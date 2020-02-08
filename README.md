@@ -10,6 +10,7 @@
   - [⌨️ Collaborative editing - 协作编辑 (WIP)](#️-collaborative-editing-协作编辑-wip)
   - [✏️ Markdown writing - Markdown 写作](#️-markdown-writing-markdown-写作)
   - [🏷️ Tag management - 标签管理](#️-tag-management-标签管理)
+  - [😀 Interested in this project? - 对这个项目感兴趣？](#interested-in-this-project-对这个项目感兴趣)
 
 <!-- /code_chunk_output -->
 
@@ -90,3 +91,11 @@ On iOS devices (iPhone and iPad), I would suggest you to try [crossnote](https:/
 You can add arbitary tags to your notes and quickly access your notes by tag.
 
 ![Screenshot from 2020-02-08 21-44-24](https://i.loli.net/2020/02/08/Vzwo6phEvuiNmje.png)
+
+### 😀 Interested in this project? - 对这个项目感兴趣？
+
+I love open source, and I would like to continue to open source part of the frontend & backend code of this project in the future.
+
+If you are interested in this project and want to get more involved (or even help commercialize the project 😎), you can reach me either by my email `shd101wyy@gmail.com` or by my wechat(微信) `shd101wyy`.
+
+Thank you!
