@@ -1,5 +1,7 @@
 # 📝 Crossnote 交叉笔记
 
+https://crossnote.app
+
 <!-- @import "[TOC]" {cmd="toc" depthFrom=2 depthTo=6 orderedList=false} -->
 
 <!-- code_chunk_output -->
@@ -14,7 +16,9 @@
 
 <!-- /code_chunk_output -->
 
-https://crossnote.app
+🚪 [home page - 主页](https://crossnote.app)
+
+👀 [public notes - 公开的笔记](https://crossnote.app/public_notes)
 
 > ☝️ We might switch to another domain name in the future.
 
