@@ -1,5 +1,7 @@
 # 📝 Crossnote 交叉笔记
 
+![](logo192.png)
+
 https://crossnote.app
 
 <!-- @import "[TOC]" {cmd="toc" depthFrom=2 depthTo=6 orderedList=false} -->
@@ -16,9 +18,11 @@ https://crossnote.app
 
 <!-- /code_chunk_output -->
 
-🚪 [home page - 主页](https://crossnote.app)
+---
 
-👀 [public notes - 公开的笔记](https://crossnote.app/public_notes)
+- 🚪 [Crossnote home page - 主页](https://crossnote.app)
+  - 👀 [public notes - 公开的笔记](https://crossnote.app/public_notes)
+- 🌐 [Crossnote Chrome extension](https://github.com/0xGG/crossnote-chrome)
 
 > ☝️ We might switch to another domain name in the future.
 
@@ -38,6 +42,8 @@ Please visit [Crossnote project](https://crossnote.app/note/5bba7c9b-fd45-455b-8
 It is heavily inspired by [Markdown Preview Enhanced](https://github.com/shd101wyy/markdown-preview-enhanced), [Google Keep](https://keep.google.com), [Google Docs](https://docs.google.com), [Quip](https://quip.com), and [Notion](https://www.notion.so).
 
 **Crossnote** is still under heavy development, and its production website is currently running on a Vultr VPS with only 8GB ram located in Los Angeles. The product is not stable yet (basically the more I code, the more bugs I produce haha), so your data is not guaranteed to be safely saved. **So let me reiterate: This product is not ready yet**. But I am happy if you could help me test it.
+
+We also offer a chrome extension [here](https://github.com/0xGG/crossnote-chrome).
 
 Any suggestions would be very helpful.
 
