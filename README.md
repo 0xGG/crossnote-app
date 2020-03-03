@@ -1,5 +1,7 @@
 # 📝 Crossnote 交叉笔记
 
+**I am planning to open source the front-end project as long as I finish implementing the offline features so as to become a REAL Progressive Web Application.**
+
 ![](logo192.png)
 
 https://crossnote.app
