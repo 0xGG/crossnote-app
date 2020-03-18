@@ -2,6 +2,8 @@
 
 **I am planning to open source the front-end project as long as I finish implementing the offline features so as to become a REAL Progressive Web Application.**
 
+Please check the [Notehub](https://github.com/0xGG/notehub) project, which will replace the old crossnote front-end.
+
 ![](logo192.png)
 
 https://crossnote.app
