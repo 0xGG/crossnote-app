@@ -1,0 +1,14 @@
+overwrite: true
+schema: http://localhost:9999/graphql
+documents: "src/**/*.graphql"
+generates:
+  src/generated/graphql.tsx:
+    plugins:
+      - "typescript"
+      - "typescript-operations"
+      - "typescript-urql"
+    config:
+        withHooks: true
+        avoidOptionals: true
+        nonOptionalTypename: false
+        declarationKind: 'interface'  
