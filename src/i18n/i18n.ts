@@ -12,7 +12,7 @@ i18next.use(initReactI18next).init({
     escapeValue: false
   },
   keySeparator: false, // we do not use keys in form messages.welcome
-  lng: localStorage.getItem("language") || "en-US", // "en-US" | "zh-CN"
+  lng: localStorage.getItem("settings/language") || "en-US", // "en-US" | "zh-CN"
   fallbackLng: "en-US",
   resources: {
     "en-US": enUSLanguage

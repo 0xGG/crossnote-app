@@ -37,6 +37,13 @@ const App: React.FC = () => {
         <Router history={browserHistory}>
           <Switch>
             <Route
+              path={`/settings`}
+              exact={true}
+              render={props => (
+                <Home section={HomeSection.Settings} queryParams={{}}></Home>
+              )}
+            ></Route>
+            <Route
               path={`/`}
               render={props => (
                 <Home

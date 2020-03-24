@@ -58,6 +58,7 @@ import { formatDistance } from "date-fns";
 import { getHeaderFromMarkdown } from "../utilities/note";
 import { printPreview } from "../utilities/preview";
 import ChangeFilePathDialog from "./ChangeFilePathDialog";
+import { SettingsContainer } from "../containers/settings";
 
 const VickyMD = require("vickymd");
 const is = require("is_js");
@@ -244,6 +245,7 @@ export default function Editor(props: Props) {
   );
 
   const crossnoteContainer = CrossnoteContainer.useContainer();
+  const settingsContainer = SettingsContainer.useContainer();
 
   const { t } = useTranslation();
 
@@ -518,6 +520,22 @@ export default function Editor(props: Props) {
       };
     }
   }, [note]);
+
+  // Initialize cursor color
+  useEffect(() => {
+    const styleID = "codemirror-cursor-style";
+    let style = document.getElementById(styleID);
+    if (!style) {
+      style = document.createElement("style");
+      style.id = styleID;
+      document.body.appendChild(style);
+    }
+    style.innerText = `
+  .CodeMirror-cursor.CodeMirror-cursor {
+    border-left: 2px solid ${settingsContainer.editorCursorColor || "#333"};
+  }    
+  `;
+  }, [settingsContainer.editorCursorColor]);
 
   useEffect(() => {
     if (note) {

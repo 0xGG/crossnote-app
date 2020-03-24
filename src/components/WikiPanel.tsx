@@ -1,41 +1,9 @@
-import React, { useState, useEffect } from "react";
-import {
-  fade,
-  createStyles,
-  makeStyles,
-  Theme
-} from "@material-ui/core/styles";
+import React, { useEffect } from "react";
+import { createStyles, makeStyles, Theme } from "@material-ui/core/styles";
 import clsx from "clsx";
-import {
-  CrossnoteContainer,
-  SelectedSectionType,
-  OrderBy,
-  OrderDirection
-} from "../containers/crossnote";
-import {
-  Box,
-  InputBase,
-  Card,
-  IconButton,
-  Typography,
-  Hidden,
-  CircularProgress,
-  Popover,
-  List,
-  ListItem,
-  ListItemText,
-  ListItemIcon,
-  Divider
-} from "@material-ui/core";
-import {
-  Magnify,
-  FileEditOutline,
-  Settings,
-  Menu as MenuIcon,
-  SortVariant,
-  SortDescending,
-  SortAscending
-} from "mdi-material-ui";
+import { CrossnoteContainer } from "../containers/crossnote";
+import { Box, Card, IconButton, Typography, Hidden } from "@material-ui/core";
+import { Menu as MenuIcon } from "mdi-material-ui";
 import { useTranslation } from "react-i18next";
 
 const previewZIndex = 99;

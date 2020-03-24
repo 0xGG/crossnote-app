@@ -38,6 +38,8 @@ import AddNotebookDialog from "../components/AddNotebookDialog";
 import NotebookTreeView from "../components/NotebookTreeView";
 import NotesPanel from "../components/NotesPanel";
 import WikiPanel from "../components/WikiPanel";
+import { browserHistory } from "../utilities/history";
+import { Settings } from "../components/Settings";
 
 const drawerWidth = 200;
 const notesPanelWidth = 350;
@@ -240,7 +242,7 @@ export function Home(props: Props) {
           </ListItemIcon>
           <ListItemText primary={"Explore"}></ListItemText>
         </ListItem>
-        <ListItem button>
+        {/*<ListItem button>
           <ListItemIcon>
             <Cube></Cube>
           </ListItemIcon>
@@ -251,8 +253,8 @@ export function Home(props: Props) {
             <Bell></Bell>
           </ListItemIcon>
           <ListItemText primary={"Notifications"}></ListItemText>
-        </ListItem>
-        <ListItem button>
+        </ListItem>*/}
+        <ListItem button onClick={() => browserHistory.push(`/settings`)}>
           <ListItemIcon>
             <SettingsIcon></SettingsIcon>
           </ListItemIcon>
@@ -337,15 +339,22 @@ export function Home(props: Props) {
         </Hidden>
       </nav>
       <Box className={clsx(classes.mainPanel)} id="main-panel">
-        {notesPanel}
-        <Paper
-          className={clsx(classes.editorPanel, "editor-panel")}
-          style={{
-            display: crossnoteContainer.displayMobileEditor && "block"
-          }}
-        >
-          <Editor note={crossnoteContainer.selectedNote}></Editor>
-        </Paper>
+        {props.section === HomeSection.Notebooks && (
+          <>
+            {notesPanel}
+            <Paper
+              className={clsx(classes.editorPanel, "editor-panel")}
+              style={{
+                display: crossnoteContainer.displayMobileEditor && "block"
+              }}
+            >
+              <Editor note={crossnoteContainer.selectedNote}></Editor>
+            </Paper>
+          </>
+        )}
+        {props.section === HomeSection.Settings && (
+          <Settings toggleDrawer={toggleDrawer}></Settings>
+        )}
       </Box>
       <AddNotebookDialog
         open={addNotebookDialogOpen}

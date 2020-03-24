@@ -16,6 +16,7 @@ import App from "./App";
 import * as serviceWorker from "./serviceWorker";
 import Crossnote from "./lib/crossnote";
 import { CrossnoteContainer } from "./containers/crossnote";
+import { SettingsContainer } from "./containers/settings";
 
 const fs = new LightningFS("fs");
 (window as any)["fs"] = fs;
@@ -32,7 +33,9 @@ try {
         crossnote: crossnote
       }}
     >
-      <App />
+      <SettingsContainer.Provider initialState={{}}>
+        <App />
+      </SettingsContainer.Provider>
     </CrossnoteContainer.Provider>,
     document.getElementById("root")
   );
