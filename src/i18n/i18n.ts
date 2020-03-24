@@ -2,9 +2,9 @@ import i18next from "i18next";
 import { initReactI18next } from "react-i18next";
 import { zhCN, enUS, zhTW, ja } from "date-fns/locale";
 import { enUS as enUSLanguage } from "./lang/enUS";
-// import { zhCN as zhCNLanguage } from "./lang/zhCN";
-// import { zhTW as zhTWLanguage } from "./lang/zhTW";
-// import { jaJP as jaJPLanguage } from "./lang/jaJP";
+import { zhCN as zhCNLanguage } from "./lang/zhCN";
+import { zhTW as zhTWLanguage } from "./lang/zhTW";
+import { jaJP as jaJPLanguage } from "./lang/jaJP";
 
 i18next.use(initReactI18next).init({
   interpolation: {
@@ -15,11 +15,10 @@ i18next.use(initReactI18next).init({
   lng: localStorage.getItem("settings/language") || "en-US", // "en-US" | "zh-CN"
   fallbackLng: "en-US",
   resources: {
-    "en-US": enUSLanguage
-    // TODO: Support other languages
-    // "zh-CN": zhCNLanguage,
-    // "zh-TW": zhTWLanguage,
-    // "ja-JP": jaJPLanguage
+    "en-US": enUSLanguage,
+    "zh-CN": zhCNLanguage,
+    "zh-TW": zhTWLanguage,
+    "ja-JP": jaJPLanguage
   }
 });
 

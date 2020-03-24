@@ -1070,7 +1070,7 @@ export default function Editor(props: Props) {
           </ButtonGroup>
           <ButtonGroup style={{ marginLeft: "8px" }}>
             {isDecrypted && (
-              <Tooltip title={"Tags"}>
+              <Tooltip title={t("general/tags")}>
                 <Button
                   className={clsx(classes.controlBtn)}
                   onClick={event => setTagsMenuAnchorEl(event.currentTarget)}
@@ -1080,7 +1080,7 @@ export default function Editor(props: Props) {
               </Tooltip>
             )}
             {isDecrypted && (
-              <Tooltip title={"Pin"}>
+              <Tooltip title={t("general/Pin")}>
                 <Button
                   className={clsx(
                     classes.controlBtn,
@@ -1092,7 +1092,7 @@ export default function Editor(props: Props) {
                 </Button>
               </Tooltip>
             )}
-            <Tooltip title={"Encryption"}>
+            <Tooltip title={t("general/Encryption")}>
               <Button
                 className={clsx(
                   classes.controlBtn,
@@ -1109,7 +1109,7 @@ export default function Editor(props: Props) {
             </Tooltip>
           </ButtonGroup>
           <ButtonGroup style={{ marginLeft: "8px" }}>
-            <Tooltip title={"Change file path"}>
+            <Tooltip title={t("general/change-file-path")}>
               <Button
                 className={clsx(classes.controlBtn)}
                 onClick={() => setFilePathDialogOpen(true)}
@@ -1117,7 +1117,7 @@ export default function Editor(props: Props) {
                 <RenameBox></RenameBox>
               </Button>
             </Tooltip>
-            <Tooltip title={"Restore (checkout)"}>
+            <Tooltip title={t("general/restore-checkout")}>
               <Button
                 className={clsx(classes.controlBtn)}
                 onClick={checkoutNote}
@@ -1125,7 +1125,7 @@ export default function Editor(props: Props) {
                 <Restore></Restore>
               </Button>
             </Tooltip>
-            <Tooltip title={"Delete file"}>
+            <Tooltip title={t("general/Delete")}>
               <Button
                 className={clsx(classes.controlBtn)}
                 onClick={() => setDeleteDialogOpen(true)}
@@ -1134,7 +1134,7 @@ export default function Editor(props: Props) {
               </Button>
             </Tooltip>
             {is.desktop() && (
-              <Tooltip title={"Print"}>
+              <Tooltip title={t("general/Print")}>
                 <Button
                   className={clsx(classes.controlBtn)}
                   onClick={() => setNeedsToPrint(true)}
@@ -1145,7 +1145,7 @@ export default function Editor(props: Props) {
             )}
           </ButtonGroup>
           <ButtonGroup style={{ marginLeft: "8px" }}>
-            <Tooltip title={"Fullscreen"}>
+            <Tooltip title={t("general/Fullscreen")}>
               <Button
                 className={clsx(classes.controlBtn)}
                 onClick={() => setFullScreenMode(true)}
@@ -1156,7 +1156,7 @@ export default function Editor(props: Props) {
           </ButtonGroup>
           {note.notebook.gitURL && ( // If no git url set, then don't allow push/pull
             <ButtonGroup style={{ marginLeft: "8px" }}>
-              <Tooltip title={"Upload (Push)"}>
+              <Tooltip title={t("general/upload-push")}>
                 <Button
                   className={clsx(classes.controlBtn)}
                   onClick={() => setPushDialogOpen(true)}
@@ -1168,7 +1168,7 @@ export default function Editor(props: Props) {
                   <CloudUploadOutline></CloudUploadOutline>
                 </Button>
               </Tooltip>
-              <Tooltip title={"Download (Pull)"}>
+              <Tooltip title={t("general/download-pull")}>
                 <Button
                   className={clsx(classes.controlBtn)}
                   onClick={pullNotebook}

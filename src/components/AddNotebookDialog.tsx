@@ -18,6 +18,7 @@ import {
 import { ChevronDown } from "mdi-material-ui";
 import { CrossnoteContainer } from "../containers/crossnote";
 import Noty from "noty";
+import { useTranslation } from "react-i18next";
 
 interface Props {
   open: boolean;
@@ -42,6 +43,7 @@ export default function AddNotebookDialog(props: Props) {
   const [rememberCredentialsChecked, setRememberCredentialsChecked] = useState<
     boolean
   >(false);
+  const { t } = useTranslation();
 
   const addNotebook = useCallback(async () => {
     try {
@@ -102,10 +104,10 @@ export default function AddNotebookDialog(props: Props) {
         }
       }}
     >
-      <DialogTitle>Add a notebook</DialogTitle>
+      <DialogTitle>{t("general/add-a-notebook")}</DialogTitle>
       <DialogContent>
         <TextField
-          label={"Notebook name"}
+          label={t("general/notebook-name")}
           value={notebookName}
           fullWidth={true}
           onChange={event => {
@@ -119,34 +121,40 @@ export default function AddNotebookDialog(props: Props) {
           onChange={() => setExpanded(!expanded)}
         >
           <ExpansionPanelSummary expandIcon={<ChevronDown></ChevronDown>}>
-            <Typography>{"Git repository (optional)"}</Typography>
+            <Typography>{`${t("general/git-repository")} (${t(
+              "general/optional"
+            )})`}</Typography>
           </ExpansionPanelSummary>
           <ExpansionPanelDetails>
             <Box>
               <TextField
-                label={"url"}
-                placeholder={"https://abc/def.git"}
+                label={t("general/url")}
+                placeholder={"https://github.com/0xGG/crossnote.git"}
                 fullWidth={true}
                 value={gitURL}
                 onChange={event => setGitURL(event.target.value)}
               ></TextField>
               <TextField
-                label={"branch"}
+                label={t("general/branch")}
                 placeholder={"master"}
                 fullWidth={true}
                 value={gitBranch}
                 onChange={event => setGitBranch(event.target.value)}
               ></TextField>
               <TextField
-                label={"username (optional)"}
-                placeholder={"username (optional)"}
+                label={`${t("general/Username")} (${t("general/optional")})`}
+                placeholder={`${t("general/Username")} (${t(
+                  "general/optional"
+                )})`}
                 fullWidth={true}
                 value={gitUsername}
                 onChange={event => setGitUsername(event.target.value)}
               ></TextField>
               <TextField
-                label={"password (optional)"}
-                placeholder={"password (optional)"}
+                label={`${t("general/Password")} (${t("general/optional")})`}
+                placeholder={`${t("general/Password")} (${t(
+                  "general/optional"
+                )})`}
                 type={"password"}
                 fullWidth={true}
                 value={gitPassword}
@@ -164,14 +172,16 @@ export default function AddNotebookDialog(props: Props) {
                 }
                 label={
                   <Typography>
-                    {"Remember credentials" +
+                    {t("general/remember-username-and-password") +
                       " " +
-                      (rememberCredentialsChecked ? "(stored locally)" : "")}
+                      (rememberCredentialsChecked
+                        ? `(${t("general/stored-locally")})`
+                        : "")}
                   </Typography>
                 }
               />
               <TextField
-                label={"cors proxy"}
+                label={t("general/cors-proxy")}
                 placeholder={"https://cors.isomorphic-git.org"}
                 fullWidth={true}
                 value={gitCorsProxy}
@@ -183,7 +193,7 @@ export default function AddNotebookDialog(props: Props) {
                 }
                 target={"_blank"}
               >
-                Why we need cors proxy?
+                {t("general/why-cors-proxy")}
               </Link>
             </Box>
           </ExpansionPanelDetails>
@@ -196,9 +206,13 @@ export default function AddNotebookDialog(props: Props) {
           onClick={addNotebook}
           disabled={crossnoteContainer.isAddingNotebook}
         >
-          {crossnoteContainer.isAddingNotebook ? "Adding..." : "Add"}
+          {crossnoteContainer.isAddingNotebook
+            ? `${t("general/adding")}...`
+            : t("general/add")}
         </Button>
-        {props.canCancel && <Button onClick={props.onClose}>{"Cancel"}</Button>}
+        {props.canCancel && (
+          <Button onClick={props.onClose}>{t("general/cancel")}</Button>
+        )}
       </DialogActions>
     </Dialog>
   );

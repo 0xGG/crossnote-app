@@ -240,7 +240,7 @@ export function Home(props: Props) {
           <ListItemIcon>
             <LibraryBooks></LibraryBooks>
           </ListItemIcon>
-          <ListItemText primary={"Explore"}></ListItemText>
+          <ListItemText primary={t("general/Explore")}></ListItemText>
         </ListItem>
         {/*<ListItem button>
           <ListItemIcon>
@@ -273,7 +273,7 @@ export function Home(props: Props) {
             }}
           >
             <Typography variant={"body1"} style={{ fontWeight: "bold" }}>
-              {"Notebooks"}
+              {t("general/Notebooks")}
             </Typography>
             <IconButton onClick={() => setAddNotebookDialogOpen(true)}>
               <PlusCircle></PlusCircle>

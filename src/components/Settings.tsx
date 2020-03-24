@@ -4,7 +4,10 @@ import {
   Typography,
   Popover,
   Hidden,
-  IconButton
+  IconButton,
+  TextField,
+  Select,
+  MenuItem
 } from "@material-ui/core";
 import { createStyles, makeStyles, Theme } from "@material-ui/core/styles";
 import clsx from "clsx";
@@ -12,7 +15,7 @@ import React, { useState, useEffect } from "react";
 import { SketchPicker } from "react-color";
 import { useTranslation } from "react-i18next";
 import { SettingsContainer } from "../containers/settings";
-import { Menu as MenuIcon } from "mdi-material-ui";
+import { Menu as MenuIcon, Translate } from "mdi-material-ui";
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -63,7 +66,7 @@ const useStyles = makeStyles((theme: Theme) =>
       right: "16px"
     },
     section: {
-      marginTop: theme.spacing(2)
+      marginTop: theme.spacing(1)
     },
     swatch: {
       padding: "4px",
@@ -149,7 +152,62 @@ export function Settings(props: Props) {
             <MenuIcon></MenuIcon>
           </IconButton>
         </Hidden>
-        <Typography variant={"h6"}>{"Settings"}</Typography>
+        <Typography variant={"h6"}>{t("general/Settings")}</Typography>
+      </Box>
+      <Box className={clsx(classes.section)}>
+        <Typography
+          variant={"body2"}
+          style={{
+            color: "rgba(0, 0, 0, 0.54)",
+            fontSize: "0.75rem",
+            marginBottom: "6px"
+          }}
+        >
+          <Translate style={{ marginRight: "8px" }}></Translate>
+          {"Languages/语言"}
+        </Typography>
+        <Select
+          variant={"standard"}
+          value={settingsContainer.language}
+          onChange={event =>
+            settingsContainer.setLanguage(event.target.value as string)
+          }
+        >
+          <MenuItem value={"en-US"}>English</MenuItem>
+          <MenuItem value={"zh-CN"}>简体中文</MenuItem>
+          <MenuItem value={"zh-TW"}>繁体中文</MenuItem>
+          <MenuItem value={"ja-JP"}>日本語</MenuItem>
+        </Select>
+      </Box>
+      <Box className={clsx(classes.section)}>
+        <TextField
+          label={t("settings/author-name")}
+          placeholder={t("account/Anonymous")}
+          fullWidth
+          margin="normal"
+          InputLabelProps={{
+            shrink: true
+          }}
+          value={settingsContainer.authorName}
+          onChange={event =>
+            settingsContainer.setAuthorName(event.currentTarget.value)
+          }
+        ></TextField>
+      </Box>
+      <Box className={clsx(classes.section)}>
+        <TextField
+          label={t("settings/author-email")}
+          placeholder={"anonymous@crossnote.app"}
+          fullWidth
+          margin="normal"
+          InputLabelProps={{
+            shrink: true
+          }}
+          value={settingsContainer.authorEmail}
+          onChange={event =>
+            settingsContainer.setAuthorEmail(event.currentTarget.value)
+          }
+        ></TextField>
       </Box>
       <Box className={clsx(classes.section)}>
         <Typography

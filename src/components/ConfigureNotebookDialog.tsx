@@ -18,6 +18,7 @@ import {
 import { ChevronDown } from "mdi-material-ui";
 import { CrossnoteContainer } from "../containers/crossnote";
 import { Notebook } from "../lib/crossnote";
+import { useTranslation } from "react-i18next";
 
 interface Props {
   open: boolean;
@@ -40,6 +41,7 @@ export default function ConfigureNotebookDialog(props: Props) {
   const [clickDeleteCount, setClickDeleteCount] = useState<number>(
     MaxClickDeleteCount
   );
+  const { t } = useTranslation();
 
   useEffect(() => {
     const notebook = props.notebook;
@@ -98,10 +100,10 @@ export default function ConfigureNotebookDialog(props: Props) {
       open={props.open}
       onClose={!clickDeleteCount ? null : props.onClose}
     >
-      <DialogTitle>Configure a notebook</DialogTitle>
+      <DialogTitle>{t("general/configure-the-notebook")}</DialogTitle>
       <DialogContent>
         <TextField
-          label={"Notebook name"}
+          label={t("general/notebook-name")}
           value={notebookName}
           fullWidth={true}
           onChange={event => {
@@ -115,12 +117,14 @@ export default function ConfigureNotebookDialog(props: Props) {
           onChange={() => setExpanded(!expanded)}
         >
           <ExpansionPanelSummary expandIcon={<ChevronDown></ChevronDown>}>
-            <Typography>{"Git repository (optional)"}</Typography>
+            <Typography>{`${t("general/git-repository")} (${t(
+              "general/optional"
+            )})`}</Typography>
           </ExpansionPanelSummary>
           <ExpansionPanelDetails>
             <Box>
               <TextField
-                label={"url"}
+                label={t("general/url")}
                 placeholder={"https://abc/def.git"}
                 disabled={true}
                 fullWidth={true}
@@ -128,7 +132,7 @@ export default function ConfigureNotebookDialog(props: Props) {
                 onChange={event => setGitURL(event.target.value)}
               ></TextField>
               <TextField
-                label={"branch"}
+                label={t("general/branch")}
                 placeholder={"master"}
                 disabled={true}
                 fullWidth={true}
@@ -136,22 +140,26 @@ export default function ConfigureNotebookDialog(props: Props) {
                 onChange={event => setGitBranch(event.target.value)}
               ></TextField>
               <TextField
-                label={"username (optional)"}
-                placeholder={"username (optional)"}
+                label={`${t("general/Username")} (${t("general/optional")})`}
+                placeholder={`${t("general/Username")} (${t(
+                  "general/optional"
+                )})`}
                 fullWidth={true}
                 value={gitUsername}
                 onChange={event => setGitUsername(event.target.value)}
               ></TextField>
               <TextField
-                label={"password (optional)"}
-                placeholder={"password (optional)"}
+                label={`${t("general/Password")} (${t("general/optional")})`}
+                placeholder={`${t("general/Password")} (${t(
+                  "general/optional"
+                )})`}
                 type={"password"}
                 fullWidth={true}
                 value={gitPassword}
                 onChange={event => setGitPassword(event.target.value)}
               ></TextField>
               <TextField
-                label={"cors proxy"}
+                label={t("general/cors-proxy")}
                 placeholder={"https://cors.isomorphic-git.org"}
                 fullWidth={true}
                 value={gitCorsProxy}
@@ -163,7 +171,7 @@ export default function ConfigureNotebookDialog(props: Props) {
                 }
                 target={"_blank"}
               >
-                Why we need cors proxy?
+                {t("general/why-cors-proxy")}
               </Link>
             </Box>
           </ExpansionPanelDetails>
@@ -183,7 +191,7 @@ export default function ConfigureNotebookDialog(props: Props) {
             }
           }}
         >
-          {"Delete" +
+          {t("general/Delete") +
             (clickDeleteCount < MaxClickDeleteCount
               ? ` ${clickDeleteCount}`
               : "")}
@@ -194,10 +202,10 @@ export default function ConfigureNotebookDialog(props: Props) {
           onClick={updateNotebook}
           disabled={!clickDeleteCount}
         >
-          {"Save"}
+          {t("general/Save")}
         </Button>
         <Button onClick={props.onClose} disabled={!clickDeleteCount}>
-          {"Cancel"}
+          {t("general/cancel")}
         </Button>
       </DialogActions>
     </Dialog>

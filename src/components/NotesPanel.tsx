@@ -297,7 +297,9 @@ export default function NotesPanel(props: Props) {
                       classes.sortSelected
                   )}
                 >
-                  <ListItemText primary={"Date modified"}></ListItemText>
+                  <ListItemText
+                    primary={t("general/date-modified")}
+                  ></ListItemText>
                 </ListItem>
                 <ListItem
                   button
@@ -309,7 +311,9 @@ export default function NotesPanel(props: Props) {
                       classes.sortSelected
                   )}
                 >
-                  <ListItemText primary={"Date created"}></ListItemText>
+                  <ListItemText
+                    primary={t("general/date-created")}
+                  ></ListItemText>
                 </ListItem>
                 <ListItem
                   button
@@ -319,7 +323,7 @@ export default function NotesPanel(props: Props) {
                       classes.sortSelected
                   )}
                 >
-                  <ListItemText primary={"Title"}></ListItemText>
+                  <ListItemText primary={t("general/title")}></ListItemText>
                 </ListItem>
                 <Divider></Divider>
                 <ListItem
@@ -333,7 +337,7 @@ export default function NotesPanel(props: Props) {
                   )}
                 >
                   <ListItemText primary={"Desc"}></ListItemText>
-                  <ListItemIcon>
+                  <ListItemIcon style={{ marginLeft: "8px" }}>
                     <SortDescending></SortDescending>
                   </ListItemIcon>
                 </ListItem>
@@ -348,7 +352,7 @@ export default function NotesPanel(props: Props) {
                   )}
                 >
                   <ListItemText primary={"Asc"}></ListItemText>
-                  <ListItemIcon>
+                  <ListItemIcon style={{ marginLeft: "8px" }}>
                     <SortAscending></SortAscending>
                   </ListItemIcon>
                 </ListItem>

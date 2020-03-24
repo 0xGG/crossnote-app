@@ -69,9 +69,10 @@ interface Props {
 }
 export default function NotebookTreeView(props: Props) {
   const classes = useStyles();
-  const crossnoteContainer = CrossnoteContainer.useContainer();
-
   const [expanded, setExpanded] = useState<string[]>([]);
+  const crossnoteContainer = CrossnoteContainer.useContainer();
+  const { t } = useTranslation();
+
   const handleChange = useCallback(
     (event: React.ChangeEvent<{}>, nodes: string[]) => {
       event.stopPropagation();
@@ -278,7 +279,7 @@ export default function NotebookTreeView(props: Props) {
                 🗓
               </span>
               <Typography className={clsx(classes.treeItemLabelText)}>
-                {"today"}
+                {t("general/today")}
               </Typography>
             </Box>
           }
@@ -305,7 +306,7 @@ export default function NotebookTreeView(props: Props) {
                 ☑️
               </span>
               <Typography className={clsx(classes.treeItemLabelText)}>
-                {"todo"}
+                {t("general/todo")}
               </Typography>
             </Box>
           }
@@ -332,7 +333,7 @@ export default function NotebookTreeView(props: Props) {
                 🗂
               </span>
               <Typography className={clsx(classes.treeItemLabelText)}>
-                {"notes"}
+                {t("general/notes")}
               </Typography>
             </Box>
           }
@@ -362,7 +363,7 @@ export default function NotebookTreeView(props: Props) {
                   📖
                 </span>
                 <Typography className={clsx(classes.treeItemLabelText)}>
-                  {"wiki"}
+                  {t("general/wiki")}
                 </Typography>
               </Box>
             }
@@ -392,7 +393,7 @@ export default function NotebookTreeView(props: Props) {
                 🏷️
               </span>
               <Typography className={clsx(classes.treeItemLabelText)}>
-                {"tagged"}
+                {t("general/tagged")}
               </Typography>
             </Box>
           }
@@ -421,7 +422,7 @@ export default function NotebookTreeView(props: Props) {
                 🈚
               </span>
               <Typography className={clsx(classes.treeItemLabelText)}>
-                {"untagged"}
+                {t("general/untagged")}
               </Typography>
             </Box>
           }
@@ -448,7 +449,7 @@ export default function NotebookTreeView(props: Props) {
                 🔐
               </span>
               <Typography className={clsx(classes.treeItemLabelText)}>
-                {"encrypted"}
+                {t("general/encrypted")}
               </Typography>
             </Box>
           }
@@ -475,7 +476,7 @@ export default function NotebookTreeView(props: Props) {
                 ⚠️
               </span>
               <Typography className={clsx(classes.treeItemLabelText)}>
-                {"conflicted"}
+                {t("general/conflicted")}
               </Typography>
             </Box>
           }

@@ -13,6 +13,7 @@ import { CrossnoteContainer } from "../containers/crossnote";
 import { Notebook } from "../lib/crossnote";
 import Noty from "noty";
 import { useTranslation } from "react-i18next";
+import { SettingsContainer } from "../containers/settings";
 
 interface Props {
   open: boolean;
@@ -21,27 +22,22 @@ interface Props {
 }
 
 export default function PushNotebookDialog(props: Props) {
-  const crossnoteContainer = CrossnoteContainer.useContainer();
   const notebook = props.notebook;
-  const [authorName, setAuthorName] = useState<string>(
-    localStorage.getItem("authorName") || "anonymous"
-  );
-  const [authorEmail, setAuthorEmail] = useState<string>(
-    localStorage.getItem("authorEmail") || "anonymous@crossnote.app"
-  );
   const [gitUsername, setGitUsername] = useState<string>(notebook.gitUsername);
   const [gitPassword, setGitPassword] = useState<string>(notebook.gitPassword);
   const [commitMessage, setCommitMessage] = useState<string>(
     "doc: Updated docs"
   );
   const { t } = useTranslation();
+  const crossnoteContainer = CrossnoteContainer.useContainer();
+  const settingsContainer = SettingsContainer.useContainer();
 
   const pushNotebook = useCallback(() => {
     crossnoteContainer
       .pushNotebook({
         notebook,
-        authorName,
-        authorEmail,
+        authorName: settingsContainer.authorEmail,
+        authorEmail: settingsContainer.authorEmail,
         username: gitUsername,
         password: gitPassword,
         message: commitMessage,
@@ -78,22 +74,16 @@ export default function PushNotebookDialog(props: Props) {
         }).show();
       });
   }, [
-    authorEmail,
-    authorName,
+    settingsContainer.authorName,
+    settingsContainer.authorEmail,
     gitUsername,
     gitPassword,
     notebook,
     commitMessage,
-    props
+    props,
+    t,
+    crossnoteContainer.pushNotebook
   ]);
-
-  useEffect(() => {
-    localStorage.setItem("authorName", authorName);
-  }, [authorName]);
-
-  useEffect(() => {
-    localStorage.setItem("authorEmail", authorEmail);
-  }, [authorEmail]);
 
   useEffect(() => {
     setGitUsername(notebook.gitUsername);
@@ -122,16 +112,20 @@ export default function PushNotebookDialog(props: Props) {
       </DialogTitle>
       <DialogContent>
         <TextField
-          label={"Author name"}
+          label={t("settings/author-name")}
           fullWidth={true}
-          value={authorName}
-          onChange={event => setAuthorName(event.target.value)}
+          value={settingsContainer.authorName}
+          onChange={event =>
+            settingsContainer.setAuthorName(event.target.value)
+          }
         ></TextField>
         <TextField
-          label={"Author email"}
+          label={t("settings/author-email")}
           fullWidth={true}
-          value={authorEmail}
-          onChange={event => setAuthorEmail(event.target.value)}
+          value={settingsContainer.authorEmail}
+          onChange={event =>
+            settingsContainer.setAuthorEmail(event.target.value)
+          }
         ></TextField>
         <TextField
           label={"Commit message"}
@@ -162,9 +156,11 @@ export default function PushNotebookDialog(props: Props) {
           disabled={crossnoteContainer.isPushingNotebook}
           onClick={pushNotebook}
         >
-          {crossnoteContainer.isPushingNotebook ? "Pushing..." : "Push"}
+          {crossnoteContainer.isPushingNotebook
+            ? t("general/Uploading")
+            : t("general/Upload")}
         </Button>
-        <Button onClick={props.onClose}>{"Cancel"}</Button>
+        <Button onClick={props.onClose}>{t("general/cancel")}</Button>
       </DialogActions>
     </Dialog>
   );
