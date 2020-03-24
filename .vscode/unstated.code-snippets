@@ -1,0 +1,22 @@
+{
+    "Unstated State": {
+       "scope": "typescript,typescriptreact",
+       "prefix": "us",
+       "body": [
+         "import { useState } from \"react\";",
+         "import { createContainer } from \"unstated-next\";",
+         "",
+         "interface InitialState {",
+         "}",
+         "",
+         "function use$1(initialState: $2) {",
+         "  return { $3 };",
+         "}",
+         "",
+         "const ${1:StateName} = createContainer(use$1);",
+         "export default $1;"
+       ],
+       "description": "Log output to console"
+     }
+   }
+   
