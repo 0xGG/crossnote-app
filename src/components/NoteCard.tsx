@@ -13,6 +13,7 @@ import { formatDistanceStrict } from "date-fns/esm";
 import { useTranslation } from "react-i18next";
 import { Pin } from "mdi-material-ui";
 import { formatRelative } from "date-fns";
+import { basename } from "path";
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -227,7 +228,9 @@ export default function NoteCard(props: Props) {
           </Box>
         )}
         <Typography variant={"caption"} className={clsx(classes.filePath)}>
-          {note.filePath + " - " + gitStatus}
+          {basename(note.filePath).startsWith("unnamed_")
+            ? gitStatus
+            : note.filePath + " - " + gitStatus}
         </Typography>
       </Box>
     </ButtonBase>

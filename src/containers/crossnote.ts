@@ -188,7 +188,7 @@ function useCrossnoteContainer(initialState: InitialState) {
     (fileName: string = "") => {
       (async () => {
         if (!fileName) {
-          fileName = randomID();
+          fileName = "unnamed_" + randomID();
         }
         if (!fileName.endsWith(".md")) {
           fileName = fileName + ".md";
@@ -454,12 +454,14 @@ function useCrossnoteContainer(initialState: InitialState) {
         });
         */
         notebook = await crossnote.addNotebook({
-          name: "Unamed",
+          name: "Unnamed",
           corsProxy: "https://cors.isomorphic-git.org",
           gitURL: ""
         });
         setNotebooks([notebook]);
         _setSelectedNotebook(notebook);
+
+        // TODO: create empty note and add `We suggest you to add [Welcome to crossnote]() notebook ;)`
       }
     })();
   }, [crossnote]);
@@ -611,20 +613,22 @@ function useCrossnoteContainer(initialState: InitialState) {
       }
 
       setNotes(notes);
-      if (!selectedNote) {
-        setSelectedNote(notes[0]);
-      }
     }
   }, [
     selectedSection,
     crossnote,
     selectedNotebook,
     includeSubdirectories,
-    selectedNote,
     notebookNotes,
     orderBy,
     orderDirection
   ]);
+
+  useEffect(() => {
+    if (notes.length && !selectedNote) {
+      setSelectedNote(notes[0]);
+    }
+  }, [notes, selectedNote]);
 
   useInterval(() => {
     if (needsToRefreshNotes) {

@@ -57,6 +57,7 @@ import Noty from "noty";
 import { formatDistance } from "date-fns";
 import { getHeaderFromMarkdown } from "../utilities/note";
 import { printPreview } from "../utilities/preview";
+import ChangeFilePathDialog from "./ChangeFilePathDialog";
 
 const VickyMD = require("vickymd");
 const is = require("is_js");
@@ -213,9 +214,6 @@ export default function Editor(props: Props) {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState<boolean>(false);
   const [filePathDialogOpen, setFilePathDialogOpen] = useState<boolean>(false);
   const [pushDialogOpen, setPushDialogOpen] = useState<boolean>(false);
-  const [newFilePath, setNewFilePath] = useState<string>(
-    (note && note.filePath) || ""
-  );
   const [editorMode, setEditorMode] = useState<EditorMode>(EditorMode.VickyMD);
   const [previewElement, setPreviewElement] = useState<HTMLElement>(null);
   const [gitStatus, setGitStatus] = useState<string>("");
@@ -252,7 +250,6 @@ export default function Editor(props: Props) {
   const closeFilePathDialog = useCallback(() => {
     if (!note) return;
     setFilePathDialogOpen(false);
-    setNewFilePath(note.filePath);
   }, [note]);
 
   const closeEncryptionDialog = useCallback(() => {
@@ -264,24 +261,6 @@ export default function Editor(props: Props) {
     setDecryptionPassword("");
     setDecryptionDialogOpen(false);
   }, []);
-
-  const changeFilePath = useCallback(
-    (newFilePath: string) => {
-      if (!note) return;
-      (async () => {
-        newFilePath = newFilePath.replace(/^\/+/, "");
-        if (!newFilePath.endsWith(".md")) {
-          newFilePath = newFilePath + ".md";
-        }
-        if (note.filePath !== newFilePath) {
-          await crossnoteContainer.changeNoteFilePath(note, newFilePath);
-        }
-        setNewFilePath(newFilePath);
-        setFilePathDialogOpen(false);
-      })();
-    },
-    [note, closeFilePathDialog]
-  );
 
   const pullNotebook = useCallback(() => {
     new Noty({
@@ -537,12 +516,6 @@ export default function Editor(props: Props) {
         setTextAreaElement(null);
         setPreviewElement(null);
       };
-    }
-  }, [note]);
-
-  useEffect(() => {
-    if (note) {
-      setNewFilePath(note.filePath);
     }
   }, [note]);
 
@@ -1334,25 +1307,11 @@ export default function Editor(props: Props) {
           <Button onClick={() => setDeleteDialogOpen(false)}>Cancel</Button>
         </DialogActions>
       </Dialog>
-      <Dialog open={filePathDialogOpen} onClose={closeFilePathDialog}>
-        <DialogTitle>Change file path</DialogTitle>
-        <DialogContent>
-          <TextField
-            value={newFilePath}
-            autoFocus={true}
-            onChange={event => setNewFilePath(event.target.value)}
-            onKeyUp={event => {
-              if (event.which === 13) {
-                changeFilePath(newFilePath);
-              }
-            }}
-          ></TextField>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => changeFilePath(newFilePath)}>Save</Button>
-          <Button onClick={closeFilePathDialog}>Cancel</Button>
-        </DialogActions>
-      </Dialog>
+      <ChangeFilePathDialog
+        note={note}
+        open={filePathDialogOpen}
+        onClose={closeFilePathDialog}
+      ></ChangeFilePathDialog>
       <Dialog open={toggleEncryptionDialogOpen} onClose={closeEncryptionDialog}>
         <DialogTitle>
           {note.config.encryption

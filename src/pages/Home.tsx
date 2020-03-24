@@ -7,7 +7,10 @@ import {
   ListItem,
   IconButton,
   Paper,
-  Typography
+  Typography,
+  Divider,
+  ListItemIcon,
+  ListItemText
 } from "@material-ui/core";
 import {
   fade,
@@ -18,7 +21,14 @@ import {
 import clsx from "clsx";
 import React, { useState, useCallback } from "react";
 import { useTranslation } from "react-i18next";
-import { PlusCircle } from "mdi-material-ui";
+import {
+  PlusCircle,
+  Settings as SettingsIcon,
+  LibraryBooks,
+  Cube,
+  Login,
+  Bell
+} from "mdi-material-ui";
 import {
   CrossnoteContainer,
   SelectedSectionType
@@ -155,12 +165,12 @@ interface Props {}
 
 export function Home(props: Props) {
   const classes = useStyles(props);
-  const crossnoteContainer = CrossnoteContainer.useContainer();
-
   const [addNotebookDialogOpen, setAddNotebookDialogOpen] = useState<boolean>(
     false
   );
   const [drawerOpen, setDrawerOpen] = useState<boolean>(false);
+  const { t } = useTranslation();
+  const crossnoteContainer = CrossnoteContainer.useContainer();
 
   const toggleDrawer = useCallback(() => {
     setDrawerOpen(!drawerOpen);
@@ -169,6 +179,31 @@ export function Home(props: Props) {
   const drawer = (
     <div>
       <List disablePadding={true}>
+        <ListItem button>
+          <ListItemIcon>
+            <LibraryBooks></LibraryBooks>
+          </ListItemIcon>
+          <ListItemText primary={"Explore"}></ListItemText>
+        </ListItem>
+        <ListItem button>
+          <ListItemIcon>
+            <Cube></Cube>
+          </ListItemIcon>
+          <ListItemText primary={"My Blocks"}></ListItemText>
+        </ListItem>
+        <ListItem button>
+          <ListItemIcon>
+            <Bell></Bell>
+          </ListItemIcon>
+          <ListItemText primary={"Notifications"}></ListItemText>
+        </ListItem>
+        <ListItem button>
+          <ListItemIcon>
+            <SettingsIcon></SettingsIcon>
+          </ListItemIcon>
+          <ListItemText primary={t("general/Settings")}></ListItemText>
+        </ListItem>
+        <Divider></Divider>
         <ListItem disableGutters={true}>
           <Box
             style={{
