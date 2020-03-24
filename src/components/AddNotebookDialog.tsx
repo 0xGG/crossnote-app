@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import {
   Dialog,
   DialogTitle,
@@ -23,14 +23,17 @@ interface Props {
   open: boolean;
   onClose: () => void;
   canCancel: boolean;
+
+  gitURL?: string;
+  gitBranch?: string;
 }
 
 export default function AddNotebookDialog(props: Props) {
   const crossnoteContainer = CrossnoteContainer.useContainer();
   const [notebookName, setNotebookName] = useState<string>("");
   const [expanded, setExpanded] = useState<boolean>(false);
-  const [gitURL, setGitURL] = useState<string>("");
-  const [gitBranch, setGitBranch] = useState<string>("");
+  const [gitURL, setGitURL] = useState<string>(props.gitURL || "");
+  const [gitBranch, setGitBranch] = useState<string>(props.gitBranch || "");
   const [gitUsername, setGitUsername] = useState<string>("");
   const [gitPassword, setGitPassword] = useState<string>("");
   const [gitCorsProxy, setGitCorsProxy] = useState<string>(
@@ -51,8 +54,8 @@ export default function AddNotebookDialog(props: Props) {
       }).show();
       await crossnoteContainer.addNotebook(
         notebookName,
-        gitURL,
-        gitBranch,
+        gitURL.trim(),
+        gitBranch.trim() || "master",
         gitUsername,
         gitPassword,
         rememberCredentialsChecked,
@@ -62,7 +65,7 @@ export default function AddNotebookDialog(props: Props) {
     } catch (error) {
       new Noty({
         type: "error",
-        text: "Failed to get notebook...",
+        text: error.message,
         layout: "topRight",
         theme: "relax",
         timeout: 2000
@@ -79,6 +82,16 @@ export default function AddNotebookDialog(props: Props) {
     rememberCredentialsChecked,
     gitCorsProxy
   ]);
+
+  useEffect(() => {
+    const i = props.gitURL.lastIndexOf("/");
+    const name = props.gitURL.slice(i + 1).replace(/\.git/, "");
+
+    setNotebookName(name);
+    setGitURL(props.gitURL);
+    setGitBranch(props.gitBranch);
+    setExpanded(true);
+  }, [props.gitURL, props.gitBranch]);
 
   return (
     <Dialog

@@ -10,6 +10,7 @@ import {
 } from "../containers/crossnote";
 import { useTranslation } from "react-i18next";
 import { Directory, Notebook, TagNode } from "../lib/crossnote";
+import { browserHistory } from "../utilities/history";
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({

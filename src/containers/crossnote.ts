@@ -15,6 +15,8 @@ import Crossnote, {
   TagNode
 } from "../lib/crossnote";
 import { getHeaderFromMarkdown } from "../utilities/note";
+import { browserHistory } from "../utilities/history";
+import * as qs from "qs";
 
 export enum SelectedSectionType {
   Notes = "Notes",
@@ -52,6 +54,7 @@ interface InitialState {
 function useCrossnoteContainer(initialState: InitialState) {
   const { t } = useTranslation();
   const crossnote = initialState.crossnote;
+  const [initialized, setInitialized] = useState<boolean>(false);
   const [notebooks, setNotebooks] = useState<Notebook[]>([]);
   const [selectedNotebook, setSelectedNotebook] = useState<Notebook>(null);
   const [notebookNotes, setNotebookNotes] = useState<Note[]>([]);
@@ -246,6 +249,14 @@ function useCrossnoteContainer(initialState: InitialState) {
     ) => {
       setIsAddingNotebook(true);
       try {
+        if (
+          notebooks.find(
+            nb => nb.gitBranch === gitBranch && nb.gitURL === gitURL
+          )
+        ) {
+          setIsAddingNotebook(false);
+          throw new Error("error/notebook-already-exists");
+        }
         const notebook = await crossnote.addNotebook({
           name,
           gitURL,
@@ -262,7 +273,7 @@ function useCrossnoteContainer(initialState: InitialState) {
         throw error;
       }
     },
-    [crossnote]
+    [crossnote, notebooks]
   );
 
   const updateNotebook = useCallback(
@@ -445,7 +456,8 @@ function useCrossnoteContainer(initialState: InitialState) {
         if (!notebook) {
           notebook = notebooks[0];
         }
-        _setSelectedNotebook(notebook); // TODO: <= default selected
+        setSelectedNotebook(notebook); // TODO: <= default selected
+        setInitialized(true);
       } else {
         /*
         notebook = await crossnote.cloneNotebook({
@@ -459,7 +471,8 @@ function useCrossnoteContainer(initialState: InitialState) {
           gitURL: ""
         });
         setNotebooks([notebook]);
-        _setSelectedNotebook(notebook);
+        setSelectedNotebook(notebook);
+        setInitialized(true);
 
         // TODO: create empty note and add `We suggest you to add [Welcome to crossnote]() notebook ;)`
       }
@@ -640,6 +653,15 @@ function useCrossnoteContainer(initialState: InitialState) {
   const _setSelectedNotebook = useCallback(
     (notebook: Notebook) => {
       localStorage.setItem("selectedNotebookID", notebook._id);
+      if (notebook.gitURL) {
+        browserHistory.push(
+          `/?repo=${encodeURIComponent(
+            notebook.gitURL
+          )}&branch=${encodeURIComponent(notebook.gitBranch || "master")}`
+        );
+      } else {
+        browserHistory.push(`/?notebookID=${notebook._id}`);
+      }
       setSelectedNotebook(notebook);
     },
     [setSelectedNotebook]
@@ -647,6 +669,7 @@ function useCrossnoteContainer(initialState: InitialState) {
 
   return {
     crossnote,
+    initialized,
     notebooks,
     selectedNotebook,
     setSelectedNotebook: _setSelectedNotebook,

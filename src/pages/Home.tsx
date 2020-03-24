@@ -19,7 +19,7 @@ import {
   Theme
 } from "@material-ui/core/styles";
 import clsx from "clsx";
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import {
   PlusCircle,
@@ -161,13 +161,31 @@ const useStyles = makeStyles((theme: Theme) =>
   })
 );
 
-interface Props {}
+export enum HomeSection {
+  Notebooks = "Notebooks",
+  Settings = "Settings"
+}
+
+interface QueryParams {
+  notebookID?: string;
+  repo?: string;
+  branch?: string;
+}
+
+interface Props {
+  section: HomeSection;
+  queryParams: QueryParams;
+}
 
 export function Home(props: Props) {
   const classes = useStyles(props);
+
   const [addNotebookDialogOpen, setAddNotebookDialogOpen] = useState<boolean>(
     false
   );
+  const [addNotebookRepo, setAddNotebookRepo] = useState<string>("");
+  const [addNotebookBranch, setAddNotebookBranch] = useState<string>("");
+
   const [drawerOpen, setDrawerOpen] = useState<boolean>(false);
   const { t } = useTranslation();
   const crossnoteContainer = CrossnoteContainer.useContainer();
@@ -175,6 +193,43 @@ export function Home(props: Props) {
   const toggleDrawer = useCallback(() => {
     setDrawerOpen(!drawerOpen);
   }, [drawerOpen]);
+
+  useEffect(() => {
+    if (!crossnoteContainer.initialized) {
+      return;
+    }
+    if (props.section === HomeSection.Notebooks) {
+      if (props.queryParams) {
+        if (props.queryParams["notebookID"]) {
+          const notebook = crossnoteContainer.notebooks.find(
+            nb => nb._id === props.queryParams["notebookID"]
+          );
+          if (notebook && crossnoteContainer.selectedNotebook !== notebook) {
+            crossnoteContainer.setSelectedNotebook(notebook);
+          }
+        } else if (props.queryParams.repo && props.queryParams.branch) {
+          const repo = decodeURIComponent(props.queryParams.repo);
+          const branch = decodeURIComponent(props.queryParams.branch);
+          const notebook = crossnoteContainer.notebooks.find(
+            nb => nb.gitURL === repo && nb.gitBranch === branch
+          );
+          if (notebook) {
+            if (crossnoteContainer.selectedNotebook !== notebook) {
+              crossnoteContainer.setSelectedNotebook(notebook);
+            }
+            // setAddNotebookRepo("");
+            // setAddNotebookBranch("");
+            // setAddNotebookDialogOpen(false);
+          } else {
+            // Show dialog
+            setAddNotebookRepo(repo);
+            setAddNotebookBranch(branch);
+            setAddNotebookDialogOpen(true);
+          }
+        }
+      }
+    }
+  }, [props.section, props.queryParams, crossnoteContainer.initialized]);
 
   const drawer = (
     <div>
@@ -296,6 +351,8 @@ export function Home(props: Props) {
         open={addNotebookDialogOpen}
         onClose={() => setAddNotebookDialogOpen(false)}
         canCancel={true}
+        gitURL={addNotebookRepo}
+        gitBranch={addNotebookBranch}
       ></AddNotebookDialog>
     </Box>
   );
