@@ -1306,6 +1306,24 @@ export type VerifyEmailMutation = (
   & Pick<Mutation, 'verifyEmail'>
 );
 
+export type LinkWithGitHubAccountMutationVariables = {
+  code: Scalars['String'];
+};
+
+
+export type LinkWithGitHubAccountMutation = (
+  { __typename?: 'Mutation' }
+  & Pick<Mutation, 'linkWithGitHubAccount'>
+);
+
+export type UnlinkGitHubAccountMutationVariables = {};
+
+
+export type UnlinkGitHubAccountMutation = (
+  { __typename?: 'Mutation' }
+  & Pick<Mutation, 'unlinkGitHubAccount'>
+);
+
 export type SetUserInfoMutationVariables = {
   cover: Scalars['String'];
   bio: Scalars['String'];
@@ -1322,6 +1340,20 @@ export type SetUserInfoMutation = (
   & { setUserInfo: (
     { __typename?: 'User' }
     & ViewerFieldsFragment
+  ) }
+);
+
+export type GitHubUserQueryVariables = {};
+
+
+export type GitHubUserQuery = (
+  { __typename?: 'Query' }
+  & { viewer: (
+    { __typename?: 'User' }
+    & { githubUser: Maybe<(
+      { __typename?: 'GitHubUser' }
+      & Pick<GitHubUser, 'login' | 'avatar' | 'email'>
+    )> }
   ) }
 );
 
@@ -1485,6 +1517,34 @@ export const VerifyEmailComponent = (props: Omit<Urql.MutationProps<VerifyEmailM
 export function useVerifyEmailMutation() {
   return Urql.useMutation<VerifyEmailMutation, VerifyEmailMutationVariables>(VerifyEmailDocument);
 };
+export const LinkWithGitHubAccountDocument = gql`
+    mutation LinkWithGitHubAccount($code: String!) {
+  linkWithGitHubAccount(input: {code: $code})
+}
+    `;
+
+export const LinkWithGitHubAccountComponent = (props: Omit<Urql.MutationProps<LinkWithGitHubAccountMutation, LinkWithGitHubAccountMutationVariables>, 'query'> & { variables?: LinkWithGitHubAccountMutationVariables }) => (
+  <Urql.Mutation {...props} query={LinkWithGitHubAccountDocument} />
+);
+
+
+export function useLinkWithGitHubAccountMutation() {
+  return Urql.useMutation<LinkWithGitHubAccountMutation, LinkWithGitHubAccountMutationVariables>(LinkWithGitHubAccountDocument);
+};
+export const UnlinkGitHubAccountDocument = gql`
+    mutation UnlinkGitHubAccount {
+  unlinkGitHubAccount
+}
+    `;
+
+export const UnlinkGitHubAccountComponent = (props: Omit<Urql.MutationProps<UnlinkGitHubAccountMutation, UnlinkGitHubAccountMutationVariables>, 'query'> & { variables?: UnlinkGitHubAccountMutationVariables }) => (
+  <Urql.Mutation {...props} query={UnlinkGitHubAccountDocument} />
+);
+
+
+export function useUnlinkGitHubAccountMutation() {
+  return Urql.useMutation<UnlinkGitHubAccountMutation, UnlinkGitHubAccountMutationVariables>(UnlinkGitHubAccountDocument);
+};
 export const SetUserInfoDocument = gql`
     mutation SetUserInfo($cover: String!, $bio: String!, $location: String!, $language: String!, $name: String!, $avatar: String!, $editorCursorColor: String!) {
   setUserInfo(input: {cover: $cover, bio: $bio, location: $location, language: $language, name: $name, avatar: $avatar, editorCursorColor: $editorCursorColor}) {
@@ -1500,6 +1560,26 @@ export const SetUserInfoComponent = (props: Omit<Urql.MutationProps<SetUserInfoM
 
 export function useSetUserInfoMutation() {
   return Urql.useMutation<SetUserInfoMutation, SetUserInfoMutationVariables>(SetUserInfoDocument);
+};
+export const GitHubUserDocument = gql`
+    query GitHubUser {
+  viewer {
+    githubUser {
+      login
+      avatar
+      email
+    }
+  }
+}
+    `;
+
+export const GitHubUserComponent = (props: Omit<Urql.QueryProps<GitHubUserQuery, GitHubUserQueryVariables>, 'query'> & { variables?: GitHubUserQueryVariables }) => (
+  <Urql.Query {...props} query={GitHubUserDocument} />
+);
+
+
+export function useGitHubUserQuery(options: Omit<Urql.UseQueryArgs<GitHubUserQueryVariables>, 'query'> = {}) {
+  return Urql.useQuery<GitHubUserQuery>({ query: GitHubUserDocument, ...options });
 };
 export const ViewerDocument = gql`
     query Viewer {

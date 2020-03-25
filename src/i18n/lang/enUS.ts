@@ -145,6 +145,21 @@ export const enUS = {
     "general/download-pull": "Download (pull)",
     "general/upload-push": "Upload (push)",
 
+    // Error
+    "error/authentication-failed": "Authentication failed",
+    "error/failed-to-upload-notebook": "Failed to upload notebook",
+    "error/failed-to-download-notebook": "Failed to download notebook",
+    "error/notebook-already-exists": "Notebook already exists",
+    "error/invalid-git-url-prefix": "Invalid git URL prefix",
+    "error/please-resolve-conflicts": "Please resolve conflicts first",
+
+    // Success
+    "success/notebook-uploaded": "Notebook uploaded",
+    "success/notebook-downloaded": "Notebook downloaded",
+
+    // Info
+    "info/downloading-notebook": "Downloading notebook",
+
     // Note
     "note/unarchive-note": "Unarchive note",
     "note/archive-note": "Archive note",

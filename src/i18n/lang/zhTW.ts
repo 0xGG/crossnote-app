@@ -145,6 +145,21 @@ export const zhTW = {
     "general/download-pull": "下載 (pull)",
     "general/upload-push": "上傳 (push)",
 
+    // Error
+    "error/authentication-failed": "認証失敗",
+    "error/failed-to-upload-notebook": "上傳筆記本失敗",
+    "error/failed-to-download-notebook": "下載筆記本失敗",
+    "error/notebook-already-exists": "筆記本已經存在",
+    "error/invalid-git-url-prefix": "無效的 git URL 前綴",
+    "error/please-resolve-conflicts": "請先解決沖突",
+
+    // Success
+    "success/notebook-uploaded": "筆記本已上傳",
+    "success/notebook-downloaded": "筆記本已下載",
+
+    // Info
+    "info/downloading-notebook": "正在下載筆記本",
+
     // Note
     "note/unarchive-note": "取消歸檔",
     "note/archive-note": "歸檔",

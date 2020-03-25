@@ -44,7 +44,7 @@ export default function PushNotebookDialog(props: Props) {
         onAuthFailure: () => {
           new Noty({
             type: "error",
-            text: "Authentication failed",
+            text: t("error/authentication-failed"),
             layout: "topRight",
             theme: "relax",
             timeout: 5000
@@ -55,7 +55,7 @@ export default function PushNotebookDialog(props: Props) {
         props.onClose();
         new Noty({
           type: "success",
-          text: "Notebook pushed",
+          text: t("success/notebook-uploaded"),
           layout: "topRight",
           theme: "relax",
           timeout: 2000
@@ -67,7 +67,7 @@ export default function PushNotebookDialog(props: Props) {
           type: "error",
           text: error.message.match(/^error\//)
             ? t(error.message)
-            : "Failed to push notebook",
+            : t("error/failed-to-upload-notebook"),
           layout: "topRight",
           theme: "relax",
           timeout: 2000

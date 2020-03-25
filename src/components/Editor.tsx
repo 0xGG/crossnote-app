@@ -267,7 +267,7 @@ export default function Editor(props: Props) {
   const pullNotebook = useCallback(() => {
     new Noty({
       type: "info",
-      text: "Pulling notebook...",
+      text: t("info/downloading-notebook"),
       layout: "topRight",
       theme: "relax",
       timeout: 2000
@@ -279,7 +279,7 @@ export default function Editor(props: Props) {
         onAuthFailure: () => {
           new Noty({
             type: "error",
-            text: "Authentication failed",
+            text: t("error/authentication-failed"),
             layout: "topRight",
             theme: "relax",
             timeout: 5000
@@ -289,7 +289,7 @@ export default function Editor(props: Props) {
       .then(() => {
         new Noty({
           type: "success",
-          text: "Notebook pulled",
+          text: t("success/notebook-downloaded"),
           layout: "topRight",
           theme: "relax",
           timeout: 2000
@@ -299,7 +299,7 @@ export default function Editor(props: Props) {
         console.log(error);
         new Noty({
           type: "error",
-          text: "Failed to pull notebook",
+          text: t("error/failed-to-download-notebook"),
           layout: "topRight",
           theme: "relax",
           timeout: 2000

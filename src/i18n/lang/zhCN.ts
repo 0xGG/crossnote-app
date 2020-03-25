@@ -145,6 +145,21 @@ export const zhCN = {
     "general/download-pull": "下载 (pull)",
     "general/upload-push": "上传 (push)",
 
+    // Error
+    "error/authentication-failed": "认证失败",
+    "error/failed-to-upload-notebook": "上传笔记本失败",
+    "error/failed-to-download-notebook": "下载笔记本失败",
+    "error/notebook-already-exists": "笔记本已经存在",
+    "error/invalid-git-url-prefix": "无效的 git URL 前缀",
+    "error/please-resolve-conflicts": "请先解决冲突",
+
+    // Success
+    "success/notebook-uploaded": "笔记本已上传",
+    "success/notebook-downloaded": "笔记本已下载",
+
+    // Info
+    "info/downloading-notebook": "正在下载笔记本",
+
     // Note
     "note/unarchive-note": "取消归档",
     "note/archive-note": "归档",

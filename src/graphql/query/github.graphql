@@ -1,0 +1,9 @@
+query GitHubUser {
+  viewer {
+    githubUser {
+      login
+      avatar
+      email
+    }
+  }
+}

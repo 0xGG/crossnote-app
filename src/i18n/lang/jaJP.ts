@@ -145,6 +145,23 @@ export const jaJP = {
     "general/download-pull": "ダウンロード (pull)",
     "general/upload-push": "アップロード (push)",
 
+    // Error
+    "error/authentication-failed": "認証に失敗しました",
+    "error/failed-to-upload-notebook":
+      "ノートブックをアップロードできませんでした",
+    "error/failed-to-download-notebook":
+      "ノートブックをダウンロードできませんでした ...",
+    "error/notebook-already-exists": "ノートブックは既に存在します",
+    "error/invalid-git-url-prefix": "無効な git URL プレフィックス",
+    "error/please-resolve-conflicts": "最初に競合を解決してください",
+
+    // Success
+    "success/notebook-uploaded": "ノートブックがアップロードされます",
+    "success/notebook-downloaded": "ノートブックがダウンロードされます",
+
+    // Info
+    "info/downloading-notebook": "ノートブックをダウンロード中",
+
     // Note
     "note/unarchive-note": "アーカイブ解除",
     "note/archive-note": "アーカイブ",

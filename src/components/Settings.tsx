@@ -8,18 +8,33 @@ import {
   TextField,
   Select,
   MenuItem,
-  Divider,
-  Button
+  Button,
+  Avatar,
+  Tooltip,
+  Chip
 } from "@material-ui/core";
 import { createStyles, makeStyles, Theme } from "@material-ui/core/styles";
 import clsx from "clsx";
 import React, { useState, useEffect } from "react";
 import { SketchPicker } from "react-color";
 import { useTranslation } from "react-i18next";
+import Identicon from "identicon.js";
+import { sha256 } from "js-sha256";
 import { SettingsContainer } from "../containers/settings";
-import { Menu as MenuIcon, Translate } from "mdi-material-ui";
+import {
+  Menu as MenuIcon,
+  Translate,
+  ImagePlus,
+  GithubCircle
+} from "mdi-material-ui";
 import { CloudContainer } from "../containers/cloud";
 import { AuthDialog } from "./AuthDialog";
+import { smmsUploadImages } from "../utilities/image_uploader";
+import {
+  useGitHubUserQuery,
+  useUnlinkGitHubAccountMutation
+} from "../generated/graphql";
+import { startGitHubOAuth } from "../utilities/utils";
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -27,14 +42,14 @@ const useStyles = makeStyles((theme: Theme) =>
       padding: theme.spacing(2),
       width: "600px",
       maxWidth: "100%",
-      left: "50%",
       position: "relative",
-      top: "32px",
-      transform: "translateX(-50%)",
+      margin: `${theme.spacing(4)}px auto`,
       height: "fit-content",
       [theme.breakpoints.down("sm")]: {
         top: "0",
-        height: "100%"
+        margin: "0",
+        height: "100%",
+        overflow: "auto"
       }
     },
     cover: {
@@ -143,9 +158,115 @@ export function Settings(props: Props) {
   const [colorPickerAnchorElement, setColorPickerAnchorElement] = useState<
     HTMLElement
   >(null);
+  const [imageUploaderElement, setImageUploaderElement] = useState<
+    HTMLInputElement
+  >(null);
   const displayColorPicker = Boolean(colorPickerAnchorElement);
   const settingsContainer = SettingsContainer.useContainer();
   const cloudContainer = CloudContainer.useContainer();
+
+  const [name, setName] = useState<string>(
+    (cloudContainer.viewer && cloudContainer.viewer.name) || ""
+  );
+  const [cover, setCover] = useState<string>(
+    (cloudContainer.viewer && cloudContainer.viewer.cover) || ""
+  );
+  const [avatar, setAvatar] = useState<string>(
+    (cloudContainer.viewer && cloudContainer.viewer.avatar) || ""
+  );
+  const [uploadingAvatar, setUploadingAvatar] = useState<boolean>(false);
+  const [uploadingCover, setUploadingCover] = useState<boolean>(false);
+  const [resGitHubUser] = useGitHubUserQuery();
+  const [
+    resUnlinkGitHubAccount,
+    executeUnlinkGitHubAccount
+  ] = useUnlinkGitHubAccountMutation();
+
+  function uploadCover(event: React.MouseEvent<HTMLButtonElement, MouseEvent>) {
+    event.preventDefault();
+    event.stopPropagation();
+    if (!imageUploaderElement) return;
+    imageUploaderElement.onchange = function(event) {
+      const target = event.target as any;
+      const files = target.files || [];
+      new Noty({
+        type: "info",
+        text: t("settings/uploading-cover-image"),
+        layout: "topRight",
+        theme: "relax",
+        timeout: 2000
+      }).show();
+      smmsUploadImages(files)
+        .then(urls => {
+          setUploadingCover(false);
+          setCover(urls[0] || "");
+        })
+        .catch((error: any) => {
+          // console.log(error);
+          new Noty({
+            type: "error",
+            text: t("settings/upload-image-failure"),
+            layout: "topRight",
+            theme: "relax",
+            timeout: 2000
+          }).show();
+          setUploadingCover(false);
+        });
+    };
+    setUploadingCover(true);
+    imageUploaderElement.click();
+  }
+
+  function uploadAvatar(
+    event: React.MouseEvent<HTMLButtonElement, MouseEvent>
+  ) {
+    event.preventDefault();
+    event.stopPropagation();
+    if (!imageUploaderElement) return;
+    imageUploaderElement.onchange = function(event) {
+      const target = event.target as any;
+      const files = target.files || [];
+      new Noty({
+        type: "info",
+        text: "Uploading avatar image",
+        layout: "topRight",
+        theme: "relax",
+        timeout: 2000
+      }).show();
+      smmsUploadImages(files)
+        .then(urls => {
+          setUploadingAvatar(false);
+          setAvatar(urls[0] || "");
+        })
+        .catch((error: any) => {
+          // console.log(error);
+          new Noty({
+            type: "error",
+            text: "Failed to upload image",
+            layout: "topRight",
+            theme: "relax",
+            timeout: 2000
+          }).show();
+          setUploadingAvatar(false);
+        });
+    };
+    setUploadingAvatar(true);
+    imageUploaderElement.click();
+  }
+
+  useEffect(() => {
+    if (cloudContainer.viewer) {
+      setName(cloudContainer.viewer.name);
+      setAvatar(cloudContainer.viewer.avatar);
+      setCover(cloudContainer.viewer.cover);
+    }
+  }, [cloudContainer.viewer]);
+
+  useEffect(() => {
+    if (resUnlinkGitHubAccount.data) {
+      window.location.reload();
+    }
+  }, [resUnlinkGitHubAccount]);
 
   return (
     <Card className={clsx(classes.settingsCard)}>
@@ -159,16 +280,135 @@ export function Settings(props: Props) {
         </Hidden>
         <Typography variant={"h6"}>{t("general/Settings")}</Typography>
       </Box>
-      <Box className={clsx(classes.section)}>
-        <Button
-          variant={"outlined"}
-          color={"primary"}
-          style={{ marginBottom: "24px" }}
-          onClick={() => cloudContainer.setAuthDialogOpen(true)}
-        >
-          {t("general/sign-in")}
-        </Button>
-      </Box>
+      {cloudContainer.loggedIn ? (
+        <>
+          <Box className={clsx(classes.section)}>
+            <Typography variant={"h6"}>
+              @{cloudContainer.viewer.username}
+            </Typography>
+            <Typography>{cloudContainer.viewer.email}</Typography>
+          </Box>
+          {/*
+          <div
+            className={clsx(classes.cover)}
+            style={{
+              backgroundImage: `url("${cover}")`
+            }}
+          ></div>
+          <Box className={clsx(classes.row)}>
+            <TextField
+              label={t("settings/Cover")}
+              style={{ marginTop: 8 }}
+              placeholder="https://.../xxx.png"
+              helperText={t("settings/enter-cover-image-url")}
+              fullWidth
+              margin="normal"
+              InputLabelProps={{
+                shrink: true
+              }}
+              value={cover}
+              onChange={event => setCover(event.currentTarget.value)}
+            />
+            <Tooltip title={t("settings/upload-image")}>
+              <IconButton disabled={uploadingCover} onClick={uploadCover}>
+                <ImagePlus></ImagePlus>
+              </IconButton>
+            </Tooltip>
+          </Box>
+          <Box className={clsx(classes.section)}>
+            <Avatar
+              className={clsx(classes.avatar)}
+              variant={"rounded"}
+              src={
+                avatar ||
+                "data:image/png;base64," +
+                  new Identicon(
+                    sha256(
+                      cloudContainer.viewer && cloudContainer.viewer.username
+                    ),
+                    80
+                  ).toString()
+              }
+            ></Avatar>
+            <Box className={clsx(classes.row)}>
+              <TextField
+                label={t("settings/Avatar")}
+                style={{ marginTop: 8 }}
+                placeholder="https://.../xxx.png"
+                helperText={t("settings/enter-avatar-image-url")}
+                fullWidth
+                margin="normal"
+                InputLabelProps={{
+                  shrink: true
+                }}
+                value={avatar}
+                onChange={event => setAvatar(event.currentTarget.value)}
+              />
+              <Tooltip title={t("settings/upload-image")}>
+                <IconButton disabled={uploadingAvatar} onClick={uploadAvatar}>
+                  <ImagePlus></ImagePlus>
+                </IconButton>
+              </Tooltip>
+            </Box>
+          </Box>
+          <Box className={clsx(classes.section)}>
+            <TextField
+              label={t("settings/Name")}
+              style={{ marginTop: 8 }}
+              placeholder={t("settings/enter-name")}
+              fullWidth
+              margin="normal"
+              InputLabelProps={{
+                shrink: true
+              }}
+              value={name}
+              onChange={event => setName(event.currentTarget.value)}
+            />
+          </Box>
+          <Box
+            className={clsx(classes.section)}
+            style={{ marginBottom: "32px" }}
+          >
+            {resGitHubUser.data &&
+            resGitHubUser.data.viewer &&
+            resGitHubUser.data.viewer.githubUser ? (
+              <Chip
+                color={"primary"}
+                avatar={
+                  <Avatar
+                    src={resGitHubUser.data.viewer.githubUser.avatar}
+                  ></Avatar>
+                }
+                label={
+                  t("settings/linked-with-github-account") +
+                  ": " +
+                  resGitHubUser.data.viewer.githubUser.login
+                }
+                onClick={() => {
+                  window.open(
+                    "https://github.com/" +
+                      resGitHubUser.data.viewer.githubUser.login,
+                    "_blank"
+                  );
+                }}
+                disabled={resUnlinkGitHubAccount.fetching}
+                onDelete={() => {
+                  executeUnlinkGitHubAccount();
+                }}
+              />
+            ) : (
+              <Chip
+                color={"default"}
+                disabled={resGitHubUser.fetching}
+                icon={<GithubCircle></GithubCircle>}
+                onClick={() => startGitHubOAuth()}
+                label={t("settings/link-with-github-account")}
+              ></Chip>
+            )}
+          </Box>
+*/}
+        </>
+      ) : null}
       <Box className={clsx(classes.section)}>
         <Typography
           variant={"body2"}
@@ -288,6 +528,35 @@ export function Settings(props: Props) {
           ></SketchPicker>
         </Popover>
       </Box>
+      {cloudContainer.loggedIn ? (
+        <Button
+          variant={"outlined"}
+          color="secondary"
+          className={clsx(classes.logoutBtn)}
+          onClick={() => {
+            cloudContainer.logout();
+          }}
+        >
+          {t("settings/log-out")}
+        </Button>
+      ) : (
+        <Button
+          variant={"outlined"}
+          color={"primary"}
+          className={clsx(classes.logoutBtn)}
+          onClick={() => cloudContainer.setAuthDialogOpen(true)}
+        >
+          {t("general/sign-in")}
+        </Button>
+      )}
+      <input
+        type="file"
+        multiple
+        style={{ display: "none" }}
+        ref={(element: HTMLInputElement) => {
+          setImageUploaderElement(element);
+        }}
+      ></input>
       <AuthDialog
         open={cloudContainer.authDialogOpen}
         onClose={() => cloudContainer.setAuthDialogOpen(false)}
