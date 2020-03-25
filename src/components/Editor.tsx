@@ -267,7 +267,7 @@ export default function Editor(props: Props) {
   const pullNotebook = useCallback(() => {
     new Noty({
       type: "info",
-      text: "Pulling notebook...",
+      text: t("info/downloading-notebook"),
       layout: "topRight",
       theme: "relax",
       timeout: 2000
@@ -279,7 +279,7 @@ export default function Editor(props: Props) {
         onAuthFailure: () => {
           new Noty({
             type: "error",
-            text: "Authentication failed",
+            text: t("error/authentication-failed"),
             layout: "topRight",
             theme: "relax",
             timeout: 5000
@@ -289,7 +289,7 @@ export default function Editor(props: Props) {
       .then(() => {
         new Noty({
           type: "success",
-          text: "Notebook pulled",
+          text: t("success/notebook-downloaded"),
           layout: "topRight",
           theme: "relax",
           timeout: 2000
@@ -299,7 +299,7 @@ export default function Editor(props: Props) {
         console.log(error);
         new Noty({
           type: "error",
-          text: "Failed to pull notebook",
+          text: t("error/failed-to-download-notebook"),
           layout: "topRight",
           theme: "relax",
           timeout: 2000
@@ -397,7 +397,7 @@ export default function Editor(props: Props) {
             } catch (error) {
               new Noty({
                 type: "error",
-                text: "Failed to disable encryption",
+                text: t("error/failed-to-disable-encryption"),
                 layout: "topRight",
                 theme: "relax",
                 timeout: 5000
@@ -407,7 +407,7 @@ export default function Editor(props: Props) {
           .catch(error => {
             new Noty({
               type: "error",
-              text: "Failed to disable encryption",
+              text: t("error/failed-to-disable-encryption"),
               layout: "topRight",
               theme: "relax",
               timeout: 5000
@@ -452,7 +452,7 @@ export default function Editor(props: Props) {
           } catch (error) {
             new Noty({
               type: "error",
-              text: "Decryption failed",
+              text: t("error/decryption-failed"),
               layout: "topRight",
               theme: "relax",
               timeout: 5000
@@ -552,7 +552,7 @@ export default function Editor(props: Props) {
       setIsDecrypted(false);
       setDecryptionPassword("");
       editor.setOption("readOnly", true);
-      editor.setValue("🔐 encrypted");
+      editor.setValue(`🔐 ${t("general/encrypted")}`);
       setDecryptionDialogOpen(true);
     } else {
       setIsDecrypted(true);
@@ -699,7 +699,7 @@ export default function Editor(props: Props) {
           handleLinksClickEvent(previewElement);
         }
       } else {
-        previewElement.innerHTML = "🔐 encrypted";
+        previewElement.innerHTML = `🔐 ${t("general/encrypted")}`;
       }
     }
   }, [editorMode, editor, previewElement, note, isDecrypted]);
@@ -997,7 +997,7 @@ export default function Editor(props: Props) {
           disabled={crossnoteContainer.isLoadingNotebook}
           variant={"outlined"}
         >
-          <Typography>{"📝 Create a note"}</Typography>
+          <Typography>{`📝 ${t("general/add-a-note")}`}</Typography>
         </Button>
       </Box>
     );
@@ -1196,7 +1196,7 @@ export default function Editor(props: Props) {
                 )}
               >
                 <TextField
-                  placeholder={"Add tag..."}
+                  placeholder={t("general/add-a-tag")}
                   autoFocus={true}
                   value={tagName}
                   onChange={event => {
@@ -1333,8 +1333,8 @@ export default function Editor(props: Props) {
       <Dialog open={toggleEncryptionDialogOpen} onClose={closeEncryptionDialog}>
         <DialogTitle>
           {note.config.encryption
-            ? "Disable the encryption"
-            : "Encrypt this note with password"}
+            ? t("general/disable-the-encryption-on-this-note")
+            : t("general/encrypt-this-note-with-password")}
         </DialogTitle>
         <DialogContent>
           <TextField
@@ -1346,7 +1346,7 @@ export default function Editor(props: Props) {
                 toggleEncryption();
               }
             }}
-            placeholder={"password"}
+            placeholder={t("general/Password")}
             type={"password"}
           ></TextField>
         </DialogContent>
@@ -1357,19 +1357,21 @@ export default function Editor(props: Props) {
             onClick={toggleEncryption}
           >
             {note.config.encryption ? <Lock></Lock> : <LockOpen></LockOpen>}
-            {note.config.encryption ? "Disable encryption" : "Encrypt"}
+            {note.config.encryption
+              ? t("general/disable-encryption")
+              : t("general/encrypt")}
           </Button>
-          <Button onClick={closeEncryptionDialog}>Cancel</Button>
+          <Button onClick={closeEncryptionDialog}>{t("general/cancel")}</Button>
         </DialogActions>
       </Dialog>
       <Dialog open={decryptionDialogOpen} onClose={closeDecryptionDialog}>
-        <DialogTitle>{"Decrypt this note"}</DialogTitle>
+        <DialogTitle>{t("general/decrypt-this-note")}</DialogTitle>
         <DialogContent>
           <TextField
             value={decryptionPassword}
             autoFocus={true}
             onChange={event => setDecryptionPassword(event.target.value)}
-            placeholder={"password"}
+            placeholder={t("general/Password")}
             type={"password"}
             onKeyUp={event => {
               if (event.which === 13) {
@@ -1380,9 +1382,9 @@ export default function Editor(props: Props) {
         </DialogContent>
         <DialogActions>
           <Button variant={"contained"} color={"primary"} onClick={decryptNote}>
-            {"Decrypt"}
+            {t("general/decrypt")}
           </Button>
-          <Button onClick={closeDecryptionDialog}>Cancel</Button>
+          <Button onClick={closeDecryptionDialog}>{t("general/cancel")}</Button>
         </DialogActions>
       </Dialog>
       <PushNotebookDialog

@@ -49,7 +49,7 @@ export default function AddNotebookDialog(props: Props) {
     try {
       new Noty({
         type: "info",
-        text: "Getting notebook...",
+        text: t("info/downloading-notebook"),
         layout: "topRight",
         theme: "relax",
         timeout: 2000

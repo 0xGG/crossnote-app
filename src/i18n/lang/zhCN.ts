@@ -119,6 +119,7 @@ export const zhCN = {
     "general/Explore": "探索",
     "general/Notebooks": "笔记本",
     "general/add-a-notebook": "添加一个笔记本",
+    "general/add-a-note": "添加一个笔记",
     "general/configure-the-notebook": "设置笔记本",
     "general/notebook-name": "笔记本名称",
     "general/git-repository": "git 仓库",
@@ -134,7 +135,9 @@ export const zhCN = {
     "general/wiki": "维基",
     "general/tagged": "标签",
     "general/untagged": "未标签",
+    "general/encrypt": "加密",
     "general/encrypted": "已加密",
+    "general/decrypt": "解密",
     "general/conflicted": "冲突",
     "general/Pin": "置顶",
     "general/Encryption": "加密",
@@ -143,6 +146,28 @@ export const zhCN = {
     "general/restore-checkout": "恢复 (checkout)",
     "general/download-pull": "下载 (pull)",
     "general/upload-push": "上传 (push)",
+    "general/disable-the-encryption-on-this-note": "解除这个笔记上的加密",
+    "general/encrypt-this-note-with-password": "通过密码加密这个笔记",
+    "general/disable-encryption": "解除加密",
+    "general/decrypt-this-note": "解密这个笔记",
+    "general/upload-the-profile": "上传账户信息",
+
+    // Error
+    "error/authentication-failed": "认证失败",
+    "error/failed-to-upload-notebook": "上传笔记本失败",
+    "error/failed-to-download-notebook": "下载笔记本失败",
+    "error/notebook-already-exists": "笔记本已经存在",
+    "error/invalid-git-url-prefix": "无效的 git URL 前缀",
+    "error/please-resolve-conflicts": "请先解决冲突",
+    "error/failed-to-disable-encryption": "解除加密失败",
+    "error/decryption-failed": "解密失败",
+
+    // Success
+    "success/notebook-uploaded": "笔记本已上传",
+    "success/notebook-downloaded": "笔记本已下载",
+
+    // Info
+    "info/downloading-notebook": "正在下载笔记本",
 
     // Note
     "note/unarchive-note": "取消归档",

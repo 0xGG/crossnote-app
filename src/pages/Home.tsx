@@ -10,7 +10,8 @@ import {
   Typography,
   Divider,
   ListItemIcon,
-  ListItemText
+  ListItemText,
+  Avatar
 } from "@material-ui/core";
 import {
   fade,
@@ -21,6 +22,8 @@ import {
 import clsx from "clsx";
 import React, { useState, useCallback, useEffect } from "react";
 import { useTranslation } from "react-i18next";
+import Identicon from "identicon.js";
+import { sha256 } from "js-sha256";
 import {
   PlusCircle,
   Settings as SettingsIcon,
@@ -40,6 +43,7 @@ import NotesPanel from "../components/NotesPanel";
 import WikiPanel from "../components/WikiPanel";
 import { browserHistory } from "../utilities/history";
 import { Settings } from "../components/Settings";
+import { CloudContainer } from "../containers/cloud";
 
 const drawerWidth = 200;
 const notesPanelWidth = 350;
@@ -108,6 +112,11 @@ const useStyles = makeStyles((theme: Theme) =>
       width: drawerWidth
       // backgroundColor: "#2196f1",
       // color: "#fff"
+    },
+    avatar: {
+      width: "24px",
+      height: "24px",
+      borderRadius: "4px"
     },
     selectedSection: {
       backgroundColor: "#ccc"
@@ -191,6 +200,7 @@ export function Home(props: Props) {
   const [drawerOpen, setDrawerOpen] = useState<boolean>(false);
   const { t } = useTranslation();
   const crossnoteContainer = CrossnoteContainer.useContainer();
+  const cloudContainer = CloudContainer.useContainer();
 
   const toggleDrawer = useCallback(() => {
     setDrawerOpen(!drawerOpen);
@@ -236,13 +246,13 @@ export function Home(props: Props) {
   const drawer = (
     <div>
       <List disablePadding={true}>
-        <ListItem button>
+        {/*<ListItem button>
           <ListItemIcon>
             <LibraryBooks></LibraryBooks>
           </ListItemIcon>
           <ListItemText primary={t("general/Explore")}></ListItemText>
         </ListItem>
-        {/*<ListItem button>
+        <ListItem button>
           <ListItemIcon>
             <Cube></Cube>
           </ListItemIcon>
@@ -255,9 +265,28 @@ export function Home(props: Props) {
           <ListItemText primary={"Notifications"}></ListItemText>
         </ListItem>*/}
         <ListItem button onClick={() => browserHistory.push(`/settings`)}>
-          <ListItemIcon>
-            <SettingsIcon></SettingsIcon>
-          </ListItemIcon>
+          {cloudContainer.viewer ? (
+            <ListItemIcon>
+              <Avatar
+                className={clsx(classes.avatar)}
+                variant={"rounded"}
+                src={
+                  cloudContainer.viewer.avatar ||
+                  "data:image/png;base64," +
+                    new Identicon(
+                      sha256(
+                        cloudContainer.viewer && cloudContainer.viewer.username
+                      ),
+                      80
+                    ).toString()
+                }
+              ></Avatar>
+            </ListItemIcon>
+          ) : (
+            <ListItemIcon>
+              <SettingsIcon></SettingsIcon>
+            </ListItemIcon>
+          )}
           <ListItemText primary={t("general/Settings")}></ListItemText>
         </ListItem>
         <Divider></Divider>

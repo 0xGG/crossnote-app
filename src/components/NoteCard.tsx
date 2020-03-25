@@ -120,7 +120,7 @@ export default function NoteCard(props: Props) {
     );
     generateSummaryFromMarkdown(
       note.config.encryption
-        ? "🔐 encrypted"
+        ? `🔐 ${t("general/encrypted")}`
         : note.markdown.trim() || t("general/this-note-is-empty")
     )
       .then(summary => {

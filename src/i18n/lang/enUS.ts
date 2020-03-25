@@ -119,6 +119,7 @@ export const enUS = {
     "general/Explore": "Explore",
     "general/Notebooks": "Notebooks",
     "general/add-a-notebook": "Add a notebook",
+    "general/add-a-note": "Add a note",
     "general/configure-the-notebook": "Configure the notebook",
     "general/notebook-name": "Notebook name",
     "general/git-repository": "git repository",
@@ -134,7 +135,9 @@ export const enUS = {
     "general/wiki": "Wiki",
     "general/tagged": "Tagged",
     "general/untagged": "Untagged",
+    "general/encrypt": "Encrypt",
     "general/encrypted": "Encrypted",
+    "general/decrypt": "Decrypt",
     "general/conflicted": "Conflicted",
     "general/Pin": "Pin",
     "general/Encryption": "Encryption",
@@ -143,6 +146,30 @@ export const enUS = {
     "general/restore-checkout": "Restore (checkout)",
     "general/download-pull": "Download (pull)",
     "general/upload-push": "Upload (push)",
+    "general/disable-the-encryption-on-this-note":
+      "Disable the encryption on this note",
+    "general/encrypt-this-note-with-password":
+      "Encrypt this note with password",
+    "general/disable-encryption": "Disable encryption",
+    "general/decrypt-this-note": "Decrypt this note",
+    "general/upload-profile": "Upload profile",
+
+    // Error
+    "error/authentication-failed": "Authentication failed",
+    "error/failed-to-upload-notebook": "Failed to upload notebook",
+    "error/failed-to-download-notebook": "Failed to download notebook",
+    "error/notebook-already-exists": "Notebook already exists",
+    "error/invalid-git-url-prefix": "Invalid git URL prefix",
+    "error/please-resolve-conflicts": "Please resolve conflicts first",
+    "error/failed-to-disable-encryption": "Failed to disable encryption",
+    "error/decryption-failed": "Decryption failed",
+
+    // Success
+    "success/notebook-uploaded": "Notebook uploaded",
+    "success/notebook-downloaded": "Notebook downloaded",
+
+    // Info
+    "info/downloading-notebook": "Downloading notebook",
 
     // Note
     "note/unarchive-note": "Unarchive note",

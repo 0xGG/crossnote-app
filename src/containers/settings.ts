@@ -41,6 +41,7 @@ function useSettingsContainer(initialState: InitialState) {
   );
 
   const _setEditorCursorColor = useCallback((editorCursorColor: string) => {
+    editorCursorColor = editorCursorColor || "rgba(51, 51, 51, 1)";
     localStorage.setItem("settings/editorCursorColor", editorCursorColor);
     setEditorCursorColor(editorCursorColor);
   }, []);

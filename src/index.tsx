@@ -17,6 +17,9 @@ import * as serviceWorker from "./serviceWorker";
 import Crossnote from "./lib/crossnote";
 import { CrossnoteContainer } from "./containers/crossnote";
 import { SettingsContainer } from "./containers/settings";
+import { CloudContainer } from "./containers/cloud";
+import { Provider } from "urql";
+import { GraphQLClient } from "./utilities/client";
 
 const fs = new LightningFS("fs");
 (window as any)["fs"] = fs;
@@ -28,15 +31,19 @@ try {
   (window as any)["crossnote"] = crossnote;
 
   ReactDOM.render(
-    <CrossnoteContainer.Provider
-      initialState={{
-        crossnote: crossnote
-      }}
-    >
-      <SettingsContainer.Provider initialState={{}}>
-        <App />
-      </SettingsContainer.Provider>
-    </CrossnoteContainer.Provider>,
+    <Provider value={GraphQLClient}>
+      <CrossnoteContainer.Provider
+        initialState={{
+          crossnote: crossnote
+        }}
+      >
+        <SettingsContainer.Provider initialState={{}}>
+          <CloudContainer.Provider initialState={{}}>
+            <App />
+          </CloudContainer.Provider>
+        </SettingsContainer.Provider>
+      </CrossnoteContainer.Provider>
+    </Provider>,
     document.getElementById("root")
   );
 } catch (error) {
