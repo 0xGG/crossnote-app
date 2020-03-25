@@ -1,0 +1,36 @@
+fragment ViewerFields on User {
+  avatar
+  bio
+  cover
+  createdAt
+  deletedAt
+  id
+  language
+  # location
+  name
+  username
+  email
+  verifiedEmail
+  updatedAt
+  #isFollowing
+  #areFriends
+  #followersCount
+  #followingsCount
+  #notesCount
+  #favoriteTags {
+  #  fullName
+  #  name
+  #  order
+  #  pinned
+  #}
+  notifications(last: 1) {
+    totalCount
+  }
+  editorCursorColor
+}
+
+query Viewer {
+  viewer {
+    ...ViewerFields
+  }
+}

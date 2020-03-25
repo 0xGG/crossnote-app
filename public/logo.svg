@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="67px" height="67px" viewBox="0 0 67 67" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <!-- Generator: Sketch 61.2 (89653) - https://sketch.com -->
+    <title>编组 5@3x</title>
+    <desc>Created with Sketch.</desc>
+    <defs>
+        <filter x="-55.3%" y="-43.8%" width="210.5%" height="187.5%" filterUnits="objectBoundingBox" id="filter-1">
+            <feOffset dx="0" dy="1" in="SourceAlpha" result="shadowOffsetOuter1"></feOffset>
+            <feGaussianBlur stdDeviation="2" in="shadowOffsetOuter1" result="shadowBlurOuter1"></feGaussianBlur>
+            <feColorMatrix values="0 0 0 0 0   0 0 0 0 0   0 0 0 0 0  0 0 0 0.2 0" type="matrix" in="shadowBlurOuter1" result="shadowMatrixOuter1"></feColorMatrix>
+            <feMerge>
+                <feMergeNode in="shadowMatrixOuter1"></feMergeNode>
+                <feMergeNode in="SourceGraphic"></feMergeNode>
+            </feMerge>
+        </filter>
+        <filter x="-43.8%" y="-55.3%" width="187.5%" height="210.5%" filterUnits="objectBoundingBox" id="filter-2">
+            <feOffset dx="0" dy="1" in="SourceAlpha" result="shadowOffsetOuter1"></feOffset>
+            <feGaussianBlur stdDeviation="2" in="shadowOffsetOuter1" result="shadowBlurOuter1"></feGaussianBlur>
+            <feColorMatrix values="0 0 0 0 0   0 0 0 0 0   0 0 0 0 0  0 0 0 0.2 0" type="matrix" in="shadowBlurOuter1" result="shadowMatrixOuter1"></feColorMatrix>
+            <feMerge>
+                <feMergeNode in="shadowMatrixOuter1"></feMergeNode>
+                <feMergeNode in="SourceGraphic"></feMergeNode>
+            </feMerge>
+        </filter>
+        <filter x="-55.3%" y="-43.8%" width="210.5%" height="187.5%" filterUnits="objectBoundingBox" id="filter-3">
+            <feOffset dx="0" dy="1" in="SourceAlpha" result="shadowOffsetOuter1"></feOffset>
+            <feGaussianBlur stdDeviation="2" in="shadowOffsetOuter1" result="shadowBlurOuter1"></feGaussianBlur>
+            <feColorMatrix values="0 0 0 0 0   0 0 0 0 0   0 0 0 0 0  0 0 0 0.2 0" type="matrix" in="shadowBlurOuter1" result="shadowMatrixOuter1"></feColorMatrix>
+            <feMerge>
+                <feMergeNode in="shadowMatrixOuter1"></feMergeNode>
+                <feMergeNode in="SourceGraphic"></feMergeNode>
+            </feMerge>
+        </filter>
+        <filter x="-43.8%" y="-55.3%" width="187.5%" height="210.5%" filterUnits="objectBoundingBox" id="filter-4">
+            <feOffset dx="0" dy="1" in="SourceAlpha" result="shadowOffsetOuter1"></feOffset>
+            <feGaussianBlur stdDeviation="2" in="shadowOffsetOuter1" result="shadowBlurOuter1"></feGaussianBlur>
+            <feColorMatrix values="0 0 0 0 0   0 0 0 0 0   0 0 0 0 0  0 0 0 0.2 0" type="matrix" in="shadowBlurOuter1" result="shadowMatrixOuter1"></feColorMatrix>
+            <feMerge>
+                <feMergeNode in="shadowMatrixOuter1"></feMergeNode>
+                <feMergeNode in="SourceGraphic"></feMergeNode>
+            </feMerge>
+        </filter>
+    </defs>
+    <g id="编组-5" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g id="编组-18" filter="url(#filter-1)" transform="translate(10.000000, 19.000000)">
+            <polygon id="矩形" fill="#0086FF" transform="translate(4.777143, 4.906335) rotate(-45.000000) translate(-4.777143, -4.906335) " points="1.52036644 1.60958303 8.09548165 1.54875354 8.03391927 8.203087 1.45880406 8.2639165"></polygon>
+            <polygon id="矩形备份-2" fill="#0AB7F7" transform="translate(9.438936, 9.655191) rotate(-45.000000) translate(-9.438936, -9.655191) " points="6.18215958 6.35843852 12.7572748 6.29760903 12.6957124 12.9519425 6.1205972 13.012772"></polygon>
+            <polygon id="矩形备份-3" fill="#1ED5E4" transform="translate(14.100729, 14.404046) rotate(-45.000000) translate(-14.100729, -14.404046) " points="10.8439527 11.107294 17.4190679 11.0464645 17.3575056 17.700798 10.7823903 17.7616275"></polygon>
+            <polygon id="矩形备份-4" fill="#30EDAF" transform="translate(9.494434, 19.096367) rotate(-45.000000) translate(-9.494434, -19.096367) " points="6.23765712 15.7996155 12.8127723 15.738786 12.7512099 22.3931195 6.17609474 22.453949"></polygon>
+        </g>
+        <g id="编组-17" filter="url(#filter-2)" transform="translate(24.000000, 10.000000)">
+            <polygon id="矩形" fill="#0086FF" transform="translate(19.056392, 4.816386) rotate(-315.000000) translate(-19.056392, -4.816386) " points="15.7996155 1.51963356 22.3747307 1.45880406 22.3131683 8.11313753 15.7380531 8.17396702"></polygon>
+            <polygon id="矩形备份-2" fill="#0AB7F7" transform="translate(14.307536, 9.478179) rotate(-315.000000) translate(-14.307536, -9.478179) " points="11.05076 6.1814267 17.6258752 6.1205972 17.5643128 12.7749307 10.9891976 12.8357602"></polygon>
+            <polygon id="矩形备份-3" fill="#1ED5E4" transform="translate(9.558681, 14.139972) rotate(-315.000000) translate(-9.558681, -14.139972) " points="6.30190453 10.8432198 12.8770197 10.7823903 12.8154574 17.4367238 6.24034215 17.4975533"></polygon>
+            <polygon id="矩形备份-4" fill="#30EDAF" transform="translate(4.866359, 9.533676) rotate(-315.000000) translate(-4.866359, -9.533676) " points="1.60958303 6.23692424 8.18469824 6.17609474 8.12313586 12.8304282 1.54802065 12.8912577"></polygon>
+        </g>
+        <g id="编组-20" filter="url(#filter-3)" transform="translate(38.000000, 24.000000)">
+            <polygon id="矩形" fill="#0086FF" points="18.7347735 19.1246345 14.1284779 23.816956 9.46668477 19.0681005 14.0729804 14.375779"></polygon>
+            <polygon id="矩形备份-2" fill="#0AB7F7" points="14.0729804 14.375779 9.46668477 19.0681005 4.80489163 14.319245 9.41118723 9.62692351"></polygon>
+            <polygon id="矩形备份-3" fill="#1ED5E4" transform="translate(4.777143, 9.598657) rotate(-225.000000) translate(-4.777143, -9.598657) " points="1.52036644 6.30190453 8.09548165 6.24107504 8.03391927 12.8954085 1.45880406 12.956238"></polygon>
+            <polygon id="矩形备份-4" fill="#30EDAF" transform="translate(9.383438, 4.906335) rotate(-225.000000) translate(-9.383438, -4.906335) " points="6.12666205 1.60958303 12.7017773 1.54875354 12.6402149 8.203087 6.06509967 8.2639165"></polygon>
+        </g>
+        <g id="编组-19" filter="url(#filter-4)" transform="translate(19.000000, 38.000000)">
+            <polygon id="矩形" fill="#0086FF" transform="translate(4.866359, 14.139972) rotate(-135.000000) translate(-4.866359, -14.139972) " points="1.60958303 10.8432198 8.18469824 10.7823903 8.12313586 17.4367238 1.54802065 17.4975533"></polygon>
+            <polygon id="矩形备份-2" fill="#0AB7F7" transform="translate(9.615215, 9.478179) rotate(-135.000000) translate(-9.615215, -9.478179) " points="6.35843852 6.1814267 12.9335537 6.1205972 12.8719914 12.7749307 6.29687615 12.8357602"></polygon>
+            <polygon id="矩形备份-3" fill="#1ED5E4" transform="translate(14.364070, 4.816386) rotate(-135.000000) translate(-14.364070, -4.816386) " points="11.107294 1.51963356 17.6824092 1.45880406 17.6208468 8.11313753 11.0457316 8.17396702"></polygon>
+            <polygon id="矩形备份-4" fill="#30EDAF" transform="translate(19.056392, 9.422681) rotate(-135.000000) translate(-19.056392, -9.422681) " points="15.7996155 6.12592916 22.3747307 6.06509967 22.3131683 12.7194331 15.7380531 12.7802626"></polygon>
+        </g>
+    </g>
+</svg>
