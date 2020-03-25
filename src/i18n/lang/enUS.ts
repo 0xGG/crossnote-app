@@ -31,7 +31,7 @@ export const enUS = {
     "general/updating": "Updating",
     "general/close": "Close",
     "general/Note": "Note",
-    "general/notes": "notes",
+    "general/notes": "Notes",
     "general/Settings": "Settings",
     "general/Collaborators": "Collaborators",
     "general/collaborators": "collaborators",
@@ -152,7 +152,7 @@ export const enUS = {
       "Encrypt this note with password",
     "general/disable-encryption": "Disable encryption",
     "general/decrypt-this-note": "Decrypt this note",
-    "general/upload-profile": "Upload profile",
+    "general/upload-the-profile": "Upload profile",
 
     // Error
     "error/authentication-failed": "Authentication failed",
