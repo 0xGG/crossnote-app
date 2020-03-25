@@ -11,7 +11,8 @@ import {
   Button,
   Avatar,
   Tooltip,
-  Chip
+  Chip,
+  Link
 } from "@material-ui/core";
 import { createStyles, makeStyles, Theme } from "@material-ui/core/styles";
 import clsx from "clsx";
@@ -164,10 +165,6 @@ export function Settings(props: Props) {
   const displayColorPicker = Boolean(colorPickerAnchorElement);
   const settingsContainer = SettingsContainer.useContainer();
   const cloudContainer = CloudContainer.useContainer();
-
-  const [name, setName] = useState<string>(
-    (cloudContainer.viewer && cloudContainer.viewer.name) || ""
-  );
   const [cover, setCover] = useState<string>(
     (cloudContainer.viewer && cloudContainer.viewer.cover) || ""
   );
@@ -256,7 +253,6 @@ export function Settings(props: Props) {
 
   useEffect(() => {
     if (cloudContainer.viewer) {
-      setName(cloudContainer.viewer.name);
       setAvatar(cloudContainer.viewer.avatar);
       setCover(cloudContainer.viewer.cover);
     }
@@ -288,7 +284,6 @@ export function Settings(props: Props) {
             </Typography>
             <Typography>{cloudContainer.viewer.email}</Typography>
           </Box>
-          {/*
           <div
             className={clsx(classes.cover)}
             style={{
@@ -351,20 +346,6 @@ export function Settings(props: Props) {
               </Tooltip>
             </Box>
           </Box>
-          <Box className={clsx(classes.section)}>
-            <TextField
-              label={t("settings/Name")}
-              style={{ marginTop: 8 }}
-              placeholder={t("settings/enter-name")}
-              fullWidth
-              margin="normal"
-              InputLabelProps={{
-                shrink: true
-              }}
-              value={name}
-              onChange={event => setName(event.currentTarget.value)}
-            />
-          </Box>
           <Box
             className={clsx(classes.section)}
             style={{ marginBottom: "32px" }}
@@ -406,7 +387,6 @@ export function Settings(props: Props) {
               ></Chip>
             )}
           </Box>
-*/}
         </>
       ) : null}
       <Box className={clsx(classes.section)}>
@@ -528,6 +508,46 @@ export function Settings(props: Props) {
           ></SketchPicker>
         </Popover>
       </Box>
+      {cloudContainer.loggedIn && (
+        <Box className={clsx(classes.section)}>
+          <Button
+            variant={"contained"}
+            color={"primary"}
+            className={clsx(classes.saveBtn)}
+            onClick={() => {
+              cloudContainer.setUserInfo({
+                name: settingsContainer.authorName,
+                cover,
+                avatar,
+                editorCursorColor: settingsContainer.editorCursorColor,
+                language: settingsContainer.language
+              });
+            }}
+            disabled={cloudContainer.resSetUserInfo.fetching}
+          >
+            {t("general/upload-the-profile")}
+          </Button>
+          {/*
+        <Box
+          className={clsx(classes.section)}
+          style={{
+            position: "absolute",
+            right: "16px",
+            bottom: "16px"
+          }}
+        >
+          <Link
+            style={{ cursor: "pointer" }}
+            onClick={(event: any) => {
+              event.preventDefault();
+              crossnoteContainer.jumpToStartPage();
+            }}
+          >
+            <Typography>{t("settings/about-this-project")}</Typography>
+          </Link>
+        </Box>*/}
+        </Box>
+      )}
       {cloudContainer.loggedIn ? (
         <Button
           variant={"outlined"}

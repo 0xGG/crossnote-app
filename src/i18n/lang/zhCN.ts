@@ -150,6 +150,7 @@ export const zhCN = {
     "general/encrypt-this-note-with-password": "通过密码加密这个笔记",
     "general/disable-encryption": "解除加密",
     "general/decrypt-this-note": "解密这个笔记",
+    "general/upload-the-profile": "上传账户信息",
 
     // Error
     "error/authentication-failed": "认证失败",

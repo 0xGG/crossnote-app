@@ -150,6 +150,7 @@ export const zhTW = {
     "general/encrypt-this-note-with-password": "通過密碼加密這個筆記",
     "general/disable-encryption": "解除加密",
     "general/decrypt-this-note": "解密這個筆記",
+    "general/upload-the-profile": "上傳賬戶信息",
 
     // Error
     "error/authentication-failed": "認証失敗",
