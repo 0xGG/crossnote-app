@@ -119,6 +119,7 @@ export const zhCN = {
     "general/Explore": "探索",
     "general/Notebooks": "笔记本",
     "general/add-a-notebook": "添加一个笔记本",
+    "general/add-a-note": "添加一个笔记",
     "general/configure-the-notebook": "设置笔记本",
     "general/notebook-name": "笔记本名称",
     "general/git-repository": "git 仓库",

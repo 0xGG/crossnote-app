@@ -119,6 +119,7 @@ export const zhTW = {
     "general/Explore": "探索",
     "general/Notebooks": "筆記本",
     "general/add-a-notebook": "添加一個筆記本",
+    "general/add-a-note": "添加一个筆記",
     "general/configure-the-notebook": "設置筆記本",
     "general/notebook-name": "筆記本名稱",
     "general/git-repository": "git 倉庫",

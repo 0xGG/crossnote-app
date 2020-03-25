@@ -7,7 +7,9 @@ import {
   IconButton,
   TextField,
   Select,
-  MenuItem
+  MenuItem,
+  Divider,
+  Button
 } from "@material-ui/core";
 import { createStyles, makeStyles, Theme } from "@material-ui/core/styles";
 import clsx from "clsx";
@@ -16,6 +18,8 @@ import { SketchPicker } from "react-color";
 import { useTranslation } from "react-i18next";
 import { SettingsContainer } from "../containers/settings";
 import { Menu as MenuIcon, Translate } from "mdi-material-ui";
+import { CloudContainer } from "../containers/cloud";
+import { AuthDialog } from "./AuthDialog";
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -135,12 +139,13 @@ interface Props {
 }
 export function Settings(props: Props) {
   const classes = useStyles(props);
-  const settingsContainer = SettingsContainer.useContainer();
   const { t } = useTranslation();
   const [colorPickerAnchorElement, setColorPickerAnchorElement] = useState<
     HTMLElement
   >(null);
   const displayColorPicker = Boolean(colorPickerAnchorElement);
+  const settingsContainer = SettingsContainer.useContainer();
+  const cloudContainer = CloudContainer.useContainer();
 
   return (
     <Card className={clsx(classes.settingsCard)}>
@@ -153,6 +158,16 @@ export function Settings(props: Props) {
           </IconButton>
         </Hidden>
         <Typography variant={"h6"}>{t("general/Settings")}</Typography>
+      </Box>
+      <Box className={clsx(classes.section)}>
+        <Button
+          variant={"outlined"}
+          color={"primary"}
+          style={{ marginBottom: "24px" }}
+          onClick={() => cloudContainer.setAuthDialogOpen(true)}
+        >
+          {t("general/sign-in")}
+        </Button>
       </Box>
       <Box className={clsx(classes.section)}>
         <Typography
@@ -273,6 +288,10 @@ export function Settings(props: Props) {
           ></SketchPicker>
         </Popover>
       </Box>
+      <AuthDialog
+        open={cloudContainer.authDialogOpen}
+        onClose={() => cloudContainer.setAuthDialogOpen(false)}
+      ></AuthDialog>
     </Card>
   );
 }

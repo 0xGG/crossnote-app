@@ -1,0 +1,23 @@
+mutation SetUserInfo(
+  $cover: String!
+  $bio: String!
+  $location: String!
+  $language: String!
+  $name: String!
+  $avatar: String!
+  $editorCursorColor: String!
+) {
+  setUserInfo(
+    input: {
+      cover: $cover
+      bio: $bio
+      location: $location
+      language: $language
+      name: $name
+      avatar: $avatar
+      editorCursorColor: $editorCursorColor
+    }
+  ) {
+    ...ViewerFields
+  }
+}

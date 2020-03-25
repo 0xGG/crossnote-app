@@ -119,6 +119,7 @@ export const enUS = {
     "general/Explore": "Explore",
     "general/Notebooks": "Notebooks",
     "general/add-a-notebook": "Add a notebook",
+    "general/add-a-note": "Add a note",
     "general/configure-the-notebook": "Configure the notebook",
     "general/notebook-name": "Notebook name",
     "general/git-repository": "git repository",

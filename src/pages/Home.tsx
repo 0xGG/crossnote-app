@@ -236,13 +236,13 @@ export function Home(props: Props) {
   const drawer = (
     <div>
       <List disablePadding={true}>
-        <ListItem button>
+        {/*<ListItem button>
           <ListItemIcon>
             <LibraryBooks></LibraryBooks>
           </ListItemIcon>
           <ListItemText primary={t("general/Explore")}></ListItemText>
         </ListItem>
-        {/*<ListItem button>
+        <ListItem button>
           <ListItemIcon>
             <Cube></Cube>
           </ListItemIcon>

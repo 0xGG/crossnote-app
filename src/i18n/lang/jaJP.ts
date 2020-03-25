@@ -119,6 +119,7 @@ export const jaJP = {
     "general/Explore": "探索",
     "general/Notebooks": "ノートブック",
     "general/add-a-notebook": "ノートブックを追加する",
+    "general/add-a-note": "ノートを追加する",
     "general/configure-the-notebook": "ノートブックを構成する",
     "general/notebook-name": "ノートブック名",
     "general/git-repository": "git リポジトリ",

@@ -997,7 +997,7 @@ export default function Editor(props: Props) {
           disabled={crossnoteContainer.isLoadingNotebook}
           variant={"outlined"}
         >
-          <Typography>{"📝 Create a note"}</Typography>
+          <Typography>{`📝 ${t("general/add-a-note")}`}</Typography>
         </Button>
       </Box>
     );

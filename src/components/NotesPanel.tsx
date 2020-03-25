@@ -189,7 +189,7 @@ export default function NotesPanel(props: Props) {
                 🗓
               </span>
               <Typography className={clsx(classes.sectionName)}>
-                {" today"}
+                {t("general/today")}
               </Typography>
             </Box>
           ) : crossnoteContainer.selectedSection.type ===
@@ -199,7 +199,7 @@ export default function NotesPanel(props: Props) {
                 ☑️
               </span>
               <Typography className={clsx(classes.sectionName)}>
-                {" todo"}
+                {t("general/todo")}
               </Typography>
             </Box>
           ) : crossnoteContainer.selectedSection.type ===
@@ -209,7 +209,7 @@ export default function NotesPanel(props: Props) {
                 🏷️
               </span>
               <Typography className={clsx(classes.sectionName)}>
-                {" tagged"}
+                {t("general/tagged")}
               </Typography>
             </Box>
           ) : crossnoteContainer.selectedSection.type ===
@@ -219,7 +219,7 @@ export default function NotesPanel(props: Props) {
                 🈚
               </span>
               <Typography className={clsx(classes.sectionName)}>
-                {" untagged"}
+                {t("general/untagged")}
               </Typography>
             </Box>
           ) : crossnoteContainer.selectedSection.type ===
@@ -239,7 +239,7 @@ export default function NotesPanel(props: Props) {
                 🔐
               </span>
               <Typography className={clsx(classes.sectionName)}>
-                {" encrypted"}
+                {t("general/encrypted")}
               </Typography>
             </Box>
           ) : crossnoteContainer.selectedSection.type ===
@@ -249,7 +249,7 @@ export default function NotesPanel(props: Props) {
                 ⚠️
               </span>
               <Typography className={clsx(classes.sectionName)}>
-                {" conflicted"}
+                {t("general/conflicted")}
               </Typography>
             </Box>
           ) : (
