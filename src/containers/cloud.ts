@@ -30,7 +30,7 @@ function useCloudContainer(initialState: InitialState) {
     if (token) {
       executeViewerQuery({
         requestPolicy: "network-only",
-        pollInterval: 20 * 1000 // Refetch the viewer every 20 seconds for checking notifications
+        pollInterval: 30 * 1000 // Refetch the viewer every 30 seconds for checking notifications
       });
     }
   }, [executeViewerQuery, token]);
