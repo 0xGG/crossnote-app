@@ -11,7 +11,6 @@ import {
   Divider,
   ListItemIcon,
   ListItemText,
-  ListItemAvatar,
   Avatar
 } from "@material-ui/core";
 import {

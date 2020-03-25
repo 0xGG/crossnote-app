@@ -1,13 +1,13 @@
 import React, { useEffect } from "react";
 import "./App.css";
-import { Home, HomeSection } from "./pages/Home";
 import { createMuiTheme } from "@material-ui/core";
 import { orange, blue } from "@material-ui/core/colors";
 import { ThemeProvider } from "@material-ui/styles";
 import * as qs from "qs";
 import { Router, Route, Switch } from "react-router-dom";
 import { browserHistory } from "./utilities/history";
-
+import { Home, HomeSection } from "./pages/Home";
+import { GitHubOAuthCallback } from "./components/GitHubOAuthCallback";
 import "./editor";
 
 const theme = createMuiTheme({
@@ -41,6 +41,19 @@ const App: React.FC = () => {
               exact={true}
               render={props => (
                 <Home section={HomeSection.Settings} queryParams={{}}></Home>
+              )}
+            ></Route>
+            <Route
+              exact={true}
+              path={`/github_oauth_callback`}
+              render={props => (
+                <GitHubOAuthCallback
+                  code={
+                    qs.parse(props.location.search.replace(/^\?/, ""))[
+                      "code"
+                    ] || ""
+                  }
+                ></GitHubOAuthCallback>
               )}
             ></Route>
             <Route
