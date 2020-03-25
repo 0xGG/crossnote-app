@@ -1,7 +1,8 @@
 import { createClient, defaultExchanges, subscriptionExchange } from "urql";
 import { getGraphQLEndpoint } from "./utils";
-import { SubscriptionClient } from "subscriptions-transport-ws";
+// import { SubscriptionClient } from "subscriptions-transport-ws";
 
+/*
 const subscriptionClient = new SubscriptionClient(
   getGraphQLEndpoint().replace(/^http/, "ws"),
   {
@@ -12,14 +13,17 @@ const subscriptionClient = new SubscriptionClient(
     reconnect: true
   }
 );
+*/
 
 export const GraphQLClient = createClient({
   url: getGraphQLEndpoint(),
   exchanges: [
-    ...defaultExchanges,
+    ...defaultExchanges
+    // Disable subscriptions for now
+    /*
     subscriptionExchange({
       forwardSubscription: operation => subscriptionClient.request(operation)
-    })
+    })*/
   ],
   fetchOptions: {
     cache: "no-cache",

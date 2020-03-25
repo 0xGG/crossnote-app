@@ -30,7 +30,7 @@ function useCloudContainer(initialState: InitialState) {
     if (token) {
       executeViewerQuery({
         requestPolicy: "network-only",
-        pollInterval: 20 * 1000 // Refetch the viewer every 20 seconds // Doesn't work here...
+        pollInterval: 20 * 1000 // Refetch the viewer every 20 seconds for checking notifications
       });
     }
   }, [executeViewerQuery, token]);
@@ -64,6 +64,9 @@ function useCloudContainer(initialState: InitialState) {
   useEffect(() => {
     if (resViewer.fetching) {
     } else if (resViewer.error) {
+      /*
+      // Don't display error message here
+      // because the application might be offline now
       new Noty({
         type: "error",
         text: resViewer.error.message,
@@ -71,7 +74,7 @@ function useCloudContainer(initialState: InitialState) {
         theme: "relax",
         timeout: 2000
       }).show();
-      // console.error(resViewer.error);
+      */
       // logout(); // <= Cause mobile device login failure.
     } else if (resViewer.data && resViewer.data.viewer) {
       const viewer = resViewer.data.viewer as User;
