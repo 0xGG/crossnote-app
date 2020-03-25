@@ -284,7 +284,7 @@ export function Settings(props: Props) {
             </Typography>
             <Typography>{cloudContainer.viewer.email}</Typography>
           </Box>
-          <div
+          {/* <div
             className={clsx(classes.cover)}
             style={{
               backgroundImage: `url("${cover}")`
@@ -310,6 +310,7 @@ export function Settings(props: Props) {
               </IconButton>
             </Tooltip>
           </Box>
+      */}
           <Box className={clsx(classes.section)}>
             <Avatar
               className={clsx(classes.avatar)}
