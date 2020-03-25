@@ -135,7 +135,9 @@ export const zhTW = {
     "general/wiki": "維琪",
     "general/tagged": "標籤",
     "general/untagged": "未標籤",
+    "general/encrypt": "加密",
     "general/encrypted": "已加密",
+    "general/decrypt": "解密",
     "general/conflicted": "衝突",
     "general/Pin": "置頂",
     "general/Encryption": "加密",
@@ -144,6 +146,10 @@ export const zhTW = {
     "general/restore-checkout": "恢復 (checkout)",
     "general/download-pull": "下載 (pull)",
     "general/upload-push": "上傳 (push)",
+    "general/disable-the-encryption-on-this-note": "解除這個筆記上的加密",
+    "general/encrypt-this-note-with-password": "通過密碼加密這個筆記",
+    "general/disable-encryption": "解除加密",
+    "general/decrypt-this-note": "解密這個筆記",
 
     // Error
     "error/authentication-failed": "認証失敗",
@@ -152,6 +158,8 @@ export const zhTW = {
     "error/notebook-already-exists": "筆記本已經存在",
     "error/invalid-git-url-prefix": "無效的 git URL 前綴",
     "error/please-resolve-conflicts": "請先解決沖突",
+    "error/failed-to-disable-encryption": "解除加密失敗",
+    "error/decryption-failed": "解密失敗",
 
     // Success
     "success/notebook-uploaded": "筆記本已上傳",

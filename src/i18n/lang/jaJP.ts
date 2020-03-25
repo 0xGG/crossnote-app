@@ -135,7 +135,9 @@ export const jaJP = {
     "general/wiki": "Wiki",
     "general/tagged": "タグ",
     "general/untagged": "タグない",
+    "general/encrypt": "暗号化",
     "general/encrypted": "暗号化",
+    "general/decrypt": "復号化",
     "general/conflicted": "競合",
     "general/Pin": "ピン",
     "general/Encryption": "暗号化",
@@ -144,6 +146,12 @@ export const jaJP = {
     "general/restore-checkout": "復元 (checkout)",
     "general/download-pull": "ダウンロード (pull)",
     "general/upload-push": "アップロード (push)",
+    "general/disable-the-encryption-on-this-note":
+      "このノートの暗号化を無効にする",
+    "general/encrypt-this-note-with-password":
+      "このノートをパスワードで暗号化する",
+    "general/disable-encryption": "暗号化を無効にする",
+    "general/decrypt-this-note": "このノートを復号化する",
 
     // Error
     "error/authentication-failed": "認証に失敗しました",
@@ -154,6 +162,8 @@ export const jaJP = {
     "error/notebook-already-exists": "ノートブックは既に存在します",
     "error/invalid-git-url-prefix": "無効な git URL プレフィックス",
     "error/please-resolve-conflicts": "最初に競合を解決してください",
+    "error/failed-to-disable-encryption": "暗号化を無効にできませんでした",
+    "error/decryption-failed": "復号化に失敗しました",
 
     // Success
     "success/notebook-uploaded": "ノートブックがアップロードされます",
