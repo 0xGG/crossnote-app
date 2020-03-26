@@ -485,6 +485,10 @@ export const enUS = {
     "tesseract/loaded language traineddata": "loaded language traineddata",
     "tesseract/initializing api": "initializing api",
     "tesseract/initialized api": "initialized api",
-    "tesseract/recognizing text": "recognizing text"
+    "tesseract/recognizing text": "recognizing text",
+
+    // Dialogs
+    "delete-file-dialog/title": "Are you sure to delete this note?",
+    "delete-file-dialog/subtitle": "Can't be undone"
   }
 };

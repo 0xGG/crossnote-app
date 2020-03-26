@@ -62,6 +62,7 @@ export default function PushNotebookDialog(props: Props) {
         }).show();
       })
       .catch((error: Error) => {
+        console.log(error);
         props.onClose();
         new Noty({
           type: "error",

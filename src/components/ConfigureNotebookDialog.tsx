@@ -178,24 +178,26 @@ export default function ConfigureNotebookDialog(props: Props) {
         </ExpansionPanel>
       </DialogContent>
       <DialogActions>
-        <Button
-          variant={"contained"}
-          color={"secondary"}
-          disabled={!clickDeleteCount}
-          onClick={() => {
-            if (clickDeleteCount === 1) {
-              deleteNotebook();
-              setClickDeleteCount(clickDeleteCount - 1);
-            } else {
-              setClickDeleteCount(clickDeleteCount - 1);
-            }
-          }}
-        >
-          {t("general/Delete") +
-            (clickDeleteCount < MaxClickDeleteCount
-              ? ` ${clickDeleteCount}`
-              : "")}
-        </Button>
+        {crossnoteContainer.notebooks.length > 1 && (
+          <Button
+            variant={"contained"}
+            color={"secondary"}
+            disabled={!clickDeleteCount}
+            onClick={() => {
+              if (clickDeleteCount === 1) {
+                deleteNotebook();
+                setClickDeleteCount(clickDeleteCount - 1);
+              } else {
+                setClickDeleteCount(clickDeleteCount - 1);
+              }
+            }}
+          >
+            {t("general/Delete") +
+              (clickDeleteCount < MaxClickDeleteCount
+                ? ` ${clickDeleteCount}`
+                : "")}
+          </Button>
+        )}
         <Button
           variant={"contained"}
           color={"primary"}

@@ -18,6 +18,12 @@ import { getHeaderFromMarkdown } from "../utilities/note";
 import { browserHistory } from "../utilities/history";
 import * as qs from "qs";
 
+export enum EditorMode {
+  VickyMD = "VickyMD",
+  SourceCode = "SourceCode",
+  Preview = "Preview"
+}
+
 export enum SelectedSectionType {
   Notes = "Notes",
   Today = "Today",
@@ -45,6 +51,16 @@ export enum OrderBy {
 export enum OrderDirection {
   ASC = "ASC",
   DESC = "DESC"
+}
+
+/**
+ * The note to open
+ */
+export interface PendingNote {
+  notebookID?: string;
+  repo?: string;
+  branch?: string;
+  filePath: string;
 }
 
 interface InitialState {
@@ -92,6 +108,8 @@ function useCrossnoteContainer(initialState: InitialState) {
   const [orderDirection, setOrderDirection] = useState<OrderDirection>(
     OrderDirection.DESC
   );
+  const [editorMode, setEditorMode] = useState<EditorMode>(EditorMode.Preview);
+  const [pendingNote, setPendingNote] = useState<PendingNote>(null);
 
   const updateNoteMarkdown = useCallback(
     (
@@ -232,6 +250,7 @@ function useCrossnoteContainer(initialState: InitialState) {
         setNotebookNotes(notes => [note, ...notes]);
         setSelectedNote(note);
         setDisplayMobileEditor(true);
+        setEditorMode(EditorMode.VickyMD);
       })();
     },
     [selectedNotebook, crossnote, selectedSection]
@@ -250,6 +269,7 @@ function useCrossnoteContainer(initialState: InitialState) {
       setIsAddingNotebook(true);
       try {
         if (
+          gitURL.length &&
           notebooks.find(
             nb => nb.gitBranch === gitBranch && nb.gitURL === gitURL
           )
@@ -356,6 +376,8 @@ function useCrossnoteContainer(initialState: InitialState) {
         } else {
           setSelectedNote(newNote);
         }
+
+        setNeedsToRefreshNotes(true);
       } catch (error) {
         setIsPullingNotebook(false);
         throw error;
@@ -430,15 +452,55 @@ function useCrossnoteContainer(initialState: InitialState) {
     [crossnote]
   );
 
+  const _setSelectedNote = useCallback(
+    (note: Note) => {
+      setSelectedNote(note);
+      const notebook = note.notebook;
+      if (notebook.gitURL) {
+        browserHistory.push(
+          `/?repo=${encodeURIComponent(
+            notebook.gitURL
+          )}&branch=${encodeURIComponent(
+            notebook.gitBranch || "master"
+          )}&filePath=${encodeURIComponent(note.filePath)}`
+        );
+      } else {
+        browserHistory.push(
+          `/?notebookID=${notebook._id}&filePath=${encodeURIComponent(
+            note.filePath
+          )}`
+        );
+      }
+    },
+    [setSelectedNote]
+  );
+
   const openNoteAtPath = useCallback(
     (filePath: string) => {
       if (!crossnote) return;
       const note = notebookNotes.find(n => n.filePath === filePath);
       if (note) {
-        setSelectedNote(note);
+        _setSelectedNote(note);
       }
     },
-    [crossnote, notebookNotes]
+    [crossnote, notebookNotes, _setSelectedNote]
+  );
+
+  const _setSelectedNotebook = useCallback(
+    (notebook: Notebook) => {
+      localStorage.setItem("selectedNotebookID", notebook._id);
+      setSelectedNotebook(notebook);
+      if (notebook.gitURL) {
+        browserHistory.push(
+          `/?repo=${encodeURIComponent(
+            notebook.gitURL
+          )}&branch=${encodeURIComponent(notebook.gitBranch || "master")}`
+        );
+      } else {
+        browserHistory.push(`/?notebookID=${notebook._id}`);
+      }
+    },
+    [setSelectedNotebook]
   );
 
   useEffect(() => {
@@ -503,13 +565,13 @@ function useCrossnoteContainer(initialState: InitialState) {
         dir: "./",
         includeSubdirectories: true
       });
+      setSelectedNote(null);
       setNotebookNotes(notes);
       setNotebookDirectories(
         await crossnote.getNotebookDirectoriesFromNotes(notes)
       );
       setHasSummaryMD(await crossnote.hasSummaryMD(selectedNotebook));
       setNotebookTagNode(crossnote.getNotebookTagNodeFromNotes(notes));
-      setSelectedNote(null);
       setIsLoadingNotebook(false);
     })();
   }, [crossnote, selectedNotebook]);
@@ -638,10 +700,38 @@ function useCrossnoteContainer(initialState: InitialState) {
   ]);
 
   useEffect(() => {
-    if (notes.length && !selectedNote) {
+    if (notes.length && !selectedNote && !pendingNote) {
       setSelectedNote(notes[0]);
     }
-  }, [notes, selectedNote]);
+  }, [notes, selectedNote, pendingNote]);
+
+  useEffect(() => {
+    setEditorMode(EditorMode.Preview);
+  }, [selectedNote]);
+
+  // Find and select the pending note
+  useEffect(() => {
+    if (!pendingNote || !initialized || isLoadingNotebook) {
+      return;
+    }
+    if (selectedNote && selectedNote.filePath === pendingNote.filePath) {
+      setPendingNote(null);
+      return;
+    }
+
+    // TODO: Also check if the notebook matches
+    const note = notebookNotes.find(n => n.filePath === pendingNote.filePath);
+    if (note) {
+      setSelectedNote(note);
+    }
+    setPendingNote(null); // note doesn't exist
+  }, [
+    initialized,
+    isLoadingNotebook,
+    pendingNote,
+    selectedNote,
+    notebookNotes
+  ]);
 
   useInterval(() => {
     if (needsToRefreshNotes) {
@@ -649,23 +739,6 @@ function useCrossnoteContainer(initialState: InitialState) {
       setNotes(notes => [...notes]);
     }
   }, 4000);
-
-  const _setSelectedNotebook = useCallback(
-    (notebook: Notebook) => {
-      localStorage.setItem("selectedNotebookID", notebook._id);
-      if (notebook.gitURL) {
-        browserHistory.push(
-          `/?repo=${encodeURIComponent(
-            notebook.gitURL
-          )}&branch=${encodeURIComponent(notebook.gitBranch || "master")}`
-        );
-      } else {
-        browserHistory.push(`/?notebookID=${notebook._id}`);
-      }
-      setSelectedNotebook(notebook);
-    },
-    [setSelectedNotebook]
-  );
 
   return {
     crossnote,
@@ -675,7 +748,7 @@ function useCrossnoteContainer(initialState: InitialState) {
     setSelectedNotebook: _setSelectedNotebook,
     notes,
     selectedNote,
-    setSelectedNote,
+    setSelectedNote: _setSelectedNote,
     updateNoteMarkdown,
     createNewNote,
     selectedSection,
@@ -707,7 +780,10 @@ function useCrossnoteContainer(initialState: InitialState) {
     setOrderDirection,
     hasSummaryMD,
     wikiTOCElement,
-    setWikiTOCElement
+    setWikiTOCElement,
+    editorMode,
+    setEditorMode,
+    setPendingNote
   };
 }
 

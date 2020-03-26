@@ -112,7 +112,15 @@ export interface PullNotebookArgs {
 
 interface PullNotebookResult {
   numConflicts: number;
+  cache: Cache;
 }
+
+type Cache = {
+  [key: string]: {
+    status: string;
+    markdown: string;
+  };
+};
 
 export default class Crossnote {
   private fs: any;
@@ -442,14 +450,7 @@ export default class Crossnote {
       newFilePath = newFilePath + ".md";
     }
 
-    try {
-      await git.remove({
-        fs: this.fs,
-        dir: notebook.dir,
-        filepath: note.filePath
-      });
-    } catch (error) {}
-
+    const oldFilePath = note.filePath;
     const newDirPath = path.dirname(path.resolve(notebook.dir, newFilePath));
     // Make directories recursively
     const dirNames = newDirPath.split("/").slice(1);
@@ -470,14 +471,67 @@ export default class Crossnote {
     }
 
     await this.rename(
-      path.resolve(notebook.dir, note.filePath),
+      path.resolve(notebook.dir, oldFilePath),
       path.resolve(notebook.dir, newFilePath)
     );
+    await git.remove({
+      fs: this.fs,
+      dir: notebook.dir,
+      filepath: oldFilePath
+    });
     await git.add({
       fs: this.fs,
       dir: notebook.dir,
       filepath: newFilePath
     });
+  }
+
+  private async generateChangesCache(notebook: Notebook): Promise<Cache> {
+    const cache: Cache = {};
+    const createCache = async (stagedFiles: string[]) => {
+      for (let i = 0; i < stagedFiles.length; i++) {
+        if (stagedFiles[i] in cache) {
+          continue;
+        }
+        const status = await git.status({
+          fs: this.fs,
+          dir: notebook.dir,
+          filepath: stagedFiles[i]
+        });
+        if (status.match(/^\*?(modified|added)/)) {
+          cache[stagedFiles[i]] = {
+            status,
+            markdown: await this.readFile(
+              path.resolve(notebook.dir, stagedFiles[i])
+            )
+          };
+        } else if (status.match(/^\*?(deleted)/)) {
+          cache[stagedFiles[i]] = {
+            status,
+            markdown: ""
+          };
+        }
+      }
+    };
+
+    await createCache(
+      // Check previous staged file for `delete` status
+      await git.listFiles({
+        fs: this.fs,
+        dir: notebook.dir,
+        ref: "HEAD"
+      })
+    );
+
+    await createCache(
+      // Check current staged file for `add` status
+      await git.listFiles({
+        fs: this.fs,
+        dir: notebook.dir
+      })
+    );
+
+    return cache;
   }
 
   public async pushNotebook({
@@ -492,15 +546,6 @@ export default class Crossnote {
     onAuthFailure,
     onAuthSuccess
   }: PushNotebookArgs): Promise<null | git.PushResult> {
-    const stagedFiles = await this.listFiles(notebook);
-    if (!stagedFiles.length) {
-      return {
-        ok: true,
-        error: null,
-        refs: {}
-      };
-    }
-
     // Pull notebook first
     const pullNotebookResult = await this.pullNotebook({
       notebook,
@@ -521,6 +566,7 @@ export default class Crossnote {
       depth: 5
     });
     const latestSha = (logs && logs[0] && logs[0].oid) || "";
+    localStorage.setItem(`pending/push/${notebook._id}`, latestSha);
 
     const sha = await git.commit({
       fs: this.fs,
@@ -538,6 +584,7 @@ export default class Crossnote {
         path.resolve(notebook.dir, `.git/refs/heads/${gitBranch}`),
         latestSha
       );
+      localStorage.removeItem(`pending/push/${notebook._id}`);
     };
 
     // console.log(sha);
@@ -595,6 +642,7 @@ export default class Crossnote {
         });
       }*/
     }
+    localStorage.removeItem(`pending/push/${notebook._id}`);
     return pushResult;
   }
 
@@ -608,28 +656,12 @@ export default class Crossnote {
     // TODO: If has conflicted notes, prevent pulling.
 
     // NOTE: Seems like diff3 not working as I expected. Therefore I might create my own type of diff
-    const stagedFiles = await git.listFiles({ fs: this.fs, dir: notebook.dir });
     const cache: {
       [key: string]: {
         status: string;
         markdown: string;
       };
-    } = {};
-    for (let i = 0; i < stagedFiles.length; i++) {
-      const status = await git.status({
-        fs: this.fs,
-        dir: notebook.dir,
-        filepath: stagedFiles[i]
-      });
-      if (status.match(/^\*?(modified|added)/)) {
-        cache[stagedFiles[i]] = {
-          status,
-          markdown: await this.readFile(
-            path.resolve(notebook.dir, stagedFiles[i])
-          )
-        };
-      }
-    }
+    } = await this.generateChangesCache(notebook);
 
     let logs = await git.log({
       fs: this.fs,
@@ -676,6 +708,10 @@ export default class Crossnote {
       // Restore from cache
       // console.log("same");
       for (const filePath in cache) {
+        if (cache[filePath].status === "deleted") {
+          await this.deleteNote(notebook, filePath);
+          continue;
+        }
         const markdown = cache[filePath].markdown;
         await this.writeFile(path.resolve(notebook.dir, filePath), markdown);
         await git.add({
@@ -734,13 +770,13 @@ export default class Crossnote {
             if (item.conflict) {
               hasConflict = true;
               mergedText += `\\<${"<".repeat(markerSize - 1)} ${ourName}\n`;
-              mergedText += item.conflict.a.join("");
+              mergedText += item.conflict.a.join("") + "\n";
               // if (format === "diff3") {
               //mergedText += `\\|${"|".repeat(markerSize - 1)} ${baseName}\n`;
               //mergedText += item.conflict.o.join("");
               // }
               mergedText += `\\=${"=".repeat(markerSize - 1)}\n`;
-              mergedText += item.conflict.b.join("");
+              mergedText += item.conflict.b.join("") + "\n";
               mergedText += `\\>${">".repeat(markerSize - 1)} ${theirName}\n`;
             }
           }
@@ -769,8 +805,10 @@ export default class Crossnote {
         }
       }
     }
+
     return {
-      numConflicts
+      numConflicts,
+      cache
     };
   }
 
@@ -830,21 +868,18 @@ export default class Crossnote {
         ref: `origin/${gitBranch}`,
         depth: 5
       });
-      const latestSha = (logs && logs[0] && logs[0].oid) || "";
+      const latestSha =
+        localStorage.getItem(`pending/push/${notebook._id}`) ||
+        (logs && logs[0] && logs[0].oid) ||
+        "";
       await this.writeFile(
         path.resolve(notebook.dir, `.git/refs/heads/${gitBranch}`),
         latestSha
       );
+      localStorage.removeItem(`pending/push/${notebook._id}`);
     }
 
     return notebooks;
-  }
-
-  public async listFiles(notebook: Notebook) {
-    return await git.listFiles({
-      fs: this.fs,
-      dir: notebook.dir
-    });
   }
 
   private matter(markdown: string): MatterOutput {
@@ -1020,12 +1055,12 @@ ${markdown}`;
   }
   public async deleteNote(notebook: Notebook, filePath: string) {
     if (await this.exists(path.resolve(notebook.dir, filePath))) {
+      await this.unlink(path.resolve(notebook.dir, filePath));
       await git.remove({
         fs: this.fs,
         dir: notebook.dir,
         filepath: filePath
       });
-      await this.unlink(path.resolve(notebook.dir, filePath));
     }
   }
 

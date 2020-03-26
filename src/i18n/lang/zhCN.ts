@@ -467,6 +467,10 @@ export const zhCN = {
     "tesseract/loaded language traineddata": "已读取语言训练数据",
     "tesseract/initializing api": "正在初始化程序接口",
     "tesseract/initialized api": "已初始化程序接口",
-    "tesseract/recognizing text": "正在识别文字"
+    "tesseract/recognizing text": "正在识别文字",
+
+    // Dialogs
+    "delete-file-dialog/title": "你确定要删除这个笔记？",
+    "delete-file-dialog/subtitle": "将不能被撤回"
   }
 };

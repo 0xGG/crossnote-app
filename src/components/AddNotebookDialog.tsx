@@ -47,13 +47,15 @@ export default function AddNotebookDialog(props: Props) {
 
   const addNotebook = useCallback(async () => {
     try {
-      new Noty({
-        type: "info",
-        text: t("info/downloading-notebook"),
-        layout: "topRight",
-        theme: "relax",
-        timeout: 2000
-      }).show();
+      if (gitURL.trim().length) {
+        new Noty({
+          type: "info",
+          text: t("info/downloading-notebook"),
+          layout: "topRight",
+          theme: "relax",
+          timeout: 2000
+        }).show();
+      }
       await crossnoteContainer.addNotebook(
         notebookName,
         gitURL.trim(),

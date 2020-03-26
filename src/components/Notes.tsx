@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { createStyles, makeStyles, Theme } from "@material-ui/core/styles";
 import clsx from "clsx";
 import { CrossnoteContainer } from "../containers/crossnote";
-import { Box } from "@material-ui/core";
+import { Box, Typography } from "@material-ui/core";
 import NoteCard from "./NoteCard";
 import { useTranslation } from "react-i18next";
 import { Note } from "../lib/crossnote";
@@ -94,7 +94,11 @@ export default function Notes(props: Props) {
         notesListElement.removeEventListener("keydown", keyDownHandler);
       };
     }
-  }, [notesListElement, crossnoteContainer.notes]);
+  }, [
+    notesListElement,
+    crossnoteContainer.notes,
+    crossnoteContainer.selectedNote
+  ]);
 
   return (
     <div
@@ -108,6 +112,19 @@ export default function Notes(props: Props) {
           <NoteCard key={"note-card-" + note.filePath} note={note}></NoteCard>
         );
       })}
+      {crossnoteContainer.initialized &&
+        !crossnoteContainer.isLoadingNotebook &&
+        notes.length === 0 && (
+          <Typography
+            style={{
+              textAlign: "center",
+              marginTop: "32px"
+            }}
+            variant={"body2"}
+          >
+            {"🧐 " + t("general/no-notes-found")}
+          </Typography>
+        )}
     </div>
   );
 }

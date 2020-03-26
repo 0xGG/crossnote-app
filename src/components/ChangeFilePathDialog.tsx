@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   Dialog,
   DialogTitle,
@@ -8,7 +8,8 @@ import {
   Button
 } from "@material-ui/core";
 import { CrossnoteContainer } from "../containers/crossnote";
-import { Notebook, Note } from "../lib/crossnote";
+import { Note } from "../lib/crossnote";
+import { useTranslation } from "react-i18next";
 
 interface Props {
   open: boolean;
@@ -23,6 +24,7 @@ export default function ChangeFilePathDialog(props: Props) {
   const [newFilePath, setNewFilePath] = useState<string>(
     (note && note.filePath) || ""
   );
+  const { t } = useTranslation();
 
   const changeFilePath = useCallback(
     (newFilePath: string) => {
@@ -68,7 +70,7 @@ export default function ChangeFilePathDialog(props: Props) {
 
   return (
     <Dialog open={props.open} onClose={props.onClose}>
-      <DialogTitle>Change file path</DialogTitle>
+      <DialogTitle>{t("general/change-file-path")}</DialogTitle>
       <DialogContent>
         <TextField
           value={newFilePath}
@@ -85,8 +87,14 @@ export default function ChangeFilePathDialog(props: Props) {
         ></TextField>
       </DialogContent>
       <DialogActions>
-        <Button onClick={() => changeFilePath(newFilePath)}>Save</Button>
-        <Button onClick={props.onClose}>Cancel</Button>
+        <Button
+          variant={"contained"}
+          color={"primary"}
+          onClick={() => changeFilePath(newFilePath)}
+        >
+          {t("general/Save")}
+        </Button>
+        <Button onClick={props.onClose}>{t("general/cancel")}</Button>
       </DialogActions>
     </Dialog>
   );
