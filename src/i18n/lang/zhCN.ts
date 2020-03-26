@@ -161,6 +161,7 @@ export const zhCN = {
     "error/please-resolve-conflicts": "请先解决冲突",
     "error/failed-to-disable-encryption": "解除加密失败",
     "error/decryption-failed": "解密失败",
+    "error/failed-to-change-file-path": "更改文件路径失败",
 
     // Success
     "success/notebook-uploaded": "笔记本已上传",

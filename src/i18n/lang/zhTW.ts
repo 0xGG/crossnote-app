@@ -161,6 +161,7 @@ export const zhTW = {
     "error/please-resolve-conflicts": "請先解決沖突",
     "error/failed-to-disable-encryption": "解除加密失敗",
     "error/decryption-failed": "解密失敗",
+    "error/failed-to-change-file-path": "更改文件路徑失敗",
 
     // Success
     "success/notebook-uploaded": "筆記本已上傳",

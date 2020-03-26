@@ -194,7 +194,7 @@ function useCrossnoteContainer(initialState: InitialState) {
         } catch (error) {
           new Noty({
             type: "error",
-            text: "Failed to change file path",
+            text: t("error/failed-to-change-file-path"),
             layout: "topRight",
             theme: "relax",
             timeout: 5000
