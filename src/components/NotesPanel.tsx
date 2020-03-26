@@ -49,7 +49,8 @@ const useStyles = makeStyles((theme: Theme) =>
       height: "100%"
     },
     topPanel: {
-      padding: theme.spacing(1)
+      padding: theme.spacing(1),
+      borderRadius: 0
     },
     row: {
       display: "flex",

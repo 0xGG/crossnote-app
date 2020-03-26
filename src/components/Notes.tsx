@@ -108,17 +108,19 @@ export default function Notes(props: Props) {
           <NoteCard key={"note-card-" + note.filePath} note={note}></NoteCard>
         );
       })}
-      {!crossnoteContainer.isLoadingNotebook && notes.length === 0 && (
-        <Typography
-          style={{
-            textAlign: "center",
-            marginTop: "32px"
-          }}
-          variant={"body2"}
-        >
-          {"🧐 " + t("general/no-notes-found")}
-        </Typography>
-      )}
+      {crossnoteContainer.initialized &&
+        !crossnoteContainer.isLoadingNotebook &&
+        notes.length === 0 && (
+          <Typography
+            style={{
+              textAlign: "center",
+              marginTop: "32px"
+            }}
+            variant={"body2"}
+          >
+            {"🧐 " + t("general/no-notes-found")}
+          </Typography>
+        )}
     </div>
   );
 }

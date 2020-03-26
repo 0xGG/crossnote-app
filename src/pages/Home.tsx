@@ -146,6 +146,7 @@ const useStyles = makeStyles((theme: Theme) =>
       width: `${notesPanelWidth}px`,
       maxWidth: "100%",
       height: "100%",
+      borderRadius: 0,
       [theme.breakpoints.down("xs")]: {
         width: "100%"
       }
@@ -156,6 +157,7 @@ const useStyles = makeStyles((theme: Theme) =>
       position: "absolute",
       left: `calc(${notesPanelWidth}px)`,
       height: "100%",
+      borderRadius: 0,
       [theme.breakpoints.down("md")]: {
         width: `calc(100% - ${notesPanelWidth}px)`,
         left: `${notesPanelWidth}px`
