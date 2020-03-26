@@ -94,7 +94,11 @@ export default function Notes(props: Props) {
         notesListElement.removeEventListener("keydown", keyDownHandler);
       };
     }
-  }, [notesListElement, crossnoteContainer.notes]);
+  }, [
+    notesListElement,
+    crossnoteContainer.notes,
+    crossnoteContainer.selectedNote
+  ]);
 
   return (
     <div

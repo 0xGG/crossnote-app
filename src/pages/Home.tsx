@@ -183,6 +183,7 @@ interface QueryParams {
   notebookID?: string;
   repo?: string;
   branch?: string;
+  filePath?: string;
 }
 
 interface Props {
@@ -214,16 +215,27 @@ export function Home(props: Props) {
     }
     if (props.section === HomeSection.Notebooks) {
       if (props.queryParams) {
-        if (props.queryParams["notebookID"]) {
+        const notebookID = props.queryParams["notebookID"];
+        if (notebookID) {
+          const filePath = decodeURIComponent(props.queryParams.filePath || "");
           const notebook = crossnoteContainer.notebooks.find(
-            nb => nb._id === props.queryParams["notebookID"]
+            nb => nb._id === notebookID
           );
           if (notebook && crossnoteContainer.selectedNotebook !== notebook) {
             crossnoteContainer.setSelectedNotebook(notebook);
           }
+          if (filePath) {
+            crossnoteContainer.setPendingNote({
+              notebookID: notebookID,
+              filePath
+            });
+          } else {
+            crossnoteContainer.setPendingNote(null);
+          }
         } else if (props.queryParams.repo && props.queryParams.branch) {
-          const repo = decodeURIComponent(props.queryParams.repo);
-          const branch = decodeURIComponent(props.queryParams.branch);
+          const repo = decodeURIComponent(props.queryParams.repo || "");
+          const branch = decodeURIComponent(props.queryParams.branch || "");
+          const filePath = decodeURIComponent(props.queryParams.filePath || "");
           const notebook = crossnoteContainer.notebooks.find(
             nb => nb.gitURL === repo && nb.gitBranch === branch
           );
@@ -231,9 +243,15 @@ export function Home(props: Props) {
             if (crossnoteContainer.selectedNotebook !== notebook) {
               crossnoteContainer.setSelectedNotebook(notebook);
             }
-            // setAddNotebookRepo("");
-            // setAddNotebookBranch("");
-            // setAddNotebookDialogOpen(false);
+            if (filePath) {
+              crossnoteContainer.setPendingNote({
+                repo,
+                branch,
+                filePath
+              });
+            } else {
+              crossnoteContainer.setPendingNote(null);
+            }
           } else {
             // Show dialog
             setAddNotebookRepo(repo);
