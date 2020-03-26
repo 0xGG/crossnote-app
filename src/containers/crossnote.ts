@@ -18,6 +18,12 @@ import { getHeaderFromMarkdown } from "../utilities/note";
 import { browserHistory } from "../utilities/history";
 import * as qs from "qs";
 
+export enum EditorMode {
+  VickyMD = "VickyMD",
+  SourceCode = "SourceCode",
+  Preview = "Preview"
+}
+
 export enum SelectedSectionType {
   Notes = "Notes",
   Today = "Today",
@@ -92,6 +98,7 @@ function useCrossnoteContainer(initialState: InitialState) {
   const [orderDirection, setOrderDirection] = useState<OrderDirection>(
     OrderDirection.DESC
   );
+  const [editorMode, setEditorMode] = useState<EditorMode>(EditorMode.Preview);
 
   const updateNoteMarkdown = useCallback(
     (
@@ -232,6 +239,7 @@ function useCrossnoteContainer(initialState: InitialState) {
         setNotebookNotes(notes => [note, ...notes]);
         setSelectedNote(note);
         setDisplayMobileEditor(true);
+        setEditorMode(EditorMode.VickyMD);
       })();
     },
     [selectedNotebook, crossnote, selectedSection]
@@ -643,6 +651,10 @@ function useCrossnoteContainer(initialState: InitialState) {
     }
   }, [notes, selectedNote]);
 
+  useEffect(() => {
+    setEditorMode(EditorMode.Preview);
+  }, [selectedNote]);
+
   useInterval(() => {
     if (needsToRefreshNotes) {
       setNeedsToRefreshNotes(false);
@@ -707,7 +719,9 @@ function useCrossnoteContainer(initialState: InitialState) {
     setOrderDirection,
     hasSummaryMD,
     wikiTOCElement,
-    setWikiTOCElement
+    setWikiTOCElement,
+    editorMode,
+    setEditorMode
   };
 }
 

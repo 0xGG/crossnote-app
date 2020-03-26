@@ -2,7 +2,7 @@ import React, { useState, useCallback, useEffect } from "react";
 import { createStyles, makeStyles, Theme } from "@material-ui/core/styles";
 import clsx from "clsx";
 import { Note } from "../lib/crossnote";
-import { CrossnoteContainer } from "../containers/crossnote";
+import { CrossnoteContainer, EditorMode } from "../containers/crossnote";
 import { useTranslation } from "react-i18next";
 import * as CryptoJS from "crypto-js";
 import * as path from "path";
@@ -184,11 +184,6 @@ const useStyles = makeStyles((theme: Theme) =>
   })
 );
 
-export enum EditorMode {
-  VickyMD = "VickyMD",
-  SourceCode = "SourceCode",
-  Preview = "Preview"
-}
 interface CursorPosition {
   ch: number;
   line: number;
@@ -215,7 +210,6 @@ export default function Editor(props: Props) {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState<boolean>(false);
   const [filePathDialogOpen, setFilePathDialogOpen] = useState<boolean>(false);
   const [pushDialogOpen, setPushDialogOpen] = useState<boolean>(false);
-  const [editorMode, setEditorMode] = useState<EditorMode>(EditorMode.VickyMD);
   const [previewElement, setPreviewElement] = useState<HTMLElement>(null);
   const [gitStatus, setGitStatus] = useState<string>("");
   const [fullScreenMode, setFullScreenMode] = useState<boolean>(false);
@@ -650,22 +644,27 @@ export default function Editor(props: Props) {
 
   useEffect(() => {
     if (!editor || !note) return;
-    if (editorMode === EditorMode.VickyMD) {
+    if (crossnoteContainer.editorMode === EditorMode.VickyMD) {
       VickyMD.switchToHyperMD(editor);
       editor.getWrapperElement().style.display = "block";
       editor.refresh();
-    } else if (editorMode === EditorMode.SourceCode) {
+    } else if (crossnoteContainer.editorMode === EditorMode.SourceCode) {
       VickyMD.switchToNormal(editor);
       editor.getWrapperElement().style.display = "block";
       editor.refresh();
     } else {
       editor.getWrapperElement().style.display = "none";
     }
-  }, [editorMode, editor, note, isDecrypted]);
+  }, [crossnoteContainer.editorMode, editor, note, isDecrypted]);
 
   // Render Preview
   useEffect(() => {
-    if (editorMode === EditorMode.Preview && editor && note && previewElement) {
+    if (
+      crossnoteContainer.editorMode === EditorMode.Preview &&
+      editor &&
+      note &&
+      previewElement
+    ) {
       if (isDecrypted) {
         const handleLinksClickEvent = (preview: HTMLElement) => {
           // Handle link click event
@@ -702,7 +701,13 @@ export default function Editor(props: Props) {
         previewElement.innerHTML = `🔐 ${t("general/encrypted")}`;
       }
     }
-  }, [editorMode, editor, previewElement, note, isDecrypted]);
+  }, [
+    crossnoteContainer.editorMode,
+    editor,
+    previewElement,
+    note,
+    isDecrypted
+  ]);
 
   // Command
   useEffect(() => {
@@ -919,7 +924,10 @@ export default function Editor(props: Props) {
     if (!note || !editor || !needsToPrint) {
       return;
     }
-    if (editorMode === EditorMode.Preview && previewElement) {
+    if (
+      crossnoteContainer.editorMode === EditorMode.Preview &&
+      previewElement
+    ) {
       const printDone = () => {
         setNeedsToPrint(false);
         previewElement.style.zIndex = `${previewZIndex}`;
@@ -932,9 +940,15 @@ export default function Editor(props: Props) {
           printDone();
         });
     } else {
-      setEditorMode(EditorMode.Preview);
+      crossnoteContainer.setEditorMode(EditorMode.Preview);
     }
-  }, [needsToPrint, editorMode, note, editor, previewElement]);
+  }, [
+    needsToPrint,
+    crossnoteContainer.editorMode,
+    note,
+    editor,
+    previewElement
+  ]);
 
   // Wiki TOC Render
   useEffect(() => {
@@ -1026,13 +1040,17 @@ export default function Editor(props: Props) {
               <Button
                 className={clsx(
                   classes.controlBtn,
-                  editorMode === EditorMode.VickyMD &&
+                  crossnoteContainer.editorMode === EditorMode.VickyMD &&
                     classes.controlBtnSelected
                 )}
                 color={
-                  editorMode === EditorMode.VickyMD ? "primary" : "default"
+                  crossnoteContainer.editorMode === EditorMode.VickyMD
+                    ? "primary"
+                    : "default"
                 }
-                onClick={() => setEditorMode(EditorMode.VickyMD)}
+                onClick={() =>
+                  crossnoteContainer.setEditorMode(EditorMode.VickyMD)
+                }
               >
                 <Pencil></Pencil>
               </Button>
@@ -1041,13 +1059,17 @@ export default function Editor(props: Props) {
               <Button
                 className={clsx(
                   classes.controlBtn,
-                  editorMode === EditorMode.SourceCode &&
+                  crossnoteContainer.editorMode === EditorMode.SourceCode &&
                     classes.controlBtnSelected
                 )}
                 color={
-                  editorMode === EditorMode.SourceCode ? "primary" : "default"
+                  crossnoteContainer.editorMode === EditorMode.SourceCode
+                    ? "primary"
+                    : "default"
                 }
-                onClick={() => setEditorMode(EditorMode.SourceCode)}
+                onClick={() =>
+                  crossnoteContainer.setEditorMode(EditorMode.SourceCode)
+                }
               >
                 <CodeTags></CodeTags>
               </Button>
@@ -1056,13 +1078,17 @@ export default function Editor(props: Props) {
               <Button
                 className={clsx(
                   classes.controlBtn,
-                  editorMode === EditorMode.Preview &&
+                  crossnoteContainer.editorMode === EditorMode.Preview &&
                     classes.controlBtnSelected
                 )}
                 color={
-                  editorMode === EditorMode.Preview ? "primary" : "default"
+                  crossnoteContainer.editorMode === EditorMode.Preview
+                    ? "primary"
+                    : "default"
                 }
-                onClick={() => setEditorMode(EditorMode.Preview)}
+                onClick={() =>
+                  crossnoteContainer.setEditorMode(EditorMode.Preview)
+                }
               >
                 <FilePresentationBox></FilePresentationBox>
               </Button>
@@ -1258,7 +1284,7 @@ export default function Editor(props: Props) {
             setTextAreaElement(element);
           }}
         ></textarea>
-        {editorMode === EditorMode.Preview &&
+        {crossnoteContainer.editorMode === EditorMode.Preview &&
         /*!editorContainer.pinPreviewOnTheSide &&*/
         editor ? (
           <div
