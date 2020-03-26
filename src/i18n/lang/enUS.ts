@@ -163,6 +163,7 @@ export const enUS = {
     "error/please-resolve-conflicts": "Please resolve conflicts first",
     "error/failed-to-disable-encryption": "Failed to disable encryption",
     "error/decryption-failed": "Decryption failed",
+    "error/failed-to-change-file-path": "Failed to change file path",
 
     // Success
     "success/notebook-uploaded": "Notebook uploaded",

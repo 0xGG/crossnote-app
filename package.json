@@ -79,8 +79,9 @@
     "vickymd": "0.1.5"
   },
   "scripts": {
-    "start": "react-scripts start",
-    "build": "react-scripts build",
+    "git-info": "echo export default \"{\\\"logMessage\\\": \\\"$(git log -1 --oneline)\\\"}\"  > src/_git_commit.js",
+    "start": "yarn git-info; react-scripts start",
+    "build": "yarn git-info; react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
     "dev:graphql-codegen": "graphql-codegen -c codegen.dev.yml",

@@ -165,6 +165,7 @@ export const jaJP = {
     "error/please-resolve-conflicts": "最初に競合を解決してください",
     "error/failed-to-disable-encryption": "暗号化を無効にできませんでした",
     "error/decryption-failed": "復号化に失敗しました",
+    "error/failed-to-change-file-path": "ファイル パスの変更に失敗しました",
 
     // Success
     "success/notebook-uploaded": "ノートブックがアップロードされます",

@@ -86,3 +86,4 @@ yarn-error.log*
 
 # My ignore
 test.js
+_git_commit.js
