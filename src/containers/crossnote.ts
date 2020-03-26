@@ -258,6 +258,7 @@ function useCrossnoteContainer(initialState: InitialState) {
       setIsAddingNotebook(true);
       try {
         if (
+          gitURL.length &&
           notebooks.find(
             nb => nb.gitBranch === gitBranch && nb.gitURL === gitURL
           )
