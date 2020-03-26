@@ -521,6 +521,7 @@ export default class Crossnote {
       depth: 5
     });
     const latestSha = (logs && logs[0] && logs[0].oid) || "";
+    localStorage.setItem(`pending/push/${notebook._id}`, latestSha);
 
     const sha = await git.commit({
       fs: this.fs,
@@ -538,6 +539,7 @@ export default class Crossnote {
         path.resolve(notebook.dir, `.git/refs/heads/${gitBranch}`),
         latestSha
       );
+      localStorage.remove(`pending/push/${notebook._id}`);
     };
 
     // console.log(sha);
@@ -595,6 +597,7 @@ export default class Crossnote {
         });
       }*/
     }
+    localStorage.remove(`pending/push/${notebook._id}`);
     return pushResult;
   }
 
@@ -830,11 +833,15 @@ export default class Crossnote {
         ref: `origin/${gitBranch}`,
         depth: 5
       });
-      const latestSha = (logs && logs[0] && logs[0].oid) || "";
+      const latestSha =
+        localStorage.getItem(`pending/push/${notebook._id}`) ||
+        (logs && logs[0] && logs[0].oid) ||
+        "";
       await this.writeFile(
         path.resolve(notebook.dir, `.git/refs/heads/${gitBranch}`),
         latestSha
       );
+      localStorage.removeItem(`pending/push/${notebook._id}`);
     }
 
     return notebooks;
