@@ -11,7 +11,8 @@ import {
   Divider,
   ListItemIcon,
   ListItemText,
-  Avatar
+  Avatar,
+  CircularProgress
 } from "@material-ui/core";
 import {
   fade,
@@ -324,7 +325,10 @@ export function Home(props: Props) {
             <Typography variant={"body1"} style={{ fontWeight: "bold" }}>
               {t("general/Notebooks")}
             </Typography>
-            <IconButton onClick={() => setAddNotebookDialogOpen(true)}>
+            <IconButton
+              onClick={() => setAddNotebookDialogOpen(true)}
+              disabled={!crossnoteContainer.initialized}
+            >
               <PlusCircle></PlusCircle>
             </IconButton>
           </Box>
@@ -340,6 +344,11 @@ export function Home(props: Props) {
             </ListItem>
           );
         })}
+        {!crossnoteContainer.initialized && (
+          <ListItem>
+            <CircularProgress style={{ margin: "0 auto" }}></CircularProgress>
+          </ListItem>
+        )}
       </List>
     </div>
   );

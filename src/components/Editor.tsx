@@ -1296,7 +1296,7 @@ export default function Editor(props: Props) {
               ) : (
                 <ListItem className={clsx(classes.menuItemOverride)}>
                   <Typography style={{ margin: "8px 0" }}>
-                    {"No tags"}
+                    {t("general/no-tags")}
                   </Typography>
                 </ListItem>
               )}

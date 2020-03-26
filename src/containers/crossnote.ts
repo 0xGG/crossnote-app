@@ -353,20 +353,23 @@ function useCrossnoteContainer(initialState: InitialState) {
         setHasSummaryMD(await crossnote.hasSummaryMD(args.notebook));
         setNotebookTagNode(crossnote.getNotebookTagNodeFromNotes(notes));
 
-        const newNote = notes.find(n => n.filePath === selectedNote.filePath);
-        if (!newNote) {
-          setSelectedNote(notes[0]); // TODO: pull might remove currently selectedNote
+        if (selectedNote) {
+          const newNote = notes.find(n => n.filePath === selectedNote.filePath);
+          if (!newNote) {
+            setSelectedNote(notes[0]); // TODO: pull might remove currently selectedNote
+          } else {
+            setSelectedNote(newNote);
+          }
         } else {
-          setSelectedNote(newNote);
+          setSelectedNote(notes[0]);
         }
-
         setNeedsToRefreshNotes(true);
       } catch (error) {
         setIsPushingNotebook(false);
         throw error;
       }
     },
-    [crossnote]
+    [crossnote, selectedNote]
   );
 
   const pullNotebook = useCallback(
@@ -391,13 +394,16 @@ function useCrossnoteContainer(initialState: InitialState) {
         setHasSummaryMD(await crossnote.hasSummaryMD(args.notebook));
         setNotebookTagNode(crossnote.getNotebookTagNodeFromNotes(notes));
 
-        const newNote = notes.find(n => n.filePath === selectedNote.filePath);
-        if (!newNote) {
-          setSelectedNote(notes[0]); // TODO: pull might remove currently selectedNote
+        if (selectedNote) {
+          const newNote = notes.find(n => n.filePath === selectedNote.filePath);
+          if (!newNote) {
+            setSelectedNote(notes[0]); // TODO: pull might remove currently selectedNote
+          } else {
+            setSelectedNote(newNote);
+          }
         } else {
-          setSelectedNote(newNote);
+          setSelectedNote(notes[0]);
         }
-
         setNeedsToRefreshNotes(true);
       } catch (error) {
         setIsPullingNotebook(false);

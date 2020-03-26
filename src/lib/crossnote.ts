@@ -134,6 +134,7 @@ export default class Crossnote {
   private exists: (path: string) => Promise<boolean>;
   private rename: (oldPath: string, newPath: string) => Promise<void>;
   private rmdir: (path: string) => Promise<void>;
+  private mkdirp: (path: string) => Promise<void>;
 
   private notebookDB: PouchDB.Database<Notebook>;
 
@@ -270,6 +271,15 @@ export default class Crossnote {
       }
 
       await rmdir(dirPath);
+    };
+
+    this.mkdirp = async (dirPath: string) => {
+      if (await this.exists(dirPath)) {
+        return;
+      } else {
+        await this.mkdirp(path.dirname(dirPath));
+        await this.mkdir(dirPath);
+      }
     };
   }
 
@@ -452,17 +462,7 @@ export default class Crossnote {
 
     const oldFilePath = note.filePath;
     const newDirPath = path.dirname(path.resolve(notebook.dir, newFilePath));
-    // Make directories recursively
-    const dirNames = newDirPath.split("/").slice(1);
-    for (let i = 0; i < dirNames.length; i++) {
-      const paths = ["/"];
-      for (let j = 0; j <= i; j++) {
-        paths.push(dirNames[j]);
-      }
-      if (!(await this.exists(paths.join("/")))) {
-        await this.mkdir(paths.join("/"));
-      }
-    }
+    this.mkdirp(newDirPath);
 
     // TODO: Check if newFilePath already exists. If so don't overwrite
     const exists = await this.exists(path.resolve(notebook.dir, newFilePath));
@@ -713,6 +713,8 @@ export default class Crossnote {
           continue;
         }
         const markdown = cache[filePath].markdown;
+        const dirname = path.dirname(path.resolve(notebook.dir, filePath));
+        await this.mkdirp(dirname);
         await this.writeFile(path.resolve(notebook.dir, filePath), markdown);
         await git.add({
           fs: this.fs,
@@ -785,6 +787,8 @@ export default class Crossnote {
           }
 
           // console.log("mergedText: ", mergedText);
+          const dirname = path.dirname(path.resolve(notebook.dir, filePath));
+          await this.mkdirp(dirname);
           await this.writeFile(
             path.resolve(notebook.dir, filePath),
             mergedText
@@ -796,6 +800,8 @@ export default class Crossnote {
           });
         } else {
           const markdown = cache[filePath].markdown;
+          const dirname = path.dirname(path.resolve(notebook.dir, filePath));
+          await this.mkdirp(dirname);
           await this.writeFile(path.resolve(notebook.dir, filePath), markdown);
           await git.add({
             fs: this.fs,
