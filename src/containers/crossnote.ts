@@ -340,6 +340,27 @@ function useCrossnoteContainer(initialState: InitialState) {
       try {
         await crossnote.pushNotebook(args);
         setIsPushingNotebook(false);
+        // TODO: Refactor. The code below is the same as pullNotebook
+        const notes = await crossnote.listNotes({
+          notebook: args.notebook,
+          dir: "./",
+          includeSubdirectories: true
+        });
+        setNotebookNotes(notes);
+        setNotebookDirectories(
+          await crossnote.getNotebookDirectoriesFromNotes(notes)
+        );
+        setHasSummaryMD(await crossnote.hasSummaryMD(args.notebook));
+        setNotebookTagNode(crossnote.getNotebookTagNodeFromNotes(notes));
+
+        const newNote = notes.find(n => n.filePath === selectedNote.filePath);
+        if (!newNote) {
+          setSelectedNote(notes[0]); // TODO: pull might remove currently selectedNote
+        } else {
+          setSelectedNote(newNote);
+        }
+
+        setNeedsToRefreshNotes(true);
       } catch (error) {
         setIsPushingNotebook(false);
         throw error;
