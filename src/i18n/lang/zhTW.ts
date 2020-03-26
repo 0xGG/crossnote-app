@@ -467,6 +467,10 @@ export const zhTW = {
     "tesseract/loaded language traineddata": "已讀取語言訓練數據",
     "tesseract/initializing api": "正在初始化程序接口",
     "tesseract/initialized api": "已初始化程序接口",
-    "tesseract/recognizing text": "正在識別文字"
+    "tesseract/recognizing text": "正在識別文字",
+
+    // Dialogs
+    "delete-file-dialog/title": "妳確定要刪除這個筆記？",
+    "delete-file-dialog/subtitle": "將不能被撤回"
   }
 };

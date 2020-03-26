@@ -770,13 +770,13 @@ export default class Crossnote {
             if (item.conflict) {
               hasConflict = true;
               mergedText += `\\<${"<".repeat(markerSize - 1)} ${ourName}\n`;
-              mergedText += item.conflict.a.join("");
+              mergedText += item.conflict.a.join("") + "\n";
               // if (format === "diff3") {
               //mergedText += `\\|${"|".repeat(markerSize - 1)} ${baseName}\n`;
               //mergedText += item.conflict.o.join("");
               // }
               mergedText += `\\=${"=".repeat(markerSize - 1)}\n`;
-              mergedText += item.conflict.b.join("");
+              mergedText += item.conflict.b.join("") + "\n";
               mergedText += `\\>${">".repeat(markerSize - 1)} ${theirName}\n`;
             }
           }

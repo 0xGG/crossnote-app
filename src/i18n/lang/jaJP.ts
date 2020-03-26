@@ -502,6 +502,10 @@ export const jaJP = {
     "tesseract/loaded language traineddata": "loaded language traineddata",
     "tesseract/initializing api": "initializing api",
     "tesseract/initialized api": "initialized api",
-    "tesseract/recognizing text": "recognizing text"
+    "tesseract/recognizing text": "recognizing text",
+
+    // Dialogs
+    "delete-file-dialog/title": "このノートを削除しますか?",
+    "delete-file-dialog/subtitle": "元に戻すことはできません"
   }
 };

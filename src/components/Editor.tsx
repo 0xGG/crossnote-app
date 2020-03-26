@@ -1335,9 +1335,11 @@ export default function Editor(props: Props) {
         open={deleteDialogOpen}
         onClose={() => setDeleteDialogOpen(false)}
       >
-        <DialogTitle>Are you sure to delete this file?</DialogTitle>
+        <DialogTitle>{t("delete-file-dialog/title")}</DialogTitle>
         <DialogContent>
-          <DialogContentText>Can't be undone</DialogContentText>
+          <DialogContentText>
+            {t("delete-file-dialog/subtitle")}
+          </DialogContentText>
         </DialogContent>
         <DialogActions>
           <Button
@@ -1347,9 +1349,11 @@ export default function Editor(props: Props) {
               setDeleteDialogOpen(false);
             }}
           >
-            Delete
+            {t("general/Delete")}
           </Button>
-          <Button onClick={() => setDeleteDialogOpen(false)}>Cancel</Button>
+          <Button onClick={() => setDeleteDialogOpen(false)}>
+            {t("general/cancel")}
+          </Button>
         </DialogActions>
       </Dialog>
       <ChangeFilePathDialog

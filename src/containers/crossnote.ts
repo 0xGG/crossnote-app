@@ -365,6 +365,8 @@ function useCrossnoteContainer(initialState: InitialState) {
         } else {
           setSelectedNote(newNote);
         }
+
+        setNeedsToRefreshNotes(true);
       } catch (error) {
         setIsPullingNotebook(false);
         throw error;
