@@ -59,6 +59,7 @@ import { getHeaderFromMarkdown } from "../utilities/note";
 import { printPreview } from "../utilities/preview";
 import ChangeFilePathDialog from "./ChangeFilePathDialog";
 import { SettingsContainer } from "../containers/settings";
+import { initMathPreview } from "../editor/views/math-preview";
 
 const VickyMD = require("vickymd");
 const is = require("is_js");
@@ -181,6 +182,36 @@ const useStyles = makeStyles((theme: Theme) =>
     },
     menuItemTextField: {
       paddingRight: theme.spacing(2)
+    },
+    // math
+    floatWin: {
+      position: "fixed",
+      zIndex: 100,
+      background: "#EEE",
+      backgroundImage: "linear-gradient(to bottom, #FFF, #EEE)",
+      borderRadius: "5px",
+      overflow: "hidden",
+      boxShadow: "0 3px 7px rgba(0,0,0,0.3)",
+      minWidth: "200px",
+      maxWidth: "70%"
+    },
+    floatWinHidden: {
+      display: "none"
+    },
+    floatWinTitle: {
+      display: "flex",
+      alignItems: "center",
+      background: "#579",
+      backgroundImage: "linear-gradient(to bottom, #68A, #579)",
+      color: "#eee"
+    },
+    floatWinContent: {
+      maxHeight: "80vh",
+      overflow: "auto",
+      padding: "10px 20px"
+    },
+    floatWinClose: {
+      color: "#eee"
     }
   })
 );
@@ -580,6 +611,7 @@ export default function Editor(props: Props) {
         }
       });
       setEditor(editor);
+      initMathPreview(editor);
     }
   }, [textAreaElement, note, editor]);
 
@@ -1430,6 +1462,24 @@ export default function Editor(props: Props) {
         imageElement={editImageElement}
         marker={editImageTextMarker}
       ></EditImageDialog>
+
+      <Box
+        id="math-preview"
+        className={clsx(classes.floatWin, "float-win", "float-win-hidden")}
+      >
+        <Box className={clsx(classes.floatWinTitle, "float-win-title")}>
+          <IconButton
+            className={clsx(classes.floatWinClose, "float-win-close")}
+          >
+            <Close></Close>
+          </IconButton>
+          <Typography>{t("general/math-preview")}</Typography>
+        </Box>
+        <Box
+          className={clsx(classes.floatWinContent, "float-win-content")}
+          id="math-preview-content"
+        ></Box>
+      </Box>
     </Box>
   );
 }
