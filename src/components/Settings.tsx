@@ -36,6 +36,7 @@ import {
   useUnlinkGitHubAccountMutation
 } from "../generated/graphql";
 import { startGitHubOAuth } from "../utilities/utils";
+import GitCommit from "../_git_commit";
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -549,6 +550,17 @@ export function Settings(props: Props) {
         </Box>*/}
         </Box>
       )}
+      <Box className={clsx(classes.section)} style={{ marginTop: "32px" }}>
+        <Link
+          href={`https://github.com/0xGG/crossnote/commit/${
+            GitCommit.logMessage.split(/\s+/)[0]
+          }`}
+        >
+          <Typography variant={"caption"}>
+            {"build " + GitCommit.logMessage}
+          </Typography>
+        </Link>
+      </Box>
       {cloudContainer.loggedIn ? (
         <Button
           variant={"outlined"}
