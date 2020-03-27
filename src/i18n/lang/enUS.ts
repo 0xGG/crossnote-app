@@ -153,6 +153,8 @@ export const enUS = {
     "general/disable-encryption": "Disable encryption",
     "general/decrypt-this-note": "Decrypt this note",
     "general/upload-the-profile": "Upload profile",
+    "general/commit-message": "Commit message",
+    "general/upload-notebook": "Upload the notebook",
 
     // Error
     "error/authentication-failed": "Authentication failed",

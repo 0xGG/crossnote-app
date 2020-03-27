@@ -60,6 +60,7 @@ import { printPreview } from "../utilities/preview";
 import ChangeFilePathDialog from "./ChangeFilePathDialog";
 import { SettingsContainer } from "../containers/settings";
 import { initMathPreview } from "../editor/views/math-preview";
+import EmojiDefinitions from "vickymd/addon/emoji";
 
 const VickyMD = require("vickymd");
 const is = require("is_js");
@@ -757,10 +758,14 @@ export default function Editor(props: Props) {
           hint: () => {
             const cursor = editor.getCursor();
             const token = editor.getTokenAt(cursor);
-            const start = token.string.lastIndexOf("/");
             const line = cursor.line;
+            const lineStr = editor.getLine(line);
             const end: number = cursor.ch;
-            const currentWord: string = token.string.slice(start + 1, end);
+            let start = token.start;
+            if (lineStr[start] !== "/") {
+              start = start - 1;
+            }
+            const currentWord: string = lineStr.slice(start, end);
 
             const commands = [
               {
@@ -866,6 +871,46 @@ export default function Editor(props: Props) {
                 displayText: `/abc - ${t("editor/toolbar/insert-abc-notation")}`
               }
             ];
+            const filtered = commands.filter(
+              item =>
+                item.displayText
+                  .toLocaleLowerCase()
+                  .indexOf(currentWord.toLowerCase()) >= 0
+            );
+            return {
+              list: filtered.length ? filtered : commands,
+              from: { line, ch: start },
+              to: { line, ch: end }
+            };
+          }
+        });
+      }
+
+      // Check emoji
+      if (changeObject.text.length === 1 && changeObject.text[0] === ":") {
+        editor.showHint({
+          closeOnUnfocus: true,
+          completeSingle: false,
+          hint: () => {
+            const cursor = editor.getCursor();
+            const token = editor.getTokenAt(cursor);
+            const line = cursor.line;
+            const lineStr = editor.getLine(line);
+            const end: number = cursor.ch;
+            let start = token.start;
+            if (lineStr[start] !== ":") {
+              start = start - 1;
+            }
+            const currentWord: string = lineStr.slice(start, end);
+
+            const commands: { text: string; displayText: string }[] = [];
+            for (const def in EmojiDefinitions) {
+              const emoji = EmojiDefinitions[def];
+              commands.push({
+                text: `:${def}: `,
+                displayText: `:${def}: ${emoji}`
+              });
+            }
             const filtered = commands.filter(
               item =>
                 item.displayText
