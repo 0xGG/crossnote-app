@@ -9,11 +9,26 @@ import {
   Typography,
   Box
 } from "@material-ui/core";
+import {
+  fade,
+  createStyles,
+  makeStyles,
+  Theme
+} from "@material-ui/core/styles";
+import clsx from "clsx";
 import { CrossnoteContainer } from "../containers/crossnote";
 import { Notebook } from "../lib/crossnote";
 import Noty from "noty";
 import { useTranslation } from "react-i18next";
 import { SettingsContainer } from "../containers/settings";
+
+const useStyles = makeStyles((theme: Theme) =>
+  createStyles({
+    textField: {
+      marginBottom: theme.spacing(2)
+    }
+  })
+);
 
 interface Props {
   open: boolean;
@@ -22,6 +37,7 @@ interface Props {
 }
 
 export default function PushNotebookDialog(props: Props) {
+  const classes = useStyles(props);
   const notebook = props.notebook;
   const [gitUsername, setGitUsername] = useState<string>(notebook.gitUsername);
   const [gitPassword, setGitPassword] = useState<string>(notebook.gitPassword);
@@ -104,7 +120,7 @@ export default function PushNotebookDialog(props: Props) {
       }}
     >
       <DialogTitle>
-        {`Push notebook ${notebook.name} to git repository`}
+        {`${t("general/upload-notebook")} "${notebook.name}"`}
         <Box>
           <Typography variant={"caption"}>
             {notebook.gitURL + ":" + notebook.gitBranch}
@@ -113,6 +129,7 @@ export default function PushNotebookDialog(props: Props) {
       </DialogTitle>
       <DialogContent>
         <TextField
+          className={clsx(classes.textField)}
           label={t("settings/author-name")}
           fullWidth={true}
           value={settingsContainer.authorName}
@@ -121,6 +138,7 @@ export default function PushNotebookDialog(props: Props) {
           }
         ></TextField>
         <TextField
+          className={clsx(classes.textField)}
           label={t("settings/author-email")}
           fullWidth={true}
           value={settingsContainer.authorEmail}
@@ -129,21 +147,32 @@ export default function PushNotebookDialog(props: Props) {
           }
         ></TextField>
         <TextField
-          label={"Commit message"}
+          className={clsx(classes.textField)}
+          label={t("general/commit-message")}
           fullWidth={true}
           value={commitMessage}
           onChange={event => setCommitMessage(event.target.value)}
         ></TextField>
         <TextField
-          label={"username"}
-          placeholder={"username"}
+          className={clsx(classes.textField)}
+          label={`${t("general/git-repository")} ${t("general/Username")} (${t(
+            "general/optional"
+          )})`}
+          placeholder={`${t("general/git-repository")} ${t(
+            "general/Username"
+          )} (${t("general/optional")})`}
           fullWidth={true}
           value={gitUsername}
           onChange={event => setGitUsername(event.target.value)}
         ></TextField>
         <TextField
-          label={"password"}
-          placeholder={"password"}
+          className={clsx(classes.textField)}
+          label={`${t("general/git-repository")} ${t("general/Password")} (${t(
+            "general/optional"
+          )})`}
+          placeholder={`${t("general/git-repository")} ${t(
+            "general/Password"
+          )} (${t("general/optional")})`}
           type={"password"}
           fullWidth={true}
           value={gitPassword}

@@ -733,7 +733,15 @@ function useCrossnoteContainer(initialState: InitialState) {
   }, [notes, selectedNote, pendingNote]);
 
   useEffect(() => {
-    setEditorMode(EditorMode.Preview);
+    if (selectedNote) {
+      if (selectedNote.markdown.length) {
+        setEditorMode(EditorMode.Preview);
+      } else {
+        setEditorMode(EditorMode.VickyMD);
+      }
+    } else {
+      setEditorMode(EditorMode.Preview);
+    }
   }, [selectedNote]);
 
   // Find and select the pending note

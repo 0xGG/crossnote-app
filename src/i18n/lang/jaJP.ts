@@ -153,6 +153,8 @@ export const jaJP = {
     "general/disable-encryption": "暗号化を無効にする",
     "general/decrypt-this-note": "このノートを復号化する",
     "general/upload-the-profile": "プロファイルをアップロードする",
+    "general/commit-message": "コミット メッセージ",
+    "general/upload-notebook": "ノートブックをアップロードする",
 
     // Error
     "error/authentication-failed": "認証に失敗しました",
