@@ -206,52 +206,50 @@ function useCrossnoteContainer(initialState: InitialState) {
   );
 
   const createNewNote = useCallback(
-    (fileName: string = "") => {
-      (async () => {
-        if (!fileName) {
-          fileName = "unnamed_" + randomID();
-        }
-        if (!fileName.endsWith(".md")) {
-          fileName = fileName + ".md";
-        }
-        let filePath;
-        let tags: string[] = [];
-        if (
-          selectedSection.type === SelectedSectionType.Notes ||
-          selectedSection.type === SelectedSectionType.Today ||
-          selectedSection.type === SelectedSectionType.Todo ||
-          selectedSection.type === SelectedSectionType.Tagged ||
-          selectedSection.type === SelectedSectionType.Untagged
-        ) {
-          filePath = fileName;
-        } else if (selectedSection.type === SelectedSectionType.Tag) {
-          filePath = fileName;
-          tags = [selectedSection.path];
-        } else {
-          filePath = path.relative(
-            selectedNotebook.dir,
-            path.resolve(selectedNotebook.dir, selectedSection.path, fileName)
-          );
-        }
+    async (fileName: string = "") => {
+      if (!fileName) {
+        fileName = "unnamed_" + randomID();
+      }
+      if (!fileName.endsWith(".md")) {
+        fileName = fileName + ".md";
+      }
+      let filePath;
+      let tags: string[] = [];
+      if (
+        selectedSection.type === SelectedSectionType.Notes ||
+        selectedSection.type === SelectedSectionType.Today ||
+        selectedSection.type === SelectedSectionType.Todo ||
+        selectedSection.type === SelectedSectionType.Tagged ||
+        selectedSection.type === SelectedSectionType.Untagged
+      ) {
+        filePath = fileName;
+      } else if (selectedSection.type === SelectedSectionType.Tag) {
+        filePath = fileName;
+        tags = [selectedSection.path];
+      } else {
+        filePath = path.relative(
+          selectedNotebook.dir,
+          path.resolve(selectedNotebook.dir, selectedSection.path, fileName)
+        );
+      }
 
-        const noteConfig: NoteConfig = {
-          id: "",
-          tags: tags,
-          modifiedAt: new Date(),
-          createdAt: new Date()
-        };
-        await crossnote.writeNote(selectedNotebook, filePath, "", noteConfig);
-        const note: Note = {
-          notebook: selectedNotebook,
-          filePath: filePath,
-          markdown: "",
-          config: noteConfig
-        };
-        setNotebookNotes(notes => [note, ...notes]);
-        setSelectedNote(note);
-        setDisplayMobileEditor(true);
-        setEditorMode(EditorMode.VickyMD);
-      })();
+      const noteConfig: NoteConfig = {
+        id: "",
+        tags: tags,
+        modifiedAt: new Date(),
+        createdAt: new Date()
+      };
+      await crossnote.writeNote(selectedNotebook, filePath, "", noteConfig);
+      const note: Note = {
+        notebook: selectedNotebook,
+        filePath: filePath,
+        markdown: "",
+        config: noteConfig
+      };
+      setNotebookNotes(notes => [note, ...notes]);
+      setSelectedNote(note);
+      setDisplayMobileEditor(true);
+      setEditorMode(EditorMode.VickyMD);
     },
     [selectedNotebook, crossnote, selectedSection]
   );
