@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react";
 import {
   fade,
   createStyles,
@@ -126,6 +126,7 @@ export default function NotesPanel(props: Props) {
   const classes = useStyles(props);
   const { t } = useTranslation();
   const [sortMenuAnchorEl, setSortMenuAnchorEl] = useState<HTMLElement>(null);
+  const [isCreatingNote, setIsCreatingNote] = useState<boolean>(false);
   const crossnoteContainer = CrossnoteContainer.useContainer();
 
   // Search
@@ -135,6 +136,18 @@ export default function NotesPanel(props: Props) {
     notebookConfigurationDialogOpen,
     setNotebookConfigurationDialogOpen
   ] = useState<boolean>(false);
+
+  const createNewNote = useCallback(() => {
+    setIsCreatingNote(true);
+    crossnoteContainer
+      .createNewNote()
+      .then(() => {
+        setIsCreatingNote(false);
+      })
+      .catch(() => {
+        setIsCreatingNote(false);
+      });
+  }, [crossnoteContainer]);
 
   return (
     <Box className={clsx(classes.notesPanel)}>
@@ -161,9 +174,8 @@ export default function NotesPanel(props: Props) {
             />
           </div>
           <IconButton
-            onClick={() => {
-              crossnoteContainer.createNewNote();
-            }}
+            onClick={createNewNote}
+            disabled={!crossnoteContainer.initialized || isCreatingNote}
           >
             <FileEditOutline></FileEditOutline>
           </IconButton>
