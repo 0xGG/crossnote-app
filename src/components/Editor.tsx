@@ -139,6 +139,9 @@ const useStyles = makeStyles((theme: Theme) =>
         padding: theme.spacing(1)
       }
     },
+    presentation: {
+      padding: "0 !important"
+    },
     fullScreen: {
       position: "fixed",
       width: "100%",
@@ -149,6 +152,7 @@ const useStyles = makeStyles((theme: Theme) =>
       overflow: "auto",
       padding: "0"
     },
+
     editor: {
       width: "100%",
       height: "100%"
@@ -244,6 +248,9 @@ export default function Editor(props: Props) {
   const [filePathDialogOpen, setFilePathDialogOpen] = useState<boolean>(false);
   const [pushDialogOpen, setPushDialogOpen] = useState<boolean>(false);
   const [previewElement, setPreviewElement] = useState<HTMLElement>(null);
+  const [previewIsPresentation, setPreviewIsPresentation] = useState<boolean>(
+    false
+  );
   const [gitStatus, setGitStatus] = useState<string>("");
   const [fullScreenMode, setFullScreenMode] = useState<boolean>(false);
   const [tagsMenuAnchorEl, setTagsMenuAnchorEl] = useState<HTMLElement>(null);
@@ -724,12 +731,14 @@ export default function Editor(props: Props) {
             (previewElement.children[0] as HTMLIFrameElement).contentDocument
               .body as HTMLElement
           );
+          setPreviewIsPresentation(true);
         } else {
           // normal
           // previewElement.style.maxWidth = `${EditorPreviewMaxWidth}px`;
           previewElement.style.height = "100%";
           previewElement.style.overflow = "hidden !important";
           handleLinksClickEvent(previewElement);
+          setPreviewIsPresentation(false);
         }
       } else {
         previewElement.innerHTML = `🔐 ${t("general/encrypted")}`;
@@ -765,7 +774,9 @@ export default function Editor(props: Props) {
             if (lineStr[start] !== "/") {
               start = start - 1;
             }
-            const currentWord: string = lineStr.slice(start, end);
+            const currentWord: string = lineStr
+              .slice(start, end)
+              .replace(/^\//, "");
 
             const commands = [
               {
@@ -901,7 +912,9 @@ export default function Editor(props: Props) {
             if (lineStr[start] !== ":") {
               start = start - 1;
             }
-            const currentWord: string = lineStr.slice(start, end);
+            const currentWord: string = lineStr
+              .slice(start, end)
+              .replace(/^:/, "");
 
             const commands: { text: string; displayText: string }[] = [];
             for (const def in EmojiDefinitions) {
@@ -1366,7 +1379,11 @@ export default function Editor(props: Props) {
         /*!editorContainer.pinPreviewOnTheSide &&*/
         editor ? (
           <div
-            className={clsx(classes.preview, "preview")}
+            className={clsx(
+              classes.preview,
+              "preview",
+              previewIsPresentation ? classes.presentation : null
+            )}
             id="preview"
             ref={(element: HTMLElement) => {
               setPreviewElement(element);
