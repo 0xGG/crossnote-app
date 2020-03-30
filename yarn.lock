@@ -1678,10 +1678,10 @@
   dependencies:
     react-beautiful-dnd "^13.0.0"
 
-"@material-ui/core@^4.9.7":
-  version "4.9.7"
-  resolved "https://registry.npm.taobao.org/@material-ui/core/download/@material-ui/core-4.9.7.tgz#0c1caf123278770f34c5d8e9ecd9e1314f87a621"
-  integrity sha1-DByvEjJ4dw80xdjp7NnhMU+HpiE=
+"@material-ui/core@^4.9.8":
+  version "4.9.8"
+  resolved "https://registry.npm.taobao.org/@material-ui/core/download/@material-ui/core-4.9.8.tgz#21c37a9aadf4ff8a2719b8cfcad0ae9e6ca53791"
+  integrity sha1-IcN6mq30/4onGbjPytCunmylN5E=
   dependencies:
     "@babel/runtime" "^7.4.4"
     "@material-ui/styles" "^4.9.6"
@@ -1703,10 +1703,10 @@
   dependencies:
     "@babel/runtime" "^7.4.4"
 
-"@material-ui/lab@^4.0.0-alpha.46":
-  version "4.0.0-alpha.46"
-  resolved "https://registry.npm.taobao.org/@material-ui/lab/download/@material-ui/lab-4.0.0-alpha.46.tgz#453546d58d3a0064263c198dedb6a1c54d24d1a4"
-  integrity sha1-RTVG1Y06AGQmPBmN7bahxU0k0aQ=
+"@material-ui/lab@^4.0.0-alpha.47":
+  version "4.0.0-alpha.47"
+  resolved "https://registry.npm.taobao.org/@material-ui/lab/download/@material-ui/lab-4.0.0-alpha.47.tgz#757a336e4c2496f700a392ff41e25a7d460a387b"
+  integrity sha1-dXozbkwklvcAo5L/QeJafUYKOHs=
   dependencies:
     "@babel/runtime" "^7.4.4"
     "@material-ui/utils" "^4.9.6"
@@ -1770,24 +1770,6 @@
     "@babel/runtime" "^7.4.4"
     prop-types "^15.7.2"
     react-is "^16.8.0"
-
-"@mattkrick/fast-rtc-peer@^0.3.2":
-  version "0.3.2"
-  resolved "https://registry.npm.taobao.org/@mattkrick/fast-rtc-peer/download/@mattkrick/fast-rtc-peer-0.3.2.tgz#1d52730d0ccf342cbc7557e01ea57d810f286eac"
-  integrity sha1-HVJzDQzPNCy8dVfgHqV9gQ8obqw=
-  dependencies:
-    eventemitter3 "^3.1.0"
-    shortid "^2.2.12"
-    tslib "^1.9.3"
-
-"@mattkrick/fast-rtc-swarm@^0.3.3":
-  version "0.3.3"
-  resolved "https://registry.npm.taobao.org/@mattkrick/fast-rtc-swarm/download/@mattkrick/fast-rtc-swarm-0.3.3.tgz#3fd2f6dd0e9a10fbd3c8ad50abbaf010c0d6b038"
-  integrity sha1-P9L23Q6aEPvTyK1Qq7rwEMDWsDg=
-  dependencies:
-    "@mattkrick/fast-rtc-peer" "^0.3.2"
-    eventemitter3 "^3.1.0"
-    tslib "^1.9.3"
 
 "@mdi/font@^5.0.45":
   version "5.0.45"
@@ -2155,7 +2137,7 @@
     "@types/node" "*"
     form-data "^3.0.0"
 
-"@types/node@*", "@types/node@^13.9.2":
+"@types/node@*":
   version "13.9.3"
   resolved "https://registry.npm.taobao.org/@types/node/download/@types/node-13.9.3.tgz?cache=0&sync_timestamp=1584882755623&other_urls=https%3A%2F%2Fregistry.npm.taobao.org%2F%40types%2Fnode%2Fdownload%2F%40types%2Fnode-13.9.3.tgz#6356df2647de9eac569f9a52eda3480fa9e70b4d"
   integrity sha1-Y1bfJkfenqxWn5pS7aNID6nnC00=
@@ -2164,6 +2146,11 @@
   version "10.17.17"
   resolved "https://registry.npm.taobao.org/@types/node/download/@types/node-10.17.17.tgz?cache=0&sync_timestamp=1584882755623&other_urls=https%3A%2F%2Fregistry.npm.taobao.org%2F%40types%2Fnode%2Fdownload%2F%40types%2Fnode-10.17.17.tgz#7a183163a9e6ff720d86502db23ba4aade5999b8"
   integrity sha1-ehgxY6nm/3INhlAtsjukqt5Zmbg=
+
+"@types/node@^13.9.5":
+  version "13.9.5"
+  resolved "https://registry.npm.taobao.org/@types/node/download/@types/node-13.9.5.tgz?cache=0&sync_timestamp=1585327949603&other_urls=https%3A%2F%2Fregistry.npm.taobao.org%2F%40types%2Fnode%2Fdownload%2F%40types%2Fnode-13.9.5.tgz#59738bf30b31aea1faa2df7f4a5f55613750cf00"
+  integrity sha1-WXOL8wsxrqH6ot9/Sl9VYTdQzwA=
 
 "@types/parse-json@^4.0.0":
   version "4.0.0"
@@ -2404,10 +2391,10 @@
     "@types/prop-types" "*"
     csstype "^2.2.0"
 
-"@types/react@^16.9.26":
-  version "16.9.26"
-  resolved "https://registry.npm.taobao.org/@types/react/download/@types/react-16.9.26.tgz?cache=0&sync_timestamp=1585251394052&other_urls=https%3A%2F%2Fregistry.npm.taobao.org%2F%40types%2Freact%2Fdownload%2F%40types%2Freact-16.9.26.tgz#1e55803e468f5393413e29033538cc9aaed6cec9"
-  integrity sha1-HlWAPkaPU5NBPikDNTjMmq7Wzsk=
+"@types/react@^16.9.27":
+  version "16.9.27"
+  resolved "https://registry.npm.taobao.org/@types/react/download/@types/react-16.9.27.tgz?cache=0&sync_timestamp=1585426591155&other_urls=https%3A%2F%2Fregistry.npm.taobao.org%2F%40types%2Freact%2Fdownload%2F%40types%2Freact-16.9.27.tgz#7fc5db99e3ec3f21735b44d3560cff684856814a"
+  integrity sha1-f8XbmePsPyFzW0TTVgz/aEhWgUo=
   dependencies:
     "@types/prop-types" "*"
     csstype "^2.2.0"
@@ -10665,15 +10652,10 @@ nanobus@^4.3.3:
     nanotiming "^7.2.0"
     remove-array-items "^1.0.0"
 
-nanoid@^2.1.0:
-  version "2.1.11"
-  resolved "https://registry.npm.taobao.org/nanoid/download/nanoid-2.1.11.tgz#ec24b8a758d591561531b4176a01e3ab4f0f0280"
-  integrity sha1-7CS4p1jVkVYVMbQXagHjq08PAoA=
-
-nanoid@^3.0.0:
-  version "3.0.0"
-  resolved "https://registry.npm.taobao.org/nanoid/download/nanoid-3.0.0.tgz#760f6d7e076935d086aa3c790e0272cab41abbcb"
-  integrity sha1-dg9tfgdpNdCGqjx5DgJyyrQau8s=
+nanoid@^3.0.2:
+  version "3.0.2"
+  resolved "https://registry.npm.taobao.org/nanoid/download/nanoid-3.0.2.tgz?cache=0&other_urls=https%3A%2F%2Fregistry.npm.taobao.org%2Fnanoid%2Fdownload%2Fnanoid-3.0.2.tgz#37e91e6f5277ce22335be473e2a5db1bd96dd026"
+  integrity sha1-N+keb1J3ziIzW+Rz4qXbG9lt0CY=
 
 nanoiterator@^1.1.0:
   version "1.2.1"
@@ -14014,13 +13996,6 @@ shellwords@^0.1.1:
   resolved "https://registry.npm.taobao.org/shellwords/download/shellwords-0.1.1.tgz#d6b9181c1a48d397324c84871efbcfc73fc0654b"
   integrity sha1-1rkYHBpI05cyTISHHvvPxz/AZUs=
 
-shortid@^2.2.12:
-  version "2.2.15"
-  resolved "https://registry.npm.taobao.org/shortid/download/shortid-2.2.15.tgz#2b902eaa93a69b11120373cd42a1f1fe4437c122"
-  integrity sha1-K5AuqpOmmxESA3PNQqHx/kQ3wSI=
-  dependencies:
-    nanoid "^2.1.0"
-
 side-channel@^1.0.2:
   version "1.0.2"
   resolved "https://registry.npm.taobao.org/side-channel/download/side-channel-1.0.2.tgz#df5d1abadb4e4bf4af1cd8852bf132d2f7876947"
@@ -15945,10 +15920,10 @@ verror@1.10.0:
     core-util-is "1.0.2"
     extsprintf "^1.2.0"
 
-vickymd@0.1.8:
-  version "0.1.8"
-  resolved "https://registry.npm.taobao.org/vickymd/download/vickymd-0.1.8.tgz?cache=0&sync_timestamp=1585307764519&other_urls=https%3A%2F%2Fregistry.npm.taobao.org%2Fvickymd%2Fdownload%2Fvickymd-0.1.8.tgz#95e6c8c343ac54b6c82bf82187b6012fd625e123"
-  integrity sha1-lebIw0OsVLbIK/ghh7YBL9Yl4SM=
+vickymd@0.1.9:
+  version "0.1.9"
+  resolved "https://registry.npm.taobao.org/vickymd/download/vickymd-0.1.9.tgz#3254e4fcee01586bdd1b49e6d19171b25f444508"
+  integrity sha1-MlTk/O4BWGvdG0nm0ZFxsl9ERQg=
   optionalDependencies:
     echarts "^4.7.0"
     emojione "^4.5.0"

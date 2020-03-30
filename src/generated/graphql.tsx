@@ -736,7 +736,7 @@ export type CreateCommentWidgetMutation = (
   { __typename?: 'Mutation' }
   & { createWidget: (
     { __typename?: 'Widget' }
-    & CommentWidgetFieldsFragment
+    & Pick<Widget, 'id'>
   ) }
 );
 
@@ -939,6 +939,19 @@ export type CommentWidgetFieldsFragment = (
         & CommentWidgetMessageConnectionFieldsFragment
       ) }
     ) }
+  ) }
+);
+
+export type CommentWidgetQueryVariables = {
+  widgetID: Scalars['UUID'];
+};
+
+
+export type CommentWidgetQuery = (
+  { __typename?: 'Query' }
+  & { widget: (
+    { __typename?: 'Widget' }
+    & CommentWidgetFieldsFragment
   ) }
 );
 
@@ -1225,10 +1238,10 @@ export function useVerifyEmailMutation() {
 export const CreateCommentWidgetDocument = gql`
     mutation CreateCommentWidget($title: String!, $source: String!) {
   createWidget(input: {title: $title, source: $source, type: COMMENT}) {
-    ...CommentWidgetFields
+    id
   }
 }
-    ${CommentWidgetFieldsFragmentDoc}`;
+    `;
 
 export const CreateCommentWidgetComponent = (props: Omit<Urql.MutationProps<CreateCommentWidgetMutation, CreateCommentWidgetMutationVariables>, 'query'> & { variables?: CreateCommentWidgetMutationVariables }) => (
   <Urql.Mutation {...props} query={CreateCommentWidgetDocument} />
@@ -1425,6 +1438,22 @@ export const UpdateWidgetComponent = (props: Omit<Urql.MutationProps<UpdateWidge
 
 export function useUpdateWidgetMutation() {
   return Urql.useMutation<UpdateWidgetMutation, UpdateWidgetMutationVariables>(UpdateWidgetDocument);
+};
+export const CommentWidgetDocument = gql`
+    query CommentWidget($widgetID: UUID!) {
+  widget(id: $widgetID) {
+    ...CommentWidgetFields
+  }
+}
+    ${CommentWidgetFieldsFragmentDoc}`;
+
+export const CommentWidgetComponent = (props: Omit<Urql.QueryProps<CommentWidgetQuery, CommentWidgetQueryVariables>, 'query'> & { variables: CommentWidgetQueryVariables }) => (
+  <Urql.Query {...props} query={CommentWidgetDocument} />
+);
+
+
+export function useCommentWidgetQuery(options: Omit<Urql.UseQueryArgs<CommentWidgetQueryVariables>, 'query'> = {}) {
+  return Urql.useQuery<CommentWidgetQuery>({ query: CommentWidgetDocument, ...options });
 };
 export const CommentWidgetMessagesDocument = gql`
     query CommentWidgetMessages($widgetID: UUID!, $before: UUID!, $after: UUID!, $first: Int!, $last: Int!) {

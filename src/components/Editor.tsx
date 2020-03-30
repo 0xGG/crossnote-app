@@ -1103,7 +1103,10 @@ export default function Editor(props: Props) {
             position: "relative"
           }}
           onClick={() => crossnoteContainer.createNewNote()}
-          disabled={crossnoteContainer.isLoadingNotebook}
+          disabled={
+            !crossnoteContainer.initialized ||
+            crossnoteContainer.isLoadingNotebook
+          }
           variant={"outlined"}
         >
           <Typography>{`📝 ${t("general/add-a-note")}`}</Typography>

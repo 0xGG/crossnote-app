@@ -1,6 +1,6 @@
 mutation CreateCommentWidget($title: String!, $source: String!) {
   createWidget(input: { title: $title, source: $source, type: COMMENT }) {
-    ...CommentWidgetFields
+    id
   }
 }
 

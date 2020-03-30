@@ -60,6 +60,12 @@ fragment CommentWidgetFields on Widget {
   }
 }
 
+query CommentWidget($widgetID: UUID!) {
+  widget(id: $widgetID) {
+    ...CommentWidgetFields
+  }
+}
+
 query CommentWidgetMessages(
   $widgetID: UUID!
   $before: UUID!
