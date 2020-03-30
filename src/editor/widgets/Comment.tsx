@@ -1,7 +1,12 @@
 import { WidgetCreator, WidgetArgs } from "vickymd/widget";
 import React, { useState, useEffect, useCallback } from "react";
 import ReactDOM from "react-dom";
-import { createStyles, makeStyles, Theme } from "@material-ui/core/styles";
+import {
+  createStyles,
+  makeStyles,
+  Theme,
+  ThemeProvider
+} from "@material-ui/core/styles";
 import clsx from "clsx";
 import Identicon from "identicon.js";
 import { sha256 } from "js-sha256";
@@ -31,14 +36,17 @@ import {
   LinkVariant,
   CommentOutline,
   StickerEmoji,
-  TrashCan,
-  TrashCanOutline
+  TrashCanOutline,
+  Pencil
 } from "mdi-material-ui";
+import { crossnoteTheme } from "../../utilities/theme";
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
     commentWidget: {
-      position: "relative"
+      position: "relative",
+      borderLeft: `4px solid ${theme.palette.primary.light}`,
+      backgroundColor: theme.palette.grey[100]
     },
     topBar: {
       display: "flex",
@@ -67,7 +75,7 @@ const useStyles = makeStyles((theme: Theme) =>
     button: {
       color: "rgba(0, 0, 0, 0.54)"
     },
-    deleteBtn: {
+    actionButtons: {
       position: "absolute",
       right: "0",
       top: "0"
@@ -280,9 +288,14 @@ function CommentWidget(props: WidgetArgs) {
         </Tooltip>
       </Box>
       {!props.isPreview && (
-        <IconButton className={clsx(classes.deleteBtn)} onClick={deleteWidget}>
-          <TrashCanOutline></TrashCanOutline>
-        </IconButton>
+        <Box className={clsx(classes.actionButtons)}>
+          <IconButton>
+            <Pencil></Pencil>
+          </IconButton>
+          <IconButton onClick={deleteWidget}>
+            <TrashCanOutline></TrashCanOutline>
+          </IconButton>
+        </Box>
       )}
     </Box>
   );
@@ -292,7 +305,9 @@ export const CommentWidgetCreator: WidgetCreator = args => {
   const el = document.createElement("span");
   ReactDOM.render(
     <Provider value={GraphQLClient}>
-      <CommentWidget {...args}></CommentWidget>
+      <ThemeProvider theme={crossnoteTheme}>
+        <CommentWidget {...args}></CommentWidget>
+      </ThemeProvider>
     </Provider>,
     el
   );
