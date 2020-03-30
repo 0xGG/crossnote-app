@@ -880,6 +880,10 @@ export default function Editor(props: Props) {
               {
                 text: "`@crossnote.abc`  \n",
                 displayText: `/abc - ${t("editor/toolbar/insert-abc-notation")}`
+              },
+              {
+                text: "`@crossnote.comment`  \n",
+                displayText: `/crossnote.comment - Insert crossnote cloud comment widget`
               }
             ];
             const filtered = commands.filter(

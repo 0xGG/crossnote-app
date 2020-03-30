@@ -33,6 +33,7 @@ import { YoutubeWidgetCreator } from "./widgets/Youtube";
 import { OCRWidgetCreator } from "./widgets/OCR";
 import { KanbanWidgetCreator } from "./widgets/Kanban";
 import { ABCWidgetCreator } from "./widgets/ABC";
+import { CommentWidgetCreator } from "./widgets/Comment";
 
 // Set necessary window scope variables
 window["CodeMirror"] = require("codemirror");
@@ -47,3 +48,4 @@ registerWidgetCreator("crossnote.youtube", YoutubeWidgetCreator);
 registerWidgetCreator("crossnote.ocr", OCRWidgetCreator);
 registerWidgetCreator("crossnote.kanban", KanbanWidgetCreator);
 registerWidgetCreator("crossnote.abc", ABCWidgetCreator);
+registerWidgetCreator("crossnote.comment", CommentWidgetCreator);

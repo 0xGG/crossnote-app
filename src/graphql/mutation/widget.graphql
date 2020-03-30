@@ -1,0 +1,7 @@
+mutation DeleteWidget($id: UUID!) {
+  deleteWidget(input: { id: $id })
+}
+
+mutation UpdateWidget($id: UUID!, $title: String!, $source: String!) {
+  updateWidget(input: { id: $id, title: $title, source: $source })
+}
