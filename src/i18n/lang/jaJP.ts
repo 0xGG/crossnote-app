@@ -155,6 +155,7 @@ export const jaJP = {
     "general/upload-the-profile": "プロファイルをアップロードする",
     "general/commit-message": "コミット メッセージ",
     "general/upload-notebook": "ノートブックをアップロードする",
+    "general/Comments": "コメント",
 
     // Error
     "error/authentication-failed": "認証に失敗しました",
@@ -192,20 +193,6 @@ export const jaJP = {
 
     // UserTags
     "user-tags/follow-a-tag": "ラベルをフォロー",
-
-    // ChatMessage
-    "chat-message/reply-to-this-user": "このユーザーに返信",
-    "chat-message/add-reaction-to-this-message":
-      "このメッセージへの応答を追加します",
-    "chat-message/edit-this-message": "このメッセージを編集する",
-    "chat-message/modified-message": "変更されたメッセージ",
-
-    // ChatPanel
-    "chat-panel/post-message-failure": "メッセージの送信に失敗しました",
-    "chat-panel/unsubscribe-info":
-      "このチャットグループから退会すると、他のユーザーがあなたにメンションした場合にのみ通知を受けることができます",
-    "chat-panel/subscribe-info":
-      "このチャットグループに登録すると、誰かがメッセージを送信したときに通知されます",
 
     // Notifications
     "notifications/refresh": "更新して新しいメッセージを表示",
@@ -507,8 +494,22 @@ export const jaJP = {
     "tesseract/initialized api": "initialized api",
     "tesseract/recognizing text": "recognizing text",
 
+    // Comment widget
+    "widget/crossnote.comment/reply-to-this-user": "このユーザーに返信",
+    "widget/crossnote.comment/add-reaction-to-this-comment":
+      "このコメントへの応答を追加します",
+    "widget/crossnote.comment/edit-this-message": "このコメントを編集する",
+    "widget/crossnote.comment/modified-comment": "変更されたコメント",
+    "widget/crossnote.comment/post-comment-failure":
+      "コメントの送信に失敗しました",
+    "widget/crossnote.comment/unsubscribe-info": "コメントの購読を解除する",
+    "widget/crossnote.comment/subscribe-info": "コメントを購読する",
+    "widget/crossnote.comment/view-more-comments": "その他のコメントを表示する",
+
     // Dialogs
     "delete-file-dialog/title": "このノートを削除しますか?",
-    "delete-file-dialog/subtitle": "元に戻すことはできません"
+    "delete-file-dialog/subtitle": "元に戻すことはできません",
+    "add-notebook-dialog/disclaimer":
+      "すべてのノートブックデータは、ブラウザにローカルに保存されます。"
   }
 };

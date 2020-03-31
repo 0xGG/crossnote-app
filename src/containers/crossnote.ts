@@ -771,7 +771,7 @@ function useCrossnoteContainer(initialState: InitialState) {
       setNeedsToRefreshNotes(false);
       setNotes(notes => [...notes]);
     }
-  }, 4000);
+  }, 8000); // TODO: the delay might be dependent on the number of notes...
 
   return {
     crossnote,

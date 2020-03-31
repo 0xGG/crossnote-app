@@ -153,6 +153,7 @@ export const zhTW = {
     "general/upload-the-profile": "上傳賬戶信息",
     "general/commit-message": "提交說明",
     "general/upload-notebook": "上傳筆記本",
+    "general/Comments": "評論",
 
     // Error
     "error/authentication-failed": "認証失敗",
@@ -188,19 +189,6 @@ export const zhTW = {
 
     // UserTags
     "user-tags/follow-a-tag": "關注一個標籤",
-
-    // ChatMessage
-    "chat-message/reply-to-this-user": "回復給這個用戶",
-    "chat-message/add-reaction-to-this-message": "給這條消息添加反應",
-    "chat-message/edit-this-message": "編輯這條消息",
-    "chat-message/modified-message": "編輯过的消息",
-
-    // ChatPanel
-    "chat-panel/post-message-failure": "發送消息失敗",
-    "chat-panel/unsubscribe-info":
-      "取消訂閱這個聊天群將會使你只有在別人提到你的時候才會收到通知",
-    "chat-panel/subscribe-info":
-      "訂閱這個聊天群將會讓你在被人發送消息的時候收到通知",
 
     // Notifications
     "notifications/refresh": "刷新來查看新的消息",
@@ -472,8 +460,21 @@ export const zhTW = {
     "tesseract/initialized api": "已初始化程序接口",
     "tesseract/recognizing text": "正在識別文字",
 
+    // Comment widget
+    "widget/crossnote.comment/reply-to-this-user": "回復給這個用戶",
+    "widget/crossnote.comment/add-reaction-to-this-comment":
+      "給這條評論添加反應",
+    "widget/crossnote.comment/edit-this-message": "編輯這條評論",
+    "widget/crossnote.comment/modified-comment": "編輯过的評論",
+    "widget/crossnote.comment/post-comment-failure": "發送評論失敗",
+    "widget/crossnote.comment/unsubscribe-info": "取消訂閱評論",
+    "widget/crossnote.comment/subscribe-info": "訂閱評論",
+    "widget/crossnote.comment/view-more-comments": "查看更多的評論",
+
     // Dialogs
     "delete-file-dialog/title": "妳確定要刪除這個筆記？",
-    "delete-file-dialog/subtitle": "將不能被撤回"
+    "delete-file-dialog/subtitle": "將不能被撤回",
+    "add-notebook-dialog/disclaimer":
+      "所有筆記本的資料將只會被保存于瀏覽器本地。"
   }
 };

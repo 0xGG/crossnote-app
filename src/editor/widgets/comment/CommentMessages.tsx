@@ -259,7 +259,7 @@ export function CommentMessage(props: Props) {
           color={"textSecondary"}
           className={clsx(classes.modifiedCaption)}
         >
-          {t("chat-message/modified-message")}
+          {t("widget/crossnote.comment/modified-comment")}
         </Typography>
       )}
       <div
@@ -292,7 +292,9 @@ export function CommentMessage(props: Props) {
                 style={{ marginRight: "8px" }}
                 className={clsx(classes.reactionChip)}
                 onClick={() => {
-                  if (reactionSummary.selfAuthored) {
+                  if (!globalContainers.cloudContainer.loggedIn) {
+                    globalContainers.cloudContainer.setAuthDialogOpen(true);
+                  } else if (reactionSummary.selfAuthored) {
                     executeRemoveReactionFromCommentWidgetMessageMutation({
                       messageID: message.id,
                       reaction: reactionSummary.reaction
@@ -332,19 +334,21 @@ export function CommentMessage(props: Props) {
         }}
       >
         <Card>
-          <Tooltip title={t("chat-message/reply-to-this-user")}>
+          <Tooltip title={t("widget/crossnote.comment/reply-to-this-user")}>
             <IconButton onClick={handleReply}>
               <Reply style={actionBtnClass}></Reply>
             </IconButton>
           </Tooltip>
-          <Tooltip title={t("chat-message/add-reaction-to-this-message")}>
+          <Tooltip
+            title={t("widget/crossnote.comment/add-reaction-to-this-comment")}
+          >
             <IconButton onClick={() => setEmojiPickerOpen(true)}>
               <StickerEmoji style={actionBtnClass}></StickerEmoji>
             </IconButton>
           </Tooltip>
           {globalContainers.cloudContainer.loggedIn &&
             message.author.id === globalContainers.cloudContainer.viewer.id && (
-              <Tooltip title={t("chat-message/edit-this-message")}>
+              <Tooltip title={t("widget/crossnote.comment/edit-this-message")}>
                 <IconButton
                   onClick={() => props.onModifyChatMessage(message.id)}
                 >
@@ -360,14 +364,18 @@ export function CommentMessage(props: Props) {
           emoji={""}
           showSkinTones={false /* Disable skin for now */}
           onSelect={data => {
-            // console.log("Emoji chosen", data);
-            setEmojiPickerOpen(false);
-            executeAddReactionToCommentWidgetMessageMutation({
-              messageID: message.id,
-              reaction: data.colons
-            });
-            updateReactionSummaries(data.colons);
-            handleClose();
+            if (!globalContainers.cloudContainer.loggedIn) {
+              setEmojiPickerOpen(false);
+              globalContainers.cloudContainer.setAuthDialogOpen(true);
+            } else {
+              setEmojiPickerOpen(false);
+              executeAddReactionToCommentWidgetMessageMutation({
+                messageID: message.id,
+                reaction: data.colons
+              });
+              updateReactionSummaries(data.colons);
+              handleClose();
+            }
           }}
         />
       </Dialog>

@@ -7,9 +7,16 @@ import {
   Box,
   IconButton,
   DialogActions,
-  Button
+  Button,
+  useMediaQuery,
+  Tooltip
 } from "@material-ui/core";
-import { createStyles, makeStyles, Theme } from "@material-ui/core/styles";
+import {
+  createStyles,
+  makeStyles,
+  Theme,
+  useTheme
+} from "@material-ui/core/styles";
 import clsx from "clsx";
 import {
   CommentWidgetFieldsFragment,
@@ -27,7 +34,7 @@ import {
   getMentionsFromMarkdown
 } from "../../../utilities/note";
 import { UUIDNil } from "../../../utilities/utils";
-import { BellOutline, Bell } from "mdi-material-ui";
+import { BellOutline, Bell, Close } from "mdi-material-ui";
 import { CommentMessage } from "./CommentMessages";
 import { Editor as CodeMirrorEditor } from "codemirror";
 import { CommentEditor } from "./CommentEditor";
@@ -40,6 +47,11 @@ const useStyles = makeStyles((theme: Theme) =>
       flexDirection: "row",
       alignItems: "center",
       justifyContent: "space-between"
+    },
+    row: {
+      display: "flex",
+      flexDirection: "row",
+      alignItems: "center"
     },
     commentWrapper: {
       padding: "0"
@@ -55,6 +67,8 @@ interface Props {
 }
 export function CommentDialog(props: Props) {
   const classes = useStyles(props);
+  const theme = useTheme();
+  const fullScreen = useMediaQuery(theme.breakpoints.down("xs"));
   const commentWidget = props.commentWidget;
   const { t } = useTranslation();
   const [editor, setEditor] = useState<CodeMirrorEditor>(null);
@@ -219,7 +233,7 @@ export function CommentDialog(props: Props) {
     } else if (resPostMessage.error) {
       new Noty({
         type: "error",
-        text: t("chat-panel/post-message-failure"),
+        text: t("widget/crossnote.comment/post-comment-failure"),
         layout: "topRight",
         theme: "relax",
         timeout: 2000
@@ -268,26 +282,46 @@ export function CommentDialog(props: Props) {
   }, [resMessagesAfter]);
 
   return (
-    <Dialog open={props.open} onClose={props.onClose} fullWidth={true}>
+    <Dialog
+      open={props.open}
+      onClose={props.onClose}
+      fullWidth={true}
+      fullScreen={fullScreen}
+    >
       <DialogTitle style={{ paddingBottom: "0" }}>
         <Box className={classes.topBar}>
-          <Typography>Comment</Typography>
-          <IconButton
-            color={"primary"}
-            onClick={() => {
-              if (commentWidget.instance.commentWidget.subscribed) {
-                unsubscribeFromChatGroup();
-              } else {
-                subscribeToChatGroup();
-              }
-            }}
-          >
-            {commentWidget.instance.commentWidget.subscribed ? (
-              <Bell></Bell>
-            ) : (
-              <BellOutline></BellOutline>
+          <Box className={classes.row}>
+            {fullScreen && (
+              <IconButton onClick={() => props.onClose()}>
+                <Close></Close>
+              </IconButton>
             )}
-          </IconButton>
+            <Typography>{t("general/Comments")}</Typography>
+          </Box>
+          <Tooltip
+            title={
+              commentWidget.instance.commentWidget.subscribed
+                ? t("widget/crossnote.comment/unsubscribe-info")
+                : t("widget/crossnote.comment/subscribe-info")
+            }
+          >
+            <IconButton
+              color={"primary"}
+              onClick={() => {
+                if (commentWidget.instance.commentWidget.subscribed) {
+                  unsubscribeFromChatGroup();
+                } else {
+                  subscribeToChatGroup();
+                }
+              }}
+            >
+              {commentWidget.instance.commentWidget.subscribed ? (
+                <Bell></Bell>
+              ) : (
+                <BellOutline></BellOutline>
+              )}
+            </IconButton>
+          </Tooltip>
         </Box>
       </DialogTitle>
       <DialogContent className={clsx(classes.commentWrapper)}>
@@ -330,7 +364,7 @@ export function CommentDialog(props: Props) {
                       onClick={fetchPreviousMessages}
                       disabled={resMessagesAfter.fetching}
                     >
-                      {t("comment-widget/view-next-comments")}
+                      {t("widget/crossnote.comment/view-more-comments")}
                     </Button>
                   </Box>
                 </Box>

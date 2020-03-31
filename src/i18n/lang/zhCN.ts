@@ -153,6 +153,7 @@ export const zhCN = {
     "general/upload-the-profile": "上传账户信息",
     "general/commit-message": "提交说明",
     "general/upload-notebook": "上传笔记本",
+    "general/Comments": "评论",
 
     // Error
     "error/authentication-failed": "认证失败",
@@ -188,19 +189,6 @@ export const zhCN = {
 
     // UserTags
     "user-tags/follow-a-tag": "关注一个标签",
-
-    // ChatMessage
-    "chat-message/reply-to-this-user": "回复给这个用户",
-    "chat-message/add-reaction-to-this-message": "给这条消息添加反应",
-    "chat-message/edit-this-message": "编辑这条消息",
-    "chat-message/modified-message": "编辑过的消息",
-
-    // ChatPanel
-    "chat-panel/post-message-failure": "发送消息失败",
-    "chat-panel/unsubscribe-info":
-      "取消订阅这个聊天群将会使你只有在别人提到你的时候才会收到通知",
-    "chat-panel/subscribe-info":
-      "订阅这个聊天群将会让你在被人发送消息的时候收到通知",
 
     // Notifications
     "notifications/refresh": "刷新来查看新的消息",
@@ -472,8 +460,21 @@ export const zhCN = {
     "tesseract/initialized api": "已初始化程序接口",
     "tesseract/recognizing text": "正在识别文字",
 
+    // Comment widget
+    "widget/crossnote.comment/reply-to-this-user": "回复给这个用户",
+    "widget/crossnote.comment/add-reaction-to-this-comment":
+      "给这条评论添加反应",
+    "widget/crossnote.comment/edit-this-message": "编辑这条评论",
+    "widget/crossnote.comment/modified-comment": "编辑过的评论",
+    "widget/crossnote.comment/post-comment-failure": "发送评论失败",
+    "widget/crossnote.comment/unsubscribe-info": "取消订阅评论",
+    "widget/crossnote.comment/subscribe-info": "订阅评论",
+    "widget/crossnote.comment/view-more-comments": "查看更多的评论",
+
     // Dialogs
     "delete-file-dialog/title": "你确定要删除这个笔记？",
-    "delete-file-dialog/subtitle": "将不能被撤回"
+    "delete-file-dialog/subtitle": "将不能被撤回",
+    "add-notebook-dialog/disclaimer":
+      "所有笔记本的数据将只会被保存于浏览器本地。"
   }
 };

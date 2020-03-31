@@ -155,6 +155,7 @@ export const enUS = {
     "general/upload-the-profile": "Upload profile",
     "general/commit-message": "Commit message",
     "general/upload-notebook": "Upload the notebook",
+    "general/Comments": "Comments",
 
     // Error
     "error/authentication-failed": "Authentication failed",
@@ -190,19 +191,6 @@ export const enUS = {
 
     // UserTags
     "user-tags/follow-a-tag": "Follow a tag",
-
-    // ChatMessage
-    "chat-message/reply-to-this-user": "Reply to this user",
-    "chat-message/add-reaction-to-this-message": "Add reaction to this message",
-    "chat-message/edit-this-message": "Edit this message",
-    "chat-message/modified-message": "modified message",
-
-    // ChatPanel
-    "chat-panel/post-message-failure": "Failed to post message",
-    "chat-panel/unsubscribe-info":
-      "Unsubscribing from this chat group will stop you from receiving notifications unless someone mentions you",
-    "chat-panel/subscribe-info":
-      "Subscribing to this chat group will let you receive notifications whenever someone posts a message",
 
     // Notifications
     "notifications/refresh": "Refresh to see new notifications",
@@ -490,10 +478,22 @@ export const enUS = {
     "tesseract/initialized api": "initialized api",
     "tesseract/recognizing text": "recognizing text",
 
+    // Comment widget
+    "widget/crossnote.comment/reply-to-this-user": "Reply to this user",
+    "widget/crossnote.comment/add-reaction-to-this-comment":
+      "Add reaction to this comment",
+    "widget/crossnote.comment/edit-this-message": "Edit this comment",
+    "widget/crossnote.comment/modified-comment": "modified comment",
+    "widget/crossnote.comment/post-comment-failure": "Failed to post comment",
+    "widget/crossnote.comment/unsubscribe-info":
+      "Unsubscribe from the comments",
+    "widget/crossnote.comment/subscribe-info": "Subscribe to the comments",
+    "widget/crossnote.comment/view-more-comments": "View more comments",
+
     // Dialogs
     "delete-file-dialog/title": "Are you sure to delete this note?",
     "delete-file-dialog/subtitle": "Can't be undone",
     "add-notebook-dialog/disclaimer":
-      "We won't upload any of your notebook data to our server. Everything will be stored locally."
+      "Notebook data will only be stored locally in browser."
   }
 };

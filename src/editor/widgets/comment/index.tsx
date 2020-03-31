@@ -206,12 +206,16 @@ function CommentWidget(props: WidgetArgs) {
     }
   }, [widgetID, executeCommentWidgetQuery]);
 
+  if (resCommentWidget.error) {
+    return <Box>{t("error/failed-to-load-widget")}</Box>;
+  }
+
   if (!widgetID) {
-    return <Box>{"Creating widget"}</Box>;
+    return <Box>{t("widget/creating-widget")}</Box>;
   }
 
   if (!commentWidget) {
-    return <Box>{"Loading widget"}</Box>;
+    return <Box>{t("widget/loading-widget")}</Box>;
   }
 
   return (
