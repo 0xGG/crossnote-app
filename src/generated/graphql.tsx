@@ -1083,7 +1083,7 @@ export const CommentWidgetFieldsFragmentDoc = gql`
           reaction
           selfAuthored
         }
-        messages(last: 20) {
+        messages(first: 20) {
           ...CommentWidgetMessageConnectionFields
         }
       }

@@ -52,7 +52,7 @@ fragment CommentWidgetFields on Widget {
           reaction
           selfAuthored
         }
-        messages(last: 20) {
+        messages(first: 20) {
           ...CommentWidgetMessageConnectionFields
         }
       }

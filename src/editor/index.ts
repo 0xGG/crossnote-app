@@ -33,7 +33,7 @@ import { YoutubeWidgetCreator } from "./widgets/Youtube";
 import { OCRWidgetCreator } from "./widgets/OCR";
 import { KanbanWidgetCreator } from "./widgets/Kanban";
 import { ABCWidgetCreator } from "./widgets/ABC";
-import { CommentWidgetCreator } from "./widgets/Comment";
+import { CommentWidgetCreator } from "./widgets/comment/index";
 
 // Set necessary window scope variables
 window["CodeMirror"] = require("codemirror");

@@ -8,56 +8,35 @@ import {
   ThemeProvider
 } from "@material-ui/core/styles";
 import clsx from "clsx";
-import Identicon from "identicon.js";
-import { sha256 } from "js-sha256";
 import {
   useCreateCommentWidgetMutation,
-  useDeleteWidgetMutation,
   useCommentWidgetQuery,
   CommentWidgetFieldsFragment,
-  useUpdateWidgetMutation,
   useAddReactionToCommentWidgetMutation,
-  useRemoveReactionFromCommentWidgetMutation,
-  Widget
-} from "../../generated/graphql";
+  useRemoveReactionFromCommentWidgetMutation
+} from "../../../generated/graphql";
 import Noty from "noty";
 import { useTranslation } from "react-i18next";
-import { Editor as CodeMirrorEditor } from "codemirror";
-import { getHeaderFromMarkdown } from "../../utilities/note";
+import { getHeaderFromMarkdown } from "../../../utilities/note";
 import { Provider } from "urql";
-import { GraphQLClient } from "../../utilities/client";
+import { GraphQLClient } from "../../../utilities/client";
 import {
   Button,
-  Card,
   Box,
   Typography,
-  Link,
   Avatar,
   Tooltip,
   Badge,
-  IconButton,
   Dialog,
-  DialogContent,
-  DialogActions,
   Chip
 } from "@material-ui/core";
-import {
-  LinkVariant,
-  CommentOutline,
-  StickerEmoji,
-  TrashCanOutline,
-  Pencil,
-  ContentSave,
-  Cancel
-} from "mdi-material-ui";
-import { crossnoteTheme } from "../../utilities/theme";
-import { renderPreview } from "vickymd/preview";
+import { CommentOutline, StickerEmoji } from "mdi-material-ui";
+import { crossnoteTheme } from "../../../utilities/theme";
 import { Emoji, Picker as EmojiPicker } from "emoji-mart";
 import "emoji-mart/css/emoji-mart.css";
-import { globalContainers } from "../../containers/global";
-import { CommentDialog } from "./comment/CommentDialog";
-import { WidgetTopPanel } from "./widget/WidgetTopPanel";
-const VickyMD = require("vickymd");
+import { globalContainers } from "../../../containers/global";
+import { CommentDialog } from "./CommentDialog";
+import { WidgetTopPanel } from "../widget/WidgetTopPanel";
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -252,7 +231,7 @@ function CommentWidget(props: WidgetArgs) {
           >
             <CommentOutline></CommentOutline>
             {commentWidget.instance.commentWidget.messagesCount > 0 ? (
-              <Typography style={{ marginLeft: "4px" }}>
+              <Typography style={{ marginLeft: "4px", marginBottom: "0" }}>
                 {commentWidget.instance.commentWidget.messagesCount}
               </Typography>
             ) : null}
