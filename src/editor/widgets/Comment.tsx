@@ -107,8 +107,11 @@ const useStyles = makeStyles((theme: Theme) =>
       backgroundColor: "inherit !important",
       paddingTop: theme.spacing(1),
       paddingBottom: theme.spacing(1),
-      "& p:first-child": {
+      "& p:last-child": {
         marginBottom: "0 !important"
+      },
+      "& br": {
+        // display: "none"
       }
     }
   })
@@ -276,6 +279,11 @@ function CommentWidget(props: WidgetArgs) {
   useEffect(() => {
     if (commentWidget && previewElement) {
       renderPreview(previewElement, widgetDescription);
+
+      // TODO: There might be a bug in renderPreview function. It generated extra new lines
+      previewElement.innerHTML = previewElement.innerHTML
+        .replace(/<br>\n/g, "<br>")
+        .trim();
     }
   }, [commentWidget, previewElement, widgetDescription]);
 
@@ -293,7 +301,7 @@ function CommentWidget(props: WidgetArgs) {
         inputStyle: "textarea"
         // autofocus: false
       });
-      editor.setValue(commentWidget.description);
+      editor.setValue(widgetDescription);
       editor.setOption("lineNumbers", false);
       editor.setOption("foldGutter", false);
       editor.setOption("autofocus", false);
@@ -305,7 +313,7 @@ function CommentWidget(props: WidgetArgs) {
         setTextAreaElement(null);
       };
     }
-  }, [textAreaElement, commentWidget]);
+  }, [textAreaElement, commentWidget, widgetDescription]);
 
   useEffect(() => {
     if (commentWidget) {
