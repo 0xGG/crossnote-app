@@ -1,7 +1,5 @@
 import React, { useEffect } from "react";
 import "./App.css";
-import { createMuiTheme } from "@material-ui/core";
-import { orange, blue } from "@material-ui/core/colors";
 import { ThemeProvider } from "@material-ui/styles";
 import * as qs from "qs";
 import { Router, Route, Switch } from "react-router-dom";
@@ -35,6 +33,16 @@ const App: React.FC = () => {
               exact={true}
               render={props => (
                 <Home section={HomeSection.Settings} queryParams={{}}></Home>
+              )}
+            ></Route>
+            <Route
+              path={`/notifications`}
+              exact={true}
+              render={props => (
+                <Home
+                  section={HomeSection.Notifications}
+                  queryParams={{}}
+                ></Home>
               )}
             ></Route>
             <Route

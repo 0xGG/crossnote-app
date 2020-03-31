@@ -61,6 +61,21 @@ function useCloudContainer(initialState: InitialState) {
     [executeSetUserInfoMutation]
   );
 
+  const reduceNotificationsCountByOne = useCallback(() => {
+    if (viewer) {
+      viewer.notifications.totalCount = Math.max(
+        0,
+        viewer.notifications.totalCount - 1
+      );
+      setViewer(Object.assign({}, viewer) as User);
+    }
+  }, [viewer]);
+
+  const clearNotificationsCount = useCallback(() => {
+    viewer.notifications.totalCount = 0;
+    setViewer(Object.assign({}, viewer) as User);
+  }, [viewer]);
+
   useEffect(() => {
     if (resViewer.fetching) {
     } else if (resViewer.error) {
@@ -128,7 +143,9 @@ function useCloudContainer(initialState: InitialState) {
     viewer,
     refetchViewer,
     resSetUserInfo,
-    setUserInfo
+    setUserInfo,
+    reduceNotificationsCountByOne,
+    clearNotificationsCount
   };
 }
 

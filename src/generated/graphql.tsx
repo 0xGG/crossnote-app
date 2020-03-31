@@ -848,6 +848,24 @@ export type UnlinkGitHubAccountMutation = (
   & Pick<Mutation, 'unlinkGitHubAccount'>
 );
 
+export type DeleteNotificationMutationVariables = {
+  notificationID: Scalars['UUID'];
+};
+
+
+export type DeleteNotificationMutation = (
+  { __typename?: 'Mutation' }
+  & Pick<Mutation, 'deleteNotification'>
+);
+
+export type DeleteAllNotificationsMutationVariables = {};
+
+
+export type DeleteAllNotificationsMutation = (
+  { __typename?: 'Mutation' }
+  & Pick<Mutation, 'deleteAllNotifications'>
+);
+
 export type SetUserInfoMutationVariables = {
   cover: Scalars['String'];
   bio: Scalars['String'];
@@ -992,6 +1010,65 @@ export type GitHubUserQuery = (
   ) }
 );
 
+export type NotificationFieldsFragment = (
+  { __typename?: 'Notification' }
+  & Pick<Notification, 'id' | 'createdAt' | 'meta'>
+  & { origin: (
+    { __typename?: 'User' }
+    & Pick<User, 'id' | 'username' | 'avatar'>
+  ), receiver: (
+    { __typename?: 'User' }
+    & Pick<User, 'id' | 'username' | 'avatar'>
+  ), event: (
+    { __typename?: 'NotificationEventCommentWidgetMessagePosting' }
+    & Pick<NotificationEventCommentWidgetMessagePosting, 'type'>
+    & { message: (
+      { __typename?: 'CommentWidgetMessage' }
+      & Pick<CommentWidgetMessage, 'id' | 'markdown' | 'createdAt'>
+      & { widget: (
+        { __typename?: 'Widget' }
+        & Pick<Widget, 'description'>
+        & { owner: (
+          { __typename?: 'User' }
+          & Pick<User, 'id' | 'username' | 'avatar'>
+        ) }
+      ) }
+    ) }
+  ) | (
+    { __typename?: 'NotificationEventUserFollowing' }
+    & Pick<NotificationEventUserFollowing, 'type'>
+  ) }
+);
+
+export type NotificationsQueryVariables = {
+  before: Scalars['UUID'];
+  after: Scalars['UUID'];
+  first: Maybe<Scalars['Int']>;
+  last: Maybe<Scalars['Int']>;
+};
+
+
+export type NotificationsQuery = (
+  { __typename?: 'Query' }
+  & { viewer: (
+    { __typename?: 'User' }
+    & { notifications: (
+      { __typename?: 'NotificationConnection' }
+      & { pageInfo: (
+        { __typename?: 'PageInfo' }
+        & PageInfoFieldsFragment
+      ), edges: Array<(
+        { __typename?: 'NotificationEdge' }
+        & Pick<NotificationEdge, 'cursor'>
+        & { node: (
+          { __typename?: 'Notification' }
+          & NotificationFieldsFragment
+        ) }
+      )> }
+    ) }
+  ) }
+);
+
 export type PageInfoFieldsFragment = (
   { __typename?: 'PageInfo' }
   & Pick<PageInfo, 'startCursor' | 'endCursor' | 'hasNextPage' | 'hasPreviousPage'>
@@ -1091,6 +1168,45 @@ export const CommentWidgetFieldsFragmentDoc = gql`
   }
 }
     ${CommentWidgetMessageConnectionFieldsFragmentDoc}`;
+export const NotificationFieldsFragmentDoc = gql`
+    fragment NotificationFields on Notification {
+  id
+  createdAt
+  origin {
+    id
+    username
+    avatar
+  }
+  receiver {
+    id
+    username
+    avatar
+  }
+  meta
+  event {
+    type
+    ... on NotificationEventUserFollowing {
+      type
+    }
+    ... on NotificationEventCommentWidgetMessagePosting {
+      type
+      message {
+        id
+        markdown
+        createdAt
+        widget {
+          owner {
+            id
+            username
+            avatar
+          }
+          description
+        }
+      }
+    }
+  }
+}
+    `;
 export const ViewerFieldsFragmentDoc = gql`
     fragment ViewerFields on User {
   avatar
@@ -1391,6 +1507,34 @@ export const UnlinkGitHubAccountComponent = (props: Omit<Urql.MutationProps<Unli
 export function useUnlinkGitHubAccountMutation() {
   return Urql.useMutation<UnlinkGitHubAccountMutation, UnlinkGitHubAccountMutationVariables>(UnlinkGitHubAccountDocument);
 };
+export const DeleteNotificationDocument = gql`
+    mutation DeleteNotification($notificationID: UUID!) {
+  deleteNotification(input: {notificationID: $notificationID})
+}
+    `;
+
+export const DeleteNotificationComponent = (props: Omit<Urql.MutationProps<DeleteNotificationMutation, DeleteNotificationMutationVariables>, 'query'> & { variables?: DeleteNotificationMutationVariables }) => (
+  <Urql.Mutation {...props} query={DeleteNotificationDocument} />
+);
+
+
+export function useDeleteNotificationMutation() {
+  return Urql.useMutation<DeleteNotificationMutation, DeleteNotificationMutationVariables>(DeleteNotificationDocument);
+};
+export const DeleteAllNotificationsDocument = gql`
+    mutation DeleteAllNotifications {
+  deleteAllNotifications
+}
+    `;
+
+export const DeleteAllNotificationsComponent = (props: Omit<Urql.MutationProps<DeleteAllNotificationsMutation, DeleteAllNotificationsMutationVariables>, 'query'> & { variables?: DeleteAllNotificationsMutationVariables }) => (
+  <Urql.Mutation {...props} query={DeleteAllNotificationsDocument} />
+);
+
+
+export function useDeleteAllNotificationsMutation() {
+  return Urql.useMutation<DeleteAllNotificationsMutation, DeleteAllNotificationsMutationVariables>(DeleteAllNotificationsDocument);
+};
 export const SetUserInfoDocument = gql`
     mutation SetUserInfo($cover: String!, $bio: String!, $location: String!, $language: String!, $name: String!, $avatar: String!, $editorCursorColor: String!) {
   setUserInfo(input: {cover: $cover, bio: $bio, location: $location, language: $language, name: $name, avatar: $avatar, editorCursorColor: $editorCursorColor}) {
@@ -1496,6 +1640,33 @@ export const GitHubUserComponent = (props: Omit<Urql.QueryProps<GitHubUserQuery,
 
 export function useGitHubUserQuery(options: Omit<Urql.UseQueryArgs<GitHubUserQueryVariables>, 'query'> = {}) {
   return Urql.useQuery<GitHubUserQuery>({ query: GitHubUserDocument, ...options });
+};
+export const NotificationsDocument = gql`
+    query Notifications($before: UUID!, $after: UUID!, $first: Int, $last: Int) {
+  viewer {
+    notifications(before: $before, after: $after, first: $first, last: $last) {
+      pageInfo {
+        ...PageInfoFields
+      }
+      edges {
+        cursor
+        node {
+          ...NotificationFields
+        }
+      }
+    }
+  }
+}
+    ${PageInfoFieldsFragmentDoc}
+${NotificationFieldsFragmentDoc}`;
+
+export const NotificationsComponent = (props: Omit<Urql.QueryProps<NotificationsQuery, NotificationsQueryVariables>, 'query'> & { variables: NotificationsQueryVariables }) => (
+  <Urql.Query {...props} query={NotificationsDocument} />
+);
+
+
+export function useNotificationsQuery(options: Omit<Urql.UseQueryArgs<NotificationsQueryVariables>, 'query'> = {}) {
+  return Urql.useQuery<NotificationsQuery>({ query: NotificationsDocument, ...options });
 };
 export const ViewerDocument = gql`
     query Viewer {

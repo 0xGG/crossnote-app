@@ -29,7 +29,6 @@ import {
   GithubCircle
 } from "mdi-material-ui";
 import { CloudContainer } from "../containers/cloud";
-import { AuthDialog } from "./AuthDialog";
 import { smmsUploadImages } from "../utilities/image_uploader";
 import {
   useGitHubUserQuery,

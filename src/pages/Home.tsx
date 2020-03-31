@@ -12,7 +12,8 @@ import {
   ListItemIcon,
   ListItemText,
   Avatar,
-  CircularProgress
+  CircularProgress,
+  Badge
 } from "@material-ui/core";
 import {
   fade,
@@ -48,6 +49,7 @@ import { CloudContainer } from "../containers/cloud";
 import { globalContainers } from "../containers/global";
 import { SettingsContainer } from "../containers/settings";
 import { AuthDialog } from "../components/AuthDialog";
+import { Notifications } from "../components/Notifications";
 
 const drawerWidth = 200;
 const notesPanelWidth = 350;
@@ -180,7 +182,8 @@ const useStyles = makeStyles((theme: Theme) =>
 
 export enum HomeSection {
   Notebooks = "Notebooks",
-  Settings = "Settings"
+  Settings = "Settings",
+  Notifications = "Notifications"
 }
 
 interface QueryParams {
@@ -287,12 +290,7 @@ export function Home(props: Props) {
           </ListItemIcon>
           <ListItemText primary={"My Blocks"}></ListItemText>
         </ListItem>
-        <ListItem button>
-          <ListItemIcon>
-            <Bell></Bell>
-          </ListItemIcon>
-          <ListItemText primary={"Notifications"}></ListItemText>
-        </ListItem>*/}
+        */}
         <ListItem button onClick={() => browserHistory.push(`/settings`)}>
           {cloudContainer.viewer ? (
             <ListItemIcon>
@@ -318,6 +316,28 @@ export function Home(props: Props) {
           )}
           <ListItemText primary={t("general/Settings")}></ListItemText>
         </ListItem>
+        {cloudContainer.loggedIn && (
+          <ListItem
+            button
+            onClick={() => browserHistory.push(`/notifications`)}
+          >
+            <ListItemIcon>
+              {cloudContainer.viewer.notifications.totalCount > 0 ? (
+                <Badge
+                  color={"secondary"}
+                  badgeContent={
+                    cloudContainer.viewer.notifications.totalCount || ""
+                  }
+                >
+                  <Bell></Bell>
+                </Badge>
+              ) : (
+                <Bell></Bell>
+              )}
+            </ListItemIcon>
+            <ListItemText primary={"Notifications"}></ListItemText>
+          </ListItem>
+        )}
         <Divider></Divider>
         <ListItem disableGutters={true}>
           <Box
@@ -362,7 +382,8 @@ export function Home(props: Props) {
   );
 
   const notesPanel =
-    crossnoteContainer.selectedSection.type !== SelectedSectionType.Wiki ? (
+    props.section === HomeSection.Notebooks &&
+    (crossnoteContainer.selectedSection.type !== SelectedSectionType.Wiki ? (
       <Paper className={clsx(classes.notesPanel)} id={"notes-panel"}>
         <NotesPanel toggleDrawer={toggleDrawer}></NotesPanel>
       </Paper>
@@ -370,7 +391,7 @@ export function Home(props: Props) {
       <Paper className={clsx(classes.notesPanel)} id={"notes-panel"}>
         <WikiPanel toggleDrawer={toggleDrawer}></WikiPanel>
       </Paper>
-    );
+    ));
 
   return (
     <Box className={clsx(classes.page)}>
@@ -420,6 +441,9 @@ export function Home(props: Props) {
         )}
         {props.section === HomeSection.Settings && (
           <Settings toggleDrawer={toggleDrawer}></Settings>
+        )}
+        {props.section === HomeSection.Notifications && (
+          <Notifications toggleDrawer={toggleDrawer}></Notifications>
         )}
       </Box>
       <AddNotebookDialog
