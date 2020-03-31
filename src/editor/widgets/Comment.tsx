@@ -14,10 +14,12 @@ import {
   useCreateCommentWidgetMutation,
   useDeleteWidgetMutation,
   useCommentWidgetQuery,
-  CommentWidgetFieldsFragment
+  CommentWidgetFieldsFragment,
+  useUpdateWidgetMutation
 } from "../../generated/graphql";
 import Noty from "noty";
 import { useTranslation } from "react-i18next";
+import { Editor as CodeMirrorEditor } from "codemirror";
 import { getHeaderFromMarkdown } from "../../utilities/note";
 import { Provider } from "urql";
 import { GraphQLClient } from "../../utilities/client";
@@ -30,16 +32,23 @@ import {
   Avatar,
   Tooltip,
   Badge,
-  IconButton
+  IconButton,
+  Dialog,
+  DialogContent,
+  DialogActions
 } from "@material-ui/core";
 import {
   LinkVariant,
   CommentOutline,
   StickerEmoji,
   TrashCanOutline,
-  Pencil
+  Pencil,
+  ContentSave,
+  Cancel
 } from "mdi-material-ui";
 import { crossnoteTheme } from "../../utilities/theme";
+import { renderPreview } from "vickymd/preview";
+const VickyMD = require("vickymd");
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -78,7 +87,29 @@ const useStyles = makeStyles((theme: Theme) =>
     actionButtons: {
       position: "absolute",
       right: "0",
-      top: "0"
+      top: "0",
+      display: "flex",
+      flexDirection: "row",
+      alignItems: "center"
+    },
+    editorWrapper: {
+      // height: "160px",
+      // border: "2px solid #96c3e6",
+      "& .CodeMirror-gutters": {
+        display: "none"
+      }
+    },
+    textarea: {
+      width: "100%",
+      height: "100%"
+    },
+    preview: {
+      backgroundColor: "inherit !important",
+      paddingTop: theme.spacing(1),
+      paddingBottom: theme.spacing(1),
+      "& p:first-child": {
+        marginBottom: "0 !important"
+      }
     }
   })
 );
@@ -88,6 +119,15 @@ function CommentWidget(props: WidgetArgs) {
   const widgetID = props.attributes["id"];
   const editor = props.editor;
   const { t } = useTranslation();
+  const [previewElement, setPreviewElement] = useState<HTMLElement>(null);
+  const [textAreaElement, setTextAreaElement] = useState<HTMLTextAreaElement>(
+    null
+  );
+  const [descriptionEditor, setDescriptionEditor] = useState<CodeMirrorEditor>(
+    null
+  );
+  const [editorDialogOpen, setEditDialogOpen] = useState<boolean>(false);
+
   const [
     resCreateCommentWidget,
     executeCreateCommentWidgetMutation
@@ -96,6 +136,10 @@ function CommentWidget(props: WidgetArgs) {
     resDeleteWidget,
     executeDeleteWidgetMutation
   ] = useDeleteWidgetMutation();
+  const [
+    resUpdateWidget,
+    executeUpdateWidgetMutation
+  ] = useUpdateWidgetMutation();
   const [resCommentWidget, executeCommentWidgetQuery] = useCommentWidgetQuery({
     requestPolicy: "network-only",
     pause: true,
@@ -106,6 +150,7 @@ function CommentWidget(props: WidgetArgs) {
   const [commentWidget, setCommentWidget] = useState<
     CommentWidgetFieldsFragment
   >(null);
+  const [widgetDescription, setWidgetDescription] = useState<string>("");
 
   const deleteWidget = useCallback(() => {
     if (widgetID) {
@@ -115,12 +160,18 @@ function CommentWidget(props: WidgetArgs) {
     }
   }, [widgetID, executeDeleteWidgetMutation]);
 
-  useEffect(() => {
-    console.log("mount comment widget: ", widgetID);
-    return () => {
-      console.log("unmount comment widget: ", widgetID);
-    };
-  }, [widgetID]);
+  const updateWidget = useCallback(() => {
+    if (descriptionEditor && commentWidget) {
+      const description =
+        descriptionEditor.getValue() || commentWidget.description;
+      executeUpdateWidgetMutation({
+        id: commentWidget.id,
+        description
+      });
+      setWidgetDescription(description);
+    }
+    setEditDialogOpen(false);
+  }, [descriptionEditor, commentWidget, executeUpdateWidgetMutation]);
 
   // Create comment widget
   useEffect(() => {
@@ -171,6 +222,8 @@ function CommentWidget(props: WidgetArgs) {
 
   useEffect(() => {
     if (resCommentWidget.error) {
+      // TODO: This part has issue if we delete a widget and create a new one. The error will repeatly occur.
+      /*
       console.log(resCommentWidget.error);
       new Noty({
         type: "error",
@@ -179,9 +232,9 @@ function CommentWidget(props: WidgetArgs) {
         theme: "relax",
         timeout: 5000
       }).show();
+      */
       setCommentWidget(null);
     } else if (resCommentWidget.data) {
-      console.log("fetched: ", resCommentWidget.data);
       setCommentWidget(resCommentWidget.data.widget);
       resCommentWidget.data = null;
     }
@@ -198,9 +251,9 @@ function CommentWidget(props: WidgetArgs) {
       const title =
         getHeaderFromMarkdown(editor.getValue()) || t("general/Untitled");
       const source = window.location.href;
+      const description = `[ℹ️](${source}) **${title}**`;
       executeCreateCommentWidgetMutation({
-        title,
-        source
+        description
       });
     }
   }, [
@@ -220,6 +273,48 @@ function CommentWidget(props: WidgetArgs) {
     }
   }, [widgetID, executeCommentWidgetQuery]);
 
+  useEffect(() => {
+    if (commentWidget && previewElement) {
+      renderPreview(previewElement, widgetDescription);
+    }
+  }, [commentWidget, previewElement, widgetDescription]);
+
+  useEffect(() => {
+    if (!commentWidget) {
+      return;
+    }
+
+    if (textAreaElement) {
+      const editor: CodeMirrorEditor = VickyMD.fromTextArea(textAreaElement, {
+        mode: {
+          name: "hypermd",
+          hashtag: true
+        },
+        inputStyle: "textarea"
+        // autofocus: false
+      });
+      editor.setValue(commentWidget.description);
+      editor.setOption("lineNumbers", false);
+      editor.setOption("foldGutter", false);
+      editor.setOption("autofocus", false);
+      editor.focus();
+      setDescriptionEditor(editor);
+
+      return () => {
+        setDescriptionEditor(null);
+        setTextAreaElement(null);
+      };
+    }
+  }, [textAreaElement, commentWidget]);
+
+  useEffect(() => {
+    if (commentWidget) {
+      setWidgetDescription(commentWidget.description);
+    } else {
+      setWidgetDescription("");
+    }
+  }, [commentWidget]);
+
   if (!widgetID) {
     return <Box>{"Creating widget"}</Box>;
   }
@@ -231,21 +326,12 @@ function CommentWidget(props: WidgetArgs) {
   return (
     <Box className={clsx(classes.commentWidget)}>
       <Box className={clsx(classes.topBar)}>
-        <Avatar
-          className={clsx(classes.avatar)}
-          variant={"rounded"}
-          src={
-            commentWidget.owner.avatar ||
-            "data:image/png;base64," +
-              new Identicon(sha256(commentWidget.owner.username), 80).toString()
-          }
-        ></Avatar>
-        <Typography variant={"h6"} className={classes.widgetTitle}>
-          {commentWidget.title}
-        </Typography>
-        <Link href={commentWidget.source} className={classes.widgetSourceLink}>
-          <LinkVariant></LinkVariant>
-        </Link>
+        <div
+          className={clsx(classes.preview, "preview")}
+          ref={(element: HTMLElement) => {
+            setPreviewElement(element);
+          }}
+        ></div>
       </Box>
       <Box className={clsx(classes.interactionPanel)}>
         <Tooltip title={t("interaction-panel/add-comment")}>
@@ -287,16 +373,62 @@ function CommentWidget(props: WidgetArgs) {
           </Button>
         </Tooltip>
       </Box>
-      {!props.isPreview && (
-        <Box className={clsx(classes.actionButtons)}>
+
+      <Box className={clsx(classes.actionButtons)}>
+        <Tooltip title={commentWidget.owner.username}>
           <IconButton>
+            <Avatar
+              className={clsx(classes.avatar)}
+              variant={"rounded"}
+              src={
+                commentWidget.owner.avatar ||
+                "data:image/png;base64," +
+                  new Identicon(
+                    sha256(commentWidget.owner.username),
+                    80
+                  ).toString()
+              }
+            ></Avatar>
+          </IconButton>
+        </Tooltip>
+        {!props.isPreview && (
+          <IconButton onClick={() => setEditDialogOpen(true)}>
             <Pencil></Pencil>
           </IconButton>
+        )}
+        {!props.isPreview && (
           <IconButton onClick={deleteWidget}>
             <TrashCanOutline></TrashCanOutline>
           </IconButton>
-        </Box>
-      )}
+        )}
+      </Box>
+      <Dialog open={editorDialogOpen} onClose={() => setEditDialogOpen(false)}>
+        <DialogContent>
+          <Box
+            className={clsx(classes.editorWrapper)}
+            style={{ minWidth: "300px", maxWidth: "100%" }}
+          >
+            <textarea
+              className={classes.textarea}
+              ref={(element: HTMLTextAreaElement) => {
+                setTextAreaElement(element);
+              }}
+            ></textarea>
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <IconButton onClick={updateWidget}>
+            <ContentSave></ContentSave>
+          </IconButton>
+          <IconButton
+            onClick={() => {
+              setEditDialogOpen(false);
+            }}
+          >
+            <Cancel></Cancel>
+          </IconButton>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }

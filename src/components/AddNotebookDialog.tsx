@@ -129,6 +129,9 @@ export default function AddNotebookDialog(props: Props) {
           </ExpansionPanelSummary>
           <ExpansionPanelDetails>
             <Box>
+              <Typography variant={"caption"}>
+                {"* " + t("add-notebook-dialog/disclaimer")}
+              </Typography>
               <TextField
                 label={t("general/url")}
                 placeholder={"https://github.com/0xGG/crossnote.git"}

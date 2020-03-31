@@ -107,8 +107,7 @@ export interface CommentWidgetReaction {
 
 export interface CreateWidget {
   type: WidgetType;
-  title: Scalars['String'];
-  source: Scalars['String'];
+  description: Scalars['String'];
 }
 
 export interface DeleteNotification {
@@ -509,8 +508,7 @@ export interface UpdateCommentWidgetMessage {
 
 export interface UpdateWidget {
   id: Scalars['UUID'];
-  title: Scalars['String'];
-  source: Scalars['String'];
+  description: Scalars['String'];
 }
 
 
@@ -595,8 +593,7 @@ export interface Widget {
   id: Scalars['UUID'];
   instance: WidgetInstance;
   owner: User;
-  title: Scalars['String'];
-  source: Scalars['String'];
+  description: Scalars['String'];
 }
 
 export interface WidgetConnection {
@@ -727,8 +724,7 @@ export type VerifyEmailMutation = (
 );
 
 export type CreateCommentWidgetMutationVariables = {
-  title: Scalars['String'];
-  source: Scalars['String'];
+  description: Scalars['String'];
 };
 
 
@@ -882,8 +878,7 @@ export type DeleteWidgetMutation = (
 
 export type UpdateWidgetMutationVariables = {
   id: Scalars['UUID'];
-  title: Scalars['String'];
-  source: Scalars['String'];
+  description: Scalars['String'];
 };
 
 
@@ -921,7 +916,7 @@ export type CommentWidgetMessageConnectionFieldsFragment = (
 
 export type CommentWidgetFieldsFragment = (
   { __typename?: 'Widget' }
-  & Pick<Widget, 'id' | 'title' | 'source'>
+  & Pick<Widget, 'id' | 'description'>
   & { owner: (
     { __typename?: 'User' }
     & Pick<User, 'id' | 'username' | 'avatar'>
@@ -1069,8 +1064,7 @@ export const CommentWidgetFieldsFragmentDoc = gql`
     username
     avatar
   }
-  title
-  source
+  description
   instance {
     type
     ... on CommentWidgetInstance {
@@ -1236,8 +1230,8 @@ export function useVerifyEmailMutation() {
   return Urql.useMutation<VerifyEmailMutation, VerifyEmailMutationVariables>(VerifyEmailDocument);
 };
 export const CreateCommentWidgetDocument = gql`
-    mutation CreateCommentWidget($title: String!, $source: String!) {
-  createWidget(input: {title: $title, source: $source, type: COMMENT}) {
+    mutation CreateCommentWidget($description: String!) {
+  createWidget(input: {description: $description, type: COMMENT}) {
     id
   }
 }
@@ -1426,8 +1420,8 @@ export function useDeleteWidgetMutation() {
   return Urql.useMutation<DeleteWidgetMutation, DeleteWidgetMutationVariables>(DeleteWidgetDocument);
 };
 export const UpdateWidgetDocument = gql`
-    mutation UpdateWidget($id: UUID!, $title: String!, $source: String!) {
-  updateWidget(input: {id: $id, title: $title, source: $source})
+    mutation UpdateWidget($id: UUID!, $description: String!) {
+  updateWidget(input: {id: $id, description: $description})
 }
     `;
 

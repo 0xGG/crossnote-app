@@ -34,8 +34,7 @@ fragment CommentWidgetFields on Widget {
     username
     avatar
   }
-  title
-  source
+  description
   instance {
     type
     ... on CommentWidgetInstance {

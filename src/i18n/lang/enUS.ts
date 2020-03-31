@@ -492,6 +492,8 @@ export const enUS = {
 
     // Dialogs
     "delete-file-dialog/title": "Are you sure to delete this note?",
-    "delete-file-dialog/subtitle": "Can't be undone"
+    "delete-file-dialog/subtitle": "Can't be undone",
+    "add-notebook-dialog/disclaimer":
+      "We won't upload any of your notebook data to our server. Everything will be stored locally."
   }
 };
