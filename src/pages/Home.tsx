@@ -45,6 +45,9 @@ import WikiPanel from "../components/WikiPanel";
 import { browserHistory } from "../utilities/history";
 import { Settings } from "../components/Settings";
 import { CloudContainer } from "../containers/cloud";
+import { globalContainers } from "../containers/global";
+import { SettingsContainer } from "../containers/settings";
+import { AuthDialog } from "../components/AuthDialog";
 
 const drawerWidth = 200;
 const notesPanelWidth = 350;
@@ -205,6 +208,11 @@ export function Home(props: Props) {
   const { t } = useTranslation();
   const crossnoteContainer = CrossnoteContainer.useContainer();
   const cloudContainer = CloudContainer.useContainer();
+  const settingsContainer = SettingsContainer.useContainer();
+
+  // HACK: Register globalContainers for widgets use
+  globalContainers.cloudContainer = cloudContainer;
+  globalContainers.settingsContainer = settingsContainer;
 
   const toggleDrawer = useCallback(() => {
     setDrawerOpen(!drawerOpen);
@@ -421,6 +429,10 @@ export function Home(props: Props) {
         gitURL={addNotebookRepo}
         gitBranch={addNotebookBranch}
       ></AddNotebookDialog>
+      <AuthDialog
+        open={cloudContainer.authDialogOpen}
+        onClose={() => cloudContainer.setAuthDialogOpen(false)}
+      ></AuthDialog>
     </Box>
   );
 }

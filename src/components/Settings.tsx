@@ -591,10 +591,6 @@ export function Settings(props: Props) {
           setImageUploaderElement(element);
         }}
       ></input>
-      <AuthDialog
-        open={cloudContainer.authDialogOpen}
-        onClose={() => cloudContainer.setAuthDialogOpen(false)}
-      ></AuthDialog>
     </Card>
   );
 }

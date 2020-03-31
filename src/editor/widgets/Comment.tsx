@@ -15,7 +15,10 @@ import {
   useDeleteWidgetMutation,
   useCommentWidgetQuery,
   CommentWidgetFieldsFragment,
-  useUpdateWidgetMutation
+  useUpdateWidgetMutation,
+  useAddReactionToCommentWidgetMutation,
+  useRemoveReactionFromCommentWidgetMutation,
+  Widget
 } from "../../generated/graphql";
 import Noty from "noty";
 import { useTranslation } from "react-i18next";
@@ -35,7 +38,8 @@ import {
   IconButton,
   Dialog,
   DialogContent,
-  DialogActions
+  DialogActions,
+  Chip
 } from "@material-ui/core";
 import {
   LinkVariant,
@@ -48,6 +52,11 @@ import {
 } from "mdi-material-ui";
 import { crossnoteTheme } from "../../utilities/theme";
 import { renderPreview } from "vickymd/preview";
+import { Emoji, Picker as EmojiPicker } from "emoji-mart";
+import "emoji-mart/css/emoji-mart.css";
+import { globalContainers } from "../../containers/global";
+import { CommentDialog } from "./comment/CommentDialog";
+import { WidgetTopPanel } from "./widget/WidgetTopPanel";
 const VickyMD = require("vickymd");
 
 const useStyles = makeStyles((theme: Theme) =>
@@ -57,25 +66,6 @@ const useStyles = makeStyles((theme: Theme) =>
       borderLeft: `4px solid ${theme.palette.primary.light}`,
       backgroundColor: theme.palette.grey[100]
     },
-    topBar: {
-      display: "flex",
-      flexDirection: "row",
-      alignItems: "center",
-      paddingLeft: theme.spacing(2),
-      paddingRight: theme.spacing(1)
-    },
-    avatar: {
-      width: "24px",
-      height: "24px",
-      borderRadius: "4px"
-    },
-    widgetTitle: {
-      marginLeft: `${theme.spacing(1)}px !important`
-    },
-    widgetSourceLink: {
-      marginTop: `8px`,
-      marginLeft: theme.spacing(0.5)
-    },
     interactionPanel: {
       display: "flex",
       flexDirection: "row",
@@ -84,34 +74,10 @@ const useStyles = makeStyles((theme: Theme) =>
     button: {
       color: "rgba(0, 0, 0, 0.54)"
     },
-    actionButtons: {
-      position: "absolute",
-      right: "0",
-      top: "0",
-      display: "flex",
-      flexDirection: "row",
-      alignItems: "center"
-    },
-    editorWrapper: {
-      // height: "160px",
-      // border: "2px solid #96c3e6",
-      "& .CodeMirror-gutters": {
-        display: "none"
-      }
-    },
-    textarea: {
-      width: "100%",
-      height: "100%"
-    },
-    preview: {
-      backgroundColor: "inherit !important",
-      paddingTop: theme.spacing(1),
-      paddingBottom: theme.spacing(1),
-      "& p:last-child": {
-        marginBottom: "0 !important"
-      },
-      "& br": {
-        // display: "none"
+    reactionChip: {
+      marginBottom: "2px",
+      "&:hover": {
+        cursor: "pointer"
       }
     }
   })
@@ -122,27 +88,13 @@ function CommentWidget(props: WidgetArgs) {
   const widgetID = props.attributes["id"];
   const editor = props.editor;
   const { t } = useTranslation();
-  const [previewElement, setPreviewElement] = useState<HTMLElement>(null);
-  const [textAreaElement, setTextAreaElement] = useState<HTMLTextAreaElement>(
-    null
-  );
-  const [descriptionEditor, setDescriptionEditor] = useState<CodeMirrorEditor>(
-    null
-  );
-  const [editorDialogOpen, setEditDialogOpen] = useState<boolean>(false);
-
+  const [emojiPickerOpen, setEmojiPickerOpen] = useState<boolean>(false);
+  const [commentDialogOpen, setCommentDialogOpen] = useState<boolean>(false);
+  const [forceUpdate, setForceUpdate] = useState<number>(Date.now());
   const [
     resCreateCommentWidget,
     executeCreateCommentWidgetMutation
   ] = useCreateCommentWidgetMutation();
-  const [
-    resDeleteWidget,
-    executeDeleteWidgetMutation
-  ] = useDeleteWidgetMutation();
-  const [
-    resUpdateWidget,
-    executeUpdateWidgetMutation
-  ] = useUpdateWidgetMutation();
   const [resCommentWidget, executeCommentWidgetQuery] = useCommentWidgetQuery({
     requestPolicy: "network-only",
     pause: true,
@@ -150,31 +102,56 @@ function CommentWidget(props: WidgetArgs) {
       widgetID
     }
   });
+  const [
+    resAddReactionToCommentWidget,
+    executeAddReactionToCommentWidgetMutation
+  ] = useAddReactionToCommentWidgetMutation();
+  const [
+    resRemoveReactionFromCommentWidget,
+    executeRemoveReactionFromCommentWidgetMutation
+  ] = useRemoveReactionFromCommentWidgetMutation();
   const [commentWidget, setCommentWidget] = useState<
     CommentWidgetFieldsFragment
   >(null);
-  const [widgetDescription, setWidgetDescription] = useState<string>("");
 
-  const deleteWidget = useCallback(() => {
-    if (widgetID) {
-      executeDeleteWidgetMutation({
-        id: widgetID
-      });
-    }
-  }, [widgetID, executeDeleteWidgetMutation]);
-
-  const updateWidget = useCallback(() => {
-    if (descriptionEditor && commentWidget) {
-      const description =
-        descriptionEditor.getValue() || commentWidget.description;
-      executeUpdateWidgetMutation({
-        id: commentWidget.id,
-        description
-      });
-      setWidgetDescription(description);
-    }
-    setEditDialogOpen(false);
-  }, [descriptionEditor, commentWidget, executeUpdateWidgetMutation]);
+  const updateReactionSummaries = useCallback(
+    (reaction: string) => {
+      if (!commentWidget) {
+        return;
+      }
+      let found = false;
+      for (
+        let i = 0;
+        i < commentWidget.instance.commentWidget.reactionSummaries.length;
+        i++
+      ) {
+        if (
+          commentWidget.instance.commentWidget.reactionSummaries[i].reaction ===
+          reaction
+        ) {
+          found = true;
+          commentWidget.instance.commentWidget.reactionSummaries[i].count += 1;
+          commentWidget.instance.commentWidget.reactionSummaries[
+            i
+          ].selfAuthored = true;
+          break;
+        }
+      }
+      if (!found) {
+        commentWidget.instance.commentWidget.reactionSummaries = [
+          {
+            reaction: reaction,
+            count: 1,
+            selfAuthored: true
+          },
+          ...commentWidget.instance.commentWidget.reactionSummaries
+        ];
+        commentWidget.instance.commentWidget.reactionsCount += 1;
+      }
+      setForceUpdate(Date.now());
+    },
+    [commentWidget]
+  );
 
   // Create comment widget
   useEffect(() => {
@@ -196,32 +173,6 @@ function CommentWidget(props: WidgetArgs) {
       props.setAttributes(Object.assign(props.attributes, { id }));
     }
   }, [resCreateCommentWidget, t, props, widgetID]);
-
-  // Delete comment widget
-  useEffect(() => {
-    if (props.isPreview || !widgetID) {
-      return;
-    }
-    const err = () => {
-      new Noty({
-        type: "error",
-        text: t("error/failed-to-delete-widget"),
-        layout: "topRight",
-        theme: "relax",
-        timeout: 5000
-      }).show();
-    };
-    if (resDeleteWidget.error) {
-      err();
-    } else if (resDeleteWidget.data) {
-      if (resDeleteWidget.data.deleteWidget) {
-        resDeleteWidget.data = null;
-        props.removeSelf();
-      } else {
-        err();
-      }
-    }
-  }, [resDeleteWidget, props, t, widgetID]);
 
   useEffect(() => {
     if (resCommentWidget.error) {
@@ -254,7 +205,7 @@ function CommentWidget(props: WidgetArgs) {
       const title =
         getHeaderFromMarkdown(editor.getValue()) || t("general/Untitled");
       const source = window.location.href;
-      const description = `[ℹ️](${source}) **${title}**`;
+      const description = `[💬](${source})  **${title}**`;
       executeCreateCommentWidgetMutation({
         description
       });
@@ -276,53 +227,6 @@ function CommentWidget(props: WidgetArgs) {
     }
   }, [widgetID, executeCommentWidgetQuery]);
 
-  useEffect(() => {
-    if (commentWidget && previewElement) {
-      renderPreview(previewElement, widgetDescription);
-
-      // TODO: There might be a bug in renderPreview function. It generated extra new lines
-      previewElement.innerHTML = previewElement.innerHTML
-        .replace(/<br>\n/g, "<br>")
-        .trim();
-    }
-  }, [commentWidget, previewElement, widgetDescription]);
-
-  useEffect(() => {
-    if (!commentWidget) {
-      return;
-    }
-
-    if (textAreaElement) {
-      const editor: CodeMirrorEditor = VickyMD.fromTextArea(textAreaElement, {
-        mode: {
-          name: "hypermd",
-          hashtag: true
-        },
-        inputStyle: "textarea"
-        // autofocus: false
-      });
-      editor.setValue(widgetDescription);
-      editor.setOption("lineNumbers", false);
-      editor.setOption("foldGutter", false);
-      editor.setOption("autofocus", false);
-      editor.focus();
-      setDescriptionEditor(editor);
-
-      return () => {
-        setDescriptionEditor(null);
-        setTextAreaElement(null);
-      };
-    }
-  }, [textAreaElement, commentWidget, widgetDescription]);
-
-  useEffect(() => {
-    if (commentWidget) {
-      setWidgetDescription(commentWidget.description);
-    } else {
-      setWidgetDescription("");
-    }
-  }, [commentWidget]);
-
   if (!widgetID) {
     return <Box>{"Creating widget"}</Box>;
   }
@@ -333,27 +237,17 @@ function CommentWidget(props: WidgetArgs) {
 
   return (
     <Box className={clsx(classes.commentWidget)}>
-      <Box className={clsx(classes.topBar)}>
-        <div
-          className={clsx(classes.preview, "preview")}
-          ref={(element: HTMLElement) => {
-            setPreviewElement(element);
-          }}
-        ></div>
-      </Box>
+      <WidgetTopPanel
+        widget={commentWidget as any}
+        removeSelf={props.removeSelf}
+        isPreview={props.isPreview}
+      ></WidgetTopPanel>
       <Box className={clsx(classes.interactionPanel)}>
         <Tooltip title={t("interaction-panel/add-comment")}>
           <Button
             className={clsx(classes.button)}
             onClick={() => {
-              /*
-              if (crossnoteContainer.loggedIn) {
-                props.openChat(note);
-              } else {
-                crossnoteContainer.jumpToStartPage();
-              }
-              // console.log("Open chat");
-              */
+              setCommentDialogOpen(true);
             }}
           >
             <CommentOutline></CommentOutline>
@@ -367,76 +261,105 @@ function CommentWidget(props: WidgetArgs) {
         <Tooltip title={t("interaction-panel/add-reaction")}>
           <Button
             className={clsx(classes.button)}
-            // onClick={() => setEmojiPickerOpen(true)}
+            onClick={() => setEmojiPickerOpen(true)}
           >
             <Badge style={{ zIndex: 0 }} color={"secondary"}>
               {/* badgeContent={(note.reactions || "+").toString()} */}
               <StickerEmoji />
               {commentWidget.instance.commentWidget.reactionsCount > 0 ? (
-                <Typography style={{ marginLeft: "4px" }}>
+                <Typography style={{ marginLeft: "4px", marginBottom: "0" }}>
                   {commentWidget.instance.commentWidget.reactionsCount}
                 </Typography>
               ) : null}
             </Badge>
           </Button>
         </Tooltip>
+        <Box>
+          {commentWidget.instance.commentWidget.reactionSummaries
+            .sort((x, y) => {
+              let weightX = 1;
+              let weightY = 1;
+              if (x.selfAuthored) {
+                weightX = 100;
+              }
+              if (y.selfAuthored) {
+                weightY = 100;
+              }
+              return x.count * weightX - y.count * weightY;
+            })
+            .map(reactionSummary => {
+              return (
+                <Chip
+                  variant={
+                    reactionSummary.selfAuthored ? "default" : "outlined"
+                  }
+                  size="medium"
+                  label={reactionSummary.count.toString()}
+                  color={"primary"}
+                  key={reactionSummary.reaction}
+                  style={{ marginRight: "8px" }}
+                  className={clsx(classes.reactionChip)}
+                  onClick={() => {
+                    if (!globalContainers.cloudContainer.loggedIn) {
+                      globalContainers.cloudContainer.setAuthDialogOpen(true);
+                    } else if (reactionSummary.selfAuthored) {
+                      executeRemoveReactionFromCommentWidgetMutation({
+                        widgetID: commentWidget.id,
+                        reaction: reactionSummary.reaction
+                      });
+                      reactionSummary.selfAuthored = false;
+                      reactionSummary.count -= 1;
+                      commentWidget.instance.commentWidget.reactionsCount -= 1;
+                      if (reactionSummary.count <= 0) {
+                        commentWidget.instance.commentWidget.reactionSummaries = commentWidget.instance.commentWidget.reactionSummaries.filter(
+                          summary =>
+                            summary.reaction !== reactionSummary.reaction
+                        );
+                        setForceUpdate(Date.now());
+                      }
+                    } else {
+                      executeAddReactionToCommentWidgetMutation({
+                        widgetID: commentWidget.id,
+                        reaction: reactionSummary.reaction
+                      });
+                      updateReactionSummaries(reactionSummary.reaction);
+                    }
+                  }}
+                  avatar={
+                    <Avatar>
+                      <Emoji emoji={reactionSummary.reaction} size={16}></Emoji>
+                    </Avatar>
+                  }
+                />
+              );
+            })}
+        </Box>
       </Box>
 
-      <Box className={clsx(classes.actionButtons)}>
-        <Tooltip title={commentWidget.owner.username}>
-          <IconButton>
-            <Avatar
-              className={clsx(classes.avatar)}
-              variant={"rounded"}
-              src={
-                commentWidget.owner.avatar ||
-                "data:image/png;base64," +
-                  new Identicon(
-                    sha256(commentWidget.owner.username),
-                    80
-                  ).toString()
-              }
-            ></Avatar>
-          </IconButton>
-        </Tooltip>
-        {!props.isPreview && (
-          <IconButton onClick={() => setEditDialogOpen(true)}>
-            <Pencil></Pencil>
-          </IconButton>
-        )}
-        {!props.isPreview && (
-          <IconButton onClick={deleteWidget}>
-            <TrashCanOutline></TrashCanOutline>
-          </IconButton>
-        )}
-      </Box>
-      <Dialog open={editorDialogOpen} onClose={() => setEditDialogOpen(false)}>
-        <DialogContent>
-          <Box
-            className={clsx(classes.editorWrapper)}
-            style={{ minWidth: "300px", maxWidth: "100%" }}
-          >
-            <textarea
-              className={classes.textarea}
-              ref={(element: HTMLTextAreaElement) => {
-                setTextAreaElement(element);
-              }}
-            ></textarea>
-          </Box>
-        </DialogContent>
-        <DialogActions>
-          <IconButton onClick={updateWidget}>
-            <ContentSave></ContentSave>
-          </IconButton>
-          <IconButton
-            onClick={() => {
-              setEditDialogOpen(false);
-            }}
-          >
-            <Cancel></Cancel>
-          </IconButton>
-        </DialogActions>
+      <Dialog open={emojiPickerOpen} onClose={() => setEmojiPickerOpen(false)}>
+        <EmojiPicker
+          emoji={""}
+          showSkinTones={false}
+          onSelect={data => {
+            if (!globalContainers.cloudContainer.loggedIn) {
+              setEmojiPickerOpen(false);
+              globalContainers.cloudContainer.setAuthDialogOpen(true);
+            } else {
+              setEmojiPickerOpen(false);
+              executeAddReactionToCommentWidgetMutation({
+                widgetID: commentWidget.id,
+                reaction: data.colons
+              });
+              updateReactionSummaries(data.colons);
+            }
+          }}
+        ></EmojiPicker>
       </Dialog>
+      <CommentDialog
+        open={commentDialogOpen}
+        onClose={() => setCommentDialogOpen(false)}
+        commentWidget={commentWidget}
+      ></CommentDialog>
     </Box>
   );
 }

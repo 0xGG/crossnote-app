@@ -594,6 +594,7 @@ export interface Widget {
   instance: WidgetInstance;
   owner: User;
   description: Scalars['String'];
+  canConfigure: Scalars['Boolean'];
 }
 
 export interface WidgetConnection {
@@ -916,7 +917,7 @@ export type CommentWidgetMessageConnectionFieldsFragment = (
 
 export type CommentWidgetFieldsFragment = (
   { __typename?: 'Widget' }
-  & Pick<Widget, 'id' | 'description'>
+  & Pick<Widget, 'id' | 'description' | 'canConfigure'>
   & { owner: (
     { __typename?: 'User' }
     & Pick<User, 'id' | 'username' | 'avatar'>
@@ -1065,6 +1066,7 @@ export const CommentWidgetFieldsFragmentDoc = gql`
     avatar
   }
   description
+  canConfigure
   instance {
     type
     ... on CommentWidgetInstance {
