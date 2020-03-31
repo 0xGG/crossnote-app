@@ -169,6 +169,8 @@ export const jaJP = {
     "error/failed-to-disable-encryption": "暗号化を無効にできませんでした",
     "error/decryption-failed": "復号化に失敗しました",
     "error/failed-to-change-file-path": "ファイル パスの変更に失敗しました",
+    "error/failed-to-create-widget": "ウィジェットの作成に失敗しました",
+    "error/failed-to-load-widget": "ウィジェットを読み込めませんでした",
 
     // Success
     "success/notebook-uploaded": "ノートブックがアップロードされます",
@@ -332,6 +334,8 @@ export const jaJP = {
     "editor/toolbar/insert-ordered-list": "順序付きリストを挿入",
     "editor/toolbar/insert-link": "リンクを挿入",
     "editor/toolbar/insert-table": "テーブルを挿入",
+    "editor/toolbar/insert-comment":
+      "クロスノートクラウドコメントウィジェットを挿入",
 
     // * NoteControl
     "editor/note-control/tag-added": "タグが追加されました",
@@ -422,6 +426,8 @@ export const jaJP = {
     "widget/controls": "コントローラー",
     "widget/loop": "サイクル",
     "widget/muted": "ミュート",
+    "widget/creating-widget": "ウィジェットを作成しています",
+    "widget/loading-widget": "ウィジェットを読み込んでいます",
     "widget/crossnote.image/thanks_sm_ms":
       "無料のドローイングベッドサービスを提供してくれたsm.msに感謝します。",
     "widget/crossnote.audio/audio_element_fail":

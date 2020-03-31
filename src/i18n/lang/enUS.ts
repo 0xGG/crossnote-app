@@ -167,6 +167,8 @@ export const enUS = {
     "error/failed-to-disable-encryption": "Failed to disable encryption",
     "error/decryption-failed": "Decryption failed",
     "error/failed-to-change-file-path": "Failed to change file path",
+    "error/failed-to-create-widget": "Failed to create widget",
+    "error/failed-to-load-widget": "Failed to load widget",
 
     // Success
     "success/notebook-uploaded": "Notebook uploaded",
@@ -320,6 +322,7 @@ export const enUS = {
     "editor/toolbar/insert-ordered-list": "Insert ordered list",
     "editor/toolbar/insert-link": "Insert link",
     "editor/toolbar/insert-table": "Insert table",
+    "editor/toolbar/insert-comment": "Insert crossnote cloud comment widget",
 
     // * NoteControl
     "editor/note-control/tag-added": "Tag added",
@@ -408,6 +411,8 @@ export const enUS = {
     "widget/controls": "controls",
     "widget/loop": "loop",
     "widget/muted": "muted",
+    "widget/creating-widget": "Creating widget",
+    "widget/loading-widget": "Loading widget",
     "widget/crossnote.image/thanks_sm_ms":
       "Thanks sm.ms for offering free image hosting service.",
     "widget/crossnote.audio/audio_element_fail":

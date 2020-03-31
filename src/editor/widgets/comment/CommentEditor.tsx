@@ -6,16 +6,11 @@ import {
   Button,
   Box,
   Card,
-  IconButton,
-  Dialog,
-  FormControlLabel,
-  Switch,
   Typography
 } from "@material-ui/core";
 import clsx from "clsx";
 import { useTranslation } from "react-i18next";
 import { Editor as CodeMirrorEditor } from "codemirror";
-import Noty from "noty";
 import { globalContainers } from "../../../containers/global";
 const VickyMD = require("vickymd");
 

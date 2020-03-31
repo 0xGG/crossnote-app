@@ -883,7 +883,9 @@ export default function Editor(props: Props) {
               },
               {
                 text: "`@crossnote.comment`  \n",
-                displayText: `/crossnote.comment - Insert crossnote cloud comment widget`
+                displayText: `/crossnote.comment - ${t(
+                  "editor/toolbar/insert-comment"
+                )}`
               }
             ];
             const filtered = commands.filter(

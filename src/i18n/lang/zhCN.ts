@@ -165,6 +165,8 @@ export const zhCN = {
     "error/failed-to-disable-encryption": "解除加密失败",
     "error/decryption-failed": "解密失败",
     "error/failed-to-change-file-path": "更改文件路径失败",
+    "error/failed-to-create-widget": "创建挂件失败",
+    "error/failed-to-load-widget": "读取挂件失败",
 
     // Success
     "success/notebook-uploaded": "笔记本已上传",
@@ -317,6 +319,7 @@ export const zhCN = {
     "editor/toolbar/insert-ordered-list": "插入有序列表",
     "editor/toolbar/insert-link": "插入链接",
     "editor/toolbar/insert-table": "插入表格",
+    "editor/toolbar/insert-comment": "插入交叉笔记云评论挂件",
 
     // * NoteControl
     "editor/note-control/tag-added": "标签已被添加",
@@ -397,6 +400,8 @@ export const zhCN = {
     "widget/controls": "控制器",
     "widget/loop": "循环",
     "widget/muted": "静音",
+    "widget/creating-widget": "正在创建挂件",
+    "widget/loading-widget": "正在读取挂件",
     "widget/crossnote.image/thanks_sm_ms":
       "在此由衷感谢 sm.ms 提供免费的图床服务。",
     "widget/crossnote.audio/audio_element_fail":

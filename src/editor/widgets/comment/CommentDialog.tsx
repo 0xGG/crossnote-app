@@ -205,6 +205,7 @@ export function CommentDialog(props: Props) {
   useEffect(() => {
     if (resSubscribeToCommentWidget.error) {
       // console.log(resSubscribeToCommentWidget.error);
+      /*
       new Noty({
         type: "error",
         text: t("error/failed-to-subscribe-to-comment-widget"),
@@ -212,12 +213,14 @@ export function CommentDialog(props: Props) {
         theme: "relax",
         timeout: 2000
       }).show();
+      */
     }
   }, [resSubscribeToCommentWidget, t]);
 
   useEffect(() => {
     if (resUnsubscribeFromCommentWidget.error) {
       // console.log(resUnsubscribeFromCommentWidget.error);
+      /*
       new Noty({
         type: "error",
         text: t("error/failed-to-unsubscribe-from-comment-widget"),
@@ -225,6 +228,7 @@ export function CommentDialog(props: Props) {
         theme: "relax",
         timeout: 2000
       }).show();
+      */
     }
   }, [resUnsubscribeFromCommentWidget, t]);
 

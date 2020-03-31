@@ -165,6 +165,8 @@ export const zhTW = {
     "error/failed-to-disable-encryption": "解除加密失敗",
     "error/decryption-failed": "解密失敗",
     "error/failed-to-change-file-path": "更改文件路徑失敗",
+    "error/failed-to-create-widget": "創建掛件失敗",
+    "error/failed-to-load-widget": "讀取掛件失敗",
 
     // Success
     "success/notebook-uploaded": "筆記本已上傳",
@@ -317,6 +319,7 @@ export const zhTW = {
     "editor/toolbar/insert-ordered-list": "插入有序列表",
     "editor/toolbar/insert-link": "插入鏈接",
     "editor/toolbar/insert-table": "插入表格",
+    "editor/toolbar/insert-comment": "插入交叉筆記雲評論掛件",
 
     // * NoteControl
     "editor/note-control/tag-added": "標籤已被添加",
@@ -397,6 +400,8 @@ export const zhTW = {
     "widget/controls": "控制器",
     "widget/loop": "循環",
     "widget/muted": "靜音",
+    "widget/creating-widget": "正在創建掛件",
+    "widget/loading-widget": "正在讀取掛件",
     "widget/crossnote.image/thanks_sm_ms":
       "在此由衷感謝 sm.ms 提供免費的圖床服務。",
     "widget/crossnote.audio/audio_element_fail":
