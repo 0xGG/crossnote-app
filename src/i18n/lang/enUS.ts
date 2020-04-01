@@ -111,7 +111,8 @@ export const enUS = {
     "general/Uploading": "Uploading",
     "general/clicks": "clicks",
     "general/Processing": "Processing...",
-    "general/please-wait": "please wait...",
+    "general/please-wait": "Please wait...",
+    "general/please-sign-in-first": "Please sign in first",
     "general/Languages": "Languages",
     "general/track": "Track",
     "general/Publish": "Publish",
@@ -155,6 +156,10 @@ export const enUS = {
     "general/upload-the-profile": "Upload profile",
     "general/commit-message": "Commit message",
     "general/upload-notebook": "Upload the notebook",
+    "general/Comments": "Comments",
+    "general/Source": "Source",
+    "general/Description": "Description",
+    "general/Edit": "Edit",
 
     // Error
     "error/authentication-failed": "Authentication failed",
@@ -166,6 +171,8 @@ export const enUS = {
     "error/failed-to-disable-encryption": "Failed to disable encryption",
     "error/decryption-failed": "Decryption failed",
     "error/failed-to-change-file-path": "Failed to change file path",
+    "error/failed-to-create-widget": "Failed to create widget",
+    "error/failed-to-load-widget": "Failed to load widget",
 
     // Success
     "success/notebook-uploaded": "Notebook uploaded",
@@ -190,19 +197,6 @@ export const enUS = {
 
     // UserTags
     "user-tags/follow-a-tag": "Follow a tag",
-
-    // ChatMessage
-    "chat-message/reply-to-this-user": "Reply to this user",
-    "chat-message/add-reaction-to-this-message": "Add reaction to this message",
-    "chat-message/edit-this-message": "Edit this message",
-    "chat-message/modified-message": "modified message",
-
-    // ChatPanel
-    "chat-panel/post-message-failure": "Failed to post message",
-    "chat-panel/unsubscribe-info":
-      "Unsubscribing from this chat group will stop you from receiving notifications unless someone mentions you",
-    "chat-panel/subscribe-info":
-      "Subscribing to this chat group will let you receive notifications whenever someone posts a message",
 
     // Notifications
     "notifications/refresh": "Refresh to see new notifications",
@@ -332,6 +326,7 @@ export const enUS = {
     "editor/toolbar/insert-ordered-list": "Insert ordered list",
     "editor/toolbar/insert-link": "Insert link",
     "editor/toolbar/insert-table": "Insert table",
+    "editor/toolbar/insert-comment": "Insert crossnote cloud comment widget",
 
     // * NoteControl
     "editor/note-control/tag-added": "Tag added",
@@ -403,6 +398,7 @@ export const enUS = {
     "notification/started-following-you": "Started following you",
     // * BookmarkNotification
     "notification/bookmarked-your-note": "Bookmarked your note",
+    "notification/view-more-notifications": "View more notifications",
 
     // GitHubOAuthCallback
     "github-oauth/wait": "Please wait ...",
@@ -420,6 +416,8 @@ export const enUS = {
     "widget/controls": "controls",
     "widget/loop": "loop",
     "widget/muted": "muted",
+    "widget/creating-widget": "Creating widget",
+    "widget/loading-widget": "Loading widget",
     "widget/crossnote.image/thanks_sm_ms":
       "Thanks sm.ms for offering free image hosting service.",
     "widget/crossnote.audio/audio_element_fail":
@@ -490,8 +488,22 @@ export const enUS = {
     "tesseract/initialized api": "initialized api",
     "tesseract/recognizing text": "recognizing text",
 
+    // Comment widget
+    "widget/crossnote.comment/reply-to-this-user": "Reply to this user",
+    "widget/crossnote.comment/add-reaction-to-this-comment":
+      "Add reaction to this comment",
+    "widget/crossnote.comment/edit-this-message": "Edit this comment",
+    "widget/crossnote.comment/modified-comment": "modified comment",
+    "widget/crossnote.comment/post-comment-failure": "Failed to post comment",
+    "widget/crossnote.comment/unsubscribe-info":
+      "Unsubscribe from the comments",
+    "widget/crossnote.comment/subscribe-info": "Subscribe to the comments",
+    "widget/crossnote.comment/view-more-comments": "View more comments",
+
     // Dialogs
     "delete-file-dialog/title": "Are you sure to delete this note?",
-    "delete-file-dialog/subtitle": "Can't be undone"
+    "delete-file-dialog/subtitle": "Can't be undone",
+    "add-notebook-dialog/disclaimer":
+      "Notebook data will only be stored locally in browser."
   }
 };

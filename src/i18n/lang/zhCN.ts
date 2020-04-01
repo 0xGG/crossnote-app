@@ -112,6 +112,7 @@ export const zhCN = {
     "general/clicks": "点击",
     "general/Processing": "正在处理...",
     "general/please-wait": "请稍候...",
+    "general/please-sign-in-first": "请先登录",
     "general/Languages": "语言",
     "general/track": "跟踪",
     "general/Publish": "发布",
@@ -153,6 +154,10 @@ export const zhCN = {
     "general/upload-the-profile": "上传账户信息",
     "general/commit-message": "提交说明",
     "general/upload-notebook": "上传笔记本",
+    "general/Comments": "评论",
+    "general/Source": "源",
+    "general/Description": "描述",
+    "general/Edit": "编辑",
 
     // Error
     "error/authentication-failed": "认证失败",
@@ -164,6 +169,8 @@ export const zhCN = {
     "error/failed-to-disable-encryption": "解除加密失败",
     "error/decryption-failed": "解密失败",
     "error/failed-to-change-file-path": "更改文件路径失败",
+    "error/failed-to-create-widget": "创建挂件失败",
+    "error/failed-to-load-widget": "读取挂件失败",
 
     // Success
     "success/notebook-uploaded": "笔记本已上传",
@@ -188,19 +195,6 @@ export const zhCN = {
 
     // UserTags
     "user-tags/follow-a-tag": "关注一个标签",
-
-    // ChatMessage
-    "chat-message/reply-to-this-user": "回复给这个用户",
-    "chat-message/add-reaction-to-this-message": "给这条消息添加反应",
-    "chat-message/edit-this-message": "编辑这条消息",
-    "chat-message/modified-message": "编辑过的消息",
-
-    // ChatPanel
-    "chat-panel/post-message-failure": "发送消息失败",
-    "chat-panel/unsubscribe-info":
-      "取消订阅这个聊天群将会使你只有在别人提到你的时候才会收到通知",
-    "chat-panel/subscribe-info":
-      "订阅这个聊天群将会让你在被人发送消息的时候收到通知",
 
     // Notifications
     "notifications/refresh": "刷新来查看新的消息",
@@ -329,6 +323,7 @@ export const zhCN = {
     "editor/toolbar/insert-ordered-list": "插入有序列表",
     "editor/toolbar/insert-link": "插入链接",
     "editor/toolbar/insert-table": "插入表格",
+    "editor/toolbar/insert-comment": "插入交叉笔记云评论挂件",
 
     // * NoteControl
     "editor/note-control/tag-added": "标签已被添加",
@@ -395,6 +390,7 @@ export const zhCN = {
     "notification/started-following-you": "开始关注了你",
     // * BookmarkNotification
     "notification/bookmarked-your-note": "收藏了你的笔记",
+    "notification/view-more-notifications": "查看更多的消息",
 
     // GitHubOAuthCallback
     "github-oauth/wait": "请稍等 ...",
@@ -409,6 +405,8 @@ export const zhCN = {
     "widget/controls": "控制器",
     "widget/loop": "循环",
     "widget/muted": "静音",
+    "widget/creating-widget": "正在创建挂件",
+    "widget/loading-widget": "正在读取挂件",
     "widget/crossnote.image/thanks_sm_ms":
       "在此由衷感谢 sm.ms 提供免费的图床服务。",
     "widget/crossnote.audio/audio_element_fail":
@@ -472,8 +470,21 @@ export const zhCN = {
     "tesseract/initialized api": "已初始化程序接口",
     "tesseract/recognizing text": "正在识别文字",
 
+    // Comment widget
+    "widget/crossnote.comment/reply-to-this-user": "回复给这个用户",
+    "widget/crossnote.comment/add-reaction-to-this-comment":
+      "给这条评论添加反应",
+    "widget/crossnote.comment/edit-this-message": "编辑这条评论",
+    "widget/crossnote.comment/modified-comment": "编辑过的评论",
+    "widget/crossnote.comment/post-comment-failure": "发送评论失败",
+    "widget/crossnote.comment/unsubscribe-info": "取消订阅评论",
+    "widget/crossnote.comment/subscribe-info": "订阅评论",
+    "widget/crossnote.comment/view-more-comments": "查看更多的评论",
+
     // Dialogs
     "delete-file-dialog/title": "你确定要删除这个笔记？",
-    "delete-file-dialog/subtitle": "将不能被撤回"
+    "delete-file-dialog/subtitle": "将不能被撤回",
+    "add-notebook-dialog/disclaimer":
+      "所有笔记本的数据将只会被保存于浏览器本地。"
   }
 };

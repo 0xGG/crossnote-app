@@ -1,7 +1,5 @@
 import React, { useEffect } from "react";
 import "./App.css";
-import { createMuiTheme } from "@material-ui/core";
-import { orange, blue } from "@material-ui/core/colors";
 import { ThemeProvider } from "@material-ui/styles";
 import * as qs from "qs";
 import { Router, Route, Switch } from "react-router-dom";
@@ -9,13 +7,7 @@ import { browserHistory } from "./utilities/history";
 import { Home, HomeSection } from "./pages/Home";
 import { GitHubOAuthCallback } from "./components/GitHubOAuthCallback";
 import "./editor";
-
-const theme = createMuiTheme({
-  palette: {
-    primary: blue,
-    secondary: orange
-  }
-});
+import { crossnoteTheme } from "./utilities/theme";
 
 const App: React.FC = () => {
   useEffect(() => {
@@ -32,7 +24,7 @@ const App: React.FC = () => {
     };
   }, []);
   return (
-    <ThemeProvider theme={theme}>
+    <ThemeProvider theme={crossnoteTheme}>
       <div className="App">
         <Router history={browserHistory}>
           <Switch>
@@ -41,6 +33,16 @@ const App: React.FC = () => {
               exact={true}
               render={props => (
                 <Home section={HomeSection.Settings} queryParams={{}}></Home>
+              )}
+            ></Route>
+            <Route
+              path={`/notifications`}
+              exact={true}
+              render={props => (
+                <Home
+                  section={HomeSection.Notifications}
+                  queryParams={{}}
+                ></Home>
               )}
             ></Route>
             <Route

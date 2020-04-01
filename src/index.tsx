@@ -18,6 +18,8 @@ import Crossnote from "./lib/crossnote";
 import { CrossnoteContainer } from "./containers/crossnote";
 import { SettingsContainer } from "./containers/settings";
 import { CloudContainer } from "./containers/cloud";
+import { NotificationsContainer } from "./containers/notifications";
+
 import { Provider } from "urql";
 import { GraphQLClient } from "./utilities/client";
 
@@ -39,7 +41,9 @@ try {
       >
         <SettingsContainer.Provider initialState={{}}>
           <CloudContainer.Provider initialState={{}}>
-            <App />
+            <NotificationsContainer.Provider initialState={{}}>
+              <App />
+            </NotificationsContainer.Provider>
           </CloudContainer.Provider>
         </SettingsContainer.Provider>
       </CrossnoteContainer.Provider>

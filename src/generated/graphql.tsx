@@ -15,46 +15,14 @@ export interface Scalars {
   Upload: any;
 }
 
-export interface AddCollaboratorToNote {
-  noteID: Scalars['UUID'];
-  collaboratorID: Maybe<Scalars['UUID']>;
-  collaboratorUsername: Maybe<Scalars['String']>;
-}
-
-export interface AddReactionToChatMessage {
-  chatMessageID: Scalars['UUID'];
+export interface AddReactionToCommentWidget {
+  widgetID: Scalars['UUID'];
   reaction: Scalars['String'];
 }
 
-export interface AddReactionToNote {
-  noteID: Scalars['UUID'];
+export interface AddReactionToCommentWidgetMessage {
+  messageID: Scalars['UUID'];
   reaction: Scalars['String'];
-}
-
-export interface AddTagToNote {
-  noteID: Scalars['UUID'];
-  noteKey: Maybe<Scalars['UUID']>;
-  tag: Scalars['String'];
-}
-
-export interface ArchiveNote {
-  noteID: Scalars['UUID'];
-}
-
-export interface AttachToParentNote {
-  noteID: Scalars['UUID'];
-  parentNoteID: Scalars['UUID'];
-}
-
-export enum AuthorViewScope {
-  All = 'ALL',
-  Onymous = 'ONYMOUS',
-  Anonymous = 'ANONYMOUS'
-}
-
-export enum AuthorVisibility {
-  Onymous = 'ONYMOUS',
-  Anonymous = 'ANONYMOUS'
 }
 
 export interface AuthReturn {
@@ -63,138 +31,92 @@ export interface AuthReturn {
   user: User;
 }
 
-export interface BookmarkNote {
-  noteID: Scalars['UUID'];
-}
-
-export interface ChatGroup {
-   __typename?: 'ChatGroup';
+export interface CommentWidget {
+   __typename?: 'CommentWidget';
   id: Scalars['UUID'];
-  owner: User;
+  createdAt: Scalars['Time'];
+  updatedAt: Scalars['Time'];
   messagesCount: Scalars['Int'];
-  type: ChatGroupType;
-  updatedAt: Maybe<Scalars['Time']>;
-  note: Note;
-  messages: ChatMessageConnection;
+  reactionsCount: Scalars['Int'];
   subscribed: Scalars['Boolean'];
+  messages: CommentWidgetMessageConnection;
+  reactionSummaries: Array<ReactionSummary>;
 }
 
 
-export interface ChatGroupMessagesArgs {
+export interface CommentWidgetMessagesArgs {
   before?: Maybe<Scalars['UUID']>;
   after?: Maybe<Scalars['UUID']>;
   first?: Maybe<Scalars['Int']>;
   last?: Maybe<Scalars['Int']>;
 }
 
-export interface ChatGroupConnection {
-   __typename?: 'ChatGroupConnection';
-  totalCount: Scalars['Int'];
-  pageInfo: PageInfo;
-  edges: Array<ChatGroupEdge>;
-}
 
-export interface ChatGroupEdge {
-   __typename?: 'ChatGroupEdge';
-  cursor: Scalars['UUID'];
-  node: ChatGroup;
-}
-
-export enum ChatGroupType {
-  Note = 'NOTE',
-  Individual = 'INDIVIDUAL'
-}
-
-export interface ChatMessage {
-   __typename?: 'ChatMessage';
-  id: Scalars['UUID'];
-  author: User;
-  markdown: Scalars['String'];
-  authorVisibility: AuthorVisibility;
-  createdAt: Scalars['Time'];
-  updatedAt: Scalars['Time'];
-  reactionSummaries: Array<ReactionSummary>;
-  chatGroup: ChatGroup;
-}
-
-
-export interface ChatMessageReactionSummariesArgs {
+export interface CommentWidgetReactionSummariesArgs {
   size?: Maybe<Scalars['Int']>;
 }
 
-export interface ChatMessageConnection {
-   __typename?: 'ChatMessageConnection';
+export interface CommentWidgetInstance  extends WidgetInstance {
+   __typename?: 'CommentWidgetInstance';
+  type: WidgetType;
+  commentWidget: CommentWidget;
+}
+
+export interface CommentWidgetMessage {
+   __typename?: 'CommentWidgetMessage';
+  id: Scalars['UUID'];
+  widget: Widget;
+  author: User;
+  markdown: Scalars['String'];
+  createdAt: Scalars['Time'];
+  updatedAt: Scalars['Time'];
+  reactionSummaries: Array<ReactionSummary>;
+}
+
+
+export interface CommentWidgetMessageReactionSummariesArgs {
+  size?: Maybe<Scalars['Int']>;
+}
+
+export interface CommentWidgetMessageConnection {
+   __typename?: 'CommentWidgetMessageConnection';
   totalCount: Scalars['Int'];
   pageInfo: PageInfo;
-  edges: Array<ChatMessageEdge>;
+  edges: Array<CommentWidgetMessageEdge>;
 }
 
-export interface ChatMessageEdge {
-   __typename?: 'ChatMessageEdge';
+export interface CommentWidgetMessageEdge {
+   __typename?: 'CommentWidgetMessageEdge';
   cursor: Scalars['UUID'];
-  node: ChatMessage;
+  node: CommentWidgetMessage;
 }
 
-export interface CreateNote {
-  title: Maybe<Scalars['String']>;
-  markdown: Maybe<Scalars['String']>;
-  parentNoteID: Maybe<Scalars['UUID']>;
-  tags: Array<Maybe<Scalars['String']>>;
-  noteVisibility: Maybe<NoteVisibility>;
-  authorVisibility: Maybe<AuthorVisibility>;
-  notifyUsers: Array<Maybe<Scalars['String']>>;
-  allowReadersToSuggestTags: Maybe<Scalars['Boolean']>;
+export interface CommentWidgetMessageReaction {
+   __typename?: 'CommentWidgetMessageReaction';
+  message: CommentWidgetMessage;
+  user: User;
+  reaction: Scalars['String'];
 }
 
-export interface CreateNoteBackup {
-  noteID: Scalars['UUID'];
-  name: Scalars['String'];
-  title: Scalars['String'];
-  markdown: Scalars['String'];
+export interface CommentWidgetReaction {
+   __typename?: 'CommentWidgetReaction';
+  widget: Widget;
+  user: User;
+  reaction: Scalars['String'];
 }
 
-export interface Cursor {
-  line: Scalars['Int'];
-  ch: Scalars['Int'];
-}
-
-export interface DeleteNote {
-  noteID: Scalars['UUID'];
-}
-
-export interface DeleteNoteBackup {
-  id: Scalars['UUID'];
+export interface CreateWidget {
+  type: WidgetType;
+  description: Scalars['String'];
+  source: Scalars['String'];
 }
 
 export interface DeleteNotification {
   notificationID: Scalars['UUID'];
 }
 
-export interface DisableNoteKey {
-  noteID: Scalars['UUID'];
-  permission: NoteKeyPermission;
-}
-
-export interface DuplicateNote {
-  noteID: Scalars['UUID'];
-}
-
-export interface EnableNoteKey {
-  noteID: Scalars['UUID'];
-  permission: NoteKeyPermission;
-}
-
-export interface FavoriteTag {
-   __typename?: 'FavoriteTag';
-  name: Scalars['String'];
-  fullName: Scalars['String'];
-  pinned: Scalars['Boolean'];
-  order: Scalars['Int'];
-}
-
-export interface FollowTag {
-  tag: Scalars['String'];
-  pinned: Maybe<Scalars['Boolean']>;
+export interface DeleteWidget {
+  id: Scalars['UUID'];
 }
 
 export interface FollowUser {
@@ -212,77 +134,37 @@ export interface LinkWithGitHubAccount {
   code: Scalars['String'];
 }
 
-export interface Modification {
-  v: Scalars['Int'];
-  us: Array<Scalars['String']>;
-  rs: Array<ModificationRecord>;
-}
-
-export interface ModificationRecord {
-  o: Scalars['Int'];
-  v: Scalars['String'];
-}
-
 export interface Mutation {
    __typename?: 'Mutation';
   signUp: AuthReturn;
   signIn: AuthReturn;
   signUpWithGitHubAccount: AuthReturn;
   signInWithGitHubAccount: AuthReturn;
-  postChatMessage: ChatMessage;
-  updateChatMessage: ChatMessage;
-  addReactionToChatMessage: Scalars['Boolean'];
-  removeReactionFromChatMessage: Scalars['Boolean'];
-  subscribeToChatGroup: Scalars['Boolean'];
-  unsubscribeFromChatGroup: Scalars['Boolean'];
-  createNote: Maybe<Note>;
-  duplicateNote: Maybe<Note>;
-  attachToParentNote: Note;
-  unattachFromParentNote: Scalars['Boolean'];
-  bookmarkNote: Scalars['Boolean'];
-  unbookmarkNote: Scalars['Boolean'];
-  updateNoteMarkdown: Scalars['Boolean'];
-  addTagToNote: Scalars['Boolean'];
-  removeTagFromNote: Scalars['Boolean'];
-  suggestNoteTag: Scalars['Boolean'];
-  addCollaboratorToNote: User;
-  removeCollaboratorFromNote: User;
-  createNoteBackup: NoteBackup;
-  deleteNoteBackup: Scalars['Boolean'];
-  setCollaboratorRole: Scalars['Boolean'];
-  addReactionToNote: Scalars['Boolean'];
-  removeReactionFromNote: Scalars['Boolean'];
-  setNoteVisibility: Scalars['Boolean'];
-  setAuthorVisibility: Scalars['Boolean'];
-  setAllowReadersToSuggestTags: Scalars['Boolean'];
-  setAllowReadersToAttachNotes: Scalars['Boolean'];
-  setInheritParentNoteCollaboratorsList: Scalars['Boolean'];
-  deleteNote: Scalars['Boolean'];
-  undeleteNote: Scalars['Boolean'];
-  pinNote: Scalars['Boolean'];
-  unpinNote: Scalars['Boolean'];
-  archiveNote: Scalars['Boolean'];
-  unarchiveNote: Scalars['Boolean'];
-  reportNote: Scalars['Boolean'];
-  unreportNote: Scalars['Boolean'];
-  reorderNote: Scalars['Boolean'];
   deleteNotification: Scalars['Boolean'];
   deleteAllNotifications: Scalars['Boolean'];
   setUserInfo: User;
   followUser: Scalars['Boolean'];
   unfollowUser: Scalars['Boolean'];
-  followTag: Scalars['Boolean'];
-  unfollowTag: Scalars['Boolean'];
-  setFollowingTagPinnedStatus: Scalars['Boolean'];
-  userMadeChangesToNote: Scalars['Boolean'];
-  userOperateEditorCursor: Scalars['Boolean'];
   sendEmailVerificationCode: Scalars['Boolean'];
   resetPassword: Scalars['Boolean'];
   verifyEmail: Scalars['Boolean'];
-  enableNoteKey: NoteKey;
-  disableNoteKey: NoteKey;
   linkWithGitHubAccount: Scalars['Boolean'];
   unlinkGitHubAccount: Scalars['Boolean'];
+  registerNotebook: Notebook;
+  unregisterNotebook: Scalars['Boolean'];
+  StarNotebook: Scalars['Boolean'];
+  UnstarNotebook: Scalars['Boolean'];
+  createWidget: Widget;
+  updateWidget: Scalars['Boolean'];
+  deleteWidget: Scalars['Boolean'];
+  postCommentWidgetMessage: CommentWidgetMessage;
+  updateCommentWidgetMessage: CommentWidgetMessage;
+  addReactionToCommentWidget: Scalars['Boolean'];
+  removeReactionFromCommentWidget: Scalars['Boolean'];
+  addReactionToCommentWidgetMessage: Scalars['Boolean'];
+  removeReactionFromCommentWidgetMessage: Scalars['Boolean'];
+  subscribeToCommentWidget: Scalars['Boolean'];
+  unsubscribeFromCommentWidget: Scalars['Boolean'];
 }
 
 
@@ -306,191 +188,6 @@ export interface MutationSignInWithGitHubAccountArgs {
 }
 
 
-export interface MutationPostChatMessageArgs {
-  input: PostChatMessage;
-}
-
-
-export interface MutationUpdateChatMessageArgs {
-  input: UpdateChatMessage;
-}
-
-
-export interface MutationAddReactionToChatMessageArgs {
-  input: AddReactionToChatMessage;
-}
-
-
-export interface MutationRemoveReactionFromChatMessageArgs {
-  input: RemoveReactionFromChatMessage;
-}
-
-
-export interface MutationSubscribeToChatGroupArgs {
-  input: SubscribeToChatGroup;
-}
-
-
-export interface MutationUnsubscribeFromChatGroupArgs {
-  input: UnsubscribeFromChatGroup;
-}
-
-
-export interface MutationCreateNoteArgs {
-  input: CreateNote;
-}
-
-
-export interface MutationDuplicateNoteArgs {
-  input: DuplicateNote;
-}
-
-
-export interface MutationAttachToParentNoteArgs {
-  input: Maybe<AttachToParentNote>;
-}
-
-
-export interface MutationUnattachFromParentNoteArgs {
-  input: Maybe<UnattachFromParentNote>;
-}
-
-
-export interface MutationBookmarkNoteArgs {
-  input: BookmarkNote;
-}
-
-
-export interface MutationUnbookmarkNoteArgs {
-  input: UnbookmarkNote;
-}
-
-
-export interface MutationUpdateNoteMarkdownArgs {
-  input: UpdateNoteMarkdown;
-}
-
-
-export interface MutationAddTagToNoteArgs {
-  input: AddTagToNote;
-}
-
-
-export interface MutationRemoveTagFromNoteArgs {
-  input: RemoveTagFromNote;
-}
-
-
-export interface MutationSuggestNoteTagArgs {
-  input: SuggestNoteTag;
-}
-
-
-export interface MutationAddCollaboratorToNoteArgs {
-  input: AddCollaboratorToNote;
-}
-
-
-export interface MutationRemoveCollaboratorFromNoteArgs {
-  input: RemoveCollaboratorFromNote;
-}
-
-
-export interface MutationCreateNoteBackupArgs {
-  input: Maybe<CreateNoteBackup>;
-}
-
-
-export interface MutationDeleteNoteBackupArgs {
-  input: Maybe<DeleteNoteBackup>;
-}
-
-
-export interface MutationSetCollaboratorRoleArgs {
-  input: SetCollaboratorRole;
-}
-
-
-export interface MutationAddReactionToNoteArgs {
-  input: AddReactionToNote;
-}
-
-
-export interface MutationRemoveReactionFromNoteArgs {
-  input: RemoveReactionFromNote;
-}
-
-
-export interface MutationSetNoteVisibilityArgs {
-  input: SetNoteVisibility;
-}
-
-
-export interface MutationSetAuthorVisibilityArgs {
-  input: SetAuthorVisibility;
-}
-
-
-export interface MutationSetAllowReadersToSuggestTagsArgs {
-  input: Maybe<SetAllowReadersToSuggestTags>;
-}
-
-
-export interface MutationSetAllowReadersToAttachNotesArgs {
-  input: Maybe<SetAllowReadersToAttachNotes>;
-}
-
-
-export interface MutationSetInheritParentNoteCollaboratorsListArgs {
-  input: Maybe<SetInheritParentNoteCollaboratorsList>;
-}
-
-
-export interface MutationDeleteNoteArgs {
-  input: DeleteNote;
-}
-
-
-export interface MutationUndeleteNoteArgs {
-  input: UndeleteNote;
-}
-
-
-export interface MutationPinNoteArgs {
-  input: PinNote;
-}
-
-
-export interface MutationUnpinNoteArgs {
-  input: UnpinNote;
-}
-
-
-export interface MutationArchiveNoteArgs {
-  input: ArchiveNote;
-}
-
-
-export interface MutationUnarchiveNoteArgs {
-  input: UnarchiveNote;
-}
-
-
-export interface MutationReportNoteArgs {
-  input: ReportNote;
-}
-
-
-export interface MutationUnreportNoteArgs {
-  input: UnreportNote;
-}
-
-
-export interface MutationReorderNoteArgs {
-  input: ReorderNote;
-}
-
-
 export interface MutationDeleteNotificationArgs {
   input: DeleteNotification;
 }
@@ -511,31 +208,6 @@ export interface MutationUnfollowUserArgs {
 }
 
 
-export interface MutationFollowTagArgs {
-  input: FollowTag;
-}
-
-
-export interface MutationUnfollowTagArgs {
-  input: UnfollowTag;
-}
-
-
-export interface MutationSetFollowingTagPinnedStatusArgs {
-  input: Maybe<SetFollowingTagPinnedStatus>;
-}
-
-
-export interface MutationUserMadeChangesToNoteArgs {
-  input: UserMadeChangesToNote;
-}
-
-
-export interface MutationUserOperateEditorCursorArgs {
-  input: UserOperateEditorCursor;
-}
-
-
 export interface MutationSendEmailVerificationCodeArgs {
   input: Maybe<SendEmailVerificationCode>;
 }
@@ -551,167 +223,112 @@ export interface MutationVerifyEmailArgs {
 }
 
 
-export interface MutationEnableNoteKeyArgs {
-  input: Maybe<EnableNoteKey>;
-}
-
-
-export interface MutationDisableNoteKeyArgs {
-  input: Maybe<DisableNoteKey>;
-}
-
-
 export interface MutationLinkWithGitHubAccountArgs {
   input: Maybe<LinkWithGitHubAccount>;
 }
 
-export interface Note {
-   __typename?: 'Note';
+
+export interface MutationRegisterNotebookArgs {
+  input: RegisterNotebook;
+}
+
+
+export interface MutationUnregisterNotebookArgs {
+  input: UnregisterNotebook;
+}
+
+
+export interface MutationStarNotebookArgs {
+  input: StarNotebook;
+}
+
+
+export interface MutationUnstarNotebookArgs {
+  input: UnstarNotebook;
+}
+
+
+export interface MutationCreateWidgetArgs {
+  input: Maybe<CreateWidget>;
+}
+
+
+export interface MutationUpdateWidgetArgs {
+  input: Maybe<UpdateWidget>;
+}
+
+
+export interface MutationDeleteWidgetArgs {
+  input: Maybe<DeleteWidget>;
+}
+
+
+export interface MutationPostCommentWidgetMessageArgs {
+  input: PostCommentWidgetMessage;
+}
+
+
+export interface MutationUpdateCommentWidgetMessageArgs {
+  input: UpdateCommentWidgetMessage;
+}
+
+
+export interface MutationAddReactionToCommentWidgetArgs {
+  input: Maybe<AddReactionToCommentWidget>;
+}
+
+
+export interface MutationRemoveReactionFromCommentWidgetArgs {
+  input: Maybe<RemoveReactionFromCommentWidget>;
+}
+
+
+export interface MutationAddReactionToCommentWidgetMessageArgs {
+  input: Maybe<AddReactionToCommentWidgetMessage>;
+}
+
+
+export interface MutationRemoveReactionFromCommentWidgetMessageArgs {
+  input: Maybe<RemoveReactionFromCommentWidgetMessage>;
+}
+
+
+export interface MutationSubscribeToCommentWidgetArgs {
+  input: Maybe<SubscribeToCommentWidget>;
+}
+
+
+export interface MutationUnsubscribeFromCommentWidgetArgs {
+  input: Maybe<UnsubscribeFromCommentWidget>;
+}
+
+export interface Notebook {
+   __typename?: 'Notebook';
   id: Scalars['UUID'];
   createdAt: Scalars['Time'];
   updatedAt: Scalars['Time'];
-  deletedAt: Maybe<Scalars['Time']>;
-  modifiedAt: Scalars['Time'];
-  publishedAt: Maybe<Scalars['Time']>;
-  author: User;
+  owner: User;
+  gitURL: Scalars['String'];
+  gitBranch: Scalars['String'];
   title: Scalars['String'];
   markdown: Scalars['String'];
-  status: NoteStatus;
-  order: Scalars['Int'];
-  reactionsCount: Scalars['Int'];
-  reportsCount: Scalars['Int'];
-  bookmarksCount: Maybe<Scalars['Int']>;
-  backupsCount: Maybe<Scalars['Int']>;
-  attachedNotesCount: Maybe<Scalars['Int']>;
-  clicksCount: Maybe<Scalars['Int']>;
-  noteVisibility: NoteVisibility;
-  authorVisibility: AuthorVisibility;
-  reactionSummaries: Array<ReactionSummary>;
-  tags: Array<NoteTag>;
-  allowReadersToSuggestTags: Scalars['Boolean'];
-  allowReadersToAttachNotes: Scalars['Boolean'];
-  inheritParentNoteCollaboratorsList: Scalars['Boolean'];
-  chatGroup: ChatGroup;
-  collaborators: Array<NoteCollaborator>;
-  collaboratorRole: NoteCollaboratorRole;
-  backups: Array<NoteBackup>;
-  noteKey: NoteKey;
-  canAttachNote: Maybe<Scalars['Boolean']>;
-  attachedNotes: NoteConnection;
-  parentNote: Maybe<Note>;
-  isBookmarked: Maybe<Scalars['Boolean']>;
+  starsCount: Scalars['Int'];
+  dailyStarsCount: Maybe<Scalars['Int']>;
+  weeklyStarsCount: Maybe<Scalars['Int']>;
+  monthlyStarsCount: Maybe<Scalars['Int']>;
 }
 
-
-export interface NoteReactionSummariesArgs {
-  size?: Maybe<Scalars['Int']>;
-}
-
-
-export interface NoteChatGroupArgs {
-  type: NoteChatGroupType;
-}
-
-
-export interface NoteNoteKeyArgs {
-  permission: NoteKeyPermission;
-}
-
-
-export interface NoteAttachedNotesArgs {
-  orderBy: NoteOrderBy;
-  before?: Maybe<Scalars['UUID']>;
-  after?: Maybe<Scalars['UUID']>;
-  first?: Maybe<Scalars['Int']>;
-  last?: Maybe<Scalars['Int']>;
-}
-
-export interface NoteBackup {
-   __typename?: 'NoteBackup';
-  id: Scalars['UUID'];
-  createdAt: Scalars['Time'];
-  updatedAt: Scalars['Time'];
-  user: User;
-  name: Scalars['String'];
-  title: Scalars['String'];
-  markdown: Scalars['String'];
-}
-
-export enum NoteChatGroupType {
-  Editor = 'EDITOR',
-  Preview = 'PREVIEW'
-}
-
-export interface NoteCollaborator {
-   __typename?: 'NoteCollaborator';
-  noteID: Scalars['UUID'];
-  role: NoteCollaboratorRole;
-  user: User;
-}
-
-export enum NoteCollaboratorRole {
-  Admin = 'ADMIN',
-  Editor = 'EDITOR',
-  Viewer = 'VIEWER',
-  Unknown = 'UNKNOWN'
-}
-
-export interface NoteConnection {
-   __typename?: 'NoteConnection';
+export interface NotebookConnection {
+   __typename?: 'NotebookConnection';
   totalCount: Scalars['Int'];
   pageInfo: PageInfo;
-  edges: Array<NoteEdge>;
+  edges: Array<NotebookEdge>;
 }
 
-export interface NoteEdge {
-   __typename?: 'NoteEdge';
+export interface NotebookEdge {
+   __typename?: 'NotebookEdge';
   cursor: Scalars['UUID'];
-  node: Note;
-}
-
-export interface NoteKey {
-   __typename?: 'NoteKey';
-  id: Scalars['UUID'];
-  createdAt: Scalars['Time'];
-  permission: NoteKeyPermission;
-  disabled: Scalars['Boolean'];
-}
-
-export enum NoteKeyPermission {
-  CanEdit = 'CAN_EDIT',
-  CanView = 'CAN_VIEW'
-}
-
-export enum NoteOrderBy {
-  CreatedAt = 'CREATED_AT',
-  ModifiedAt = 'MODIFIED_AT',
-  InteractedAt = 'INTERACTED_AT'
-}
-
-export interface NoteReaction {
-   __typename?: 'NoteReaction';
-  note: Note;
-  user: User;
-  reaction: Scalars['String'];
-}
-
-export enum NoteStatus {
-  Normal = 'NORMAL',
-  Pinned = 'PINNED',
-  Archived = 'ARCHIVED',
-  Deleted = 'DELETED'
-}
-
-export interface NoteTag {
-   __typename?: 'NoteTag';
-  name: Scalars['String'];
-  fullName: Scalars['String'];
-}
-
-export enum NoteVisibility {
-  Public = 'PUBLIC',
-  Private = 'PRIVATE',
-  FriendsOnly = 'FRIENDS_ONLY'
+  node: Notebook;
 }
 
 export interface Notification {
@@ -741,51 +358,15 @@ export interface NotificationEvent {
   type: NotificationEventType;
 }
 
-export interface NotificationEventBookmark  extends NotificationEvent {
-   __typename?: 'NotificationEventBookmark';
+export interface NotificationEventCommentWidgetMessagePosting  extends NotificationEvent {
+   __typename?: 'NotificationEventCommentWidgetMessagePosting';
   type: NotificationEventType;
-  note: Note;
-}
-
-export interface NotificationEventCommentPosting  extends NotificationEvent {
-   __typename?: 'NotificationEventCommentPosting';
-  type: NotificationEventType;
-  comment: ChatMessage;
-}
-
-export interface NotificationEventNotePosting  extends NotificationEvent {
-   __typename?: 'NotificationEventNotePosting';
-  type: NotificationEventType;
-  note: Note;
-}
-
-export interface NotificationEventNoteReaction  extends NotificationEvent {
-   __typename?: 'NotificationEventNoteReaction';
-  type: NotificationEventType;
-  noteReaction: NoteReaction;
-}
-
-export interface NotificationEventNoteSharing  extends NotificationEvent {
-   __typename?: 'NotificationEventNoteSharing';
-  type: NotificationEventType;
-  note: Note;
-  role: NoteCollaboratorRole;
-}
-
-export interface NotificationEventNoteTagSuggestion  extends NotificationEvent {
-   __typename?: 'NotificationEventNoteTagSuggestion';
-  type: NotificationEventType;
-  note: Note;
+  message: CommentWidgetMessage;
 }
 
 export enum NotificationEventType {
-  NotePosting = 'NOTE_POSTING',
-  NoteReaction = 'NOTE_REACTION',
   UserFollowing = 'USER_FOLLOWING',
-  CommentPosting = 'COMMENT_POSTING',
-  NoteSharing = 'NOTE_SHARING',
-  NoteTagSuggestion = 'NOTE_TAG_SUGGESTION',
-  Bookmark = 'BOOKMARK'
+  CommentWidgetMessagePosting = 'COMMENT_WIDGET_MESSAGE_POSTING'
 }
 
 export interface NotificationEventUserFollowing  extends NotificationEvent {
@@ -801,55 +382,24 @@ export interface PageInfo {
   hasNextPage: Scalars['Boolean'];
 }
 
-export interface PinNote {
-  noteID: Scalars['UUID'];
-}
-
-export interface PostChatMessage {
-  chatGroupID: Scalars['UUID'];
+export interface PostCommentWidgetMessage {
+  widgetID: Scalars['UUID'];
   markdown: Scalars['String'];
-  authorVisibility: Maybe<AuthorVisibility>;
   notifyUsers: Array<Maybe<Scalars['String']>>;
 }
 
 export interface Query {
    __typename?: 'Query';
   test: Scalars['String'];
-  chatGroup: ChatGroup;
-  note: Note;
-  publicNotes: NoteConnection;
-  tag: Tag;
+  widget: Widget;
   viewer: User;
   user: User;
   stats: Stats;
 }
 
 
-export interface QueryChatGroupArgs {
+export interface QueryWidgetArgs {
   id: Scalars['UUID'];
-}
-
-
-export interface QueryNoteArgs {
-  id: Scalars['UUID'];
-  noteKey: Maybe<Scalars['UUID']>;
-  increaseClicksCountIfNecessary?: Maybe<Scalars['Boolean']>;
-}
-
-
-export interface QueryPublicNotesArgs {
-  orderBy: NoteOrderBy;
-  before?: Maybe<Scalars['UUID']>;
-  after?: Maybe<Scalars['UUID']>;
-  first?: Maybe<Scalars['Int']>;
-  last?: Maybe<Scalars['Int']>;
-  tag?: Maybe<Scalars['String']>;
-  authorVisibility?: Maybe<AuthorViewScope>;
-}
-
-
-export interface QueryTagArgs {
-  name: Scalars['String'];
 }
 
 
@@ -865,35 +415,19 @@ export interface ReactionSummary {
   selfAuthored: Scalars['Boolean'];
 }
 
-export interface RemoveCollaboratorFromNote {
-  noteID: Scalars['UUID'];
-  collaboratorID: Maybe<Scalars['UUID']>;
-  collaboratorUsername: Maybe<Scalars['String']>;
+export interface RegisterNotebook {
+  gitURL: Scalars['String'];
+  gitBranch: Scalars['String'];
 }
 
-export interface RemoveReactionFromChatMessage {
-  chatMessageID: Scalars['UUID'];
+export interface RemoveReactionFromCommentWidget {
+  widgetID: Scalars['UUID'];
   reaction: Scalars['String'];
 }
 
-export interface RemoveReactionFromNote {
-  noteID: Scalars['UUID'];
+export interface RemoveReactionFromCommentWidgetMessage {
+  messageID: Scalars['UUID'];
   reaction: Scalars['String'];
-}
-
-export interface RemoveTagFromNote {
-  noteID: Scalars['UUID'];
-  noteKey: Maybe<Scalars['UUID']>;
-  tag: Scalars['String'];
-}
-
-export interface ReorderNote {
-  noteID: Scalars['UUID'];
-  order: Scalars['Int'];
-}
-
-export interface ReportNote {
-  noteID: Scalars['UUID'];
 }
 
 export interface ResetPassword {
@@ -904,42 +438,6 @@ export interface ResetPassword {
 
 export interface SendEmailVerificationCode {
   email: Scalars['String'];
-}
-
-export interface SetAllowReadersToAttachNotes {
-  noteID: Scalars['UUID'];
-  allowReadersToAttachNotes: Scalars['Boolean'];
-}
-
-export interface SetAllowReadersToSuggestTags {
-  noteID: Scalars['UUID'];
-  allowReadersToSuggestTags: Scalars['Boolean'];
-}
-
-export interface SetAuthorVisibility {
-  noteID: Scalars['UUID'];
-  visibility: AuthorVisibility;
-}
-
-export interface SetCollaboratorRole {
-  noteID: Scalars['UUID'];
-  collaboratorID: Scalars['UUID'];
-  role: NoteCollaboratorRole;
-}
-
-export interface SetFollowingTagPinnedStatus {
-  tag: Scalars['String'];
-  pinned: Scalars['Boolean'];
-}
-
-export interface SetInheritParentNoteCollaboratorsList {
-  noteID: Scalars['UUID'];
-  inheritParentNoteCollaboratorsList: Scalars['Boolean'];
-}
-
-export interface SetNoteVisibility {
-  noteID: Scalars['UUID'];
-  visibility: NoteVisibility;
 }
 
 export interface SetUserInfo {
@@ -973,98 +471,46 @@ export interface SignUpWithGitHubAccount {
   accessToken: Scalars['String'];
 }
 
+export interface StarNotebook {
+  notebookID: Scalars['UUID'];
+}
+
 export interface Stats {
    __typename?: 'Stats';
   numUsers: Scalars['Int'];
-  numNotes: Scalars['Int'];
-  numChatMessages: Scalars['Int'];
-  numNoteReactions: Scalars['Int'];
+  numNotebooks: Scalars['Int'];
 }
 
-export interface SubscribeToChatGroup {
-  chatGroupID: Scalars['UUID'];
+export interface SubscribeToCommentWidget {
+  widgetID: Scalars['UUID'];
 }
 
-export interface Subscription {
-   __typename?: 'Subscription';
-  userGetsOnline: UserInteraction;
-  messagePostedInChatGroup: ChatMessage;
-  userJoinedNoteEditor: UserEditorInteraction;
-}
-
-
-export interface SubscriptionMessagePostedInChatGroupArgs {
-  chatGroupID: Scalars['UUID'];
-}
-
-
-export interface SubscriptionUserJoinedNoteEditorArgs {
-  noteID: Scalars['UUID'];
-  noteKey?: Maybe<Scalars['UUID']>;
-  clientID: Scalars['UUID'];
-}
-
-export interface SuggestNoteTag {
-  noteID: Scalars['UUID'];
-  tag: Scalars['String'];
-}
-
-export interface Tag {
-   __typename?: 'Tag';
-  name: Scalars['String'];
-  fullName: Scalars['String'];
-  isFollowing: Scalars['Boolean'];
-  pinned: Scalars['Boolean'];
-}
-
-
-export interface UnarchiveNote {
-  noteID: Scalars['UUID'];
-}
-
-export interface UnattachFromParentNote {
-  noteID: Scalars['UUID'];
-  parentNoteID: Scalars['UUID'];
-}
-
-export interface UnbookmarkNote {
-  noteID: Scalars['UUID'];
-}
-
-export interface UndeleteNote {
-  noteID: Scalars['UUID'];
-}
-
-export interface UnfollowTag {
-  tag: Scalars['String'];
-}
 
 export interface UnfollowUser {
   userID: Scalars['UUID'];
 }
 
-export interface UnpinNote {
-  noteID: Scalars['UUID'];
+export interface UnregisterNotebook {
+  id: Scalars['UUID'];
 }
 
-export interface UnreportNote {
-  noteID: Scalars['UUID'];
+export interface UnstarNotebook {
+  notebookID: Scalars['UUID'];
 }
 
-export interface UnsubscribeFromChatGroup {
-  chatGroupID: Scalars['UUID'];
+export interface UnsubscribeFromCommentWidget {
+  widgetID: Scalars['UUID'];
 }
 
-export interface UpdateChatMessage {
-  chatMessageID: Scalars['UUID'];
+export interface UpdateCommentWidgetMessage {
+  messageID: Scalars['UUID'];
   markdown: Scalars['String'];
 }
 
-export interface UpdateNoteMarkdown {
-  noteID: Scalars['UUID'];
-  noteKey: Maybe<Scalars['UUID']>;
-  title: Scalars['String'];
-  modification: Modification;
+export interface UpdateWidget {
+  id: Scalars['UUID'];
+  description: Scalars['String'];
+  source: Scalars['String'];
 }
 
 
@@ -1085,57 +531,23 @@ export interface User {
   deletedAt: Maybe<Scalars['Time']>;
   followingsCount: Maybe<Scalars['Int']>;
   followersCount: Maybe<Scalars['Int']>;
-  notesCount: Maybe<Scalars['Int']>;
+  widgetsCount: Maybe<Scalars['Int']>;
   isFollowing: Maybe<Scalars['Boolean']>;
   areFriends: Maybe<Scalars['Boolean']>;
   followings: Maybe<Array<User>>;
   followers: Maybe<Array<User>>;
-  favoriteTags: Maybe<Array<FavoriteTag>>;
-  notes: NoteConnection;
-  followingsNotes: NoteConnection;
-  sharedNotes: NoteConnection;
-  bookmarks: NoteConnection;
+  widgetSummaries: Array<UserWidget>;
+  widgets: WidgetConnection;
   notifications: NotificationConnection;
-  clientID: Maybe<Scalars['String']>;
-  editorActorID: Maybe<Scalars['String']>;
+  notebooks: NotebookConnection;
+  starredNotebooks: NotebookConnection;
   editorCursorColor: Maybe<Scalars['String']>;
-  chatGroups: ChatGroupConnection;
   githubUser: Maybe<GitHubUser>;
 }
 
 
-export interface UserNotesArgs {
-  tag?: Maybe<Scalars['String']>;
-  statuses: Array<NoteStatus>;
-  orderBy: NoteOrderBy;
-  before?: Maybe<Scalars['UUID']>;
-  after?: Maybe<Scalars['UUID']>;
-  first?: Maybe<Scalars['Int']>;
-  last?: Maybe<Scalars['Int']>;
-}
-
-
-export interface UserFollowingsNotesArgs {
-  orderBy: NoteOrderBy;
-  before?: Maybe<Scalars['UUID']>;
-  after?: Maybe<Scalars['UUID']>;
-  first?: Maybe<Scalars['Int']>;
-  last?: Maybe<Scalars['Int']>;
-}
-
-
-export interface UserSharedNotesArgs {
-  orderBy: NoteOrderBy;
-  before?: Maybe<Scalars['UUID']>;
-  after?: Maybe<Scalars['UUID']>;
-  first?: Maybe<Scalars['Int']>;
-  last?: Maybe<Scalars['Int']>;
-}
-
-
-export interface UserBookmarksArgs {
-  tag?: Maybe<Scalars['String']>;
-  orderBy: NoteOrderBy;
+export interface UserWidgetsArgs {
+  type: WidgetType;
   before?: Maybe<Scalars['UUID']>;
   after?: Maybe<Scalars['UUID']>;
   first?: Maybe<Scalars['Int']>;
@@ -1151,53 +563,62 @@ export interface UserNotificationsArgs {
 }
 
 
-export interface UserChatGroupsArgs {
+export interface UserNotebooksArgs {
   before?: Maybe<Scalars['UUID']>;
   after?: Maybe<Scalars['UUID']>;
   first?: Maybe<Scalars['Int']>;
   last?: Maybe<Scalars['Int']>;
 }
 
-export interface UserEditorInteraction {
-   __typename?: 'UserEditorInteraction';
-  operation: UserEditorOperation;
-  value: Scalars['String'];
+
+export interface UserStarredNotebooksArgs {
+  before?: Maybe<Scalars['UUID']>;
+  after?: Maybe<Scalars['UUID']>;
+  first?: Maybe<Scalars['Int']>;
+  last?: Maybe<Scalars['Int']>;
 }
 
-export enum UserEditorOperation {
-  Joined = 'JOINED',
-  Left = 'LEFT',
-  MadeChanges = 'MADE_CHANGES',
-  Initiated = 'INITIATED',
-  CursorMoved = 'CURSOR_MOVED'
-}
-
-export interface UserInteraction {
-   __typename?: 'UserInteraction';
-  operation: UserOperation;
-  value: Scalars['String'];
-}
-
-export interface UserMadeChangesToNote {
-  noteID: Scalars['UUID'];
-  editorActorID: Scalars['String'];
-  changes: Scalars['String'];
-}
-
-export interface UserOperateEditorCursor {
-  noteID: Scalars['UUID'];
-  editorActorID: Scalars['String'];
-  cursors: Array<Cursor>;
-}
-
-export enum UserOperation {
-  ReceivedNotification = 'RECEIVED_NOTIFICATION'
+export interface UserWidget {
+   __typename?: 'UserWidget';
+  type: WidgetType;
+  count: Scalars['Int'];
 }
 
 
 export interface VerifyEmail {
   email: Scalars['String'];
   verificationCode: Scalars['String'];
+}
+
+export interface Widget {
+   __typename?: 'Widget';
+  id: Scalars['UUID'];
+  instance: WidgetInstance;
+  owner: User;
+  description: Scalars['String'];
+  source: Scalars['String'];
+  canConfigure: Scalars['Boolean'];
+}
+
+export interface WidgetConnection {
+   __typename?: 'WidgetConnection';
+  totalCount: Scalars['Int'];
+  pageInfo: PageInfo;
+  edges: Array<WidgetEdge>;
+}
+
+export interface WidgetEdge {
+   __typename?: 'WidgetEdge';
+  cursor: Scalars['UUID'];
+  node: Widget;
+}
+
+export interface WidgetInstance {
+  type: WidgetType;
+}
+
+export enum WidgetType {
+  Comment = 'COMMENT'
 }
 
 export type SignUpMutationVariables = {
@@ -1306,6 +727,113 @@ export type VerifyEmailMutation = (
   & Pick<Mutation, 'verifyEmail'>
 );
 
+export type CreateCommentWidgetMutationVariables = {
+  description: Scalars['String'];
+  source: Scalars['String'];
+};
+
+
+export type CreateCommentWidgetMutation = (
+  { __typename?: 'Mutation' }
+  & { createWidget: (
+    { __typename?: 'Widget' }
+    & Pick<Widget, 'id'>
+  ) }
+);
+
+export type PostCommentWidgetMessageMutationVariables = {
+  widgetID: Scalars['UUID'];
+  markdown: Scalars['String'];
+  notifyUsers: Array<Scalars['String']>;
+};
+
+
+export type PostCommentWidgetMessageMutation = (
+  { __typename?: 'Mutation' }
+  & { postCommentWidgetMessage: (
+    { __typename?: 'CommentWidgetMessage' }
+    & CommentWidgetMessageFieldsFragment
+  ) }
+);
+
+export type UpdateCommentWidgetMessageMutationVariables = {
+  messageID: Scalars['UUID'];
+  markdown: Scalars['String'];
+};
+
+
+export type UpdateCommentWidgetMessageMutation = (
+  { __typename?: 'Mutation' }
+  & { updateCommentWidgetMessage: (
+    { __typename?: 'CommentWidgetMessage' }
+    & CommentWidgetMessageFieldsFragment
+  ) }
+);
+
+export type AddReactionToCommentWidgetMutationVariables = {
+  widgetID: Scalars['UUID'];
+  reaction: Scalars['String'];
+};
+
+
+export type AddReactionToCommentWidgetMutation = (
+  { __typename?: 'Mutation' }
+  & Pick<Mutation, 'addReactionToCommentWidget'>
+);
+
+export type RemoveReactionFromCommentWidgetMutationVariables = {
+  widgetID: Scalars['UUID'];
+  reaction: Scalars['String'];
+};
+
+
+export type RemoveReactionFromCommentWidgetMutation = (
+  { __typename?: 'Mutation' }
+  & Pick<Mutation, 'removeReactionFromCommentWidget'>
+);
+
+export type AddReactionToCommentWidgetMessageMutationVariables = {
+  messageID: Scalars['UUID'];
+  reaction: Scalars['String'];
+};
+
+
+export type AddReactionToCommentWidgetMessageMutation = (
+  { __typename?: 'Mutation' }
+  & Pick<Mutation, 'addReactionToCommentWidgetMessage'>
+);
+
+export type RemoveReactionFromCommentWidgetMessageMutationVariables = {
+  messageID: Scalars['UUID'];
+  reaction: Scalars['String'];
+};
+
+
+export type RemoveReactionFromCommentWidgetMessageMutation = (
+  { __typename?: 'Mutation' }
+  & Pick<Mutation, 'removeReactionFromCommentWidgetMessage'>
+);
+
+export type SubscribeToCommentWidgetMutationVariables = {
+  widgetID: Scalars['UUID'];
+};
+
+
+export type SubscribeToCommentWidgetMutation = (
+  { __typename?: 'Mutation' }
+  & Pick<Mutation, 'subscribeToCommentWidget'>
+);
+
+export type UnsubscribeFromCommentWidgetMutationVariables = {
+  widgetID: Scalars['UUID'];
+};
+
+
+export type UnsubscribeFromCommentWidgetMutation = (
+  { __typename?: 'Mutation' }
+  & Pick<Mutation, 'unsubscribeFromCommentWidget'>
+);
+
 export type LinkWithGitHubAccountMutationVariables = {
   code: Scalars['String'];
 };
@@ -1322,6 +850,24 @@ export type UnlinkGitHubAccountMutationVariables = {};
 export type UnlinkGitHubAccountMutation = (
   { __typename?: 'Mutation' }
   & Pick<Mutation, 'unlinkGitHubAccount'>
+);
+
+export type DeleteNotificationMutationVariables = {
+  notificationID: Scalars['UUID'];
+};
+
+
+export type DeleteNotificationMutation = (
+  { __typename?: 'Mutation' }
+  & Pick<Mutation, 'deleteNotification'>
+);
+
+export type DeleteAllNotificationsMutationVariables = {};
+
+
+export type DeleteAllNotificationsMutation = (
+  { __typename?: 'Mutation' }
+  & Pick<Mutation, 'deleteAllNotifications'>
 );
 
 export type SetUserInfoMutationVariables = {
@@ -1343,6 +889,118 @@ export type SetUserInfoMutation = (
   ) }
 );
 
+export type DeleteWidgetMutationVariables = {
+  id: Scalars['UUID'];
+};
+
+
+export type DeleteWidgetMutation = (
+  { __typename?: 'Mutation' }
+  & Pick<Mutation, 'deleteWidget'>
+);
+
+export type UpdateWidgetMutationVariables = {
+  id: Scalars['UUID'];
+  description: Scalars['String'];
+  source: Scalars['String'];
+};
+
+
+export type UpdateWidgetMutation = (
+  { __typename?: 'Mutation' }
+  & Pick<Mutation, 'updateWidget'>
+);
+
+export type CommentWidgetMessageFieldsFragment = (
+  { __typename?: 'CommentWidgetMessage' }
+  & Pick<CommentWidgetMessage, 'id' | 'markdown' | 'createdAt' | 'updatedAt'>
+  & { author: (
+    { __typename?: 'User' }
+    & Pick<User, 'id' | 'username' | 'avatar'>
+  ), reactionSummaries: Array<(
+    { __typename?: 'ReactionSummary' }
+    & Pick<ReactionSummary, 'count' | 'reaction' | 'selfAuthored'>
+  )> }
+);
+
+export type CommentWidgetMessageConnectionFieldsFragment = (
+  { __typename?: 'CommentWidgetMessageConnection' }
+  & { pageInfo: (
+    { __typename?: 'PageInfo' }
+    & PageInfoFieldsFragment
+  ), edges: Array<(
+    { __typename?: 'CommentWidgetMessageEdge' }
+    & Pick<CommentWidgetMessageEdge, 'cursor'>
+    & { node: (
+      { __typename?: 'CommentWidgetMessage' }
+      & CommentWidgetMessageFieldsFragment
+    ) }
+  )> }
+);
+
+export type CommentWidgetFieldsFragment = (
+  { __typename?: 'Widget' }
+  & Pick<Widget, 'id' | 'description' | 'source' | 'canConfigure'>
+  & { owner: (
+    { __typename?: 'User' }
+    & Pick<User, 'id' | 'username' | 'avatar'>
+  ), instance: (
+    { __typename?: 'CommentWidgetInstance' }
+    & Pick<CommentWidgetInstance, 'type'>
+    & { commentWidget: (
+      { __typename?: 'CommentWidget' }
+      & Pick<CommentWidget, 'id' | 'createdAt' | 'updatedAt' | 'messagesCount' | 'reactionsCount' | 'subscribed'>
+      & { reactionSummaries: Array<(
+        { __typename?: 'ReactionSummary' }
+        & Pick<ReactionSummary, 'count' | 'reaction' | 'selfAuthored'>
+      )>, messages: (
+        { __typename?: 'CommentWidgetMessageConnection' }
+        & CommentWidgetMessageConnectionFieldsFragment
+      ) }
+    ) }
+  ) }
+);
+
+export type CommentWidgetQueryVariables = {
+  widgetID: Scalars['UUID'];
+};
+
+
+export type CommentWidgetQuery = (
+  { __typename?: 'Query' }
+  & { widget: (
+    { __typename?: 'Widget' }
+    & CommentWidgetFieldsFragment
+  ) }
+);
+
+export type CommentWidgetMessagesQueryVariables = {
+  widgetID: Scalars['UUID'];
+  before: Scalars['UUID'];
+  after: Scalars['UUID'];
+  first: Scalars['Int'];
+  last: Scalars['Int'];
+};
+
+
+export type CommentWidgetMessagesQuery = (
+  { __typename?: 'Query' }
+  & { widget: (
+    { __typename?: 'Widget' }
+    & { instance: (
+      { __typename?: 'CommentWidgetInstance' }
+      & Pick<CommentWidgetInstance, 'type'>
+      & { commentWidget: (
+        { __typename?: 'CommentWidget' }
+        & { messages: (
+          { __typename?: 'CommentWidgetMessageConnection' }
+          & CommentWidgetMessageConnectionFieldsFragment
+        ) }
+      ) }
+    ) }
+  ) }
+);
+
 export type GitHubUserQueryVariables = {};
 
 
@@ -1355,6 +1013,70 @@ export type GitHubUserQuery = (
       & Pick<GitHubUser, 'login' | 'avatar' | 'email'>
     )> }
   ) }
+);
+
+export type NotificationFieldsFragment = (
+  { __typename?: 'Notification' }
+  & Pick<Notification, 'id' | 'createdAt' | 'meta'>
+  & { origin: (
+    { __typename?: 'User' }
+    & Pick<User, 'id' | 'username' | 'avatar'>
+  ), receiver: (
+    { __typename?: 'User' }
+    & Pick<User, 'id' | 'username' | 'avatar'>
+  ), event: (
+    { __typename?: 'NotificationEventCommentWidgetMessagePosting' }
+    & Pick<NotificationEventCommentWidgetMessagePosting, 'type'>
+    & { message: (
+      { __typename?: 'CommentWidgetMessage' }
+      & Pick<CommentWidgetMessage, 'id' | 'markdown' | 'createdAt'>
+      & { widget: (
+        { __typename?: 'Widget' }
+        & Pick<Widget, 'description' | 'source'>
+        & { owner: (
+          { __typename?: 'User' }
+          & Pick<User, 'id' | 'username' | 'avatar'>
+        ) }
+      ) }
+    ) }
+  ) | (
+    { __typename?: 'NotificationEventUserFollowing' }
+    & Pick<NotificationEventUserFollowing, 'type'>
+  ) }
+);
+
+export type NotificationsQueryVariables = {
+  before: Scalars['UUID'];
+  after: Scalars['UUID'];
+  first: Maybe<Scalars['Int']>;
+  last: Maybe<Scalars['Int']>;
+};
+
+
+export type NotificationsQuery = (
+  { __typename?: 'Query' }
+  & { viewer: (
+    { __typename?: 'User' }
+    & { notifications: (
+      { __typename?: 'NotificationConnection' }
+      & { pageInfo: (
+        { __typename?: 'PageInfo' }
+        & PageInfoFieldsFragment
+      ), edges: Array<(
+        { __typename?: 'NotificationEdge' }
+        & Pick<NotificationEdge, 'cursor'>
+        & { node: (
+          { __typename?: 'Notification' }
+          & NotificationFieldsFragment
+        ) }
+      )> }
+    ) }
+  ) }
+);
+
+export type PageInfoFieldsFragment = (
+  { __typename?: 'PageInfo' }
+  & Pick<PageInfo, 'startCursor' | 'endCursor' | 'hasNextPage' | 'hasPreviousPage'>
 );
 
 export type ViewerFieldsFragment = (
@@ -1377,6 +1099,121 @@ export type ViewerQuery = (
   ) }
 );
 
+export const PageInfoFieldsFragmentDoc = gql`
+    fragment PageInfoFields on PageInfo {
+  startCursor
+  endCursor
+  hasNextPage
+  hasPreviousPage
+}
+    `;
+export const CommentWidgetMessageFieldsFragmentDoc = gql`
+    fragment CommentWidgetMessageFields on CommentWidgetMessage {
+  id
+  author {
+    id
+    username
+    avatar
+  }
+  markdown
+  createdAt
+  updatedAt
+  reactionSummaries {
+    count
+    reaction
+    selfAuthored
+  }
+}
+    `;
+export const CommentWidgetMessageConnectionFieldsFragmentDoc = gql`
+    fragment CommentWidgetMessageConnectionFields on CommentWidgetMessageConnection {
+  pageInfo {
+    ...PageInfoFields
+  }
+  edges {
+    cursor
+    node {
+      ...CommentWidgetMessageFields
+    }
+  }
+}
+    ${PageInfoFieldsFragmentDoc}
+${CommentWidgetMessageFieldsFragmentDoc}`;
+export const CommentWidgetFieldsFragmentDoc = gql`
+    fragment CommentWidgetFields on Widget {
+  id
+  owner {
+    id
+    username
+    avatar
+  }
+  description
+  source
+  canConfigure
+  instance {
+    type
+    ... on CommentWidgetInstance {
+      type
+      commentWidget {
+        id
+        createdAt
+        updatedAt
+        messagesCount
+        reactionsCount
+        subscribed
+        reactionSummaries {
+          count
+          reaction
+          selfAuthored
+        }
+        messages(first: 20) {
+          ...CommentWidgetMessageConnectionFields
+        }
+      }
+    }
+  }
+}
+    ${CommentWidgetMessageConnectionFieldsFragmentDoc}`;
+export const NotificationFieldsFragmentDoc = gql`
+    fragment NotificationFields on Notification {
+  id
+  createdAt
+  origin {
+    id
+    username
+    avatar
+  }
+  receiver {
+    id
+    username
+    avatar
+  }
+  meta
+  event {
+    type
+    ... on NotificationEventUserFollowing {
+      type
+    }
+    ... on NotificationEventCommentWidgetMessagePosting {
+      type
+      message {
+        id
+        markdown
+        createdAt
+        widget {
+          owner {
+            id
+            username
+            avatar
+          }
+          description
+          source
+        }
+      }
+    }
+  }
+}
+    `;
 export const ViewerFieldsFragmentDoc = gql`
     fragment ViewerFields on User {
   avatar
@@ -1517,6 +1354,138 @@ export const VerifyEmailComponent = (props: Omit<Urql.MutationProps<VerifyEmailM
 export function useVerifyEmailMutation() {
   return Urql.useMutation<VerifyEmailMutation, VerifyEmailMutationVariables>(VerifyEmailDocument);
 };
+export const CreateCommentWidgetDocument = gql`
+    mutation CreateCommentWidget($description: String!, $source: String!) {
+  createWidget(input: {description: $description, source: $source, type: COMMENT}) {
+    id
+  }
+}
+    `;
+
+export const CreateCommentWidgetComponent = (props: Omit<Urql.MutationProps<CreateCommentWidgetMutation, CreateCommentWidgetMutationVariables>, 'query'> & { variables?: CreateCommentWidgetMutationVariables }) => (
+  <Urql.Mutation {...props} query={CreateCommentWidgetDocument} />
+);
+
+
+export function useCreateCommentWidgetMutation() {
+  return Urql.useMutation<CreateCommentWidgetMutation, CreateCommentWidgetMutationVariables>(CreateCommentWidgetDocument);
+};
+export const PostCommentWidgetMessageDocument = gql`
+    mutation PostCommentWidgetMessage($widgetID: UUID!, $markdown: String!, $notifyUsers: [String!]!) {
+  postCommentWidgetMessage(input: {widgetID: $widgetID, markdown: $markdown, notifyUsers: $notifyUsers}) {
+    ...CommentWidgetMessageFields
+  }
+}
+    ${CommentWidgetMessageFieldsFragmentDoc}`;
+
+export const PostCommentWidgetMessageComponent = (props: Omit<Urql.MutationProps<PostCommentWidgetMessageMutation, PostCommentWidgetMessageMutationVariables>, 'query'> & { variables?: PostCommentWidgetMessageMutationVariables }) => (
+  <Urql.Mutation {...props} query={PostCommentWidgetMessageDocument} />
+);
+
+
+export function usePostCommentWidgetMessageMutation() {
+  return Urql.useMutation<PostCommentWidgetMessageMutation, PostCommentWidgetMessageMutationVariables>(PostCommentWidgetMessageDocument);
+};
+export const UpdateCommentWidgetMessageDocument = gql`
+    mutation UpdateCommentWidgetMessage($messageID: UUID!, $markdown: String!) {
+  updateCommentWidgetMessage(input: {messageID: $messageID, markdown: $markdown}) {
+    ...CommentWidgetMessageFields
+  }
+}
+    ${CommentWidgetMessageFieldsFragmentDoc}`;
+
+export const UpdateCommentWidgetMessageComponent = (props: Omit<Urql.MutationProps<UpdateCommentWidgetMessageMutation, UpdateCommentWidgetMessageMutationVariables>, 'query'> & { variables?: UpdateCommentWidgetMessageMutationVariables }) => (
+  <Urql.Mutation {...props} query={UpdateCommentWidgetMessageDocument} />
+);
+
+
+export function useUpdateCommentWidgetMessageMutation() {
+  return Urql.useMutation<UpdateCommentWidgetMessageMutation, UpdateCommentWidgetMessageMutationVariables>(UpdateCommentWidgetMessageDocument);
+};
+export const AddReactionToCommentWidgetDocument = gql`
+    mutation AddReactionToCommentWidget($widgetID: UUID!, $reaction: String!) {
+  addReactionToCommentWidget(input: {widgetID: $widgetID, reaction: $reaction})
+}
+    `;
+
+export const AddReactionToCommentWidgetComponent = (props: Omit<Urql.MutationProps<AddReactionToCommentWidgetMutation, AddReactionToCommentWidgetMutationVariables>, 'query'> & { variables?: AddReactionToCommentWidgetMutationVariables }) => (
+  <Urql.Mutation {...props} query={AddReactionToCommentWidgetDocument} />
+);
+
+
+export function useAddReactionToCommentWidgetMutation() {
+  return Urql.useMutation<AddReactionToCommentWidgetMutation, AddReactionToCommentWidgetMutationVariables>(AddReactionToCommentWidgetDocument);
+};
+export const RemoveReactionFromCommentWidgetDocument = gql`
+    mutation RemoveReactionFromCommentWidget($widgetID: UUID!, $reaction: String!) {
+  removeReactionFromCommentWidget(input: {widgetID: $widgetID, reaction: $reaction})
+}
+    `;
+
+export const RemoveReactionFromCommentWidgetComponent = (props: Omit<Urql.MutationProps<RemoveReactionFromCommentWidgetMutation, RemoveReactionFromCommentWidgetMutationVariables>, 'query'> & { variables?: RemoveReactionFromCommentWidgetMutationVariables }) => (
+  <Urql.Mutation {...props} query={RemoveReactionFromCommentWidgetDocument} />
+);
+
+
+export function useRemoveReactionFromCommentWidgetMutation() {
+  return Urql.useMutation<RemoveReactionFromCommentWidgetMutation, RemoveReactionFromCommentWidgetMutationVariables>(RemoveReactionFromCommentWidgetDocument);
+};
+export const AddReactionToCommentWidgetMessageDocument = gql`
+    mutation AddReactionToCommentWidgetMessage($messageID: UUID!, $reaction: String!) {
+  addReactionToCommentWidgetMessage(input: {messageID: $messageID, reaction: $reaction})
+}
+    `;
+
+export const AddReactionToCommentWidgetMessageComponent = (props: Omit<Urql.MutationProps<AddReactionToCommentWidgetMessageMutation, AddReactionToCommentWidgetMessageMutationVariables>, 'query'> & { variables?: AddReactionToCommentWidgetMessageMutationVariables }) => (
+  <Urql.Mutation {...props} query={AddReactionToCommentWidgetMessageDocument} />
+);
+
+
+export function useAddReactionToCommentWidgetMessageMutation() {
+  return Urql.useMutation<AddReactionToCommentWidgetMessageMutation, AddReactionToCommentWidgetMessageMutationVariables>(AddReactionToCommentWidgetMessageDocument);
+};
+export const RemoveReactionFromCommentWidgetMessageDocument = gql`
+    mutation RemoveReactionFromCommentWidgetMessage($messageID: UUID!, $reaction: String!) {
+  removeReactionFromCommentWidgetMessage(input: {messageID: $messageID, reaction: $reaction})
+}
+    `;
+
+export const RemoveReactionFromCommentWidgetMessageComponent = (props: Omit<Urql.MutationProps<RemoveReactionFromCommentWidgetMessageMutation, RemoveReactionFromCommentWidgetMessageMutationVariables>, 'query'> & { variables?: RemoveReactionFromCommentWidgetMessageMutationVariables }) => (
+  <Urql.Mutation {...props} query={RemoveReactionFromCommentWidgetMessageDocument} />
+);
+
+
+export function useRemoveReactionFromCommentWidgetMessageMutation() {
+  return Urql.useMutation<RemoveReactionFromCommentWidgetMessageMutation, RemoveReactionFromCommentWidgetMessageMutationVariables>(RemoveReactionFromCommentWidgetMessageDocument);
+};
+export const SubscribeToCommentWidgetDocument = gql`
+    mutation SubscribeToCommentWidget($widgetID: UUID!) {
+  subscribeToCommentWidget(input: {widgetID: $widgetID})
+}
+    `;
+
+export const SubscribeToCommentWidgetComponent = (props: Omit<Urql.MutationProps<SubscribeToCommentWidgetMutation, SubscribeToCommentWidgetMutationVariables>, 'query'> & { variables?: SubscribeToCommentWidgetMutationVariables }) => (
+  <Urql.Mutation {...props} query={SubscribeToCommentWidgetDocument} />
+);
+
+
+export function useSubscribeToCommentWidgetMutation() {
+  return Urql.useMutation<SubscribeToCommentWidgetMutation, SubscribeToCommentWidgetMutationVariables>(SubscribeToCommentWidgetDocument);
+};
+export const UnsubscribeFromCommentWidgetDocument = gql`
+    mutation UnsubscribeFromCommentWidget($widgetID: UUID!) {
+  unsubscribeFromCommentWidget(input: {widgetID: $widgetID})
+}
+    `;
+
+export const UnsubscribeFromCommentWidgetComponent = (props: Omit<Urql.MutationProps<UnsubscribeFromCommentWidgetMutation, UnsubscribeFromCommentWidgetMutationVariables>, 'query'> & { variables?: UnsubscribeFromCommentWidgetMutationVariables }) => (
+  <Urql.Mutation {...props} query={UnsubscribeFromCommentWidgetDocument} />
+);
+
+
+export function useUnsubscribeFromCommentWidgetMutation() {
+  return Urql.useMutation<UnsubscribeFromCommentWidgetMutation, UnsubscribeFromCommentWidgetMutationVariables>(UnsubscribeFromCommentWidgetDocument);
+};
 export const LinkWithGitHubAccountDocument = gql`
     mutation LinkWithGitHubAccount($code: String!) {
   linkWithGitHubAccount(input: {code: $code})
@@ -1545,6 +1514,34 @@ export const UnlinkGitHubAccountComponent = (props: Omit<Urql.MutationProps<Unli
 export function useUnlinkGitHubAccountMutation() {
   return Urql.useMutation<UnlinkGitHubAccountMutation, UnlinkGitHubAccountMutationVariables>(UnlinkGitHubAccountDocument);
 };
+export const DeleteNotificationDocument = gql`
+    mutation DeleteNotification($notificationID: UUID!) {
+  deleteNotification(input: {notificationID: $notificationID})
+}
+    `;
+
+export const DeleteNotificationComponent = (props: Omit<Urql.MutationProps<DeleteNotificationMutation, DeleteNotificationMutationVariables>, 'query'> & { variables?: DeleteNotificationMutationVariables }) => (
+  <Urql.Mutation {...props} query={DeleteNotificationDocument} />
+);
+
+
+export function useDeleteNotificationMutation() {
+  return Urql.useMutation<DeleteNotificationMutation, DeleteNotificationMutationVariables>(DeleteNotificationDocument);
+};
+export const DeleteAllNotificationsDocument = gql`
+    mutation DeleteAllNotifications {
+  deleteAllNotifications
+}
+    `;
+
+export const DeleteAllNotificationsComponent = (props: Omit<Urql.MutationProps<DeleteAllNotificationsMutation, DeleteAllNotificationsMutationVariables>, 'query'> & { variables?: DeleteAllNotificationsMutationVariables }) => (
+  <Urql.Mutation {...props} query={DeleteAllNotificationsDocument} />
+);
+
+
+export function useDeleteAllNotificationsMutation() {
+  return Urql.useMutation<DeleteAllNotificationsMutation, DeleteAllNotificationsMutationVariables>(DeleteAllNotificationsDocument);
+};
 export const SetUserInfoDocument = gql`
     mutation SetUserInfo($cover: String!, $bio: String!, $location: String!, $language: String!, $name: String!, $avatar: String!, $editorCursorColor: String!) {
   setUserInfo(input: {cover: $cover, bio: $bio, location: $location, language: $language, name: $name, avatar: $avatar, editorCursorColor: $editorCursorColor}) {
@@ -1560,6 +1557,76 @@ export const SetUserInfoComponent = (props: Omit<Urql.MutationProps<SetUserInfoM
 
 export function useSetUserInfoMutation() {
   return Urql.useMutation<SetUserInfoMutation, SetUserInfoMutationVariables>(SetUserInfoDocument);
+};
+export const DeleteWidgetDocument = gql`
+    mutation DeleteWidget($id: UUID!) {
+  deleteWidget(input: {id: $id})
+}
+    `;
+
+export const DeleteWidgetComponent = (props: Omit<Urql.MutationProps<DeleteWidgetMutation, DeleteWidgetMutationVariables>, 'query'> & { variables?: DeleteWidgetMutationVariables }) => (
+  <Urql.Mutation {...props} query={DeleteWidgetDocument} />
+);
+
+
+export function useDeleteWidgetMutation() {
+  return Urql.useMutation<DeleteWidgetMutation, DeleteWidgetMutationVariables>(DeleteWidgetDocument);
+};
+export const UpdateWidgetDocument = gql`
+    mutation UpdateWidget($id: UUID!, $description: String!, $source: String!) {
+  updateWidget(input: {id: $id, description: $description, source: $source})
+}
+    `;
+
+export const UpdateWidgetComponent = (props: Omit<Urql.MutationProps<UpdateWidgetMutation, UpdateWidgetMutationVariables>, 'query'> & { variables?: UpdateWidgetMutationVariables }) => (
+  <Urql.Mutation {...props} query={UpdateWidgetDocument} />
+);
+
+
+export function useUpdateWidgetMutation() {
+  return Urql.useMutation<UpdateWidgetMutation, UpdateWidgetMutationVariables>(UpdateWidgetDocument);
+};
+export const CommentWidgetDocument = gql`
+    query CommentWidget($widgetID: UUID!) {
+  widget(id: $widgetID) {
+    ...CommentWidgetFields
+  }
+}
+    ${CommentWidgetFieldsFragmentDoc}`;
+
+export const CommentWidgetComponent = (props: Omit<Urql.QueryProps<CommentWidgetQuery, CommentWidgetQueryVariables>, 'query'> & { variables: CommentWidgetQueryVariables }) => (
+  <Urql.Query {...props} query={CommentWidgetDocument} />
+);
+
+
+export function useCommentWidgetQuery(options: Omit<Urql.UseQueryArgs<CommentWidgetQueryVariables>, 'query'> = {}) {
+  return Urql.useQuery<CommentWidgetQuery>({ query: CommentWidgetDocument, ...options });
+};
+export const CommentWidgetMessagesDocument = gql`
+    query CommentWidgetMessages($widgetID: UUID!, $before: UUID!, $after: UUID!, $first: Int!, $last: Int!) {
+  widget(id: $widgetID) {
+    instance {
+      type
+      ... on CommentWidgetInstance {
+        type
+        commentWidget {
+          messages(before: $before, after: $after, first: $first, last: $last) {
+            ...CommentWidgetMessageConnectionFields
+          }
+        }
+      }
+    }
+  }
+}
+    ${CommentWidgetMessageConnectionFieldsFragmentDoc}`;
+
+export const CommentWidgetMessagesComponent = (props: Omit<Urql.QueryProps<CommentWidgetMessagesQuery, CommentWidgetMessagesQueryVariables>, 'query'> & { variables: CommentWidgetMessagesQueryVariables }) => (
+  <Urql.Query {...props} query={CommentWidgetMessagesDocument} />
+);
+
+
+export function useCommentWidgetMessagesQuery(options: Omit<Urql.UseQueryArgs<CommentWidgetMessagesQueryVariables>, 'query'> = {}) {
+  return Urql.useQuery<CommentWidgetMessagesQuery>({ query: CommentWidgetMessagesDocument, ...options });
 };
 export const GitHubUserDocument = gql`
     query GitHubUser {
@@ -1580,6 +1647,33 @@ export const GitHubUserComponent = (props: Omit<Urql.QueryProps<GitHubUserQuery,
 
 export function useGitHubUserQuery(options: Omit<Urql.UseQueryArgs<GitHubUserQueryVariables>, 'query'> = {}) {
   return Urql.useQuery<GitHubUserQuery>({ query: GitHubUserDocument, ...options });
+};
+export const NotificationsDocument = gql`
+    query Notifications($before: UUID!, $after: UUID!, $first: Int, $last: Int) {
+  viewer {
+    notifications(before: $before, after: $after, first: $first, last: $last) {
+      pageInfo {
+        ...PageInfoFields
+      }
+      edges {
+        cursor
+        node {
+          ...NotificationFields
+        }
+      }
+    }
+  }
+}
+    ${PageInfoFieldsFragmentDoc}
+${NotificationFieldsFragmentDoc}`;
+
+export const NotificationsComponent = (props: Omit<Urql.QueryProps<NotificationsQuery, NotificationsQueryVariables>, 'query'> & { variables: NotificationsQueryVariables }) => (
+  <Urql.Query {...props} query={NotificationsDocument} />
+);
+
+
+export function useNotificationsQuery(options: Omit<Urql.UseQueryArgs<NotificationsQueryVariables>, 'query'> = {}) {
+  return Urql.useQuery<NotificationsQuery>({ query: NotificationsDocument, ...options });
 };
 export const ViewerDocument = gql`
     query Viewer {

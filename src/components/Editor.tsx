@@ -880,6 +880,12 @@ export default function Editor(props: Props) {
               {
                 text: "`@crossnote.abc`  \n",
                 displayText: `/abc - ${t("editor/toolbar/insert-abc-notation")}`
+              },
+              {
+                text: "`@crossnote.comment`  \n",
+                displayText: `/crossnote.comment - ${t(
+                  "editor/toolbar/insert-comment"
+                )}`
               }
             ];
             const filtered = commands.filter(
@@ -1099,7 +1105,10 @@ export default function Editor(props: Props) {
             position: "relative"
           }}
           onClick={() => crossnoteContainer.createNewNote()}
-          disabled={crossnoteContainer.isLoadingNotebook}
+          disabled={
+            !crossnoteContainer.initialized ||
+            crossnoteContainer.isLoadingNotebook
+          }
           variant={"outlined"}
         >
           <Typography>{`📝 ${t("general/add-a-note")}`}</Typography>

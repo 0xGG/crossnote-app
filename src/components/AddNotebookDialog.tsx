@@ -108,6 +108,9 @@ export default function AddNotebookDialog(props: Props) {
     >
       <DialogTitle>{t("general/add-a-notebook")}</DialogTitle>
       <DialogContent>
+        <Typography variant={"caption"}>
+          {"* " + t("add-notebook-dialog/disclaimer")}
+        </Typography>
         <TextField
           label={t("general/notebook-name")}
           value={notebookName}

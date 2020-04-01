@@ -726,9 +726,9 @@ function useCrossnoteContainer(initialState: InitialState) {
 
   useEffect(() => {
     if (notes.length && !selectedNote && !pendingNote) {
-      setSelectedNote(notes[0]);
+      _setSelectedNote(notes[0]);
     }
-  }, [notes, selectedNote, pendingNote]);
+  }, [notes, selectedNote, pendingNote, _setSelectedNote]);
 
   useEffect(() => {
     if (selectedNote) {
@@ -771,7 +771,7 @@ function useCrossnoteContainer(initialState: InitialState) {
       setNeedsToRefreshNotes(false);
       setNotes(notes => [...notes]);
     }
-  }, 4000);
+  }, 8000); // TODO: the delay might be dependent on the number of notes...
 
   return {
     crossnote,

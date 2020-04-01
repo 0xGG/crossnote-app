@@ -1,0 +1,53 @@
+fragment NotificationFields on Notification {
+  id
+  createdAt
+  origin {
+    id
+    username
+    avatar
+  }
+  receiver {
+    id
+    username
+    avatar
+  }
+  meta
+  event {
+    type
+    ... on NotificationEventUserFollowing {
+      type
+    }
+    ... on NotificationEventCommentWidgetMessagePosting {
+      type
+      message {
+        id
+        markdown
+        createdAt
+        widget {
+          owner {
+            id
+            username
+            avatar
+          }
+          description
+          source
+        }
+      }
+    }
+  }
+}
+query Notifications($before: UUID!, $after: UUID!, $first: Int, $last: Int) {
+  viewer {
+    notifications(before: $before, after: $after, first: $first, last: $last) {
+      pageInfo {
+        ...PageInfoFields
+      }
+      edges {
+        cursor
+        node {
+          ...NotificationFields
+        }
+      }
+    }
+  }
+}

@@ -24,7 +24,7 @@ export const jaJP = {
     "general/title": "表題",
     "general/saved-at": "保存於",
     "general/loading": "讀取中 ...",
-    "general/loading-notifications": "正在讀取消息 ...",
+    "general/loading-notifications": "通知を読み込んでいます ...",
     "general/failed-to-set": "設定に失敗しました",
     "general/update": "更新",
     "general/updated": "更新しました",
@@ -112,6 +112,7 @@ export const jaJP = {
     "general/clicks": "クリック",
     "general/Processing": "処理中...",
     "general/please-wait": "しばらくお待ちください...",
+    "general/please-sign-in-first": "最初にサインインしてください",
     "general/Languages": "言語",
     "general/track": "たどる",
     "general/Publish": "公開",
@@ -155,6 +156,10 @@ export const jaJP = {
     "general/upload-the-profile": "プロファイルをアップロードする",
     "general/commit-message": "コミット メッセージ",
     "general/upload-notebook": "ノートブックをアップロードする",
+    "general/Comments": "コメント",
+    "general/Source": "ソース",
+    "general/Description": "説明",
+    "general/Edit": "編集",
 
     // Error
     "error/authentication-failed": "認証に失敗しました",
@@ -168,6 +173,8 @@ export const jaJP = {
     "error/failed-to-disable-encryption": "暗号化を無効にできませんでした",
     "error/decryption-failed": "復号化に失敗しました",
     "error/failed-to-change-file-path": "ファイル パスの変更に失敗しました",
+    "error/failed-to-create-widget": "ウィジェットの作成に失敗しました",
+    "error/failed-to-load-widget": "ウィジェットを読み込めませんでした",
 
     // Success
     "success/notebook-uploaded": "ノートブックがアップロードされます",
@@ -192,20 +199,6 @@ export const jaJP = {
 
     // UserTags
     "user-tags/follow-a-tag": "ラベルをフォロー",
-
-    // ChatMessage
-    "chat-message/reply-to-this-user": "このユーザーに返信",
-    "chat-message/add-reaction-to-this-message":
-      "このメッセージへの応答を追加します",
-    "chat-message/edit-this-message": "このメッセージを編集する",
-    "chat-message/modified-message": "変更されたメッセージ",
-
-    // ChatPanel
-    "chat-panel/post-message-failure": "メッセージの送信に失敗しました",
-    "chat-panel/unsubscribe-info":
-      "このチャットグループから退会すると、他のユーザーがあなたにメンションした場合にのみ通知を受けることができます",
-    "chat-panel/subscribe-info":
-      "このチャットグループに登録すると、誰かがメッセージを送信したときに通知されます",
 
     // Notifications
     "notifications/refresh": "更新して新しいメッセージを表示",
@@ -345,6 +338,8 @@ export const jaJP = {
     "editor/toolbar/insert-ordered-list": "順序付きリストを挿入",
     "editor/toolbar/insert-link": "リンクを挿入",
     "editor/toolbar/insert-table": "テーブルを挿入",
+    "editor/toolbar/insert-comment":
+      "クロスノートクラウドコメントウィジェットを挿入",
 
     // * NoteControl
     "editor/note-control/tag-added": "タグが追加されました",
@@ -419,6 +414,7 @@ export const jaJP = {
     "notification/started-following-you": "あなたをフォローし始めました",
     // * BookmarkNotification
     "notification/bookmarked-your-note": "あなたのノートをブックマーク",
+    "notification/view-more-notifications": "その他の通知を表示する",
 
     // GitHubOAuthCallback
     "github-oauth/wait": "お待ちください ...",
@@ -435,6 +431,8 @@ export const jaJP = {
     "widget/controls": "コントローラー",
     "widget/loop": "サイクル",
     "widget/muted": "ミュート",
+    "widget/creating-widget": "ウィジェットを作成しています",
+    "widget/loading-widget": "ウィジェットを読み込んでいます",
     "widget/crossnote.image/thanks_sm_ms":
       "無料のドローイングベッドサービスを提供してくれたsm.msに感謝します。",
     "widget/crossnote.audio/audio_element_fail":
@@ -507,8 +505,22 @@ export const jaJP = {
     "tesseract/initialized api": "initialized api",
     "tesseract/recognizing text": "recognizing text",
 
+    // Comment widget
+    "widget/crossnote.comment/reply-to-this-user": "このユーザーに返信",
+    "widget/crossnote.comment/add-reaction-to-this-comment":
+      "このコメントへの応答を追加します",
+    "widget/crossnote.comment/edit-this-message": "このコメントを編集する",
+    "widget/crossnote.comment/modified-comment": "変更されたコメント",
+    "widget/crossnote.comment/post-comment-failure":
+      "コメントの送信に失敗しました",
+    "widget/crossnote.comment/unsubscribe-info": "コメントの購読を解除する",
+    "widget/crossnote.comment/subscribe-info": "コメントを購読する",
+    "widget/crossnote.comment/view-more-comments": "その他のコメントを表示する",
+
     // Dialogs
     "delete-file-dialog/title": "このノートを削除しますか?",
-    "delete-file-dialog/subtitle": "元に戻すことはできません"
+    "delete-file-dialog/subtitle": "元に戻すことはできません",
+    "add-notebook-dialog/disclaimer":
+      "すべてのノートブックデータは、ブラウザにローカルに保存されます。"
   }
 };

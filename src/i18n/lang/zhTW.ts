@@ -112,6 +112,7 @@ export const zhTW = {
     "general/clicks": "點擊",
     "general/Processing": "正在處理...",
     "general/please-wait": "請稍候...",
+    "general/please-sign-in-first": "請先登錄",
     "general/Languages": "語言",
     "general/track": "跟蹤",
     "general/Publish": "發布",
@@ -153,6 +154,10 @@ export const zhTW = {
     "general/upload-the-profile": "上傳賬戶信息",
     "general/commit-message": "提交說明",
     "general/upload-notebook": "上傳筆記本",
+    "general/Comments": "評論",
+    "general/Source": "源",
+    "general/Description": "描述",
+    "general/Edit": "編輯",
 
     // Error
     "error/authentication-failed": "認証失敗",
@@ -164,6 +169,8 @@ export const zhTW = {
     "error/failed-to-disable-encryption": "解除加密失敗",
     "error/decryption-failed": "解密失敗",
     "error/failed-to-change-file-path": "更改文件路徑失敗",
+    "error/failed-to-create-widget": "創建掛件失敗",
+    "error/failed-to-load-widget": "讀取掛件失敗",
 
     // Success
     "success/notebook-uploaded": "筆記本已上傳",
@@ -188,19 +195,6 @@ export const zhTW = {
 
     // UserTags
     "user-tags/follow-a-tag": "關注一個標籤",
-
-    // ChatMessage
-    "chat-message/reply-to-this-user": "回復給這個用戶",
-    "chat-message/add-reaction-to-this-message": "給這條消息添加反應",
-    "chat-message/edit-this-message": "編輯這條消息",
-    "chat-message/modified-message": "編輯过的消息",
-
-    // ChatPanel
-    "chat-panel/post-message-failure": "發送消息失敗",
-    "chat-panel/unsubscribe-info":
-      "取消訂閱這個聊天群將會使你只有在別人提到你的時候才會收到通知",
-    "chat-panel/subscribe-info":
-      "訂閱這個聊天群將會讓你在被人發送消息的時候收到通知",
 
     // Notifications
     "notifications/refresh": "刷新來查看新的消息",
@@ -329,6 +323,7 @@ export const zhTW = {
     "editor/toolbar/insert-ordered-list": "插入有序列表",
     "editor/toolbar/insert-link": "插入鏈接",
     "editor/toolbar/insert-table": "插入表格",
+    "editor/toolbar/insert-comment": "插入交叉筆記雲評論掛件",
 
     // * NoteControl
     "editor/note-control/tag-added": "標籤已被添加",
@@ -395,6 +390,7 @@ export const zhTW = {
     "notification/started-following-you": "開始關注了你",
     // * BookmarkNotification
     "notification/bookmarked-your-note": "收藏了你的筆記",
+    "notification/view-more-notifications": "查看更多的消息",
 
     // GitHubOAuthCallback
     "github-oauth/wait": "請稍等 ...",
@@ -409,6 +405,8 @@ export const zhTW = {
     "widget/controls": "控制器",
     "widget/loop": "循環",
     "widget/muted": "靜音",
+    "widget/creating-widget": "正在創建掛件",
+    "widget/loading-widget": "正在讀取掛件",
     "widget/crossnote.image/thanks_sm_ms":
       "在此由衷感謝 sm.ms 提供免費的圖床服務。",
     "widget/crossnote.audio/audio_element_fail":
@@ -472,8 +470,21 @@ export const zhTW = {
     "tesseract/initialized api": "已初始化程序接口",
     "tesseract/recognizing text": "正在識別文字",
 
+    // Comment widget
+    "widget/crossnote.comment/reply-to-this-user": "回復給這個用戶",
+    "widget/crossnote.comment/add-reaction-to-this-comment":
+      "給這條評論添加反應",
+    "widget/crossnote.comment/edit-this-message": "編輯這條評論",
+    "widget/crossnote.comment/modified-comment": "編輯过的評論",
+    "widget/crossnote.comment/post-comment-failure": "發送評論失敗",
+    "widget/crossnote.comment/unsubscribe-info": "取消訂閱評論",
+    "widget/crossnote.comment/subscribe-info": "訂閱評論",
+    "widget/crossnote.comment/view-more-comments": "查看更多的評論",
+
     // Dialogs
     "delete-file-dialog/title": "妳確定要刪除這個筆記？",
-    "delete-file-dialog/subtitle": "將不能被撤回"
+    "delete-file-dialog/subtitle": "將不能被撤回",
+    "add-notebook-dialog/disclaimer":
+      "所有筆記本的資料將只會被保存于瀏覽器本地。"
   }
 };
