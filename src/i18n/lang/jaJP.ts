@@ -112,6 +112,7 @@ export const jaJP = {
     "general/clicks": "クリック",
     "general/Processing": "処理中...",
     "general/please-wait": "しばらくお待ちください...",
+    "general/please-sign-in-first": "最初にサインインしてください",
     "general/Languages": "言語",
     "general/track": "たどる",
     "general/Publish": "公開",

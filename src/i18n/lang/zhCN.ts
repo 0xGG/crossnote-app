@@ -112,6 +112,7 @@ export const zhCN = {
     "general/clicks": "点击",
     "general/Processing": "正在处理...",
     "general/please-wait": "请稍候...",
+    "general/please-sign-in-first": "请先登录",
     "general/Languages": "语言",
     "general/track": "跟踪",
     "general/Publish": "发布",

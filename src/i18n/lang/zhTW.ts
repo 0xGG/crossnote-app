@@ -112,6 +112,7 @@ export const zhTW = {
     "general/clicks": "點擊",
     "general/Processing": "正在處理...",
     "general/please-wait": "請稍候...",
+    "general/please-sign-in-first": "請先登錄",
     "general/Languages": "語言",
     "general/track": "跟蹤",
     "general/Publish": "發布",

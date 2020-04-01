@@ -150,6 +150,17 @@ function CommentWidget(props: WidgetArgs) {
         theme: "relax",
         timeout: 5000
       }).show();
+
+      if (!globalContainers.cloudContainer.loggedIn) {
+        new Noty({
+          type: "info",
+          text: t("general/please-sign-in-first"),
+          layout: "topRight",
+          theme: "relax",
+          timeout: 5000
+        }).show();
+      }
+
       props.removeSelf();
     } else if (resCreateCommentWidget.data) {
       const id = resCreateCommentWidget.data.createWidget.id;
