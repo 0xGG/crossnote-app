@@ -20,15 +20,11 @@ import "emoji-mart/css/emoji-mart.css";
 import { Reply, StickerEmoji, FileEditOutline } from "mdi-material-ui";
 import Noty from "noty";
 import { useTranslation } from "react-i18next";
-import Avatars from "@dicebear/avatars";
-import sprites from "@dicebear/avatars-human-sprites";
 import { renderPreview } from "vickymd/preview";
 import { languageCodeToDateFNSLocale } from "../../../i18n/i18n";
 import {
-  CommentWidgetMessage,
   useAddReactionToCommentWidgetMessageMutation,
   useRemoveReactionFromCommentWidgetMessageMutation,
-  Widget,
   CommentWidgetFieldsFragment,
   CommentWidgetMessageFieldsFragment
 } from "../../../generated/graphql";

@@ -30,6 +30,7 @@ fragment NotificationFields on Notification {
             avatar
           }
           description
+          source
         }
       }
     }

@@ -31,16 +31,17 @@ import {
 } from "mdi-material-ui";
 import { renderPreview } from "vickymd/preview";
 import { Widget } from "../../../generated/graphql";
+import { browserHistory } from "../../../utilities/history";
 const VickyMD = require("vickymd");
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
     topPanel: {
+      position: "relative",
       display: "flex",
       flexDirection: "row",
       alignItems: "center",
-      paddingLeft: theme.spacing(2),
-      paddingRight: theme.spacing(1)
+      width: "100%"
     },
     avatar: {
       width: "24px",
@@ -90,7 +91,7 @@ const useStyles = makeStyles((theme: Theme) =>
 
 interface Props {
   widget: Widget;
-  removeSelf: () => void;
+  removeSelf?: () => void;
   isPreview: Boolean;
 }
 
@@ -165,7 +166,9 @@ export function WidgetTopPanel(props: Props) {
     } else if (resDeleteWidget.data) {
       if (resDeleteWidget.data.deleteWidget) {
         resDeleteWidget.data = null;
-        props.removeSelf();
+        if (props.removeSelf) {
+          props.removeSelf();
+        }
       } else {
         err();
       }
@@ -232,11 +235,16 @@ export function WidgetTopPanel(props: Props) {
         {widget.source && (
           <Link
             href={widget.source}
-            target={
-              widget.source.startsWith(window.location.origin)
-                ? "_self"
-                : "_blank"
-            }
+            onClick={(event: any) => {
+              event.preventDefault();
+              if (widget.source.startsWith(window.location.origin)) {
+                browserHistory.push(
+                  widget.source.replace(window.location.origin, "")
+                );
+              } else {
+                window.open(widget.source, "_blank");
+              }
+            }}
           >
             <IconButton>
               <LinkVariant></LinkVariant>

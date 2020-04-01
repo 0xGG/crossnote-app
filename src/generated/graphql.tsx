@@ -1025,9 +1025,6 @@ export type NotificationFieldsFragment = (
     { __typename?: 'User' }
     & Pick<User, 'id' | 'username' | 'avatar'>
   ), event: (
-    { __typename?: 'NotificationEventUserFollowing' }
-    & Pick<NotificationEventUserFollowing, 'type'>
-  ) | (
     { __typename?: 'NotificationEventCommentWidgetMessagePosting' }
     & Pick<NotificationEventCommentWidgetMessagePosting, 'type'>
     & { message: (
@@ -1035,13 +1032,16 @@ export type NotificationFieldsFragment = (
       & Pick<CommentWidgetMessage, 'id' | 'markdown' | 'createdAt'>
       & { widget: (
         { __typename?: 'Widget' }
-        & Pick<Widget, 'description'>
+        & Pick<Widget, 'description' | 'source'>
         & { owner: (
           { __typename?: 'User' }
           & Pick<User, 'id' | 'username' | 'avatar'>
         ) }
       ) }
     ) }
+  ) | (
+    { __typename?: 'NotificationEventUserFollowing' }
+    & Pick<NotificationEventUserFollowing, 'type'>
   ) }
 );
 
@@ -1207,6 +1207,7 @@ export const NotificationFieldsFragmentDoc = gql`
             avatar
           }
           description
+          source
         }
       }
     }

@@ -388,6 +388,7 @@ export const zhTW = {
     "notification/started-following-you": "開始關注了你",
     // * BookmarkNotification
     "notification/bookmarked-your-note": "收藏了你的筆記",
+    "notification/view-more-notifications": "查看更多的消息",
 
     // GitHubOAuthCallback
     "github-oauth/wait": "請稍等 ...",

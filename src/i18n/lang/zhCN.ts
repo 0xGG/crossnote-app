@@ -388,6 +388,7 @@ export const zhCN = {
     "notification/started-following-you": "开始关注了你",
     // * BookmarkNotification
     "notification/bookmarked-your-note": "收藏了你的笔记",
+    "notification/view-more-notifications": "查看更多的消息",
 
     // GitHubOAuthCallback
     "github-oauth/wait": "请稍等 ...",

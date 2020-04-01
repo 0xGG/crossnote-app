@@ -45,6 +45,10 @@ const useStyles = makeStyles((theme: Theme) =>
       // borderLeft: `4px solid ${theme.palette.primary.light}`,
       backgroundColor: theme.palette.grey[100]
     },
+    topPanel: {
+      paddingLeft: theme.spacing(2),
+      paddingRight: theme.spacing(1)
+    },
     interactionPanel: {
       display: "flex",
       flexDirection: "row",
@@ -221,11 +225,13 @@ function CommentWidget(props: WidgetArgs) {
 
   return (
     <Box className={clsx(classes.commentWidget)}>
-      <WidgetTopPanel
-        widget={commentWidget as any}
-        removeSelf={props.removeSelf}
-        isPreview={props.isPreview}
-      ></WidgetTopPanel>
+      <Box className={clsx(classes.topPanel)}>
+        <WidgetTopPanel
+          widget={commentWidget as any}
+          removeSelf={props.removeSelf}
+          isPreview={props.isPreview}
+        ></WidgetTopPanel>
+      </Box>
       <Box className={clsx(classes.interactionPanel)}>
         <Tooltip title={t("interaction-panel/add-comment")}>
           <Button

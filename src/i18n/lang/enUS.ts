@@ -396,6 +396,7 @@ export const enUS = {
     "notification/started-following-you": "Started following you",
     // * BookmarkNotification
     "notification/bookmarked-your-note": "Bookmarked your note",
+    "notification/view-more-notifications": "View more notifications",
 
     // GitHubOAuthCallback
     "github-oauth/wait": "Please wait ...",

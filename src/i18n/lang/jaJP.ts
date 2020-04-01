@@ -24,7 +24,7 @@ export const jaJP = {
     "general/title": "表題",
     "general/saved-at": "保存於",
     "general/loading": "讀取中 ...",
-    "general/loading-notifications": "正在讀取消息 ...",
+    "general/loading-notifications": "通知を読み込んでいます ...",
     "general/failed-to-set": "設定に失敗しました",
     "general/update": "更新",
     "general/updated": "更新しました",
@@ -412,6 +412,7 @@ export const jaJP = {
     "notification/started-following-you": "あなたをフォローし始めました",
     // * BookmarkNotification
     "notification/bookmarked-your-note": "あなたのノートをブックマーク",
+    "notification/view-more-notifications": "その他の通知を表示する",
 
     // GitHubOAuthCallback
     "github-oauth/wait": "お待ちください ...",
