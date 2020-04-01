@@ -108,6 +108,7 @@ export interface CommentWidgetReaction {
 export interface CreateWidget {
   type: WidgetType;
   description: Scalars['String'];
+  source: Scalars['String'];
 }
 
 export interface DeleteNotification {
@@ -509,6 +510,7 @@ export interface UpdateCommentWidgetMessage {
 export interface UpdateWidget {
   id: Scalars['UUID'];
   description: Scalars['String'];
+  source: Scalars['String'];
 }
 
 
@@ -594,6 +596,7 @@ export interface Widget {
   instance: WidgetInstance;
   owner: User;
   description: Scalars['String'];
+  source: Scalars['String'];
   canConfigure: Scalars['Boolean'];
 }
 
@@ -726,6 +729,7 @@ export type VerifyEmailMutation = (
 
 export type CreateCommentWidgetMutationVariables = {
   description: Scalars['String'];
+  source: Scalars['String'];
 };
 
 
@@ -898,6 +902,7 @@ export type DeleteWidgetMutation = (
 export type UpdateWidgetMutationVariables = {
   id: Scalars['UUID'];
   description: Scalars['String'];
+  source: Scalars['String'];
 };
 
 
@@ -935,7 +940,7 @@ export type CommentWidgetMessageConnectionFieldsFragment = (
 
 export type CommentWidgetFieldsFragment = (
   { __typename?: 'Widget' }
-  & Pick<Widget, 'id' | 'description' | 'canConfigure'>
+  & Pick<Widget, 'id' | 'description' | 'source' | 'canConfigure'>
   & { owner: (
     { __typename?: 'User' }
     & Pick<User, 'id' | 'username' | 'avatar'>
@@ -1020,6 +1025,9 @@ export type NotificationFieldsFragment = (
     { __typename?: 'User' }
     & Pick<User, 'id' | 'username' | 'avatar'>
   ), event: (
+    { __typename?: 'NotificationEventUserFollowing' }
+    & Pick<NotificationEventUserFollowing, 'type'>
+  ) | (
     { __typename?: 'NotificationEventCommentWidgetMessagePosting' }
     & Pick<NotificationEventCommentWidgetMessagePosting, 'type'>
     & { message: (
@@ -1034,9 +1042,6 @@ export type NotificationFieldsFragment = (
         ) }
       ) }
     ) }
-  ) | (
-    { __typename?: 'NotificationEventUserFollowing' }
-    & Pick<NotificationEventUserFollowing, 'type'>
   ) }
 );
 
@@ -1143,6 +1148,7 @@ export const CommentWidgetFieldsFragmentDoc = gql`
     avatar
   }
   description
+  source
   canConfigure
   instance {
     type
@@ -1348,8 +1354,8 @@ export function useVerifyEmailMutation() {
   return Urql.useMutation<VerifyEmailMutation, VerifyEmailMutationVariables>(VerifyEmailDocument);
 };
 export const CreateCommentWidgetDocument = gql`
-    mutation CreateCommentWidget($description: String!) {
-  createWidget(input: {description: $description, type: COMMENT}) {
+    mutation CreateCommentWidget($description: String!, $source: String!) {
+  createWidget(input: {description: $description, source: $source, type: COMMENT}) {
     id
   }
 }
@@ -1566,8 +1572,8 @@ export function useDeleteWidgetMutation() {
   return Urql.useMutation<DeleteWidgetMutation, DeleteWidgetMutationVariables>(DeleteWidgetDocument);
 };
 export const UpdateWidgetDocument = gql`
-    mutation UpdateWidget($id: UUID!, $description: String!) {
-  updateWidget(input: {id: $id, description: $description})
+    mutation UpdateWidget($id: UUID!, $description: String!, $source: String!) {
+  updateWidget(input: {id: $id, description: $description, source: $source})
 }
     `;
 

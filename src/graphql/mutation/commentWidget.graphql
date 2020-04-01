@@ -1,5 +1,7 @@
-mutation CreateCommentWidget($description: String!) {
-  createWidget(input: { description: $description, type: COMMENT }) {
+mutation CreateCommentWidget($description: String!, $source: String!) {
+  createWidget(
+    input: { description: $description, source: $source, type: COMMENT }
+  ) {
     id
   }
 }

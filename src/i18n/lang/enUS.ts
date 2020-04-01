@@ -156,6 +156,8 @@ export const enUS = {
     "general/commit-message": "Commit message",
     "general/upload-notebook": "Upload the notebook",
     "general/Comments": "Comments",
+    "general/Source": "Source",
+    "general/Description": "Description",
 
     // Error
     "error/authentication-failed": "Authentication failed",

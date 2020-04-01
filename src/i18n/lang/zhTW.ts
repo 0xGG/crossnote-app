@@ -154,6 +154,8 @@ export const zhTW = {
     "general/commit-message": "提交說明",
     "general/upload-notebook": "上傳筆記本",
     "general/Comments": "評論",
+    "general/Source": "源",
+    "general/Description": "描述",
 
     // Error
     "error/authentication-failed": "認証失敗",

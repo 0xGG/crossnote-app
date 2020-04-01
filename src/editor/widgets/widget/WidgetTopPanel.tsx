@@ -17,9 +17,18 @@ import {
   IconButton,
   Dialog,
   DialogContent,
-  DialogActions
+  DialogActions,
+  Link,
+  TextField,
+  Typography
 } from "@material-ui/core";
-import { TrashCanOutline, Pencil, ContentSave, Cancel } from "mdi-material-ui";
+import {
+  TrashCanOutline,
+  Pencil,
+  ContentSave,
+  Cancel,
+  LinkVariant
+} from "mdi-material-ui";
 import { renderPreview } from "vickymd/preview";
 import { Widget } from "../../../generated/graphql";
 const VickyMD = require("vickymd");
@@ -54,6 +63,7 @@ const useStyles = makeStyles((theme: Theme) =>
       alignItems: "center"
     },
     editorWrapper: {
+      marginTop: theme.spacing(2),
       // height: "160px",
       // border: "2px solid #96c3e6",
       "& .CodeMirror-gutters": {
@@ -103,7 +113,8 @@ export function WidgetTopPanel(props: Props) {
     resUpdateWidget,
     executeUpdateWidgetMutation
   ] = useUpdateWidgetMutation();
-  const [widgetDescription, setWidgetDescription] = useState<string>("");
+  const [forceUpdate, setForceUpdate] = useState<number>(Date.now());
+  const [widgetSource, setWidgetSource] = useState<string>("");
 
   const deleteWidget = useCallback(() => {
     if (widget && widget.id) {
@@ -118,12 +129,22 @@ export function WidgetTopPanel(props: Props) {
       const description = editor.getValue() || widget.description;
       executeUpdateWidgetMutation({
         id: widget.id,
-        description
+        description,
+        source: widgetSource
       });
-      setWidgetDescription(description);
+      widget.description = description;
+      widget.source = widgetSource;
+      setForceUpdate(Date.now());
     }
     setEditDialogOpen(false);
-  }, [editor, widget, executeUpdateWidgetMutation]);
+  }, [editor, widget, executeUpdateWidgetMutation, widgetSource]);
+
+  const closeEditDialog = useCallback(() => {
+    if (widget) {
+      setWidgetSource(widget.source);
+    }
+    setEditDialogOpen(false);
+  }, [widget]);
 
   // Delete widget
   useEffect(() => {
@@ -153,14 +174,14 @@ export function WidgetTopPanel(props: Props) {
 
   useEffect(() => {
     if (widget && previewElement) {
-      renderPreview(previewElement, widgetDescription);
+      renderPreview(previewElement, widget.description);
 
       // TODO: There might be a bug in renderPreview function. It generated extra new lines
       previewElement.innerHTML = previewElement.innerHTML
         .replace(/<br>\n/g, "<br>")
         .trim();
     }
-  }, [widget, previewElement, widgetDescription]);
+  }, [widget, previewElement, forceUpdate]);
 
   useEffect(() => {
     if (!widget) {
@@ -176,7 +197,7 @@ export function WidgetTopPanel(props: Props) {
         inputStyle: "textarea"
         // autofocus: false
       });
-      editor.setValue(widgetDescription);
+      editor.setValue(widget.description);
       editor.setOption("lineNumbers", false);
       editor.setOption("foldGutter", false);
       editor.setOption("autofocus", false);
@@ -188,13 +209,13 @@ export function WidgetTopPanel(props: Props) {
         setTextAreaElement(null);
       };
     }
-  }, [textAreaElement, widget, widgetDescription]);
+  }, [textAreaElement, widget]);
 
   useEffect(() => {
     if (widget) {
-      setWidgetDescription(widget.description);
+      setWidgetSource(widget.source);
     } else {
-      setWidgetDescription("");
+      setWidgetSource("");
     }
   }, [widget]);
 
@@ -208,6 +229,20 @@ export function WidgetTopPanel(props: Props) {
       ></div>
 
       <Box className={clsx(classes.actionButtons)}>
+        {widget.source && (
+          <Link
+            href={widget.source}
+            target={
+              widget.source.startsWith(window.location.origin)
+                ? "_self"
+                : "_blank"
+            }
+          >
+            <IconButton>
+              <LinkVariant></LinkVariant>
+            </IconButton>
+          </Link>
+        )}
         <Tooltip title={widget.owner.username}>
           <IconButton>
             <Avatar
@@ -232,12 +267,21 @@ export function WidgetTopPanel(props: Props) {
           </IconButton>
         )}
       </Box>
-      <Dialog open={editorDialogOpen} onClose={() => setEditDialogOpen(false)}>
+      <Dialog open={editorDialogOpen} onClose={closeEditDialog}>
         <DialogContent>
+          <TextField
+            label={t("general/Source")}
+            value={widgetSource}
+            onChange={event => setWidgetSource(event.target.value)}
+            fullWidth={true}
+          ></TextField>
           <Box
             className={clsx(classes.editorWrapper)}
             style={{ minWidth: "300px", maxWidth: "100%" }}
           >
+            <Typography variant={"caption"} color={"textSecondary"}>
+              {t("general/Description")}
+            </Typography>
             <textarea
               className={classes.textarea}
               ref={(element: HTMLTextAreaElement) => {
@@ -250,11 +294,7 @@ export function WidgetTopPanel(props: Props) {
           <IconButton onClick={updateWidget}>
             <ContentSave></ContentSave>
           </IconButton>
-          <IconButton
-            onClick={() => {
-              setEditDialogOpen(false);
-            }}
-          >
+          <IconButton onClick={closeEditDialog}>
             <Cancel></Cancel>
           </IconButton>
         </DialogActions>

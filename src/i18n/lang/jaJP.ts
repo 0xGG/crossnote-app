@@ -156,6 +156,8 @@ export const jaJP = {
     "general/commit-message": "コミット メッセージ",
     "general/upload-notebook": "ノートブックをアップロードする",
     "general/Comments": "コメント",
+    "general/Source": "ソース",
+    "general/Description": "説明",
 
     // Error
     "error/authentication-failed": "認証に失敗しました",

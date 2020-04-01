@@ -42,7 +42,7 @@ const useStyles = makeStyles((theme: Theme) =>
   createStyles({
     commentWidget: {
       position: "relative",
-      borderLeft: `4px solid ${theme.palette.primary.light}`,
+      // borderLeft: `4px solid ${theme.palette.primary.light}`,
       backgroundColor: theme.palette.grey[100]
     },
     interactionPanel: {
@@ -184,9 +184,10 @@ function CommentWidget(props: WidgetArgs) {
       const title =
         getHeaderFromMarkdown(editor.getValue()) || t("general/Untitled");
       const source = window.location.href;
-      const description = `[💬](${source})  **${title}**`;
+      const description = `💬  **${title}**`;
       executeCreateCommentWidgetMutation({
-        description
+        description,
+        source
       });
     }
   }, [

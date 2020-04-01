@@ -35,6 +35,7 @@ fragment CommentWidgetFields on Widget {
     avatar
   }
   description
+  source
   canConfigure
   instance {
     type

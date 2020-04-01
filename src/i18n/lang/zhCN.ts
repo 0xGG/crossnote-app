@@ -154,6 +154,8 @@ export const zhCN = {
     "general/commit-message": "提交说明",
     "general/upload-notebook": "上传笔记本",
     "general/Comments": "评论",
+    "general/Source": "源",
+    "general/Description": "描述",
 
     // Error
     "error/authentication-failed": "认证失败",
