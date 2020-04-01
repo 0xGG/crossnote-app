@@ -158,6 +158,7 @@ export const jaJP = {
     "general/Comments": "コメント",
     "general/Source": "ソース",
     "general/Description": "説明",
+    "general/Edit": "編集",
 
     // Error
     "error/authentication-failed": "認証に失敗しました",

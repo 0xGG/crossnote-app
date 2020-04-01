@@ -233,23 +233,25 @@ export function WidgetTopPanel(props: Props) {
 
       <Box className={clsx(classes.actionButtons)}>
         {widget.source && (
-          <Link
-            href={widget.source}
-            onClick={(event: any) => {
-              event.preventDefault();
-              if (widget.source.startsWith(window.location.origin)) {
-                browserHistory.push(
-                  widget.source.replace(window.location.origin, "")
-                );
-              } else {
-                window.open(widget.source, "_blank");
-              }
-            }}
-          >
-            <IconButton>
-              <LinkVariant></LinkVariant>
-            </IconButton>
-          </Link>
+          <Tooltip title={t("general/Source")}>
+            <Link
+              href={widget.source}
+              onClick={(event: any) => {
+                event.preventDefault();
+                if (widget.source.startsWith(window.location.origin)) {
+                  browserHistory.push(
+                    widget.source.replace(window.location.origin, "")
+                  );
+                } else {
+                  window.open(widget.source, "_blank");
+                }
+              }}
+            >
+              <IconButton>
+                <LinkVariant></LinkVariant>
+              </IconButton>
+            </Link>
+          </Tooltip>
         )}
         <Tooltip title={widget.owner.username}>
           <IconButton>
@@ -265,14 +267,18 @@ export function WidgetTopPanel(props: Props) {
           </IconButton>
         </Tooltip>
         {!props.isPreview && widget.canConfigure && (
-          <IconButton onClick={() => setEditDialogOpen(true)}>
-            <Pencil></Pencil>
-          </IconButton>
+          <Tooltip title={t("general/Edit")}>
+            <IconButton onClick={() => setEditDialogOpen(true)}>
+              <Pencil></Pencil>
+            </IconButton>
+          </Tooltip>
         )}
         {!props.isPreview && widget.canConfigure && (
-          <IconButton onClick={deleteWidget}>
-            <TrashCanOutline></TrashCanOutline>
-          </IconButton>
+          <Tooltip title={t("general/Delete")}>
+            <IconButton onClick={deleteWidget}>
+              <TrashCanOutline></TrashCanOutline>
+            </IconButton>
+          </Tooltip>
         )}
       </Box>
       <Dialog open={editorDialogOpen} onClose={closeEditDialog}>

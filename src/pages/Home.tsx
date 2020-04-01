@@ -335,7 +335,7 @@ export function Home(props: Props) {
                 <Bell></Bell>
               )}
             </ListItemIcon>
-            <ListItemText primary={"Notifications"}></ListItemText>
+            <ListItemText primary={t("general/Notifications")}></ListItemText>
           </ListItem>
         )}
         <Divider></Divider>

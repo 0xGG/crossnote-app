@@ -158,6 +158,7 @@ export const enUS = {
     "general/Comments": "Comments",
     "general/Source": "Source",
     "general/Description": "Description",
+    "general/Edit": "Edit",
 
     // Error
     "error/authentication-failed": "Authentication failed",

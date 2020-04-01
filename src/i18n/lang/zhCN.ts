@@ -156,6 +156,7 @@ export const zhCN = {
     "general/Comments": "评论",
     "general/Source": "源",
     "general/Description": "描述",
+    "general/Edit": "编辑",
 
     // Error
     "error/authentication-failed": "认证失败",

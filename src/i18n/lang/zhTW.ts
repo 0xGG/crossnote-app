@@ -156,6 +156,7 @@ export const zhTW = {
     "general/Comments": "評論",
     "general/Source": "源",
     "general/Description": "描述",
+    "general/Edit": "編輯",
 
     // Error
     "error/authentication-failed": "認証失敗",
