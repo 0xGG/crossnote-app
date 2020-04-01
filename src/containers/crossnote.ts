@@ -726,9 +726,9 @@ function useCrossnoteContainer(initialState: InitialState) {
 
   useEffect(() => {
     if (notes.length && !selectedNote && !pendingNote) {
-      setSelectedNote(notes[0]);
+      _setSelectedNote(notes[0]);
     }
-  }, [notes, selectedNote, pendingNote]);
+  }, [notes, selectedNote, pendingNote, _setSelectedNote]);
 
   useEffect(() => {
     if (selectedNote) {
