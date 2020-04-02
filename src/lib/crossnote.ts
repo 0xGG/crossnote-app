@@ -22,6 +22,7 @@ export interface Notebook {
   gitUsername?: string;
   gitPassword?: string;
 
+  autoFetchPeriod: number; // in milliseconds
   fetchedAt: Date;
   latestSha: String;
   currentSha: String;
@@ -322,6 +323,7 @@ export default class Crossnote {
         gitCorsProxy: corsProxy.trim(),
         gitUsername: rememberCredentials ? username.trim() : "",
         gitPassword: rememberCredentials ? password : "",
+        autoFetchPeriod: 0,
         fetchedAt: new Date(),
         latestSha: "",
         currentSha: ""
@@ -414,6 +416,7 @@ export default class Crossnote {
       gitCorsProxy: corsProxy,
       gitUsername: rememberCredentials ? username : "",
       gitPassword: rememberCredentials ? password : "",
+      autoFetchPeriod: 1200000, // 20 minutes
       fetchedAt: new Date(),
       currentSha: currentSha,
       latestSha: currentSha
@@ -929,6 +932,9 @@ export default class Crossnote {
       if (notebook.gitURL.trim().length <= 0) {
         // no remote set
         continue;
+      }
+      if (typeof notebook.autoFetchPeriod === "undefined") {
+        notebook.autoFetchPeriod = 1200000; // 20 minutes
       }
       const gitBranch = notebook.gitBranch || "master";
       const latestSha =

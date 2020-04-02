@@ -160,6 +160,11 @@ export const enUS = {
     "general/Source": "Source",
     "general/Description": "Description",
     "general/Edit": "Edit",
+    "general/notebook-updates-found": "Notebook updates found",
+    "general/update-the-notebook": "Update the notebook",
+    "general/check-notebook-updates-periodically":
+      "Check notebook updates periodically",
+    "general/minutes": "minute(s)",
 
     // Error
     "error/authentication-failed": "Authentication failed",
@@ -504,6 +509,10 @@ export const enUS = {
     "delete-file-dialog/title": "Are you sure to delete this note?",
     "delete-file-dialog/subtitle": "Can't be undone",
     "add-notebook-dialog/disclaimer":
-      "Notebook data will only be stored locally in browser."
+      "Notebook data will only be stored locally in browser.",
+    "edit-image-dialog/title": "Edit the image",
+    "edit-image-dialog/image-url": "image URL",
+    "edit-image-dialog/image-title": "image title",
+    "edit-image-dialog/image-alt-text": "image alt text"
   }
 };

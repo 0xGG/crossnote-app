@@ -772,7 +772,10 @@ function useCrossnoteContainer(initialState: InitialState) {
   useInterval(() => {
     for (let i = 0; i < notebooks.length; i++) {
       const notebook = notebooks[i];
-      if (Date.now() - notebook.fetchedAt.getTime() >= 1200000) {
+      if (
+        notebook.autoFetchPeriod >= 1000 &&
+        Date.now() - notebook.fetchedAt.getTime() >= notebook.autoFetchPeriod
+      ) {
         // 20 minutes // TODO: Allow user to configure the time
         if (notebook.gitURL.length > 0) {
           crossnote

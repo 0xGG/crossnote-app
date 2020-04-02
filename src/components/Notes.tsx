@@ -167,7 +167,7 @@ export default function Notes(props: Props) {
           crossnoteContainer.selectedNotebook.latestSha && (
           <Box className={clsx(classes.updatePanel)}>
             <Typography style={{ marginBottom: "8px" }}>
-              {"🔔  " + t("Notebook updates found")}
+              {"🔔  " + t("general/notebook-updates-found")}
             </Typography>
             <Button
               color={"primary"}
@@ -181,7 +181,7 @@ export default function Notes(props: Props) {
               <CloudDownloadOutline
                 style={{ marginRight: "8px" }}
               ></CloudDownloadOutline>
-              {"  " + t("Update the notebook")}
+              {t("general/update-the-notebook")}
             </Button>
           </Box>
         )}
