@@ -24,8 +24,8 @@ export interface Notebook {
 
   autoFetchPeriod: number; // in milliseconds
   fetchedAt: Date;
-  latestSha: String;
-  currentSha: String;
+  remoteSha: string;
+  localSha: string;
 }
 
 export interface Note {
@@ -325,8 +325,8 @@ export default class Crossnote {
         gitPassword: rememberCredentials ? password : "",
         autoFetchPeriod: 0,
         fetchedAt: new Date(),
-        latestSha: "",
-        currentSha: ""
+        remoteSha: "",
+        localSha: ""
       };
       if (!(await this.exists("/notebooks"))) {
         await this.mkdir("/notebooks");
@@ -405,7 +405,10 @@ export default class Crossnote {
       }
     });
 
-    const currentSha = await this.getCurrentShaOfNotebook(dir, branch.trim());
+    const sha = await this.getGitSHA(
+      dir,
+      `origin/${branch.trim() || "master"}`
+    );
 
     const notebook: Notebook = {
       _id,
@@ -418,8 +421,8 @@ export default class Crossnote {
       gitPassword: rememberCredentials ? password : "",
       autoFetchPeriod: 1200000, // 20 minutes
       fetchedAt: new Date(),
-      currentSha: currentSha,
-      latestSha: currentSha
+      localSha: sha,
+      remoteSha: sha
     };
 
     // Save to DB
@@ -447,7 +450,19 @@ export default class Crossnote {
     await this.notebookDB.remove(notebook);
   }
   public async updateNotebook(notebook: Notebook) {
-    await this.notebookDB.put(notebook, { force: true });
+    const nb = await this.notebookDB.get(notebook._id);
+    nb.dir = notebook.dir;
+    nb.name = notebook.name;
+    nb.gitURL = notebook.gitURL;
+    nb.gitBranch = notebook.gitBranch;
+    nb.gitCorsProxy = notebook.gitCorsProxy;
+    nb.gitUsername = notebook.gitUsername;
+    nb.gitPassword = notebook.gitPassword;
+    nb.autoFetchPeriod = notebook.autoFetchPeriod;
+    nb.fetchedAt = notebook.fetchedAt;
+    nb.remoteSha = notebook.remoteSha;
+    nb.localSha = notebook.localSha;
+    await this.notebookDB.put(nb, { force: true });
   }
   /*
   public async makeDirectoryForNotebook(notebook: Notebook, dir: string) {
@@ -576,11 +591,7 @@ export default class Crossnote {
       throw new Error("error/please-resolve-conflicts");
     }
 
-    const latestSha = await this.getCurrentShaOfNotebook(
-      notebook.dir,
-      notebook.gitBranch
-    );
-    localStorage.setItem(`pending/push/${notebook._id}`, latestSha);
+    const localSha = notebook.localSha;
 
     const sha = await git.commit({
       fs: this.fs,
@@ -596,9 +607,8 @@ export default class Crossnote {
       const gitBranch = notebook.gitBranch || "master";
       await this.writeFile(
         path.resolve(notebook.dir, `.git/refs/heads/${gitBranch}`),
-        latestSha
+        localSha
       );
-      localStorage.removeItem(`pending/push/${notebook._id}`);
     };
 
     // console.log(sha);
@@ -647,23 +657,18 @@ export default class Crossnote {
     if (pushResult.ok) {
       // Update notebook
       notebook.fetchedAt = new Date();
-      notebook.currentSha = sha;
-      notebook.latestSha = sha;
+      notebook.localSha = sha;
+      notebook.remoteSha = sha;
       await this.updateNotebook(notebook);
     }
-    localStorage.removeItem(`pending/push/${notebook._id}`);
-
     return pushResult;
   }
 
-  public async getCurrentShaOfNotebook(
-    dir: string,
-    branch: string = "master"
-  ): Promise<string> {
+  public async getGitSHA(dir: string, ref: string = "master"): Promise<string> {
     let logs = await git.log({
       fs: this.fs,
       dir: dir,
-      ref: `origin/${branch}`,
+      ref: ref,
       depth: 5
     });
     if (logs.length > 0) {
@@ -687,10 +692,7 @@ export default class Crossnote {
         markdown: string;
       };
     } = await this.generateChangesCache(notebook);
-    const currentSha = await this.getCurrentShaOfNotebook(
-      notebook.dir,
-      notebook.gitBranch
-    );
+    const localSha = notebook.localSha;
 
     await git.pull({
       fs: this.fs,
@@ -716,13 +718,13 @@ export default class Crossnote {
       onMessage
     });
 
-    const latestSha = await this.getCurrentShaOfNotebook(
+    const remoteSha = await this.getGitSHA(
       notebook.dir,
-      notebook.gitBranch
+      `origin/${notebook.gitBranch}`
     );
 
     let numConflicts = 0;
-    if (currentSha === latestSha) {
+    if (localSha === remoteSha) {
       // Restore from cache
       // console.log("same");
       for (const filePath in cache) {
@@ -760,7 +762,7 @@ export default class Crossnote {
           const baseContentBlobResult = await git.readBlob({
             fs: this.fs,
             dir: notebook.dir,
-            oid: currentSha,
+            oid: localSha,
             filepath: filePath
           });
           const baseContent = Buffer.from(baseContentBlobResult.blob).toString(
@@ -832,8 +834,8 @@ export default class Crossnote {
 
     // Update notebook
     notebook.fetchedAt = new Date();
-    notebook.currentSha = latestSha;
-    notebook.latestSha = latestSha;
+    notebook.localSha = remoteSha;
+    notebook.remoteSha = remoteSha;
     await this.updateNotebook(notebook);
 
     return {
@@ -849,10 +851,7 @@ export default class Crossnote {
     onAuthSuccess,
     onMessage
   }: FetchNotebookArgs): Promise<boolean> {
-    const currentSha = await this.getCurrentShaOfNotebook(
-      notebook.dir,
-      notebook.gitBranch
-    );
+    const localSha = notebook.localSha;
     const result = await git.fetch({
       fs: this.fs,
       http,
@@ -876,11 +875,11 @@ export default class Crossnote {
 
     // Update notebook
     notebook.fetchedAt = new Date();
-    notebook.currentSha = currentSha;
-    notebook.latestSha = result.fetchHead;
+    notebook.localSha = localSha;
+    notebook.remoteSha = result.fetchHead;
     await this.updateNotebook(notebook);
 
-    return currentSha !== result.fetchHead;
+    return localSha !== result.fetchHead;
   }
 
   public markdownHasConflicts(markdown: string): boolean {
@@ -936,19 +935,21 @@ export default class Crossnote {
       if (typeof notebook.autoFetchPeriod === "undefined") {
         notebook.autoFetchPeriod = 1200000; // 20 minutes
       }
-      const gitBranch = notebook.gitBranch || "master";
-      const latestSha =
-        localStorage.getItem(`pending/push/${notebook._id}`) ||
-        (await this.getCurrentShaOfNotebook(
+      if (typeof notebook.localSha === "undefined") {
+        notebook.localSha = await this.getGitSHA(
           notebook.dir,
-          notebook.gitBranch
-        )) ||
-        "";
+          `origin/${notebook.gitBranch}`
+        );
+      }
+      if (typeof notebook.remoteSha === "undefined") {
+        notebook.remoteSha = notebook.localSha;
+      }
+      const gitBranch = notebook.gitBranch || "master";
+      const sha = notebook.localSha || "";
       await this.writeFile(
         path.resolve(notebook.dir, `.git/refs/heads/${gitBranch}`),
-        latestSha
+        sha
       );
-      localStorage.removeItem(`pending/push/${notebook._id}`);
     }
     return notebooks;
   }

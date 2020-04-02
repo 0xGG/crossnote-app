@@ -247,23 +247,16 @@ export default function NotebookTreeView(props: Props) {
             <span role="img" aria-label="notes">
               📒
           </span>*/}
-            <Badge
-              color={"secondary"}
-              variant={"dot"}
-              invisible={props.notebook.currentSha === props.notebook.latestSha}
-              anchorOrigin={{
-                vertical: "top",
-                horizontal: "right"
-              }}
+            <Typography
+              color={"inherit"}
+              variant={"body1"}
+              className={clsx(classes.treeItemLabelText)}
             >
-              <Typography
-                color={"inherit"}
-                variant={"body1"}
-                className={clsx(classes.treeItemLabelText)}
-              >
-                {props.notebook.name}
-              </Typography>
-            </Badge>
+              {props.notebook.name +
+                (props.notebook.localSha === props.notebook.remoteSha
+                  ? ""
+                  : " 🔔")}
+            </Typography>
           </Box>
         }
       >

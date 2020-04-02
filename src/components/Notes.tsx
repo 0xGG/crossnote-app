@@ -163,8 +163,8 @@ export default function Notes(props: Props) {
       }}
     >
       {crossnoteContainer.selectedNotebook &&
-        crossnoteContainer.selectedNotebook.currentSha !==
-          crossnoteContainer.selectedNotebook.latestSha && (
+        crossnoteContainer.selectedNotebook.localSha !==
+          crossnoteContainer.selectedNotebook.remoteSha && (
           <Box className={clsx(classes.updatePanel)}>
             <Typography style={{ marginBottom: "8px" }}>
               {"🔔  " + t("general/notebook-updates-found")}
