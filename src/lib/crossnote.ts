@@ -419,7 +419,7 @@ export default class Crossnote {
       gitCorsProxy: corsProxy,
       gitUsername: rememberCredentials ? username : "",
       gitPassword: rememberCredentials ? password : "",
-      autoFetchPeriod: 1200000, // 20 minutes
+      autoFetchPeriod: 3600000, // 60 minutes
       fetchedAt: new Date(),
       localSha: sha,
       remoteSha: sha
@@ -933,7 +933,7 @@ export default class Crossnote {
         continue;
       }
       if (typeof notebook.autoFetchPeriod === "undefined") {
-        notebook.autoFetchPeriod = 1200000; // 20 minutes
+        notebook.autoFetchPeriod = 3600000; // 60 minutes
       }
       if (typeof notebook.localSha === "undefined") {
         notebook.localSha = await this.getGitSHA(
