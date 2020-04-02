@@ -159,6 +159,7 @@ function CommentWidget(props: WidgetArgs) {
           theme: "relax",
           timeout: 5000
         }).show();
+        globalContainers.cloudContainer.setAuthDialogOpen(true);
       }
 
       props.removeSelf();

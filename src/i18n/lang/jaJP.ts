@@ -160,6 +160,11 @@ export const jaJP = {
     "general/Source": "ソース",
     "general/Description": "説明",
     "general/Edit": "編集",
+    "general/notebook-updates-found": "ノートブックの更新が見つかりました",
+    "general/update-the-notebook": "ノートブックを更新する",
+    "general/check-notebook-updates-periodically":
+      "ノートブックの更新を定期的に確認する",
+    "general/minutes": "分",
 
     // Error
     "error/authentication-failed": "認証に失敗しました",
@@ -521,6 +526,10 @@ export const jaJP = {
     "delete-file-dialog/title": "このノートを削除しますか?",
     "delete-file-dialog/subtitle": "元に戻すことはできません",
     "add-notebook-dialog/disclaimer":
-      "すべてのノートブックデータは、ブラウザにローカルに保存されます。"
+      "すべてのノートブックデータは、ブラウザにローカルに保存されます。",
+    "edit-image-dialog/title": "画像を編集する",
+    "edit-image-dialog/image-url": "画像の URL",
+    "edit-image-dialog/image-title": "画像のタイトル",
+    "edit-image-dialog/image-alt-text": "画像代替テキスト"
   }
 };

@@ -280,14 +280,16 @@ export default function NotesPanel(props: Props) {
           )}
 
           <Box>
-            {crossnoteContainer.selectedSection.type ===
-              SelectedSectionType.Notes && (
+            {
+              /*crossnoteContainer.selectedSection.type ===
+              SelectedSectionType.Notes && (*/
               <IconButton
                 onClick={() => setNotebookConfigurationDialogOpen(true)}
               >
                 <Settings></Settings>
               </IconButton>
-            )}
+              /*)*/
+            }
             <IconButton
               onClick={event => setSortMenuAnchorEl(event.currentTarget)}
             >

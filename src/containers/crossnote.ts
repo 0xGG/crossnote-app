@@ -134,6 +134,8 @@ function useCrossnoteContainer(initialState: InitialState) {
               callback(status);
             });
           }
+          // QUESTION: Seems like every time cloudContainer refetches the viewer, the note card that got modified will be refreshed. I don't know why
+          // QUESTION: Don't disable it actually if cloudContainer has no token set and no viewer were fetched.
           setNeedsToRefreshNotes(true);
         });
     },
@@ -285,6 +287,7 @@ function useCrossnoteContainer(initialState: InitialState) {
           rememberCredentials: gitRememberCredentials
         });
         setNotebooks(notebooks => [notebook, ...notebooks]);
+        _setSelectedNotebook(notebook);
         setIsAddingNotebook(false);
       } catch (error) {
         setIsAddingNotebook(false);
@@ -766,12 +769,30 @@ function useCrossnoteContainer(initialState: InitialState) {
     notebookNotes
   ]);
 
+  // TODO: This script should be moved to background (serviceWorker?)
   useInterval(() => {
-    if (needsToRefreshNotes) {
-      setNeedsToRefreshNotes(false);
-      setNotes(notes => [...notes]);
+    for (let i = 0; i < notebooks.length; i++) {
+      const notebook = notebooks[i];
+      if (
+        notebook.autoFetchPeriod >= 1000 &&
+        Date.now() - notebook.fetchedAt.getTime() >= notebook.autoFetchPeriod
+      ) {
+        // 20 minutes // TODO: Allow user to configure the time
+        if (notebook.gitURL.length > 0) {
+          crossnote
+            .fetchNotebook({ notebook })
+            .then(changed => {
+              if (changed) {
+                setNeedsToRefreshNotes(true);
+              }
+            })
+            .catch(error => {
+              console.log(error);
+            });
+        }
+      }
     }
-  }, 8000); // TODO: the delay might be dependent on the number of notes...
+  }, 60000); // Check every 1 minute
 
   return {
     crossnote,
@@ -816,7 +837,9 @@ function useCrossnoteContainer(initialState: InitialState) {
     setWikiTOCElement,
     editorMode,
     setEditorMode,
-    setPendingNote
+    setPendingNote,
+    needsToRefreshNotes,
+    setNeedsToRefreshNotes
   };
 }
 

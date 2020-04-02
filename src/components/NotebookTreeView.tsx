@@ -2,7 +2,7 @@ import { TreeView, TreeItem } from "@material-ui/lab";
 import { createStyles, makeStyles, Theme } from "@material-ui/core/styles";
 import clsx from "clsx";
 import React, { useState, useCallback, useEffect } from "react";
-import { IconButton, Box, Typography } from "@material-ui/core";
+import { IconButton, Box, Typography, Badge } from "@material-ui/core";
 import { ChevronRight, ChevronDown } from "mdi-material-ui";
 import {
   CrossnoteContainer,
@@ -252,7 +252,10 @@ export default function NotebookTreeView(props: Props) {
               variant={"body1"}
               className={clsx(classes.treeItemLabelText)}
             >
-              {props.notebook.name}
+              {props.notebook.name +
+                (props.notebook.localSha === props.notebook.remoteSha
+                  ? ""
+                  : " 🔔")}
             </Typography>
           </Box>
         }

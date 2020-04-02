@@ -9,11 +9,11 @@ import {
   DialogActions,
   Button,
   Link,
-  FormControlLabel,
-  Checkbox,
   ExpansionPanel,
   ExpansionPanelDetails,
-  ExpansionPanelSummary
+  ExpansionPanelSummary,
+  Input,
+  InputAdornment
 } from "@material-ui/core";
 import { ChevronDown } from "mdi-material-ui";
 import { CrossnoteContainer } from "../containers/crossnote";
@@ -38,6 +38,7 @@ export default function ConfigureNotebookDialog(props: Props) {
   const [gitCorsProxy, setGitCorsProxy] = useState<string>(
     "https://cors.isomorphic-git.org"
   );
+  const [autoFetchPeriod, setAutoFetchPeriod] = useState<number>(0);
   const [clickDeleteCount, setClickDeleteCount] = useState<number>(
     MaxClickDeleteCount
   );
@@ -54,6 +55,7 @@ export default function ConfigureNotebookDialog(props: Props) {
     setGitUsername(notebook.gitUsername);
     setGitPassword(notebook.gitPassword);
     setGitCorsProxy(notebook.gitCorsProxy);
+    setAutoFetchPeriod(notebook.autoFetchPeriod / 60000);
   }, [props.notebook]);
 
   const updateNotebook = useCallback(async () => {
@@ -68,6 +70,7 @@ export default function ConfigureNotebookDialog(props: Props) {
     notebook.gitUsername = gitUsername.trim();
     notebook.gitPassword = gitPassword;
     notebook.gitCorsProxy = gitCorsProxy.trim();
+    notebook.autoFetchPeriod = Math.max(autoFetchPeriod * 60000, 0);
     try {
       await crossnoteContainer.updateNotebook(notebook);
     } catch (error) {}
@@ -80,7 +83,8 @@ export default function ConfigureNotebookDialog(props: Props) {
     gitBranch,
     gitUsername,
     gitPassword,
-    gitCorsProxy
+    gitCorsProxy,
+    autoFetchPeriod
   ]);
 
   const deleteNotebook = useCallback(async () => {
@@ -173,6 +177,29 @@ export default function ConfigureNotebookDialog(props: Props) {
               >
                 {t("general/why-cors-proxy")}
               </Link>
+              {props.notebook && props.notebook.gitURL ? (
+                <Box style={{ marginTop: "16px" }}>
+                  <Typography>
+                    {t("general/check-notebook-updates-periodically")}
+                  </Typography>
+                  <Input
+                    value={autoFetchPeriod}
+                    onChange={event => {
+                      try {
+                        const value = parseFloat(event.target.value || "0");
+                        if (!isNaN(value)) {
+                          setAutoFetchPeriod(value);
+                        }
+                      } catch (error) {}
+                    }}
+                    endAdornment={
+                      <InputAdornment position="end">
+                        {t("general/minutes")}
+                      </InputAdornment>
+                    }
+                  ></Input>
+                </Box>
+              ) : null}
             </Box>
           </ExpansionPanelDetails>
         </ExpansionPanel>

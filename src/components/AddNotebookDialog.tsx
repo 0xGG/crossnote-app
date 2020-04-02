@@ -56,6 +56,7 @@ export default function AddNotebookDialog(props: Props) {
           timeout: 2000
         }).show();
       }
+      props.onClose();
       await crossnoteContainer.addNotebook(
         notebookName,
         gitURL.trim(),
@@ -65,7 +66,6 @@ export default function AddNotebookDialog(props: Props) {
         rememberCredentialsChecked,
         gitCorsProxy
       );
-      props.onClose();
     } catch (error) {
       new Noty({
         type: "error",

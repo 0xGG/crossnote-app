@@ -158,6 +158,10 @@ export const zhCN = {
     "general/Source": "源",
     "general/Description": "描述",
     "general/Edit": "编辑",
+    "general/notebook-updates-found": "发现笔记本更新",
+    "general/update-the-notebook": "更新这个笔记本",
+    "general/check-notebook-updates-periodically": "周期性地检查笔记本更新",
+    "general/minutes": "分钟",
 
     // Error
     "error/authentication-failed": "认证失败",
@@ -485,6 +489,10 @@ export const zhCN = {
     "delete-file-dialog/title": "你确定要删除这个笔记？",
     "delete-file-dialog/subtitle": "将不能被撤回",
     "add-notebook-dialog/disclaimer":
-      "所有笔记本的数据将只会被保存于浏览器本地。"
+      "所有笔记本的数据将只会被保存于浏览器本地。",
+    "edit-image-dialog/title": "编辑图片",
+    "edit-image-dialog/image-url": "图片 URL",
+    "edit-image-dialog/image-title": "图片标题",
+    "edit-image-dialog/image-alt-text": "图片替代文本"
   }
 };

@@ -158,6 +158,10 @@ export const zhTW = {
     "general/Source": "源",
     "general/Description": "描述",
     "general/Edit": "編輯",
+    "general/notebook-updates-found": "發現筆記本更新",
+    "general/update-the-notebook": "更新這個筆記本",
+    "general/check-notebook-updates-periodically": "週期性地檢查筆記本更新",
+    "general/minutes": "分鐘",
 
     // Error
     "error/authentication-failed": "認証失敗",
@@ -485,6 +489,10 @@ export const zhTW = {
     "delete-file-dialog/title": "妳確定要刪除這個筆記？",
     "delete-file-dialog/subtitle": "將不能被撤回",
     "add-notebook-dialog/disclaimer":
-      "所有筆記本的資料將只會被保存于瀏覽器本地。"
+      "所有筆記本的資料將只會被保存于瀏覽器本地。",
+    "edit-image-dialog/title": "編輯圖片",
+    "edit-image-dialog/image-url": "圖片 URL",
+    "edit-image-dialog/image-title": "圖片標題",
+    "edit-image-dialog/image-alt-text": "圖片替代文本"
   }
 };

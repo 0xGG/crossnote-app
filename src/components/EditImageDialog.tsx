@@ -11,6 +11,7 @@ import {
 import { createStyles, makeStyles, Theme } from "@material-ui/core/styles";
 import clsx from "clsx";
 import { Editor as CodeMirrorEditor, TextMarker } from "codemirror";
+import { useTranslation } from "react-i18next";
 
 interface Props {
   open: boolean;
@@ -34,6 +35,7 @@ const useStyles = makeStyles((theme: Theme) =>
 
 export default function EditImageDialog(props: Props) {
   const classes = useStyles(props);
+  const { t } = useTranslation();
   const editor = props.editor;
   const marker = props.marker;
   const imageElement = props.imageElement;
@@ -88,7 +90,7 @@ export default function EditImageDialog(props: Props) {
 
   return (
     <Dialog open={props.open} onClose={props.onClose}>
-      <DialogTitle>Edit image</DialogTitle>
+      <DialogTitle>{t("edit-image-dialog/title")}</DialogTitle>
       <DialogContent style={{ width: "400px", maxWidth: "100%" }}>
         <Box className={clsx(classes.imageWrapper)}>
           <img
@@ -101,33 +103,33 @@ export default function EditImageDialog(props: Props) {
         <TextField
           autoFocus={true}
           value={imageSrc}
-          helperText={"image URL"}
+          helperText={t("edit-image-dialog/image-url")}
           fullWidth={true}
           onChange={event => setImageSrc(event.target.value)}
         ></TextField>
         <TextField
           autoFocus={true}
           value={imageTitle}
-          helperText={"image title"}
+          helperText={t("edit-image-dialog/image-title")}
           fullWidth={true}
           onChange={event => setImageTitle(event.target.value)}
         ></TextField>
         <TextField
           autoFocus={true}
           value={imageAlt}
-          helperText={"image alt text"}
+          helperText={t("edit-image-dialog/image-alt-text")}
           fullWidth={true}
           onChange={event => setImageAlt(event.target.value)}
         ></TextField>
       </DialogContent>
       <DialogActions>
         <Button variant={"contained"} color={"primary"} onClick={updateImage}>
-          Update
+          {t("general/update")}
         </Button>
         <Button variant={"contained"} color={"secondary"} onClick={deleteImage}>
-          Delete
+          {t("general/Delete")}
         </Button>
-        <Button onClick={props.onClose}>Cancel</Button>
+        <Button onClick={props.onClose}> {t("general/cancel")}</Button>
       </DialogActions>
     </Dialog>
   );
