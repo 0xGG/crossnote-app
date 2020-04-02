@@ -134,7 +134,8 @@ function useCrossnoteContainer(initialState: InitialState) {
               callback(status);
             });
           }
-          setNeedsToRefreshNotes(true);
+          // QUESTION: Seems like every time cloudContainer refetches the viewer, the note card that got modified will be refreshed. I don't know why
+          // setNeedsToRefreshNotes(true);
         });
     },
     [crossnote]
