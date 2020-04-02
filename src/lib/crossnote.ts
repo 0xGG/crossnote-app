@@ -605,6 +605,7 @@ export default class Crossnote {
 
     const restoreSHA = async () => {
       const gitBranch = notebook.gitBranch || "master";
+      // Perform a soft reset
       await this.writeFile(
         path.resolve(notebook.dir, `.git/refs/heads/${gitBranch}`),
         localSha
@@ -665,15 +666,19 @@ export default class Crossnote {
   }
 
   public async getGitSHA(dir: string, ref: string = "master"): Promise<string> {
-    let logs = await git.log({
-      fs: this.fs,
-      dir: dir,
-      ref: ref,
-      depth: 5
-    });
-    if (logs.length > 0) {
-      return (logs && logs[0]).oid;
-    } else {
+    try {
+      let logs = await git.log({
+        fs: this.fs,
+        dir: dir,
+        ref: ref,
+        depth: 5
+      });
+      if (logs.length > 0) {
+        return (logs && logs[0]).oid;
+      } else {
+        return "";
+      }
+    } catch (error) {
       return "";
     }
   }
@@ -694,18 +699,14 @@ export default class Crossnote {
     } = await this.generateChangesCache(notebook);
     const localSha = notebook.localSha;
 
-    await git.pull({
+    // Stop using git.pull as merge will cause error
+    const result = await git.fetch({
       fs: this.fs,
       http,
       dir: notebook.dir,
       singleBranch: true,
       corsProxy: notebook.gitCorsProxy,
       ref: notebook.gitBranch || "master",
-      author: {
-        name: "anonymous",
-        email: "anonymous@crossnote.app"
-      },
-      // fastForwardOnly: true,
       onAuth: (url, auth) => {
         return {
           username: notebook.gitUsername,
@@ -718,10 +719,19 @@ export default class Crossnote {
       onMessage
     });
 
-    const remoteSha = await this.getGitSHA(
-      notebook.dir,
-      `origin/${notebook.gitBranch}`
+    // Perform a hard reset
+    const remoteSha = result.fetchHead;
+    await this.writeFile(
+      path.resolve(notebook.dir, `.git/refs/heads/${notebook.gitBranch}`),
+      remoteSha
     );
+    await this.unlink(path.resolve(notebook.dir, `.git/index`));
+    await git.checkout({
+      dir: notebook.dir,
+      fs: this.fs,
+      ref: notebook.gitBranch || "master"
+    });
+    // Done hard reset
 
     let numConflicts = 0;
     if (localSha === remoteSha) {
@@ -756,18 +766,30 @@ export default class Crossnote {
       for (const filePath in cache) {
         const ourContent = cache[filePath].markdown;
         if (await this.exists(path.resolve(notebook.dir, filePath))) {
-          const theirContent = await this.readFile(
-            path.resolve(notebook.dir, filePath)
-          );
-          const baseContentBlobResult = await git.readBlob({
-            fs: this.fs,
-            dir: notebook.dir,
-            oid: localSha,
-            filepath: filePath
-          });
-          const baseContent = Buffer.from(baseContentBlobResult.blob).toString(
-            "utf8"
-          );
+          let baseContent: string = "";
+          let theirContent: string = "";
+          try {
+            const baseContentBlobResult = await git.readBlob({
+              fs: this.fs,
+              dir: notebook.dir,
+              oid: localSha,
+              filepath: filePath
+            });
+            baseContent = Buffer.from(baseContentBlobResult.blob).toString(
+              "utf8"
+            );
+          } catch (error) {}
+          try {
+            const theirContentBlobTresult = await git.readBlob({
+              fs: this.fs,
+              dir: notebook.dir,
+              oid: remoteSha,
+              filepath: filePath
+            });
+            theirContent = Buffer.from(theirContentBlobTresult.blob).toString(
+              "utf8"
+            );
+          } catch (error) {}
           // console.log("ourContent: ", ourContent);
           // console.log("theirContent: ", theirContent);
           // console.log("baseContent: ", baseContent);
@@ -860,6 +882,7 @@ export default class Crossnote {
       tags: false,
       depth: 1,
       corsProxy: notebook.gitCorsProxy,
+      url: notebook.gitURL,
       ref: notebook.gitBranch || "master",
       onAuth: (url, auth) => {
         return {
@@ -946,12 +969,17 @@ export default class Crossnote {
       }
       const gitBranch = notebook.gitBranch || "master";
       const sha = notebook.localSha || "";
-      await this.writeFile(
-        path.resolve(notebook.dir, `.git/refs/heads/${gitBranch}`),
-        sha
-      );
+      try {
+        // Perform a soft reset
+        await this.writeFile(
+          path.resolve(notebook.dir, `.git/refs/heads/${gitBranch}`),
+          sha
+        );
+      } catch (error) {
+        notebooks[i] = null;
+      }
     }
-    return notebooks;
+    return notebooks.filter(nb => nb);
   }
 
   private matter(markdown: string): MatterOutput {

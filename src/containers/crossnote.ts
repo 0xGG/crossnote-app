@@ -110,6 +110,9 @@ function useCrossnoteContainer(initialState: InitialState) {
   );
   const [editorMode, setEditorMode] = useState<EditorMode>(EditorMode.Preview);
   const [pendingNote, setPendingNote] = useState<PendingNote>(null);
+  const [isPerformingAutoFetch, setIsPerformingAutoFetch] = useState<boolean>(
+    false
+  );
 
   const updateNoteMarkdown = useCallback(
     (
@@ -770,28 +773,31 @@ function useCrossnoteContainer(initialState: InitialState) {
   ]);
 
   // TODO: This script should be moved to background (serviceWorker?)
-  useInterval(() => {
+  useInterval(async () => {
+    if (isPerformingAutoFetch) {
+      return;
+    }
+    setIsPerformingAutoFetch(true);
     for (let i = 0; i < notebooks.length; i++) {
       const notebook = notebooks[i];
       if (
         notebook.autoFetchPeriod >= 1000 &&
         Date.now() - notebook.fetchedAt.getTime() >= notebook.autoFetchPeriod
       ) {
-        // 20 minutes // TODO: Allow user to configure the time
+        // TODO: Parallel running tasks instead of running one by one
         if (notebook.gitURL.length > 0) {
-          crossnote
-            .fetchNotebook({ notebook })
-            .then(changed => {
-              if (changed) {
-                setNeedsToRefreshNotes(true);
-              }
-            })
-            .catch(error => {
-              console.log(error);
-            });
+          try {
+            const changed = await crossnote.fetchNotebook({ notebook });
+            if (changed) {
+              setNeedsToRefreshNotes(true);
+            }
+          } catch (error) {
+            console.log(error);
+          }
         }
       }
     }
+    setIsPerformingAutoFetch(false);
   }, 60000); // Check every 1 minute
 
   return {
