@@ -278,7 +278,8 @@ export function Home(props: Props) {
   const drawer = (
     <div>
       <List disablePadding={true}>
-        {/*<ListItem button>
+        {/*
+        <ListItem button onClick={() => browserHistory.push(`/explore`)}>
           <ListItemIcon>
             <LibraryBooks></LibraryBooks>
           </ListItemIcon>

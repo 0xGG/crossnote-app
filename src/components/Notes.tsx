@@ -6,6 +6,7 @@ import { Box, Typography } from "@material-ui/core";
 import NoteCard from "./NoteCard";
 import { useTranslation } from "react-i18next";
 import { Note } from "../lib/crossnote";
+import useInterval from "@use-it/interval";
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -28,6 +29,7 @@ export default function Notes(props: Props) {
   const crossnoteContainer = CrossnoteContainer.useContainer();
   const [notes, setNotes] = useState<Note[]>([]);
   const [notesListElement, setNotesListElement] = useState<HTMLElement>(null);
+  const [forceUpdate, setForceUpdate] = useState<number>(Date.now());
   const searchValue = props.searchValue;
 
   useEffect(() => {
@@ -99,6 +101,13 @@ export default function Notes(props: Props) {
     crossnoteContainer.notes,
     crossnoteContainer.selectedNote
   ]);
+
+  useInterval(() => {
+    if (crossnoteContainer.needsToRefreshNotes) {
+      crossnoteContainer.setNeedsToRefreshNotes(false);
+      setForceUpdate(Date.now());
+    }
+  }, 10000);
 
   return (
     <div

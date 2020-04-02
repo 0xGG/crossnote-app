@@ -135,7 +135,8 @@ function useCrossnoteContainer(initialState: InitialState) {
             });
           }
           // QUESTION: Seems like every time cloudContainer refetches the viewer, the note card that got modified will be refreshed. I don't know why
-          // setNeedsToRefreshNotes(true);
+          // QUESTION: Don't disable it actually if cloudContainer has no token set and no viewer were fetched.
+          setNeedsToRefreshNotes(true);
         });
     },
     [crossnote]
@@ -767,13 +768,6 @@ function useCrossnoteContainer(initialState: InitialState) {
     notebookNotes
   ]);
 
-  useInterval(() => {
-    if (needsToRefreshNotes) {
-      setNeedsToRefreshNotes(false);
-      setNotes(notes => [...notes]);
-    }
-  }, 8000); // TODO: the delay might be dependent on the number of notes...
-
   return {
     crossnote,
     initialized,
@@ -817,7 +811,9 @@ function useCrossnoteContainer(initialState: InitialState) {
     setWikiTOCElement,
     editorMode,
     setEditorMode,
-    setPendingNote
+    setPendingNote,
+    needsToRefreshNotes,
+    setNeedsToRefreshNotes
   };
 }
 
