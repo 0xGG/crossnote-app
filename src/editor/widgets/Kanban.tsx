@@ -260,7 +260,11 @@ function KanbanCardDisplay(props: KanbanCardProps) {
           </IconButton>
         </Box>
       )}
-      <Dialog open={editorDialogOpen} onClose={() => setEditDialogOpen(false)}>
+      <Dialog
+        open={editorDialogOpen}
+        onClose={() => setEditDialogOpen(false)}
+        style={{ zIndex: 3000 }}
+      >
         <DialogContent>
           <Box
             className={clsx(classes.editorWrapper)}

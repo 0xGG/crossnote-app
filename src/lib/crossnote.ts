@@ -860,6 +860,7 @@ export default class Crossnote {
       tags: false,
       depth: 1,
       corsProxy: notebook.gitCorsProxy,
+      url: notebook.gitURL,
       ref: notebook.gitBranch || "master",
       onAuth: (url, auth) => {
         return {

@@ -89,7 +89,7 @@ export default function EditImageDialog(props: Props) {
   }
 
   return (
-    <Dialog open={props.open} onClose={props.onClose}>
+    <Dialog open={props.open} onClose={props.onClose} style={{ zIndex: 3001 }}>
       <DialogTitle>{t("edit-image-dialog/title")}</DialogTitle>
       <DialogContent style={{ width: "400px", maxWidth: "100%" }}>
         <Box className={clsx(classes.imageWrapper)}>
