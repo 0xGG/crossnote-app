@@ -287,6 +287,7 @@ function useCrossnoteContainer(initialState: InitialState) {
           rememberCredentials: gitRememberCredentials
         });
         setNotebooks(notebooks => [notebook, ...notebooks]);
+        _setSelectedNotebook(notebook);
         setIsAddingNotebook(false);
       } catch (error) {
         setIsAddingNotebook(false);
