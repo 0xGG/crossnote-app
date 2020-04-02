@@ -768,6 +768,28 @@ function useCrossnoteContainer(initialState: InitialState) {
     notebookNotes
   ]);
 
+  // TODO: This script should be moved to background (serviceWorker?)
+  useInterval(() => {
+    for (let i = 0; i < notebooks.length; i++) {
+      const notebook = notebooks[i];
+      if (Date.now() - notebook.fetchedAt.getTime() >= 1200000) {
+        // 20 minutes // TODO: Allow user to configure the time
+        if (notebook.gitURL.length > 0) {
+          crossnote
+            .fetchNotebook({ notebook })
+            .then(changed => {
+              if (changed) {
+                setNeedsToRefreshNotes(true);
+              }
+            })
+            .catch(error => {
+              console.log(error);
+            });
+        }
+      }
+    }
+  }, 60000); // Check every 1 minute
+
   return {
     crossnote,
     initialized,

@@ -1,12 +1,14 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { createStyles, makeStyles, Theme } from "@material-ui/core/styles";
 import clsx from "clsx";
 import { CrossnoteContainer } from "../containers/crossnote";
-import { Box, Typography } from "@material-ui/core";
+import { Box, Typography, Button } from "@material-ui/core";
 import NoteCard from "./NoteCard";
 import { useTranslation } from "react-i18next";
 import { Note } from "../lib/crossnote";
 import useInterval from "@use-it/interval";
+import { CloudDownloadOutline } from "mdi-material-ui";
+import Noty from "noty";
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -15,6 +17,11 @@ const useStyles = makeStyles((theme: Theme) =>
       flex: "1",
       overflowY: "auto",
       paddingBottom: theme.spacing(12)
+    },
+    updatePanel: {
+      padding: theme.spacing(2),
+      textAlign: "center",
+      borderBottom: "1px solid #ededed"
     }
   })
 );
@@ -31,6 +38,45 @@ export default function Notes(props: Props) {
   const [notesListElement, setNotesListElement] = useState<HTMLElement>(null);
   const [forceUpdate, setForceUpdate] = useState<number>(Date.now());
   const searchValue = props.searchValue;
+
+  const pullNotebook = useCallback(() => {
+    const notebook = crossnoteContainer.selectedNotebook;
+    if (!notebook) {
+      return;
+    }
+    crossnoteContainer
+      .pullNotebook({
+        notebook: notebook,
+        onAuthFailure: () => {
+          new Noty({
+            type: "error",
+            text: t("error/authentication-failed"),
+            layout: "topRight",
+            theme: "relax",
+            timeout: 5000
+          }).show();
+        }
+      })
+      .then(() => {
+        new Noty({
+          type: "success",
+          text: t("success/notebook-downloaded"),
+          layout: "topRight",
+          theme: "relax",
+          timeout: 2000
+        }).show();
+      })
+      .catch(error => {
+        console.log(error);
+        new Noty({
+          type: "error",
+          text: t("error/failed-to-download-notebook"),
+          layout: "topRight",
+          theme: "relax",
+          timeout: 2000
+        }).show();
+      });
+  }, [crossnoteContainer.selectedNotebook, t]);
 
   useEffect(() => {
     const pinned: Note[] = [];
@@ -116,6 +162,29 @@ export default function Notes(props: Props) {
         setNotesListElement(element);
       }}
     >
+      {crossnoteContainer.selectedNotebook &&
+        crossnoteContainer.selectedNotebook.currentSha !==
+          crossnoteContainer.selectedNotebook.latestSha && (
+          <Box className={clsx(classes.updatePanel)}>
+            <Typography style={{ marginBottom: "8px" }}>
+              {"🔔  " + t("Notebook updates found")}
+            </Typography>
+            <Button
+              color={"primary"}
+              variant={"outlined"}
+              onClick={pullNotebook}
+              disabled={
+                crossnoteContainer.isPullingNotebook ||
+                crossnoteContainer.isPushingNotebook
+              }
+            >
+              <CloudDownloadOutline
+                style={{ marginRight: "8px" }}
+              ></CloudDownloadOutline>
+              {"  " + t("Update the notebook")}
+            </Button>
+          </Box>
+        )}
       {(notes || []).map(note => {
         return (
           <NoteCard key={"note-card-" + note.filePath} note={note}></NoteCard>
