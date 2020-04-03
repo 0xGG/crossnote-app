@@ -42,6 +42,9 @@ export default function ConfigureNotebookDialog(props: Props) {
   const [clickDeleteCount, setClickDeleteCount] = useState<number>(
     MaxClickDeleteCount
   );
+  const [clickHardResetCount, setClickHardResetCount] = useState<number>(
+    MaxClickDeleteCount
+  );
   const { t } = useTranslation();
 
   useEffect(() => {
@@ -91,6 +94,14 @@ export default function ConfigureNotebookDialog(props: Props) {
     const notebook = props.notebook;
     try {
       await crossnoteContainer.deleteNotebook(notebook);
+    } catch (error) {}
+    props.onClose();
+  }, [props.notebook]);
+
+  const hardResetNotebook = useCallback(async () => {
+    const notebook = props.notebook;
+    try {
+      await crossnoteContainer.hardResetNotebook(notebook);
     } catch (error) {}
     props.onClose();
   }, [props.notebook]);
@@ -222,6 +233,26 @@ export default function ConfigureNotebookDialog(props: Props) {
             {t("general/Delete") +
               (clickDeleteCount < MaxClickDeleteCount
                 ? ` ${clickDeleteCount}`
+                : "")}
+          </Button>
+        )}
+        {props.notebook && props.notebook.gitURL.length > 0 && (
+          <Button
+            variant={"contained"}
+            color={"secondary"}
+            disabled={!clickHardResetCount}
+            onClick={() => {
+              if (clickHardResetCount === 1) {
+                hardResetNotebook();
+                setClickHardResetCount(clickHardResetCount - 1);
+              } else {
+                setClickHardResetCount(clickHardResetCount - 1);
+              }
+            }}
+          >
+            {t("general/hard-reset") +
+              (clickHardResetCount < MaxClickDeleteCount
+                ? ` ${clickHardResetCount}`
                 : "")}
           </Button>
         )}

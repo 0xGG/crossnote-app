@@ -165,6 +165,7 @@ export const jaJP = {
     "general/check-notebook-updates-periodically":
       "ノートブックの更新を定期的に確認する",
     "general/minutes": "分",
+    "general/hard-reset": "ハードリセット",
 
     // Error
     "error/authentication-failed": "認証に失敗しました",

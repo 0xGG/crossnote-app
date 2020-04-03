@@ -683,6 +683,46 @@ export default class Crossnote {
     }
   }
 
+  public async hardResetNotebook(notebook: Notebook, sha: string) {
+    await this.writeFile(
+      path.resolve(notebook.dir, `.git/refs/heads/${notebook.gitBranch}`),
+      sha
+    );
+    await this.unlink(path.resolve(notebook.dir, `.git/index`));
+    await git.checkout({
+      dir: notebook.dir,
+      fs: this.fs,
+      ref: notebook.gitBranch || "master"
+    });
+  }
+
+  private async restoreFilesFromCache(
+    cache: Cache,
+    notebook: Notebook
+  ): Promise<number> {
+    let numConflicts = 0;
+    // console.log("same");
+    for (const filePath in cache) {
+      if (cache[filePath].status === "deleted") {
+        await this.deleteNote(notebook, filePath);
+        continue;
+      }
+      const markdown = cache[filePath].markdown;
+      const dirname = path.dirname(path.resolve(notebook.dir, filePath));
+      await this.mkdirp(dirname);
+      await this.writeFile(path.resolve(notebook.dir, filePath), markdown);
+      await git.add({
+        fs: this.fs,
+        dir: notebook.dir,
+        filepath: filePath
+      });
+      if (this.markdownHasConflicts(markdown)) {
+        numConflicts += 1;
+      }
+    }
+    return numConflicts;
+  }
+
   public async pullNotebook({
     notebook,
     onProgress,
@@ -690,15 +730,6 @@ export default class Crossnote {
     onAuthSuccess,
     onMessage
   }: PullNotebookArgs): Promise<PullNotebookResult> {
-    // NOTE: Seems like diff3 not working as I expected. Therefore I might create my own type of diff
-    const cache: {
-      [key: string]: {
-        status: string;
-        markdown: string;
-      };
-    } = await this.generateChangesCache(notebook);
-    const localSha = notebook.localSha;
-
     // Stop using git.pull as merge will cause error
     const result = await git.fetch({
       fs: this.fs,
@@ -719,42 +750,32 @@ export default class Crossnote {
       onMessage
     });
 
+    // NOTE: Seems like diff3 not working as I expected. Therefore I might create my own type of diff
+    const cache: {
+      [key: string]: {
+        status: string;
+        markdown: string;
+      };
+    } = await this.generateChangesCache(notebook);
+    const localSha = notebook.localSha;
+
+    // Save cache in case of system crash
+    localStorage.setItem(
+      `pending/pull/${notebook._id}`,
+      JSON.stringify({
+        cache,
+        localSha
+      })
+    );
+
     // Perform a hard reset
     const remoteSha = result.fetchHead;
-    await this.writeFile(
-      path.resolve(notebook.dir, `.git/refs/heads/${notebook.gitBranch}`),
-      remoteSha
-    );
-    await this.unlink(path.resolve(notebook.dir, `.git/index`));
-    await git.checkout({
-      dir: notebook.dir,
-      fs: this.fs,
-      ref: notebook.gitBranch || "master"
-    });
-    // Done hard reset
+    await this.hardResetNotebook(notebook, remoteSha);
 
     let numConflicts = 0;
     if (localSha === remoteSha) {
       // Restore from cache
-      // console.log("same");
-      for (const filePath in cache) {
-        if (cache[filePath].status === "deleted") {
-          await this.deleteNote(notebook, filePath);
-          continue;
-        }
-        const markdown = cache[filePath].markdown;
-        const dirname = path.dirname(path.resolve(notebook.dir, filePath));
-        await this.mkdirp(dirname);
-        await this.writeFile(path.resolve(notebook.dir, filePath), markdown);
-        await git.add({
-          fs: this.fs,
-          dir: notebook.dir,
-          filepath: filePath
-        });
-        if (this.markdownHasConflicts(markdown)) {
-          numConflicts += 1;
-        }
-      }
+      numConflicts = await this.restoreFilesFromCache(cache, notebook);
     } else {
       // Check conflicted notes
       // console.log("check conflicted");
@@ -859,6 +880,8 @@ export default class Crossnote {
     notebook.localSha = remoteSha;
     notebook.remoteSha = remoteSha;
     await this.updateNotebook(notebook);
+
+    localStorage.removeItem(`pending/pull/${notebook._id}`);
 
     return {
       numConflicts,
@@ -975,6 +998,28 @@ export default class Crossnote {
           path.resolve(notebook.dir, `.git/refs/heads/${gitBranch}`),
           sha
         );
+
+        // Restore cached files from failed `git` pull event
+        const pendingPull = localStorage.getItem(
+          `pending/pull/${notebook._id}`
+        );
+        if (pendingPull) {
+          try {
+            await this.restoreFilesFromCache(
+              JSON.parse(pendingPull).cache,
+              notebook
+            );
+          } catch (error) {}
+          localStorage.removeItem(`pending/pull/${notebook._id}`);
+        }
+
+        // NOTE: Seems like there is a bug somewhere that caused all files to become *undeleted
+        // So we run git.add again.
+        await git.add({
+          fs: this.fs,
+          dir: notebook.dir,
+          filepath: "."
+        });
       } catch (error) {
         notebooks[i] = null;
       }

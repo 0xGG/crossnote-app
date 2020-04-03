@@ -165,6 +165,7 @@ export const enUS = {
     "general/check-notebook-updates-periodically":
       "Check notebook updates periodically",
     "general/minutes": "minute(s)",
+    "general/hard-reset": "Hard reset",
 
     // Error
     "error/authentication-failed": "Authentication failed",
