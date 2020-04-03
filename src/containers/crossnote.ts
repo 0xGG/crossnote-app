@@ -361,6 +361,7 @@ function useCrossnoteContainer(initialState: InitialState) {
         await crossnote.hardResetNotebook(notebook, notebook.localSha);
 
         // TODO: Refactor
+        setIsLoadingNotebook(true);
         const notes = await crossnote.listNotes({
           notebook: notebook,
           dir: "./",
