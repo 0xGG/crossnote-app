@@ -2352,6 +2352,13 @@
   dependencies:
     react-i18next "*"
 
+"@types/react-lazyload@^2.6.0":
+  version "2.6.0"
+  resolved "https://registry.npm.taobao.org/@types/react-lazyload/download/@types/react-lazyload-2.6.0.tgz#41cd9cbb2c03dd810377518d4837794469a521d1"
+  integrity sha1-Qc2cuywD3YEDd1GNSDd5RGmlIdE=
+  dependencies:
+    "@types/react" "*"
+
 "@types/react-resizable@^1.7.2":
   version "1.7.2"
   resolved "https://registry.npm.taobao.org/@types/react-resizable/download/@types/react-resizable-1.7.2.tgz#ff7f6d67394abb6f64207fcc574ffccb932d8a97"
@@ -12971,6 +12978,11 @@ react-is@^16.12.0, react-is@^16.6.0, react-is@^16.7.0, react-is@^16.8.0, react-i
   version "16.13.1"
   resolved "https://registry.npm.taobao.org/react-is/download/react-is-16.13.1.tgz#789729a4dc36de2999dc156dd6c1d9c18cea56a4"
   integrity sha1-eJcppNw23imZ3BVt1sHZwYzqVqQ=
+
+react-lazyload@^2.6.7:
+  version "2.6.7"
+  resolved "https://registry.npm.taobao.org/react-lazyload/download/react-lazyload-2.6.7.tgz#9f5df01858ca11780ecf6be39ed9b17d845e7349"
+  integrity sha1-n13wGFjKEXgOz2vjntmxfYRec0k=
 
 react-masonry-component@^6.2.1:
   version "6.2.1"

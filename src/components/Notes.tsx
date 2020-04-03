@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
+import LazyLoad from "react-lazyload";
 import { createStyles, makeStyles, Theme } from "@material-ui/core/styles";
 import clsx from "clsx";
 import { CrossnoteContainer } from "../containers/crossnote";
@@ -9,6 +10,7 @@ import { Note } from "../lib/crossnote";
 import useInterval from "@use-it/interval";
 import { CloudDownloadOutline } from "mdi-material-ui";
 import Noty from "noty";
+import { Skeleton } from "@material-ui/lab";
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -153,7 +155,7 @@ export default function Notes(props: Props) {
       crossnoteContainer.setNeedsToRefreshNotes(false);
       setForceUpdate(Date.now());
     }
-  }, 10000);
+  }, 15000);
 
   return (
     <div
@@ -187,7 +189,29 @@ export default function Notes(props: Props) {
         )}
       {(notes || []).map(note => {
         return (
-          <NoteCard key={"note-card-" + note.filePath} note={note}></NoteCard>
+          <LazyLoad
+            key={"lazy-load-note-card-" + note.filePath}
+            placeholder={
+              <Box
+                style={{
+                  textAlign: "center",
+                  height: "92px",
+                  paddingTop: "16px",
+                  paddingBottom: "16px",
+                  boxSizing: "border-box"
+                }}
+              >
+                <Skeleton />
+                <Skeleton animation={false} />
+                <Skeleton animation="wave" />
+              </Box>
+            }
+            height={92}
+            overflow={true}
+            once={true}
+          >
+            <NoteCard key={"note-card-" + note.filePath} note={note}></NoteCard>
+          </LazyLoad>
         );
       })}
       {crossnoteContainer.initialized &&

@@ -782,18 +782,18 @@ function useCrossnoteContainer(initialState: InitialState) {
       const notebook = notebooks[i];
       if (
         notebook.autoFetchPeriod >= 1000 &&
-        Date.now() - notebook.fetchedAt.getTime() >= notebook.autoFetchPeriod
+        Date.now() - notebook.fetchedAt.getTime() >= notebook.autoFetchPeriod &&
+        notebook.gitURL.length > 0 &&
+        notebook.localSha === notebook.remoteSha
       ) {
-        // TODO: Parallel running tasks instead of running one by one
-        if (notebook.gitURL.length > 0) {
-          try {
-            const changed = await crossnote.fetchNotebook({ notebook });
-            if (changed) {
-              setNeedsToRefreshNotes(true);
-            }
-          } catch (error) {
-            console.log(error);
+        // TODO:  Run tasks in parallel instead of running one by one
+        try {
+          const changed = await crossnote.fetchNotebook({ notebook });
+          if (changed) {
+            setNeedsToRefreshNotes(true);
           }
+        } catch (error) {
+          console.log(error);
         }
       }
     }
