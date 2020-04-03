@@ -162,6 +162,7 @@ export const zhTW = {
     "general/update-the-notebook": "更新這個筆記本",
     "general/check-notebook-updates-periodically": "週期性地檢查筆記本更新",
     "general/minutes": "分鐘",
+    "general/hard-reset": "硬重設",
 
     // Error
     "error/authentication-failed": "認証失敗",

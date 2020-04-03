@@ -259,6 +259,23 @@ function useCrossnoteContainer(initialState: InitialState) {
     [selectedNotebook, crossnote, selectedSection]
   );
 
+  const _setSelectedNotebook = useCallback(
+    (notebook: Notebook) => {
+      localStorage.setItem("selectedNotebookID", notebook._id);
+      setSelectedNotebook(notebook);
+      if (notebook.gitURL) {
+        browserHistory.push(
+          `/?repo=${encodeURIComponent(
+            notebook.gitURL
+          )}&branch=${encodeURIComponent(notebook.gitBranch || "master")}`
+        );
+      } else {
+        browserHistory.push(`/?notebookID=${notebook._id}`);
+      }
+    },
+    [setSelectedNotebook]
+  );
+
   const addNotebook = useCallback(
     async (
       name: string,
@@ -297,7 +314,7 @@ function useCrossnoteContainer(initialState: InitialState) {
         throw error;
       }
     },
-    [crossnote, notebooks]
+    [crossnote, notebooks, _setSelectedNotebook]
   );
 
   const updateNotebook = useCallback(
@@ -331,6 +348,33 @@ function useCrossnoteContainer(initialState: InitialState) {
         })
       );
       _setSelectedNotebook(selectedNotebook);
+    },
+    [crossnote, _setSelectedNotebook]
+  );
+
+  const hardResetNotebook = useCallback(
+    async (notebook: Notebook) => {
+      if (!crossnote) {
+        return;
+      }
+      try {
+        await crossnote.hardResetNotebook(notebook, notebook.localSha);
+
+        // TODO: Refactor
+        const notes = await crossnote.listNotes({
+          notebook: notebook,
+          dir: "./",
+          includeSubdirectories: true
+        });
+        setSelectedNote(null);
+        setNotebookNotes(notes);
+        setNotebookDirectories(
+          await crossnote.getNotebookDirectoriesFromNotes(notes)
+        );
+        setHasSummaryMD(await crossnote.hasSummaryMD(notebook));
+        setNotebookTagNode(crossnote.getNotebookTagNodeFromNotes(notes));
+        setIsLoadingNotebook(false);
+      } catch (error) {}
     },
     [crossnote]
   );
@@ -515,23 +559,6 @@ function useCrossnoteContainer(initialState: InitialState) {
       }
     },
     [crossnote, notebookNotes, _setSelectedNote]
-  );
-
-  const _setSelectedNotebook = useCallback(
-    (notebook: Notebook) => {
-      localStorage.setItem("selectedNotebookID", notebook._id);
-      setSelectedNotebook(notebook);
-      if (notebook.gitURL) {
-        browserHistory.push(
-          `/?repo=${encodeURIComponent(
-            notebook.gitURL
-          )}&branch=${encodeURIComponent(notebook.gitBranch || "master")}`
-        );
-      } else {
-        browserHistory.push(`/?notebookID=${notebook._id}`);
-      }
-    },
-    [setSelectedNotebook]
   );
 
   useEffect(() => {
@@ -825,6 +852,7 @@ function useCrossnoteContainer(initialState: InitialState) {
     isPullingNotebook,
     updateNotebook,
     deleteNotebook,
+    hardResetNotebook,
     pushNotebook,
     pullNotebook,
     checkoutNote,

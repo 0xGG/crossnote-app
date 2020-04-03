@@ -162,6 +162,7 @@ export const zhCN = {
     "general/update-the-notebook": "更新这个笔记本",
     "general/check-notebook-updates-periodically": "周期性地检查笔记本更新",
     "general/minutes": "分钟",
+    "general/hard-reset": "硬重置",
 
     // Error
     "error/authentication-failed": "认证失败",

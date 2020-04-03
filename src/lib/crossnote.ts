@@ -683,6 +683,19 @@ export default class Crossnote {
     }
   }
 
+  public async hardResetNotebook(notebook: Notebook, sha: string) {
+    await this.writeFile(
+      path.resolve(notebook.dir, `.git/refs/heads/${notebook.gitBranch}`),
+      sha
+    );
+    await this.unlink(path.resolve(notebook.dir, `.git/index`));
+    await git.checkout({
+      dir: notebook.dir,
+      fs: this.fs,
+      ref: notebook.gitBranch || "master"
+    });
+  }
+
   public async pullNotebook({
     notebook,
     onProgress,
@@ -721,17 +734,7 @@ export default class Crossnote {
 
     // Perform a hard reset
     const remoteSha = result.fetchHead;
-    await this.writeFile(
-      path.resolve(notebook.dir, `.git/refs/heads/${notebook.gitBranch}`),
-      remoteSha
-    );
-    await this.unlink(path.resolve(notebook.dir, `.git/index`));
-    await git.checkout({
-      dir: notebook.dir,
-      fs: this.fs,
-      ref: notebook.gitBranch || "master"
-    });
-    // Done hard reset
+    await this.hardResetNotebook(notebook, remoteSha);
 
     let numConflicts = 0;
     if (localSha === remoteSha) {
