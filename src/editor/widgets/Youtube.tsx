@@ -105,8 +105,18 @@ function YoutubeWidget(props: WidgetArgs) {
           }}
           onKeyDown={event => {
             if (event.which === 13) {
-              if (url && url.match(/youtube\.com\/watch\?v=(.+?)$/)) {
-                const videoID = url.match(/youtube\.com\/watch\?v=(.+?)$/)[1];
+              if (url && url.match(/\?v=(.+?)(&|$)/)) {
+                const videoID = url.match(/\?v=(.+?)(&|$)/)[1];
+                const attrs = {
+                  videoID
+                };
+                props.replaceSelf(
+                  `\`@crossnote.youtube ${JSON.stringify(attrs)
+                    .replace(/^{/, "")
+                    .replace(/}$/, "")}\``
+                );
+              } else if (url && url.match(/\/youtu\.be\/(.+?)(\?|$)/)) {
+                const videoID = url.match(/\/youtu\.be\/(.+?)(\?|$)/)[1];
                 const attrs = {
                   videoID
                 };
