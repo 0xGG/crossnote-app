@@ -74,6 +74,22 @@ function BilibiliWidget(props: WidgetArgs) {
       </span>
     );
   }
+  if (attributes["bvid"]) {
+    return (
+      <span style={{ cursor: "default" }}>
+        <Box className={clsx(classes.videoWrapper)}>
+          <iframe
+            title={"bilibili_" + attributes["id"]}
+            className={clsx(classes.video)}
+            src={`https://player.bilibili.com/player.html?bvid=BV${attributes["bvid"]}`}
+            scrolling={"no"}
+            frameBorder={"no"}
+            allowFullScreen={true}
+          ></iframe>
+        </Box>
+      </span>
+    );
+  }
 
   if (props.isPreview) {
     return <span></span>;
@@ -105,10 +121,20 @@ function BilibiliWidget(props: WidgetArgs) {
           }}
           onKeyDown={event => {
             if (event.which === 13) {
-              if (url && url.match(/bilibili\.com\/video\/av(\d+)/)) {
-                const aid = url.match(/bilibili\.com\/video\/av(\d+)/)[1];
+              if (url && url.match(/\/av(\d+)/)) {
+                const aid = url.match(/\/av(\d+)/)[1];
                 const attrs = {
                   aid
+                };
+                props.replaceSelf(
+                  `\`@crossnote.bilibili ${JSON.stringify(attrs)
+                    .replace(/^{/, "")
+                    .replace(/}$/, "")}\``
+                );
+              } else if (url && url.match(/\/BV(.+?)($|\/|\?)/)) {
+                const bvid = url.match(/\/BV(.+?)($|\/|\?)/)[1];
+                const attrs = {
+                  bvid
                 };
                 props.replaceSelf(
                   `\`@crossnote.bilibili ${JSON.stringify(attrs)
