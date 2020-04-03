@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import {
   fade,
   createStyles,
@@ -105,7 +105,7 @@ const useStyles = makeStyles((theme: Theme) =>
     },
     loading: {
       position: "absolute",
-      top: "30%",
+      top: "40%",
       left: "50%",
       transform: "translateX(-50%)"
     },
@@ -148,6 +148,10 @@ export default function NotesPanel(props: Props) {
         setIsCreatingNote(false);
       });
   }, [crossnoteContainer]);
+
+  useEffect(() => {
+    setSearchValue("");
+  }, [crossnoteContainer.selectedNotebook]);
 
   return (
     <Box className={clsx(classes.notesPanel)}>

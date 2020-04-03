@@ -12,6 +12,8 @@ import { CloudDownloadOutline } from "mdi-material-ui";
 import Noty from "noty";
 import { Skeleton } from "@material-ui/lab";
 
+const lazyLoadPlaceholderHeight = 92;
+
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
     notesList: {
@@ -150,6 +152,14 @@ export default function Notes(props: Props) {
     crossnoteContainer.selectedNote
   ]);
 
+  useEffect(() => {
+    if (notesListElement) {
+      // Hack: fix note cards not displaying bug when searchValue is not empty
+      notesListElement.scrollTop += 1;
+      notesListElement.scrollTop -= 1;
+    }
+  }, [notes, notesListElement]);
+
   useInterval(() => {
     if (crossnoteContainer.needsToRefreshNotes) {
       crossnoteContainer.setNeedsToRefreshNotes(false);
@@ -195,7 +205,7 @@ export default function Notes(props: Props) {
               <Box
                 style={{
                   textAlign: "center",
-                  height: "92px",
+                  height: `${lazyLoadPlaceholderHeight}px`,
                   paddingTop: "16px",
                   paddingBottom: "16px",
                   boxSizing: "border-box"
@@ -206,9 +216,10 @@ export default function Notes(props: Props) {
                 <Skeleton animation="wave" />
               </Box>
             }
-            height={92}
+            height={lazyLoadPlaceholderHeight}
             overflow={true}
             once={true}
+            scrollContainer={notesListElement}
           >
             <NoteCard key={"note-card-" + note.filePath} note={note}></NoteCard>
           </LazyLoad>
