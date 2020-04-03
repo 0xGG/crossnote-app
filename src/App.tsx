@@ -4,10 +4,11 @@ import { ThemeProvider } from "@material-ui/styles";
 import * as qs from "qs";
 import { Router, Route, Switch } from "react-router-dom";
 import { browserHistory } from "./utilities/history";
-import { Home, HomeSection } from "./pages/Home";
+import { Home } from "./pages/Home";
 import { GitHubOAuthCallback } from "./components/GitHubOAuthCallback";
 import "./editor";
 import { crossnoteTheme } from "./utilities/theme";
+import { HomeSection } from "./containers/crossnote";
 
 const App: React.FC = () => {
   useEffect(() => {

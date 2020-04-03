@@ -36,7 +36,8 @@ import {
 } from "mdi-material-ui";
 import {
   CrossnoteContainer,
-  SelectedSectionType
+  SelectedSectionType,
+  HomeSection
 } from "../containers/crossnote";
 import Editor from "../components/Editor";
 import AddNotebookDialog from "../components/AddNotebookDialog";
@@ -180,12 +181,6 @@ const useStyles = makeStyles((theme: Theme) =>
   })
 );
 
-export enum HomeSection {
-  Notebooks = "Notebooks",
-  Settings = "Settings",
-  Notifications = "Notifications"
-}
-
 interface QueryParams {
   notebookID?: string;
   repo?: string;
@@ -274,6 +269,10 @@ export function Home(props: Props) {
       }
     }
   }, [props.section, props.queryParams, crossnoteContainer.initialized]);
+
+  useEffect(() => {
+    crossnoteContainer.setHomeSection(props.section);
+  }, [props.section]);
 
   const drawer = (
     <div>
