@@ -155,8 +155,14 @@ export default function Notes(props: Props) {
   useEffect(() => {
     if (notesListElement) {
       // Hack: fix note cards not displaying bug when searchValue is not empty
+      const initialHeight = notesListElement.style.height;
+      const initialFlex = notesListElement.style.flex;
+      notesListElement.style.flex = "initial";
+      notesListElement.style.height = "10px";
       notesListElement.scrollTop += 1;
       notesListElement.scrollTop -= 1;
+      notesListElement.style.height = initialHeight;
+      notesListElement.style.flex = initialFlex;
     }
   }, [notes, notesListElement]);
 
