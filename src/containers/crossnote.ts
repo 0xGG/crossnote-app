@@ -53,6 +53,12 @@ export enum OrderDirection {
   DESC = "DESC"
 }
 
+export enum HomeSection {
+  Notebooks = "Notebooks",
+  Settings = "Settings",
+  Notifications = "Notifications"
+}
+
 /**
  * The note to open
  */
@@ -112,6 +118,9 @@ function useCrossnoteContainer(initialState: InitialState) {
   const [pendingNote, setPendingNote] = useState<PendingNote>(null);
   const [isPerformingAutoFetch, setIsPerformingAutoFetch] = useState<boolean>(
     false
+  );
+  const [homeSection, setHomeSection] = useState<HomeSection>(
+    HomeSection.Notebooks
   );
 
   const updateNoteMarkdown = useCallback(
@@ -759,10 +768,15 @@ function useCrossnoteContainer(initialState: InitialState) {
   ]);
 
   useEffect(() => {
-    if (notes.length && !selectedNote && !pendingNote) {
+    if (
+      notes.length &&
+      !selectedNote &&
+      !pendingNote &&
+      homeSection === HomeSection.Notebooks
+    ) {
       _setSelectedNote(notes[0]);
     }
-  }, [notes, selectedNote, pendingNote, _setSelectedNote]);
+  }, [notes, selectedNote, pendingNote, _setSelectedNote, homeSection]);
 
   useEffect(() => {
     if (selectedNote) {
@@ -874,7 +888,9 @@ function useCrossnoteContainer(initialState: InitialState) {
     setEditorMode,
     setPendingNote,
     needsToRefreshNotes,
-    setNeedsToRefreshNotes
+    setNeedsToRefreshNotes,
+    homeSection,
+    setHomeSection
   };
 }
 

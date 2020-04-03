@@ -165,54 +165,15 @@ export function Settings(props: Props) {
   const displayColorPicker = Boolean(colorPickerAnchorElement);
   const settingsContainer = SettingsContainer.useContainer();
   const cloudContainer = CloudContainer.useContainer();
-  const [cover, setCover] = useState<string>(
-    (cloudContainer.viewer && cloudContainer.viewer.cover) || ""
-  );
   const [avatar, setAvatar] = useState<string>(
     (cloudContainer.viewer && cloudContainer.viewer.avatar) || ""
   );
   const [uploadingAvatar, setUploadingAvatar] = useState<boolean>(false);
-  const [uploadingCover, setUploadingCover] = useState<boolean>(false);
   const [resGitHubUser] = useGitHubUserQuery();
   const [
     resUnlinkGitHubAccount,
     executeUnlinkGitHubAccount
   ] = useUnlinkGitHubAccountMutation();
-
-  function uploadCover(event: React.MouseEvent<HTMLButtonElement, MouseEvent>) {
-    event.preventDefault();
-    event.stopPropagation();
-    if (!imageUploaderElement) return;
-    imageUploaderElement.onchange = function(event) {
-      const target = event.target as any;
-      const files = target.files || [];
-      new Noty({
-        type: "info",
-        text: t("settings/uploading-cover-image"),
-        layout: "topRight",
-        theme: "relax",
-        timeout: 2000
-      }).show();
-      smmsUploadImages(files)
-        .then(urls => {
-          setUploadingCover(false);
-          setCover(urls[0] || "");
-        })
-        .catch((error: any) => {
-          // console.log(error);
-          new Noty({
-            type: "error",
-            text: t("settings/upload-image-failure"),
-            layout: "topRight",
-            theme: "relax",
-            timeout: 2000
-          }).show();
-          setUploadingCover(false);
-        });
-    };
-    setUploadingCover(true);
-    imageUploaderElement.click();
-  }
 
   function uploadAvatar(
     event: React.MouseEvent<HTMLButtonElement, MouseEvent>
@@ -253,8 +214,7 @@ export function Settings(props: Props) {
 
   useEffect(() => {
     if (cloudContainer.viewer) {
-      setAvatar(cloudContainer.viewer.avatar);
-      setCover(cloudContainer.viewer.cover);
+      setAvatar(avatar => avatar || cloudContainer.viewer.avatar);
     }
   }, [cloudContainer.viewer]);
 
@@ -518,7 +478,7 @@ export function Settings(props: Props) {
             onClick={() => {
               cloudContainer.setUserInfo({
                 name: settingsContainer.authorName,
-                cover,
+                cover: "",
                 avatar,
                 editorCursorColor: settingsContainer.editorCursorColor,
                 language: settingsContainer.language

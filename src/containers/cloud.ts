@@ -30,7 +30,7 @@ function useCloudContainer(initialState: InitialState) {
     if (token) {
       executeViewerQuery({
         requestPolicy: "network-only",
-        pollInterval: 30 * 1000 // Refetch the viewer every 30 seconds for checking notifications
+        pollInterval: 60 * 1000 // Refetch the viewer every 60 seconds for checking notifications
       });
     }
   }, [executeViewerQuery, token]);
@@ -94,13 +94,20 @@ function useCloudContainer(initialState: InitialState) {
     } else if (resViewer.data && resViewer.data.viewer) {
       const viewer = resViewer.data.viewer as User;
       setViewer(viewer);
-      setLoggedIn(true);
-      settingsContainer.setLanguage(viewer.language);
-      settingsContainer.setAuthorName(viewer.name);
-      settingsContainer.setAuthorEmail(viewer.email);
-      settingsContainer.setEditorCursorColor(viewer.editorCursorColor);
     }
   }, [resViewer]);
+
+  useEffect(() => {
+    if (viewer) {
+      setLoggedIn(true);
+      if (!loggedIn) {
+        settingsContainer.setLanguage(viewer.language);
+        settingsContainer.setAuthorName(viewer.name);
+        settingsContainer.setAuthorEmail(viewer.email);
+        settingsContainer.setEditorCursorColor(viewer.editorCursorColor);
+      }
+    }
+  }, [loggedIn, viewer]);
 
   useEffect(() => {
     if (token && refetchViewer) {

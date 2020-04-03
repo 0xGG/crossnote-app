@@ -1024,7 +1024,9 @@ export default class Crossnote {
         notebooks[i] = null;
       }
     }
-    return notebooks.filter(nb => nb);
+    return notebooks
+      .filter(nb => nb)
+      .sort((x, y) => x.name.localeCompare(y.name));
   }
 
   private matter(markdown: string): MatterOutput {

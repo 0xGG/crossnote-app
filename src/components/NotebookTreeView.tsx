@@ -6,7 +6,8 @@ import { IconButton, Box, Typography, Badge } from "@material-ui/core";
 import { ChevronRight, ChevronDown } from "mdi-material-ui";
 import {
   CrossnoteContainer,
-  SelectedSectionType
+  SelectedSectionType,
+  HomeSection
 } from "../containers/crossnote";
 import { useTranslation } from "react-i18next";
 import { Directory, Notebook, TagNode } from "../lib/crossnote";
@@ -72,6 +73,12 @@ export default function NotebookTreeView(props: Props) {
   const [expanded, setExpanded] = useState<string[]>([]);
   const crossnoteContainer = CrossnoteContainer.useContainer();
   const { t } = useTranslation();
+
+  useEffect(() => {
+    if (crossnoteContainer.homeSection !== HomeSection.Notebooks) {
+      setExpanded([]);
+    }
+  }, [crossnoteContainer.homeSection]);
 
   const handleChange = useCallback(
     (event: React.ChangeEvent<{}>, nodes: string[]) => {
