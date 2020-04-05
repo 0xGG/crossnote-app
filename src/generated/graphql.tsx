@@ -150,8 +150,8 @@ export interface Mutation {
   verifyEmail: Scalars['Boolean'];
   linkWithGitHubAccount: Scalars['Boolean'];
   unlinkGitHubAccount: Scalars['Boolean'];
-  registerNotebook: Notebook;
-  unregisterNotebook: Scalars['Boolean'];
+  publishNotebook: Notebook;
+  unpublishNotebook: Scalars['Boolean'];
   StarNotebook: Scalars['Boolean'];
   UnstarNotebook: Scalars['Boolean'];
   createWidget: Widget;
@@ -228,13 +228,13 @@ export interface MutationLinkWithGitHubAccountArgs {
 }
 
 
-export interface MutationRegisterNotebookArgs {
-  input: RegisterNotebook;
+export interface MutationPublishNotebookArgs {
+  input: PublishNotebook;
 }
 
 
-export interface MutationUnregisterNotebookArgs {
-  input: UnregisterNotebook;
+export interface MutationUnpublishNotebookArgs {
+  input: UnpublishNotebook;
 }
 
 
@@ -388,6 +388,11 @@ export interface PostCommentWidgetMessage {
   notifyUsers: Array<Maybe<Scalars['String']>>;
 }
 
+export interface PublishNotebook {
+  gitURL: Scalars['String'];
+  gitBranch: Scalars['String'];
+}
+
 export interface Query {
    __typename?: 'Query';
   test: Scalars['String'];
@@ -413,11 +418,6 @@ export interface ReactionSummary {
   count: Scalars['Int'];
   reaction: Scalars['String'];
   selfAuthored: Scalars['Boolean'];
-}
-
-export interface RegisterNotebook {
-  gitURL: Scalars['String'];
-  gitBranch: Scalars['String'];
 }
 
 export interface RemoveReactionFromCommentWidget {
@@ -490,7 +490,7 @@ export interface UnfollowUser {
   userID: Scalars['UUID'];
 }
 
-export interface UnregisterNotebook {
+export interface UnpublishNotebook {
   id: Scalars['UUID'];
 }
 
@@ -532,6 +532,8 @@ export interface User {
   followingsCount: Maybe<Scalars['Int']>;
   followersCount: Maybe<Scalars['Int']>;
   widgetsCount: Maybe<Scalars['Int']>;
+  notebooksCount: Maybe<Scalars['Int']>;
+  starredNotebooksCount: Maybe<Scalars['Int']>;
   isFollowing: Maybe<Scalars['Boolean']>;
   areFriends: Maybe<Scalars['Boolean']>;
   followings: Maybe<Array<User>>;
@@ -1025,6 +1027,9 @@ export type NotificationFieldsFragment = (
     { __typename?: 'User' }
     & Pick<User, 'id' | 'username' | 'avatar'>
   ), event: (
+    { __typename?: 'NotificationEventUserFollowing' }
+    & Pick<NotificationEventUserFollowing, 'type'>
+  ) | (
     { __typename?: 'NotificationEventCommentWidgetMessagePosting' }
     & Pick<NotificationEventCommentWidgetMessagePosting, 'type'>
     & { message: (
@@ -1039,9 +1044,6 @@ export type NotificationFieldsFragment = (
         ) }
       ) }
     ) }
-  ) | (
-    { __typename?: 'NotificationEventUserFollowing' }
-    & Pick<NotificationEventUserFollowing, 'type'>
   ) }
 );
 
@@ -1081,7 +1083,7 @@ export type PageInfoFieldsFragment = (
 
 export type ViewerFieldsFragment = (
   { __typename?: 'User' }
-  & Pick<User, 'avatar' | 'bio' | 'cover' | 'createdAt' | 'deletedAt' | 'id' | 'language' | 'name' | 'username' | 'email' | 'verifiedEmail' | 'updatedAt' | 'editorCursorColor'>
+  & Pick<User, 'avatar' | 'bio' | 'cover' | 'createdAt' | 'deletedAt' | 'id' | 'language' | 'name' | 'username' | 'email' | 'verifiedEmail' | 'updatedAt' | 'widgetsCount' | 'editorCursorColor'>
   & { notifications: (
     { __typename?: 'NotificationConnection' }
     & Pick<NotificationConnection, 'totalCount'>
@@ -1228,6 +1230,7 @@ export const ViewerFieldsFragmentDoc = gql`
   email
   verifiedEmail
   updatedAt
+  widgetsCount
   notifications(last: 1) {
     totalCount
   }

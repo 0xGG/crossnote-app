@@ -195,6 +195,7 @@ function CommentWidget(props: WidgetArgs) {
       !widgetID &&
       !resCreateCommentWidget.fetching &&
       !resCreateCommentWidget.error &&
+      !resCreateCommentWidget.data &&
       editor
     ) {
       const title =
