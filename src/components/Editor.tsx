@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useEffect } from "react";
 import { createStyles, makeStyles, Theme } from "@material-ui/core/styles";
 import clsx from "clsx";
-import { Note } from "../lib/crossnote";
+import { Note, TagNode } from "../lib/crossnote";
 import {
   CrossnoteContainer,
   EditorMode,
@@ -56,6 +56,7 @@ import {
   TagOutline,
   Printer,
   PencilOutline,
+  Tag,
 } from "mdi-material-ui";
 import { renderPreview } from "vickymd/preview";
 import PushNotebookDialog from "./PushNotebookDialog";
@@ -353,34 +354,37 @@ export default function Editor(props: Props) {
     crossnoteContainer.checkoutNote(note);
   }, [note]);
 
-  const addTag = useCallback(() => {
-    let tag = tagName.trim() || "";
-    if (!note || !tag.length || !editor || !isDecrypted) {
-      return;
-    }
-    tag = tag
-      .replace(/\s+/g, " ")
-      .split("/")
-      .map((t) => t.trim())
-      .filter((x) => x.length > 0)
-      .join("/");
-    setTagNames((tagNames) => {
-      const newTagNames =
-        tagNames.indexOf(tag) >= 0 ? [...tagNames] : [tag, ...tagNames];
-      note.config.tags = newTagNames.sort((x, y) => x.localeCompare(y));
-      crossnoteContainer.updateNoteMarkdown(
-        note,
-        editor.getValue(),
-        note.config.encryption ? decryptionPassword : "",
-        (status) => {
-          setGitStatus(status);
-        },
-      );
-      crossnoteContainer.updateNotebookTagNode();
-      return newTagNames;
-    });
-    setTagName("");
-  }, [tagName, note, editor, decryptionPassword, isDecrypted]);
+  const addTag = useCallback(
+    (tagName: string) => {
+      let tag = tagName.trim() || "";
+      if (!note || !tag.length || !editor || !isDecrypted) {
+        return;
+      }
+      tag = tag
+        .replace(/\s+/g, " ")
+        .split("/")
+        .map((t) => t.trim())
+        .filter((x) => x.length > 0)
+        .join("/");
+      setTagNames((tagNames) => {
+        const newTagNames =
+          tagNames.indexOf(tag) >= 0 ? [...tagNames] : [tag, ...tagNames];
+        note.config.tags = newTagNames.sort((x, y) => x.localeCompare(y));
+        crossnoteContainer.updateNoteMarkdown(
+          note,
+          editor.getValue(),
+          note.config.encryption ? decryptionPassword : "",
+          (status) => {
+            setGitStatus(status);
+          },
+        );
+        crossnoteContainer.updateNotebookTagNode();
+        return newTagNames;
+      });
+      setTagName("");
+    },
+    [note, editor, decryptionPassword, isDecrypted],
+  );
 
   const deleteTag = useCallback(
     (tagName: string) => {
@@ -721,7 +725,17 @@ export default function Editor(props: Props) {
             const link = links[i] as HTMLAnchorElement;
             link.onclick = (event) => {
               event.preventDefault();
-              openURL(link.getAttribute("href"));
+              if (link.hasAttribute("data-topic")) {
+                const tag = link.getAttribute("data-topic");
+                if (tag.length) {
+                  crossnoteContainer.setSelectedSection({
+                    type: SelectedSectionType.Tag,
+                    path: tag,
+                  });
+                }
+              } else {
+                openURL(link.getAttribute("href"));
+              }
             };
           }
         };
@@ -777,148 +791,158 @@ export default function Editor(props: Props) {
     ) => {
       // Check commands
       if (changeObject.text.length === 1 && changeObject.text[0] === "/") {
-        editor.showHint({
-          closeOnUnfocus: false,
-          completeSingle: false,
-          hint: () => {
-            const cursor = editor.getCursor();
-            const token = editor.getTokenAt(cursor);
-            const line = cursor.line;
-            const lineStr = editor.getLine(line);
-            const end: number = cursor.ch;
-            let start = token.start;
-            if (lineStr[start] !== "/") {
-              start = start - 1;
-            }
-            const currentWord: string = lineStr
-              .slice(start, end)
-              .replace(/^\//, "");
+        const aheadStr = editor
+          .getLine(changeObject.from.line)
+          .slice(0, changeObject.from.ch + 1);
+        if (!aheadStr.match(/#[^\s]+?\/$/)) {
+          // Not `/` inside a tag
+          editor.showHint({
+            closeOnUnfocus: false,
+            completeSingle: false,
+            hint: () => {
+              const cursor = editor.getCursor();
+              const token = editor.getTokenAt(cursor);
+              const line = cursor.line;
+              const lineStr = editor.getLine(line);
+              const end: number = cursor.ch;
+              let start = token.start;
+              if (lineStr[start] !== "/") {
+                start = start - 1;
+              }
+              const currentWord: string = lineStr
+                .slice(start, end)
+                .replace(/^\//, "");
 
-            const commands = [
-              {
-                text: "# ",
-                displayText: `/h1 - ${t("editor/toolbar/insert-header-1")}`,
-              },
-              {
-                text: "## ",
-                displayText: `/h2 - ${t("editor/toolbar/insert-header-2")}`,
-              },
-              {
-                text: "### ",
-                displayText: `/h3 - ${t("editor/toolbar/insert-header-3")}`,
-              },
-              {
-                text: "#### ",
-                displayText: `/h4 - ${t("editor/toolbar/insert-header-4")}`,
-              },
-              {
-                text: "##### ",
-                displayText: `/h5 - ${t("editor/toolbar/insert-header-5")}`,
-              },
-              {
-                text: "###### ",
-                displayText: `/h6 - ${t("editor/toolbar/insert-header-6")}`,
-              },
-              {
-                text: "> ",
-                displayText: `/blockquote - ${t(
-                  "editor/toolbar/insert-blockquote",
-                )}`,
-              },
-              {
-                text: "* ",
-                displayText: `/ul - ${t(
-                  "editor/toolbar/insert-unordered-list",
-                )}`,
-              },
-              {
-                text: "1. ",
-                displayText: `/ol - ${t("editor/toolbar/insert-ordered-list")}`,
-              },
-              {
-                text: "`@crossnote.image`\n",
-                displayText: `/image - ${t("editor/toolbar/insert-image")}`,
-              },
-              {
-                text: `|   |   |
+              const commands = [
+                {
+                  text: "# ",
+                  displayText: `/h1 - ${t("editor/toolbar/insert-header-1")}`,
+                },
+                {
+                  text: "## ",
+                  displayText: `/h2 - ${t("editor/toolbar/insert-header-2")}`,
+                },
+                {
+                  text: "### ",
+                  displayText: `/h3 - ${t("editor/toolbar/insert-header-3")}`,
+                },
+                {
+                  text: "#### ",
+                  displayText: `/h4 - ${t("editor/toolbar/insert-header-4")}`,
+                },
+                {
+                  text: "##### ",
+                  displayText: `/h5 - ${t("editor/toolbar/insert-header-5")}`,
+                },
+                {
+                  text: "###### ",
+                  displayText: `/h6 - ${t("editor/toolbar/insert-header-6")}`,
+                },
+                {
+                  text: "> ",
+                  displayText: `/blockquote - ${t(
+                    "editor/toolbar/insert-blockquote",
+                  )}`,
+                },
+                {
+                  text: "* ",
+                  displayText: `/ul - ${t(
+                    "editor/toolbar/insert-unordered-list",
+                  )}`,
+                },
+                {
+                  text: "1. ",
+                  displayText: `/ol - ${t(
+                    "editor/toolbar/insert-ordered-list",
+                  )}`,
+                },
+                {
+                  text: "`@crossnote.image`\n",
+                  displayText: `/image - ${t("editor/toolbar/insert-image")}`,
+                },
+                {
+                  text: `|   |   |
 |---|---|
 |   |   |
 `,
-                displayText: `/table - ${t("editor/toolbar/insert-table")}`,
-              },
-              {
-                text:
-                  "`@timer " +
-                  JSON.stringify({ date: new Date().toString() })
-                    .replace(/^{/, "")
-                    .replace(/}$/, "") +
-                  "`\n",
-                displayText: `/timer - ${t("editor/toolbar/insert-clock")}`,
-              },
-              {
-                text: "",
-                displayText: `/emoji - ${t("editor/toolbar/insert-emoji")}`,
-              },
-              {
-                text: "`@crossnote.audio`  \n",
-                displayText: `/audio - ${t("editor/toolbar/audio-url")}`,
-              },
-              {
-                text: "`@crossnote.netease_music`  \n",
-                displayText: `/netease - ${t("editor/toolbar/netease-music")}`,
-              },
-              {
-                text: "`@crossnote.video`  \n",
-                displayText: `/video - ${t("editor/toolbar/video-url")}`,
-              },
-              {
-                text: "`@crossnote.youtube`  \n",
-                displayText: `/youtube - ${t("editor/toolbar/youtube")}`,
-              },
-              {
-                text: "`@crossnote.bilibili`  \n",
-                displayText: `/bilibili - ${t("editor/toolbar/bilibili")}`,
-              },
-              {
-                text: "<!-- slide -->  \n",
-                displayText: `/slide - ${t("editor/toolbar/insert-slide")}`,
-              },
-              {
-                text: "`@crossnote.ocr`  \n",
-                displayText: `/ocr - ${t("editor/toolbar/insert-ocr")}`,
-              },
-              {
-                text: '`@crossnote.kanban "v":2,"board":{"columns":[]}`  \n',
-                displayText: `/kanban - ${t(
-                  "editor/toolbar/insert-kanban",
-                )} (beta)`,
-              },
-              {
-                text: "`@crossnote.abc`  \n",
-                displayText: `/abc - ${t(
-                  "editor/toolbar/insert-abc-notation",
-                )}`,
-              },
-              {
-                text: "`@crossnote.comment`  \n",
-                displayText: `/crossnote.comment - ${t(
-                  "editor/toolbar/insert-comment",
-                )}`,
-              },
-            ];
-            const filtered = commands.filter(
-              (item) =>
-                item.displayText
-                  .toLocaleLowerCase()
-                  .indexOf(currentWord.toLowerCase()) >= 0,
-            );
-            return {
-              list: filtered.length ? filtered : commands,
-              from: { line, ch: start },
-              to: { line, ch: end },
-            };
-          },
-        });
+                  displayText: `/table - ${t("editor/toolbar/insert-table")}`,
+                },
+                {
+                  text:
+                    "`@timer " +
+                    JSON.stringify({ date: new Date().toString() })
+                      .replace(/^{/, "")
+                      .replace(/}$/, "") +
+                    "`\n",
+                  displayText: `/timer - ${t("editor/toolbar/insert-clock")}`,
+                },
+                {
+                  text: "",
+                  displayText: `/emoji - ${t("editor/toolbar/insert-emoji")}`,
+                },
+                {
+                  text: "`@crossnote.audio`  \n",
+                  displayText: `/audio - ${t("editor/toolbar/audio-url")}`,
+                },
+                {
+                  text: "`@crossnote.netease_music`  \n",
+                  displayText: `/netease - ${t(
+                    "editor/toolbar/netease-music",
+                  )}`,
+                },
+                {
+                  text: "`@crossnote.video`  \n",
+                  displayText: `/video - ${t("editor/toolbar/video-url")}`,
+                },
+                {
+                  text: "`@crossnote.youtube`  \n",
+                  displayText: `/youtube - ${t("editor/toolbar/youtube")}`,
+                },
+                {
+                  text: "`@crossnote.bilibili`  \n",
+                  displayText: `/bilibili - ${t("editor/toolbar/bilibili")}`,
+                },
+                {
+                  text: "<!-- slide -->  \n",
+                  displayText: `/slide - ${t("editor/toolbar/insert-slide")}`,
+                },
+                {
+                  text: "`@crossnote.ocr`  \n",
+                  displayText: `/ocr - ${t("editor/toolbar/insert-ocr")}`,
+                },
+                {
+                  text: '`@crossnote.kanban "v":2,"board":{"columns":[]}`  \n',
+                  displayText: `/kanban - ${t(
+                    "editor/toolbar/insert-kanban",
+                  )} (beta)`,
+                },
+                {
+                  text: "`@crossnote.abc`  \n",
+                  displayText: `/abc - ${t(
+                    "editor/toolbar/insert-abc-notation",
+                  )}`,
+                },
+                {
+                  text: "`@crossnote.comment`  \n",
+                  displayText: `/crossnote.comment - ${t(
+                    "editor/toolbar/insert-comment",
+                  )}`,
+                },
+              ];
+              const filtered = commands.filter(
+                (item) =>
+                  item.displayText
+                    .toLocaleLowerCase()
+                    .indexOf(currentWord.toLowerCase()) >= 0,
+              );
+              return {
+                list: filtered.length ? filtered : commands,
+                from: { line, ch: start },
+                to: { line, ch: end },
+              };
+            },
+          });
+        }
       }
 
       // Check emoji
@@ -954,6 +978,61 @@ export default function Editor(props: Props) {
                   .toLocaleLowerCase()
                   .indexOf(currentWord.toLowerCase()) >= 0,
             );
+            return {
+              list: filtered.length ? filtered : commands,
+              from: { line, ch: start },
+              to: { line, ch: end },
+            };
+          },
+        });
+      }
+
+      // Check tag
+      if (
+        changeObject.text.length === 1 &&
+        changeObject.text[0] !== " " &&
+        changeObject.from.ch > 0 &&
+        editor.getLine(changeObject.from.line)[changeObject.from.ch - 1] === "#"
+      ) {
+        editor.showHint({
+          closeOnUnfocus: true,
+          completeSingle: false,
+          hint: () => {
+            const cursor = editor.getCursor();
+            const token = editor.getTokenAt(cursor);
+            const line = cursor.line;
+            const lineStr = editor.getLine(line);
+            const end: number = cursor.ch;
+            let start = token.start;
+            if (lineStr[start] !== "#") {
+              start = start - 1;
+            }
+            const currentWord: string = lineStr
+              .slice(start, end)
+              .replace(/^#/, "");
+            const commands: { text: string; displayText: string }[] = [];
+            if (currentWord.trim().length > 0) {
+              commands.push({
+                text: `#${currentWord}`,
+                displayText: `+ #${currentWord}`,
+              });
+            }
+            const helper = (children: TagNode[]) => {
+              if (!children || !children.length) return;
+              for (let i = 0; i < children.length; i++) {
+                const tag = children[i].path;
+                commands.push({
+                  text: `#${tag}`,
+                  displayText: `+ #${tag}`,
+                });
+                helper(children[i].children);
+              }
+            };
+            helper(crossnoteContainer.notebookTagNode.children);
+            const filtered = commands.filter(
+              (item) => item.text.toLocaleLowerCase().indexOf(currentWord) >= 0,
+            );
+
             return {
               list: filtered.length ? filtered : commands,
               from: { line, ch: start },
@@ -1018,6 +1097,17 @@ export default function Editor(props: Props) {
           );
         }
       }
+
+      // Add Tag
+      if (
+        changeObject.origin === "complete" &&
+        changeObject.removed[0] &&
+        changeObject.removed[0].match(/^#[^\s]/) &&
+        changeObject.text[0] &&
+        changeObject.text[0].match(/^#[^\s]/)
+      ) {
+        addTag(changeObject.text[0].replace(/^#/, ""));
+      }
     };
     editor.on("change", onChangeHandler);
 
@@ -1032,7 +1122,7 @@ export default function Editor(props: Props) {
       editor.off("change", onChangeHandler);
       editor.off("cursorActivity", onCursorActivityHandler);
     };
-  }, [editor, note /*t*/]);
+  }, [editor, note, crossnoteContainer.notebookTagNode, addTag /*t*/]);
 
   // Print preview
   useEffect(() => {
@@ -1219,7 +1309,12 @@ export default function Editor(props: Props) {
                   className={clsx(classes.controlBtn)}
                   onClick={(event) => setTagsMenuAnchorEl(event.currentTarget)}
                 >
-                  <TagOutline></TagOutline>
+                  {crossnoteContainer.notebookTagNode.children &&
+                  crossnoteContainer.notebookTagNode.children.length ? (
+                    <Tag></Tag>
+                  ) : (
+                    <TagOutline></TagOutline>
+                  )}
                 </Button>
               </Tooltip>
             )}
@@ -1349,7 +1444,7 @@ export default function Editor(props: Props) {
                   }}
                   onKeyUp={(event) => {
                     if (event.which === 13) {
-                      addTag();
+                      addTag(tagName);
                     }
                   }}
                 ></TextField>
