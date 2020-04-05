@@ -242,7 +242,7 @@ export default function ConfigureNotebookDialog(props: Props) {
           <Button
             variant={"contained"}
             color={"secondary"}
-            disabled={!clickHardResetCount}
+            disabled={!clickHardResetCount || !clickDeleteCount}
             onClick={() => {
               if (clickHardResetCount === 1) {
                 hardResetNotebook();

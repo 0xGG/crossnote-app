@@ -26,13 +26,23 @@ export function printPreview(
   return VickyMDPrintPreview(
     previewElement,
     bannerElement,
-    ["#main-panel", "#editor-main-panel", "#editor-card"],
+    [
+      "#main-panel",
+      "#editor-main-panel",
+      "#editor-card",
+      ".main-panel-split-pane",
+    ],
     `
+  .Pane.vertical {
+    position: initial !important;
+  }
   #notes-panel,
   .editor-bottom-panel,
   .drawer,
   .CodeMirror,
   .editor-textarea,
+  .editor-toolbar,
+  .Pane.vertical.Pane1,
   .control-panel-wrapper {
     display: none;
   }
