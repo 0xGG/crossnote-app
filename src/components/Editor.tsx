@@ -69,6 +69,7 @@ import ChangeFilePathDialog from "./ChangeFilePathDialog";
 import { SettingsContainer } from "../containers/settings";
 import { initMathPreview } from "../editor/views/math-preview";
 import EmojiDefinitions from "vickymd/addon/emoji";
+import { TagStopRegExp } from "../utilities/markdown";
 
 const VickyMD = require("vickymd");
 const is = require("is_js");
@@ -362,10 +363,14 @@ export default function Editor(props: Props) {
       }
       tag = tag
         .replace(/\s+/g, " ")
+        .replace(TagStopRegExp, "")
         .split("/")
         .map((t) => t.trim())
         .filter((x) => x.length > 0)
         .join("/");
+      if (!tag.length) {
+        return;
+      }
       setTagNames((tagNames) => {
         const newTagNames =
           tagNames.indexOf(tag) >= 0 ? [...tagNames] : [tag, ...tagNames];
@@ -1009,7 +1014,7 @@ export default function Editor(props: Props) {
             }
             const currentWord: string = lineStr
               .slice(start, end)
-              .replace(/^#/, "");
+              .replace(TagStopRegExp, "");
             const commands: { text: string; displayText: string }[] = [];
             if (currentWord.trim().length > 0) {
               commands.push({
@@ -1306,11 +1311,15 @@ export default function Editor(props: Props) {
             {isDecrypted && (
               <Tooltip title={t("general/tags")}>
                 <Button
-                  className={clsx(classes.controlBtn)}
+                  className={clsx(
+                    classes.controlBtn,
+                    note.config.tags &&
+                      note.config.tags.length > 0 &&
+                      classes.controlBtnSelectedSecondary,
+                  )}
                   onClick={(event) => setTagsMenuAnchorEl(event.currentTarget)}
                 >
-                  {crossnoteContainer.notebookTagNode.children &&
-                  crossnoteContainer.notebookTagNode.children.length ? (
+                  {note.config.tags && note.config.tags.length > 0 ? (
                     <Tag></Tag>
                   ) : (
                     <TagOutline></TagOutline>
