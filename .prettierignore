@@ -14,3 +14,4 @@ node_modules
 build
 public
 .vscode
+src/_git_commit.js

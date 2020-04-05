@@ -1554,7 +1554,7 @@ export default function Editor(props: Props) {
                 <Typography
                   variant={"caption"}
                   style={{ cursor: "pointer" }}
-                  color={"textSecondary"}
+                  color={"textPrimary"}
                   key={`${offset}-${path}`}
                   onClick={() => {
                     if (offset === arr.length - 1) {
@@ -1575,13 +1575,13 @@ export default function Editor(props: Props) {
           <Typography
             variant={"caption"}
             style={{ marginLeft: "4px", marginTop: "3px" }}
-            color={"textSecondary"}
+            color={"textPrimary"}
           >
             {"- " + gitStatus}
           </Typography>
         </Box>
         <Box className={clsx(classes.cursorPositionInfo)}>
-          <Typography variant={"caption"} color={"textSecondary"}>
+          <Typography variant={"caption"} color={"textPrimary"}>
             {`Ln ${cursorPosition.line + 1}, Col ${cursorPosition.ch}`}
           </Typography>
         </Box>
