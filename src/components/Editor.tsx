@@ -57,6 +57,7 @@ import {
   Printer,
   PencilOutline,
   Tag,
+  ContentDuplicate,
 } from "mdi-material-ui";
 import { renderPreview } from "vickymd/preview";
 import PushNotebookDialog from "./PushNotebookDialog";
@@ -1018,7 +1019,7 @@ export default function Editor(props: Props) {
             const commands: { text: string; displayText: string }[] = [];
             if (currentWord.trim().length > 0) {
               commands.push({
-                text: `#${currentWord}`,
+                text: `#${currentWord} `,
                 displayText: `+ #${currentWord}`,
               });
             }
@@ -1027,7 +1028,7 @@ export default function Editor(props: Props) {
               for (let i = 0; i < children.length; i++) {
                 const tag = children[i].path;
                 commands.push({
-                  text: `#${tag}`,
+                  text: `#${tag} `,
                   displayText: `+ #${tag}`,
                 });
                 helper(children[i].children);
@@ -1373,6 +1374,16 @@ export default function Editor(props: Props) {
                 <Delete></Delete>
               </Button>
             </Tooltip>
+            {!note.config.encryption && (
+              <Tooltip title={t("general/create-a-copy")}>
+                <Button
+                  className={clsx(classes.controlBtn)}
+                  onClick={() => crossnoteContainer.duplicateNote(note)}
+                >
+                  <ContentDuplicate></ContentDuplicate>
+                </Button>
+              </Tooltip>
+            )}
             {is.desktop() && (
               <Tooltip title={t("general/Print")}>
                 <Button

@@ -144,6 +144,7 @@ export const enUS = {
     "general/Encryption": "Encryption",
     "general/Fullscreen": "Fullscreen",
     "general/change-file-path": "Change file path",
+    "general/create-a-copy": "Create a copy",
     "general/restore-checkout": "Restore (git checkout)",
     "general/download-pull": "Download (git pull)",
     "general/upload-push": "Upload (git pull & git push)",

@@ -269,6 +269,19 @@ function useCrossnoteContainer(initialState: InitialState) {
     [selectedNotebook, crossnote, selectedSection],
   );
 
+  const duplicateNote = useCallback(
+    async (note: Note) => {
+      if (!crossnote) return;
+      const duplicatedNote = await crossnote.duplicateNote(
+        note.notebook,
+        note.filePath,
+      );
+      setNotebookNotes((notes) => [duplicatedNote, ...notes]);
+      setSelectedNote(duplicatedNote);
+    },
+    [crossnote],
+  );
+
   const _setSelectedNotebook = useCallback(
     (notebook: Notebook) => {
       localStorage.setItem("selectedNotebookID", notebook._id);
@@ -864,6 +877,7 @@ function useCrossnoteContainer(initialState: InitialState) {
     setIncludeSubdirectories,
     deleteNote,
     changeNoteFilePath,
+    duplicateNote,
     notebookDirectories,
     notebookTagNode,
     addNotebook,

@@ -144,6 +144,7 @@ export const zhTW = {
     "general/Encryption": "加密",
     "general/Fullscreen": "全屏",
     "general/change-file-path": "更改檔路徑",
+    "general/create-a-copy": "建立複本",
     "general/restore-checkout": "恢復 (git checkout)",
     "general/download-pull": "下載 (git pull)",
     "general/upload-push": "上傳 (git pull & git push)",

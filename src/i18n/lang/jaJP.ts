@@ -144,6 +144,7 @@ export const jaJP = {
     "general/Encryption": "暗号化",
     "general/Fullscreen": "フルスクリーン",
     "general/change-file-path": "ファイル パスの変更",
+    "general/create-a-copy": "コピーを作成する",
     "general/restore-checkout": "復元 (git checkout)",
     "general/download-pull": "ダウンロード (git pull)",
     "general/upload-push": "アップロード (git pull & git push)",

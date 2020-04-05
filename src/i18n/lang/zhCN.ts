@@ -144,6 +144,7 @@ export const zhCN = {
     "general/Encryption": "加密",
     "general/Fullscreen": "全屏",
     "general/change-file-path": "更改文件路径",
+    "general/create-a-copy": "创建一个副本",
     "general/restore-checkout": "恢复 (git checkout)",
     "general/download-pull": "下载 (git pull)",
     "general/upload-push": "上传 (git pull & git push)",
