@@ -12647,7 +12647,7 @@ prompts@^2.0.1:
     kleur "^3.0.3"
     sisteransi "^1.0.4"
 
-prop-types@15.x, prop-types@^15.0.0, prop-types@^15.5.10, prop-types@^15.5.8, prop-types@^15.6.0, prop-types@^15.6.2, prop-types@^15.7.2:
+prop-types@15.x, prop-types@^15.0.0, prop-types@^15.5.10, prop-types@^15.5.4, prop-types@^15.5.8, prop-types@^15.6.0, prop-types@^15.6.2, prop-types@^15.7.2:
   version "15.7.2"
   resolved "https://registry.npm.taobao.org/prop-types/download/prop-types-15.7.2.tgz#52c41e75b8c87e72b9d9360e0206b99dcbffa6c5"
   integrity sha1-UsQedbjIfnK52TYOAga5ncv/psU=
@@ -12984,6 +12984,11 @@ react-lazyload@^2.6.7:
   resolved "https://registry.npm.taobao.org/react-lazyload/download/react-lazyload-2.6.7.tgz#9f5df01858ca11780ecf6be39ed9b17d845e7349"
   integrity sha1-n13wGFjKEXgOz2vjntmxfYRec0k=
 
+react-lifecycles-compat@^3.0.4:
+  version "3.0.4"
+  resolved "https://registry.npm.taobao.org/react-lifecycles-compat/download/react-lifecycles-compat-3.0.4.tgz#4f1a273afdfc8f3488a8c516bfda78f872352362"
+  integrity sha1-TxonOv38jzSIqMUWv9p4+HI1I2I=
+
 react-masonry-component@^6.2.1:
   version "6.2.1"
   resolved "https://registry.npm.taobao.org/react-masonry-component/download/react-masonry-component-6.2.1.tgz#dd23b3129d6b922852b160472e6c9a6256fcdb8a"
@@ -13112,6 +13117,22 @@ react-scripts@3.4.1:
     workbox-webpack-plugin "4.3.1"
   optionalDependencies:
     fsevents "2.1.2"
+
+react-split-pane@^0.1.91:
+  version "0.1.91"
+  resolved "https://registry.npm.taobao.org/react-split-pane/download/react-split-pane-0.1.91.tgz?cache=0&sync_timestamp=1584952322075&other_urls=https%3A%2F%2Fregistry.npm.taobao.org%2Freact-split-pane%2Fdownload%2Freact-split-pane-0.1.91.tgz#18b9ef23b2ff225c957f77b6b096e458d85312ae"
+  integrity sha1-GLnvI7L/IlyVf3e2sJbkWNhTEq4=
+  dependencies:
+    prop-types "^15.7.2"
+    react-lifecycles-compat "^3.0.4"
+    react-style-proptype "^3.2.2"
+
+react-style-proptype@^3.2.2:
+  version "3.2.2"
+  resolved "https://registry.npm.taobao.org/react-style-proptype/download/react-style-proptype-3.2.2.tgz#d8e998e62ce79ec35b087252b90f19f1c33968a0"
+  integrity sha1-2OmY5iznnsNbCHJSuQ8Z8cM5aKA=
+  dependencies:
+    prop-types "^15.5.4"
 
 react-transition-group@^4.0.0, react-transition-group@^4.3.0:
   version "4.3.0"
@@ -15932,10 +15953,10 @@ verror@1.10.0:
     core-util-is "1.0.2"
     extsprintf "^1.2.0"
 
-vickymd@0.1.9:
-  version "0.1.9"
-  resolved "https://registry.npm.taobao.org/vickymd/download/vickymd-0.1.9.tgz#3254e4fcee01586bdd1b49e6d19171b25f444508"
-  integrity sha1-MlTk/O4BWGvdG0nm0ZFxsl9ERQg=
+vickymd@0.1.10:
+  version "0.1.10"
+  resolved "https://registry.npm.taobao.org/vickymd/download/vickymd-0.1.10.tgz#a1a39232b7ded6e9171e1c523cf16e6225824c92"
+  integrity sha1-oaOSMrfe1ukXHhxSPPFuYiWCTJI=
   optionalDependencies:
     echarts "^4.7.0"
     emojione "^4.5.0"

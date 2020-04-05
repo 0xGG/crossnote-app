@@ -243,34 +243,11 @@ export function Settings(props: Props) {
               @{cloudContainer.viewer.username}
             </Typography>
             <Typography>{cloudContainer.viewer.email}</Typography>
+            <Typography variant={"caption"}>
+              {t("settings/created-cloud-widgets-count") +
+                `: ${cloudContainer.viewer.widgetsCount}/∞`}
+            </Typography>
           </Box>
-          {/* <div
-            className={clsx(classes.cover)}
-            style={{
-              backgroundImage: `url("${cover}")`
-            }}
-          ></div>
-          <Box className={clsx(classes.row)}>
-            <TextField
-              label={t("settings/Cover")}
-              style={{ marginTop: 8 }}
-              placeholder="https://.../xxx.png"
-              helperText={t("settings/enter-cover-image-url")}
-              fullWidth
-              margin="normal"
-              InputLabelProps={{
-                shrink: true
-              }}
-              value={cover}
-              onChange={event => setCover(event.currentTarget.value)}
-            />
-            <Tooltip title={t("settings/upload-image")}>
-              <IconButton disabled={uploadingCover} onClick={uploadCover}>
-                <ImagePlus></ImagePlus>
-              </IconButton>
-            </Tooltip>
-          </Box>
-      */}
           <Box className={clsx(classes.section)}>
             <Avatar
               className={clsx(classes.avatar)}

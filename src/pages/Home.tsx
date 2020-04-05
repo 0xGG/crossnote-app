@@ -13,27 +13,23 @@ import {
   ListItemText,
   Avatar,
   CircularProgress,
-  Badge
+  Badge,
+  useMediaQuery
 } from "@material-ui/core";
 import {
   fade,
   createStyles,
   makeStyles,
-  Theme
+  Theme,
+  useTheme
 } from "@material-ui/core/styles";
 import clsx from "clsx";
 import React, { useState, useCallback, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import Identicon from "identicon.js";
 import { sha256 } from "js-sha256";
-import {
-  PlusCircle,
-  Settings as SettingsIcon,
-  LibraryBooks,
-  Cube,
-  Login,
-  Bell
-} from "mdi-material-ui";
+import { PlusCircle, Settings as SettingsIcon, Bell } from "mdi-material-ui";
+import SplitPane from "react-split-pane";
 import {
   CrossnoteContainer,
   SelectedSectionType,
@@ -54,6 +50,8 @@ import { Notifications } from "../components/Notifications";
 
 const drawerWidth = 200;
 const notesPanelWidth = 350;
+const notesPanelMinWidth = 220;
+const notesPanelMaxWidth = 400;
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
     page: {
@@ -150,7 +148,6 @@ const useStyles = makeStyles((theme: Theme) =>
       backgroundColor: "#eee"
     },
     notesPanel: {
-      width: `${notesPanelWidth}px`,
       maxWidth: "100%",
       height: "100%",
       borderRadius: 0,
@@ -159,15 +156,13 @@ const useStyles = makeStyles((theme: Theme) =>
       }
     },
     editorPanel: {
-      // flex: "1" // Flex has overflow issue
-      width: `calc(100% - ${notesPanelWidth}px)`,
       position: "absolute",
-      left: `calc(${notesPanelWidth}px)`,
+      width: "100%",
       height: "100%",
       borderRadius: 0,
       [theme.breakpoints.down("md")]: {
-        width: `calc(100% - ${notesPanelWidth}px)`,
-        left: `${notesPanelWidth}px`
+        // width: `calc(100% - ${notesPanelWidth}px)`,
+        // left: `${notesPanelWidth}px`
       },
       [theme.breakpoints.down("xs")]: {
         display: "none",
@@ -195,7 +190,8 @@ interface Props {
 
 export function Home(props: Props) {
   const classes = useStyles(props);
-
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("xs"));
   const [addNotebookDialogOpen, setAddNotebookDialogOpen] = useState<boolean>(
     false
   );
@@ -393,6 +389,17 @@ export function Home(props: Props) {
       </Paper>
     ));
 
+  const editorPanel = (
+    <Paper
+      className={clsx(classes.editorPanel, "editor-panel")}
+      style={{
+        display: crossnoteContainer.displayMobileEditor && "block"
+      }}
+    >
+      <Editor note={crossnoteContainer.selectedNote}></Editor>
+    </Paper>
+  );
+
   return (
     <Box className={clsx(classes.page)}>
       <CssBaseline></CssBaseline>
@@ -426,19 +433,22 @@ export function Home(props: Props) {
         </Hidden>
       </nav>
       <Box className={clsx(classes.mainPanel)} id="main-panel">
-        {props.section === HomeSection.Notebooks && (
-          <>
-            {notesPanel}
-            <Paper
-              className={clsx(classes.editorPanel, "editor-panel")}
-              style={{
-                display: crossnoteContainer.displayMobileEditor && "block"
-              }}
+        {props.section === HomeSection.Notebooks &&
+          (isMobile ? (
+            <React.Fragment>
+              {notesPanel}
+              {editorPanel}
+            </React.Fragment>
+          ) : (
+            <SplitPane
+              defaultSize={notesPanelWidth}
+              minSize={notesPanelMinWidth}
+              maxSize={notesPanelMaxWidth}
             >
-              <Editor note={crossnoteContainer.selectedNote}></Editor>
-            </Paper>
-          </>
-        )}
+              {notesPanel}
+              {editorPanel}
+            </SplitPane>
+          ))}
         {props.section === HomeSection.Settings && (
           <Settings toggleDrawer={toggleDrawer}></Settings>
         )}

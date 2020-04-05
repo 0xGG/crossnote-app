@@ -223,6 +223,7 @@ export const zhCN = {
     "settings/log-out": "登出",
     "settings/author-name": "作者姓名",
     "settings/author-email": "作者邮箱",
+    "settings/created-cloud-widgets-count": "创建的云挂件数量",
 
     // Preview
     "preview/attach-a-note": "附加一个笔记",

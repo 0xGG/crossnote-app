@@ -64,6 +64,7 @@
     "react-resizable": "^1.10.1",
     "react-router-dom": "^5.1.2",
     "react-scripts": "3.4.1",
+    "react-split-pane": "^0.1.91",
     "styled-components": "^5.0.1",
     "subscriptions-transport-ws": "^0.9.16",
     "tesseract.js": "^2.1.1",
@@ -76,7 +77,7 @@
     "unstated-next": "^1.1.0",
     "urql": "^1.9.5",
     "uuid": "^7.0.2",
-    "vickymd": "0.1.9"
+    "vickymd": "0.1.10"
   },
   "scripts": {
     "git-info": "echo export default \"{\\\"logMessage\\\": \\\"$(git log -1 --oneline)\\\"}\"  > src/_git_commit.js",
