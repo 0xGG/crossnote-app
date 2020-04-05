@@ -14,14 +14,14 @@ import {
   Avatar,
   CircularProgress,
   Badge,
-  useMediaQuery
+  useMediaQuery,
 } from "@material-ui/core";
 import {
   fade,
   createStyles,
   makeStyles,
   Theme,
-  useTheme
+  useTheme,
 } from "@material-ui/core/styles";
 import clsx from "clsx";
 import React, { useState, useCallback, useEffect } from "react";
@@ -33,7 +33,7 @@ import SplitPane from "react-split-pane";
 import {
   CrossnoteContainer,
   SelectedSectionType,
-  HomeSection
+  HomeSection,
 } from "../containers/crossnote";
 import Editor from "../components/Editor";
 import AddNotebookDialog from "../components/AddNotebookDialog";
@@ -58,31 +58,31 @@ const useStyles = makeStyles((theme: Theme) =>
       display: "flex",
       width: "100%",
       height: "100%",
-      backgroundColor: "#2196F1"
+      backgroundColor: "#2196F1",
     },
     appBar: {
       zIndex: theme.zIndex.drawer + 1,
-      boxShadow: "none"
+      boxShadow: "none",
     },
     toolBar: {
       display: "flex",
       flexDirection: "row",
-      justifyContent: "space-between"
+      justifyContent: "space-between",
     },
     search: {
       position: "relative",
       borderRadius: theme.shape.borderRadius,
       backgroundColor: fade(theme.palette.common.white, 0.15),
       "&:hover": {
-        backgroundColor: fade(theme.palette.common.white, 0.25)
+        backgroundColor: fade(theme.palette.common.white, 0.25),
       },
       marginRight: theme.spacing(2),
       marginLeft: 0,
       width: "100%",
       [theme.breakpoints.up("sm")]: {
         marginLeft: theme.spacing(3),
-        width: "auto"
-      }
+        width: "auto",
+      },
     },
     searchIcon: {
       width: theme.spacing(7),
@@ -91,48 +91,48 @@ const useStyles = makeStyles((theme: Theme) =>
       pointerEvents: "none",
       display: "flex",
       alignItems: "center",
-      justifyContent: "center"
+      justifyContent: "center",
     },
     inputRoot: {
-      color: "inherit"
+      color: "inherit",
     },
     inputInput: {
       padding: theme.spacing(1, 1, 1, 7),
       transition: theme.transitions.create("width"),
       width: "100%",
       [theme.breakpoints.up("md")]: {
-        width: 200
-      }
+        width: 200,
+      },
     },
     displayNone: {
-      display: "none"
+      display: "none",
     },
     drawer: {
       [theme.breakpoints.up("sm")]: {
         width: drawerWidth,
-        flexShrink: 0
-      }
+        flexShrink: 0,
+      },
     },
     drawerPaper: {
-      width: drawerWidth
+      width: drawerWidth,
       // backgroundColor: "#2196f1",
       // color: "#fff"
     },
     avatar: {
       width: "24px",
       height: "24px",
-      borderRadius: "4px"
+      borderRadius: "4px",
     },
     selectedSection: {
-      backgroundColor: "#ccc"
+      backgroundColor: "#ccc",
     },
     left: {
       display: "flex",
       flexDirection: "row",
-      alignItems: "center"
+      alignItems: "center",
     },
     menuButton: {
-      marginRight: theme.spacing(2)
+      marginRight: theme.spacing(2),
       /*
       [theme.breakpoints.up("sm")]: {
         display: "none"
@@ -145,15 +145,15 @@ const useStyles = makeStyles((theme: Theme) =>
       flexDirection: "row",
       flexGrow: 1,
       overflow: "auto",
-      backgroundColor: "#eee"
+      backgroundColor: "#eee",
     },
     notesPanel: {
       maxWidth: "100%",
       height: "100%",
       borderRadius: 0,
       [theme.breakpoints.down("xs")]: {
-        width: "100%"
-      }
+        width: "100%",
+      },
     },
     editorPanel: {
       position: "absolute",
@@ -169,10 +169,10 @@ const useStyles = makeStyles((theme: Theme) =>
         top: "0",
         left: "0",
         width: "100%",
-        height: "100%"
-      }
+        height: "100%",
+      },
     },
-    toolBarSpace: theme.mixins.toolbar
+    toolBarSpace: theme.mixins.toolbar,
   })
 );
 
@@ -222,7 +222,7 @@ export function Home(props: Props) {
         if (notebookID) {
           const filePath = decodeURIComponent(props.queryParams.filePath || "");
           const notebook = crossnoteContainer.notebooks.find(
-            nb => nb._id === notebookID
+            (nb) => nb._id === notebookID
           );
           if (notebook && crossnoteContainer.selectedNotebook !== notebook) {
             crossnoteContainer.setSelectedNotebook(notebook);
@@ -230,7 +230,7 @@ export function Home(props: Props) {
           if (filePath) {
             crossnoteContainer.setPendingNote({
               notebookID: notebookID,
-              filePath
+              filePath,
             });
           } else {
             crossnoteContainer.setPendingNote(null);
@@ -240,7 +240,7 @@ export function Home(props: Props) {
           const branch = decodeURIComponent(props.queryParams.branch || "");
           const filePath = decodeURIComponent(props.queryParams.filePath || "");
           const notebook = crossnoteContainer.notebooks.find(
-            nb => nb.gitURL === repo && nb.gitBranch === branch
+            (nb) => nb.gitURL === repo && nb.gitBranch === branch
           );
           if (notebook) {
             if (crossnoteContainer.selectedNotebook !== notebook) {
@@ -250,7 +250,7 @@ export function Home(props: Props) {
               crossnoteContainer.setPendingNote({
                 repo,
                 branch,
-                filePath
+                filePath,
               });
             } else {
               crossnoteContainer.setPendingNote(null);
@@ -343,7 +343,7 @@ export function Home(props: Props) {
               flexDirection: "row",
               alignItems: "center",
               justifyContent: "center",
-              padding: "0 8px"
+              padding: "0 8px",
             }}
           >
             <Typography variant={"body1"} style={{ fontWeight: "bold" }}>
@@ -357,7 +357,7 @@ export function Home(props: Props) {
             </IconButton>
           </Box>
         </ListItem>
-        {crossnoteContainer.notebooks.map(notebook => {
+        {crossnoteContainer.notebooks.map((notebook) => {
           return (
             <ListItem
               disableGutters={true}
@@ -393,7 +393,7 @@ export function Home(props: Props) {
     <Paper
       className={clsx(classes.editorPanel, "editor-panel")}
       style={{
-        display: crossnoteContainer.displayMobileEditor && "block"
+        display: crossnoteContainer.displayMobileEditor && "block",
       }}
     >
       <Editor note={crossnoteContainer.selectedNote}></Editor>
@@ -411,10 +411,10 @@ export function Home(props: Props) {
             open={drawerOpen}
             onClose={toggleDrawer}
             classes={{
-              paper: classes.drawerPaper
+              paper: classes.drawerPaper,
             }}
             ModalProps={{
-              keepMounted: true // Better open performance on mobile.
+              keepMounted: true, // Better open performance on mobile.
             }}
           >
             {drawer}
@@ -423,7 +423,7 @@ export function Home(props: Props) {
         <Hidden xsDown implementation="css">
           <Drawer
             classes={{
-              paper: classes.drawerPaper
+              paper: classes.drawerPaper,
             }}
             variant="permanent"
             open

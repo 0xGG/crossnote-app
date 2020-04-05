@@ -144,9 +144,9 @@ export const zhTW = {
     "general/Encryption": "加密",
     "general/Fullscreen": "全屏",
     "general/change-file-path": "更改檔路徑",
-    "general/restore-checkout": "恢復 (checkout)",
-    "general/download-pull": "下載 (pull)",
-    "general/upload-push": "上傳 (push)",
+    "general/restore-checkout": "恢復 (git checkout)",
+    "general/download-pull": "下載 (git pull)",
+    "general/upload-push": "上傳 (git pull & git push)",
     "general/disable-the-encryption-on-this-note": "解除這個筆記上的加密",
     "general/encrypt-this-note-with-password": "通過密碼加密這個筆記",
     "general/disable-encryption": "解除加密",
@@ -495,6 +495,6 @@ export const zhTW = {
     "edit-image-dialog/title": "編輯圖片",
     "edit-image-dialog/image-url": "圖片 URL",
     "edit-image-dialog/image-title": "圖片標題",
-    "edit-image-dialog/image-alt-text": "圖片替代文本"
-  }
+    "edit-image-dialog/image-alt-text": "圖片替代文本",
+  },
 };

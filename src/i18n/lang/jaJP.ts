@@ -144,9 +144,9 @@ export const jaJP = {
     "general/Encryption": "暗号化",
     "general/Fullscreen": "フルスクリーン",
     "general/change-file-path": "ファイル パスの変更",
-    "general/restore-checkout": "復元 (checkout)",
-    "general/download-pull": "ダウンロード (pull)",
-    "general/upload-push": "アップロード (push)",
+    "general/restore-checkout": "復元 (git checkout)",
+    "general/download-pull": "ダウンロード (git pull)",
+    "general/upload-push": "アップロード (git pull & git push)",
     "general/disable-the-encryption-on-this-note":
       "このノートの暗号化を無効にする",
     "general/encrypt-this-note-with-password":
@@ -532,6 +532,6 @@ export const jaJP = {
     "edit-image-dialog/title": "画像を編集する",
     "edit-image-dialog/image-url": "画像の URL",
     "edit-image-dialog/image-title": "画像のタイトル",
-    "edit-image-dialog/image-alt-text": "画像代替テキスト"
-  }
+    "edit-image-dialog/image-alt-text": "画像代替テキスト",
+  },
 };

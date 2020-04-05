@@ -144,9 +144,9 @@ export const zhCN = {
     "general/Encryption": "加密",
     "general/Fullscreen": "全屏",
     "general/change-file-path": "更改文件路径",
-    "general/restore-checkout": "恢复 (checkout)",
-    "general/download-pull": "下载 (pull)",
-    "general/upload-push": "上传 (push)",
+    "general/restore-checkout": "恢复 (git checkout)",
+    "general/download-pull": "下载 (git pull)",
+    "general/upload-push": "上传 (git pull & git push)",
     "general/disable-the-encryption-on-this-note": "解除这个笔记上的加密",
     "general/encrypt-this-note-with-password": "通过密码加密这个笔记",
     "general/disable-encryption": "解除加密",
@@ -495,6 +495,6 @@ export const zhCN = {
     "edit-image-dialog/title": "编辑图片",
     "edit-image-dialog/image-url": "图片 URL",
     "edit-image-dialog/image-title": "图片标题",
-    "edit-image-dialog/image-alt-text": "图片替代文本"
-  }
+    "edit-image-dialog/image-alt-text": "图片替代文本",
+  },
 };

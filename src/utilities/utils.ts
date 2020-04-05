@@ -25,7 +25,7 @@ export function getPeerJSEndpoint(): PeerJSOption {
     return {
       host: `crossnote.app`,
       path: "/peer",
-      secure: true
+      secure: true,
       // config: { iceServers: [{ url: "stun:stun.l.google.com:19302" }] }
     };
   } else {
@@ -33,7 +33,7 @@ export function getPeerJSEndpoint(): PeerJSOption {
       host: window.location.hostname,
       port: 9000,
       path: "/peer",
-      secure: false
+      secure: false,
       // config: { iceServers: [{ url: "stun:stun.l.google.com:19302" }] }
     };
   }
@@ -67,9 +67,9 @@ export function startGitHubOAuth() {
 export const graphqlFetchContext = {
   fetchOptions: {
     headers: {
-      Authorization: `Bearer ${localStorage.getItem("token")}`
-    }
-  }
+      Authorization: `Bearer ${localStorage.getItem("token")}`,
+    },
+  },
 };
 export function formatDate(dateString: string) {
   if (!dateString) return "";
@@ -104,7 +104,7 @@ export function formatDate(dateString: string) {
       "Sep",
       "Oct",
       "Nov",
-      "Dec"
+      "Dec",
     ];
     return (
       monthNamesShort[date.getMonth()] +
@@ -145,7 +145,7 @@ export function generateUUID() {
   // Public Domain/MIT
   var d = new Date().getTime(); //Timestamp
   var d2 = (performance && performance.now && performance.now() * 1000) || 0; //Time in microseconds since page-load or 0 if unsupported
-  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function(c) {
+  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function (c) {
     var r = Math.random() * 16; //random number between 0 and 16
     if (d > 0) {
       //Use timestamp until depleted
@@ -163,7 +163,7 @@ export function generateUUID() {
 export class RandomColorGenerator {
   private cache: { [key: string]: string } = {};
   private hashCode(s: string): number {
-    let n = s.split("").reduce(function(a, b) {
+    let n = s.split("").reduce(function (a, b) {
       a = (a << 5) - a + b.charCodeAt(0);
       return a & a;
     }, 0);
@@ -187,7 +187,5 @@ export class RandomColorGenerator {
 export const randomColorGenerator = new RandomColorGenerator();
 
 export function randomID() {
-  return Math.random()
-    .toString(36)
-    .substr(2, 9);
+  return Math.random().toString(36).substr(2, 9);
 }

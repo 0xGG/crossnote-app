@@ -144,9 +144,9 @@ export const enUS = {
     "general/Encryption": "Encryption",
     "general/Fullscreen": "Fullscreen",
     "general/change-file-path": "Change file path",
-    "general/restore-checkout": "Restore (checkout)",
-    "general/download-pull": "Download (pull)",
-    "general/upload-push": "Upload (push)",
+    "general/restore-checkout": "Restore (git checkout)",
+    "general/download-pull": "Download (git pull)",
+    "general/upload-push": "Upload (git pull & git push)",
     "general/disable-the-encryption-on-this-note":
       "Disable the encryption on this note",
     "general/encrypt-this-note-with-password":
@@ -515,6 +515,6 @@ export const enUS = {
     "edit-image-dialog/title": "Edit the image",
     "edit-image-dialog/image-url": "image URL",
     "edit-image-dialog/image-title": "image title",
-    "edit-image-dialog/image-alt-text": "image alt text"
-  }
+    "edit-image-dialog/image-alt-text": "image alt text",
+  },
 };
