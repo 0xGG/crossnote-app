@@ -131,6 +131,10 @@ export default function NotesPanel(props: Props) {
 
   // Search
   const [searchValue, setSearchValue] = useState<string>("");
+  const [searchValueInputTimeout, setSearchValueInputTimeout] = useState<
+    NodeJS.Timeout
+  >(null);
+  const [finalSearchValue, setFinalSearchValue] = useState<string>("");
 
   const [
     notebookConfigurationDialogOpen,
@@ -149,8 +153,24 @@ export default function NotesPanel(props: Props) {
       });
   }, [crossnoteContainer]);
 
+  const onChangeSearchValue = useCallback(
+    (event: React.ChangeEvent<HTMLTextAreaElement | HTMLInputElement>) => {
+      const value = event.target.value;
+      setSearchValue(value);
+      if (searchValueInputTimeout) {
+        clearTimeout(searchValueInputTimeout);
+      }
+      const timeout = setTimeout(() => {
+        setFinalSearchValue(value);
+      }, 400);
+      setSearchValueInputTimeout(timeout);
+    },
+    [searchValueInputTimeout]
+  );
+
   useEffect(() => {
     setSearchValue("");
+    setFinalSearchValue("");
   }, [crossnoteContainer.selectedNotebook]);
 
   return (
@@ -174,7 +194,7 @@ export default function NotesPanel(props: Props) {
               }}
               value={searchValue}
               inputProps={{ "aria-label": "search" }}
-              onChange={event => setSearchValue(event.target.value)}
+              onChange={onChangeSearchValue}
             />
           </div>
           <IconButton
@@ -391,7 +411,7 @@ export default function NotesPanel(props: Props) {
         <CircularProgress className={clsx(classes.loading)}></CircularProgress>
       )}
 
-      <Notes searchValue={searchValue}></Notes>
+      <Notes searchValue={finalSearchValue}></Notes>
     </Box>
   );
 }
