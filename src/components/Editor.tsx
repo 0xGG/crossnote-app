@@ -2,7 +2,11 @@ import React, { useState, useCallback, useEffect } from "react";
 import { createStyles, makeStyles, Theme } from "@material-ui/core/styles";
 import clsx from "clsx";
 import { Note } from "../lib/crossnote";
-import { CrossnoteContainer, EditorMode } from "../containers/crossnote";
+import {
+  CrossnoteContainer,
+  EditorMode,
+  SelectedSectionType,
+} from "../containers/crossnote";
 import { useTranslation } from "react-i18next";
 import * as CryptoJS from "crypto-js";
 import * as path from "path";
@@ -23,6 +27,8 @@ import {
   List,
   ListItem,
   Hidden,
+  Breadcrumbs,
+  Link,
 } from "@material-ui/core";
 import {
   Editor as CodeMirrorEditor,
@@ -1418,21 +1424,39 @@ export default function Editor(props: Props) {
       </Box>
       <Box className={clsx(classes.bottomPanel, "editor-bottom-panel")}>
         <Box className={clsx(classes.row)}>
+          <Breadcrumbs aria-label={"File path"} maxItems={4}>
+            {note.filePath.split("/").map((path, offset, arr) => {
+              return (
+                <Typography
+                  variant={"caption"}
+                  style={{ cursor: "pointer" }}
+                  color={"textSecondary"}
+                  onClick={() => {
+                    if (offset === arr.length - 1) {
+                      setFilePathDialogOpen(true);
+                    } else {
+                      crossnoteContainer.setSelectedSection({
+                        type: SelectedSectionType.Directory,
+                        path: arr.slice(0, offset + 1).join("/"),
+                      });
+                    }
+                  }}
+                >
+                  {path}
+                </Typography>
+              );
+            })}
+          </Breadcrumbs>
           <Typography
             variant={"caption"}
-            style={{ cursor: "pointer" }}
-            onClick={() => {
-              setFilePathDialogOpen(true);
-            }}
+            style={{ marginLeft: "4px", marginTop: "3px" }}
+            color={"textSecondary"}
           >
-            {note.filePath}
-          </Typography>
-          <Typography variant={"caption"} style={{ marginLeft: "4px" }}>
             {"- " + gitStatus}
           </Typography>
         </Box>
         <Box className={clsx(classes.cursorPositionInfo)}>
-          <Typography variant={"caption"}>
+          <Typography variant={"caption"} color={"textSecondary"}>
             {`Ln ${cursorPosition.line + 1}, Col ${cursorPosition.ch}`}
           </Typography>
         </Box>

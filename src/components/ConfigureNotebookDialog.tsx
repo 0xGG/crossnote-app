@@ -13,7 +13,7 @@ import {
   ExpansionPanelDetails,
   ExpansionPanelSummary,
   Input,
-  InputAdornment
+  InputAdornment,
 } from "@material-ui/core";
 import { ChevronDown } from "mdi-material-ui";
 import { CrossnoteContainer } from "../containers/crossnote";
@@ -87,7 +87,7 @@ export default function ConfigureNotebookDialog(props: Props) {
     gitUsername,
     gitPassword,
     gitCorsProxy,
-    autoFetchPeriod
+    autoFetchPeriod,
   ]);
 
   const deleteNotebook = useCallback(async () => {
@@ -121,10 +121,12 @@ export default function ConfigureNotebookDialog(props: Props) {
           label={t("general/notebook-name")}
           value={notebookName}
           fullWidth={true}
-          onChange={event => {
+          onChange={(event) => {
             setNotebookName(event.target.value);
           }}
           style={{ marginBottom: "16px" }}
+          autoComplete={"off"}
+          autoCorrect={"off"}
         ></TextField>
         <ExpansionPanel
           elevation={2}
@@ -144,7 +146,7 @@ export default function ConfigureNotebookDialog(props: Props) {
                 disabled={true}
                 fullWidth={true}
                 value={gitURL}
-                onChange={event => setGitURL(event.target.value)}
+                onChange={(event) => setGitURL(event.target.value)}
               ></TextField>
               <TextField
                 label={t("general/branch")}
@@ -152,7 +154,7 @@ export default function ConfigureNotebookDialog(props: Props) {
                 disabled={true}
                 fullWidth={true}
                 value={gitBranch}
-                onChange={event => setGitBranch(event.target.value)}
+                onChange={(event) => setGitBranch(event.target.value)}
               ></TextField>
               <TextField
                 label={`${t("general/Username")} (${t("general/optional")})`}
@@ -161,7 +163,7 @@ export default function ConfigureNotebookDialog(props: Props) {
                 )})`}
                 fullWidth={true}
                 value={gitUsername}
-                onChange={event => setGitUsername(event.target.value)}
+                onChange={(event) => setGitUsername(event.target.value)}
               ></TextField>
               <TextField
                 label={`${t("general/Password")} (${t("general/optional")})`}
@@ -171,14 +173,14 @@ export default function ConfigureNotebookDialog(props: Props) {
                 type={"password"}
                 fullWidth={true}
                 value={gitPassword}
-                onChange={event => setGitPassword(event.target.value)}
+                onChange={(event) => setGitPassword(event.target.value)}
               ></TextField>
               <TextField
                 label={t("general/cors-proxy")}
                 placeholder={"https://cors.isomorphic-git.org"}
                 fullWidth={true}
                 value={gitCorsProxy}
-                onChange={event => setGitCorsProxy(event.target.value)}
+                onChange={(event) => setGitCorsProxy(event.target.value)}
               ></TextField>
               <Link
                 href={
@@ -195,7 +197,7 @@ export default function ConfigureNotebookDialog(props: Props) {
                   </Typography>
                   <Input
                     value={autoFetchPeriod}
-                    onChange={event => {
+                    onChange={(event) => {
                       try {
                         const value = parseFloat(event.target.value || "0");
                         if (!isNaN(value)) {

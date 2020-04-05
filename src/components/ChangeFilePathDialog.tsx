@@ -5,7 +5,7 @@ import {
   DialogContent,
   TextField,
   DialogActions,
-  Button
+  Button,
 } from "@material-ui/core";
 import { CrossnoteContainer } from "../containers/crossnote";
 import { Note } from "../lib/crossnote";
@@ -71,12 +71,12 @@ export default function ChangeFilePathDialog(props: Props) {
   return (
     <Dialog open={props.open} onClose={props.onClose}>
       <DialogTitle>{t("general/change-file-path")}</DialogTitle>
-      <DialogContent>
+      <DialogContent style={{ width: "400px", maxWidth: "100%" }}>
         <TextField
           value={newFilePath}
           autoFocus={true}
-          onChange={event => setNewFilePath(event.target.value)}
-          onKeyUp={event => {
+          onChange={(event) => setNewFilePath(event.target.value)}
+          onKeyUp={(event) => {
             if (event.which === 13) {
               changeFilePath(newFilePath);
             }
@@ -84,6 +84,7 @@ export default function ChangeFilePathDialog(props: Props) {
           inputRef={(input: HTMLInputElement) => {
             setInputEl(input);
           }}
+          fullWidth={true}
         ></TextField>
       </DialogContent>
       <DialogActions>

@@ -3,14 +3,14 @@ import {
   fade,
   createStyles,
   makeStyles,
-  Theme
+  Theme,
 } from "@material-ui/core/styles";
 import clsx from "clsx";
 import {
   CrossnoteContainer,
   SelectedSectionType,
   OrderBy,
-  OrderDirection
+  OrderDirection,
 } from "../containers/crossnote";
 import {
   Box,
@@ -25,7 +25,7 @@ import {
   ListItem,
   ListItemText,
   ListItemIcon,
-  Divider
+  Divider,
 } from "@material-ui/core";
 import {
   Magnify,
@@ -34,7 +34,7 @@ import {
   Menu as MenuIcon,
   SortVariant,
   SortDescending,
-  SortAscending
+  SortAscending,
 } from "mdi-material-ui";
 import { useTranslation } from "react-i18next";
 import ConfigureNotebookDialog from "./ConfigureNotebookDialog";
@@ -46,25 +46,25 @@ const useStyles = makeStyles((theme: Theme) =>
       position: "relative",
       display: "flex",
       flexDirection: "column",
-      height: "100%"
+      height: "100%",
     },
     topPanel: {
       padding: theme.spacing(1),
-      borderRadius: 0
+      borderRadius: 0,
     },
     row: {
       display: "flex",
-      alignItems: "center"
+      alignItems: "center",
     },
     sectionName: {
-      marginLeft: theme.spacing(1)
+      marginLeft: theme.spacing(1),
     },
     search: {
       position: "relative",
       borderRadius: theme.shape.borderRadius,
       backgroundColor: fade(theme.palette.common.white, 0.15),
       "&:hover": {
-        backgroundColor: fade(theme.palette.common.white, 0.25)
+        backgroundColor: fade(theme.palette.common.white, 0.25),
       },
       marginRight: 0, // theme.spacing(2),
       marginLeft: 0,
@@ -72,7 +72,7 @@ const useStyles = makeStyles((theme: Theme) =>
       [theme.breakpoints.up("sm")]: {
         // marginLeft: theme.spacing(3),
         // width: "auto"
-      }
+      },
     },
     searchIcon: {
       width: theme.spacing(7),
@@ -82,12 +82,12 @@ const useStyles = makeStyles((theme: Theme) =>
       pointerEvents: "none",
       display: "flex",
       alignItems: "center",
-      justifyContent: "center"
+      justifyContent: "center",
     },
     inputRoot: {
       color: "inherit",
       border: "1px solid #bbb",
-      borderRadius: "4px"
+      borderRadius: "4px",
     },
     inputInput: {
       padding: theme.spacing(1, 1, 1, 7),
@@ -95,26 +95,26 @@ const useStyles = makeStyles((theme: Theme) =>
       width: "100%",
       [theme.breakpoints.up("md")]: {
         // width: 200
-      }
+      },
     },
     notesList: {
       position: "relative",
       flex: "1",
       overflowY: "auto",
-      paddingBottom: theme.spacing(12)
+      paddingBottom: theme.spacing(12),
     },
     loading: {
       position: "absolute",
       top: "40%",
       left: "50%",
-      transform: "translateX(-50%)"
+      transform: "translateX(-50%)",
     },
     sortSelected: {
       color: theme.palette.primary.main,
       "& svg": {
-        color: theme.palette.primary.main
-      }
-    }
+        color: theme.palette.primary.main,
+      },
+    },
   })
 );
 
@@ -138,7 +138,7 @@ export default function NotesPanel(props: Props) {
 
   const [
     notebookConfigurationDialogOpen,
-    setNotebookConfigurationDialogOpen
+    setNotebookConfigurationDialogOpen,
   ] = useState<boolean>(false);
 
   const createNewNote = useCallback(() => {
@@ -190,11 +190,13 @@ export default function NotesPanel(props: Props) {
               placeholder={t("search/placeholder")}
               classes={{
                 root: classes.inputRoot,
-                input: classes.inputInput
+                input: classes.inputInput,
               }}
               value={searchValue}
               inputProps={{ "aria-label": "search" }}
               onChange={onChangeSearchValue}
+              autoComplete={"off"}
+              autoCorrect={"off"}
             />
           </div>
           <IconButton
@@ -315,7 +317,7 @@ export default function NotesPanel(props: Props) {
               /*)*/
             }
             <IconButton
-              onClick={event => setSortMenuAnchorEl(event.currentTarget)}
+              onClick={(event) => setSortMenuAnchorEl(event.currentTarget)}
             >
               <SortVariant></SortVariant>
             </IconButton>

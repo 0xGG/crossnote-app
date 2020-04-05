@@ -1,0 +1,6 @@
+build
+public
+*.js
+*.css
+*.yml
+*.json
