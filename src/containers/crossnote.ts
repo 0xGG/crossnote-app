@@ -176,6 +176,7 @@ function useCrossnoteContainer(initialState: InitialState) {
         setNotebookTagNode(crossnote.getNotebookTagNodeFromNotes(newNotes));
         return newNotes;
       });
+      setSelectedNote(null);
       setDisplayMobileEditor(false);
     },
     [crossnote, selectedNotebook],

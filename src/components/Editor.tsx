@@ -749,6 +749,13 @@ export default function Editor(props: Props) {
         }
       } else {
         previewElement.innerHTML = `🔐 ${t("general/encrypted")}`;
+        const clickHandler = () => {
+          setDecryptionDialogOpen(true);
+        };
+        previewElement.addEventListener("click", clickHandler);
+        return () => {
+          previewElement.removeEventListener("click", clickHandler);
+        };
       }
     }
   }, [
@@ -757,6 +764,8 @@ export default function Editor(props: Props) {
     previewElement,
     note,
     isDecrypted,
+    openURL,
+    t,
   ]);
 
   // Command
@@ -1431,6 +1440,7 @@ export default function Editor(props: Props) {
                   variant={"caption"}
                   style={{ cursor: "pointer" }}
                   color={"textSecondary"}
+                  key={`${offset}-${path}`}
                   onClick={() => {
                     if (offset === arr.length - 1) {
                       setFilePathDialogOpen(true);
