@@ -32,14 +32,14 @@ const App: React.FC = () => {
             <Route
               path={`/settings`}
               exact={true}
-              render={props => (
+              render={(props) => (
                 <Home section={HomeSection.Settings} queryParams={{}}></Home>
               )}
             ></Route>
             <Route
               path={`/notifications`}
               exact={true}
-              render={props => (
+              render={(props) => (
                 <Home
                   section={HomeSection.Notifications}
                   queryParams={{}}
@@ -49,7 +49,7 @@ const App: React.FC = () => {
             <Route
               exact={true}
               path={`/github_oauth_callback`}
-              render={props => (
+              render={(props) => (
                 <GitHubOAuthCallback
                   code={
                     qs.parse(props.location.search.replace(/^\?/, ""))[
@@ -61,11 +61,11 @@ const App: React.FC = () => {
             ></Route>
             <Route
               path={`/`}
-              render={props => (
+              render={(props) => (
                 <Home
                   section={HomeSection.Notebooks}
                   queryParams={qs.parse(
-                    props.location.search.replace(/^\?/, "")
+                    props.location.search.replace(/^\?/, ""),
                   )}
                 ></Home>
               )}

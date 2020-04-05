@@ -6,16 +6,16 @@ interface InitialState {}
 
 function useSettingsContainer(initialState: InitialState) {
   const [language, setLanguage] = useState<string>(
-    localStorage.getItem("settings/language") || "en-US"
+    localStorage.getItem("settings/language") || "en-US",
   );
   const [editorCursorColor, setEditorCursorColor] = useState<string>(
-    localStorage.getItem("settings/editorCursorColor") || "rgba(51, 51, 51, 1)"
+    localStorage.getItem("settings/editorCursorColor") || "rgba(51, 51, 51, 1)",
   );
   const [authorName, setAuthorName] = useState<string>(
-    localStorage.getItem("settings/authorName") || "Anonymous"
+    localStorage.getItem("settings/authorName") || "Anonymous",
   );
   const [authorEmail, setAuthorEmail] = useState<string>(
-    localStorage.getItem("settings/authorEmail") || "anonymous@crossnote.app"
+    localStorage.getItem("settings/authorEmail") || "anonymous@crossnote.app",
   );
 
   const { t, i18n } = useTranslation();
@@ -37,7 +37,7 @@ function useSettingsContainer(initialState: InitialState) {
         i18n.changeLanguage("en-US");
       }
     },
-    [i18n]
+    [i18n],
   );
 
   const _setEditorCursorColor = useCallback((editorCursorColor: string) => {
@@ -64,7 +64,7 @@ function useSettingsContainer(initialState: InitialState) {
     authorName,
     setAuthorName: _setAuthorName,
     authorEmail,
-    setAuthorEmail: _setAuthorEmail
+    setAuthorEmail: _setAuthorEmail,
   };
 }
 

@@ -22,10 +22,10 @@ export async function smmsUploadImages(files: File[] = []): Promise<string[]> {
           mode: "cors",
           headers,
           referrer: "",
-          body: data
+          body: data,
         })
-          .then(response => response.json())
-          .then(json => {
+          .then((response) => response.json())
+          .then((json) => {
             if (json["success"]) {
               return resolve(json["data"]["url"]);
             } else if (
@@ -38,10 +38,10 @@ export async function smmsUploadImages(files: File[] = []): Promise<string[]> {
               return reject(json["message"]);
             }
           })
-          .catch(error => {
+          .catch((error) => {
             return reject("Failed to connect to sm.ms host");
           });
-      })
+      }),
     );
   }
   return await Promise.all(promises);

@@ -7,13 +7,15 @@ import { Note } from "../lib/crossnote";
 import {
   getHeaderFromMarkdown,
   generateSummaryFromMarkdown,
-  Summary
+  Summary,
 } from "../utilities/note";
 import { formatDistanceStrict } from "date-fns/esm";
 import { useTranslation } from "react-i18next";
 import { Pin } from "mdi-material-ui";
 import { formatRelative } from "date-fns";
 import { basename } from "path";
+import { SettingsContainer } from "../containers/settings";
+import { languageCodeToDateFNSLocale } from "../i18n/i18n";
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -24,42 +26,42 @@ const useStyles = makeStyles((theme: Theme) =>
       alignItems: "flex-start",
       padding: theme.spacing(2, 0.5, 0),
       textAlign: "left",
-      cursor: "default"
+      cursor: "default",
     },
     selected: {
-      borderLeft: `4px solid ${theme.palette.primary.main}`
+      borderLeft: `4px solid ${theme.palette.primary.main}`,
     },
     unselected: {
-      borderLeft: `4px solid rgba(0, 0, 0, 0)`
+      borderLeft: `4px solid rgba(0, 0, 0, 0)`,
     },
     leftPanel: {
       width: "48px",
-      paddingLeft: theme.spacing(0.5)
+      paddingLeft: theme.spacing(0.5),
     },
     duration: {
-      color: theme.palette.text.secondary
+      color: theme.palette.text.secondary,
     },
     rightPanel: {
       width: "calc(100% - 48px)",
-      borderBottom: "1px solid #ededed"
+      borderBottom: "1px solid #ededed",
     },
     header: {
       marginBottom: theme.spacing(1),
-      wordBreak: "break-all"
+      wordBreak: "break-all",
     },
     summary: {
-      color: theme.palette.text.secondary,
-      marginBottom: theme.spacing(1),
-      paddingRight: theme.spacing(2),
-      display: "-webkit-box",
-      lineHeight: "1.3rem !important",
-      textOverflow: "ellipsis !important",
-      overflow: "hidden !important",
-      maxWidth: "100%",
-      maxHeight: "2.6rem", // lineHeight x -website-line-clamp
+      "color": theme.palette.text.secondary,
+      "marginBottom": theme.spacing(1),
+      "paddingRight": theme.spacing(2),
+      "display": "-webkit-box",
+      "lineHeight": "1.3rem !important",
+      "textOverflow": "ellipsis !important",
+      "overflow": "hidden !important",
+      "maxWidth": "100%",
+      "maxHeight": "2.6rem", // lineHeight x -website-line-clamp
       "-webkit-line-clamp": 2,
       "-webkit-box-orient": "vertical",
-      wordBreak: "break-all"
+      "wordBreak": "break-all",
     },
     filePath: {},
     images: {
@@ -67,12 +69,12 @@ const useStyles = makeStyles((theme: Theme) =>
       width: "100%",
       overflow: "hidden",
       position: "relative",
-      marginBottom: theme.spacing(1)
+      marginBottom: theme.spacing(1),
     },
     imagesWrapper: {
       display: "flex",
       alignItems: "center",
-      flexDirection: "row"
+      flexDirection: "row",
     },
     image: {
       width: "128px",
@@ -82,13 +84,13 @@ const useStyles = makeStyles((theme: Theme) =>
       backgroundSize: "cover",
       backgroundPosition: "center",
       display: "block",
-      borderRadius: "6px"
+      borderRadius: "6px",
     },
     pin: {
       color: theme.palette.secondary.main,
-      marginTop: theme.spacing(1)
-    }
-  })
+      marginTop: theme.spacing(1),
+    },
+  }),
 );
 
 interface Props {
@@ -99,6 +101,7 @@ export default function NoteCard(props: Props) {
   const classes = useStyles(props);
   const note = props.note;
   const crossnoteContainer = CrossnoteContainer.useContainer();
+  const settingsContainer = SettingsContainer.useContainer();
   const [header, setHeader] = useState<string>("");
   const [summary, setSummary] = useState<Summary>(null);
   const [images, setImages] = useState<string[]>([]);
@@ -116,34 +119,34 @@ export default function NoteCard(props: Props) {
   useEffect(() => {
     setHeader(
       (note.config.encryption && note.config.encryption.title) ||
-        getHeaderFromMarkdown(note.markdown)
+        getHeaderFromMarkdown(note.markdown),
     );
     generateSummaryFromMarkdown(
       note.config.encryption
         ? `🔐 ${t("general/encrypted")}`
-        : note.markdown.trim() || t("general/this-note-is-empty")
+        : note.markdown.trim() || t("general/this-note-is-empty"),
     )
-      .then(summary => {
+      .then((summary) => {
         setSummary(summary);
 
         // render images
         const images = summary.images
-          .filter(image => image.startsWith("https://"))
+          .filter((image) => image.startsWith("https://"))
           .slice(0, 3); // TODO: Support local image
         setImages(images);
       })
-      .catch(error => {});
+      .catch((error) => {});
   }, [note.markdown, note.config.encryption, t]);
 
   useEffect(() => {
-    crossnoteContainer.crossnote.getStatus(note).then(status => {
+    crossnoteContainer.crossnote.getStatus(note).then((status) => {
       setGitStatus(status);
     });
   }, [
     note.markdown,
     note.config.modifiedAt,
     note,
-    crossnoteContainer.crossnote
+    crossnoteContainer.crossnote,
   ]);
 
   return (
@@ -153,7 +156,7 @@ export default function NoteCard(props: Props) {
         crossnoteContainer.selectedNote &&
           crossnoteContainer.selectedNote.filePath === note.filePath
           ? classes.selected
-          : classes.unselected
+          : classes.unselected,
       )}
       onClick={() => {
         crossnoteContainer.setSelectedNote(note);
@@ -167,26 +170,20 @@ export default function NoteCard(props: Props) {
               <p>
                 {t("general/created-at") +
                   " " +
-                  formatRelative(
-                    new Date(note.config.createdAt),
-                    new Date() /*{
+                  formatRelative(new Date(note.config.createdAt), new Date(), {
                     locale: languageCodeToDateFNSLocale(
-                      crossnoteContainer.viewer.language
-                    )
-                  }*/
-                  )}
+                      settingsContainer.language,
+                    ),
+                  })}
               </p>
               <p>
                 {t("general/modified-at") +
                   " " +
-                  formatRelative(
-                    new Date(note.config.modifiedAt),
-                    new Date() /*{
-                      locale: languageCodeToDateFNSLocale(
-                        crossnoteContainer.viewer.language
-                      )
-                    }*/
-                  )}
+                  formatRelative(new Date(note.config.modifiedAt), new Date(), {
+                    locale: languageCodeToDateFNSLocale(
+                      settingsContainer.language,
+                    ),
+                  })}
               </p>
             </>
           }
@@ -215,12 +212,12 @@ export default function NoteCard(props: Props) {
         {images.length > 0 && (
           <Box className={clsx(classes.images)}>
             <Box className={clsx(classes.imagesWrapper)}>
-              {images.map(image => (
+              {images.map((image) => (
                 <div
                   key={image}
                   className={clsx(classes.image)}
                   style={{
-                    backgroundImage: `url(${image})`
+                    backgroundImage: `url(${image})`,
                   }}
                 ></div>
               ))}

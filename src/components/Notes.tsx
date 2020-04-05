@@ -20,14 +20,14 @@ const useStyles = makeStyles((theme: Theme) =>
       position: "relative",
       flex: "1",
       overflowY: "auto",
-      paddingBottom: theme.spacing(12)
+      paddingBottom: theme.spacing(12),
     },
     updatePanel: {
       padding: theme.spacing(2),
       textAlign: "center",
-      borderBottom: "1px solid #ededed"
-    }
-  })
+      borderBottom: "1px solid #ededed",
+    },
+  }),
 );
 
 interface Props {
@@ -57,9 +57,9 @@ export default function Notes(props: Props) {
             text: t("error/authentication-failed"),
             layout: "topRight",
             theme: "relax",
-            timeout: 5000
+            timeout: 5000,
           }).show();
-        }
+        },
       })
       .then(() => {
         new Noty({
@@ -67,17 +67,17 @@ export default function Notes(props: Props) {
           text: t("success/notebook-downloaded"),
           layout: "topRight",
           theme: "relax",
-          timeout: 2000
+          timeout: 2000,
         }).show();
       })
-      .catch(error => {
+      .catch((error) => {
         console.log(error);
         new Noty({
           type: "error",
           text: t("error/failed-to-download-notebook"),
           layout: "topRight",
           theme: "relax",
-          timeout: 2000
+          timeout: 2000,
         }).show();
       });
   }, [crossnoteContainer.selectedNotebook, t]);
@@ -85,7 +85,7 @@ export default function Notes(props: Props) {
   useEffect(() => {
     const pinned: Note[] = [];
     const unpinned: Note[] = [];
-    crossnoteContainer.notes.forEach(note => {
+    crossnoteContainer.notes.forEach((note) => {
       if (searchValue.trim().length) {
         const regexp = new RegExp(
           "(" +
@@ -95,7 +95,7 @@ export default function Notes(props: Props) {
               // .map(s => "\\" + s.split("").join("\\"))
               .join("|") +
             ")",
-          "i"
+          "i",
         );
 
         if (note.markdown.match(regexp) || note.filePath.match(regexp)) {
@@ -126,7 +126,7 @@ export default function Notes(props: Props) {
         if (event.which === 40) {
           // Up
           const currentIndex = notes.findIndex(
-            n => n.filePath === selectedNote.filePath
+            (n) => n.filePath === selectedNote.filePath,
           );
           if (currentIndex >= 0 && currentIndex < notes.length - 1) {
             crossnoteContainer.setSelectedNote(notes[currentIndex + 1]);
@@ -134,7 +134,7 @@ export default function Notes(props: Props) {
         } else if (event.which === 38) {
           // Down
           const currentIndex = notes.findIndex(
-            n => n.filePath === selectedNote.filePath
+            (n) => n.filePath === selectedNote.filePath,
           );
           if (currentIndex > 0 && currentIndex < notes.length) {
             crossnoteContainer.setSelectedNote(notes[currentIndex - 1]);
@@ -149,7 +149,7 @@ export default function Notes(props: Props) {
   }, [
     notesListElement,
     crossnoteContainer.notes,
-    crossnoteContainer.selectedNote
+    crossnoteContainer.selectedNote,
   ]);
 
   useEffect(() => {
@@ -203,7 +203,7 @@ export default function Notes(props: Props) {
             </Button>
           </Box>
         )}
-      {(notes || []).map(note => {
+      {(notes || []).map((note) => {
         return (
           <LazyLoad
             key={"lazy-load-note-card-" + note.filePath}
@@ -214,7 +214,7 @@ export default function Notes(props: Props) {
                   height: `${lazyLoadPlaceholderHeight}px`,
                   paddingTop: "16px",
                   paddingBottom: "16px",
-                  boxSizing: "border-box"
+                  boxSizing: "border-box",
                 }}
               >
                 <Skeleton />
@@ -237,7 +237,7 @@ export default function Notes(props: Props) {
           <Typography
             style={{
               textAlign: "center",
-              marginTop: "32px"
+              marginTop: "32px",
             }}
             variant={"body2"}
           >

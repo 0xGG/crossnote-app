@@ -9,7 +9,7 @@ import { jaJP as jaJPLanguage } from "./lang/jaJP";
 i18next.use(initReactI18next).init({
   interpolation: {
     // React already does escaping
-    escapeValue: false
+    escapeValue: false,
   },
   keySeparator: false, // we do not use keys in form messages.welcome
   lng: localStorage.getItem("settings/language") || "en-US", // "en-US" | "zh-CN"
@@ -18,8 +18,8 @@ i18next.use(initReactI18next).init({
     "en-US": enUSLanguage,
     "zh-CN": zhCNLanguage,
     "zh-TW": zhTWLanguage,
-    "ja-JP": jaJPLanguage
-  }
+    "ja-JP": jaJPLanguage,
+  },
 });
 
 export default i18next;

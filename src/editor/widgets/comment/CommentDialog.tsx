@@ -9,13 +9,13 @@ import {
   DialogActions,
   Button,
   useMediaQuery,
-  Tooltip
+  Tooltip,
 } from "@material-ui/core";
 import {
   createStyles,
   makeStyles,
   Theme,
-  useTheme
+  useTheme,
 } from "@material-ui/core/styles";
 import clsx from "clsx";
 import {
@@ -26,12 +26,12 @@ import {
   usePostCommentWidgetMessageMutation,
   useUpdateCommentWidgetMessageMutation,
   useSubscribeToCommentWidgetMutation,
-  useUnsubscribeFromCommentWidgetMutation
+  useUnsubscribeFromCommentWidgetMutation,
 } from "../../../generated/graphql";
 import { useTranslation } from "react-i18next";
 import {
   EmptyPageInfo,
-  getMentionsFromMarkdown
+  getMentionsFromMarkdown,
 } from "../../../utilities/note";
 import { UUIDNil } from "../../../utilities/utils";
 import { BellOutline, Bell, Close } from "mdi-material-ui";
@@ -46,18 +46,18 @@ const useStyles = makeStyles((theme: Theme) =>
       display: "flex",
       flexDirection: "row",
       alignItems: "center",
-      justifyContent: "space-between"
+      justifyContent: "space-between",
     },
     row: {
       display: "flex",
       flexDirection: "row",
-      alignItems: "center"
+      alignItems: "center",
     },
     commentWrapper: {
-      padding: "0"
+      padding: "0",
     },
-    messages: {}
-  })
+    messages: {},
+  }),
 );
 
 interface Props {
@@ -74,44 +74,48 @@ export function CommentDialog(props: Props) {
   const [editor, setEditor] = useState<CodeMirrorEditor>(null);
   const [messages, setMessages] = useState<
     CommentWidgetMessageFieldsFragment[]
-  >(commentWidget.instance.commentWidget.messages.edges.map(edge => edge.node));
+  >(
+    commentWidget.instance.commentWidget.messages.edges.map(
+      (edge) => edge.node,
+    ),
+  );
   const [messagesElement, setMessagesElement] = useState<HTMLDivElement>(null);
   const [
     latestPulledMessagePageInfo,
-    setLatestPulledMessagePageInfo
+    setLatestPulledMessagePageInfo,
   ] = useState<PageInfo>(
-    commentWidget.instance.commentWidget.messages.pageInfo
+    commentWidget.instance.commentWidget.messages.pageInfo,
   );
   const [updateMessageID, setUpdateMessageID] = useState<string>("");
   const [
     resMessagesAfter,
-    executeMessagesAfterQuery
+    executeMessagesAfterQuery,
   ] = useCommentWidgetMessagesQuery({
     variables: {
       widgetID: commentWidget.id,
       before: UUIDNil,
       after: latestPulledMessagePageInfo.endCursor,
       first: 20,
-      last: 0
+      last: 0,
     },
     requestPolicy: "network-only",
-    pause: true
+    pause: true,
   });
   const [
     resPostMessage,
-    executePostMessageMutation
+    executePostMessageMutation,
   ] = usePostCommentWidgetMessageMutation();
   const [
     resUpdateMessage,
-    executeUpdateMessageMutation
+    executeUpdateMessageMutation,
   ] = useUpdateCommentWidgetMessageMutation();
   const [
     resSubscribeToCommentWidget,
-    executeSubscribeToCommentWidgetMutation
+    executeSubscribeToCommentWidgetMutation,
   ] = useSubscribeToCommentWidgetMutation();
   const [
     resUnsubscribeFromCommentWidget,
-    executeUnsubscribeFromCommentWidgetMutation
+    executeUnsubscribeFromCommentWidgetMutation,
   ] = useUnsubscribeFromCommentWidgetMutation();
 
   const mentionUser = useCallback(
@@ -122,14 +126,14 @@ export function CommentDialog(props: Props) {
         editor.focus();
       }
     },
-    [editor]
+    [editor],
   );
 
   const subscribeToChatGroup = useCallback(() => {
     if (commentWidget) {
       commentWidget.instance.commentWidget.subscribed = true;
       executeSubscribeToCommentWidgetMutation({
-        widgetID: commentWidget.id
+        widgetID: commentWidget.id,
       });
     }
   }, [commentWidget, executeSubscribeToCommentWidgetMutation]);
@@ -138,7 +142,7 @@ export function CommentDialog(props: Props) {
     if (commentWidget) {
       commentWidget.instance.commentWidget.subscribed = false;
       executeUnsubscribeFromCommentWidgetMutation({
-        widgetID: commentWidget.id
+        widgetID: commentWidget.id,
       });
     }
   }, [commentWidget, executeUnsubscribeFromCommentWidgetMutation]);
@@ -151,10 +155,10 @@ export function CommentDialog(props: Props) {
       executePostMessageMutation({
         widgetID: commentWidget.id,
         markdown: message,
-        notifyUsers: getMentionsFromMarkdown(message)
+        notifyUsers: getMentionsFromMarkdown(message),
       });
     },
-    [commentWidget, executePostMessageMutation]
+    [commentWidget, executePostMessageMutation],
   );
 
   const updateMessage = useCallback(
@@ -164,28 +168,28 @@ export function CommentDialog(props: Props) {
       }
       executeUpdateMessageMutation({
         messageID: messageID,
-        markdown: message
+        markdown: message,
       });
     },
-    [commentWidget, executeUpdateMessageMutation]
+    [commentWidget, executeUpdateMessageMutation],
   );
 
   const addMessage = useCallback(
     (message: CommentWidgetMessageFieldsFragment) => {
-      setMessages(messages =>
+      setMessages((messages) =>
         [message, ...messages]
           .filter(
             (message, index, self) =>
-              index === self.findIndex(m => m.id === message.id)
+              index === self.findIndex((m) => m.id === message.id),
           )
           .sort((x, y) => {
             const xC = new Date(x.createdAt);
             const yC = new Date(y.createdAt);
             return xC.getTime() - yC.getTime();
-          })
+          }),
       );
     },
-    []
+    [],
   );
 
   const scrollMessagesToBottom = useCallback(() => {
@@ -197,7 +201,7 @@ export function CommentDialog(props: Props) {
   const fetchPreviousMessages = useCallback(() => {
     if (latestPulledMessagePageInfo.hasNextPage) {
       executeMessagesAfterQuery({
-        requestPolicy: "network-only"
+        requestPolicy: "network-only",
       });
     }
   }, [executeMessagesAfterQuery, latestPulledMessagePageInfo]);
@@ -240,7 +244,7 @@ export function CommentDialog(props: Props) {
         text: t("widget/crossnote.comment/post-comment-failure"),
         layout: "topRight",
         theme: "relax",
-        timeout: 2000
+        timeout: 2000,
       }).show();
     } else if (resPostMessage.data) {
       const message = resPostMessage.data.postCommentWidgetMessage;
@@ -270,17 +274,17 @@ export function CommentDialog(props: Props) {
       if (!connection.edges.length) {
         return;
       }
-      setMessages(messages =>
-        [...connection.edges.map(edge => edge.node), ...messages]
+      setMessages((messages) =>
+        [...connection.edges.map((edge) => edge.node), ...messages]
           .filter(
             (message, index, self) =>
-              index === self.findIndex(m => m.id === message.id)
+              index === self.findIndex((m) => m.id === message.id),
           )
           .sort((x, y) => {
             const xC = new Date(x.createdAt);
             const yC = new Date(y.createdAt);
             return xC.getTime() - yC.getTime();
-          })
+          }),
       );
     }
   }, [resMessagesAfter]);
@@ -359,7 +363,7 @@ export function CommentDialog(props: Props) {
                     style={{
                       textAlign: "center",
                       padding: "16px",
-                      marginBottom: "16px"
+                      marginBottom: "16px",
                     }}
                   >
                     <Button
@@ -381,7 +385,7 @@ export function CommentDialog(props: Props) {
       </DialogContent>
       <DialogActions style={{ padding: "0" }}>
         <CommentEditor
-          sendMessage={message => {
+          sendMessage={(message) => {
             sendMessage(message);
           }}
           sendingMessage={resPostMessage.fetching}
@@ -394,7 +398,7 @@ export function CommentDialog(props: Props) {
           updateMessageID={updateMessageID}
           updateMessageMarkdown={
             updateMessageID
-              ? messages.filter(message => message.id === updateMessageID)[0]
+              ? messages.filter((message) => message.id === updateMessageID)[0]
                   .markdown
               : ""
           }

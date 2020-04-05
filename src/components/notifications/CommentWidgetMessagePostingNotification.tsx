@@ -15,9 +15,9 @@ const useStyles = makeStyles((theme: Theme) =>
       flexDirection: "column",
       alignItems: "flex-start",
       flexWrap: "wrap",
-      width: "100%"
-    }
-  })
+      width: "100%",
+    },
+  }),
 );
 
 interface Props {

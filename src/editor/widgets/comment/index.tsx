@@ -5,7 +5,7 @@ import {
   createStyles,
   makeStyles,
   Theme,
-  ThemeProvider
+  ThemeProvider,
 } from "@material-ui/core/styles";
 import clsx from "clsx";
 import {
@@ -13,7 +13,7 @@ import {
   useCommentWidgetQuery,
   CommentWidgetFieldsFragment,
   useAddReactionToCommentWidgetMutation,
-  useRemoveReactionFromCommentWidgetMutation
+  useRemoveReactionFromCommentWidgetMutation,
 } from "../../../generated/graphql";
 import Noty from "noty";
 import { useTranslation } from "react-i18next";
@@ -28,7 +28,7 @@ import {
   Tooltip,
   Badge,
   Dialog,
-  Chip
+  Chip,
 } from "@material-ui/core";
 import { CommentOutline, StickerEmoji } from "mdi-material-ui";
 import { crossnoteTheme } from "../../../utilities/theme";
@@ -43,27 +43,27 @@ const useStyles = makeStyles((theme: Theme) =>
     commentWidget: {
       position: "relative",
       // borderLeft: `4px solid ${theme.palette.primary.light}`,
-      backgroundColor: theme.palette.grey[100]
+      backgroundColor: theme.palette.grey[100],
     },
     topPanel: {
       paddingLeft: theme.spacing(2),
-      paddingRight: theme.spacing(1)
+      paddingRight: theme.spacing(1),
     },
     interactionPanel: {
       display: "flex",
       flexDirection: "row",
-      alignItems: "center"
+      alignItems: "center",
     },
     button: {
-      color: "rgba(0, 0, 0, 0.54)"
+      color: "rgba(0, 0, 0, 0.54)",
     },
     reactionChip: {
-      marginBottom: "2px",
+      "marginBottom": "2px",
       "&:hover": {
-        cursor: "pointer"
-      }
-    }
-  })
+        cursor: "pointer",
+      },
+    },
+  }),
 );
 
 function CommentWidget(props: WidgetArgs) {
@@ -76,22 +76,22 @@ function CommentWidget(props: WidgetArgs) {
   const [forceUpdate, setForceUpdate] = useState<number>(Date.now());
   const [
     resCreateCommentWidget,
-    executeCreateCommentWidgetMutation
+    executeCreateCommentWidgetMutation,
   ] = useCreateCommentWidgetMutation();
   const [resCommentWidget, executeCommentWidgetQuery] = useCommentWidgetQuery({
     requestPolicy: "network-only",
     pause: true,
     variables: {
-      widgetID
-    }
+      widgetID,
+    },
   });
   const [
     resAddReactionToCommentWidget,
-    executeAddReactionToCommentWidgetMutation
+    executeAddReactionToCommentWidgetMutation,
   ] = useAddReactionToCommentWidgetMutation();
   const [
     resRemoveReactionFromCommentWidget,
-    executeRemoveReactionFromCommentWidgetMutation
+    executeRemoveReactionFromCommentWidgetMutation,
   ] = useRemoveReactionFromCommentWidgetMutation();
   const [commentWidget, setCommentWidget] = useState<
     CommentWidgetFieldsFragment
@@ -125,15 +125,15 @@ function CommentWidget(props: WidgetArgs) {
           {
             reaction: reaction,
             count: 1,
-            selfAuthored: true
+            selfAuthored: true,
           },
-          ...commentWidget.instance.commentWidget.reactionSummaries
+          ...commentWidget.instance.commentWidget.reactionSummaries,
         ];
         commentWidget.instance.commentWidget.reactionsCount += 1;
       }
       setForceUpdate(Date.now());
     },
-    [commentWidget]
+    [commentWidget],
   );
 
   // Create comment widget
@@ -148,7 +148,7 @@ function CommentWidget(props: WidgetArgs) {
         text: t("error/failed-to-create-widget"),
         layout: "topRight",
         theme: "relax",
-        timeout: 5000
+        timeout: 5000,
       }).show();
 
       if (!globalContainers.cloudContainer.loggedIn) {
@@ -157,7 +157,7 @@ function CommentWidget(props: WidgetArgs) {
           text: t("general/please-sign-in-first"),
           layout: "topRight",
           theme: "relax",
-          timeout: 5000
+          timeout: 5000,
         }).show();
         globalContainers.cloudContainer.setAuthDialogOpen(true);
       }
@@ -204,7 +204,7 @@ function CommentWidget(props: WidgetArgs) {
       const description = `💬  **${title}**`;
       executeCreateCommentWidgetMutation({
         description,
-        source
+        source,
       });
     }
   }, [
@@ -212,14 +212,14 @@ function CommentWidget(props: WidgetArgs) {
     resCreateCommentWidget,
     editor,
     t,
-    executeCreateCommentWidgetMutation
+    executeCreateCommentWidgetMutation,
   ]);
 
   // Query created widget
   useEffect(() => {
     if (widgetID && executeCommentWidgetQuery) {
       executeCommentWidgetQuery({
-        requestPolicy: "network-only"
+        requestPolicy: "network-only",
       });
     }
   }, [widgetID, executeCommentWidgetQuery]);
@@ -290,7 +290,7 @@ function CommentWidget(props: WidgetArgs) {
               }
               return x.count * weightX - y.count * weightY;
             })
-            .map(reactionSummary => {
+            .map((reactionSummary) => {
               return (
                 <Chip
                   variant={
@@ -308,22 +308,22 @@ function CommentWidget(props: WidgetArgs) {
                     } else if (reactionSummary.selfAuthored) {
                       executeRemoveReactionFromCommentWidgetMutation({
                         widgetID: commentWidget.id,
-                        reaction: reactionSummary.reaction
+                        reaction: reactionSummary.reaction,
                       });
                       reactionSummary.selfAuthored = false;
                       reactionSummary.count -= 1;
                       commentWidget.instance.commentWidget.reactionsCount -= 1;
                       if (reactionSummary.count <= 0) {
                         commentWidget.instance.commentWidget.reactionSummaries = commentWidget.instance.commentWidget.reactionSummaries.filter(
-                          summary =>
-                            summary.reaction !== reactionSummary.reaction
+                          (summary) =>
+                            summary.reaction !== reactionSummary.reaction,
                         );
                         setForceUpdate(Date.now());
                       }
                     } else {
                       executeAddReactionToCommentWidgetMutation({
                         widgetID: commentWidget.id,
-                        reaction: reactionSummary.reaction
+                        reaction: reactionSummary.reaction,
                       });
                       updateReactionSummaries(reactionSummary.reaction);
                     }
@@ -343,7 +343,7 @@ function CommentWidget(props: WidgetArgs) {
         <EmojiPicker
           emoji={""}
           showSkinTones={false}
-          onSelect={data => {
+          onSelect={(data) => {
             if (!globalContainers.cloudContainer.loggedIn) {
               setEmojiPickerOpen(false);
               globalContainers.cloudContainer.setAuthDialogOpen(true);
@@ -351,7 +351,7 @@ function CommentWidget(props: WidgetArgs) {
               setEmojiPickerOpen(false);
               executeAddReactionToCommentWidgetMutation({
                 widgetID: commentWidget.id,
-                reaction: data.colons
+                reaction: data.colons,
               });
               updateReactionSummaries(data.colons);
             }
@@ -367,7 +367,7 @@ function CommentWidget(props: WidgetArgs) {
   );
 }
 
-export const CommentWidgetCreator: WidgetCreator = args => {
+export const CommentWidgetCreator: WidgetCreator = (args) => {
   const el = document.createElement("span");
   ReactDOM.render(
     <Provider value={GraphQLClient}>
@@ -375,7 +375,7 @@ export const CommentWidgetCreator: WidgetCreator = args => {
         <CommentWidget {...args}></CommentWidget>
       </ThemeProvider>
     </Provider>,
-    el
+    el,
   );
   return el;
 };

@@ -153,8 +153,8 @@ export default class Crossnote {
     this.notebookDB = new PouchDB("notebooks");
     this.notebookDB.createIndex({
       index: {
-        fields: ["gitURL"]
-      }
+        fields: ["gitURL"],
+      },
     });
   }
 
@@ -170,7 +170,7 @@ export default class Crossnote {
             } else {
               return resolve(data.toString());
             }
-          }
+          },
         );
       });
     };
@@ -298,7 +298,7 @@ export default class Crossnote {
     username = "",
     password = "",
     depth = 3,
-    rememberCredentials = false
+    rememberCredentials = false,
   }: CloneNotebookArgs) {
     if (gitURL) {
       return await this.cloneNotebook({
@@ -309,7 +309,7 @@ export default class Crossnote {
         username,
         password,
         depth,
-        rememberCredentials
+        rememberCredentials,
       });
     } else {
       const _id = randomID();
@@ -326,7 +326,7 @@ export default class Crossnote {
         autoFetchPeriod: 0,
         fetchedAt: new Date(),
         remoteSha: "",
-        localSha: ""
+        localSha: "",
       };
       if (!(await this.exists("/notebooks"))) {
         await this.mkdir("/notebooks");
@@ -336,7 +336,7 @@ export default class Crossnote {
       }
       await git.init({
         fs: this.fs,
-        dir
+        dir,
       });
 
       // Save to DB
@@ -359,7 +359,7 @@ export default class Crossnote {
     username = "",
     password = "",
     depth = 10,
-    rememberCredentials = false
+    rememberCredentials = false,
   }: CloneNotebookArgs): Promise<Notebook> {
     if (!gitURL.match(/^https?:\/\//)) {
       throw new Error("error/invalid-git-url-prefix");
@@ -400,14 +400,14 @@ export default class Crossnote {
       onAuth: (url, auth) => {
         return {
           username,
-          password
+          password,
         };
-      }
+      },
     });
 
     const sha = await this.getGitSHA(
       dir,
-      `origin/${branch.trim() || "master"}`
+      `origin/${branch.trim() || "master"}`,
     );
 
     const notebook: Notebook = {
@@ -422,7 +422,7 @@ export default class Crossnote {
       autoFetchPeriod: 3600000, // 60 minutes
       fetchedAt: new Date(),
       localSha: sha,
-      remoteSha: sha
+      remoteSha: sha,
     };
 
     // Save to DB
@@ -485,7 +485,7 @@ export default class Crossnote {
   public async changeNoteFilePath(
     notebook: Notebook,
     note: Note,
-    newFilePath: string
+    newFilePath: string,
   ) {
     newFilePath = newFilePath.replace(/^\/+/, "");
     if (!newFilePath.endsWith(".md")) {
@@ -504,17 +504,17 @@ export default class Crossnote {
 
     await this.rename(
       path.resolve(notebook.dir, oldFilePath),
-      path.resolve(notebook.dir, newFilePath)
+      path.resolve(notebook.dir, newFilePath),
     );
     await git.remove({
       fs: this.fs,
       dir: notebook.dir,
-      filepath: oldFilePath
+      filepath: oldFilePath,
     });
     await git.add({
       fs: this.fs,
       dir: notebook.dir,
-      filepath: newFilePath
+      filepath: newFilePath,
     });
   }
 
@@ -528,19 +528,19 @@ export default class Crossnote {
         const status = await git.status({
           fs: this.fs,
           dir: notebook.dir,
-          filepath: stagedFiles[i]
+          filepath: stagedFiles[i],
         });
         if (status.match(/^\*?(modified|added)/)) {
           cache[stagedFiles[i]] = {
             status,
             markdown: await this.readFile(
-              path.resolve(notebook.dir, stagedFiles[i])
-            )
+              path.resolve(notebook.dir, stagedFiles[i]),
+            ),
           };
         } else if (status.match(/^\*?(deleted)/)) {
           cache[stagedFiles[i]] = {
             status,
-            markdown: ""
+            markdown: "",
           };
         }
       }
@@ -551,16 +551,16 @@ export default class Crossnote {
       await git.listFiles({
         fs: this.fs,
         dir: notebook.dir,
-        ref: "HEAD"
-      })
+        ref: "HEAD",
+      }),
     );
 
     await createCache(
       // Check current staged file for `add` status
       await git.listFiles({
         fs: this.fs,
-        dir: notebook.dir
-      })
+        dir: notebook.dir,
+      }),
     );
 
     return cache;
@@ -576,7 +576,7 @@ export default class Crossnote {
     onProgress,
     onMessage,
     onAuthFailure,
-    onAuthSuccess
+    onAuthSuccess,
   }: PushNotebookArgs): Promise<null | git.PushResult> {
     // Pull notebook first
     const pullNotebookResult = await this.pullNotebook({
@@ -584,7 +584,7 @@ export default class Crossnote {
       onProgress,
       onAuthFailure,
       onAuthSuccess,
-      onMessage
+      onMessage,
     });
 
     if (pullNotebookResult.numConflicts > 0) {
@@ -598,9 +598,9 @@ export default class Crossnote {
       dir: notebook.dir,
       author: {
         name: authorName,
-        email: authorEmail
+        email: authorEmail,
       },
-      message
+      message,
     });
 
     const restoreSHA = async () => {
@@ -608,7 +608,7 @@ export default class Crossnote {
       // Perform a soft reset
       await this.writeFile(
         path.resolve(notebook.dir, `.git/refs/heads/${gitBranch}`),
-        localSha
+        localSha,
       );
     };
 
@@ -619,15 +619,15 @@ export default class Crossnote {
       onAuth: (url, auth) => {
         return {
           username: username, // || notebook.gitUsername,
-          password: password // || notebook.gitPassword
+          password: password, // || notebook.gitPassword
         };
       },
-      onProgress: progress => {
+      onProgress: (progress) => {
         if (onProgress) {
           onProgress(progress);
         }
       },
-      onMessage: message => {
+      onMessage: (message) => {
         if (onMessage) {
           onMessage(message);
         }
@@ -646,7 +646,7 @@ export default class Crossnote {
       url: notebook.gitURL,
       dir: notebook.dir,
       ref: notebook.gitBranch,
-      corsProxy: notebook.gitCorsProxy
+      corsProxy: notebook.gitCorsProxy,
     });
 
     // console.log("pushResult: ", pushResult);
@@ -671,7 +671,7 @@ export default class Crossnote {
         fs: this.fs,
         dir: dir,
         ref: ref,
-        depth: 5
+        depth: 5,
       });
       if (logs.length > 0) {
         return (logs && logs[0]).oid;
@@ -686,19 +686,19 @@ export default class Crossnote {
   public async hardResetNotebook(notebook: Notebook, sha: string) {
     await this.writeFile(
       path.resolve(notebook.dir, `.git/refs/heads/${notebook.gitBranch}`),
-      sha
+      sha,
     );
     await this.unlink(path.resolve(notebook.dir, `.git/index`));
     await git.checkout({
       dir: notebook.dir,
       fs: this.fs,
-      ref: notebook.gitBranch || "master"
+      ref: notebook.gitBranch || "master",
     });
   }
 
   private async restoreFilesFromCache(
     cache: Cache,
-    notebook: Notebook
+    notebook: Notebook,
   ): Promise<number> {
     let numConflicts = 0;
     // console.log("same");
@@ -714,7 +714,7 @@ export default class Crossnote {
       await git.add({
         fs: this.fs,
         dir: notebook.dir,
-        filepath: filePath
+        filepath: filePath,
       });
       if (this.markdownHasConflicts(markdown)) {
         numConflicts += 1;
@@ -728,7 +728,7 @@ export default class Crossnote {
     onProgress,
     onAuthFailure,
     onAuthSuccess,
-    onMessage
+    onMessage,
   }: PullNotebookArgs): Promise<PullNotebookResult> {
     // Stop using git.pull as merge will cause error
     const result = await git.fetch({
@@ -741,13 +741,13 @@ export default class Crossnote {
       onAuth: (url, auth) => {
         return {
           username: notebook.gitUsername,
-          password: notebook.gitPassword
+          password: notebook.gitPassword,
         };
       },
       onProgress,
       onAuthFailure,
       onAuthSuccess,
-      onMessage
+      onMessage,
     });
 
     // NOTE: Seems like diff3 not working as I expected. Therefore I might create my own type of diff
@@ -764,8 +764,8 @@ export default class Crossnote {
       `pending/pull/${notebook._id}`,
       JSON.stringify({
         cache,
-        localSha
-      })
+        localSha,
+      }),
     );
 
     // Perform a hard reset
@@ -794,10 +794,10 @@ export default class Crossnote {
               fs: this.fs,
               dir: notebook.dir,
               oid: localSha,
-              filepath: filePath
+              filepath: filePath,
             });
             baseContent = Buffer.from(baseContentBlobResult.blob).toString(
-              "utf8"
+              "utf8",
             );
           } catch (error) {}
           try {
@@ -805,10 +805,10 @@ export default class Crossnote {
               fs: this.fs,
               dir: notebook.dir,
               oid: remoteSha,
-              filepath: filePath
+              filepath: filePath,
             });
             theirContent = Buffer.from(theirContentBlobTresult.blob).toString(
-              "utf8"
+              "utf8",
             );
           } catch (error) {}
           // console.log("ourContent: ", ourContent);
@@ -854,12 +854,12 @@ export default class Crossnote {
           await this.mkdirp(dirname);
           await this.writeFile(
             path.resolve(notebook.dir, filePath),
-            mergedText
+            mergedText,
           );
           await git.add({
             fs: this.fs,
             dir: notebook.dir,
-            filepath: filePath
+            filepath: filePath,
           });
         } else {
           const markdown = cache[filePath].markdown;
@@ -869,7 +869,7 @@ export default class Crossnote {
           await git.add({
             fs: this.fs,
             dir: notebook.dir,
-            filepath: filePath
+            filepath: filePath,
           });
         }
       }
@@ -885,7 +885,7 @@ export default class Crossnote {
 
     return {
       numConflicts,
-      cache
+      cache,
     };
   }
 
@@ -894,7 +894,7 @@ export default class Crossnote {
     onProgress,
     onAuthFailure,
     onAuthSuccess,
-    onMessage
+    onMessage,
   }: FetchNotebookArgs): Promise<boolean> {
     const localSha = notebook.localSha;
     const result = await git.fetch({
@@ -910,13 +910,13 @@ export default class Crossnote {
       onAuth: (url, auth) => {
         return {
           username: notebook.gitUsername,
-          password: notebook.gitPassword
+          password: notebook.gitPassword,
         };
       },
       onProgress,
       onAuthFailure,
       onAuthSuccess,
-      onMessage
+      onMessage,
     });
 
     // Update notebook
@@ -943,14 +943,14 @@ export default class Crossnote {
         // ref: "HEAD"
         // ref: note.notebook.gitBranch,
         filepaths: [note.filePath],
-        force: true
+        force: true,
       });
       if (await this.exists(path.resolve(note.notebook.dir, note.filePath))) {
         await git.add({
           // .remove is wrong
           fs: this.fs,
           dir: note.notebook.dir,
-          filepath: note.filePath
+          filepath: note.filePath,
         });
       }
       const newNote = await this.getNote(note.notebook, note.filePath);
@@ -964,8 +964,8 @@ export default class Crossnote {
     const notebooks = (
       await this.notebookDB.find({
         selector: {
-          gitURL: { $gt: null }
-        }
+          gitURL: { $gt: null },
+        },
       })
     ).docs;
     // console.log(notebooks);
@@ -984,7 +984,7 @@ export default class Crossnote {
       if (typeof notebook.localSha === "undefined") {
         notebook.localSha = await this.getGitSHA(
           notebook.dir,
-          `origin/${notebook.gitBranch}`
+          `origin/${notebook.gitBranch}`,
         );
       }
       if (typeof notebook.remoteSha === "undefined") {
@@ -996,18 +996,18 @@ export default class Crossnote {
         // Perform a soft reset
         await this.writeFile(
           path.resolve(notebook.dir, `.git/refs/heads/${gitBranch}`),
-          sha
+          sha,
         );
 
         // Restore cached files from failed `git` pull event
         const pendingPull = localStorage.getItem(
-          `pending/pull/${notebook._id}`
+          `pending/pull/${notebook._id}`,
         );
         if (pendingPull) {
           try {
             await this.restoreFilesFromCache(
               JSON.parse(pendingPull).cache,
-              notebook
+              notebook,
             );
           } catch (error) {}
           localStorage.removeItem(`pending/pull/${notebook._id}`);
@@ -1018,14 +1018,14 @@ export default class Crossnote {
         await git.add({
           fs: this.fs,
           dir: notebook.dir,
-          filepath: "."
+          filepath: ".",
         });
       } catch (error) {
         notebooks[i] = null;
       }
     }
     return notebooks
-      .filter(nb => nb)
+      .filter((nb) => nb)
       .sort((x, y) => x.name.localeCompare(y.name));
   }
 
@@ -1047,7 +1047,7 @@ export default class Crossnote {
     }
     return {
       data: frontMatter,
-      content: markdown
+      content: markdown,
     };
   }
 
@@ -1067,7 +1067,7 @@ ${markdown}`;
   public async getNote(
     notebook: Notebook,
     filePath: string,
-    stats?: Stats
+    stats?: Stats,
   ): Promise<Note> {
     const absFilePath = path.resolve(notebook.dir, filePath);
     if (!stats) {
@@ -1086,7 +1086,7 @@ ${markdown}`;
         // id: "",
         createdAt: new Date(stats.ctimeMs),
         modifiedAt: new Date(stats.mtimeMs),
-        tags: []
+        tags: [],
       };
 
       try {
@@ -1108,7 +1108,7 @@ ${markdown}`;
         notebook: notebook,
         filePath: path.relative(notebook.dir, absFilePath),
         markdown,
-        config: noteConfig
+        config: noteConfig,
       };
       return note;
     } else {
@@ -1119,7 +1119,7 @@ ${markdown}`;
   public async listNotes({
     notebook,
     dir = "./",
-    includeSubdirectories = false
+    includeSubdirectories = false,
   }: ListNotesArgs): Promise<Note[]> {
     let notes: Note[] = [];
     let files: string[] = [];
@@ -1135,7 +1135,7 @@ ${markdown}`;
       const note = await this.getNote(
         notebook,
         path.relative(notebook.dir, absFilePath),
-        stats
+        stats,
       );
       if (note) {
         notes.push(note);
@@ -1146,8 +1146,8 @@ ${markdown}`;
           await this.listNotes({
             notebook,
             dir: path.relative(notebook.dir, absFilePath),
-            includeSubdirectories
-          })
+            includeSubdirectories,
+          }),
         );
       }
     }
@@ -1160,7 +1160,7 @@ ${markdown}`;
     filePath: string,
     markdown: string,
     noteConfig: NoteConfig,
-    password?: string
+    password?: string,
   ): Promise<NoteConfig> {
     noteConfig.modifiedAt = new Date();
 
@@ -1176,7 +1176,7 @@ ${markdown}`;
         noteConfig.encryption.title = getHeaderFromMarkdown(markdown);
         markdown = AES.encrypt(
           JSON.stringify({ markdown }),
-          password || ""
+          password || "",
         ).toString();
       }
       markdown = this.matterStringify(markdown, frontMatter);
@@ -1186,7 +1186,7 @@ ${markdown}`;
         noteConfig.encryption.title = getHeaderFromMarkdown(markdown);
         markdown = AES.encrypt(
           JSON.stringify({ markdown }),
-          password || ""
+          password || "",
         ).toString();
       }
       markdown = this.matterStringify(markdown, { note: noteConfig });
@@ -1196,7 +1196,7 @@ ${markdown}`;
     await git.add({
       fs: this.fs,
       dir: notebook.dir,
-      filepath: filePath
+      filepath: filePath,
     });
     return noteConfig;
   }
@@ -1206,19 +1206,30 @@ ${markdown}`;
       await git.remove({
         fs: this.fs,
         dir: notebook.dir,
-        filepath: filePath
+        filepath: filePath,
       });
     }
   }
 
+  public async duplicateNote(notebook: Notebook, filePath: string) {
+    const oldNote = await this.getNote(notebook, filePath);
+    if (!oldNote) return;
+    const noteConfig = oldNote.config;
+    noteConfig.createdAt = new Date();
+    noteConfig.modifiedAt = new Date();
+    const newFilePath = filePath.replace(/\.md$/, ".copy.md");
+    await this.writeNote(notebook, newFilePath, oldNote.markdown, noteConfig);
+    return await this.getNote(notebook, newFilePath);
+  }
+
   // public async moveNote(fromFilePath: string, toFilePath: string) {}
   public async getNotebookDirectoriesFromNotes(
-    notes: Note[]
+    notes: Note[],
   ): Promise<Directory> {
     const rootDirectory: Directory = {
       name: ".",
       path: ".",
-      children: []
+      children: [],
     };
 
     const filePaths = new Set<string>([]);
@@ -1226,7 +1237,7 @@ ${markdown}`;
       filePaths.add(path.dirname(notes[i].filePath));
     }
 
-    filePaths.forEach(value => {
+    filePaths.forEach((value) => {
       const dirNames = value.split("/");
       let directory = rootDirectory;
       for (let i = 0; i < dirNames.length; i++) {
@@ -1234,7 +1245,7 @@ ${markdown}`;
           break;
         } else {
           let subDirectory = directory.children.filter(
-            directory => directory.name === dirNames[i]
+            (directory) => directory.name === dirNames[i],
           )[0];
           if (subDirectory) {
             directory = subDirectory;
@@ -1246,7 +1257,7 @@ ${markdown}`;
             subDirectory = {
               name: dirNames[i],
               path: paths.join("/"),
-              children: []
+              children: [],
             };
             directory.children.push(subDirectory);
             directory = subDirectory;
@@ -1262,24 +1273,24 @@ ${markdown}`;
     const rootTagNode: TagNode = {
       name: ".",
       path: ".",
-      children: []
+      children: [],
     };
 
     for (let i = 0; i < notes.length; i++) {
       const note = notes[i];
       const tags = note.config.tags || [];
-      tags.forEach(tag => {
+      tags.forEach((tag) => {
         let node = rootTagNode;
         tag.split("/").forEach((t, index) => {
           t = t.toLocaleLowerCase().replace(/\s+/g, " ");
-          const offset = node.children.findIndex(c => c.name === t);
+          const offset = node.children.findIndex((c) => c.name === t);
           if (offset >= 0) {
             node = node.children[offset];
           } else {
             const newNode: TagNode = {
               name: t,
               path: node.name === "." ? t : node.path + "/" + t,
-              children: []
+              children: [],
             };
             node.children.push(newNode);
             node.children.sort((x, y) => x.name.localeCompare(y.name));
@@ -1308,7 +1319,7 @@ ${markdown}`;
     return await git.status({
       fs: this.fs,
       dir: note.notebook.dir,
-      filepath: note.filePath
+      filepath: note.filePath,
     });
   }
 }

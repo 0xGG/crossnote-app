@@ -28,7 +28,7 @@ const fs = new LightningFS("fs");
 
 try {
   const crossnote = new Crossnote({
-    fs: fs
+    fs: fs,
   });
   (window as any)["crossnote"] = crossnote;
 
@@ -36,7 +36,7 @@ try {
     <Provider value={GraphQLClient}>
       <CrossnoteContainer.Provider
         initialState={{
-          crossnote: crossnote
+          crossnote: crossnote,
         }}
       >
         <SettingsContainer.Provider initialState={{}}>
@@ -48,7 +48,7 @@ try {
         </SettingsContainer.Provider>
       </CrossnoteContainer.Provider>
     </Provider>,
-    document.getElementById("root")
+    document.getElementById("root"),
   );
 } catch (error) {
   console.log(error);

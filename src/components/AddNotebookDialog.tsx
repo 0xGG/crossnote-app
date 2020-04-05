@@ -13,7 +13,7 @@ import {
   Checkbox,
   ExpansionPanel,
   ExpansionPanelDetails,
-  ExpansionPanelSummary
+  ExpansionPanelSummary,
 } from "@material-ui/core";
 import { ChevronDown } from "mdi-material-ui";
 import { CrossnoteContainer } from "../containers/crossnote";
@@ -38,7 +38,7 @@ export default function AddNotebookDialog(props: Props) {
   const [gitUsername, setGitUsername] = useState<string>("");
   const [gitPassword, setGitPassword] = useState<string>("");
   const [gitCorsProxy, setGitCorsProxy] = useState<string>(
-    "https://cors.isomorphic-git.org"
+    "https://cors.isomorphic-git.org",
   );
   const [rememberCredentialsChecked, setRememberCredentialsChecked] = useState<
     boolean
@@ -53,7 +53,7 @@ export default function AddNotebookDialog(props: Props) {
           text: t("info/downloading-notebook"),
           layout: "topRight",
           theme: "relax",
-          timeout: 2000
+          timeout: 2000,
         }).show();
       }
       props.onClose();
@@ -64,7 +64,7 @@ export default function AddNotebookDialog(props: Props) {
         gitUsername,
         gitPassword,
         rememberCredentialsChecked,
-        gitCorsProxy
+        gitCorsProxy,
       );
     } catch (error) {
       new Noty({
@@ -72,7 +72,7 @@ export default function AddNotebookDialog(props: Props) {
         text: error.message,
         layout: "topRight",
         theme: "relax",
-        timeout: 2000
+        timeout: 2000,
       }).show();
       props.onClose();
     }
@@ -84,7 +84,7 @@ export default function AddNotebookDialog(props: Props) {
     gitUsername,
     gitPassword,
     rememberCredentialsChecked,
-    gitCorsProxy
+    gitCorsProxy,
   ]);
 
   useEffect(() => {
@@ -115,10 +115,12 @@ export default function AddNotebookDialog(props: Props) {
           label={t("general/notebook-name")}
           value={notebookName}
           fullWidth={true}
-          onChange={event => {
+          onChange={(event) => {
             setNotebookName(event.target.value);
           }}
           style={{ marginBottom: "16px" }}
+          autoComplete={"off"}
+          autoCorrect={"off"}
         ></TextField>
         <ExpansionPanel
           elevation={2}
@@ -127,7 +129,7 @@ export default function AddNotebookDialog(props: Props) {
         >
           <ExpansionPanelSummary expandIcon={<ChevronDown></ChevronDown>}>
             <Typography>{`${t("general/git-repository")} (${t(
-              "general/optional"
+              "general/optional",
             )})`}</Typography>
           </ExpansionPanelSummary>
           <ExpansionPanelDetails>
@@ -137,33 +139,33 @@ export default function AddNotebookDialog(props: Props) {
                 placeholder={"https://github.com/0xGG/crossnote.git"}
                 fullWidth={true}
                 value={gitURL}
-                onChange={event => setGitURL(event.target.value)}
+                onChange={(event) => setGitURL(event.target.value)}
               ></TextField>
               <TextField
                 label={t("general/branch")}
                 placeholder={"master"}
                 fullWidth={true}
                 value={gitBranch}
-                onChange={event => setGitBranch(event.target.value)}
+                onChange={(event) => setGitBranch(event.target.value)}
               ></TextField>
               <TextField
                 label={`${t("general/Username")} (${t("general/optional")})`}
                 placeholder={`${t("general/Username")} (${t(
-                  "general/optional"
+                  "general/optional",
                 )})`}
                 fullWidth={true}
                 value={gitUsername}
-                onChange={event => setGitUsername(event.target.value)}
+                onChange={(event) => setGitUsername(event.target.value)}
               ></TextField>
               <TextField
                 label={`${t("general/Password")} (${t("general/optional")})`}
                 placeholder={`${t("general/Password")} (${t(
-                  "general/optional"
+                  "general/optional",
                 )})`}
                 type={"password"}
                 fullWidth={true}
                 value={gitPassword}
-                onChange={event => setGitPassword(event.target.value)}
+                onChange={(event) => setGitPassword(event.target.value)}
               ></TextField>
               <FormControlLabel
                 control={
@@ -190,7 +192,7 @@ export default function AddNotebookDialog(props: Props) {
                 placeholder={"https://cors.isomorphic-git.org"}
                 fullWidth={true}
                 value={gitCorsProxy}
-                onChange={event => setGitCorsProxy(event.target.value)}
+                onChange={(event) => setGitCorsProxy(event.target.value)}
               ></TextField>
               <Link
                 href={

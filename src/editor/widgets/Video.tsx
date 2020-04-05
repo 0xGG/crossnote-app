@@ -9,7 +9,7 @@ import {
   Input,
   Tooltip,
   Switch,
-  FormControlLabel
+  FormControlLabel,
 } from "@material-ui/core";
 import { createStyles, makeStyles, Theme } from "@material-ui/core/styles";
 import clsx from "clsx";
@@ -20,31 +20,31 @@ const useStyles = makeStyles((theme: Theme) =>
   createStyles({
     card: {
       padding: theme.spacing(2),
-      position: "relative"
+      position: "relative",
     },
     actionButtons: {
       position: "absolute",
       top: "0",
-      right: "0"
+      right: "0",
     },
     section: {
-      marginTop: theme.spacing(2)
+      marginTop: theme.spacing(2),
     },
     videoWrapper: {
       cursor: "default",
       position: "relative",
       width: "100%",
       height: "0",
-      paddingTop: "56.25%"
+      paddingTop: "56.25%",
     },
     video: {
       position: "absolute",
       left: "0",
       top: "0",
       width: "100%",
-      height: "100%"
-    }
-  })
+      height: "100%",
+    },
+  }),
 );
 
 function VideoWidget(props: WidgetArgs) {
@@ -53,10 +53,10 @@ function VideoWidget(props: WidgetArgs) {
   const { t } = useTranslation();
   const [source, setSource] = useState<string>(attributes["source"] || "");
   const [autoplay, setAutoplay] = useState<boolean>(
-    attributes["autoplay"] || false
+    attributes["autoplay"] || false,
   );
   const [controls, setControls] = useState<boolean>(
-    attributes["controls"] || true
+    attributes["controls"] || true,
   );
   const [loop, setLoop] = useState<boolean>(attributes["loop"] || false);
   const [muted, setMuted] = useState<boolean>(attributes["muted"] || false);
@@ -105,10 +105,10 @@ function VideoWidget(props: WidgetArgs) {
           margin={"dense"}
           placeholder={t("widget/crossnote.video/video-url-placeholder")}
           value={source}
-          onChange={event => {
+          onChange={(event) => {
             setSource(event.target.value);
           }}
-          onKeyDown={event => {
+          onKeyDown={(event) => {
             if (event.which === 13) {
               if (source) {
                 const attrs = {
@@ -117,12 +117,12 @@ function VideoWidget(props: WidgetArgs) {
                   loop,
                   muted,
                   src: source,
-                  poster
+                  poster,
                 };
                 props.replaceSelf(
                   `\`@crossnote.video ${JSON.stringify(attrs)
                     .replace(/^{/, "")
-                    .replace(/}$/, "")}\``
+                    .replace(/}$/, "")}\``,
                 );
               }
             }
@@ -138,7 +138,7 @@ function VideoWidget(props: WidgetArgs) {
           margin={"dense"}
           placeholder={t("widget/crossnote.video/poster-url-placeholder")}
           value={poster}
-          onChange={event => {
+          onChange={(event) => {
             setPoster(event.target.value);
           }}
           fullWidth={true}
@@ -190,7 +190,7 @@ function VideoWidget(props: WidgetArgs) {
   );
 }
 
-export const VideoWidgetCreator: WidgetCreator = args => {
+export const VideoWidgetCreator: WidgetCreator = (args) => {
   const el = document.createElement("span");
   ReactDOM.render(<VideoWidget {...args}></VideoWidget>, el);
   return el;

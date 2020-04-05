@@ -7,13 +7,13 @@ import {
   Button,
   TextField,
   Typography,
-  Box
+  Box,
 } from "@material-ui/core";
 import {
   fade,
   createStyles,
   makeStyles,
-  Theme
+  Theme,
 } from "@material-ui/core/styles";
 import clsx from "clsx";
 import { CrossnoteContainer } from "../containers/crossnote";
@@ -25,9 +25,9 @@ import { SettingsContainer } from "../containers/settings";
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
     textField: {
-      marginBottom: theme.spacing(2)
-    }
-  })
+      marginBottom: theme.spacing(2),
+    },
+  }),
 );
 
 interface Props {
@@ -42,7 +42,7 @@ export default function PushNotebookDialog(props: Props) {
   const [gitUsername, setGitUsername] = useState<string>(notebook.gitUsername);
   const [gitPassword, setGitPassword] = useState<string>(notebook.gitPassword);
   const [commitMessage, setCommitMessage] = useState<string>(
-    "doc: Updated docs"
+    "doc: Updated docs",
   );
   const { t } = useTranslation();
   const crossnoteContainer = CrossnoteContainer.useContainer();
@@ -63,9 +63,9 @@ export default function PushNotebookDialog(props: Props) {
             text: t("error/authentication-failed"),
             layout: "topRight",
             theme: "relax",
-            timeout: 5000
+            timeout: 5000,
           }).show();
-        }
+        },
       })
       .then(() => {
         props.onClose();
@@ -74,7 +74,7 @@ export default function PushNotebookDialog(props: Props) {
           text: t("success/notebook-uploaded"),
           layout: "topRight",
           theme: "relax",
-          timeout: 2000
+          timeout: 2000,
         }).show();
       })
       .catch((error: Error) => {
@@ -87,7 +87,7 @@ export default function PushNotebookDialog(props: Props) {
             : t("error/failed-to-upload-notebook"),
           layout: "topRight",
           theme: "relax",
-          timeout: 2000
+          timeout: 2000,
         }).show();
       });
   }, [
@@ -99,7 +99,7 @@ export default function PushNotebookDialog(props: Props) {
     commitMessage,
     props,
     t,
-    crossnoteContainer.pushNotebook
+    crossnoteContainer.pushNotebook,
   ]);
 
   useEffect(() => {
@@ -133,7 +133,7 @@ export default function PushNotebookDialog(props: Props) {
           label={t("settings/author-name")}
           fullWidth={true}
           value={settingsContainer.authorName}
-          onChange={event =>
+          onChange={(event) =>
             settingsContainer.setAuthorName(event.target.value)
           }
         ></TextField>
@@ -142,7 +142,7 @@ export default function PushNotebookDialog(props: Props) {
           label={t("settings/author-email")}
           fullWidth={true}
           value={settingsContainer.authorEmail}
-          onChange={event =>
+          onChange={(event) =>
             settingsContainer.setAuthorEmail(event.target.value)
           }
         ></TextField>
@@ -151,32 +151,32 @@ export default function PushNotebookDialog(props: Props) {
           label={t("general/commit-message")}
           fullWidth={true}
           value={commitMessage}
-          onChange={event => setCommitMessage(event.target.value)}
+          onChange={(event) => setCommitMessage(event.target.value)}
         ></TextField>
         <TextField
           className={clsx(classes.textField)}
           label={`${t("general/git-repository")} ${t("general/Username")} (${t(
-            "general/optional"
+            "general/optional",
           )})`}
           placeholder={`${t("general/git-repository")} ${t(
-            "general/Username"
+            "general/Username",
           )} (${t("general/optional")})`}
           fullWidth={true}
           value={gitUsername}
-          onChange={event => setGitUsername(event.target.value)}
+          onChange={(event) => setGitUsername(event.target.value)}
         ></TextField>
         <TextField
           className={clsx(classes.textField)}
           label={`${t("general/git-repository")} ${t("general/Password")} (${t(
-            "general/optional"
+            "general/optional",
           )})`}
           placeholder={`${t("general/git-repository")} ${t(
-            "general/Password"
+            "general/Password",
           )} (${t("general/optional")})`}
           type={"password"}
           fullWidth={true}
           value={gitPassword}
-          onChange={event => setGitPassword(event.target.value)}
+          onChange={(event) => setGitPassword(event.target.value)}
         ></TextField>
       </DialogContent>
       <DialogActions>

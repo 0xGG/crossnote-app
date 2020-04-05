@@ -6,14 +6,14 @@ import {
   IconButton,
   TextField,
   Card,
-  Button
+  Button,
 } from "@material-ui/core";
 import { createStyles, makeStyles, Theme } from "@material-ui/core/styles";
 import clsx from "clsx";
 import {
   useLinkWithGitHubAccountMutation,
   useSignInWithGitHubAccountMutation,
-  useSignUpWithGitHubAccountMutation
+  useSignUpWithGitHubAccountMutation,
 } from "../generated/graphql";
 import { browserHistory } from "../utilities/history";
 import { UUIDNil } from "../utilities/utils";
@@ -31,25 +31,25 @@ const useStyles = makeStyles((theme: Theme) =>
       top: "50%",
       padding: "16px",
       boxSizing: "border-box",
-      color: "#fff"
+      color: "#fff",
     },
     email: {
-      marginBottom: "24px"
+      marginBottom: "24px",
     },
     password: {
-      marginBottom: "24px"
+      marginBottom: "24px",
     },
     errorMessage: {
-      color: "#f44336"
+      color: "#f44336",
     },
     card: {
       position: "relative",
       width: "300px",
       maxWidth: "100%",
       padding: "16px",
-      margin: "32px auto"
-    }
-  })
+      margin: "32px auto",
+    },
+  }),
 );
 
 interface Props {
@@ -65,15 +65,15 @@ export function GitHubOAuthCallback(props: Props) {
   const [errorMessage, setErrorMessage] = useState<string>("");
   const [
     resLinkWithGitHubAccount,
-    executeLinkWithGitHubAccount
+    executeLinkWithGitHubAccount,
   ] = useLinkWithGitHubAccountMutation();
   const [
     resSignInWithGitHubAccount,
-    executeSignInWithGitHubAccount
+    executeSignInWithGitHubAccount,
   ] = useSignInWithGitHubAccountMutation();
   const [
     resSignUpWithGitHubAccount,
-    executeSignUpWithGitHubAccount
+    executeSignUpWithGitHubAccount,
   ] = useSignUpWithGitHubAccountMutation();
 
   console.log("GitHubOAuthCallback: ", i18n.language);
@@ -98,7 +98,7 @@ export function GitHubOAuthCallback(props: Props) {
         text: t("github-oauth/link-with-github-account-failure"),
         layout: "topRight",
         theme: "relax",
-        timeout: 2000
+        timeout: 2000,
       }).show();
       setTitle(t("github-oauth/link-with-github-account-failure"));
     } else if (resLinkWithGitHubAccount.data) {
@@ -114,7 +114,7 @@ export function GitHubOAuthCallback(props: Props) {
         text: t("github-oauth/sign-in-with-github-account-failure"),
         layout: "topRight",
         theme: "relax",
-        timeout: 2000
+        timeout: 2000,
       }).show();
       setTitle(t("github-oauth/sign-in-with-github-account-failure"));
     } else if (
@@ -128,18 +128,18 @@ export function GitHubOAuthCallback(props: Props) {
       ) {
         // Ask user to register for new account
         setAccessToken(
-          resSignInWithGitHubAccount.data.signInWithGitHubAccount.token
+          resSignInWithGitHubAccount.data.signInWithGitHubAccount.token,
         );
         setUsername(
-          resSignInWithGitHubAccount.data.signInWithGitHubAccount.user.username
+          resSignInWithGitHubAccount.data.signInWithGitHubAccount.user.username,
         );
         setEmail(
-          resSignInWithGitHubAccount.data.signInWithGitHubAccount.user.email
+          resSignInWithGitHubAccount.data.signInWithGitHubAccount.user.email,
         );
       } else {
         localStorage.setItem(
           "token",
-          resSignInWithGitHubAccount.data.signInWithGitHubAccount.token
+          resSignInWithGitHubAccount.data.signInWithGitHubAccount.token,
         );
         browserHistory.replace("/");
         window.location.reload();
@@ -152,12 +152,12 @@ export function GitHubOAuthCallback(props: Props) {
       setErrorMessage(
         resSignUpWithGitHubAccount.error.message
           .replace(/\[GraphQL\]/, "")
-          .trim()
+          .trim(),
       );
     } else if (resSignUpWithGitHubAccount.data) {
       localStorage.setItem(
         "token",
-        resSignUpWithGitHubAccount.data.signUpWithGitHubAccount.token
+        resSignUpWithGitHubAccount.data.signUpWithGitHubAccount.token,
       );
       browserHistory.replace("/");
       window.location.reload();
@@ -168,7 +168,7 @@ export function GitHubOAuthCallback(props: Props) {
     executeSignUpWithGitHubAccount({
       email,
       username,
-      accessToken
+      accessToken,
     });
   };
 
@@ -199,7 +199,7 @@ export function GitHubOAuthCallback(props: Props) {
             label={t("general/Username")}
             variant="outlined"
             value={username}
-            onChange={event => {
+            onChange={(event) => {
               setErrorMessage("");
               setUsername(event.target.value);
             }}
@@ -210,11 +210,11 @@ export function GitHubOAuthCallback(props: Props) {
             label={t("general/Email")}
             variant="outlined"
             value={email}
-            onChange={event => {
+            onChange={(event) => {
               setErrorMessage("");
               setEmail(event.target.value);
             }}
-            onClick={event => {
+            onClick={(event) => {
               event.currentTarget.focus();
             }}
             fullWidth={true}

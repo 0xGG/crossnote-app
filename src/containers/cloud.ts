@@ -3,7 +3,7 @@ import { useState, useEffect, useCallback } from "react";
 import {
   User,
   useViewerQuery,
-  useSetUserInfoMutation
+  useSetUserInfoMutation,
 } from "../generated/graphql";
 import Noty from "noty";
 import { SettingsContainer } from "./settings";
@@ -17,11 +17,11 @@ function useCloudContainer(initialState: InitialState) {
   const [viewer, setViewer] = useState<User>(null);
   const [resViewer, executeViewerQuery] = useViewerQuery({
     requestPolicy: "network-only",
-    pause: true
+    pause: true,
   });
   const [resSetUserInfo, executeSetUserInfoMutation] = useSetUserInfoMutation();
   const [token, setToken] = useState<string>(
-    localStorage.getItem("token") || ""
+    localStorage.getItem("token") || "",
   );
   const settingsContainer = SettingsContainer.useContainer();
   const [t] = useTranslation();
@@ -30,7 +30,7 @@ function useCloudContainer(initialState: InitialState) {
     if (token) {
       executeViewerQuery({
         requestPolicy: "network-only",
-        pollInterval: 60 * 1000 // Refetch the viewer every 60 seconds for checking notifications
+        pollInterval: 60 * 1000, // Refetch the viewer every 60 seconds for checking notifications
       });
     }
   }, [executeViewerQuery, token]);
@@ -46,7 +46,7 @@ function useCloudContainer(initialState: InitialState) {
       cover = "",
       avatar = "",
       language = "en-US",
-      editorCursorColor = "rgba(51, 51, 51, 1)"
+      editorCursorColor = "rgba(51, 51, 51, 1)",
     }) => {
       executeSetUserInfoMutation({
         cover,
@@ -55,17 +55,17 @@ function useCloudContainer(initialState: InitialState) {
         bio: "",
         language,
         location: "",
-        editorCursorColor
+        editorCursorColor,
       });
     },
-    [executeSetUserInfoMutation]
+    [executeSetUserInfoMutation],
   );
 
   const reduceNotificationsCountByOne = useCallback(() => {
     if (viewer) {
       viewer.notifications.totalCount = Math.max(
         0,
-        viewer.notifications.totalCount - 1
+        viewer.notifications.totalCount - 1,
       );
       setViewer(Object.assign({}, viewer) as User);
     }
@@ -123,7 +123,7 @@ function useCloudContainer(initialState: InitialState) {
         text: resSetUserInfo.error.message,
         layout: "topRight",
         theme: "relax",
-        timeout: 2000
+        timeout: 2000,
       }).show();
     } else if (resSetUserInfo.data && resSetUserInfo.data.setUserInfo) {
       setViewer(resSetUserInfo.data.setUserInfo as User);
@@ -132,11 +132,11 @@ function useCloudContainer(initialState: InitialState) {
         text: t("general/profile-updated"),
         layout: "topRight",
         theme: "relax",
-        timeout: 2000
+        timeout: 2000,
       }).show();
     }
   }, [
-    resSetUserInfo
+    resSetUserInfo,
     /*
     t // TODO: Will cause repeated run
     */
@@ -152,7 +152,7 @@ function useCloudContainer(initialState: InitialState) {
     resSetUserInfo,
     setUserInfo,
     reduceNotificationsCountByOne,
-    clearNotificationsCount
+    clearNotificationsCount,
   };
 }
 

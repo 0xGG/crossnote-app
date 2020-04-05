@@ -1,8 +1,12 @@
 import React, { useState, useCallback, useEffect } from "react";
 import { createStyles, makeStyles, Theme } from "@material-ui/core/styles";
 import clsx from "clsx";
-import { Note } from "../lib/crossnote";
-import { CrossnoteContainer, EditorMode } from "../containers/crossnote";
+import { Note, TagNode } from "../lib/crossnote";
+import {
+  CrossnoteContainer,
+  EditorMode,
+  SelectedSectionType,
+} from "../containers/crossnote";
 import { useTranslation } from "react-i18next";
 import * as CryptoJS from "crypto-js";
 import * as path from "path";
@@ -22,12 +26,14 @@ import {
   Popover,
   List,
   ListItem,
-  Hidden
+  Hidden,
+  Breadcrumbs,
+  Link,
 } from "@material-ui/core";
 import {
   Editor as CodeMirrorEditor,
   EditorChangeLinkedList,
-  TextMarker
+  TextMarker,
 } from "codemirror";
 import {
   RenameBox,
@@ -48,7 +54,10 @@ import {
   Lock,
   LockOpen,
   TagOutline,
-  Printer
+  Printer,
+  PencilOutline,
+  Tag,
+  ContentDuplicate,
 } from "mdi-material-ui";
 import { renderPreview } from "vickymd/preview";
 import PushNotebookDialog from "./PushNotebookDialog";
@@ -61,6 +70,7 @@ import ChangeFilePathDialog from "./ChangeFilePathDialog";
 import { SettingsContainer } from "../containers/settings";
 import { initMathPreview } from "../editor/views/math-preview";
 import EmojiDefinitions from "vickymd/addon/emoji";
+import { TagStopRegExp } from "../utilities/markdown";
 
 const VickyMD = require("vickymd");
 const is = require("is_js");
@@ -73,7 +83,7 @@ const useStyles = makeStyles((theme: Theme) =>
       height: "100%",
       display: "flex",
       flexDirection: "column",
-      borderRadius: 0
+      borderRadius: 0,
     },
     topPanel: {
       position: "relative",
@@ -82,7 +92,7 @@ const useStyles = makeStyles((theme: Theme) =>
       alignItems: "center",
       justifyContent: "space-between",
       borderBottom: "1px solid #eee",
-      overflow: "auto"
+      overflow: "auto",
     },
     bottomPanel: {
       position: "relative",
@@ -90,57 +100,57 @@ const useStyles = makeStyles((theme: Theme) =>
       display: "flex",
       alignItems: "center",
       justifyContent: "space-between",
-      borderTop: "1px solid #eee"
+      borderTop: "1px solid #eee",
       // color: theme.palette.primary.contrastText,
       // backgroundColor: theme.palette.primary.main
     },
     controlBtn: {
       padding: theme.spacing(0.5, 0),
-      color: theme.palette.text.secondary
+      color: theme.palette.text.secondary,
     },
     controlBtnSelected: {
-      color: theme.palette.primary.main
+      color: theme.palette.primary.main,
     },
     controlBtnSelectedSecondary: {
-      color: theme.palette.secondary.main
+      color: theme.palette.secondary.main,
     },
     row: {
       display: "flex",
       flexDirection: "row",
-      alignItems: "center"
+      alignItems: "center",
     },
     cursorPositionInfo: {
       // position: "absolute",
       // right: "16px",
       // bottom: "16px",
-      zIndex: 150
+      zIndex: 150,
     },
     editorWrapper: {
       //     display: "contents",
-      flex: 1,
-      overflow: "auto",
+      "flex": 1,
+      "overflow": "auto",
       "& .CodeMirror-gutters": {
-        display: "none"
+        display: "none",
       },
       "& .CodeMirror-code": {
-        width: "100%"
+        width: "100%",
       },
       "& .CodeMirror": {
         height: "100%",
         padding: theme.spacing(0, 2),
         [theme.breakpoints.down("sm")]: {
-          padding: theme.spacing(0)
-        }
+          padding: theme.spacing(0),
+        },
       },
       "& .CodeMirror-vscrollbar": {
-        display: "none !important"
+        display: "none !important",
       },
       [theme.breakpoints.down("sm")]: {
-        padding: theme.spacing(1)
-      }
+        padding: theme.spacing(1),
+      },
     },
     presentation: {
-      padding: "0 !important"
+      padding: "0 !important",
     },
     fullScreen: {
       position: "fixed",
@@ -150,12 +160,12 @@ const useStyles = makeStyles((theme: Theme) =>
       top: "0",
       zIndex: 2000,
       overflow: "auto",
-      padding: "0"
+      padding: "0",
     },
 
     editor: {
       width: "100%",
-      height: "100%"
+      height: "100%",
     },
     preview: {
       position: "relative",
@@ -168,25 +178,25 @@ const useStyles = makeStyles((theme: Theme) =>
       padding: theme.spacing(2),
       zIndex: previewZIndex,
       [theme.breakpoints.down("sm")]: {
-        padding: theme.spacing(1)
-      }
+        padding: theme.spacing(1),
+      },
       // gridArea: "2 / 2 / 3 / 3"
     },
     backBtn: {
       marginRight: "8px",
       [theme.breakpoints.up("sm")]: {
-        display: "none"
-      }
+        display: "none",
+      },
     },
     menuItemOverride: {
-      cursor: "default",
-      padding: `0 0 0 ${theme.spacing(2)}px`,
+      "cursor": "default",
+      "padding": `0 0 0 ${theme.spacing(2)}px`,
       "&:hover": {
-        backgroundColor: "inherit"
-      }
+        backgroundColor: "inherit",
+      },
     },
     menuItemTextField: {
-      paddingRight: theme.spacing(2)
+      paddingRight: theme.spacing(2),
     },
     // math
     floatWin: {
@@ -198,27 +208,27 @@ const useStyles = makeStyles((theme: Theme) =>
       overflow: "hidden",
       boxShadow: "0 3px 7px rgba(0,0,0,0.3)",
       minWidth: "200px",
-      maxWidth: "70%"
+      maxWidth: "70%",
     },
     floatWinHidden: {
-      display: "none"
+      display: "none",
     },
     floatWinTitle: {
       display: "flex",
       alignItems: "center",
       background: "#579",
       backgroundImage: "linear-gradient(to bottom, #68A, #579)",
-      color: "#eee"
+      color: "#eee",
     },
     floatWinContent: {
       maxHeight: "80vh",
       overflow: "auto",
-      padding: "10px 20px"
+      padding: "10px 20px",
     },
     floatWinClose: {
-      color: "#eee"
-    }
-  })
+      color: "#eee",
+    },
+  }),
 );
 
 interface CursorPosition {
@@ -237,19 +247,19 @@ export default function Editor(props: Props) {
   const note = props.note;
   const classes = useStyles(props);
   const [textAreaElement, setTextAreaElement] = useState<HTMLTextAreaElement>(
-    null
+    null,
   );
   const [editor, setEditor] = useState<CodeMirrorEditor>(null);
   const [cursorPosition, setCursorPosition] = useState<CursorPosition>({
     line: 0,
-    ch: 0
+    ch: 0,
   });
   const [deleteDialogOpen, setDeleteDialogOpen] = useState<boolean>(false);
   const [filePathDialogOpen, setFilePathDialogOpen] = useState<boolean>(false);
   const [pushDialogOpen, setPushDialogOpen] = useState<boolean>(false);
   const [previewElement, setPreviewElement] = useState<HTMLElement>(null);
   const [previewIsPresentation, setPreviewIsPresentation] = useState<boolean>(
-    false
+    false,
   );
   const [gitStatus, setGitStatus] = useState<string>("");
   const [fullScreenMode, setFullScreenMode] = useState<boolean>(false);
@@ -263,19 +273,19 @@ export default function Editor(props: Props) {
     string
   >("");
   const [decryptionDialogOpen, setDecryptionDialogOpen] = useState<boolean>(
-    false
+    false,
   );
   const [decryptionPassword, setDecryptionPassword] = useState<string>("");
   const [isDecrypted, setIsDecrypted] = useState<boolean>(false);
   const [needsToPrint, setNeedsToPrint] = useState<boolean>(false);
   const [editImageElement, setEditImageElement] = useState<HTMLImageElement>(
-    null
+    null,
   );
   const [editImageTextMarker, setEditImageTextMarker] = useState<TextMarker>(
-    null
+    null,
   );
   const [editImageDialogOpen, setEditImageDialogOpen] = useState<boolean>(
-    false
+    false,
   );
 
   const crossnoteContainer = CrossnoteContainer.useContainer();
@@ -304,7 +314,7 @@ export default function Editor(props: Props) {
       text: t("info/downloading-notebook"),
       layout: "topRight",
       theme: "relax",
-      timeout: 2000
+      timeout: 2000,
     }).show();
     if (!note) return;
     crossnoteContainer
@@ -316,9 +326,9 @@ export default function Editor(props: Props) {
             text: t("error/authentication-failed"),
             layout: "topRight",
             theme: "relax",
-            timeout: 5000
+            timeout: 5000,
           }).show();
-        }
+        },
       })
       .then(() => {
         new Noty({
@@ -326,17 +336,17 @@ export default function Editor(props: Props) {
           text: t("success/notebook-downloaded"),
           layout: "topRight",
           theme: "relax",
-          timeout: 2000
+          timeout: 2000,
         }).show();
       })
-      .catch(error => {
+      .catch((error) => {
         console.log(error);
         new Noty({
           type: "error",
           text: t("error/failed-to-download-notebook"),
           layout: "topRight",
           theme: "relax",
-          timeout: 2000
+          timeout: 2000,
         }).show();
       });
   }, [note]);
@@ -346,55 +356,62 @@ export default function Editor(props: Props) {
     crossnoteContainer.checkoutNote(note);
   }, [note]);
 
-  const addTag = useCallback(() => {
-    let tag = tagName.trim() || "";
-    if (!note || !tag.length || !editor || !isDecrypted) {
-      return;
-    }
-    tag = tag
-      .replace(/\s+/g, " ")
-      .split("/")
-      .map(t => t.trim())
-      .filter(x => x.length > 0)
-      .join("/");
-    setTagNames(tagNames => {
-      const newTagNames =
-        tagNames.indexOf(tag) >= 0 ? [...tagNames] : [tag, ...tagNames];
-      note.config.tags = newTagNames.sort((x, y) => x.localeCompare(y));
-      crossnoteContainer.updateNoteMarkdown(
-        note,
-        editor.getValue(),
-        note.config.encryption ? decryptionPassword : "",
-        status => {
-          setGitStatus(status);
-        }
-      );
-      crossnoteContainer.updateNotebookTagNode();
-      return newTagNames;
-    });
-    setTagName("");
-  }, [tagName, note, editor, decryptionPassword, isDecrypted]);
+  const addTag = useCallback(
+    (tagName: string) => {
+      let tag = tagName.trim() || "";
+      if (!note || !tag.length || !editor || !isDecrypted) {
+        return;
+      }
+      tag = tag
+        .replace(/\s+/g, " ")
+        .replace(TagStopRegExp, "")
+        .split("/")
+        .map((t) => t.trim())
+        .filter((x) => x.length > 0)
+        .join("/");
+      if (!tag.length) {
+        return;
+      }
+      setTagNames((tagNames) => {
+        const newTagNames =
+          tagNames.indexOf(tag) >= 0 ? [...tagNames] : [tag, ...tagNames];
+        note.config.tags = newTagNames.sort((x, y) => x.localeCompare(y));
+        crossnoteContainer.updateNoteMarkdown(
+          note,
+          editor.getValue(),
+          note.config.encryption ? decryptionPassword : "",
+          (status) => {
+            setGitStatus(status);
+          },
+        );
+        crossnoteContainer.updateNotebookTagNode();
+        return newTagNames;
+      });
+      setTagName("");
+    },
+    [note, editor, decryptionPassword, isDecrypted],
+  );
 
   const deleteTag = useCallback(
     (tagName: string) => {
       if (note && editor && isDecrypted) {
-        setTagNames(tagNames => {
-          const newTagNames = tagNames.filter(t => t !== tagName);
+        setTagNames((tagNames) => {
+          const newTagNames = tagNames.filter((t) => t !== tagName);
           note.config.tags = newTagNames.sort((x, y) => x.localeCompare(y));
           crossnoteContainer.updateNoteMarkdown(
             note,
             editor.getValue(),
             note.config.encryption ? decryptionPassword : "",
-            status => {
+            (status) => {
               setGitStatus(status);
-            }
+            },
           );
           crossnoteContainer.updateNotebookTagNode();
           return newTagNames;
         });
       }
     },
-    [note, editor, decryptionPassword, isDecrypted]
+    [note, editor, decryptionPassword, isDecrypted],
   );
 
   const toggleEncryption = useCallback(() => {
@@ -405,11 +422,11 @@ export default function Editor(props: Props) {
         // Check if the password is correct
         crossnoteContainer
           .getNote(note.notebook, note.filePath)
-          .then(n => {
+          .then((n) => {
             try {
               const bytes = CryptoJS.AES.decrypt(
                 n.markdown.trim(),
-                toggleEncryptionPassword
+                toggleEncryptionPassword,
               );
               const json = JSON.parse(bytes.toString(CryptoJS.enc.Utf8));
               // Disable encryption
@@ -419,14 +436,14 @@ export default function Editor(props: Props) {
                 note,
                 json.markdown,
                 "",
-                status => {
+                (status) => {
                   setGitStatus(status);
                   setDecryptionPassword("");
                   setIsDecrypted(true);
                   closeEncryptionDialog();
                   editor.setValue(json.markdown);
                   editor.setOption("readOnly", false);
-                }
+                },
               );
             } catch (error) {
               new Noty({
@@ -434,34 +451,34 @@ export default function Editor(props: Props) {
                 text: t("error/failed-to-disable-encryption"),
                 layout: "topRight",
                 theme: "relax",
-                timeout: 5000
+                timeout: 5000,
               }).show();
             }
           })
-          .catch(error => {
+          .catch((error) => {
             new Noty({
               type: "error",
               text: t("error/failed-to-disable-encryption"),
               layout: "topRight",
               theme: "relax",
-              timeout: 5000
+              timeout: 5000,
             }).show();
           });
       } else {
         // Enable encryption
         note.config.encryption = {
-          title: getHeaderFromMarkdown(markdown)
+          title: getHeaderFromMarkdown(markdown),
         };
         crossnoteContainer.updateNoteMarkdown(
           note,
           editor.getValue(),
           toggleEncryptionPassword,
-          status => {
+          (status) => {
             setDecryptionPassword(toggleEncryptionPassword);
             setIsDecrypted(true);
             setGitStatus(status);
             closeEncryptionDialog();
-          }
+          },
         );
       }
     }
@@ -471,12 +488,12 @@ export default function Editor(props: Props) {
     if (note && editor) {
       crossnoteContainer
         .getNote(note.notebook, note.filePath)
-        .then(n => {
+        .then((n) => {
           // Decrypt
           try {
             const bytes = CryptoJS.AES.decrypt(
               n.markdown.trim(),
-              decryptionPassword
+              decryptionPassword,
             );
             const json = JSON.parse(bytes.toString(CryptoJS.enc.Utf8));
             editor.setOption("readOnly", false);
@@ -489,12 +506,12 @@ export default function Editor(props: Props) {
               text: t("error/decryption-failed"),
               layout: "topRight",
               theme: "relax",
-              timeout: 5000
+              timeout: 5000,
             }).show();
             setIsDecrypted(false);
           }
         })
-        .catch(error => {
+        .catch((error) => {
           setIsDecrypted(false);
           console.log(error);
         });
@@ -511,9 +528,9 @@ export default function Editor(props: Props) {
         note,
         editor.getValue(),
         note.config.encryption ? decryptionPassword : "",
-        status => {
+        (status) => {
           setGitStatus(status);
-        }
+        },
       );
     }
   }, [note, editor, decryptionPassword, isDecrypted]);
@@ -528,7 +545,7 @@ export default function Editor(props: Props) {
       } else if (url.startsWith("/")) {
         let filePath = path.relative(
           note.notebook.dir,
-          path.resolve(note.notebook.dir, url.replace(/^\//, ""))
+          path.resolve(note.notebook.dir, url.replace(/^\//, "")),
         );
         crossnoteContainer.openNoteAtPath(filePath);
       } else {
@@ -536,13 +553,13 @@ export default function Editor(props: Props) {
           note.notebook.dir,
           path.resolve(
             path.dirname(path.resolve(note.notebook.dir, note.filePath)),
-            url
-          )
+            url,
+          ),
         );
         crossnoteContainer.openNoteAtPath(filePath);
       }
     },
-    [note, editor]
+    [note, editor],
   );
 
   useEffect(() => {
@@ -573,7 +590,7 @@ export default function Editor(props: Props) {
 
   useEffect(() => {
     if (note) {
-      crossnoteContainer.crossnote.getStatus(note).then(status => {
+      crossnoteContainer.crossnote.getStatus(note).then((status) => {
         setGitStatus(status);
       });
     }
@@ -602,19 +619,19 @@ export default function Editor(props: Props) {
       const editor: CodeMirrorEditor = VickyMD.fromTextArea(textAreaElement, {
         mode: {
           name: "hypermd",
-          hashtag: true
+          hashtag: true,
         },
-        inputStyle: "textarea"
+        inputStyle: "textarea",
       });
       editor.setOption("lineNumbers", false);
       editor.setOption("foldGutter", false);
       editor.setValue(note.markdown || "");
-      editor.on("cursorActivity", instance => {
+      editor.on("cursorActivity", (instance) => {
         const cursor = instance.getCursor();
         if (cursor) {
           setCursorPosition({
             line: cursor.line,
-            ch: cursor.ch
+            ch: cursor.ch,
           });
         }
       });
@@ -640,10 +657,10 @@ export default function Editor(props: Props) {
           note,
           markdown,
           note.config.encryption ? decryptionPassword : "",
-          status => {
+          (status) => {
             setGitStatus(status);
             setTagNames(note.config.tags || []); // After resolve conflicts
-          }
+          },
         );
       };
       editor.on("changes", changesHandler);
@@ -666,7 +683,7 @@ export default function Editor(props: Props) {
         const imageElement: HTMLImageElement = args.element;
         imageElement.setAttribute(
           "data-marker-position",
-          JSON.stringify(marker.find())
+          JSON.stringify(marker.find()),
         );
         setEditImageElement(imageElement);
         setEditImageTextMarker(marker);
@@ -712,9 +729,19 @@ export default function Editor(props: Props) {
           const links = preview.getElementsByTagName("A");
           for (let i = 0; i < links.length; i++) {
             const link = links[i] as HTMLAnchorElement;
-            link.onclick = event => {
+            link.onclick = (event) => {
               event.preventDefault();
-              openURL(link.getAttribute("href"));
+              if (link.hasAttribute("data-topic")) {
+                const tag = link.getAttribute("data-topic");
+                if (tag.length) {
+                  crossnoteContainer.setSelectedSection({
+                    type: SelectedSectionType.Tag,
+                    path: tag,
+                  });
+                }
+              } else {
+                openURL(link.getAttribute("href"));
+              }
             };
           }
         };
@@ -729,7 +756,7 @@ export default function Editor(props: Props) {
           previewElement.style.overflow = "hidden !important";
           handleLinksClickEvent(
             (previewElement.children[0] as HTMLIFrameElement).contentDocument
-              .body as HTMLElement
+              .body as HTMLElement,
           );
           setPreviewIsPresentation(true);
         } else {
@@ -742,6 +769,13 @@ export default function Editor(props: Props) {
         }
       } else {
         previewElement.innerHTML = `🔐 ${t("general/encrypted")}`;
+        const clickHandler = () => {
+          setDecryptionDialogOpen(true);
+        };
+        previewElement.addEventListener("click", clickHandler);
+        return () => {
+          previewElement.removeEventListener("click", clickHandler);
+        };
       }
     }
   }, [
@@ -749,7 +783,9 @@ export default function Editor(props: Props) {
     editor,
     previewElement,
     note,
-    isDecrypted
+    isDecrypted,
+    openURL,
+    t,
   ]);
 
   // Command
@@ -757,150 +793,162 @@ export default function Editor(props: Props) {
     if (!editor || !note) return;
     const onChangeHandler = (
       instance: CodeMirrorEditor,
-      changeObject: EditorChangeLinkedList
+      changeObject: EditorChangeLinkedList,
     ) => {
       // Check commands
       if (changeObject.text.length === 1 && changeObject.text[0] === "/") {
-        editor.showHint({
-          closeOnUnfocus: false,
-          completeSingle: false,
-          hint: () => {
-            const cursor = editor.getCursor();
-            const token = editor.getTokenAt(cursor);
-            const line = cursor.line;
-            const lineStr = editor.getLine(line);
-            const end: number = cursor.ch;
-            let start = token.start;
-            if (lineStr[start] !== "/") {
-              start = start - 1;
-            }
-            const currentWord: string = lineStr
-              .slice(start, end)
-              .replace(/^\//, "");
+        const aheadStr = editor
+          .getLine(changeObject.from.line)
+          .slice(0, changeObject.from.ch + 1);
+        if (!aheadStr.match(/#[^\s]+?\/$/)) {
+          // Not `/` inside a tag
+          editor.showHint({
+            closeOnUnfocus: false,
+            completeSingle: false,
+            hint: () => {
+              const cursor = editor.getCursor();
+              const token = editor.getTokenAt(cursor);
+              const line = cursor.line;
+              const lineStr = editor.getLine(line);
+              const end: number = cursor.ch;
+              let start = token.start;
+              if (lineStr[start] !== "/") {
+                start = start - 1;
+              }
+              const currentWord: string = lineStr
+                .slice(start, end)
+                .replace(/^\//, "");
 
-            const commands = [
-              {
-                text: "# ",
-                displayText: `/h1 - ${t("editor/toolbar/insert-header-1")}`
-              },
-              {
-                text: "## ",
-                displayText: `/h2 - ${t("editor/toolbar/insert-header-2")}`
-              },
-              {
-                text: "### ",
-                displayText: `/h3 - ${t("editor/toolbar/insert-header-3")}`
-              },
-              {
-                text: "#### ",
-                displayText: `/h4 - ${t("editor/toolbar/insert-header-4")}`
-              },
-              {
-                text: "##### ",
-                displayText: `/h5 - ${t("editor/toolbar/insert-header-5")}`
-              },
-              {
-                text: "###### ",
-                displayText: `/h6 - ${t("editor/toolbar/insert-header-6")}`
-              },
-              {
-                text: "> ",
-                displayText: `/blockquote - ${t(
-                  "editor/toolbar/insert-blockquote"
-                )}`
-              },
-              {
-                text: "* ",
-                displayText: `/ul - ${t(
-                  "editor/toolbar/insert-unordered-list"
-                )}`
-              },
-              {
-                text: "1. ",
-                displayText: `/ol - ${t("editor/toolbar/insert-ordered-list")}`
-              },
-              {
-                text: "`@crossnote.image`\n",
-                displayText: `/image - ${t("editor/toolbar/insert-image")}`
-              },
-              {
-                text: `|   |   |
+              const commands = [
+                {
+                  text: "# ",
+                  displayText: `/h1 - ${t("editor/toolbar/insert-header-1")}`,
+                },
+                {
+                  text: "## ",
+                  displayText: `/h2 - ${t("editor/toolbar/insert-header-2")}`,
+                },
+                {
+                  text: "### ",
+                  displayText: `/h3 - ${t("editor/toolbar/insert-header-3")}`,
+                },
+                {
+                  text: "#### ",
+                  displayText: `/h4 - ${t("editor/toolbar/insert-header-4")}`,
+                },
+                {
+                  text: "##### ",
+                  displayText: `/h5 - ${t("editor/toolbar/insert-header-5")}`,
+                },
+                {
+                  text: "###### ",
+                  displayText: `/h6 - ${t("editor/toolbar/insert-header-6")}`,
+                },
+                {
+                  text: "> ",
+                  displayText: `/blockquote - ${t(
+                    "editor/toolbar/insert-blockquote",
+                  )}`,
+                },
+                {
+                  text: "* ",
+                  displayText: `/ul - ${t(
+                    "editor/toolbar/insert-unordered-list",
+                  )}`,
+                },
+                {
+                  text: "1. ",
+                  displayText: `/ol - ${t(
+                    "editor/toolbar/insert-ordered-list",
+                  )}`,
+                },
+                {
+                  text: "`@crossnote.image`\n",
+                  displayText: `/image - ${t("editor/toolbar/insert-image")}`,
+                },
+                {
+                  text: `|   |   |
 |---|---|
 |   |   |
 `,
-                displayText: `/table - ${t("editor/toolbar/insert-table")}`
-              },
-              {
-                text:
-                  "`@timer " +
-                  JSON.stringify({ date: new Date().toString() })
-                    .replace(/^{/, "")
-                    .replace(/}$/, "") +
-                  "`\n",
-                displayText: `/timer - ${t("editor/toolbar/insert-clock")}`
-              },
-              {
-                text: "",
-                displayText: `/emoji - ${t("editor/toolbar/insert-emoji")}`
-              },
-              {
-                text: "`@crossnote.audio`  \n",
-                displayText: `/audio - ${t("editor/toolbar/audio-url")}`
-              },
-              {
-                text: "`@crossnote.netease_music`  \n",
-                displayText: `/netease - ${t("editor/toolbar/netease-music")}`
-              },
-              {
-                text: "`@crossnote.video`  \n",
-                displayText: `/video - ${t("editor/toolbar/video-url")}`
-              },
-              {
-                text: "`@crossnote.youtube`  \n",
-                displayText: `/youtube - ${t("editor/toolbar/youtube")}`
-              },
-              {
-                text: "`@crossnote.bilibili`  \n",
-                displayText: `/bilibili - ${t("editor/toolbar/bilibili")}`
-              },
-              {
-                text: "<!-- slide -->  \n",
-                displayText: `/slide - ${t("editor/toolbar/insert-slide")}`
-              },
-              {
-                text: "`@crossnote.ocr`  \n",
-                displayText: `/ocr - ${t("editor/toolbar/insert-ocr")}`
-              },
-              {
-                text: '`@crossnote.kanban "v":2,"board":{"columns":[]}`  \n',
-                displayText: `/kanban - ${t(
-                  "editor/toolbar/insert-kanban"
-                )} (beta)`
-              },
-              {
-                text: "`@crossnote.abc`  \n",
-                displayText: `/abc - ${t("editor/toolbar/insert-abc-notation")}`
-              },
-              {
-                text: "`@crossnote.comment`  \n",
-                displayText: `/crossnote.comment - ${t(
-                  "editor/toolbar/insert-comment"
-                )}`
-              }
-            ];
-            const filtered = commands.filter(
-              item =>
-                item.displayText
-                  .toLocaleLowerCase()
-                  .indexOf(currentWord.toLowerCase()) >= 0
-            );
-            return {
-              list: filtered.length ? filtered : commands,
-              from: { line, ch: start },
-              to: { line, ch: end }
-            };
-          }
-        });
+                  displayText: `/table - ${t("editor/toolbar/insert-table")}`,
+                },
+                {
+                  text:
+                    "`@timer " +
+                    JSON.stringify({ date: new Date().toString() })
+                      .replace(/^{/, "")
+                      .replace(/}$/, "") +
+                    "`\n",
+                  displayText: `/timer - ${t("editor/toolbar/insert-clock")}`,
+                },
+                {
+                  text: "",
+                  displayText: `/emoji - ${t("editor/toolbar/insert-emoji")}`,
+                },
+                {
+                  text: "`@crossnote.audio`  \n",
+                  displayText: `/audio - ${t("editor/toolbar/audio-url")}`,
+                },
+                {
+                  text: "`@crossnote.netease_music`  \n",
+                  displayText: `/netease - ${t(
+                    "editor/toolbar/netease-music",
+                  )}`,
+                },
+                {
+                  text: "`@crossnote.video`  \n",
+                  displayText: `/video - ${t("editor/toolbar/video-url")}`,
+                },
+                {
+                  text: "`@crossnote.youtube`  \n",
+                  displayText: `/youtube - ${t("editor/toolbar/youtube")}`,
+                },
+                {
+                  text: "`@crossnote.bilibili`  \n",
+                  displayText: `/bilibili - ${t("editor/toolbar/bilibili")}`,
+                },
+                {
+                  text: "<!-- slide -->  \n",
+                  displayText: `/slide - ${t("editor/toolbar/insert-slide")}`,
+                },
+                {
+                  text: "`@crossnote.ocr`  \n",
+                  displayText: `/ocr - ${t("editor/toolbar/insert-ocr")}`,
+                },
+                {
+                  text: '`@crossnote.kanban "v":2,"board":{"columns":[]}`  \n',
+                  displayText: `/kanban - ${t(
+                    "editor/toolbar/insert-kanban",
+                  )} (beta)`,
+                },
+                {
+                  text: "`@crossnote.abc`  \n",
+                  displayText: `/abc - ${t(
+                    "editor/toolbar/insert-abc-notation",
+                  )}`,
+                },
+                {
+                  text: "`@crossnote.comment`  \n",
+                  displayText: `/crossnote.comment - ${t(
+                    "editor/toolbar/insert-comment",
+                  )}`,
+                },
+              ];
+              const filtered = commands.filter(
+                (item) =>
+                  item.displayText
+                    .toLocaleLowerCase()
+                    .indexOf(currentWord.toLowerCase()) >= 0,
+              );
+              return {
+                list: filtered.length ? filtered : commands,
+                from: { line, ch: start },
+                to: { line, ch: end },
+              };
+            },
+          });
+        }
       }
 
       // Check emoji
@@ -927,21 +975,76 @@ export default function Editor(props: Props) {
               const emoji = EmojiDefinitions[def];
               commands.push({
                 text: `:${def}: `,
-                displayText: `:${def}: ${emoji}`
+                displayText: `:${def}: ${emoji}`,
               });
             }
             const filtered = commands.filter(
-              item =>
+              (item) =>
                 item.displayText
                   .toLocaleLowerCase()
-                  .indexOf(currentWord.toLowerCase()) >= 0
+                  .indexOf(currentWord.toLowerCase()) >= 0,
             );
             return {
               list: filtered.length ? filtered : commands,
               from: { line, ch: start },
-              to: { line, ch: end }
+              to: { line, ch: end },
             };
-          }
+          },
+        });
+      }
+
+      // Check tag
+      if (
+        changeObject.text.length === 1 &&
+        changeObject.text[0] !== " " &&
+        changeObject.from.ch > 0 &&
+        editor.getLine(changeObject.from.line)[changeObject.from.ch - 1] === "#"
+      ) {
+        editor.showHint({
+          closeOnUnfocus: true,
+          completeSingle: false,
+          hint: () => {
+            const cursor = editor.getCursor();
+            const token = editor.getTokenAt(cursor);
+            const line = cursor.line;
+            const lineStr = editor.getLine(line);
+            const end: number = cursor.ch;
+            let start = token.start;
+            if (lineStr[start] !== "#") {
+              start = start - 1;
+            }
+            const currentWord: string = lineStr
+              .slice(start, end)
+              .replace(TagStopRegExp, "");
+            const commands: { text: string; displayText: string }[] = [];
+            if (currentWord.trim().length > 0) {
+              commands.push({
+                text: `#${currentWord} `,
+                displayText: `+ #${currentWord}`,
+              });
+            }
+            const helper = (children: TagNode[]) => {
+              if (!children || !children.length) return;
+              for (let i = 0; i < children.length; i++) {
+                const tag = children[i].path;
+                commands.push({
+                  text: `#${tag} `,
+                  displayText: `+ #${tag}`,
+                });
+                helper(children[i].children);
+              }
+            };
+            helper(crossnoteContainer.notebookTagNode.children);
+            const filtered = commands.filter(
+              (item) => item.text.toLocaleLowerCase().indexOf(currentWord) >= 0,
+            );
+
+            return {
+              list: filtered.length ? filtered : commands,
+              from: { line, ch: start },
+              to: { line, ch: end },
+            };
+          },
         });
       }
 
@@ -971,7 +1074,7 @@ export default function Editor(props: Props) {
                 timerTexts.push({
                   text: text,
                   line: i,
-                  date: new Date(datetime)
+                  date: new Date(datetime),
                 });
               }
             } catch (error) {
@@ -985,20 +1088,31 @@ export default function Editor(props: Props) {
           const duration = formatDistance(
             currentTimerText.date,
             previousTimerText.date,
-            { includeSeconds: true }
+            { includeSeconds: true },
           );
           const newText = `\`@timer ${JSON.stringify({
             date: currentTimerText.date.toString(),
-            duration
+            duration,
           })
             .replace(/^{/, "")
             .replace(/}$/, "")}\``;
           editor.replaceRange(
             newText,
             { line: currentTimerText.line, ch: 0 },
-            { line: currentTimerText.line, ch: currentTimerText.text.length }
+            { line: currentTimerText.line, ch: currentTimerText.text.length },
           );
         }
+      }
+
+      // Add Tag
+      if (
+        changeObject.origin === "complete" &&
+        changeObject.removed[0] &&
+        changeObject.removed[0].match(/^#[^\s]/) &&
+        changeObject.text[0] &&
+        changeObject.text[0].match(/^#[^\s]/)
+      ) {
+        addTag(changeObject.text[0].replace(/^#/, ""));
       }
     };
     editor.on("change", onChangeHandler);
@@ -1014,7 +1128,7 @@ export default function Editor(props: Props) {
       editor.off("change", onChangeHandler);
       editor.off("cursorActivity", onCursorActivityHandler);
     };
-  }, [editor, note /*t*/]);
+  }, [editor, note, crossnoteContainer.notebookTagNode, addTag /*t*/]);
 
   // Print preview
   useEffect(() => {
@@ -1044,7 +1158,7 @@ export default function Editor(props: Props) {
     crossnoteContainer.editorMode,
     note,
     editor,
-    previewElement
+    previewElement,
   ]);
 
   // Wiki TOC Render
@@ -1060,7 +1174,7 @@ export default function Editor(props: Props) {
         const links = preview.getElementsByTagName("A");
         for (let i = 0; i < links.length; i++) {
           const link = links[i] as HTMLAnchorElement;
-          link.onclick = event => {
+          link.onclick = (event) => {
             event.preventDefault();
             openURL(link.getAttribute("href"));
           };
@@ -1102,7 +1216,7 @@ export default function Editor(props: Props) {
           style={{
             margin: "0 auto",
             top: "50%",
-            position: "relative"
+            position: "relative",
           }}
           onClick={() => crossnoteContainer.createNewNote()}
           disabled={
@@ -1141,7 +1255,7 @@ export default function Editor(props: Props) {
                 className={clsx(
                   classes.controlBtn,
                   crossnoteContainer.editorMode === EditorMode.VickyMD &&
-                    classes.controlBtnSelected
+                    classes.controlBtnSelected,
                 )}
                 color={
                   crossnoteContainer.editorMode === EditorMode.VickyMD
@@ -1160,7 +1274,7 @@ export default function Editor(props: Props) {
                 className={clsx(
                   classes.controlBtn,
                   crossnoteContainer.editorMode === EditorMode.SourceCode &&
-                    classes.controlBtnSelected
+                    classes.controlBtnSelected,
                 )}
                 color={
                   crossnoteContainer.editorMode === EditorMode.SourceCode
@@ -1179,7 +1293,7 @@ export default function Editor(props: Props) {
                 className={clsx(
                   classes.controlBtn,
                   crossnoteContainer.editorMode === EditorMode.Preview &&
-                    classes.controlBtnSelected
+                    classes.controlBtnSelected,
                 )}
                 color={
                   crossnoteContainer.editorMode === EditorMode.Preview
@@ -1198,10 +1312,19 @@ export default function Editor(props: Props) {
             {isDecrypted && (
               <Tooltip title={t("general/tags")}>
                 <Button
-                  className={clsx(classes.controlBtn)}
-                  onClick={event => setTagsMenuAnchorEl(event.currentTarget)}
+                  className={clsx(
+                    classes.controlBtn,
+                    note.config.tags &&
+                      note.config.tags.length > 0 &&
+                      classes.controlBtnSelectedSecondary,
+                  )}
+                  onClick={(event) => setTagsMenuAnchorEl(event.currentTarget)}
                 >
-                  <TagOutline></TagOutline>
+                  {note.config.tags && note.config.tags.length > 0 ? (
+                    <Tag></Tag>
+                  ) : (
+                    <TagOutline></TagOutline>
+                  )}
                 </Button>
               </Tooltip>
             )}
@@ -1210,7 +1333,7 @@ export default function Editor(props: Props) {
                 <Button
                   className={clsx(
                     classes.controlBtn,
-                    note.config.pinned && classes.controlBtnSelectedSecondary
+                    note.config.pinned && classes.controlBtnSelectedSecondary,
                   )}
                   onClick={togglePin}
                 >
@@ -1222,7 +1345,7 @@ export default function Editor(props: Props) {
               <Button
                 className={clsx(
                   classes.controlBtn,
-                  note.config.encryption && classes.controlBtnSelectedSecondary
+                  note.config.encryption && classes.controlBtnSelectedSecondary,
                 )}
                 onClick={() => setToggleEncryptionDialogOpen(true)}
               >
@@ -1243,14 +1366,6 @@ export default function Editor(props: Props) {
                 <RenameBox></RenameBox>
               </Button>
             </Tooltip>
-            <Tooltip title={t("general/restore-checkout")}>
-              <Button
-                className={clsx(classes.controlBtn)}
-                onClick={checkoutNote}
-              >
-                <Restore></Restore>
-              </Button>
-            </Tooltip>
             <Tooltip title={t("general/Delete")}>
               <Button
                 className={clsx(classes.controlBtn)}
@@ -1259,6 +1374,16 @@ export default function Editor(props: Props) {
                 <Delete></Delete>
               </Button>
             </Tooltip>
+            {!note.config.encryption && (
+              <Tooltip title={t("general/create-a-copy")}>
+                <Button
+                  className={clsx(classes.controlBtn)}
+                  onClick={() => crossnoteContainer.duplicateNote(note)}
+                >
+                  <ContentDuplicate></ContentDuplicate>
+                </Button>
+              </Tooltip>
+            )}
             {is.desktop() && (
               <Tooltip title={t("general/Print")}>
                 <Button
@@ -1282,6 +1407,14 @@ export default function Editor(props: Props) {
           </ButtonGroup>
           {note.notebook.gitURL && ( // If no git url set, then don't allow push/pull
             <ButtonGroup style={{ marginLeft: "8px" }}>
+              <Tooltip title={t("general/restore-checkout")}>
+                <Button
+                  className={clsx(classes.controlBtn)}
+                  onClick={checkoutNote}
+                >
+                  <Restore></Restore>
+                </Button>
+              </Tooltip>
               <Tooltip title={t("general/upload-push")}>
                 <Button
                   className={clsx(classes.controlBtn)}
@@ -1318,26 +1451,26 @@ export default function Editor(props: Props) {
               <ListItem
                 className={clsx(
                   classes.menuItemOverride,
-                  classes.menuItemTextField
+                  classes.menuItemTextField,
                 )}
               >
                 <TextField
                   placeholder={t("general/add-a-tag")}
                   autoFocus={true}
                   value={tagName}
-                  onChange={event => {
+                  onChange={(event) => {
                     event.stopPropagation();
                     setTagName(event.target.value);
                   }}
-                  onKeyUp={event => {
+                  onKeyUp={(event) => {
                     if (event.which === 13) {
-                      addTag();
+                      addTag(tagName);
                     }
                   }}
                 ></TextField>
               </ListItem>
               {tagNames.length > 0 ? (
-                tagNames.map(tagName => {
+                tagNames.map((tagName) => {
                   return (
                     <ListItem
                       key={tagName}
@@ -1349,7 +1482,7 @@ export default function Editor(props: Props) {
                           flexDirection: "row",
                           alignItems: "center",
                           justifyContent: "space-between",
-                          width: "100%"
+                          width: "100%",
                         }}
                       >
                         <Typography>{tagName}</Typography>
@@ -1374,7 +1507,7 @@ export default function Editor(props: Props) {
       <Box
         className={clsx(
           classes.editorWrapper,
-          fullScreenMode ? classes.fullScreen : null
+          fullScreenMode ? classes.fullScreen : null,
         )}
       >
         <textarea
@@ -1391,7 +1524,7 @@ export default function Editor(props: Props) {
             className={clsx(
               classes.preview,
               "preview",
-              previewIsPresentation ? classes.presentation : null
+              previewIsPresentation ? classes.presentation : null,
             )}
             id="preview"
             ref={(element: HTMLElement) => {
@@ -1405,7 +1538,7 @@ export default function Editor(props: Props) {
               position: "fixed",
               right: "0",
               top: "0",
-              zIndex: 2001
+              zIndex: 2001,
             }}
             onClick={() => setFullScreenMode(false)}
           >
@@ -1415,21 +1548,40 @@ export default function Editor(props: Props) {
       </Box>
       <Box className={clsx(classes.bottomPanel, "editor-bottom-panel")}>
         <Box className={clsx(classes.row)}>
+          <Breadcrumbs aria-label={"File path"} maxItems={4}>
+            {note.filePath.split("/").map((path, offset, arr) => {
+              return (
+                <Typography
+                  variant={"caption"}
+                  style={{ cursor: "pointer" }}
+                  color={"textPrimary"}
+                  key={`${offset}-${path}`}
+                  onClick={() => {
+                    if (offset === arr.length - 1) {
+                      setFilePathDialogOpen(true);
+                    } else {
+                      crossnoteContainer.setSelectedSection({
+                        type: SelectedSectionType.Directory,
+                        path: arr.slice(0, offset + 1).join("/"),
+                      });
+                    }
+                  }}
+                >
+                  {path}
+                </Typography>
+              );
+            })}
+          </Breadcrumbs>
           <Typography
             variant={"caption"}
-            style={{ cursor: "pointer" }}
-            onClick={() => {
-              setFilePathDialogOpen(true);
-            }}
+            style={{ marginLeft: "4px", marginTop: "3px" }}
+            color={"textPrimary"}
           >
-            {note.filePath}
-          </Typography>
-          <Typography variant={"caption"} style={{ marginLeft: "4px" }}>
             {"- " + gitStatus}
           </Typography>
         </Box>
         <Box className={clsx(classes.cursorPositionInfo)}>
-          <Typography variant={"caption"}>
+          <Typography variant={"caption"} color={"textPrimary"}>
             {`Ln ${cursorPosition.line + 1}, Col ${cursorPosition.ch}`}
           </Typography>
         </Box>
@@ -1474,8 +1626,10 @@ export default function Editor(props: Props) {
           <TextField
             value={toggleEncryptionPassword}
             autoFocus={true}
-            onChange={event => setToggleEncryptionPassword(event.target.value)}
-            onKeyUp={event => {
+            onChange={(event) =>
+              setToggleEncryptionPassword(event.target.value)
+            }
+            onKeyUp={(event) => {
               if (event.which === 13) {
                 toggleEncryption();
               }
@@ -1504,10 +1658,10 @@ export default function Editor(props: Props) {
           <TextField
             value={decryptionPassword}
             autoFocus={true}
-            onChange={event => setDecryptionPassword(event.target.value)}
+            onChange={(event) => setDecryptionPassword(event.target.value)}
             placeholder={t("general/Password")}
             type={"password"}
-            onKeyUp={event => {
+            onKeyUp={(event) => {
               if (event.which === 13) {
                 decryptNote();
               }

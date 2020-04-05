@@ -17,7 +17,7 @@ import {
   FormGroup,
   Checkbox,
   ButtonGroup,
-  Button
+  Button,
 } from "@material-ui/core";
 import { createStyles, makeStyles, Theme } from "@material-ui/core/styles";
 import clsx from "clsx";
@@ -29,38 +29,38 @@ const useStyles = makeStyles((theme: Theme) =>
   createStyles({
     card: {
       padding: theme.spacing(2),
-      position: "relative"
+      position: "relative",
     },
     actionButtons: {
       position: "absolute",
       top: "0",
-      right: "0"
+      right: "0",
     },
     section: {
-      marginTop: theme.spacing(2)
+      marginTop: theme.spacing(2),
     },
     dropArea: {
-      textAlign: "center",
-      padding: "24px",
-      border: "4px dotted #c7c7c7",
-      backgroundColor: "#f1f1f1",
-      cursor: "pointer",
+      "textAlign": "center",
+      "padding": "24px",
+      "border": "4px dotted #c7c7c7",
+      "backgroundColor": "#f1f1f1",
+      "cursor": "pointer",
       "&:hover": {
-        backgroundColor: "#eee"
-      }
+        backgroundColor: "#eee",
+      },
     },
     canvasWrapper: {
-      marginTop: theme.spacing(2)
+      marginTop: theme.spacing(2),
       // height: 0,
       // paddingTop: "56.25%" // 16:9
     },
     canvas: {
-      maxWidth: "100%"
+      maxWidth: "100%",
     },
     disabled: {
-      cursor: "not-allowed"
-    }
-  })
+      cursor: "not-allowed",
+    },
+  }),
 );
 
 interface OCRProgress {
@@ -72,7 +72,7 @@ interface OCRProgress {
 function getInitialLanguages() {
   try {
     return JSON.parse(
-      localStorage.getItem("widget/crossnote.ocr/languages") || '["eng"]'
+      localStorage.getItem("widget/crossnote.ocr/languages") || '["eng"]',
     );
   } catch (error) {
     return ["eng"];
@@ -93,17 +93,17 @@ function OCRWidget(props: WidgetArgs) {
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
   const [ocrProgresses, setOCRProgresses] = useState<OCRProgress[]>([]);
   const [selectedLanguages, setSelectedLanguages] = useState<string[]>(
-    getInitialLanguages()
+    getInitialLanguages(),
   );
   const [grayscaleChecked, setGrayscaleChecked] = useState<boolean>(
-    !!localStorage.getItem("widget/crossnote.ocr/grayscale") || true
+    !!localStorage.getItem("widget/crossnote.ocr/grayscale") || true,
   );
 
   useEffect(() => {
     if (canvas && imageDataURL) {
       const imageObject = new Image();
       const context = canvas.getContext("2d");
-      imageObject.onload = function() {
+      imageObject.onload = function () {
         canvas.width = imageObject.width;
         canvas.height = imageObject.height;
         context.clearRect(0, 0, canvas.width, canvas.height);
@@ -115,7 +115,7 @@ function OCRWidget(props: WidgetArgs) {
         context.drawImage(imageObject, 0, 0);
         setOCRDataURL(canvas.toDataURL());
       };
-      imageObject.onerror = error => {
+      imageObject.onerror = (error) => {
         throw error;
       };
       imageObject.setAttribute("crossOrigin", "anonymous");
@@ -127,7 +127,7 @@ function OCRWidget(props: WidgetArgs) {
     e.preventDefault();
     e.stopPropagation();
     if (!imageDropAreaElement || isProcessing) return;
-    imageDropAreaElement.onchange = function(event) {
+    imageDropAreaElement.onchange = function (event) {
       const target = event.target as any;
       const files = target.files || [];
       if (files.length) {
@@ -138,7 +138,7 @@ function OCRWidget(props: WidgetArgs) {
           reader.onload = () => {
             setImageDataURL(reader.result as string);
           };
-          reader.onerror = error => {
+          reader.onerror = (error) => {
             throw error;
           };
         } catch (error) {}
@@ -156,7 +156,7 @@ function OCRWidget(props: WidgetArgs) {
   function ocr(input: File | string | HTMLCanvasElement) {
     const worker = createWorker({
       logger: (m: OCRProgress) => {
-        setOCRProgresses(ocrProgresses => {
+        setOCRProgresses((ocrProgresses) => {
           if (
             ocrProgresses.length &&
             ocrProgresses[ocrProgresses.length - 1].status === m.status
@@ -166,7 +166,7 @@ function OCRWidget(props: WidgetArgs) {
             return [...ocrProgresses, m];
           }
         });
-      }
+      },
     });
 
     (async () => {
@@ -180,7 +180,7 @@ function OCRWidget(props: WidgetArgs) {
       await worker.loadLanguage(languagesArr.join("+"));
       await worker.initialize(languagesArr.join("+"));
       const {
-        data: { text }
+        data: { text },
       } = await worker.recognize(input);
       props.replaceSelf("\n" + text);
       await worker.terminate();
@@ -189,7 +189,7 @@ function OCRWidget(props: WidgetArgs) {
   }
 
   function toggleLanguage(lang: string) {
-    setSelectedLanguages(selectedLanguages => {
+    setSelectedLanguages((selectedLanguages) => {
       const offset = selectedLanguages.indexOf(lang);
       if (offset >= 0) {
         selectedLanguages.splice(offset, 1);
@@ -199,7 +199,7 @@ function OCRWidget(props: WidgetArgs) {
       }
       localStorage.setItem(
         "widget/crossnote.ocr/languages",
-        JSON.stringify(selectedLanguages)
+        JSON.stringify(selectedLanguages),
       );
       return selectedLanguages;
     });
@@ -219,12 +219,12 @@ function OCRWidget(props: WidgetArgs) {
             <ListItem>
               <ListItemText>
                 {t(
-                  "tesseract/" + ocrProgresses[ocrProgresses.length - 1].status
+                  "tesseract/" + ocrProgresses[ocrProgresses.length - 1].status,
                 )}
               </ListItemText>
               <ListItemSecondaryAction>
                 {Math.floor(
-                  ocrProgresses[ocrProgresses.length - 1].progress * 100
+                  ocrProgresses[ocrProgresses.length - 1].progress * 100,
                 ).toString() + "%"}
               </ListItemSecondaryAction>
             </ListItem>
@@ -298,7 +298,7 @@ function OCRWidget(props: WidgetArgs) {
                   } else {
                     localStorage.setItem(
                       "widget/crossnote.ocr/grayscale",
-                      "true"
+                      "true",
                     );
                   }
                   setGrayscaleChecked(!grayscaleChecked);
@@ -312,7 +312,7 @@ function OCRWidget(props: WidgetArgs) {
         <Box className={clsx(classes.canvasWrapper)}>
           <canvas
             className={clsx(classes.canvas)}
-            ref={element => setCanvas(element)}
+            ref={(element) => setCanvas(element)}
           ></canvas>
         </Box>
         <ButtonGroup>
@@ -354,10 +354,10 @@ function OCRWidget(props: WidgetArgs) {
           margin={"dense"}
           placeholder={t("widget/crossnote.image/image-url-placeholder")}
           value={link}
-          onChange={event => {
+          onChange={(event) => {
             setLink(event.target.value);
           }}
-          onKeyDown={event => {
+          onKeyDown={(event) => {
             if (event.which === 13) {
               startOCRFromLink();
             }
@@ -378,7 +378,7 @@ function OCRWidget(props: WidgetArgs) {
         <Box
           className={clsx(
             classes.dropArea,
-            isProcessing ? classes.disabled : null
+            isProcessing ? classes.disabled : null,
           )}
           onClick={clickDropArea}
         >
@@ -401,7 +401,7 @@ function OCRWidget(props: WidgetArgs) {
   );
 }
 
-export const OCRWidgetCreator: WidgetCreator = args => {
+export const OCRWidgetCreator: WidgetCreator = (args) => {
   const el = document.createElement("span");
   ReactDOM.render(<OCRWidget {...args}></OCRWidget>, el);
   return el;

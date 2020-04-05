@@ -1,0 +1,17 @@
+*.*
+!*.css
+!*.js
+!*.json
+!*.less
+!*.md
+!*.ts
+!*.tsx
+!*.yaml
+!*.yml
+
+.DS_Store
+node_modules
+build
+public
+.vscode
+src/_git_commit.js

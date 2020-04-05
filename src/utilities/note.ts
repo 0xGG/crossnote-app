@@ -55,15 +55,15 @@ export function getHeaderFromMarkdown(markdown: string): string {
 
 export function getMentionsFromMarkdown(markdown: string): string[] {
   return (markdown.match(/@(?:[a-zA-Z\d]+-)*[a-zA-Z\d]+/g) || [])
-    .map(username => username.replace(/^@/, "").toLocaleLowerCase())
+    .map((username) => username.replace(/^@/, "").toLocaleLowerCase())
     .filter(
       (username, index, self) =>
-        index === self.findIndex(username2 => username === username2)
+        index === self.findIndex((username2) => username === username2),
     );
 }
 
 export async function generateSummaryFromMarkdown(
-  markdown: string
+  markdown: string,
 ): Promise<Summary> {
   let title = "",
     summary = "",
@@ -79,7 +79,7 @@ export async function generateSummaryFromMarkdown(
       .trim();
     contentString = markdown.slice(
       markdown.indexOf(titleMatch[0]) + titleMatch[0].length,
-      markdown.length
+      markdown.length,
     );
     const coverMatch = aheadString.match(/^!\[.*?\]\(.+?\)/gim);
     if (coverMatch && coverMatch.length) {
@@ -89,23 +89,23 @@ export async function generateSummaryFromMarkdown(
 
   const coverImagesMatch = markdown.match(/^!\[.*?\]\(.+?\)/gim);
   if (coverImagesMatch && coverImagesMatch.length) {
-    coverImagesMatch.forEach(mdImage => {
+    coverImagesMatch.forEach((mdImage) => {
       images.push(mdImage.match(/\(([^)"]+?)\)/)[1].trim());
     });
     images = images.filter(
-      (image, index, self) => index === self.findIndex(m => m === image)
+      (image, index, self) => index === self.findIndex((m) => m === image),
     );
   }
 
   summary = contentString
     .split("\n")
     .filter(
-      x =>
+      (x) =>
         x.trim().length > 0 &&
         !x.match(/!\[.*?\]\(.+?\)/) && // Remove image
-        !x.match(/`@.+?`/) // Remove widget
+        !x.match(/`@.+?`/), // Remove widget
     )
-    .map(x => x.replace(/#+\s(.+)\s*$/, "**$1**").trim()) // Replace headers to bold
+    .map((x) => x.replace(/#+\s(.+)\s*$/, "**$1**").trim()) // Replace headers to bold
     .slice(0, 10)
     .join("  \n");
 
@@ -114,7 +114,7 @@ export async function generateSummaryFromMarkdown(
     summary,
     images,
     tags: [],
-    html: ""
+    html: "",
   };
 }
 
@@ -122,5 +122,5 @@ export const EmptyPageInfo = {
   hasPreviousPage: false,
   hasNextPage: false,
   startCursor: UUIDNil,
-  endCursor: UUIDNil
+  endCursor: UUIDNil,
 };
