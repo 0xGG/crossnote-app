@@ -1139,13 +1139,27 @@ export default function Editor(props: Props) {
       crossnoteContainer.editorMode === EditorMode.Preview &&
       previewElement
     ) {
+      const tempPreviewElement = document.createElement("div");
+      tempPreviewElement.classList.add("preview");
+      tempPreviewElement.style.zIndex = "999999";
+      document.body.appendChild(tempPreviewElement);
       const printDone = () => {
         setNeedsToPrint(false);
-        previewElement.style.zIndex = `${previewZIndex}`;
+        tempPreviewElement.remove();
       };
-      printPreview(previewElement)
+      renderPreview(
+        tempPreviewElement,
+        editor.getValue(),
+        previewIsPresentation,
+      )
         .then(() => {
-          printDone();
+          printPreview(tempPreviewElement)
+            .then(() => {
+              printDone();
+            })
+            .catch(() => {
+              printDone();
+            });
         })
         .catch(() => {
           printDone();
@@ -1159,6 +1173,7 @@ export default function Editor(props: Props) {
     note,
     editor,
     previewElement,
+    previewIsPresentation,
   ]);
 
   // Wiki TOC Render
@@ -1526,7 +1541,6 @@ export default function Editor(props: Props) {
               "preview",
               previewIsPresentation ? classes.presentation : null,
             )}
-            id="preview"
             ref={(element: HTMLElement) => {
               setPreviewElement(element);
             }}

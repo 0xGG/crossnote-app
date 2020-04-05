@@ -26,16 +26,8 @@ export function printPreview(
   return VickyMDPrintPreview(
     previewElement,
     bannerElement,
-    [
-      "#main-panel",
-      "#editor-main-panel",
-      "#editor-card",
-      ".main-panel-split-pane",
-    ],
+    ["body"],
     `
-  .Pane.vertical {
-    position: initial !important;
-  }
   #notes-panel,
   .editor-bottom-panel,
   .drawer,
@@ -45,16 +37,6 @@ export function printPreview(
   .Pane.vertical.Pane1,
   .control-panel-wrapper {
     display: none;
-  }
-  #editor-card {
-    width: 100%;
-    height: 100%;
-    box-shadow: none;
-  }
-  .editor-panel, #main-panel {
-    background-color: #fff;
-    box-shadow: none;
-    border: none;
   }
 `,
     timeout,
