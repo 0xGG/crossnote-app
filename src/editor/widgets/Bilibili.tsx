@@ -7,7 +7,7 @@ import {
   IconButton,
   Box,
   Input,
-  Tooltip
+  Tooltip,
 } from "@material-ui/core";
 import { createStyles, makeStyles, Theme } from "@material-ui/core/styles";
 import clsx from "clsx";
@@ -18,22 +18,22 @@ const useStyles = makeStyles((theme: Theme) =>
   createStyles({
     card: {
       padding: theme.spacing(2),
-      position: "relative"
+      position: "relative",
     },
     actionButtons: {
       position: "absolute",
       top: "0",
-      right: "0"
+      right: "0",
     },
     section: {
-      marginTop: theme.spacing(2)
+      marginTop: theme.spacing(2),
     },
     videoWrapper: {
       cursor: "default",
       position: "relative",
       width: "100%",
       height: "0",
-      paddingTop: "56.25%"
+      paddingTop: "56.25%",
     },
     video: {
       backgroundColor: "#ddd",
@@ -42,13 +42,13 @@ const useStyles = makeStyles((theme: Theme) =>
       left: "0",
       top: "0",
       width: "100%",
-      height: "100%"
+      height: "100%",
     },
     errorMessage: {
       color: "#f44336",
-      marginTop: theme.spacing(2)
-    }
-  })
+      marginTop: theme.spacing(2),
+    },
+  }),
 );
 
 function BilibiliWidget(props: WidgetArgs) {
@@ -115,31 +115,31 @@ function BilibiliWidget(props: WidgetArgs) {
           margin={"dense"}
           placeholder={t("widget/crossnote.bilibili/url-placeholder")}
           value={url}
-          onChange={event => {
+          onChange={(event) => {
             setURL(event.target.value);
             setError("");
           }}
-          onKeyDown={event => {
+          onKeyDown={(event) => {
             if (event.which === 13) {
               if (url && url.match(/\/av(\d+)/)) {
                 const aid = url.match(/\/av(\d+)/)[1];
                 const attrs = {
-                  aid
+                  aid,
                 };
                 props.replaceSelf(
                   `\`@crossnote.bilibili ${JSON.stringify(attrs)
                     .replace(/^{/, "")
-                    .replace(/}$/, "")}\``
+                    .replace(/}$/, "")}\``,
                 );
               } else if (url && url.match(/\/BV(.+?)($|\/|\?)/)) {
                 const bvid = url.match(/\/BV(.+?)($|\/|\?)/)[1];
                 const attrs = {
-                  bvid
+                  bvid,
                 };
                 props.replaceSelf(
                   `\`@crossnote.bilibili ${JSON.stringify(attrs)
                     .replace(/^{/, "")
-                    .replace(/}$/, "")}\``
+                    .replace(/}$/, "")}\``,
                 );
               } else {
                 setError(t("widget/crossnote.bilibili/error_message"));
@@ -154,7 +154,7 @@ function BilibiliWidget(props: WidgetArgs) {
   );
 }
 
-export const BilibiliWidgetCreator: WidgetCreator = args => {
+export const BilibiliWidgetCreator: WidgetCreator = (args) => {
   const el = document.createElement("span");
   ReactDOM.render(<BilibiliWidget {...args}></BilibiliWidget>, el);
   return el;

@@ -13,23 +13,23 @@ const useStyles = makeStyles((theme: Theme) =>
       position: "relative",
       display: "flex",
       flexDirection: "column",
-      height: "100%"
+      height: "100%",
     },
     topPanel: {
-      padding: theme.spacing(1)
+      padding: theme.spacing(1),
     },
     row: {
       display: "flex",
-      alignItems: "center"
+      alignItems: "center",
     },
     sectionName: {
-      marginLeft: theme.spacing(1)
+      marginLeft: theme.spacing(1),
     },
     toc: {
       position: "relative",
       flex: "1",
       overflowY: "auto",
-      paddingBottom: theme.spacing(12)
+      paddingBottom: theme.spacing(12),
     },
     preview: {
       position: "relative",
@@ -43,11 +43,11 @@ const useStyles = makeStyles((theme: Theme) =>
       padding: theme.spacing(2),
       zIndex: previewZIndex,
       [theme.breakpoints.down("sm")]: {
-        padding: theme.spacing(1)
-      }
+        padding: theme.spacing(1),
+      },
       // gridArea: "2 / 2 / 3 / 3"
-    }
-  })
+    },
+  }),
 );
 
 interface Props {

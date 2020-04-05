@@ -9,7 +9,7 @@ import {
   Input,
   Tooltip,
   Switch,
-  FormControlLabel
+  FormControlLabel,
 } from "@material-ui/core";
 import { createStyles, makeStyles, Theme } from "@material-ui/core/styles";
 import clsx from "clsx";
@@ -22,30 +22,30 @@ const useStyles = makeStyles((theme: Theme) =>
   createStyles({
     card: {
       padding: theme.spacing(2),
-      position: "relative"
+      position: "relative",
     },
     actionButtons: {
       position: "absolute",
       top: "0",
-      right: "0"
+      right: "0",
     },
     section: {
-      marginTop: theme.spacing(2)
+      marginTop: theme.spacing(2),
     },
     dropArea: {
-      textAlign: "center",
-      padding: "24px",
-      border: "4px dotted #c7c7c7",
-      backgroundColor: "#f1f1f1",
-      cursor: "pointer",
+      "textAlign": "center",
+      "padding": "24px",
+      "border": "4px dotted #c7c7c7",
+      "backgroundColor": "#f1f1f1",
+      "cursor": "pointer",
       "&:hover": {
-        backgroundColor: "#eee"
-      }
+        backgroundColor: "#eee",
+      },
     },
     disabled: {
-      cursor: "not-allowed"
-    }
-  })
+      cursor: "not-allowed",
+    },
+  }),
 );
 
 function ImageWidget(props: WidgetArgs) {
@@ -61,7 +61,7 @@ function ImageWidget(props: WidgetArgs) {
     e.preventDefault();
     e.stopPropagation();
     if (!imageUploaderElement || uploadingImages) return;
-    imageUploaderElement.onchange = function(event) {
+    imageUploaderElement.onchange = function (event) {
       const target = event.target as any;
       const files = target.files || [];
       new Noty({
@@ -69,13 +69,13 @@ function ImageWidget(props: WidgetArgs) {
         text: t("utils/uploading-image"),
         layout: "topRight",
         theme: "relax",
-        timeout: 2000
+        timeout: 2000,
       }).show();
       setUploadingImages(true);
       smmsUploadImages(files)
-        .then(urls => {
+        .then((urls) => {
           let markdown = ``;
-          urls.forEach(url => {
+          urls.forEach((url) => {
             markdown = markdown + `![](${url})  \n`;
           });
           props.replaceSelf(markdown);
@@ -88,7 +88,7 @@ function ImageWidget(props: WidgetArgs) {
             text: t("utils/upload-image-failure"),
             layout: "topRight",
             theme: "relax",
-            timeout: 2000
+            timeout: 2000,
           }).show();
         });
     };
@@ -120,10 +120,10 @@ function ImageWidget(props: WidgetArgs) {
             margin={"dense"}
             placeholder={t("widget/crossnote.image/image-url-placeholder")}
             value={url}
-            onChange={event => {
+            onChange={(event) => {
               setURL(event.target.value);
             }}
-            onKeyDown={event => {
+            onKeyDown={(event) => {
               if (event.which === 13) {
                 props.replaceSelf(`![](${url})\n`);
               }
@@ -139,7 +139,7 @@ function ImageWidget(props: WidgetArgs) {
         <Box
           className={clsx(
             classes.dropArea,
-            uploadingImages ? classes.disabled : null
+            uploadingImages ? classes.disabled : null,
           )}
           onClick={clickDropArea}
         >
@@ -167,7 +167,7 @@ function ImageWidget(props: WidgetArgs) {
   );
 }
 
-export const ImageWidgetCreator: WidgetCreator = args => {
+export const ImageWidgetCreator: WidgetCreator = (args) => {
   const el = document.createElement("span");
   ReactDOM.render(<ImageWidget {...args}></ImageWidget>, el);
   return el;

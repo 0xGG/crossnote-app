@@ -10,7 +10,7 @@ import {
   Button,
   Dialog,
   DialogContent,
-  DialogActions
+  DialogActions,
 } from "@material-ui/core";
 import { createStyles, makeStyles, Theme } from "@material-ui/core/styles";
 import clsx from "clsx";
@@ -21,7 +21,7 @@ import {
   Cancel,
   Plus,
   TrashCan,
-  Pencil
+  Pencil,
 } from "mdi-material-ui";
 import { useTranslation } from "react-i18next";
 
@@ -38,7 +38,7 @@ const useStyles = makeStyles((theme: Theme) =>
       maxWidth: "100%",
       display: "flex",
       alignItems: "center",
-      justifyContent: "space-between"
+      justifyContent: "space-between",
     },
     kanbanCard: {
       width: "256px",
@@ -46,24 +46,24 @@ const useStyles = makeStyles((theme: Theme) =>
       position: "relative",
       [theme.breakpoints.down("sm")]: {
         marginTop: "4px",
-        marginBottom: "4px"
-      }
+        marginBottom: "4px",
+      },
     },
     editorWrapper: {
       // height: "160px",
       // border: "2px solid #96c3e6",
       "& .CodeMirror-gutters": {
-        display: "none"
-      }
+        display: "none",
+      },
     },
     textarea: {
       width: "100%",
-      height: "100%"
+      height: "100%",
     },
     preview: {
-      padding: theme.spacing(2)
-    }
-  })
+      padding: theme.spacing(2),
+    },
+  }),
 );
 
 interface KanbanCard {
@@ -114,13 +114,13 @@ function KanbanColumnHeaderDisplay(props: KanbanColumnHeaderProps) {
         {clickedTitle ? (
           <TextField
             value={titleValue}
-            onChange={event => {
+            onChange={(event) => {
               setTitleValue(event.target.value);
             }}
             onBlur={() => {
               setClickedTitle(false);
             }}
-            onKeyUp={event => {
+            onKeyUp={(event) => {
               if (event.which === 13) {
                 setClickedTitle(false);
               }
@@ -147,7 +147,7 @@ function KanbanColumnHeaderDisplay(props: KanbanColumnHeaderProps) {
               const card: KanbanCard = {
                 id: Date.now(),
                 title: "", //"Card " + column.cards.length,
-                description: t("general/empty")
+                description: t("general/empty"),
               };
               if (column) {
                 column.cards.push(card);
@@ -159,7 +159,7 @@ function KanbanColumnHeaderDisplay(props: KanbanColumnHeaderProps) {
           </IconButton>
           <IconButton
             onClick={() => {
-              board.columns = board.columns.filter(l => column.id !== l.id);
+              board.columns = board.columns.filter((l) => column.id !== l.id);
               props.refreshBoard(board);
             }}
           >
@@ -183,7 +183,7 @@ function KanbanCardDisplay(props: KanbanCardProps) {
   const card = props.card;
   const isPreview = props.isPreview;
   const [textAreaElement, setTextAreaElement] = useState<HTMLTextAreaElement>(
-    null
+    null,
   );
   const [previewElement, setPreviewElement] = React.useState<HTMLElement>(null);
 
@@ -201,9 +201,9 @@ function KanbanCardDisplay(props: KanbanCardProps) {
       const editor: CodeMirrorEditor = VickyMD.fromTextArea(textAreaElement, {
         mode: {
           name: "hypermd",
-          hashtag: true
+          hashtag: true,
         },
-        inputStyle: "textarea"
+        inputStyle: "textarea",
         // autofocus: false
       });
       editor.setValue(card.description);
@@ -250,8 +250,8 @@ function KanbanCardDisplay(props: KanbanCardProps) {
           </IconButton>
           <IconButton
             onClick={() => {
-              board.columns.forEach(column => {
-                column.cards = column.cards.filter(c => c.id !== card.id);
+              board.columns.forEach((column) => {
+                column.cards = column.cards.filter((c) => c.id !== card.id);
               });
               props.refreshBoard(board);
             }}
@@ -310,8 +310,8 @@ function KanbanWidget(props: WidgetArgs) {
   const { t } = useTranslation();
   const [board, setBoard] = useState<KanbanBoard>(
     props.attributes["board"] || {
-      columns: []
-    }
+      columns: [],
+    },
   );
 
   if ("lanes" in (board as any)) {
@@ -358,7 +358,7 @@ function KanbanWidget(props: WidgetArgs) {
                     id: Date.now(),
                     title: t("general/untitled"),
                     cards: [],
-                    wip: false
+                    wip: false,
                   });
                   refreshBoard(board);
                 }}
@@ -382,19 +382,19 @@ function KanbanWidget(props: WidgetArgs) {
         onCardDragEnd={(
           card: KanbanCard,
           source: { fromPosition: number; fromColumnId: number },
-          destination: { toPosition: number; toColumnId: number }
+          destination: { toPosition: number; toColumnId: number },
         ) => {
           const { fromPosition, fromColumnId } = source;
           let { toPosition, toColumnId } = destination;
           const fromColumn = board.columns.filter(
-            l => l.id === fromColumnId
+            (l) => l.id === fromColumnId,
           )[0];
-          const toColumn = board.columns.filter(l => l.id === toColumnId)[0];
+          const toColumn = board.columns.filter((l) => l.id === toColumnId)[0];
           fromColumn.cards.splice(fromPosition, 1);
           toColumn.cards = [
             ...toColumn.cards.slice(0, toPosition),
             card,
-            ...toColumn.cards.slice(toPosition, toColumn.cards.length)
+            ...toColumn.cards.slice(toPosition, toColumn.cards.length),
           ];
 
           refreshBoard(board);
@@ -402,7 +402,7 @@ function KanbanWidget(props: WidgetArgs) {
         onColumnDragEnd={(
           b: KanbanBoard,
           source: { fromPosition: number },
-          destination: { toPosition: number }
+          destination: { toPosition: number },
         ) => {
           const fromPosition: number = source.fromPosition;
           const toPosition: number = destination.toPosition;
@@ -419,7 +419,7 @@ function KanbanWidget(props: WidgetArgs) {
   );
 }
 
-export const KanbanWidgetCreator: WidgetCreator = args => {
+export const KanbanWidgetCreator: WidgetCreator = (args) => {
   const el = document.createElement("span");
   ReactDOM.render(<KanbanWidget {...args}></KanbanWidget>, el);
   return el;

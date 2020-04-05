@@ -18,7 +18,7 @@ const subscriptionClient = new SubscriptionClient(
 export const GraphQLClient = createClient({
   url: getGraphQLEndpoint(),
   exchanges: [
-    ...defaultExchanges
+    ...defaultExchanges,
     // Disable subscriptions for now
     /*
     subscriptionExchange({
@@ -28,7 +28,7 @@ export const GraphQLClient = createClient({
   fetchOptions: {
     cache: "no-cache",
     headers: {
-      Authorization: `Bearer ${localStorage.getItem("token")}`
-    }
-  }
+      Authorization: `Bearer ${localStorage.getItem("token")}`,
+    },
+  },
 });

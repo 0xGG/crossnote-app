@@ -7,10 +7,10 @@ export function initMathPreview(cm: CodeMirror.Editor) {
 
   win.closeBtn.addEventListener(
     "click",
-    function() {
+    function () {
       supressed = true; // for current TeX block
     },
-    false
+    false,
   );
 
   function updatePreview(expr: string) {
@@ -20,9 +20,9 @@ export function initMathPreview(cm: CodeMirror.Editor) {
       // initialize renderer and preview window
       mathRenderer = cm.hmd.FoldMath.createRenderer(
         document.getElementById("math-preview-content"),
-        "display"
+        "display",
       );
-      mathRenderer.onChanged = function() {
+      mathRenderer.onChanged = function () {
         // finished rendering. show the window
         if (!win.visible) {
           var cursorPos = cm.charCoords(cm.getCursor(), "window");
@@ -47,6 +47,6 @@ export function initMathPreview(cm: CodeMirror.Editor) {
 
   cm.setOption("hmdFoldMath", {
     onPreview: updatePreview,
-    onPreviewEnd: hidePreview
+    onPreviewEnd: hidePreview,
   });
 }

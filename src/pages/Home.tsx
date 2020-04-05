@@ -70,15 +70,15 @@ const useStyles = makeStyles((theme: Theme) =>
       justifyContent: "space-between",
     },
     search: {
-      position: "relative",
-      borderRadius: theme.shape.borderRadius,
-      backgroundColor: fade(theme.palette.common.white, 0.15),
+      "position": "relative",
+      "borderRadius": theme.shape.borderRadius,
+      "backgroundColor": fade(theme.palette.common.white, 0.15),
       "&:hover": {
         backgroundColor: fade(theme.palette.common.white, 0.25),
       },
-      marginRight: theme.spacing(2),
-      marginLeft: 0,
-      width: "100%",
+      "marginRight": theme.spacing(2),
+      "marginLeft": 0,
+      "width": "100%",
       [theme.breakpoints.up("sm")]: {
         marginLeft: theme.spacing(3),
         width: "auto",
@@ -173,7 +173,7 @@ const useStyles = makeStyles((theme: Theme) =>
       },
     },
     toolBarSpace: theme.mixins.toolbar,
-  })
+  }),
 );
 
 interface QueryParams {
@@ -193,7 +193,7 @@ export function Home(props: Props) {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("xs"));
   const [addNotebookDialogOpen, setAddNotebookDialogOpen] = useState<boolean>(
-    false
+    false,
   );
   const [addNotebookRepo, setAddNotebookRepo] = useState<string>("");
   const [addNotebookBranch, setAddNotebookBranch] = useState<string>("");
@@ -222,7 +222,7 @@ export function Home(props: Props) {
         if (notebookID) {
           const filePath = decodeURIComponent(props.queryParams.filePath || "");
           const notebook = crossnoteContainer.notebooks.find(
-            (nb) => nb._id === notebookID
+            (nb) => nb._id === notebookID,
           );
           if (notebook && crossnoteContainer.selectedNotebook !== notebook) {
             crossnoteContainer.setSelectedNotebook(notebook);
@@ -240,7 +240,7 @@ export function Home(props: Props) {
           const branch = decodeURIComponent(props.queryParams.branch || "");
           const filePath = decodeURIComponent(props.queryParams.filePath || "");
           const notebook = crossnoteContainer.notebooks.find(
-            (nb) => nb.gitURL === repo && nb.gitBranch === branch
+            (nb) => nb.gitURL === repo && nb.gitBranch === branch,
           );
           if (notebook) {
             if (crossnoteContainer.selectedNotebook !== notebook) {
@@ -298,9 +298,9 @@ export function Home(props: Props) {
                   "data:image/png;base64," +
                     new Identicon(
                       sha256(
-                        cloudContainer.viewer && cloudContainer.viewer.username
+                        cloudContainer.viewer && cloudContainer.viewer.username,
                       ),
-                      80
+                      80,
                     ).toString()
                 }
               ></Avatar>

@@ -5,7 +5,7 @@ import {
   useNotificationsQuery,
   Notification,
   useDeleteNotificationMutation,
-  useDeleteAllNotificationsMutation
+  useDeleteAllNotificationsMutation,
 } from "../generated/graphql";
 import { EmptyPageInfo } from "../utilities/note";
 import Noty from "noty";
@@ -21,29 +21,29 @@ function useNotificationsContainer(initialState: InitialState) {
       before: pageInfo.startCursor,
       after: pageInfo.endCursor,
       first: 0,
-      last: 20
+      last: 20,
     },
     requestPolicy: "network-only",
-    pause: true
+    pause: true,
   });
   const [
     resDeleteNotification,
-    executeDeleteNotificationMutation
+    executeDeleteNotificationMutation,
   ] = useDeleteNotificationMutation();
   const [
     resDeleteAllNotifications,
-    executeDeleteAllNotificationsMutation
+    executeDeleteAllNotificationsMutation,
   ] = useDeleteAllNotificationsMutation();
 
   const fetchMoreNotifications = useCallback(() => {
     executeNotificationsQuery({
-      requestPolicy: "network-only"
+      requestPolicy: "network-only",
     });
   }, [executeNotificationsQuery]);
 
   const deleteNotification = useCallback(
     (notificationID: string) => {
-      setNotifications(notifications => {
+      setNotifications((notifications) => {
         if (
           pageInfo.hasPreviousPage &&
           pageInfo.startCursor === notificationID
@@ -54,17 +54,17 @@ function useNotificationsContainer(initialState: InitialState) {
               startCursor: notification.id,
               endCursor: pageInfo.endCursor,
               hasPreviousPage: pageInfo.hasPreviousPage,
-              hasNextPage: pageInfo.hasNextPage
+              hasNextPage: pageInfo.hasNextPage,
             });
           }
         }
-        return notifications.filter(n => n.id !== notificationID);
+        return notifications.filter((n) => n.id !== notificationID);
       });
       executeDeleteNotificationMutation({
-        notificationID: notificationID
+        notificationID: notificationID,
       });
     },
-    [executeDeleteNotificationMutation, pageInfo]
+    [executeDeleteNotificationMutation, pageInfo],
   );
 
   const deleteAllNotifications = useCallback(() => {
@@ -98,7 +98,7 @@ function useNotificationsContainer(initialState: InitialState) {
       const pageInfo = ns.pageInfo;
       const edges = ns.edges;
       const newNotifications = (edges || [])
-        .map(edge => {
+        .map((edge) => {
           if (edge) {
             return edge.node as any;
           } else {
@@ -106,12 +106,12 @@ function useNotificationsContainer(initialState: InitialState) {
           }
         })
         .reverse()
-        .filter(x => x);
-      setNotifications(notifications =>
+        .filter((x) => x);
+      setNotifications((notifications) =>
         [...notifications, ...newNotifications].filter(
           (notification, index, self) =>
-            index === self.findIndex(m => m.id === notification.id)
-        )
+            index === self.findIndex((m) => m.id === notification.id),
+        ),
       );
       setPageInfo(pageInfo);
     }
@@ -125,7 +125,7 @@ function useNotificationsContainer(initialState: InitialState) {
         text: resDeleteNotification.error.message,
         layout: "topRight",
         theme: "relax",
-        timeout: 2000
+        timeout: 2000,
       }).show();
     } else if (
       resDeleteNotification.data &&
@@ -142,7 +142,7 @@ function useNotificationsContainer(initialState: InitialState) {
         text: resDeleteAllNotifications.error.message,
         layout: "topRight",
         theme: "relax",
-        timeout: 2000
+        timeout: 2000,
       }).show();
     } else if (
       resDeleteAllNotifications.data &&
@@ -167,10 +167,10 @@ function useNotificationsContainer(initialState: InitialState) {
     fetchMoreNotifications,
     deleteNotification,
     deleteAllNotifications,
-    refresh
+    refresh,
   };
 }
 
 export const NotificationsContainer = createContainer(
-  useNotificationsContainer
+  useNotificationsContainer,
 );

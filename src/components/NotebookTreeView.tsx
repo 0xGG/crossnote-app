@@ -7,7 +7,7 @@ import { ChevronRight, ChevronDown } from "mdi-material-ui";
 import {
   CrossnoteContainer,
   SelectedSectionType,
-  HomeSection
+  HomeSection,
 } from "../containers/crossnote";
 import { useTranslation } from "react-i18next";
 import { Directory, Notebook, TagNode } from "../lib/crossnote";
@@ -16,53 +16,53 @@ import { browserHistory } from "../utilities/history";
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
     treeItemRoot: {
-      paddingLeft: "4px",
+      "paddingLeft": "4px",
       // color: theme.palette.text.secondary,
       "&:focus > $treeItemContent": {
         color: "#1a73e8",
-        backgroundColor: "#e8f0fe" //theme.palette.primary.main
+        backgroundColor: "#e8f0fe", //theme.palette.primary.main
         // backgroundColor: `var(--tree-view-bg-color, ${theme.palette.grey[400]})`,
         // color: "var(--tree-view-color)"
       },
       "&:focus > $treeItemLabelIcon": {
-        color: "#1a73e8"
-      }
+        color: "#1a73e8",
+      },
     },
     treeItemContent: {
-      cursor: "default",
-      color: theme.palette.text.primary,
+      "cursor": "default",
+      "color": theme.palette.text.primary,
       // paddingLeft: theme.spacing(1),
       // paddingRight: theme.spacing(1),
-      userSelect: "none",
-      fontWeight: theme.typography.fontWeightMedium,
+      "userSelect": "none",
+      "fontWeight": theme.typography.fontWeightMedium,
       "$treeItemExpanded > &": {
-        fontWeight: theme.typography.fontWeightRegular
-      }
+        fontWeight: theme.typography.fontWeightRegular,
+      },
     },
     treeItemGroup: {
-      marginLeft: 0,
+      "marginLeft": 0,
       "& $treeItemContent": {
         // paddingLeft: theme.spacing(2)
-      }
+      },
     },
     treeItemExpanded: {},
     treeItemLabel: {
       fontWeight: "inherit",
-      color: "inherit"
+      color: "inherit",
     },
     treeItemLabelRoot: {
       display: "flex",
       alignItems: "center",
-      padding: theme.spacing(1, 0)
+      padding: theme.spacing(1, 0),
     },
     treeItemLabelIcon: {
-      color: "rgba(0, 0, 0, 0.54)"
+      color: "rgba(0, 0, 0, 0.54)",
     },
     treeItemLabelText: {
       paddingLeft: "12px",
-      flexGrow: 1
-    }
-  })
+      flexGrow: 1,
+    },
+  }),
 );
 
 interface Props {
@@ -93,18 +93,18 @@ export default function NotebookTreeView(props: Props) {
         setExpanded(nodes);
       }
     },
-    [props.notebook]
+    [props.notebook],
   );
 
   const constructDirectoryTreeItems: (directory: Directory) => any = (
-    directory: Directory
+    directory: Directory,
   ) => {
     if (directory.name === ".") {
       if (directory.children.length === 0) {
         return null;
       }
       return (
-        <>{directory.children.map(dir => constructDirectoryTreeItems(dir))}</>
+        <>{directory.children.map((dir) => constructDirectoryTreeItems(dir))}</>
       );
     } else {
       return (
@@ -115,7 +115,7 @@ export default function NotebookTreeView(props: Props) {
             content: classes.treeItemContent,
             expanded: classes.treeItemExpanded,
             group: classes.treeItemGroup,
-            label: classes.treeItemLabel
+            label: classes.treeItemLabel,
           }}
           endIcon={<div style={{ width: 24 }}></div>}
           key={directory.name}
@@ -124,7 +124,7 @@ export default function NotebookTreeView(props: Props) {
               onClick={() => {
                 crossnoteContainer.setSelectedSection({
                   type: SelectedSectionType.Directory,
-                  path: directory.path
+                  path: directory.path,
                 });
               }}
               className={clsx(classes.treeItemLabelRoot)}
@@ -142,21 +142,21 @@ export default function NotebookTreeView(props: Props) {
             </Box>
           }
         >
-          {directory.children.map(dir => constructDirectoryTreeItems(dir))}
+          {directory.children.map((dir) => constructDirectoryTreeItems(dir))}
         </TreeItem>
       );
     }
   };
 
   const constructTagNodeTreeItems: (tagNode: TagNode) => any = (
-    tagNode: TagNode
+    tagNode: TagNode,
   ) => {
     if (tagNode.name === ".") {
       if (tagNode.children.length === 0) {
         return null;
       }
       return (
-        <>{tagNode.children.map(node => constructTagNodeTreeItems(node))}</>
+        <>{tagNode.children.map((node) => constructTagNodeTreeItems(node))}</>
       );
     } else {
       return (
@@ -167,7 +167,7 @@ export default function NotebookTreeView(props: Props) {
             content: classes.treeItemContent,
             expanded: classes.treeItemExpanded,
             group: classes.treeItemGroup,
-            label: classes.treeItemLabel
+            label: classes.treeItemLabel,
           }}
           endIcon={<div style={{ width: 24 }}></div>}
           key={tagNode.path}
@@ -176,7 +176,7 @@ export default function NotebookTreeView(props: Props) {
               onClick={() => {
                 crossnoteContainer.setSelectedSection({
                   type: SelectedSectionType.Tag,
-                  path: tagNode.path
+                  path: tagNode.path,
                 });
               }}
               className={clsx(classes.treeItemLabelRoot)}
@@ -194,7 +194,7 @@ export default function NotebookTreeView(props: Props) {
             </Box>
           }
         >
-          {tagNode.children.map(dir => constructTagNodeTreeItems(dir))}
+          {tagNode.children.map((dir) => constructTagNodeTreeItems(dir))}
         </TreeItem>
       );
     }
@@ -238,14 +238,14 @@ export default function NotebookTreeView(props: Props) {
           content: classes.treeItemContent,
           expanded: classes.treeItemExpanded,
           group: classes.treeItemGroup,
-          label: classes.treeItemLabel
+          label: classes.treeItemLabel,
         }}
         label={
           <Box
             onClick={() => {
               crossnoteContainer.setSelectedNotebook(props.notebook);
               crossnoteContainer.setSelectedSection({
-                type: SelectedSectionType.Notes
+                type: SelectedSectionType.Notes,
               });
             }}
             className={clsx(classes.treeItemLabelRoot)}
@@ -274,13 +274,13 @@ export default function NotebookTreeView(props: Props) {
             content: classes.treeItemContent,
             expanded: classes.treeItemExpanded,
             group: classes.treeItemGroup,
-            label: classes.treeItemLabel
+            label: classes.treeItemLabel,
           }}
           label={
             <Box
               onClick={() => {
                 crossnoteContainer.setSelectedSection({
-                  type: SelectedSectionType.Today
+                  type: SelectedSectionType.Today,
                 });
               }}
               className={clsx(classes.treeItemLabelRoot)}
@@ -301,13 +301,13 @@ export default function NotebookTreeView(props: Props) {
             content: classes.treeItemContent,
             expanded: classes.treeItemExpanded,
             group: classes.treeItemGroup,
-            label: classes.treeItemLabel
+            label: classes.treeItemLabel,
           }}
           label={
             <Box
               onClick={() => {
                 crossnoteContainer.setSelectedSection({
-                  type: SelectedSectionType.Todo
+                  type: SelectedSectionType.Todo,
                 });
               }}
               className={clsx(classes.treeItemLabelRoot)}
@@ -328,13 +328,13 @@ export default function NotebookTreeView(props: Props) {
             content: classes.treeItemContent,
             expanded: classes.treeItemExpanded,
             group: classes.treeItemGroup,
-            label: classes.treeItemLabel
+            label: classes.treeItemLabel,
           }}
           label={
             <Box
               onClick={() => {
                 crossnoteContainer.setSelectedSection({
-                  type: SelectedSectionType.Notes
+                  type: SelectedSectionType.Notes,
                 });
               }}
               className={clsx(classes.treeItemLabelRoot)}
@@ -358,13 +358,13 @@ export default function NotebookTreeView(props: Props) {
               content: classes.treeItemContent,
               expanded: classes.treeItemExpanded,
               group: classes.treeItemGroup,
-              label: classes.treeItemLabel
+              label: classes.treeItemLabel,
             }}
             label={
               <Box
                 onClick={() => {
                   crossnoteContainer.setSelectedSection({
-                    type: SelectedSectionType.Wiki
+                    type: SelectedSectionType.Wiki,
                   });
                 }}
                 className={clsx(classes.treeItemLabelRoot)}
@@ -388,13 +388,13 @@ export default function NotebookTreeView(props: Props) {
             content: classes.treeItemContent,
             expanded: classes.treeItemExpanded,
             group: classes.treeItemGroup,
-            label: classes.treeItemLabel
+            label: classes.treeItemLabel,
           }}
           label={
             <Box
               onClick={() => {
                 crossnoteContainer.setSelectedSection({
-                  type: SelectedSectionType.Tagged
+                  type: SelectedSectionType.Tagged,
                 });
               }}
               className={clsx(classes.treeItemLabelRoot)}
@@ -417,13 +417,13 @@ export default function NotebookTreeView(props: Props) {
             content: classes.treeItemContent,
             expanded: classes.treeItemExpanded,
             group: classes.treeItemGroup,
-            label: classes.treeItemLabel
+            label: classes.treeItemLabel,
           }}
           label={
             <Box
               onClick={() => {
                 crossnoteContainer.setSelectedSection({
-                  type: SelectedSectionType.Untagged
+                  type: SelectedSectionType.Untagged,
                 });
               }}
               className={clsx(classes.treeItemLabelRoot)}
@@ -444,13 +444,13 @@ export default function NotebookTreeView(props: Props) {
             content: classes.treeItemContent,
             expanded: classes.treeItemExpanded,
             group: classes.treeItemGroup,
-            label: classes.treeItemLabel
+            label: classes.treeItemLabel,
           }}
           label={
             <Box
               onClick={() => {
                 crossnoteContainer.setSelectedSection({
-                  type: SelectedSectionType.Encrypted
+                  type: SelectedSectionType.Encrypted,
                 });
               }}
               className={clsx(classes.treeItemLabelRoot)}
@@ -471,13 +471,13 @@ export default function NotebookTreeView(props: Props) {
             content: classes.treeItemContent,
             expanded: classes.treeItemExpanded,
             group: classes.treeItemGroup,
-            label: classes.treeItemLabel
+            label: classes.treeItemLabel,
           }}
           label={
             <Box
               onClick={() => {
                 crossnoteContainer.setSelectedSection({
-                  type: SelectedSectionType.Conflicted
+                  type: SelectedSectionType.Conflicted,
                 });
               }}
               className={clsx(classes.treeItemLabelRoot)}

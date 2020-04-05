@@ -7,7 +7,7 @@ import {
   Popover,
   Chip,
   Dialog,
-  Tooltip
+  Tooltip,
 } from "@material-ui/core";
 import { createStyles, makeStyles, Theme } from "@material-ui/core/styles";
 import clsx from "clsx";
@@ -26,7 +26,7 @@ import {
   useAddReactionToCommentWidgetMessageMutation,
   useRemoveReactionFromCommentWidgetMessageMutation,
   CommentWidgetFieldsFragment,
-  CommentWidgetMessageFieldsFragment
+  CommentWidgetMessageFieldsFragment,
 } from "../../../generated/graphql";
 import { globalContainers } from "../../../containers/global";
 
@@ -34,20 +34,20 @@ const messageMarginLeft = 48;
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
     chatMessage: {
-      width: "100%",
-      paddingLeft: theme.spacing(2),
-      paddingRight: theme.spacing(2),
-      boxSizing: "border-box",
-      cursor: "pointer",
+      "width": "100%",
+      "paddingLeft": theme.spacing(2),
+      "paddingRight": theme.spacing(2),
+      "boxSizing": "border-box",
+      "cursor": "pointer",
       "&:first-child": {
-        marginTop: theme.spacing(2)
+        marginTop: theme.spacing(2),
       },
       "&:hover": {
-        backgroundColor: "#f6f6f6"
+        backgroundColor: "#f6f6f6",
       },
       "&:hover .preview": {
-        backgroundColor: "#f6f6f6 !important"
-      }
+        backgroundColor: "#f6f6f6 !important",
+      },
     },
     avatarPanel: {
       display: "grid",
@@ -55,50 +55,50 @@ const useStyles = makeStyles((theme: Theme) =>
                           "avatar time"`,
       justifyContent: "start",
       alignItems: "center",
-      gridColumnGap: theme.spacing(2)
+      gridColumnGap: theme.spacing(2),
     },
     avatar: {
       borderRadius: "4px",
       width: "32px",
       height: "32px",
       gridArea: "avatar",
-      cursor: "pointer"
+      cursor: "pointer",
     },
     username: {
-      gridArea: "username"
+      gridArea: "username",
     },
     time: {
-      gridArea: "time"
+      gridArea: "time",
     },
     message: {
-      marginLeft: `${messageMarginLeft}px`,
-      cursor: "pointer",
+      "marginLeft": `${messageMarginLeft}px`,
+      "cursor": "pointer",
       "&:hover": {
-        backgroundColor: "#f6f6f6 !important"
-      }
+        backgroundColor: "#f6f6f6 !important",
+      },
     },
     reactions: {
       marginLeft: `${messageMarginLeft}px`,
-      marginBottom: theme.spacing(2)
+      marginBottom: theme.spacing(2),
     },
     singleTime: {
-      marginLeft: `${messageMarginLeft}px`
+      marginLeft: `${messageMarginLeft}px`,
     },
     modifiedCaption: {
-      marginLeft: `${messageMarginLeft}px`
+      marginLeft: `${messageMarginLeft}px`,
     },
     reactionChip: {
-      marginBottom: "2px",
+      "marginBottom": "2px",
       "&:hover": {
-        cursor: "pointer"
-      }
-    }
-  })
+        cursor: "pointer",
+      },
+    },
+  }),
 );
 
 const actionBtnClass = {
   width: "20px",
-  height: "20px"
+  height: "20px",
 };
 
 interface Props {
@@ -116,11 +116,11 @@ export function CommentMessage(props: Props) {
   const [emojiPickerOpen, setEmojiPickerOpen] = useState<boolean>(false);
   const [
     resAddReactionToCommentWidgetMessage,
-    executeAddReactionToCommentWidgetMessageMutation
+    executeAddReactionToCommentWidgetMessageMutation,
   ] = useAddReactionToCommentWidgetMessageMutation();
   const [
     resRemoveReactionFromCommentWidgetMessage,
-    executeRemoveReactionFromCommentWidgetMessageMutation
+    executeRemoveReactionFromCommentWidgetMessageMutation,
   ] = useRemoveReactionFromCommentWidgetMessageMutation();
   const [forceUpdate, setForceUpdate] = useState<number>(Date.now());
   const { t } = useTranslation();
@@ -133,7 +133,7 @@ export function CommentMessage(props: Props) {
         text: resAddReactionToCommentWidgetMessage.error.message,
         layout: "topRight",
         theme: "relax",
-        timeout: 2000
+        timeout: 2000,
       }).show();
     }
   }, [resAddReactionToCommentWidgetMessage]);
@@ -145,7 +145,7 @@ export function CommentMessage(props: Props) {
         text: resRemoveReactionFromCommentWidgetMessage.error.message,
         layout: "topRight",
         theme: "relax",
-        timeout: 2000
+        timeout: 2000,
       }).show();
     }
   }, [resRemoveReactionFromCommentWidgetMessage]);
@@ -184,9 +184,9 @@ export function CommentMessage(props: Props) {
         {
           reaction: reaction,
           count: 1,
-          selfAuthored: true
+          selfAuthored: true,
         },
-        ...message.reactionSummaries
+        ...message.reactionSummaries,
       ];
     }
     setForceUpdate(Date.now());
@@ -225,8 +225,8 @@ export function CommentMessage(props: Props) {
           >
             {formatRelative(new Date(message.createdAt), new Date(), {
               locale: languageCodeToDateFNSLocale(
-                globalContainers.settingsContainer.language
-              )
+                globalContainers.settingsContainer.language,
+              ),
             })}
           </Typography>
         </Box>
@@ -244,8 +244,8 @@ export function CommentMessage(props: Props) {
         >
           {formatRelative(new Date(message.createdAt), new Date(), {
             locale: languageCodeToDateFNSLocale(
-              globalContainers.settingsContainer.language
-            )
+              globalContainers.settingsContainer.language,
+            ),
           })}
         </Typography>
       ) : null}
@@ -277,7 +277,7 @@ export function CommentMessage(props: Props) {
             }
             return x.count * weightX - y.count * weightY;
           })
-          .map(reactionSummary => {
+          .map((reactionSummary) => {
             return (
               <Chip
                 variant={reactionSummary.selfAuthored ? "default" : "outlined"}
@@ -293,7 +293,7 @@ export function CommentMessage(props: Props) {
                   } else if (reactionSummary.selfAuthored) {
                     executeRemoveReactionFromCommentWidgetMessageMutation({
                       messageID: message.id,
-                      reaction: reactionSummary.reaction
+                      reaction: reactionSummary.reaction,
                     });
                     reactionSummary.selfAuthored = false;
                     reactionSummary.count -= 1; // TODO: Should we remove the reaction if it reaches 0?
@@ -301,7 +301,7 @@ export function CommentMessage(props: Props) {
                   } else {
                     executeAddReactionToCommentWidgetMessageMutation({
                       messageID: message.id,
-                      reaction: reactionSummary.reaction
+                      reaction: reactionSummary.reaction,
                     });
                     updateReactionSummaries(reactionSummary.reaction);
                   }
@@ -322,11 +322,11 @@ export function CommentMessage(props: Props) {
         onClose={handleClose}
         anchorOrigin={{
           vertical: "bottom",
-          horizontal: "center"
+          horizontal: "center",
         }}
         transformOrigin={{
           vertical: "top",
-          horizontal: "center"
+          horizontal: "center",
         }}
       >
         <Card>
@@ -359,7 +359,7 @@ export function CommentMessage(props: Props) {
         <EmojiPicker
           emoji={""}
           showSkinTones={false /* Disable skin for now */}
-          onSelect={data => {
+          onSelect={(data) => {
             if (!globalContainers.cloudContainer.loggedIn) {
               setEmojiPickerOpen(false);
               globalContainers.cloudContainer.setAuthDialogOpen(true);
@@ -367,7 +367,7 @@ export function CommentMessage(props: Props) {
               setEmojiPickerOpen(false);
               executeAddReactionToCommentWidgetMessageMutation({
                 messageID: message.id,
-                reaction: data.colons
+                reaction: data.colons,
               });
               updateReactionSummaries(data.colons);
               handleClose();

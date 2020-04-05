@@ -4,6 +4,6 @@ import { blue, orange } from "@material-ui/core/colors";
 export const crossnoteTheme = createMuiTheme({
   palette: {
     primary: blue,
-    secondary: orange
-  }
+    secondary: orange,
+  },
 });

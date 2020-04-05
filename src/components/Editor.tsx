@@ -124,8 +124,8 @@ const useStyles = makeStyles((theme: Theme) =>
     },
     editorWrapper: {
       //     display: "contents",
-      flex: 1,
-      overflow: "auto",
+      "flex": 1,
+      "overflow": "auto",
       "& .CodeMirror-gutters": {
         display: "none",
       },
@@ -186,8 +186,8 @@ const useStyles = makeStyles((theme: Theme) =>
       },
     },
     menuItemOverride: {
-      cursor: "default",
-      padding: `0 0 0 ${theme.spacing(2)}px`,
+      "cursor": "default",
+      "padding": `0 0 0 ${theme.spacing(2)}px`,
       "&:hover": {
         backgroundColor: "inherit",
       },
@@ -225,7 +225,7 @@ const useStyles = makeStyles((theme: Theme) =>
     floatWinClose: {
       color: "#eee",
     },
-  })
+  }),
 );
 
 interface CursorPosition {
@@ -244,7 +244,7 @@ export default function Editor(props: Props) {
   const note = props.note;
   const classes = useStyles(props);
   const [textAreaElement, setTextAreaElement] = useState<HTMLTextAreaElement>(
-    null
+    null,
   );
   const [editor, setEditor] = useState<CodeMirrorEditor>(null);
   const [cursorPosition, setCursorPosition] = useState<CursorPosition>({
@@ -256,7 +256,7 @@ export default function Editor(props: Props) {
   const [pushDialogOpen, setPushDialogOpen] = useState<boolean>(false);
   const [previewElement, setPreviewElement] = useState<HTMLElement>(null);
   const [previewIsPresentation, setPreviewIsPresentation] = useState<boolean>(
-    false
+    false,
   );
   const [gitStatus, setGitStatus] = useState<string>("");
   const [fullScreenMode, setFullScreenMode] = useState<boolean>(false);
@@ -270,19 +270,19 @@ export default function Editor(props: Props) {
     string
   >("");
   const [decryptionDialogOpen, setDecryptionDialogOpen] = useState<boolean>(
-    false
+    false,
   );
   const [decryptionPassword, setDecryptionPassword] = useState<string>("");
   const [isDecrypted, setIsDecrypted] = useState<boolean>(false);
   const [needsToPrint, setNeedsToPrint] = useState<boolean>(false);
   const [editImageElement, setEditImageElement] = useState<HTMLImageElement>(
-    null
+    null,
   );
   const [editImageTextMarker, setEditImageTextMarker] = useState<TextMarker>(
-    null
+    null,
   );
   const [editImageDialogOpen, setEditImageDialogOpen] = useState<boolean>(
-    false
+    false,
   );
 
   const crossnoteContainer = CrossnoteContainer.useContainer();
@@ -374,7 +374,7 @@ export default function Editor(props: Props) {
         note.config.encryption ? decryptionPassword : "",
         (status) => {
           setGitStatus(status);
-        }
+        },
       );
       crossnoteContainer.updateNotebookTagNode();
       return newTagNames;
@@ -394,14 +394,14 @@ export default function Editor(props: Props) {
             note.config.encryption ? decryptionPassword : "",
             (status) => {
               setGitStatus(status);
-            }
+            },
           );
           crossnoteContainer.updateNotebookTagNode();
           return newTagNames;
         });
       }
     },
-    [note, editor, decryptionPassword, isDecrypted]
+    [note, editor, decryptionPassword, isDecrypted],
   );
 
   const toggleEncryption = useCallback(() => {
@@ -416,7 +416,7 @@ export default function Editor(props: Props) {
             try {
               const bytes = CryptoJS.AES.decrypt(
                 n.markdown.trim(),
-                toggleEncryptionPassword
+                toggleEncryptionPassword,
               );
               const json = JSON.parse(bytes.toString(CryptoJS.enc.Utf8));
               // Disable encryption
@@ -433,7 +433,7 @@ export default function Editor(props: Props) {
                   closeEncryptionDialog();
                   editor.setValue(json.markdown);
                   editor.setOption("readOnly", false);
-                }
+                },
               );
             } catch (error) {
               new Noty({
@@ -468,7 +468,7 @@ export default function Editor(props: Props) {
             setIsDecrypted(true);
             setGitStatus(status);
             closeEncryptionDialog();
-          }
+          },
         );
       }
     }
@@ -483,7 +483,7 @@ export default function Editor(props: Props) {
           try {
             const bytes = CryptoJS.AES.decrypt(
               n.markdown.trim(),
-              decryptionPassword
+              decryptionPassword,
             );
             const json = JSON.parse(bytes.toString(CryptoJS.enc.Utf8));
             editor.setOption("readOnly", false);
@@ -520,7 +520,7 @@ export default function Editor(props: Props) {
         note.config.encryption ? decryptionPassword : "",
         (status) => {
           setGitStatus(status);
-        }
+        },
       );
     }
   }, [note, editor, decryptionPassword, isDecrypted]);
@@ -535,7 +535,7 @@ export default function Editor(props: Props) {
       } else if (url.startsWith("/")) {
         let filePath = path.relative(
           note.notebook.dir,
-          path.resolve(note.notebook.dir, url.replace(/^\//, ""))
+          path.resolve(note.notebook.dir, url.replace(/^\//, "")),
         );
         crossnoteContainer.openNoteAtPath(filePath);
       } else {
@@ -543,13 +543,13 @@ export default function Editor(props: Props) {
           note.notebook.dir,
           path.resolve(
             path.dirname(path.resolve(note.notebook.dir, note.filePath)),
-            url
-          )
+            url,
+          ),
         );
         crossnoteContainer.openNoteAtPath(filePath);
       }
     },
-    [note, editor]
+    [note, editor],
   );
 
   useEffect(() => {
@@ -650,7 +650,7 @@ export default function Editor(props: Props) {
           (status) => {
             setGitStatus(status);
             setTagNames(note.config.tags || []); // After resolve conflicts
-          }
+          },
         );
       };
       editor.on("changes", changesHandler);
@@ -673,7 +673,7 @@ export default function Editor(props: Props) {
         const imageElement: HTMLImageElement = args.element;
         imageElement.setAttribute(
           "data-marker-position",
-          JSON.stringify(marker.find())
+          JSON.stringify(marker.find()),
         );
         setEditImageElement(imageElement);
         setEditImageTextMarker(marker);
@@ -736,7 +736,7 @@ export default function Editor(props: Props) {
           previewElement.style.overflow = "hidden !important";
           handleLinksClickEvent(
             (previewElement.children[0] as HTMLIFrameElement).contentDocument
-              .body as HTMLElement
+              .body as HTMLElement,
           );
           setPreviewIsPresentation(true);
         } else {
@@ -764,7 +764,7 @@ export default function Editor(props: Props) {
     if (!editor || !note) return;
     const onChangeHandler = (
       instance: CodeMirrorEditor,
-      changeObject: EditorChangeLinkedList
+      changeObject: EditorChangeLinkedList,
     ) => {
       // Check commands
       if (changeObject.text.length === 1 && changeObject.text[0] === "/") {
@@ -813,13 +813,13 @@ export default function Editor(props: Props) {
               {
                 text: "> ",
                 displayText: `/blockquote - ${t(
-                  "editor/toolbar/insert-blockquote"
+                  "editor/toolbar/insert-blockquote",
                 )}`,
               },
               {
                 text: "* ",
                 displayText: `/ul - ${t(
-                  "editor/toolbar/insert-unordered-list"
+                  "editor/toolbar/insert-unordered-list",
                 )}`,
               },
               {
@@ -881,19 +881,19 @@ export default function Editor(props: Props) {
               {
                 text: '`@crossnote.kanban "v":2,"board":{"columns":[]}`  \n',
                 displayText: `/kanban - ${t(
-                  "editor/toolbar/insert-kanban"
+                  "editor/toolbar/insert-kanban",
                 )} (beta)`,
               },
               {
                 text: "`@crossnote.abc`  \n",
                 displayText: `/abc - ${t(
-                  "editor/toolbar/insert-abc-notation"
+                  "editor/toolbar/insert-abc-notation",
                 )}`,
               },
               {
                 text: "`@crossnote.comment`  \n",
                 displayText: `/crossnote.comment - ${t(
-                  "editor/toolbar/insert-comment"
+                  "editor/toolbar/insert-comment",
                 )}`,
               },
             ];
@@ -901,7 +901,7 @@ export default function Editor(props: Props) {
               (item) =>
                 item.displayText
                   .toLocaleLowerCase()
-                  .indexOf(currentWord.toLowerCase()) >= 0
+                  .indexOf(currentWord.toLowerCase()) >= 0,
             );
             return {
               list: filtered.length ? filtered : commands,
@@ -943,7 +943,7 @@ export default function Editor(props: Props) {
               (item) =>
                 item.displayText
                   .toLocaleLowerCase()
-                  .indexOf(currentWord.toLowerCase()) >= 0
+                  .indexOf(currentWord.toLowerCase()) >= 0,
             );
             return {
               list: filtered.length ? filtered : commands,
@@ -994,7 +994,7 @@ export default function Editor(props: Props) {
           const duration = formatDistance(
             currentTimerText.date,
             previousTimerText.date,
-            { includeSeconds: true }
+            { includeSeconds: true },
           );
           const newText = `\`@timer ${JSON.stringify({
             date: currentTimerText.date.toString(),
@@ -1005,7 +1005,7 @@ export default function Editor(props: Props) {
           editor.replaceRange(
             newText,
             { line: currentTimerText.line, ch: 0 },
-            { line: currentTimerText.line, ch: currentTimerText.text.length }
+            { line: currentTimerText.line, ch: currentTimerText.text.length },
           );
         }
       }
@@ -1150,7 +1150,7 @@ export default function Editor(props: Props) {
                 className={clsx(
                   classes.controlBtn,
                   crossnoteContainer.editorMode === EditorMode.VickyMD &&
-                    classes.controlBtnSelected
+                    classes.controlBtnSelected,
                 )}
                 color={
                   crossnoteContainer.editorMode === EditorMode.VickyMD
@@ -1169,7 +1169,7 @@ export default function Editor(props: Props) {
                 className={clsx(
                   classes.controlBtn,
                   crossnoteContainer.editorMode === EditorMode.SourceCode &&
-                    classes.controlBtnSelected
+                    classes.controlBtnSelected,
                 )}
                 color={
                   crossnoteContainer.editorMode === EditorMode.SourceCode
@@ -1188,7 +1188,7 @@ export default function Editor(props: Props) {
                 className={clsx(
                   classes.controlBtn,
                   crossnoteContainer.editorMode === EditorMode.Preview &&
-                    classes.controlBtnSelected
+                    classes.controlBtnSelected,
                 )}
                 color={
                   crossnoteContainer.editorMode === EditorMode.Preview
@@ -1219,7 +1219,7 @@ export default function Editor(props: Props) {
                 <Button
                   className={clsx(
                     classes.controlBtn,
-                    note.config.pinned && classes.controlBtnSelectedSecondary
+                    note.config.pinned && classes.controlBtnSelectedSecondary,
                   )}
                   onClick={togglePin}
                 >
@@ -1231,7 +1231,7 @@ export default function Editor(props: Props) {
               <Button
                 className={clsx(
                   classes.controlBtn,
-                  note.config.encryption && classes.controlBtnSelectedSecondary
+                  note.config.encryption && classes.controlBtnSelectedSecondary,
                 )}
                 onClick={() => setToggleEncryptionDialogOpen(true)}
               >
@@ -1327,7 +1327,7 @@ export default function Editor(props: Props) {
               <ListItem
                 className={clsx(
                   classes.menuItemOverride,
-                  classes.menuItemTextField
+                  classes.menuItemTextField,
                 )}
               >
                 <TextField
@@ -1383,7 +1383,7 @@ export default function Editor(props: Props) {
       <Box
         className={clsx(
           classes.editorWrapper,
-          fullScreenMode ? classes.fullScreen : null
+          fullScreenMode ? classes.fullScreen : null,
         )}
       >
         <textarea
@@ -1400,7 +1400,7 @@ export default function Editor(props: Props) {
             className={clsx(
               classes.preview,
               "preview",
-              previewIsPresentation ? classes.presentation : null
+              previewIsPresentation ? classes.presentation : null,
             )}
             id="preview"
             ref={(element: HTMLElement) => {

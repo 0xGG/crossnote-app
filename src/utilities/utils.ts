@@ -58,9 +58,9 @@ export function getGitHubOAuthCallbackURL() {
 export function startGitHubOAuth() {
   window.open(
     `https://github.com/login/oauth/authorize?client_id=${getGitHubOAuthClientID()}&redirect_uri=${encodeURIComponent(
-      getGitHubOAuthCallbackURL()
+      getGitHubOAuthCallbackURL(),
     )}`,
-    "_self"
+    "_self",
   );
 }
 

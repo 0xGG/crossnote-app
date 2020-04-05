@@ -16,28 +16,28 @@ const useStyles = makeStyles((theme: Theme) =>
   createStyles({
     card: {
       padding: theme.spacing(2),
-      position: "relative"
+      position: "relative",
     },
     editorWrapper: {
       position: "relative",
-      padding: "2px"
+      padding: "2px",
     },
     editor: {
       width: "100%",
       height: "128px",
       resize: "none",
-      border: "none"
+      border: "none",
     },
     canvas: {
       overflow: "auto !important",
-      height: "100% !important"
+      height: "100% !important",
     },
     saveBtn: {
       position: "absolute",
       top: "0",
-      right: "0"
-    }
-  })
+      right: "0",
+    },
+  }),
 );
 
 function ABCWidget(props: WidgetArgs) {
@@ -52,7 +52,7 @@ function ABCWidget(props: WidgetArgs) {
   const [warningsElement, setWarningsElement] = useState<HTMLElement>(null);
   const [canvasElement, setCanvasElement] = useState<HTMLElement>(null);
   const [audioControlElement, setAudioControlElement] = useState<HTMLElement>(
-    null
+    null,
   );
   const [hideEditor, setHideEditor] = useState<boolean>(props.isPreview);
 
@@ -63,7 +63,7 @@ T: Cooley's
 M: 4/4
 L: 1/8
 K: Emin
-|:D2|EB{c}BA B2 EB|~B2 AB dBAG|FDAD BDAD|FDAD dAFD|`
+|:D2|EB{c}BA B2 EB|~B2 AB dBAG|FDAD BDAD|FDAD dAFD|`,
   );
 
   useEffect(() => {
@@ -85,12 +85,12 @@ K: Emin
               displayRestart: true,
               displayPlay: true,
               displayProgress: true,
-              displayWarp: true
-            }
+              displayWarp: true,
+            },
           },
           abcjsParams: {
-            generateDownload: true
-          }
+            generateDownload: true,
+          },
         });
 
         // Test synth
@@ -105,7 +105,7 @@ K: Emin
         elevation={2}
         className={clsx(classes.editorWrapper)}
         style={{
-          display: hideEditor ? "none" : "block"
+          display: hideEditor ? "none" : "block",
         }}
       >
         <textarea
@@ -115,7 +115,7 @@ K: Emin
             setEditorElement(element);
           }}
           value={abc}
-          onChange={event => {
+          onChange={(event) => {
             setABC(event.target.value);
           }}
           readOnly={props.isPreview}
@@ -154,7 +154,7 @@ K: Emin
   );
 }
 
-export const ABCWidgetCreator: WidgetCreator = args => {
+export const ABCWidgetCreator: WidgetCreator = (args) => {
   const el = document.createElement("span");
   ReactDOM.render(<ABCWidget {...args}></ABCWidget>, el);
   return el;

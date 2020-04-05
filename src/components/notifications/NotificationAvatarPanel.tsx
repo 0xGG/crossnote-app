@@ -16,23 +16,23 @@ const useStyles = makeStyles((theme: Theme) =>
       flexDirection: "row",
       alignItems: "center",
       justifyContent: "space-between",
-      width: "100%"
+      width: "100%",
     },
     row: {
       display: "flex",
       flexDirection: "row",
-      alignItems: "center"
+      alignItems: "center",
     },
     avatar: {
       borderRadius: "4px",
       width: "32px",
       height: "32px",
-      cursor: "pointer"
+      cursor: "pointer",
     },
     title: {
-      marginLeft: theme.spacing(1)
-    }
-  })
+      marginLeft: theme.spacing(1),
+    },
+  }),
 );
 
 interface NotificationAvatarPanelProps {
@@ -69,7 +69,7 @@ export function NotificationAvatarPanel(props: NotificationAvatarPanelProps) {
       </Box>
       <Typography variant="body2" color={"textSecondary"}>
         {formatRelative(new Date(createdAt), new Date(), {
-          locale: languageCodeToDateFNSLocale(settingsContainer.language)
+          locale: languageCodeToDateFNSLocale(settingsContainer.language),
         })}
       </Typography>
     </Box>

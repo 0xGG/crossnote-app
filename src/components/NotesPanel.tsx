@@ -60,15 +60,15 @@ const useStyles = makeStyles((theme: Theme) =>
       marginLeft: theme.spacing(1),
     },
     search: {
-      position: "relative",
-      borderRadius: theme.shape.borderRadius,
-      backgroundColor: fade(theme.palette.common.white, 0.15),
+      "position": "relative",
+      "borderRadius": theme.shape.borderRadius,
+      "backgroundColor": fade(theme.palette.common.white, 0.15),
       "&:hover": {
         backgroundColor: fade(theme.palette.common.white, 0.25),
       },
-      marginRight: 0, // theme.spacing(2),
-      marginLeft: 0,
-      width: "100%",
+      "marginRight": 0, // theme.spacing(2),
+      "marginLeft": 0,
+      "width": "100%",
       [theme.breakpoints.up("sm")]: {
         // marginLeft: theme.spacing(3),
         // width: "auto"
@@ -110,12 +110,12 @@ const useStyles = makeStyles((theme: Theme) =>
       transform: "translateX(-50%)",
     },
     sortSelected: {
-      color: theme.palette.primary.main,
+      "color": theme.palette.primary.main,
       "& svg": {
         color: theme.palette.primary.main,
       },
     },
-  })
+  }),
 );
 
 interface Props {
@@ -165,7 +165,7 @@ export default function NotesPanel(props: Props) {
       }, 400);
       setSearchValueInputTimeout(timeout);
     },
-    [searchValueInputTimeout]
+    [searchValueInputTimeout],
   );
 
   useEffect(() => {
@@ -335,7 +335,7 @@ export default function NotesPanel(props: Props) {
                   }
                   className={clsx(
                     crossnoteContainer.orderBy === OrderBy.ModifiedAt &&
-                      classes.sortSelected
+                      classes.sortSelected,
                   )}
                 >
                   <ListItemText
@@ -349,7 +349,7 @@ export default function NotesPanel(props: Props) {
                   }
                   className={clsx(
                     crossnoteContainer.orderBy === OrderBy.CreatedAt &&
-                      classes.sortSelected
+                      classes.sortSelected,
                   )}
                 >
                   <ListItemText
@@ -361,7 +361,7 @@ export default function NotesPanel(props: Props) {
                   onClick={() => crossnoteContainer.setOrderBy(OrderBy.Title)}
                   className={clsx(
                     crossnoteContainer.orderBy === OrderBy.Title &&
-                      classes.sortSelected
+                      classes.sortSelected,
                   )}
                 >
                   <ListItemText primary={t("general/title")}></ListItemText>
@@ -374,7 +374,7 @@ export default function NotesPanel(props: Props) {
                   }
                   className={clsx(
                     crossnoteContainer.orderDirection === OrderDirection.DESC &&
-                      classes.sortSelected
+                      classes.sortSelected,
                   )}
                 >
                   <ListItemText primary={"Desc"}></ListItemText>
@@ -389,7 +389,7 @@ export default function NotesPanel(props: Props) {
                   }
                   className={clsx(
                     crossnoteContainer.orderDirection === OrderDirection.ASC &&
-                      classes.sortSelected
+                      classes.sortSelected,
                   )}
                 >
                   <ListItemText primary={"Asc"}></ListItemText>

@@ -8,5 +8,5 @@ interface GlobalContainers {
 
 export const globalContainers: GlobalContainers = {
   cloudContainer: null,
-  settingsContainer: null
+  settingsContainer: null,
 };

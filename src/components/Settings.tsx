@@ -12,7 +12,7 @@ import {
   Avatar,
   Tooltip,
   Chip,
-  Link
+  Link,
 } from "@material-ui/core";
 import { createStyles, makeStyles, Theme } from "@material-ui/core/styles";
 import clsx from "clsx";
@@ -26,13 +26,13 @@ import {
   Menu as MenuIcon,
   Translate,
   ImagePlus,
-  GithubCircle
+  GithubCircle,
 } from "mdi-material-ui";
 import { CloudContainer } from "../containers/cloud";
 import { smmsUploadImages } from "../utilities/image_uploader";
 import {
   useGitHubUserQuery,
-  useUnlinkGitHubAccountMutation
+  useUnlinkGitHubAccountMutation,
 } from "../generated/graphql";
 import { startGitHubOAuth } from "../utilities/utils";
 import GitCommit from "../_git_commit";
@@ -50,8 +50,8 @@ const useStyles = makeStyles((theme: Theme) =>
         top: "0",
         margin: "0",
         height: "100%",
-        overflow: "auto"
-      }
+        overflow: "auto",
+      },
     },
     cover: {
       position: "relative",
@@ -63,30 +63,30 @@ const useStyles = makeStyles((theme: Theme) =>
       backgroundPosition: "center",
       backgroundColor: "#fade79",
       [theme.breakpoints.down("sm")]: {
-        paddingTop: "50%"
-      }
+        paddingTop: "50%",
+      },
     },
     row: {
       display: "flex",
       flexDirection: "row",
-      alignItems: "center"
+      alignItems: "center",
     },
     avatar: {
       marginTop: theme.spacing(2),
       width: "64px",
       height: "64px",
-      borderRadius: "4px"
+      borderRadius: "4px",
     },
     saveBtn: {
-      marginTop: theme.spacing(2)
+      marginTop: theme.spacing(2),
     },
     logoutBtn: {
       position: "absolute",
       top: "16px",
-      right: "16px"
+      right: "16px",
     },
     section: {
-      marginTop: theme.spacing(1)
+      marginTop: theme.spacing(1),
     },
     swatch: {
       padding: "4px",
@@ -94,23 +94,23 @@ const useStyles = makeStyles((theme: Theme) =>
       borderRadius: "1px",
       boxShadow: "0 0 0 1px rgba(0,0,0,0.1)",
       display: "inline-block",
-      cursor: "pointer"
+      cursor: "pointer",
     },
     color: {
       width: "36px",
       height: "18px",
-      borderRadius: "2px"
+      borderRadius: "2px",
     },
     editorText: {
-      marginLeft: theme.spacing(4)
+      marginLeft: theme.spacing(4),
     },
     editorCursor: {
       borderLeftStyle: "solid",
       borderLeftWidth: "2px",
       padding: "0",
-      position: "relative"
-    }
-  })
+      position: "relative",
+    },
+  }),
 );
 
 interface RGBA {
@@ -126,25 +126,25 @@ function getRGBA(inputStr: string = ""): RGBA {
       r: 51,
       g: 51,
       b: 51,
-      a: 1
+      a: 1,
     };
   } else {
     const match = inputStr.match(
-      /^rgba\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*\)$/
+      /^rgba\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*\)$/,
     );
     if (!match) {
       return {
         r: 51,
         g: 51,
         b: 51,
-        a: 1
+        a: 1,
       };
     } else {
       return {
         r: parseInt(match[1], 10),
         g: parseInt(match[2], 10),
         b: parseInt(match[3], 10),
-        a: parseInt(match[4], 10)
+        a: parseInt(match[4], 10),
       };
     }
   }
@@ -166,22 +166,22 @@ export function Settings(props: Props) {
   const settingsContainer = SettingsContainer.useContainer();
   const cloudContainer = CloudContainer.useContainer();
   const [avatar, setAvatar] = useState<string>(
-    (cloudContainer.viewer && cloudContainer.viewer.avatar) || ""
+    (cloudContainer.viewer && cloudContainer.viewer.avatar) || "",
   );
   const [uploadingAvatar, setUploadingAvatar] = useState<boolean>(false);
   const [resGitHubUser] = useGitHubUserQuery();
   const [
     resUnlinkGitHubAccount,
-    executeUnlinkGitHubAccount
+    executeUnlinkGitHubAccount,
   ] = useUnlinkGitHubAccountMutation();
 
   function uploadAvatar(
-    event: React.MouseEvent<HTMLButtonElement, MouseEvent>
+    event: React.MouseEvent<HTMLButtonElement, MouseEvent>,
   ) {
     event.preventDefault();
     event.stopPropagation();
     if (!imageUploaderElement) return;
-    imageUploaderElement.onchange = function(event) {
+    imageUploaderElement.onchange = function (event) {
       const target = event.target as any;
       const files = target.files || [];
       new Noty({
@@ -189,10 +189,10 @@ export function Settings(props: Props) {
         text: "Uploading avatar image",
         layout: "topRight",
         theme: "relax",
-        timeout: 2000
+        timeout: 2000,
       }).show();
       smmsUploadImages(files)
-        .then(urls => {
+        .then((urls) => {
           setUploadingAvatar(false);
           setAvatar(urls[0] || "");
         })
@@ -203,7 +203,7 @@ export function Settings(props: Props) {
             text: "Failed to upload image",
             layout: "topRight",
             theme: "relax",
-            timeout: 2000
+            timeout: 2000,
           }).show();
           setUploadingAvatar(false);
         });
@@ -214,7 +214,7 @@ export function Settings(props: Props) {
 
   useEffect(() => {
     if (cloudContainer.viewer) {
-      setAvatar(avatar => avatar || cloudContainer.viewer.avatar);
+      setAvatar((avatar) => avatar || cloudContainer.viewer.avatar);
     }
   }, [cloudContainer.viewer]);
 
@@ -257,9 +257,9 @@ export function Settings(props: Props) {
                 "data:image/png;base64," +
                   new Identicon(
                     sha256(
-                      cloudContainer.viewer && cloudContainer.viewer.username
+                      cloudContainer.viewer && cloudContainer.viewer.username,
                     ),
-                    80
+                    80,
                   ).toString()
               }
             ></Avatar>
@@ -272,10 +272,10 @@ export function Settings(props: Props) {
                 fullWidth
                 margin="normal"
                 InputLabelProps={{
-                  shrink: true
+                  shrink: true,
                 }}
                 value={avatar}
-                onChange={event => setAvatar(event.currentTarget.value)}
+                onChange={(event) => setAvatar(event.currentTarget.value)}
               />
               <Tooltip title={t("settings/upload-image")}>
                 <IconButton disabled={uploadingAvatar} onClick={uploadAvatar}>
@@ -307,7 +307,7 @@ export function Settings(props: Props) {
                   window.open(
                     "https://github.com/" +
                       resGitHubUser.data.viewer.githubUser.login,
-                    "_blank"
+                    "_blank",
                   );
                 }}
                 disabled={resUnlinkGitHubAccount.fetching}
@@ -333,7 +333,7 @@ export function Settings(props: Props) {
           style={{
             color: "rgba(0, 0, 0, 0.54)",
             fontSize: "0.75rem",
-            marginBottom: "6px"
+            marginBottom: "6px",
           }}
         >
           <Translate style={{ marginRight: "8px" }}></Translate>
@@ -342,7 +342,7 @@ export function Settings(props: Props) {
         <Select
           variant={"standard"}
           value={settingsContainer.language}
-          onChange={event =>
+          onChange={(event) =>
             settingsContainer.setLanguage(event.target.value as string)
           }
         >
@@ -359,10 +359,10 @@ export function Settings(props: Props) {
           fullWidth
           margin="normal"
           InputLabelProps={{
-            shrink: true
+            shrink: true,
           }}
           value={settingsContainer.authorName}
-          onChange={event =>
+          onChange={(event) =>
             settingsContainer.setAuthorName(event.currentTarget.value)
           }
         ></TextField>
@@ -374,10 +374,10 @@ export function Settings(props: Props) {
           fullWidth
           margin="normal"
           InputLabelProps={{
-            shrink: true
+            shrink: true,
           }}
           value={settingsContainer.authorEmail}
-          onChange={event =>
+          onChange={(event) =>
             settingsContainer.setAuthorEmail(event.currentTarget.value)
           }
         ></TextField>
@@ -388,7 +388,7 @@ export function Settings(props: Props) {
           style={{
             color: "rgba(0, 0, 0, 0.54)",
             fontSize: "0.75rem",
-            marginBottom: "6px"
+            marginBottom: "6px",
           }}
         >
           {t("settings/editor-cursor-color")}
@@ -397,7 +397,7 @@ export function Settings(props: Props) {
           style={{
             display: "flex",
             flexDirection: "row",
-            alignItems: "center"
+            alignItems: "center",
           }}
         >
           <Box
@@ -416,7 +416,7 @@ export function Settings(props: Props) {
             <span
               className={clsx(classes.editorCursor)}
               style={{
-                borderLeftColor: settingsContainer.editorCursorColor || "#333"
+                borderLeftColor: settingsContainer.editorCursorColor || "#333",
               }}
             ></span>
             {t("settings/world")}
@@ -430,16 +430,16 @@ export function Settings(props: Props) {
           }}
           anchorOrigin={{
             vertical: "bottom",
-            horizontal: "center"
+            horizontal: "center",
           }}
           transformOrigin={{
             vertical: "top",
-            horizontal: "center"
+            horizontal: "center",
           }}
         >
           <SketchPicker
             color={getRGBA(settingsContainer.editorCursorColor)}
-            onChange={color => {
+            onChange={(color) => {
               const cursorColor = `rgba(${color.rgb.r}, ${color.rgb.g}, ${color.rgb.b}, ${color.rgb.a})`;
               settingsContainer.setEditorCursorColor(cursorColor);
             }}
@@ -458,7 +458,7 @@ export function Settings(props: Props) {
                 cover: "",
                 avatar,
                 editorCursorColor: settingsContainer.editorCursorColor,
-                language: settingsContainer.language
+                language: settingsContainer.language,
               });
             }}
             disabled={cloudContainer.resSetUserInfo.fetching}

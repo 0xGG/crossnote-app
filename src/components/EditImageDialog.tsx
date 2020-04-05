@@ -6,7 +6,7 @@ import {
   DialogActions,
   Button,
   Box,
-  TextField
+  TextField,
 } from "@material-ui/core";
 import { createStyles, makeStyles, Theme } from "@material-ui/core/styles";
 import clsx from "clsx";
@@ -24,13 +24,13 @@ interface Props {
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
     imageWrapper: {
-      textAlign: "center"
+      textAlign: "center",
     },
     imagePreview: {
       maxWidth: "100%",
-      maxHeight: "400px"
-    }
-  })
+      maxHeight: "400px",
+    },
+  }),
 );
 
 export default function EditImageDialog(props: Props) {
@@ -61,16 +61,16 @@ export default function EditImageDialog(props: Props) {
     if (imageTitle.trim().length) {
       editor.replaceRange(
         `![${imageAlt.trim()}](${imageSrc.trim()} ${JSON.stringify(
-          imageTitle
+          imageTitle,
         )})`,
         pos.from,
-        pos.to
+        pos.to,
       );
     } else {
       editor.replaceRange(
         `![${imageAlt.trim()}](${imageSrc.trim()})`,
         pos.from,
-        pos.to
+        pos.to,
       );
     }
     props.onClose();
@@ -105,21 +105,21 @@ export default function EditImageDialog(props: Props) {
           value={imageSrc}
           helperText={t("edit-image-dialog/image-url")}
           fullWidth={true}
-          onChange={event => setImageSrc(event.target.value)}
+          onChange={(event) => setImageSrc(event.target.value)}
         ></TextField>
         <TextField
           autoFocus={true}
           value={imageTitle}
           helperText={t("edit-image-dialog/image-title")}
           fullWidth={true}
-          onChange={event => setImageTitle(event.target.value)}
+          onChange={(event) => setImageTitle(event.target.value)}
         ></TextField>
         <TextField
           autoFocus={true}
           value={imageAlt}
           helperText={t("edit-image-dialog/image-alt-text")}
           fullWidth={true}
-          onChange={event => setImageAlt(event.target.value)}
+          onChange={(event) => setImageAlt(event.target.value)}
         ></TextField>
       </DialogContent>
       <DialogActions>

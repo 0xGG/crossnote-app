@@ -9,7 +9,7 @@ import {
   Input,
   Tooltip,
   Switch,
-  FormControlLabel
+  FormControlLabel,
 } from "@material-ui/core";
 import { createStyles, makeStyles, Theme } from "@material-ui/core/styles";
 import clsx from "clsx";
@@ -20,30 +20,30 @@ const useStyles = makeStyles((theme: Theme) =>
   createStyles({
     card: {
       padding: theme.spacing(2),
-      position: "relative"
+      position: "relative",
     },
     actionButtons: {
       position: "absolute",
       top: "0",
-      right: "0"
+      right: "0",
     },
     section: {
-      marginTop: theme.spacing(2)
+      marginTop: theme.spacing(2),
     },
     dropArea: {
-      textAlign: "center",
-      padding: "24px",
-      border: "4px dotted #c7c7c7",
-      backgroundColor: "#f1f1f1",
-      cursor: "pointer",
+      "textAlign": "center",
+      "padding": "24px",
+      "border": "4px dotted #c7c7c7",
+      "backgroundColor": "#f1f1f1",
+      "cursor": "pointer",
       "&:hover": {
-        backgroundColor: "#eee"
-      }
+        backgroundColor: "#eee",
+      },
     },
     disabled: {
-      cursor: "not-allowed"
-    }
-  })
+      cursor: "not-allowed",
+    },
+  }),
 );
 
 function AudioWidget(props: WidgetArgs) {
@@ -52,10 +52,10 @@ function AudioWidget(props: WidgetArgs) {
   const { t } = useTranslation();
   const [source, setSource] = useState<string>(attributes["source"] || "");
   const [autoplay, setAutoplay] = useState<boolean>(
-    attributes["autoplay"] || false
+    attributes["autoplay"] || false,
   );
   const [controls, setControls] = useState<boolean>(
-    attributes["controls"] || true
+    attributes["controls"] || true,
   );
   const [loop, setLoop] = useState<boolean>(attributes["loop"] || false);
   const [muted, setMuted] = useState<boolean>(attributes["muted"] || false);
@@ -100,10 +100,10 @@ function AudioWidget(props: WidgetArgs) {
           margin={"dense"}
           placeholder={t("widget/crossnote.audio/source-url-placeholder")}
           value={source}
-          onChange={event => {
+          onChange={(event) => {
             setSource(event.target.value);
           }}
-          onKeyDown={event => {
+          onKeyDown={(event) => {
             if (event.which === 13) {
               if (source) {
                 const attrs = {
@@ -111,12 +111,12 @@ function AudioWidget(props: WidgetArgs) {
                   controls,
                   loop,
                   muted,
-                  src: source
+                  src: source,
                 };
                 props.replaceSelf(
                   `\`@crossnote.audio ${JSON.stringify(attrs)
                     .replace(/^{/, "")
-                    .replace(/}$/, "")}\``
+                    .replace(/}$/, "")}\``,
                 );
               }
             }
@@ -170,7 +170,7 @@ function AudioWidget(props: WidgetArgs) {
   );
 }
 
-export const AudioWidgetCreator: WidgetCreator = args => {
+export const AudioWidgetCreator: WidgetCreator = (args) => {
   const el = document.createElement("span");
   ReactDOM.render(<AudioWidget {...args}></AudioWidget>, el);
   return el;

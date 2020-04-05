@@ -50,18 +50,18 @@ const useStyles = makeStyles((theme: Theme) =>
       wordBreak: "break-all",
     },
     summary: {
-      color: theme.palette.text.secondary,
-      marginBottom: theme.spacing(1),
-      paddingRight: theme.spacing(2),
-      display: "-webkit-box",
-      lineHeight: "1.3rem !important",
-      textOverflow: "ellipsis !important",
-      overflow: "hidden !important",
-      maxWidth: "100%",
-      maxHeight: "2.6rem", // lineHeight x -website-line-clamp
+      "color": theme.palette.text.secondary,
+      "marginBottom": theme.spacing(1),
+      "paddingRight": theme.spacing(2),
+      "display": "-webkit-box",
+      "lineHeight": "1.3rem !important",
+      "textOverflow": "ellipsis !important",
+      "overflow": "hidden !important",
+      "maxWidth": "100%",
+      "maxHeight": "2.6rem", // lineHeight x -website-line-clamp
       "-webkit-line-clamp": 2,
       "-webkit-box-orient": "vertical",
-      wordBreak: "break-all",
+      "wordBreak": "break-all",
     },
     filePath: {},
     images: {
@@ -90,7 +90,7 @@ const useStyles = makeStyles((theme: Theme) =>
       color: theme.palette.secondary.main,
       marginTop: theme.spacing(1),
     },
-  })
+  }),
 );
 
 interface Props {
@@ -119,12 +119,12 @@ export default function NoteCard(props: Props) {
   useEffect(() => {
     setHeader(
       (note.config.encryption && note.config.encryption.title) ||
-        getHeaderFromMarkdown(note.markdown)
+        getHeaderFromMarkdown(note.markdown),
     );
     generateSummaryFromMarkdown(
       note.config.encryption
         ? `🔐 ${t("general/encrypted")}`
-        : note.markdown.trim() || t("general/this-note-is-empty")
+        : note.markdown.trim() || t("general/this-note-is-empty"),
     )
       .then((summary) => {
         setSummary(summary);
@@ -156,7 +156,7 @@ export default function NoteCard(props: Props) {
         crossnoteContainer.selectedNote &&
           crossnoteContainer.selectedNote.filePath === note.filePath
           ? classes.selected
-          : classes.unselected
+          : classes.unselected,
       )}
       onClick={() => {
         crossnoteContainer.setSelectedNote(note);
@@ -172,7 +172,7 @@ export default function NoteCard(props: Props) {
                   " " +
                   formatRelative(new Date(note.config.createdAt), new Date(), {
                     locale: languageCodeToDateFNSLocale(
-                      settingsContainer.language
+                      settingsContainer.language,
                     ),
                   })}
               </p>
@@ -181,7 +181,7 @@ export default function NoteCard(props: Props) {
                   " " +
                   formatRelative(new Date(note.config.modifiedAt), new Date(), {
                     locale: languageCodeToDateFNSLocale(
-                      settingsContainer.language
+                      settingsContainer.language,
                     ),
                   })}
               </p>

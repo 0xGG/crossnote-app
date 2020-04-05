@@ -13,10 +13,10 @@ export class FloatWin {
     const titlebar = win.querySelector(".float-win-title") as HTMLElement;
     titlebar.addEventListener(
       "selectstart",
-      function() {
+      function () {
         return false;
       },
-      false
+      false,
     );
 
     /** @type {HTMLButtonElement} */
@@ -27,14 +27,14 @@ export class FloatWin {
         () => {
           this.hide();
         },
-        false
+        false,
       );
       win.addEventListener(
         "keyup",
-        ev => {
+        (ev) => {
           if (ev.keyCode === 27) this.hide(); // ESC
         },
-        false
+        false,
       );
     }
 
@@ -47,7 +47,7 @@ export class FloatWin {
 
     titlebar.addEventListener(
       "mousedown",
-      function(e) {
+      function (e) {
         if (e.target === closeBtn) return;
 
         boxX = win.offsetLeft;
@@ -60,7 +60,7 @@ export class FloatWin {
         document.addEventListener("mousemove", move, false);
         document.addEventListener("mouseup", up, false);
       },
-      false
+      false,
     );
 
     function move(e: any) {
@@ -95,7 +95,7 @@ export class FloatWin {
       }
       return {
         x: x,
-        y: y
+        y: y,
       };
     }
 
@@ -116,7 +116,7 @@ export class FloatWin {
       setTimeout(() => {
         this.moveTo(
           (window.innerWidth - el.offsetWidth) / 2,
-          (window.innerHeight - el.offsetHeight) / 2
+          (window.innerHeight - el.offsetHeight) / 2,
         );
       }, 0);
     }

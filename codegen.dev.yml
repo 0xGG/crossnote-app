@@ -8,7 +8,7 @@ generates:
       - "typescript-operations"
       - "typescript-urql"
     config:
-        withHooks: true
-        avoidOptionals: true
-        nonOptionalTypename: false
-        declarationKind: 'interface'  
+      withHooks: true
+      avoidOptionals: true
+      nonOptionalTypename: false
+      declarationKind: "interface"

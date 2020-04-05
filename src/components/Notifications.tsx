@@ -8,7 +8,7 @@ import {
   IconButton,
   Card,
   Divider,
-  Hidden
+  Hidden,
 } from "@material-ui/core";
 import { createStyles, makeStyles, Theme } from "@material-ui/core/styles";
 import clsx from "clsx";
@@ -26,28 +26,28 @@ const useStyles = makeStyles((theme: Theme) =>
       width: "100%",
       padding: theme.spacing(2),
       [theme.breakpoints.down("sm")]: {
-        padding: theme.spacing(1)
-      }
+        padding: theme.spacing(1),
+      },
     },
     notificationsCard: {
       margin: theme.spacing(2),
       [theme.breakpoints.down("sm")]: {
         marginLeft: "0",
-        marginRight: "0"
-      }
+        marginRight: "0",
+      },
     },
     topBar: {
       display: "flex",
       flexDirection: "row",
       alignItems: "center",
-      justifyContent: "space-between"
+      justifyContent: "space-between",
     },
     row: {
       display: "flex",
       flexDirection: "row",
-      alignItems: "center"
-    }
-  })
+      alignItems: "center",
+    },
+  }),
 );
 
 interface Props {
@@ -83,7 +83,7 @@ export function Notifications(props: Props) {
     },
     [
       /*notificationsContainer*/
-    ]
+    ],
   );
 
   return (
@@ -150,7 +150,7 @@ export function Notifications(props: Props) {
                         <IconButton
                           onClick={() => {
                             notificationsContainer.deleteNotification(
-                              notification.id
+                              notification.id,
                             );
                             cloudContainer.reduceNotificationsCountByOne();
                           }}

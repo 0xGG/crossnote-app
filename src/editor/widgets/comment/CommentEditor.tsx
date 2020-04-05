@@ -6,7 +6,7 @@ import {
   Button,
   Box,
   Card,
-  Typography
+  Typography,
 } from "@material-ui/core";
 import clsx from "clsx";
 import { useTranslation } from "react-i18next";
@@ -23,7 +23,7 @@ const useStyles = makeStyles((theme: Theme) =>
       display: "flex",
       flexDirection: "column",
       // position: "absolute",
-      bottom: "0"
+      bottom: "0",
     },
     toolbar: {
       display: "flex",
@@ -32,27 +32,27 @@ const useStyles = makeStyles((theme: Theme) =>
       flexDirection: "row",
       justifyContent: "flex-end",
       padding: "1px 4px 1px 4px",
-      backgroundColor: "#eee"
+      backgroundColor: "#eee",
     },
     toolbarLeft: {
       display: "flex",
-      alignItems: "center"
+      alignItems: "center",
     },
     editorWrapper: {
-      height: "160px",
+      "height": "160px",
       // border: "2px solid #96c3e6",
       "& .CodeMirror-gutters": {
-        display: "none"
-      }
+        display: "none",
+      },
     },
     textarea: {
       width: "100%",
-      height: "100%"
+      height: "100%",
     },
     sendButton: {
-      width: "100px"
-    }
-  })
+      width: "100px",
+    },
+  }),
 );
 interface Props {
   sendMessage: (message: string) => void;
@@ -68,7 +68,7 @@ interface Props {
 export function CommentEditor(props: Props) {
   const classes = useStyles(props);
   const [textAreaElement, setTextAreaElement] = useState<HTMLTextAreaElement>(
-    null
+    null,
   );
   const [editor, setEditor] = useState<CodeMirrorEditor>(null);
   const { t } = useTranslation();
@@ -78,9 +78,9 @@ export function CommentEditor(props: Props) {
       const editor: CodeMirrorEditor = VickyMD.fromTextArea(textAreaElement, {
         mode: {
           name: "hypermd",
-          hashtag: true
+          hashtag: true,
         },
-        inputStyle: "textarea"
+        inputStyle: "textarea",
       });
       editor.setValue("");
       editor.setOption("lineNumbers", false);
@@ -120,7 +120,7 @@ export function CommentEditor(props: Props) {
                 if (editor) {
                   props.updateMessage(
                     props.updateMessageID,
-                    editor.getValue() || ""
+                    editor.getValue() || "",
                   );
                 }
               }}

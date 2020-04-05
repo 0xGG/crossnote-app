@@ -5,7 +5,7 @@ import Identicon from "identicon.js";
 import { sha256 } from "js-sha256";
 import {
   useDeleteWidgetMutation,
-  useUpdateWidgetMutation
+  useUpdateWidgetMutation,
 } from "../../../generated/graphql";
 import Noty from "noty";
 import { useTranslation } from "react-i18next";
@@ -20,14 +20,14 @@ import {
   DialogActions,
   Link,
   TextField,
-  Typography
+  Typography,
 } from "@material-ui/core";
 import {
   TrashCanOutline,
   Pencil,
   ContentSave,
   Cancel,
-  LinkVariant
+  LinkVariant,
 } from "mdi-material-ui";
 import { renderPreview } from "vickymd/preview";
 import { Widget } from "../../../generated/graphql";
@@ -41,19 +41,19 @@ const useStyles = makeStyles((theme: Theme) =>
       display: "flex",
       flexDirection: "row",
       alignItems: "center",
-      width: "100%"
+      width: "100%",
     },
     avatar: {
       width: "24px",
       height: "24px",
-      borderRadius: "4px"
+      borderRadius: "4px",
     },
     widgetTitle: {
-      marginLeft: `${theme.spacing(1)}px !important`
+      marginLeft: `${theme.spacing(1)}px !important`,
     },
     widgetSourceLink: {
       marginTop: `8px`,
-      marginLeft: theme.spacing(0.5)
+      marginLeft: theme.spacing(0.5),
     },
     actionButtons: {
       position: "absolute",
@@ -61,32 +61,32 @@ const useStyles = makeStyles((theme: Theme) =>
       top: "0",
       display: "flex",
       flexDirection: "row",
-      alignItems: "center"
+      alignItems: "center",
     },
     editorWrapper: {
-      marginTop: theme.spacing(2),
+      "marginTop": theme.spacing(2),
       // height: "160px",
       // border: "2px solid #96c3e6",
       "& .CodeMirror-gutters": {
-        display: "none"
-      }
+        display: "none",
+      },
     },
     textarea: {
       width: "100%",
-      height: "100%"
+      height: "100%",
     },
     preview: {
-      backgroundColor: "inherit !important",
-      paddingTop: theme.spacing(1),
-      paddingBottom: theme.spacing(1),
+      "backgroundColor": "inherit !important",
+      "paddingTop": theme.spacing(1),
+      "paddingBottom": theme.spacing(1),
       "& p:last-child": {
-        marginBottom: "0 !important"
+        marginBottom: "0 !important",
       },
       "& br": {
         // display: "none"
-      }
-    }
-  })
+      },
+    },
+  }),
 );
 
 interface Props {
@@ -101,18 +101,18 @@ export function WidgetTopPanel(props: Props) {
   const { t } = useTranslation();
   const [previewElement, setPreviewElement] = useState<HTMLElement>(null);
   const [textAreaElement, setTextAreaElement] = useState<HTMLTextAreaElement>(
-    null
+    null,
   );
   const [editor, setEditor] = useState<CodeMirrorEditor>(null);
   const [editorDialogOpen, setEditDialogOpen] = useState<boolean>(false);
 
   const [
     resDeleteWidget,
-    executeDeleteWidgetMutation
+    executeDeleteWidgetMutation,
   ] = useDeleteWidgetMutation();
   const [
     resUpdateWidget,
-    executeUpdateWidgetMutation
+    executeUpdateWidgetMutation,
   ] = useUpdateWidgetMutation();
   const [forceUpdate, setForceUpdate] = useState<number>(Date.now());
   const [widgetSource, setWidgetSource] = useState<string>("");
@@ -120,7 +120,7 @@ export function WidgetTopPanel(props: Props) {
   const deleteWidget = useCallback(() => {
     if (widget && widget.id) {
       executeDeleteWidgetMutation({
-        id: widget.id
+        id: widget.id,
       });
     }
   }, [widget, executeDeleteWidgetMutation]);
@@ -131,7 +131,7 @@ export function WidgetTopPanel(props: Props) {
       executeUpdateWidgetMutation({
         id: widget.id,
         description,
-        source: widgetSource
+        source: widgetSource,
       });
       widget.description = description;
       widget.source = widgetSource;
@@ -158,7 +158,7 @@ export function WidgetTopPanel(props: Props) {
         text: t("error/failed-to-delete-widget"),
         layout: "topRight",
         theme: "relax",
-        timeout: 5000
+        timeout: 5000,
       }).show();
     };
     if (resDeleteWidget.error) {
@@ -195,9 +195,9 @@ export function WidgetTopPanel(props: Props) {
       const editor: CodeMirrorEditor = VickyMD.fromTextArea(textAreaElement, {
         mode: {
           name: "hypermd",
-          hashtag: true
+          hashtag: true,
         },
-        inputStyle: "textarea"
+        inputStyle: "textarea",
         // autofocus: false
       });
       editor.setValue(widget.description);
@@ -240,7 +240,7 @@ export function WidgetTopPanel(props: Props) {
                 event.preventDefault();
                 if (widget.source.startsWith(window.location.origin)) {
                   browserHistory.push(
-                    widget.source.replace(window.location.origin, "")
+                    widget.source.replace(window.location.origin, ""),
                   );
                 } else {
                   window.open(widget.source, "_blank");
@@ -286,7 +286,7 @@ export function WidgetTopPanel(props: Props) {
           <TextField
             label={t("general/Source")}
             value={widgetSource}
-            onChange={event => setWidgetSource(event.target.value)}
+            onChange={(event) => setWidgetSource(event.target.value)}
             fullWidth={true}
           ></TextField>
           <Box

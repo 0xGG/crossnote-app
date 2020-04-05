@@ -7,7 +7,7 @@ import {
   IconButton,
   Box,
   Input,
-  Tooltip
+  Tooltip,
 } from "@material-ui/core";
 import { createStyles, makeStyles, Theme } from "@material-ui/core/styles";
 import clsx from "clsx";
@@ -18,22 +18,22 @@ const useStyles = makeStyles((theme: Theme) =>
   createStyles({
     card: {
       padding: theme.spacing(2),
-      position: "relative"
+      position: "relative",
     },
     actionButtons: {
       position: "absolute",
       top: "0",
-      right: "0"
+      right: "0",
     },
     section: {
-      marginTop: theme.spacing(2)
+      marginTop: theme.spacing(2),
     },
     videoWrapper: {
       cursor: "default",
       position: "relative",
       width: "100%",
       height: "0",
-      paddingTop: "56.25%"
+      paddingTop: "56.25%",
     },
     video: {
       backgroundColor: "#ddd",
@@ -42,13 +42,13 @@ const useStyles = makeStyles((theme: Theme) =>
       left: "0",
       top: "0",
       width: "100%",
-      height: "100%"
+      height: "100%",
     },
     errorMessage: {
       color: "#f44336",
-      marginTop: theme.spacing(2)
-    }
-  })
+      marginTop: theme.spacing(2),
+    },
+  }),
 );
 
 function YoutubeWidget(props: WidgetArgs) {
@@ -96,34 +96,34 @@ function YoutubeWidget(props: WidgetArgs) {
         <Input
           margin={"dense"}
           placeholder={t(
-            "widget/crossnote.youtube/youtube-video-url-placeholder"
+            "widget/crossnote.youtube/youtube-video-url-placeholder",
           )}
           value={url}
-          onChange={event => {
+          onChange={(event) => {
             setURL(event.target.value);
             setError("");
           }}
-          onKeyDown={event => {
+          onKeyDown={(event) => {
             if (event.which === 13) {
               if (url && url.match(/\?v=(.+?)(&|$)/)) {
                 const videoID = url.match(/\?v=(.+?)(&|$)/)[1];
                 const attrs = {
-                  videoID
+                  videoID,
                 };
                 props.replaceSelf(
                   `\`@crossnote.youtube ${JSON.stringify(attrs)
                     .replace(/^{/, "")
-                    .replace(/}$/, "")}\``
+                    .replace(/}$/, "")}\``,
                 );
               } else if (url && url.match(/\/youtu\.be\/(.+?)(\?|$)/)) {
                 const videoID = url.match(/\/youtu\.be\/(.+?)(\?|$)/)[1];
                 const attrs = {
-                  videoID
+                  videoID,
                 };
                 props.replaceSelf(
                   `\`@crossnote.youtube ${JSON.stringify(attrs)
                     .replace(/^{/, "")
-                    .replace(/}$/, "")}\``
+                    .replace(/}$/, "")}\``,
                 );
               } else {
                 setError(t("widget/crossnote.youtube/error_message"));
@@ -138,7 +138,7 @@ function YoutubeWidget(props: WidgetArgs) {
   );
 }
 
-export const YoutubeWidgetCreator: WidgetCreator = args => {
+export const YoutubeWidgetCreator: WidgetCreator = (args) => {
   const el = document.createElement("span");
   ReactDOM.render(<YoutubeWidget {...args}></YoutubeWidget>, el);
   return el;

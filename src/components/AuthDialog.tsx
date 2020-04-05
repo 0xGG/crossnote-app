@@ -10,7 +10,7 @@ import {
   Chip,
   Divider,
   Link,
-  Avatar
+  Avatar,
 } from "@material-ui/core";
 import { createStyles, makeStyles, Theme } from "@material-ui/core/styles";
 import clsx from "clsx";
@@ -24,7 +24,7 @@ import {
   useSignInMutation,
   useSignUpMutation,
   useSendEmailVerificationCodeMutation,
-  useResetPasswordMutation
+  useResetPasswordMutation,
 } from "../generated/graphql";
 import { startGitHubOAuth } from "../utilities/utils";
 
@@ -38,7 +38,7 @@ const useStyles = makeStyles((theme: Theme) =>
       margin: "0 auto",
       padding: "24px 12px",
       display: "flex",
-      flexDirection: "column"
+      flexDirection: "column",
     },
     avatar: {
       borderRadius: "4px",
@@ -47,39 +47,39 @@ const useStyles = makeStyles((theme: Theme) =>
       gridArea: "avatar",
       cursor: "pointer",
       marginLeft: theme.spacing(1),
-      marginRight: theme.spacing(1)
+      marginRight: theme.spacing(1),
     },
     header: {
-      marginBottom: "24px"
+      marginBottom: "24px",
     },
     username: {
-      marginBottom: "24px"
+      marginBottom: "24px",
     },
     email: {
-      marginBottom: "24px"
+      marginBottom: "24px",
     },
     password: {
-      marginBottom: "24px"
+      marginBottom: "24px",
     },
     authBtn: {
-      marginBottom: "16px"
+      marginBottom: "16px",
     },
     switchLink: {
-      marginTop: "16px",
+      "marginTop": "16px",
       "&:hover": {
-        cursor: "pointer"
-      }
+        cursor: "pointer",
+      },
     },
     errorMessage: {
-      color: "#f44336"
-    }
-  })
+      color: "#f44336",
+    },
+  }),
 );
 
 enum Stage {
   Signin,
   Signup,
-  ForgotPassword
+  ForgotPassword,
 }
 
 interface Props {
@@ -101,11 +101,11 @@ export function AuthDialog(props: Props) {
   const [resSignUp, executeSignUpMutation] = useSignUpMutation();
   const [
     resSendEmailVerificationCode,
-    executeSendEmailVerificationCodeMutation
+    executeSendEmailVerificationCodeMutation,
   ] = useSendEmailVerificationCodeMutation();
   const [
     resResetPassword,
-    executeResetPasswordMutation
+    executeResetPasswordMutation,
   ] = useResetPasswordMutation();
 
   const { t } = useTranslation();
@@ -114,7 +114,7 @@ export function AuthDialog(props: Props) {
   const signin = useCallback(() => {
     executeSignInMutation({
       email: email.trim(),
-      password
+      password,
     });
   }, [email, password, executeSignInMutation]);
 
@@ -123,7 +123,7 @@ export function AuthDialog(props: Props) {
       executeSignUpMutation({
         username: username.trim(),
         email: email.trim(),
-        password
+        password,
       });
     } else {
       setErrorMessage(t("widget/crossnote.auth/password-mismatch"));
@@ -134,13 +134,13 @@ export function AuthDialog(props: Props) {
     password,
     passwordConfirmation,
     t,
-    executeSignUpMutation
+    executeSignUpMutation,
   ]);
 
   const sendEmailVerificationCode = useCallback(() => {
     if (email.trim().length > 0) {
       executeSendEmailVerificationCodeMutation({
-        email: email.trim()
+        email: email.trim(),
       });
     }
   }, [email, executeSendEmailVerificationCodeMutation]);
@@ -150,7 +150,7 @@ export function AuthDialog(props: Props) {
       executeResetPasswordMutation({
         email: email.trim(),
         verificationCode: verificationCode.trim(),
-        password
+        password,
       });
     } else {
       setErrorMessage(t("widget/crossnote.auth/password-mismatch"));
@@ -161,7 +161,7 @@ export function AuthDialog(props: Props) {
     passwordConfirmation,
     executeResetPasswordMutation,
     verificationCode,
-    t
+    t,
   ]);
 
   const close = useCallback(() => {
@@ -173,7 +173,7 @@ export function AuthDialog(props: Props) {
   useEffect(() => {
     if (resSignIn.error) {
       setErrorMessage(
-        resSignIn.error.message.replace(/\[GraphQL\]/, "").trim()
+        resSignIn.error.message.replace(/\[GraphQL\]/, "").trim(),
       );
     } else if (resSignIn.data && resSignIn.data.signIn) {
       localStorage.setItem("token", resSignIn.data.signIn.token);
@@ -185,7 +185,7 @@ export function AuthDialog(props: Props) {
   useEffect(() => {
     if (resSignUp.error) {
       setErrorMessage(
-        resSignUp.error.message.replace(/\[GraphQL\]/, "").trim()
+        resSignUp.error.message.replace(/\[GraphQL\]/, "").trim(),
       );
     } else if (resSignUp.data && resSignUp.data.signUp) {
       localStorage.setItem("token", resSignUp.data.signUp.token);
@@ -199,7 +199,7 @@ export function AuthDialog(props: Props) {
       setErrorMessage(
         resSendEmailVerificationCode.error.message
           .replace(/\[GraphQL\]/, "")
-          .trim()
+          .trim(),
       );
     } else if (resSendEmailVerificationCode.data) {
       if (!resSendEmailVerificationCode.data.sendEmailVerificationCode) {
@@ -210,7 +210,7 @@ export function AuthDialog(props: Props) {
           text: t("widget/crossnote.auth/verification_code_sent") + email,
           layout: "topRight",
           theme: "relax",
-          timeout: 2000
+          timeout: 2000,
         }).show();
       }
     }
@@ -219,7 +219,7 @@ export function AuthDialog(props: Props) {
   useEffect(() => {
     if (resResetPassword.error) {
       setErrorMessage(
-        resResetPassword.error.message.replace(/\[GraphQL\]/, "").trim()
+        resResetPassword.error.message.replace(/\[GraphQL\]/, "").trim(),
       );
     } else if (resResetPassword.data) {
       if (resResetPassword.data.resetPassword) {
@@ -228,7 +228,7 @@ export function AuthDialog(props: Props) {
           text: t("widget/crossnote.auth/password_reset") + " " + email,
           layout: "topRight",
           theme: "relax",
-          timeout: 2000
+          timeout: 2000,
         }).show();
         setTimeout(() => {
           window.location.reload();
@@ -250,14 +250,14 @@ export function AuthDialog(props: Props) {
           <Box
             style={{
               display: "flex",
-              justifyContent: "space-between"
+              justifyContent: "space-between",
             }}
           >
             <Box
               style={{
                 display: "flex",
                 flexDirection: "row",
-                alignItems: "center"
+                alignItems: "center",
               }}
             >
               <Typography variant="body1" style={{ marginBottom: "0" }}>
@@ -270,7 +270,7 @@ export function AuthDialog(props: Props) {
                   "data:image/png;base64," +
                     new Identicon(
                       sha256(cloudContainer.viewer.username),
-                      80
+                      80,
                     ).toString()
                 }
               ></Avatar>
@@ -305,7 +305,7 @@ export function AuthDialog(props: Props) {
             variant="outlined"
             value={username}
             fullWidth={true}
-            onChange={event => {
+            onChange={(event) => {
               setErrorMessage("");
               setUsername(event.target.value);
             }}
@@ -317,11 +317,11 @@ export function AuthDialog(props: Props) {
           variant="outlined"
           value={email}
           fullWidth={true}
-          onChange={event => {
+          onChange={(event) => {
             setErrorMessage("");
             setEmail(event.target.value);
           }}
-          onClick={event => {
+          onClick={(event) => {
             event.currentTarget.focus();
           }}
         ></TextField>
@@ -331,7 +331,7 @@ export function AuthDialog(props: Props) {
               display: "flex",
               flexDirection: "row",
               alignItems: "center",
-              justifyContent: "space-evenly"
+              justifyContent: "space-evenly",
             }}
           >
             <TextField
@@ -340,7 +340,7 @@ export function AuthDialog(props: Props) {
               variant="outlined"
               value={verificationCode}
               fullWidth={true}
-              onChange={event => {
+              onChange={(event) => {
                 setErrorMessage("");
                 setVerificationCode(event.target.value);
               }}
@@ -369,11 +369,11 @@ export function AuthDialog(props: Props) {
             type="password"
             value={password}
             fullWidth={true}
-            onChange={event => {
+            onChange={(event) => {
               setErrorMessage("");
               setPassword(event.target.value);
             }}
-            onKeyDown={event => {
+            onKeyDown={(event) => {
               if (event.which === 13) {
                 if (stage === Stage.Signin) {
                   signin();
@@ -394,11 +394,11 @@ export function AuthDialog(props: Props) {
             type="password"
             value={passwordConfirmation}
             fullWidth={true}
-            onChange={event => {
+            onChange={(event) => {
               setErrorMessage("");
               setPasswordConfirmation(event.target.value);
             }}
-            onKeyDown={event => {
+            onKeyDown={(event) => {
               if (event.which === 13) {
                 signup();
               }

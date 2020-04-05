@@ -9,7 +9,7 @@ import {
   Input,
   Tooltip,
   Switch,
-  FormControlLabel
+  FormControlLabel,
 } from "@material-ui/core";
 import { createStyles, makeStyles, Theme } from "@material-ui/core/styles";
 import clsx from "clsx";
@@ -20,30 +20,30 @@ const useStyles = makeStyles((theme: Theme) =>
   createStyles({
     card: {
       padding: theme.spacing(2),
-      position: "relative"
+      position: "relative",
     },
     actionButtons: {
       position: "absolute",
       top: "0",
-      right: "0"
+      right: "0",
     },
     section: {
-      marginTop: theme.spacing(2)
+      marginTop: theme.spacing(2),
     },
     dropArea: {
-      textAlign: "center",
-      padding: "24px",
-      border: "4px dotted #c7c7c7",
-      backgroundColor: "#f1f1f1",
-      cursor: "pointer",
+      "textAlign": "center",
+      "padding": "24px",
+      "border": "4px dotted #c7c7c7",
+      "backgroundColor": "#f1f1f1",
+      "cursor": "pointer",
       "&:hover": {
-        backgroundColor: "#eee"
-      }
+        backgroundColor: "#eee",
+      },
     },
     disabled: {
-      cursor: "not-allowed"
-    }
-  })
+      cursor: "not-allowed",
+    },
+  }),
 );
 
 function NeteaseMusicWidget(props: WidgetArgs) {
@@ -52,7 +52,7 @@ function NeteaseMusicWidget(props: WidgetArgs) {
   const { t } = useTranslation();
   const [id, setID] = useState<string>(attributes["id"] || "");
   const [autoplay, setAutoplay] = useState<boolean>(
-    attributes["autoplay"] || false
+    attributes["autoplay"] || false,
   );
 
   if (attributes["id"]) {
@@ -63,7 +63,7 @@ function NeteaseMusicWidget(props: WidgetArgs) {
           maxWidth: "100%",
           width: "333px",
           height: "86px",
-          border: "none"
+          border: "none",
         }}
         src={`https://music.163.com/outchain/player?type=2&id=${
           attributes["id"]
@@ -94,20 +94,20 @@ function NeteaseMusicWidget(props: WidgetArgs) {
           margin={"dense"}
           placeholder={t("widget/crossnote.neteasemusic/song-id-placeholder")}
           value={id}
-          onChange={event => {
+          onChange={(event) => {
             setID(event.target.value);
           }}
-          onKeyDown={event => {
+          onKeyDown={(event) => {
             if (event.which === 13) {
               if (id) {
                 const attrs = {
                   autoplay,
-                  id
+                  id,
                 };
                 props.replaceSelf(
                   `\`@crossnote.netease_music ${JSON.stringify(attrs)
                     .replace(/^{/, "")
-                    .replace(/}$/, "")}\``
+                    .replace(/}$/, "")}\``,
                 );
               }
             }
@@ -131,7 +131,7 @@ function NeteaseMusicWidget(props: WidgetArgs) {
   );
 }
 
-export const NeteaseMusicWidgetCreator: WidgetCreator = args => {
+export const NeteaseMusicWidgetCreator: WidgetCreator = (args) => {
   const el = document.createElement("span");
   ReactDOM.render(<NeteaseMusicWidget {...args}></NeteaseMusicWidget>, el);
   return el;

@@ -38,7 +38,7 @@ export default function AddNotebookDialog(props: Props) {
   const [gitUsername, setGitUsername] = useState<string>("");
   const [gitPassword, setGitPassword] = useState<string>("");
   const [gitCorsProxy, setGitCorsProxy] = useState<string>(
-    "https://cors.isomorphic-git.org"
+    "https://cors.isomorphic-git.org",
   );
   const [rememberCredentialsChecked, setRememberCredentialsChecked] = useState<
     boolean
@@ -64,7 +64,7 @@ export default function AddNotebookDialog(props: Props) {
         gitUsername,
         gitPassword,
         rememberCredentialsChecked,
-        gitCorsProxy
+        gitCorsProxy,
       );
     } catch (error) {
       new Noty({
@@ -129,7 +129,7 @@ export default function AddNotebookDialog(props: Props) {
         >
           <ExpansionPanelSummary expandIcon={<ChevronDown></ChevronDown>}>
             <Typography>{`${t("general/git-repository")} (${t(
-              "general/optional"
+              "general/optional",
             )})`}</Typography>
           </ExpansionPanelSummary>
           <ExpansionPanelDetails>
@@ -151,7 +151,7 @@ export default function AddNotebookDialog(props: Props) {
               <TextField
                 label={`${t("general/Username")} (${t("general/optional")})`}
                 placeholder={`${t("general/Username")} (${t(
-                  "general/optional"
+                  "general/optional",
                 )})`}
                 fullWidth={true}
                 value={gitUsername}
@@ -160,7 +160,7 @@ export default function AddNotebookDialog(props: Props) {
               <TextField
                 label={`${t("general/Password")} (${t("general/optional")})`}
                 placeholder={`${t("general/Password")} (${t(
-                  "general/optional"
+                  "general/optional",
                 )})`}
                 type={"password"}
                 fullWidth={true}

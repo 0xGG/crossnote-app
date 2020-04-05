@@ -22,7 +22,7 @@ export default function ChangeFilePathDialog(props: Props) {
   const note = props.note;
   const [inputEl, setInputEl] = useState<HTMLInputElement>(null);
   const [newFilePath, setNewFilePath] = useState<string>(
-    (note && note.filePath) || ""
+    (note && note.filePath) || "",
   );
   const { t } = useTranslation();
 
@@ -40,7 +40,7 @@ export default function ChangeFilePathDialog(props: Props) {
         props.onClose();
       })();
     },
-    [note, props.onClose, props]
+    [note, props.onClose, props],
   );
 
   useEffect(() => {

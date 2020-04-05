@@ -27,7 +27,7 @@ const useStyles = makeStyles((theme: Theme) =>
     textField: {
       marginBottom: theme.spacing(2),
     },
-  })
+  }),
 );
 
 interface Props {
@@ -42,7 +42,7 @@ export default function PushNotebookDialog(props: Props) {
   const [gitUsername, setGitUsername] = useState<string>(notebook.gitUsername);
   const [gitPassword, setGitPassword] = useState<string>(notebook.gitPassword);
   const [commitMessage, setCommitMessage] = useState<string>(
-    "doc: Updated docs"
+    "doc: Updated docs",
   );
   const { t } = useTranslation();
   const crossnoteContainer = CrossnoteContainer.useContainer();
@@ -156,10 +156,10 @@ export default function PushNotebookDialog(props: Props) {
         <TextField
           className={clsx(classes.textField)}
           label={`${t("general/git-repository")} ${t("general/Username")} (${t(
-            "general/optional"
+            "general/optional",
           )})`}
           placeholder={`${t("general/git-repository")} ${t(
-            "general/Username"
+            "general/Username",
           )} (${t("general/optional")})`}
           fullWidth={true}
           value={gitUsername}
@@ -168,10 +168,10 @@ export default function PushNotebookDialog(props: Props) {
         <TextField
           className={clsx(classes.textField)}
           label={`${t("general/git-repository")} ${t("general/Password")} (${t(
-            "general/optional"
+            "general/optional",
           )})`}
           placeholder={`${t("general/git-repository")} ${t(
-            "general/Password"
+            "general/Password",
           )} (${t("general/optional")})`}
           type={"password"}
           fullWidth={true}

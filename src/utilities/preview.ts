@@ -10,7 +10,7 @@ export function handleTagClickInPreview(previewElement: HTMLElement) {
         tag.addEventListener("click", () => {
           window.open(
             `${window.location.origin}/tag/${tagName.trim()}`,
-            "_blank"
+            "_blank",
           );
         });
       }
@@ -21,7 +21,7 @@ export function handleTagClickInPreview(previewElement: HTMLElement) {
 export function printPreview(
   previewElement: HTMLElement,
   bannerElement?: HTMLElement,
-  timeout = 2000
+  timeout = 2000,
 ) {
   return VickyMDPrintPreview(
     previewElement,
@@ -47,6 +47,6 @@ export function printPreview(
     border: none;
   }
 `,
-    timeout
+    timeout,
   );
 }
