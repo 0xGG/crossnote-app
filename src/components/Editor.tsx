@@ -1233,7 +1233,7 @@ export default function Editor(props: Props) {
 
   return (
     <Box className={clsx(classes.editorPanel, "editor-panel")}>
-      <Box className={clsx(classes.topPanel)}>
+      <Box className={clsx(classes.topPanel, "editor-toolbar")}>
         <Box className={clsx(classes.row)}>
           <ButtonGroup className={clsx(classes.backBtn)}>
             <Button

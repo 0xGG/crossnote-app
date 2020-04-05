@@ -444,6 +444,7 @@ export function Home(props: Props) {
               defaultSize={notesPanelWidth}
               minSize={notesPanelMinWidth}
               maxSize={notesPanelMaxWidth}
+              className={"main-panel-split-pane"}
             >
               {notesPanel}
               {editorPanel}
