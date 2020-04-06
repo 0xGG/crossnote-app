@@ -211,7 +211,7 @@ export const jaJP = {
     "notifications/refresh": "更新して新しいメッセージを表示",
 
     // Settings
-    "settings/about-this-project": "このプロジェクトについて 🤔",
+    "settings/about-this-project": "このプロジェクトについて",
     "settings/uploading-cover-image": "カバー画像をアップロード",
     "settings/upload-image-failure": "画像のアップロードに失敗しました",
     "settings/Cover": "カバー写真",

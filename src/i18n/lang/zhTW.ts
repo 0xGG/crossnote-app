@@ -206,7 +206,7 @@ export const zhTW = {
     "notifications/refresh": "刷新來查看新的消息",
 
     // Settings
-    "settings/about-this-project": "關於這個項目 🤔",
+    "settings/about-this-project": "關於這個項目",
     "settings/uploading-cover-image": "上傳封面圖片",
     "settings/upload-image-failure": "上傳圖片失敗",
     "settings/Cover": "封面圖片",

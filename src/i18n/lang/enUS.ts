@@ -209,7 +209,7 @@ export const enUS = {
     "notifications/refresh": "Refresh to see new notifications",
 
     // Settings
-    "settings/about-this-project": "About this project 🤔",
+    "settings/about-this-project": "About this project",
     "settings/uploading-cover-image": "Uploading cover image",
     "settings/upload-image-failure": "Failed to upload image",
     "settings/Cover": "Cover",

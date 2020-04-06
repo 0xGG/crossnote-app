@@ -206,7 +206,7 @@ export const zhCN = {
     "notifications/refresh": "刷新来查看新的消息",
 
     // Settings
-    "settings/about-this-project": "关于这个项目 🤔",
+    "settings/about-this-project": "关于这个项目",
     "settings/uploading-cover-image": "上传封面图片",
     "settings/upload-image-failure": "上传图片失败",
     "settings/Cover": "封面图片",
