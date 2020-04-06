@@ -883,10 +883,6 @@ export default function Editor(props: Props) {
                   displayText: `/timer - ${t("editor/toolbar/insert-clock")}`,
                 },
                 {
-                  text: "",
-                  displayText: `/emoji - ${t("editor/toolbar/insert-emoji")}`,
-                },
-                {
                   text: "<!-- @crossnote.audio -->  \n",
                   displayText: `/audio - ${t("editor/toolbar/audio-url")}`,
                 },
