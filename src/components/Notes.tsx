@@ -121,21 +121,21 @@ export default function Notes(props: Props) {
     if (notesListElement) {
       const keyDownHandler = (event: KeyboardEvent) => {
         const selectedNote = crossnoteContainer.selectedNote;
-        const notes = crossnoteContainer.notes || [];
-        if (!selectedNote) return;
-        if (event.which === 40) {
+        if (!selectedNote || !notes.length) {
+          return;
+        }
+        const currentIndex = notes.findIndex(
+          (n) => n.filePath === selectedNote.filePath,
+        );
+        if (currentIndex < 0) {
+          crossnoteContainer.setSelectedNote(notes[0]);
+        } else if (event.which === 40) {
           // Up
-          const currentIndex = notes.findIndex(
-            (n) => n.filePath === selectedNote.filePath,
-          );
           if (currentIndex >= 0 && currentIndex < notes.length - 1) {
             crossnoteContainer.setSelectedNote(notes[currentIndex + 1]);
           }
         } else if (event.which === 38) {
           // Down
-          const currentIndex = notes.findIndex(
-            (n) => n.filePath === selectedNote.filePath,
-          );
           if (currentIndex > 0 && currentIndex < notes.length) {
             crossnoteContainer.setSelectedNote(notes[currentIndex - 1]);
           }
@@ -146,11 +146,7 @@ export default function Notes(props: Props) {
         notesListElement.removeEventListener("keydown", keyDownHandler);
       };
     }
-  }, [
-    notesListElement,
-    crossnoteContainer.notes,
-    crossnoteContainer.selectedNote,
-  ]);
+  }, [notesListElement, notes, crossnoteContainer.selectedNote]);
 
   useEffect(() => {
     if (notesListElement) {
@@ -166,6 +162,7 @@ export default function Notes(props: Props) {
         notesListElement.style.flex = initialFlex;
       };
       window.addEventListener("resize", hack);
+      hack();
       return () => {
         window.removeEventListener("resize", hack);
       };
