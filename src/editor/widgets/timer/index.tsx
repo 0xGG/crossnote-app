@@ -22,7 +22,7 @@ function Timer(props: WidgetArgs) {
         width: "375px",
         maxWidth: "100%",
         boxShadow: "0 1px 3px 1px #aaa",
-        marginBottom: "16px",
+        marginBottom: props.isPreview ? "16px" : "0",
       }}
     >
       <div className={"widget-timer-date"}>

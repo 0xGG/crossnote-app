@@ -8,14 +8,12 @@ import {
   Box,
   Input,
   Tooltip,
-  Switch,
-  FormControlLabel,
 } from "@material-ui/core";
 import { createStyles, makeStyles, Theme } from "@material-ui/core/styles";
 import clsx from "clsx";
 import { TrashCan } from "mdi-material-ui";
 import { useTranslation } from "react-i18next";
-import { smmsUploadImages } from "../../utilities/image_uploader";
+import { smmsUploadImages } from "../../../utilities/image_uploader";
 import Noty from "noty";
 
 const useStyles = makeStyles((theme: Theme) =>
