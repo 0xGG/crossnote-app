@@ -930,6 +930,12 @@ export default function Editor(props: Props) {
                   )}`,
                 },
                 {
+                  text: "<!-- @crossnote.github_gist -->  \n",
+                  displayText: `/github_gist - ${t(
+                    "editor/toolbar/insert-github-gist",
+                  )}`,
+                },
+                {
                   text: "<!-- @crossnote.comment -->  \n",
                   displayText: `/crossnote.comment - ${t(
                     "editor/toolbar/insert-comment",

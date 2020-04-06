@@ -67,6 +67,7 @@
     "react-split-pane": "^0.1.91",
     "styled-components": "^5.0.1",
     "subscriptions-transport-ws": "^0.9.16",
+    "super-react-gist": "^1.0.4",
     "tesseract.js": "^2.1.1",
     "typeface-noto-sans": "^0.0.72",
     "typeface-noto-sans-hk": "^0.0.75",

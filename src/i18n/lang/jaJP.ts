@@ -348,6 +348,7 @@ export const jaJP = {
     "editor/toolbar/insert-table": "テーブルを挿入",
     "editor/toolbar/insert-comment":
       "クロスノートクラウドコメントウィジェットを挿入",
+    "editor/toolbar/insert-github-gist": "GitHub Gist を挿入",
 
     // * NoteControl
     "editor/note-control/tag-added": "タグが追加されました",
@@ -502,6 +503,9 @@ export const jaJP = {
     "widget/crossnote.ocr/extra-settings": "追加設定",
     "widget/crossnote.ocr/grayscale": "グレースケール",
     "widget/crossnote.kanban/add-column": "新しい列を追加する",
+    "widget/crossnote.github_gist/title": "GitHub Gist を埋め込む",
+    "widget/crossnote/github_gist/enter-github-gist-url":
+      "GitHub Gist URL を入力してください",
 
     // Tesseract
     "tesseract/loading tesseract core": "loading tesseract core",

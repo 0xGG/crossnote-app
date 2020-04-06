@@ -335,6 +335,7 @@ export const enUS = {
     "editor/toolbar/insert-link": "Insert link",
     "editor/toolbar/insert-table": "Insert table",
     "editor/toolbar/insert-comment": "Insert crossnote cloud comment widget",
+    "editor/toolbar/insert-github-gist": "Insert GitHub Gist",
 
     // * NoteControl
     "editor/note-control/tag-added": "Tag added",
@@ -485,6 +486,9 @@ export const enUS = {
     "widget/crossnote.ocr/extra-settings": "Extra settings",
     "widget/crossnote.ocr/grayscale": "Grayscale",
     "widget/crossnote.kanban/add-column": "Add new column",
+    "widget/crossnote.github_gist/title": "Embed a GitHub Gist",
+    "widget/crossnote/github_gist/enter-github-gist-url":
+      "Enter GitHub Gist URL",
 
     // Tesseract
     "tesseract/loading tesseract core": "loading tesseract core",

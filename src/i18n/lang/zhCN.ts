@@ -331,6 +331,7 @@ export const zhCN = {
     "editor/toolbar/insert-link": "插入链接",
     "editor/toolbar/insert-table": "插入表格",
     "editor/toolbar/insert-comment": "插入交叉笔记云评论挂件",
+    "editor/toolbar/insert-github-gist": "插入 GitHub Gist",
 
     // * NoteControl
     "editor/note-control/tag-added": "标签已被添加",
@@ -466,6 +467,9 @@ export const zhCN = {
     "widget/crossnote.ocr/extra-settings": "额外设定",
     "widget/crossnote.ocr/grayscale": "灰度",
     "widget/crossnote.kanban/add-column": "添加新的列",
+    "widget/crossnote.github_gist/title": "嵌入一个 GitHub Gist",
+    "widget/crossnote/github_gist/enter-github-gist-url":
+      "输入 GitHub Gist URL",
 
     // Tesseract
     "tesseract/loading tesseract core": "正在读取 tesseract 核心",
