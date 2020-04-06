@@ -30,24 +30,23 @@ const useStyles = makeStyles((theme: Theme) =>
     section: {
       marginTop: theme.spacing(2),
     },
-    videoWrapper: {
-      cursor: "default",
-      position: "relative",
-      width: "100%",
-      height: "0",
-      paddingTop: "56.25%",
+    dropArea: {
+      "textAlign": "center",
+      "padding": "24px",
+      "border": "4px dotted #c7c7c7",
+      "backgroundColor": "#f1f1f1",
+      "cursor": "pointer",
+      "&:hover": {
+        backgroundColor: "#eee",
+      },
     },
-    video: {
-      position: "absolute",
-      left: "0",
-      top: "0",
-      width: "100%",
-      height: "100%",
+    disabled: {
+      cursor: "not-allowed",
     },
   }),
 );
 
-function VideoWidget(props: WidgetArgs) {
+function AudioWidget(props: WidgetArgs) {
   const attributes = props.attributes;
   const classes = useStyles(props);
   const { t } = useTranslation();
@@ -60,25 +59,21 @@ function VideoWidget(props: WidgetArgs) {
   );
   const [loop, setLoop] = useState<boolean>(attributes["loop"] || false);
   const [muted, setMuted] = useState<boolean>(attributes["muted"] || false);
-  const [poster, setPoster] = useState<string>(attributes["poster"] || "");
 
   if (attributes["src"]) {
     return (
       <span style={{ cursor: "default" }}>
-        <Box className={clsx(classes.videoWrapper)}>
-          <video
-            className={clsx(classes.video)}
-            autoPlay={attributes["autoplay"] || attributes["autoPlay"]}
-            controls={attributes["controls"]}
-            loop={attributes["loop"]}
-            muted={attributes["muted"]}
-            style={attributes["style"]}
-            poster={attributes["poster"]}
-          >
-            {t("widget/crossnote.video/video_element_fail")}
-            <source src={attributes["src"]} type={attributes["type"]}></source>
-          </video>
-        </Box>
+        <audio
+          autoPlay={attributes["autoplay"] || attributes["autoPlay"]}
+          controls={attributes["controls"]}
+          loop={attributes["loop"]}
+          muted={attributes["muted"]}
+          style={attributes["style"]}
+        >
+          {t("widget/crossnote.audio/audio_element_fail")}
+          <source src={attributes["src"]} type={attributes["type"]}></source>
+        </audio>
+        {!props.isPreview && !attributes["controls"] && "🎵"}
       </span>
     );
   }
@@ -89,7 +84,7 @@ function VideoWidget(props: WidgetArgs) {
 
   return (
     <Card elevation={2} className={clsx(classes.card)}>
-      <Typography variant={"h5"}>{t("general/Video")}</Typography>
+      <Typography variant={"h5"}>{t("general/Audio")}</Typography>
       <Box className={clsx(classes.actionButtons)}>
         <Tooltip title={t("general/Delete")}>
           <IconButton onClick={() => props.removeSelf()}>
@@ -103,7 +98,7 @@ function VideoWidget(props: WidgetArgs) {
         </Typography>
         <Input
           margin={"dense"}
-          placeholder={t("widget/crossnote.video/video-url-placeholder")}
+          placeholder={t("widget/crossnote.audio/source-url-placeholder")}
           value={source}
           onChange={(event) => {
             setSource(event.target.value);
@@ -117,29 +112,14 @@ function VideoWidget(props: WidgetArgs) {
                   loop,
                   muted,
                   src: source,
-                  poster,
                 };
                 props.replaceSelf(
-                  `\`@crossnote.video ${JSON.stringify(attrs)
+                  `<!-- @crossnote.audio ${JSON.stringify(attrs)
                     .replace(/^{/, "")
-                    .replace(/}$/, "")}\``,
+                    .replace(/}$/, "")} -->`,
                 );
               }
             }
-          }}
-          fullWidth={true}
-        ></Input>
-      </Box>
-      <Box className={clsx(classes.section)}>
-        <Typography variant={"subtitle1"} style={{ marginBottom: "8px" }}>
-          {t("widget/crossnote.video/poster-url")}
-        </Typography>
-        <Input
-          margin={"dense"}
-          placeholder={t("widget/crossnote.video/poster-url-placeholder")}
-          value={poster}
-          onChange={(event) => {
-            setPoster(event.target.value);
           }}
           fullWidth={true}
         ></Input>
@@ -190,8 +170,8 @@ function VideoWidget(props: WidgetArgs) {
   );
 }
 
-export const VideoWidgetCreator: WidgetCreator = (args) => {
+export const AudioWidgetCreator: WidgetCreator = (args) => {
   const el = document.createElement("span");
-  ReactDOM.render(<VideoWidget {...args}></VideoWidget>, el);
+  ReactDOM.render(<AudioWidget {...args}></AudioWidget>, el);
   return el;
 };

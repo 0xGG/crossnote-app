@@ -1,10 +1,12 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useCallback } from "react";
 import { createStyles, makeStyles, Theme } from "@material-ui/core/styles";
 import clsx from "clsx";
 import { CrossnoteContainer } from "../containers/crossnote";
 import { Box, Card, IconButton, Typography, Hidden } from "@material-ui/core";
 import { Menu as MenuIcon } from "mdi-material-ui";
 import { useTranslation } from "react-i18next";
+import { renderPreview } from "vickymd/preview";
+import * as path from "path";
 
 const previewZIndex = 99;
 const useStyles = makeStyles((theme: Theme) =>
@@ -17,6 +19,7 @@ const useStyles = makeStyles((theme: Theme) =>
     },
     topPanel: {
       padding: theme.spacing(1),
+      borderRadius: "0",
     },
     row: {
       display: "flex",
@@ -59,11 +62,59 @@ export default function WikiPanel(props: Props) {
   const { t } = useTranslation();
   const crossnoteContainer = CrossnoteContainer.useContainer();
 
+  const openURL = useCallback(
+    (url: string = "") => {
+      if (!url || !crossnoteContainer.selectedNotebook) {
+        return;
+      }
+      const notebook = crossnoteContainer.selectedNotebook;
+      if (url.match(/https?:\/\//)) {
+        window.open(url, "_blank");
+      } else if (url.startsWith("/")) {
+        let filePath = path.relative(
+          notebook.dir,
+          path.resolve(notebook.dir, url.replace(/^\//, "")),
+        );
+        crossnoteContainer.openNoteAtPath(filePath);
+      } else {
+        let filePath = path.relative(
+          notebook.dir,
+          path.resolve(notebook.dir, url),
+        );
+        crossnoteContainer.openNoteAtPath(filePath);
+      }
+    },
+    [crossnoteContainer.selectedNotebook],
+  );
+
   useEffect(() => {
     return () => {
       crossnoteContainer.setWikiTOCElement(null);
     };
   }, []);
+
+  useEffect(() => {
+    if (crossnoteContainer.wikiTOCElement) {
+      crossnoteContainer
+        .getNote(crossnoteContainer.selectedNotebook, "SUMMARY.md")
+        .then((note) => {
+          const handleLinksClickEvent = (preview: HTMLElement) => {
+            // Handle link click event
+            const links = preview.getElementsByTagName("A");
+            for (let i = 0; i < links.length; i++) {
+              const link = links[i] as HTMLAnchorElement;
+              link.onclick = (event) => {
+                event.preventDefault();
+                openURL(link.getAttribute("href"));
+              };
+            }
+          };
+          renderPreview(crossnoteContainer.wikiTOCElement, note.markdown);
+          handleLinksClickEvent(crossnoteContainer.wikiTOCElement);
+        })
+        .catch(() => {});
+    }
+  }, [crossnoteContainer.wikiTOCElement]);
 
   return (
     <Box className={clsx(classes.wikiPanel)}>

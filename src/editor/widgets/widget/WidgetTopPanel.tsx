@@ -178,11 +178,6 @@ export function WidgetTopPanel(props: Props) {
   useEffect(() => {
     if (widget && previewElement) {
       renderPreview(previewElement, widget.description);
-
-      // TODO: There might be a bug in renderPreview function. It generated extra new lines
-      previewElement.innerHTML = previewElement.innerHTML
-        .replace(/<br>\n/g, "<br>")
-        .trim();
     }
   }, [widget, previewElement, forceUpdate]);
 
@@ -226,6 +221,7 @@ export function WidgetTopPanel(props: Props) {
     <Box className={clsx(classes.topPanel)}>
       <div
         className={clsx(classes.preview, "preview")}
+        style={{ whiteSpace: "normal" }}
         ref={(element: HTMLElement) => {
           setPreviewElement(element);
         }}

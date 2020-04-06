@@ -59,20 +59,41 @@ function YoutubeWidget(props: WidgetArgs) {
   const [error, setError] = useState<string>("");
 
   if (attributes["videoID"]) {
-    return (
-      <span style={{ cursor: "default" }}>
-        <Box className={clsx(classes.videoWrapper)}>
-          <iframe
-            title={"youtube_" + attributes["videoID"]}
-            className={clsx(classes.video)}
-            src={`https://www.youtube.com/embed/${attributes["videoID"]}`}
-            scrolling={"no"}
-            frameBorder={"no"}
-            allowFullScreen={true}
-          ></iframe>
-        </Box>
-      </span>
-    );
+    if (!props.isPreview) {
+      return (
+        <span style={{ cursor: "default" }}>
+          <img
+            alt={"Youtube: " + attributes["videoID"]}
+            src={`https://img.youtube.com/vi/${attributes["videoID"]}/0.jpg`}
+            onClick={() => {
+              window.open(
+                `https://www.youtube.com/watch?v=${attributes["videoID"]}`,
+                "_blank",
+              );
+            }}
+            style={{
+              cursor: "pointer",
+              width: "100%",
+            }}
+          ></img>
+        </span>
+      );
+    } else {
+      return (
+        <span style={{ cursor: "default" }}>
+          <Box className={clsx(classes.videoWrapper)}>
+            <iframe
+              title={"youtube_" + attributes["videoID"]}
+              className={clsx(classes.video)}
+              src={`https://www.youtube.com/embed/${attributes["videoID"]}`}
+              scrolling={"no"}
+              frameBorder={"no"}
+              allowFullScreen={true}
+            ></iframe>
+          </Box>
+        </span>
+      );
+    }
   }
 
   if (props.isPreview) {
@@ -111,9 +132,9 @@ function YoutubeWidget(props: WidgetArgs) {
                   videoID,
                 };
                 props.replaceSelf(
-                  `\`@crossnote.youtube ${JSON.stringify(attrs)
+                  `<!-- @crossnote.youtube ${JSON.stringify(attrs)
                     .replace(/^{/, "")
-                    .replace(/}$/, "")}\``,
+                    .replace(/}$/, "")} -->`,
                 );
               } else if (url && url.match(/\/youtu\.be\/(.+?)(\?|$)/)) {
                 const videoID = url.match(/\/youtu\.be\/(.+?)(\?|$)/)[1];
@@ -121,9 +142,9 @@ function YoutubeWidget(props: WidgetArgs) {
                   videoID,
                 };
                 props.replaceSelf(
-                  `\`@crossnote.youtube ${JSON.stringify(attrs)
+                  `<!-- @crossnote.youtube ${JSON.stringify(attrs)
                     .replace(/^{/, "")
-                    .replace(/}$/, "")}\``,
+                    .replace(/}$/, "")} -->`,
                 );
               } else {
                 setError(t("widget/crossnote.youtube/error_message"));

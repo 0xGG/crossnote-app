@@ -206,7 +206,7 @@ export const zhTW = {
     "notifications/refresh": "刷新來查看新的消息",
 
     // Settings
-    "settings/about-this-project": "關於這個項目 🤔",
+    "settings/about-this-project": "關於這個項目",
     "settings/uploading-cover-image": "上傳封面圖片",
     "settings/upload-image-failure": "上傳圖片失敗",
     "settings/Cover": "封面圖片",
@@ -331,6 +331,7 @@ export const zhTW = {
     "editor/toolbar/insert-link": "插入鏈接",
     "editor/toolbar/insert-table": "插入表格",
     "editor/toolbar/insert-comment": "插入交叉筆記雲評論掛件",
+    "editor/toolbar/insert-github-gist": "插入 GitHub Gist",
 
     // * NoteControl
     "editor/note-control/tag-added": "標籤已被添加",
@@ -466,6 +467,9 @@ export const zhTW = {
     "widget/crossnote.ocr/extra-settings": "額外設定",
     "widget/crossnote.ocr/grayscale": "灰度",
     "widget/crossnote.kanban/add-column": "添加新的列",
+    "widget/crossnote.github_gist/title": "內嵌入 GitHub Gist",
+    "widget/crossnote/github_gist/enter-github-gist-url":
+      "輸入 GitHub Gist URL",
 
     // Tesseract
     "tesseract/loading tesseract core": "正在讀取 tesseract 核心",

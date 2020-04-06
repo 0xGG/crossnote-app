@@ -488,13 +488,24 @@ export function Settings(props: Props) {
       )}
       <Box className={clsx(classes.section)} style={{ marginTop: "32px" }}>
         <Link
+          href={
+            "https://crossnote.app/?repo=https%3A%2F%2Fgithub.com%2F0xGG%2Fwelcome-notebook&branch=master&filePath=README.md"
+          }
+          target={"_blank"}
+        >
+          <Typography variant={"caption"}>
+            {"🤔 " + t("settings/about-this-project")}
+          </Typography>
+        </Link>
+        <br></br>
+        <Link
           href={`https://github.com/0xGG/crossnote/commit/${
             GitCommit.logMessage.split(/\s+/)[0]
           }`}
           target={"_blank"}
         >
           <Typography variant={"caption"}>
-            {"build " + GitCommit.logMessage}
+            {"🛠 build " + GitCommit.logMessage}
           </Typography>
         </Link>
       </Box>

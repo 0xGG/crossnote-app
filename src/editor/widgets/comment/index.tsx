@@ -237,7 +237,10 @@ function CommentWidget(props: WidgetArgs) {
   }
 
   return (
-    <Box className={clsx(classes.commentWidget)}>
+    <Box
+      className={clsx(classes.commentWidget)}
+      style={{ marginBottom: props.isPreview ? "16px" : "0" }}
+    >
       <Box className={clsx(classes.topPanel)}>
         <WidgetTopPanel
           widget={commentWidget as any}

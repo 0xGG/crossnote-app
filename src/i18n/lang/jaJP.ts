@@ -211,7 +211,7 @@ export const jaJP = {
     "notifications/refresh": "更新して新しいメッセージを表示",
 
     // Settings
-    "settings/about-this-project": "このプロジェクトについて 🤔",
+    "settings/about-this-project": "このプロジェクトについて",
     "settings/uploading-cover-image": "カバー画像をアップロード",
     "settings/upload-image-failure": "画像のアップロードに失敗しました",
     "settings/Cover": "カバー写真",
@@ -348,6 +348,7 @@ export const jaJP = {
     "editor/toolbar/insert-table": "テーブルを挿入",
     "editor/toolbar/insert-comment":
       "クロスノートクラウドコメントウィジェットを挿入",
+    "editor/toolbar/insert-github-gist": "GitHub Gist を挿入",
 
     // * NoteControl
     "editor/note-control/tag-added": "タグが追加されました",
@@ -502,6 +503,9 @@ export const jaJP = {
     "widget/crossnote.ocr/extra-settings": "追加設定",
     "widget/crossnote.ocr/grayscale": "グレースケール",
     "widget/crossnote.kanban/add-column": "新しい列を追加する",
+    "widget/crossnote.github_gist/title": "GitHub Gist を埋め込む",
+    "widget/crossnote/github_gist/enter-github-gist-url":
+      "GitHub Gist URL を入力してください",
 
     // Tesseract
     "tesseract/loading tesseract core": "loading tesseract core",

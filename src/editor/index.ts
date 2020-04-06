@@ -24,21 +24,24 @@ import "vickymd/powerpack/fold-code-with-echarts";
 import "vickymd/powerpack/fold-code-with-wavedrom";
 import "vickymd/powerpack/hover-with-marked";
 import { registerWidgetCreator } from "vickymd/widget";
-import { ImageWidgetCreator } from "./widgets/Image";
-import { AudioWidgetCreator } from "./widgets/Audio";
-import { NeteaseMusicWidgetCreator } from "./widgets/NeteaseMusic";
-import { VideoWidgetCreator } from "./widgets/Video";
-import { BilibiliWidgetCreator } from "./widgets/Bilibili";
-import { YoutubeWidgetCreator } from "./widgets/Youtube";
-import { OCRWidgetCreator } from "./widgets/OCR";
-import { KanbanWidgetCreator } from "./widgets/Kanban";
-import { ABCWidgetCreator } from "./widgets/ABC";
-import { CommentWidgetCreator } from "./widgets/comment/index";
+import { TimerWidgetCreator } from "./widgets/timer";
+import { ImageWidgetCreator } from "./widgets/image";
+import { AudioWidgetCreator } from "./widgets/audio";
+import { NeteaseMusicWidgetCreator } from "./widgets/netease_music";
+import { VideoWidgetCreator } from "./widgets/video";
+import { BilibiliWidgetCreator } from "./widgets/bilibili";
+import { YoutubeWidgetCreator } from "./widgets/youtube";
+import { OCRWidgetCreator } from "./widgets/ocr";
+import { KanbanWidgetCreator } from "./widgets/kanban";
+import { ABCWidgetCreator } from "./widgets/abc";
+import { CommentWidgetCreator } from "./widgets/comment";
+import { GitHubGistWidgetCreator } from "./widgets/github_gist";
 
 // Set necessary window scope variables
 window["CodeMirror"] = require("codemirror");
 
 // Register widget creators
+registerWidgetCreator("timer", TimerWidgetCreator);
 registerWidgetCreator("crossnote.image", ImageWidgetCreator);
 registerWidgetCreator("crossnote.audio", AudioWidgetCreator);
 registerWidgetCreator("crossnote.netease_music", NeteaseMusicWidgetCreator);
@@ -49,3 +52,4 @@ registerWidgetCreator("crossnote.ocr", OCRWidgetCreator);
 registerWidgetCreator("crossnote.kanban", KanbanWidgetCreator);
 registerWidgetCreator("crossnote.abc", ABCWidgetCreator);
 registerWidgetCreator("crossnote.comment", CommentWidgetCreator);
+registerWidgetCreator("crossnote.github_gist", GitHubGistWidgetCreator);

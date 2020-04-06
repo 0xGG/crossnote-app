@@ -5,7 +5,7 @@ import clsx from "clsx";
 import { createStyles, makeStyles, Theme } from "@material-ui/core/styles";
 import { Box, IconButton, Card } from "@material-ui/core";
 import { useTranslation } from "react-i18next";
-import { generateUUID } from "../../utilities/utils";
+import { generateUUID } from "../../../utilities/utils";
 
 // @ts-ignore
 import abcjs from "abcjs";

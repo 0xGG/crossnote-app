@@ -155,14 +155,20 @@ export default function Notes(props: Props) {
   useEffect(() => {
     if (notesListElement) {
       // Hack: fix note cards not displaying bug when searchValue is not empty
-      const initialHeight = notesListElement.style.height;
-      const initialFlex = notesListElement.style.flex;
-      notesListElement.style.flex = "initial";
-      notesListElement.style.height = "10px";
-      notesListElement.scrollTop += 1;
-      notesListElement.scrollTop -= 1;
-      notesListElement.style.height = initialHeight;
-      notesListElement.style.flex = initialFlex;
+      const hack = () => {
+        const initialHeight = notesListElement.style.height;
+        const initialFlex = notesListElement.style.flex;
+        notesListElement.style.flex = "initial";
+        notesListElement.style.height = "10px";
+        notesListElement.scrollTop += 1;
+        notesListElement.scrollTop -= 1;
+        notesListElement.style.height = initialHeight;
+        notesListElement.style.flex = initialFlex;
+      };
+      window.addEventListener("resize", hack);
+      return () => {
+        window.removeEventListener("resize", hack);
+      };
     }
   }, [notes, notesListElement]);
 
@@ -226,6 +232,7 @@ export default function Notes(props: Props) {
             overflow={true}
             once={true}
             scrollContainer={notesListElement}
+            resize={true}
           >
             <NoteCard key={"note-card-" + note.filePath} note={note}></NoteCard>
           </LazyLoad>
