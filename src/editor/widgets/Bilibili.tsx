@@ -127,9 +127,9 @@ function BilibiliWidget(props: WidgetArgs) {
                   aid,
                 };
                 props.replaceSelf(
-                  `\`@crossnote.bilibili ${JSON.stringify(attrs)
+                  `<!-- @crossnote.bilibili ${JSON.stringify(attrs)
                     .replace(/^{/, "")
-                    .replace(/}$/, "")}\``,
+                    .replace(/}$/, "")} -->`,
                 );
               } else if (url && url.match(/\/BV(.+?)($|\/|\?)/)) {
                 const bvid = url.match(/\/BV(.+?)($|\/|\?)/)[1];
@@ -137,9 +137,9 @@ function BilibiliWidget(props: WidgetArgs) {
                   bvid,
                 };
                 props.replaceSelf(
-                  `\`@crossnote.bilibili ${JSON.stringify(attrs)
+                  `<!-- @crossnote.bilibili ${JSON.stringify(attrs)
                     .replace(/^{/, "")
-                    .replace(/}$/, "")}\``,
+                    .replace(/}$/, "")} -->`,
                 );
               } else {
                 setError(t("widget/crossnote.bilibili/error_message"));

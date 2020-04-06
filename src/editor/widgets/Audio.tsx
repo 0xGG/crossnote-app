@@ -114,9 +114,9 @@ function AudioWidget(props: WidgetArgs) {
                   src: source,
                 };
                 props.replaceSelf(
-                  `\`@crossnote.audio ${JSON.stringify(attrs)
+                  `<!-- @crossnote.audio ${JSON.stringify(attrs)
                     .replace(/^{/, "")
-                    .replace(/}$/, "")}\``,
+                    .replace(/}$/, "")} -->`,
                 );
               }
             }

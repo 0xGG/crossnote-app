@@ -863,7 +863,7 @@ export default function Editor(props: Props) {
                   )}`,
                 },
                 {
-                  text: "`@crossnote.image`\n",
+                  text: "<!-- @crossnote.image -->\n",
                   displayText: `/image - ${t("editor/toolbar/insert-image")}`,
                 },
                 {
@@ -875,11 +875,11 @@ export default function Editor(props: Props) {
                 },
                 {
                   text:
-                    "`@timer " +
+                    "<!-- @timer " +
                     JSON.stringify({ date: new Date().toString() })
                       .replace(/^{/, "")
                       .replace(/}$/, "") +
-                    "`\n",
+                    " -->\n",
                   displayText: `/timer - ${t("editor/toolbar/insert-clock")}`,
                 },
                 {
@@ -887,25 +887,25 @@ export default function Editor(props: Props) {
                   displayText: `/emoji - ${t("editor/toolbar/insert-emoji")}`,
                 },
                 {
-                  text: "`@crossnote.audio`  \n",
+                  text: "<!-- @crossnote.audio -->  \n",
                   displayText: `/audio - ${t("editor/toolbar/audio-url")}`,
                 },
                 {
-                  text: "`@crossnote.netease_music`  \n",
+                  text: "<!-- @crossnote.netease_music -->  \n",
                   displayText: `/netease - ${t(
                     "editor/toolbar/netease-music",
                   )}`,
                 },
                 {
-                  text: "`@crossnote.video`  \n",
+                  text: "<!-- @crossnote.video -->  \n",
                   displayText: `/video - ${t("editor/toolbar/video-url")}`,
                 },
                 {
-                  text: "`@crossnote.youtube`  \n",
+                  text: "<!-- @crossnote.youtube -->  \n",
                   displayText: `/youtube - ${t("editor/toolbar/youtube")}`,
                 },
                 {
-                  text: "`@crossnote.bilibili`  \n",
+                  text: "<!-- @crossnote.bilibili -->  \n",
                   displayText: `/bilibili - ${t("editor/toolbar/bilibili")}`,
                 },
                 {
@@ -913,23 +913,24 @@ export default function Editor(props: Props) {
                   displayText: `/slide - ${t("editor/toolbar/insert-slide")}`,
                 },
                 {
-                  text: "`@crossnote.ocr`  \n",
+                  text: "<!-- @crossnote.ocr -->  \n",
                   displayText: `/ocr - ${t("editor/toolbar/insert-ocr")}`,
                 },
                 {
-                  text: '`@crossnote.kanban "v":2,"board":{"columns":[]}`  \n',
+                  text:
+                    '<!-- @crossnote.kanban "v":2,"board":{"columns":[]} -->  \n',
                   displayText: `/kanban - ${t(
                     "editor/toolbar/insert-kanban",
                   )} (beta)`,
                 },
                 {
-                  text: "`@crossnote.abc`  \n",
+                  text: "<!-- @crossnote.abc -->  \n",
                   displayText: `/abc - ${t(
                     "editor/toolbar/insert-abc-notation",
                   )}`,
                 },
                 {
-                  text: "`@crossnote.comment`  \n",
+                  text: "<!-- @crossnote.comment -->  \n",
                   displayText: `/crossnote.comment - ${t(
                     "editor/toolbar/insert-comment",
                   )}`,
@@ -1051,7 +1052,7 @@ export default function Editor(props: Props) {
       // Timer
       if (
         changeObject.text.length > 0 &&
-        changeObject.text[0].startsWith("`@timer ") &&
+        changeObject.text[0].startsWith("<!-- @timer ") &&
         changeObject.removed.length > 0 &&
         changeObject.removed[0].startsWith("/")
       ) {

@@ -33,12 +33,14 @@ import { YoutubeWidgetCreator } from "./widgets/Youtube";
 import { OCRWidgetCreator } from "./widgets/OCR";
 import { KanbanWidgetCreator } from "./widgets/Kanban";
 import { ABCWidgetCreator } from "./widgets/ABC";
+import { TimerWidgetCreator } from "./widgets/Timer";
 import { CommentWidgetCreator } from "./widgets/comment/index";
 
 // Set necessary window scope variables
 window["CodeMirror"] = require("codemirror");
 
 // Register widget creators
+registerWidgetCreator("timer", TimerWidgetCreator);
 registerWidgetCreator("crossnote.image", ImageWidgetCreator);
 registerWidgetCreator("crossnote.audio", AudioWidgetCreator);
 registerWidgetCreator("crossnote.netease_music", NeteaseMusicWidgetCreator);

@@ -105,9 +105,9 @@ function NeteaseMusicWidget(props: WidgetArgs) {
                   id,
                 };
                 props.replaceSelf(
-                  `\`@crossnote.netease_music ${JSON.stringify(attrs)
+                  `<!-- @crossnote.netease_music ${JSON.stringify(attrs)
                     .replace(/^{/, "")
-                    .replace(/}$/, "")}\``,
+                    .replace(/}$/, "")} -->`,
                 );
               }
             }

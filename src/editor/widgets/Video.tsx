@@ -120,9 +120,9 @@ function VideoWidget(props: WidgetArgs) {
                   poster,
                 };
                 props.replaceSelf(
-                  `\`@crossnote.video ${JSON.stringify(attrs)
+                  `<!-- @crossnote.video ${JSON.stringify(attrs)
                     .replace(/^{/, "")
-                    .replace(/}$/, "")}\``,
+                    .replace(/}$/, "")} -->`,
                 );
               }
             }
