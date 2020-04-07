@@ -26,7 +26,7 @@ import {
   Menu as MenuIcon,
   Translate,
   ImagePlus,
-  GithubCircle,
+  Github,
 } from "mdi-material-ui";
 import { CloudContainer } from "../containers/cloud";
 import { smmsUploadImages } from "../utilities/image_uploader";
@@ -319,7 +319,7 @@ export function Settings(props: Props) {
               <Chip
                 color={"default"}
                 disabled={resGitHubUser.fetching}
-                icon={<GithubCircle></GithubCircle>}
+                icon={<Github></Github>}
                 onClick={() => startGitHubOAuth()}
                 label={t("settings/link-with-github-account")}
               ></Chip>

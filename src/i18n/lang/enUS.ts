@@ -516,7 +516,7 @@ export const enUS = {
     "delete-file-dialog/title": "Are you sure to delete this note?",
     "delete-file-dialog/subtitle": "Can't be undone",
     "add-notebook-dialog/disclaimer":
-      "Notebook data will only be stored locally in browser.",
+      "Notebook data will only be stored locally in browser for offline uses. We won't upload any notebook data to our server.",
     "edit-image-dialog/title": "Edit the image",
     "edit-image-dialog/image-url": "image URL",
     "edit-image-dialog/image-title": "image title",

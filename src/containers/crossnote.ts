@@ -221,7 +221,14 @@ function useCrossnoteContainer(initialState: InitialState) {
   );
 
   const createNewNote = useCallback(
-    async (fileName: string = "") => {
+    async (
+      notebook: Notebook,
+      fileName: string = "",
+      markdown: string = "",
+    ) => {
+      if (!notebook) {
+        return null;
+      }
       if (!fileName) {
         fileName = "unnamed_" + randomID();
       }
@@ -243,8 +250,8 @@ function useCrossnoteContainer(initialState: InitialState) {
         tags = [selectedSection.path];
       } else {
         filePath = path.relative(
-          selectedNotebook.dir,
-          path.resolve(selectedNotebook.dir, selectedSection.path, fileName),
+          notebook.dir,
+          path.resolve(notebook.dir, selectedSection.path, fileName),
         );
       }
 
@@ -254,9 +261,9 @@ function useCrossnoteContainer(initialState: InitialState) {
         modifiedAt: new Date(),
         createdAt: new Date(),
       };
-      await crossnote.writeNote(selectedNotebook, filePath, "", noteConfig);
+      await crossnote.writeNote(notebook, filePath, markdown, noteConfig);
       const note: Note = {
-        notebook: selectedNotebook,
+        notebook: notebook,
         filePath: filePath,
         markdown: "",
         config: noteConfig,
@@ -265,8 +272,9 @@ function useCrossnoteContainer(initialState: InitialState) {
       setSelectedNote(note);
       setDisplayMobileEditor(true);
       setEditorMode(EditorMode.VickyMD);
+      return note;
     },
-    [selectedNotebook, crossnote, selectedSection],
+    [crossnote, selectedSection],
   );
 
   const duplicateNote = useCallback(
@@ -590,7 +598,7 @@ function useCrossnoteContainer(initialState: InitialState) {
   );
 
   useEffect(() => {
-    if (!crossnote) {
+    if (!crossnote || initialized) {
       return;
     }
 
@@ -614,18 +622,24 @@ function useCrossnoteContainer(initialState: InitialState) {
         });
         */
         notebook = await crossnote.addNotebook({
-          name: "Unnamed",
+          name: "Drafts",
           corsProxy: "https://cors.isomorphic-git.org",
           gitURL: "",
         });
+        await crossnote.writeFile(
+          path.resolve(notebook.dir, "README.md"),
+          `# Welcome to Crossnote 😊
+
+If you want to know more about this project,  
+please download and read the [Welcome notebook](https://crossnote.app/?repo=https%3A%2F%2Fgithub.com%2F0xGG%2Fwelcome-notebook&branch=master&filePath=README.md).`,
+        );
         setNotebooks([notebook]);
         setSelectedNotebook(notebook);
         setInitialized(true);
-
         // TODO: create empty note and add `We suggest you to add [Welcome to crossnote]() notebook ;)`
       }
     })();
-  }, [crossnote]);
+  }, [crossnote, initialized]);
 
   useEffect(() => {
     if (!crossnote) {

@@ -97,6 +97,17 @@ export default function AddNotebookDialog(props: Props) {
     setExpanded(true);
   }, [props.gitURL, props.gitBranch]);
 
+  useEffect(() => {
+    return () => {
+      setNotebookName("");
+      setGitURL("");
+      setGitBranch("");
+      setGitUsername("");
+      setGitPassword("");
+      setExpanded(false);
+    };
+  }, [props]);
+
   return (
     <Dialog
       open={props.open}

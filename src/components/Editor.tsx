@@ -1236,7 +1236,11 @@ export default function Editor(props: Props) {
             top: "50%",
             position: "relative",
           }}
-          onClick={() => crossnoteContainer.createNewNote()}
+          onClick={() =>
+            crossnoteContainer.createNewNote(
+              crossnoteContainer.selectedNotebook,
+            )
+          }
           disabled={
             !crossnoteContainer.initialized ||
             crossnoteContainer.isLoadingNotebook

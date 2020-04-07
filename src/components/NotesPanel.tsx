@@ -30,7 +30,7 @@ import {
 import {
   Magnify,
   FileEditOutline,
-  Settings,
+  Cog,
   Menu as MenuIcon,
   SortVariant,
   SortDescending,
@@ -144,7 +144,7 @@ export default function NotesPanel(props: Props) {
   const createNewNote = useCallback(() => {
     setIsCreatingNote(true);
     crossnoteContainer
-      .createNewNote()
+      .createNewNote(crossnoteContainer.selectedNotebook)
       .then(() => {
         setIsCreatingNote(false);
       })
@@ -312,7 +312,7 @@ export default function NotesPanel(props: Props) {
               <IconButton
                 onClick={() => setNotebookConfigurationDialogOpen(true)}
               >
-                <Settings></Settings>
+                <Cog></Cog>
               </IconButton>
               /*)*/
             }
