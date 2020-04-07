@@ -496,7 +496,7 @@ export const zhCN = {
     "delete-file-dialog/title": "你确定要删除这个笔记？",
     "delete-file-dialog/subtitle": "将不能被撤回",
     "add-notebook-dialog/disclaimer":
-      "所有笔记本的数据将只会被保存于浏览器本地。",
+      "所有笔记本的数据将只会被保存于浏览器本地以供离线使用。我们不会上传任何你的笔记本数据到我们的服务器。",
     "edit-image-dialog/title": "编辑图片",
     "edit-image-dialog/image-url": "图片 URL",
     "edit-image-dialog/image-title": "图片标题",

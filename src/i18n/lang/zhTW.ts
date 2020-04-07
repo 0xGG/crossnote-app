@@ -496,7 +496,7 @@ export const zhTW = {
     "delete-file-dialog/title": "妳確定要刪除這個筆記？",
     "delete-file-dialog/subtitle": "將不能被撤回",
     "add-notebook-dialog/disclaimer":
-      "所有筆記本的資料將只會被保存于瀏覽器本地。",
+      "所有筆記本的數據將只會被保存於瀏覽器本地以供離線使用。我們不會上傳任何你的筆記本數據到我們的伺服器。",
     "edit-image-dialog/title": "編輯圖片",
     "edit-image-dialog/image-url": "圖片 URL",
     "edit-image-dialog/image-title": "圖片標題",

@@ -17,7 +17,7 @@ import clsx from "clsx";
 import { browserHistory } from "../utilities/history";
 import { CloudContainer } from "../containers/cloud";
 import { useTranslation } from "react-i18next";
-import { GithubCircle } from "mdi-material-ui";
+import { Github } from "mdi-material-ui";
 import Identicon from "identicon.js";
 import { sha256 } from "js-sha256";
 import {
@@ -422,7 +422,7 @@ export function AuthDialog(props: Props) {
             </Typography>
             <Chip
               label={t("widget/crossnote.auth/sign-in-with-github-account")}
-              icon={<GithubCircle></GithubCircle>}
+              icon={<Github></Github>}
               style={{ marginBottom: "16px", marginTop: "16px", width: "100%" }}
               onClick={() => startGitHubOAuth()}
             ></Chip>

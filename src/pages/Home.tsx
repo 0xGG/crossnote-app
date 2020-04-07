@@ -7,7 +7,6 @@ import {
   ListItem,
   IconButton,
   Paper,
-  Typography,
   Divider,
   ListItemIcon,
   ListItemText,
@@ -15,6 +14,8 @@ import {
   CircularProgress,
   Badge,
   useMediaQuery,
+  ListItemSecondaryAction,
+  Tooltip,
 } from "@material-ui/core";
 import {
   fade,
@@ -28,7 +29,12 @@ import React, { useState, useCallback, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import Identicon from "identicon.js";
 import { sha256 } from "js-sha256";
-import { PlusCircle, Settings as SettingsIcon, Bell } from "mdi-material-ui";
+import {
+  PlusCircleOutline,
+  Cog as SettingsIcon,
+  Bell,
+  Notebook,
+} from "mdi-material-ui";
 import SplitPane from "react-split-pane";
 import {
   CrossnoteContainer,
@@ -335,27 +341,20 @@ export function Home(props: Props) {
           </ListItem>
         )}
         <Divider></Divider>
-        <ListItem disableGutters={true}>
-          <Box
-            style={{
-              width: "100%",
-              display: "flex",
-              flexDirection: "row",
-              alignItems: "center",
-              justifyContent: "center",
-              padding: "0 8px",
-            }}
-          >
-            <Typography variant={"body1"} style={{ fontWeight: "bold" }}>
-              {t("general/Notebooks")}
-            </Typography>
-            <IconButton
-              onClick={() => setAddNotebookDialogOpen(true)}
-              disabled={!crossnoteContainer.initialized}
-            >
-              <PlusCircle></PlusCircle>
-            </IconButton>
-          </Box>
+        <ListItem>
+          <ListItemIcon>
+            <Notebook></Notebook>
+          </ListItemIcon>
+          <ListItemText primary={t("general/Notebooks")}></ListItemText>
+          <ListItemSecondaryAction style={{ right: "0" }}>
+            {crossnoteContainer.initialized && (
+              <Tooltip title={t("general/add-a-notebook")}>
+                <IconButton onClick={() => setAddNotebookDialogOpen(true)}>
+                  <PlusCircleOutline></PlusCircleOutline>
+                </IconButton>
+              </Tooltip>
+            )}
+          </ListItemSecondaryAction>
         </ListItem>
         {crossnoteContainer.notebooks.map((notebook) => {
           return (

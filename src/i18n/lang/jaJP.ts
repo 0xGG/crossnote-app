@@ -533,7 +533,7 @@ export const jaJP = {
     "delete-file-dialog/title": "このノートを削除しますか?",
     "delete-file-dialog/subtitle": "元に戻すことはできません",
     "add-notebook-dialog/disclaimer":
-      "すべてのノートブックデータは、ブラウザにローカルに保存されます。",
+      "すべてのノートブックデータは、ブラウザにローカルに保存されます。ノートブックデータを当社のサーバーにアップロードすることはありません。",
     "edit-image-dialog/title": "画像を編集する",
     "edit-image-dialog/image-url": "画像の URL",
     "edit-image-dialog/image-title": "画像のタイトル",

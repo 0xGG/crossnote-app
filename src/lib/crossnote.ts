@@ -133,7 +133,7 @@ export default class Crossnote {
   private fs: any;
 
   private readFile: (path: string) => Promise<string>;
-  private writeFile: (path: string, data: string) => Promise<void>;
+  public writeFile: (path: string, data: string) => Promise<void>;
   private readdir: (path: string) => Promise<string[]>;
   private unlink: (path: string) => Promise<void>;
   private stats: (path: string) => Promise<Stats>;
