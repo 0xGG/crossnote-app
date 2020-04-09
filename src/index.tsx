@@ -1,9 +1,6 @@
 import React from "react";
 import ReactDOM from "react-dom";
-//import "typeface-noto-sans";
-//import "typeface-noto-sans-sc";
-//import "typeface-noto-serif-sc";
-//import "typeface-noto-sans-hk";
+import "typeface-noto-sans-sc";
 import "typeface-roboto";
 import "noty/lib/noty.css";
 import "noty/lib/themes/relax.css";

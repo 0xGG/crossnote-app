@@ -143,7 +143,7 @@ const useStyles = makeStyles((theme: Theme) =>
         },
       },
       "& .CodeMirror-vscrollbar": {
-        display: "none !important",
+        // display: "none !important",
       },
       [theme.breakpoints.down("sm")]: {
         padding: theme.spacing(1),
