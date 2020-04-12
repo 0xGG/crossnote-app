@@ -6,16 +6,23 @@ import React from "react";
 import ReactDOM from "react-dom";
 import { WidgetArgs, WidgetCreator } from "vickymd/widget";
 import { ErrorWidget } from "vickymd/widget/error/error";
+import { useTheme } from "@material-ui/core";
 
 function Timer(props: WidgetArgs) {
   const attributes = props.attributes;
+  const theme = useTheme();
+
   return (
     <div
       style={{
         cursor: "default",
         padding: "4px 12px",
-        backgroundColor: attributes["backgroundColor"] || "rgb(250, 145, 1)",
-        color: attributes["color"] || "#fff",
+        backgroundColor:
+          attributes["backgroundColor"] ||
+          theme.palette.secondary.main ||
+          "rgb(250, 145, 1)",
+        color:
+          attributes["color"] || theme.palette.secondary.contrastText || "#fff",
         borderRadius: "16px",
         display: "flex",
         justifyContent: "space-between",
