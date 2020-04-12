@@ -541,7 +541,7 @@ export default function Editor(props: Props) {
         return;
       }
       if (url.match(/https?:\/\//)) {
-        window.open(url, "_blank");
+        window.open(url, "_blank"); // TODO: opener bug, check zhihu
       } else if (url.startsWith("/")) {
         let filePath = path.relative(
           note.notebook.dir,
@@ -698,7 +698,7 @@ export default function Editor(props: Props) {
         editor.off("imageClicked", imageClickedHandler);
       };
     }
-  }, [editor, note, decryptionPassword, isDecrypted]);
+  }, [editor, note, decryptionPassword, isDecrypted, openURL]);
 
   useEffect(() => {
     if (!editor || !note) return;
