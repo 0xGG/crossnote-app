@@ -71,6 +71,7 @@ import { SettingsContainer } from "../containers/settings";
 import { initMathPreview } from "../editor/views/math-preview";
 import EmojiDefinitions from "vickymd/addon/emoji";
 import { TagStopRegExp } from "../utilities/markdown";
+import { resolveNoteImageSrc } from "../utilities/image";
 
 const VickyMD = require("vickymd");
 const is = require("is_js");
@@ -691,11 +692,26 @@ export default function Editor(props: Props) {
       };
       editor.on("imageClicked", imageClickedHandler);
 
+      const loadImage = async (args: any) => {
+        const element = args.element;
+        const imageSrc = element.getAttribute("data-src");
+        element.setAttribute(
+          "src",
+          await resolveNoteImageSrc(
+            crossnoteContainer.crossnote,
+            note,
+            imageSrc,
+          ),
+        );
+      };
+      editor.on("imageReadyToLoad", loadImage);
+
       return () => {
         editor.off("changes", changesHandler);
         editor.off("keyup", keyupHandler);
         editor.off("linkIconClicked", linkIconClickedHandler);
         editor.off("imageClicked", imageClickedHandler);
+        editor.off("imageReadyToLoad", loadImage);
       };
     }
   }, [editor, note, decryptionPassword, isDecrypted, openURL]);
@@ -745,6 +761,21 @@ export default function Editor(props: Props) {
             };
           }
         };
+        const resolveImages = async (preview: HTMLElement) => {
+          const images = preview.getElementsByTagName("IMG");
+          for (let i = 0; i < images.length; i++) {
+            const image = images[i] as HTMLImageElement;
+            const imageSrc = image.getAttribute("src");
+            image.setAttribute(
+              "src",
+              await resolveNoteImageSrc(
+                crossnoteContainer.crossnote,
+                note,
+                imageSrc,
+              ),
+            );
+          }
+        };
         renderPreview(previewElement, editor.getValue());
         if (
           previewElement.childElementCount &&
@@ -758,6 +789,10 @@ export default function Editor(props: Props) {
             (previewElement.children[0] as HTMLIFrameElement).contentDocument
               .body as HTMLElement,
           );
+          resolveImages(
+            (previewElement.children[0] as HTMLIFrameElement).contentDocument
+              .body as HTMLElement,
+          );
           setPreviewIsPresentation(true);
         } else {
           // normal
@@ -765,6 +800,7 @@ export default function Editor(props: Props) {
           previewElement.style.height = "100%";
           previewElement.style.overflow = "hidden !important";
           handleLinksClickEvent(previewElement);
+          resolveImages(previewElement);
           setPreviewIsPresentation(false);
         }
       } else {
