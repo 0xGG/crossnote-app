@@ -16,6 +16,7 @@ import { formatRelative } from "date-fns";
 import { basename } from "path";
 import { SettingsContainer } from "../containers/settings";
 import { languageCodeToDateFNSLocale } from "../i18n/i18n";
+import { resolveNoteImageSrc } from "../utilities/image";
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -130,13 +131,28 @@ export default function NoteCard(props: Props) {
         setSummary(summary);
 
         // render images
-        const images = summary.images
-          .filter((image) => image.startsWith("https://"))
-          .slice(0, 3); // TODO: Support local image
-        setImages(images);
+        const imagePromises = Promise.all(
+          summary.images.map((image) =>
+            resolveNoteImageSrc(crossnoteContainer.crossnote, note, image),
+          ),
+        );
+        imagePromises
+          .then((imageSrcs) => {
+            imageSrcs = imageSrcs.filter((x) => x).slice(0, 3);
+            setImages(imageSrcs || []);
+          })
+          .catch((error) => {
+            setImages([]);
+          });
       })
       .catch((error) => {});
-  }, [note.markdown, note.config.encryption, t]);
+  }, [
+    note.markdown,
+    note.config.encryption,
+    note,
+    crossnoteContainer.crossnote,
+    t,
+  ]);
 
   useEffect(() => {
     crossnoteContainer.crossnote.getStatus(note).then((status) => {

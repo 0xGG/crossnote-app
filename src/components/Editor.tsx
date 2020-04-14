@@ -1743,6 +1743,7 @@ export default function Editor(props: Props) {
         editor={editor}
         imageElement={editImageElement}
         marker={editImageTextMarker}
+        note={note}
       ></EditImageDialog>
 
       <Box

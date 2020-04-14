@@ -12,6 +12,9 @@ import { createStyles, makeStyles, Theme } from "@material-ui/core/styles";
 import clsx from "clsx";
 import { Editor as CodeMirrorEditor, TextMarker } from "codemirror";
 import { useTranslation } from "react-i18next";
+import { resolveNoteImageSrc } from "../utilities/image";
+import { Note } from "../lib/crossnote";
+import { CrossnoteContainer } from "../containers/crossnote";
 
 interface Props {
   open: boolean;
@@ -19,6 +22,7 @@ interface Props {
   editor: CodeMirrorEditor;
   marker: TextMarker;
   imageElement: HTMLImageElement;
+  note: Note;
 }
 
 const useStyles = makeStyles((theme: Theme) =>
@@ -42,6 +46,8 @@ export default function EditImageDialog(props: Props) {
   const [imageSrc, setImageSrc] = useState<string>("");
   const [imageAlt, setImageAlt] = useState<string>("");
   const [imageTitle, setImageTitle] = useState<string>("");
+  const [finalImageSrc, setFinalImageSrc] = useState<string>("");
+  const crossnoteContainer = CrossnoteContainer.useContainer();
 
   const deleteImage = useCallback(() => {
     if (!imageElement || !editor || !marker) {
@@ -78,6 +84,7 @@ export default function EditImageDialog(props: Props) {
 
   useEffect(() => {
     if (imageElement && marker && editor) {
+      setFinalImageSrc("");
       setImageSrc(
         imageElement.getAttribute("data-src") || imageElement.src || "",
       );
@@ -85,6 +92,19 @@ export default function EditImageDialog(props: Props) {
       setImageAlt(imageElement.alt || "");
     }
   }, [imageElement, marker, editor]);
+
+  useEffect(() => {
+    if (!crossnoteContainer.crossnote || !props.note) {
+      return;
+    }
+    resolveNoteImageSrc(crossnoteContainer.crossnote, props.note, imageSrc)
+      .then((finalImageSrc) => {
+        setFinalImageSrc(finalImageSrc);
+      })
+      .catch((error) => {
+        setFinalImageSrc("");
+      });
+  }, [imageSrc, crossnoteContainer.crossnote, props.note]);
 
   if (!editor || !marker || !imageElement) {
     return null;
@@ -97,7 +117,7 @@ export default function EditImageDialog(props: Props) {
         <Box className={clsx(classes.imageWrapper)}>
           <img
             className={clsx(classes.imagePreview)}
-            src={imageSrc}
+            src={finalImageSrc}
             alt={imageAlt}
             title={imageTitle}
           ></img>{" "}
