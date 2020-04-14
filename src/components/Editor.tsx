@@ -72,6 +72,7 @@ import { initMathPreview } from "../editor/views/math-preview";
 import EmojiDefinitions from "vickymd/addon/emoji";
 import { TagStopRegExp } from "../utilities/markdown";
 import { resolveNoteImageSrc } from "../utilities/image";
+import { DeleteDialog } from "./DeleteDialog";
 
 const VickyMD = require("vickymd");
 const is = require("is_js");
@@ -1643,31 +1644,11 @@ export default function Editor(props: Props) {
           </Typography>
         </Box>
       </Box>
-      <Dialog
+      <DeleteDialog
         open={deleteDialogOpen}
         onClose={() => setDeleteDialogOpen(false)}
-      >
-        <DialogTitle>{t("delete-file-dialog/title")}</DialogTitle>
-        <DialogContent>
-          <DialogContentText>
-            {t("delete-file-dialog/subtitle")}
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions>
-          <Button
-            style={{ color: "red" }}
-            onClick={() => {
-              crossnoteContainer.deleteNote(note);
-              setDeleteDialogOpen(false);
-            }}
-          >
-            {t("general/Delete")}
-          </Button>
-          <Button onClick={() => setDeleteDialogOpen(false)}>
-            {t("general/cancel")}
-          </Button>
-        </DialogActions>
-      </Dialog>
+        note={note}
+      ></DeleteDialog>
       <ChangeFilePathDialog
         note={note}
         open={filePathDialogOpen}
