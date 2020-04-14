@@ -132,7 +132,7 @@ type Cache = {
 export default class Crossnote {
   private fs: any;
 
-  private readFile: (path: string) => Promise<string>;
+  private readFile: (path: string, opts?: any) => Promise<string | Uint8Array>;
   public writeFile: (path: string, data: string) => Promise<void>;
   private readdir: (path: string) => Promise<string[]>;
   private unlink: (path: string) => Promise<void>;
@@ -159,19 +159,15 @@ export default class Crossnote {
   }
 
   private setUpFSMethods() {
-    this.readFile = (path: string) => {
+    this.readFile = (path: string, opts?: any) => {
       return new Promise((resolve, reject) => {
-        this.fs.readFile(
-          path,
-          { encoding: "utf8" },
-          (error: Error, data: string) => {
-            if (error) {
-              return reject(error);
-            } else {
-              return resolve(data.toString());
-            }
-          },
-        );
+        this.fs.readFile(path, opts, (error: Error, data: string) => {
+          if (error) {
+            return reject(error);
+          } else {
+            return resolve(data.toString());
+          }
+        });
       });
     };
     this.writeFile = (path: string, data: string) => {
@@ -533,9 +529,10 @@ export default class Crossnote {
         if (status.match(/^\*?(modified|added)/)) {
           cache[stagedFiles[i]] = {
             status,
-            markdown: await this.readFile(
+            markdown: (await this.readFile(
               path.resolve(notebook.dir, stagedFiles[i]),
-            ),
+              { encoding: "utf8" },
+            )) as string,
           };
         } else if (status.match(/^\*?(deleted)/)) {
           cache[stagedFiles[i]] = {
@@ -1078,7 +1075,9 @@ ${markdown}`;
       }
     }
     if (stats.isFile() && filePath.endsWith(".md")) {
-      let markdown = await this.readFile(absFilePath);
+      let markdown = (await this.readFile(absFilePath, {
+        encoding: "utf8",
+      })) as string;
       // console.log("read: ", filePath, markdown);
 
       // Read the noteConfig, which is like <!-- note {...} --> at the end of the markdown file
@@ -1128,6 +1127,7 @@ ${markdown}`;
     } catch (error) {
       files = [];
     }
+    const listNotesPromises = [];
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
       const absFilePath = path.resolve(notebook.dir, dir, file);
@@ -1142,8 +1142,8 @@ ${markdown}`;
       }
 
       if (stats.isDirectory() && file !== ".git" && includeSubdirectories) {
-        notes = notes.concat(
-          await this.listNotes({
+        listNotesPromises.push(
+          this.listNotes({
             notebook,
             dir: path.relative(notebook.dir, absFilePath),
             includeSubdirectories,
@@ -1151,6 +1151,10 @@ ${markdown}`;
         );
       }
     }
+    const res = await Promise.all(listNotesPromises);
+    res.forEach((r) => {
+      notes = notes.concat(r);
+    });
 
     // console.log("listNotes: ", notes);
     return notes;
@@ -1321,5 +1325,33 @@ ${markdown}`;
       dir: note.notebook.dir,
       filepath: note.filePath,
     });
+  }
+
+  public async loadImageAsBase64(
+    note: Note,
+    imageSrc: string,
+  ): Promise<string> {
+    let imageFilePath;
+    if (imageSrc.startsWith("/")) {
+      imageFilePath = path.resolve(note.notebook.dir, "." + imageSrc);
+    } else {
+      imageFilePath = path.resolve(note.notebook.dir, imageSrc);
+    }
+    if (await this.exists(imageFilePath)) {
+      const data: Uint8Array = new Uint8Array(
+        // @ts-ignore
+        (await this.readFile(imageFilePath)).split(","),
+      );
+      const base64 = Buffer.from(data.buffer).toString("base64");
+      let imageType = path.extname(imageSrc).slice(1);
+      if (imageType.match(/^svg$/i)) {
+        imageType = "svg+xml";
+      } else if (imageType.match(/^jpg$/i)) {
+        imageType = "jpeg";
+      }
+      return `data:image/${imageType};base64,${base64}`;
+    } else {
+      return "";
+    }
   }
 }
