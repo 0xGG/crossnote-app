@@ -13,6 +13,6 @@ export async function resolveNoteImageSrc(
   } else if (imageSrc.startsWith("http://")) {
     return "";
   } else {
-    return crossnote.loadImageAsBase64(note, imageSrc);
+    return await crossnote.loadImageAsBase64(note, imageSrc);
   }
 }

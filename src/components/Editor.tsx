@@ -16,7 +16,6 @@ import {
   Dialog,
   DialogTitle,
   DialogContent,
-  DialogContentText,
   DialogActions,
   Button,
   Tooltip,
@@ -28,7 +27,6 @@ import {
   ListItem,
   Hidden,
   Breadcrumbs,
-  Link,
 } from "@material-ui/core";
 import {
   Editor as CodeMirrorEditor,
@@ -55,7 +53,6 @@ import {
   LockOpen,
   TagOutline,
   Printer,
-  PencilOutline,
   Tag,
   ContentDuplicate,
 } from "mdi-material-ui";
@@ -74,8 +71,17 @@ import { TagStopRegExp } from "../utilities/markdown";
 import { resolveNoteImageSrc } from "../utilities/image";
 import { DeleteDialog } from "./DeleteDialog";
 
-const VickyMD = require("vickymd");
+const VickyMD = require("vickymd/core");
 const is = require("is_js");
+
+const HMDFold = {
+  image: true,
+  link: true,
+  math: true,
+  html: true, // maybe dangerous
+  emoji: true,
+  widget: true,
+};
 
 const previewZIndex = 99;
 const useStyles = makeStyles((theme: Theme) =>
@@ -624,6 +630,7 @@ export default function Editor(props: Props) {
           hashtag: true,
         },
         inputStyle: "textarea",
+        hmdFold: HMDFold,
       });
       editor.setOption("lineNumbers", false);
       editor.setOption("foldGutter", false);
@@ -721,6 +728,7 @@ export default function Editor(props: Props) {
     if (!editor || !note) return;
     if (crossnoteContainer.editorMode === EditorMode.VickyMD) {
       VickyMD.switchToHyperMD(editor);
+      editor.setOption("hmdFold", HMDFold);
       editor.getWrapperElement().style.display = "block";
       editor.refresh();
     } else if (crossnoteContainer.editorMode === EditorMode.SourceCode) {
