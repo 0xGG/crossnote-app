@@ -81,6 +81,7 @@ const HMDFold = {
   html: true, // maybe dangerous
   emoji: true,
   widget: true,
+  code: true
 };
 
 const previewZIndex = 99;
