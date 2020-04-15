@@ -12,7 +12,7 @@ import clsx from "clsx";
 import { useTranslation } from "react-i18next";
 import { Editor as CodeMirrorEditor } from "codemirror";
 import { globalContainers } from "../../../containers/global";
-const VickyMD = require("vickymd");
+const VickyMD = require("vickymd/core");
 
 export const ChatMessageEditorHeight = "150";
 const useStyles = makeStyles((theme: Theme) =>

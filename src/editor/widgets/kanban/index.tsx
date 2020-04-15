@@ -29,7 +29,7 @@ import { useTranslation } from "react-i18next";
 import Board from "@lourenci/react-kanban";
 import { Editor as CodeMirrorEditor } from "codemirror";
 import { renderPreview } from "vickymd/preview";
-const VickyMD = require("vickymd");
+const VickyMD = require("vickymd/core");
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({

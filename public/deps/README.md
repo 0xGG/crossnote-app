@@ -12,6 +12,7 @@
   "mume": "0.4.11",
   "vega": "5.9.2",
   "vega-lite": "4.4.0",
-  "vega-embed": "6.3.2"
+  "vega-embed": "6.3.2",
+  "reveal": "3.9.2"
 }
 ```

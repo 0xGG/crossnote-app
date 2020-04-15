@@ -32,7 +32,7 @@ import {
 import { renderPreview } from "vickymd/preview";
 import { Widget } from "../../../generated/graphql";
 import { browserHistory } from "../../../utilities/history";
-const VickyMD = require("vickymd");
+const VickyMD = require("vickymd/core");
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
