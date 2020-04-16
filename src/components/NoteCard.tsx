@@ -132,9 +132,7 @@ export default function NoteCard(props: Props) {
 
         // render images
         const imagePromises = Promise.all(
-          summary.images.map((image) =>
-            resolveNoteImageSrc(crossnoteContainer.crossnote, note, image),
-          ),
+          summary.images.map((image) => resolveNoteImageSrc(note, image)),
         );
         imagePromises
           .then((imageSrcs) => {

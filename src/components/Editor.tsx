@@ -81,7 +81,7 @@ const HMDFold = {
   html: true, // maybe dangerous
   emoji: true,
   widget: true,
-  code: true
+  code: true,
 };
 
 const previewZIndex = 99;
@@ -704,14 +704,7 @@ export default function Editor(props: Props) {
       const loadImage = async (args: any) => {
         const element = args.element;
         const imageSrc = element.getAttribute("data-src");
-        element.setAttribute(
-          "src",
-          await resolveNoteImageSrc(
-            crossnoteContainer.crossnote,
-            note,
-            imageSrc,
-          ),
-        );
+        element.setAttribute("src", await resolveNoteImageSrc(note, imageSrc));
       };
       editor.on("imageReadyToLoad", loadImage);
 
@@ -778,11 +771,7 @@ export default function Editor(props: Props) {
             const imageSrc = image.getAttribute("src");
             image.setAttribute(
               "src",
-              await resolveNoteImageSrc(
-                crossnoteContainer.crossnote,
-                note,
-                imageSrc,
-              ),
+              await resolveNoteImageSrc(note, imageSrc),
             );
           }
         };

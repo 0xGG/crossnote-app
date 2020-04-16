@@ -4,14 +4,13 @@ import "typeface-noto-sans-sc";
 import "typeface-roboto";
 import "noty/lib/noty.css";
 import "noty/lib/themes/relax.css";
-// @ts-ignore
-import LightningFS from "@isomorphic-git/lightning-fs";
 
 import "./i18n/i18n";
 import "./index.css";
 import App from "./App";
 import * as serviceWorker from "./serviceWorker";
 import Crossnote from "./lib/crossnote";
+import "./lib/fs";
 import { CrossnoteContainer } from "./containers/crossnote";
 import { SettingsContainer } from "./containers/settings";
 import { CloudContainer } from "./containers/cloud";
@@ -20,13 +19,8 @@ import { NotificationsContainer } from "./containers/notifications";
 import { Provider } from "urql";
 import { GraphQLClient } from "./utilities/client";
 
-const fs = new LightningFS("fs");
-(window as any)["fs"] = fs;
-
 try {
-  const crossnote = new Crossnote({
-    fs: fs,
-  });
+  const crossnote = new Crossnote();
   (window as any)["crossnote"] = crossnote;
 
   ReactDOM.render(

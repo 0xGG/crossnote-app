@@ -97,7 +97,7 @@ export default function EditImageDialog(props: Props) {
     if (!crossnoteContainer.crossnote || !props.note) {
       return;
     }
-    resolveNoteImageSrc(crossnoteContainer.crossnote, props.note, imageSrc)
+    resolveNoteImageSrc(props.note, imageSrc)
       .then((finalImageSrc) => {
         setFinalImageSrc(finalImageSrc);
       })

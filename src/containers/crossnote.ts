@@ -17,6 +17,7 @@ import Crossnote, {
 import { getHeaderFromMarkdown } from "../utilities/note";
 import { browserHistory } from "../utilities/history";
 import * as qs from "qs";
+import { pfs } from "../lib/fs";
 
 export enum EditorMode {
   VickyMD = "VickyMD",
@@ -626,7 +627,7 @@ function useCrossnoteContainer(initialState: InitialState) {
           corsProxy: "https://cors.isomorphic-git.org",
           gitURL: "",
         });
-        await crossnote.writeFile(
+        await pfs.writeFile(
           path.resolve(notebook.dir, "README.md"),
           `# Welcome to Crossnote 😊
 
