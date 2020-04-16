@@ -21,8 +21,6 @@ import { GraphQLClient } from "./utilities/client";
 
 try {
   const crossnote = new Crossnote();
-  (window as any)["crossnote"] = crossnote;
-
   ReactDOM.render(
     <Provider value={GraphQLClient}>
       <CrossnoteContainer.Provider

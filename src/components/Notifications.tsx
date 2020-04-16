@@ -24,6 +24,7 @@ const useStyles = makeStyles((theme: Theme) =>
   createStyles({
     notifications: {
       width: "100%",
+      backgroundColor: theme.palette.background.default,
       padding: theme.spacing(2),
       [theme.breakpoints.down("sm")]: {
         padding: theme.spacing(1),

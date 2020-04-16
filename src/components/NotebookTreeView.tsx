@@ -56,7 +56,7 @@ const useStyles = makeStyles((theme: Theme) =>
       padding: theme.spacing(1, 0),
     },
     treeItemLabelIcon: {
-      color: "rgba(0, 0, 0, 0.54)",
+      // color: "rgba(0, 0, 0, 0.54)",
     },
     treeItemLabelText: {
       paddingLeft: "12px",

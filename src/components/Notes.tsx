@@ -25,7 +25,7 @@ const useStyles = makeStyles((theme: Theme) =>
     updatePanel: {
       padding: theme.spacing(2),
       textAlign: "center",
-      borderBottom: "1px solid #ededed",
+      borderBottom: `1px solid ${theme.palette.text.secondary}`,
     },
   }),
 );

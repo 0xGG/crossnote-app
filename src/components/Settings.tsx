@@ -331,7 +331,7 @@ export function Settings(props: Props) {
         <Typography
           variant={"body2"}
           style={{
-            color: "rgba(0, 0, 0, 0.54)",
+            // color: "rgba(0, 0, 0, 0.54)",
             fontSize: "0.75rem",
             marginBottom: "6px",
           }}
@@ -386,7 +386,7 @@ export function Settings(props: Props) {
         <Typography
           variant={"body2"}
           style={{
-            color: "rgba(0, 0, 0, 0.54)",
+            // color: "rgba(0, 0, 0, 0.54)",
             fontSize: "0.75rem",
             marginBottom: "6px",
           }}

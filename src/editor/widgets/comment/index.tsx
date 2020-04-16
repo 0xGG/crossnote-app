@@ -55,7 +55,7 @@ const useStyles = makeStyles((theme: Theme) =>
       alignItems: "center",
     },
     button: {
-      color: "rgba(0, 0, 0, 0.54)",
+      // color: "rgba(0, 0, 0, 0.54)",
     },
     reactionChip: {
       "marginBottom": "2px",

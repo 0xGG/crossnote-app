@@ -47,6 +47,7 @@ const useStyles = makeStyles((theme: Theme) =>
       display: "flex",
       flexDirection: "column",
       height: "100%",
+      backgroundColor: theme.palette.background.default,
     },
     topPanel: {
       padding: theme.spacing(1),
@@ -76,7 +77,7 @@ const useStyles = makeStyles((theme: Theme) =>
     },
     searchIcon: {
       width: theme.spacing(7),
-      color: "rgba(0, 0, 0, 0.54)",
+      // color: "rgba(0, 0, 0, 0.54)",
       height: "100%",
       position: "absolute",
       pointerEvents: "none",
@@ -175,7 +176,7 @@ export default function NotesPanel(props: Props) {
 
   return (
     <Box className={clsx(classes.notesPanel)}>
-      <Card className={clsx(classes.topPanel)}>
+      <Box className={clsx(classes.topPanel)}>
         <Box className={clsx(classes.row)}>
           <Hidden smUp implementation="css">
             <IconButton onClick={props.toggleDrawer}>
@@ -401,7 +402,7 @@ export default function NotesPanel(props: Props) {
             </Popover>
           </Box>
         </Box>
-      </Card>
+      </Box>
 
       <ConfigureNotebookDialog
         open={notebookConfigurationDialogOpen}
