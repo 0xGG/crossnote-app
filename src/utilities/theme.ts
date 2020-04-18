@@ -13,7 +13,7 @@ export const crossnoteTheme = createMuiTheme({
   palette: {
     common: { black: "#000", white: "#fff" },
     background: {
-      paper: "#1d1d1d",
+      paper: "#141414",
       default: "#0c0c0c",
     },
     primary: {
