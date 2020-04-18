@@ -299,6 +299,7 @@ export default function Editor(props: Props) {
   const [editImageDialogOpen, setEditImageDialogOpen] = useState<boolean>(
     false,
   );
+  const [forceUpdate, setForceUpdate] = useState<number>(Date.now());
 
   const crossnoteContainer = CrossnoteContainer.useContainer();
   const settingsContainer = SettingsContainer.useContainer();
@@ -542,6 +543,7 @@ export default function Editor(props: Props) {
         note.config.encryption ? decryptionPassword : "",
         (status) => {
           setGitStatus(status);
+          setForceUpdate(Date.now());
         },
       );
     }

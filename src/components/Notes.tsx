@@ -21,6 +21,7 @@ const useStyles = makeStyles((theme: Theme) =>
       flex: "1",
       overflowY: "auto",
       paddingBottom: theme.spacing(12),
+      marginTop: theme.spacing(0.5),
     },
     updatePanel: {
       padding: theme.spacing(2),

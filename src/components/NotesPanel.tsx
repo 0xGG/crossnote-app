@@ -400,7 +400,9 @@ export default function NotesPanel(props: Props) {
                 >
                   <ListItemText primary={"Asc"}></ListItemText>
                   <ListItemIcon style={{ marginLeft: "8px" }}>
-                    <SortAscending></SortAscending>
+                    <SortAscending
+                      className={clsx(classes.iconBtnSVG)}
+                    ></SortAscending>
                   </ListItemIcon>
                 </ListItem>
               </List>

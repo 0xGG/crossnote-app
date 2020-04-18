@@ -28,6 +28,7 @@ const useStyles = makeStyles((theme: Theme) =>
       padding: theme.spacing(2, 0.5, 0),
       textAlign: "left",
       cursor: "default",
+      backgroundColor: theme.palette.background.paper,
     },
     selected: {
       borderLeft: `4px solid ${theme.palette.primary.main}`,
