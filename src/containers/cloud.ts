@@ -46,7 +46,7 @@ function useCloudContainer(initialState: InitialState) {
       cover = "",
       avatar = "",
       language = "en-US",
-      editorCursorColor = "rgba(51, 51, 51, 1)",
+      editorCursorColor = "rgba(74, 144, 226, 1)",
     }) => {
       executeSetUserInfoMutation({
         cover,

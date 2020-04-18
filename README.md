@@ -5,12 +5,6 @@ note:
   tags: []
 ---
 
-```javascript
-function add(x, y) {
-  return x + y;
-}
-```
-
 ![](./public/logo192.png)
 
 # 📝 Crossnote 交叉笔记 (beta)

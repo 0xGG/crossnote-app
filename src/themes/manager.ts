@@ -55,6 +55,21 @@ export class ThemeManager {
       document.head.appendChild(codeBlockThemeStyleElement);
     }
     codeBlockThemeStyleElement.href = `/styles/prism_themes/${theme.codeBlockTheme}.css`;
+
+    // Set editor theme
+    const editorThemeStyleElementID = "crossnote-editor-theme";
+    let editorThemeStyleElement: HTMLLinkElement = document.getElementById(
+      editorThemeStyleElementID,
+    ) as HTMLLinkElement;
+    if (!editorThemeStyleElement) {
+      editorThemeStyleElement = document.createElement(
+        "link",
+      ) as HTMLLinkElement;
+      editorThemeStyleElement.id = editorThemeStyleElementID;
+      editorThemeStyleElement.rel = "stylesheet";
+      document.head.appendChild(editorThemeStyleElement);
+    }
+    editorThemeStyleElement.href = `/styles/editor_themes/${theme.editorTheme}.css`;
   }
 }
 

@@ -37,4 +37,5 @@ export const DarkTheme: CrossnoteTheme = new CrossnoteTheme({
   },
   previewTheme: "github-dark",
   codeBlockTheme: "monokai",
+  editorTheme: "dark",
 });

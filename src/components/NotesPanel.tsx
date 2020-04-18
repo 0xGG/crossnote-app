@@ -52,6 +52,7 @@ const useStyles = makeStyles((theme: Theme) =>
     topPanel: {
       padding: theme.spacing(1),
       borderRadius: 0,
+      backgroundColor: theme.palette.background.paper,
     },
     row: {
       display: "flex",

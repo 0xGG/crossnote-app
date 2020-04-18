@@ -650,6 +650,8 @@ export default function Editor(props: Props) {
           });
         }
       });
+      editor.getWrapperElement().classList.remove("cm-s-hypermd-light");
+      editor.getWrapperElement().classList.add("vickymd-theme");
       setEditor(editor);
       initMathPreview(editor);
     }

@@ -25,12 +25,14 @@ type CodeBlockTheme =
   | "vs"
   | "vue"
   | "xonokai";
+type EditorTheme = "light" | "dark";
 
 interface CrossnoteThemeProps {
   name: string;
   muiThemeOptions: ThemeOptions;
   previewTheme: PreviewTheme;
   codeBlockTheme: CodeBlockTheme;
+  editorTheme: EditorTheme;
 }
 
 export class CrossnoteTheme {
@@ -38,15 +40,18 @@ export class CrossnoteTheme {
   public muiTheme: Theme;
   public previewTheme: PreviewTheme;
   public codeBlockTheme: CodeBlockTheme;
+  public editorTheme: EditorTheme;
   constructor({
     name,
     muiThemeOptions,
     previewTheme,
     codeBlockTheme,
+    editorTheme,
   }: CrossnoteThemeProps) {
     this.name = name;
     this.muiTheme = createMuiTheme(muiThemeOptions);
     this.previewTheme = previewTheme;
     this.codeBlockTheme = codeBlockTheme;
+    this.editorTheme = editorTheme;
   }
 }

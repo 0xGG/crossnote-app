@@ -23,6 +23,8 @@ import {
   makeStyles,
   Theme,
   useTheme,
+  darken,
+  lighten,
 } from "@material-ui/core/styles";
 import clsx from "clsx";
 import React, { useState, useCallback, useEffect } from "react";
@@ -64,7 +66,6 @@ const useStyles = makeStyles((theme: Theme) =>
       display: "flex",
       width: "100%",
       height: "100%",
-      backgroundColor: "#2196F1",
     },
     appBar: {
       zIndex: theme.zIndex.drawer + 1,
@@ -121,7 +122,7 @@ const useStyles = makeStyles((theme: Theme) =>
     },
     drawerPaper: {
       width: drawerWidth,
-      // backgroundColor: "#2196f1",
+      backgroundColor: lighten(theme.palette.background.paper, 0.05),
       // color: "#fff"
     },
     listItemIcon: {

@@ -11,7 +11,8 @@ function useSettingsContainer(initialState: InitialState) {
     localStorage.getItem("settings/language") || "en-US",
   );
   const [editorCursorColor, setEditorCursorColor] = useState<string>(
-    localStorage.getItem("settings/editorCursorColor") || "rgba(51, 51, 51, 1)",
+    localStorage.getItem("settings/editorCursorColor") ||
+      "rgba(74, 144, 226, 1)",
   );
   const [authorName, setAuthorName] = useState<string>(
     localStorage.getItem("settings/authorName") || "Anonymous",
@@ -47,7 +48,7 @@ function useSettingsContainer(initialState: InitialState) {
   );
 
   const _setEditorCursorColor = useCallback((editorCursorColor: string) => {
-    editorCursorColor = editorCursorColor || "rgba(51, 51, 51, 1)";
+    editorCursorColor = editorCursorColor || "rgba(74, 144, 226, 1)";
     localStorage.setItem("settings/editorCursorColor", editorCursorColor);
     setEditorCursorColor(editorCursorColor);
   }, []);
