@@ -102,6 +102,7 @@ const useStyles = makeStyles((theme: Theme) =>
       justifyContent: "space-between",
       // borderBottom: "1px solid #eee",
       overflow: "auto",
+      backgroundColor: theme.palette.background.paper,
     },
     bottomPanel: {
       position: "relative",
@@ -109,6 +110,7 @@ const useStyles = makeStyles((theme: Theme) =>
       display: "flex",
       alignItems: "center",
       justifyContent: "space-between",
+      backgroundColor: theme.palette.background.paper,
       // borderTop: "1px solid #eee",
       // color: theme.palette.primary.contrastText,
       // backgroundColor: theme.palette.primary.main
@@ -138,6 +140,7 @@ const useStyles = makeStyles((theme: Theme) =>
       //     display: "contents",
       "flex": 1,
       "overflow": "auto",
+      "backgroundColor": theme.palette.background.paper,
       "& .CodeMirror-gutters": {
         display: "none",
       },
@@ -147,7 +150,6 @@ const useStyles = makeStyles((theme: Theme) =>
       "& .CodeMirror": {
         height: "100%",
         padding: theme.spacing(0, 2),
-        backgroundColor: theme.palette.background.default,
         [theme.breakpoints.down("sm")]: {
           padding: theme.spacing(0),
         },

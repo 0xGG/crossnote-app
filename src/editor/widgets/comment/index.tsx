@@ -31,12 +31,12 @@ import {
   Chip,
 } from "@material-ui/core";
 import { CommentOutline, StickerEmoji } from "mdi-material-ui";
-import { crossnoteTheme } from "../../../utilities/theme";
 import { Emoji, Picker as EmojiPicker } from "emoji-mart";
 import "emoji-mart/css/emoji-mart.css";
 import { globalContainers } from "../../../containers/global";
 import { CommentDialog } from "./CommentDialog";
 import { WidgetTopPanel } from "../widget/WidgetTopPanel";
+import { themeManager } from "../../../themes/manager";
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -374,7 +374,7 @@ export const CommentWidgetCreator: WidgetCreator = (args) => {
   const el = document.createElement("span");
   ReactDOM.render(
     <Provider value={GraphQLClient}>
-      <ThemeProvider theme={crossnoteTheme}>
+      <ThemeProvider theme={globalContainers.settingsContainer.theme.muiTheme}>
         <CommentWidget {...args}></CommentWidget>
       </ThemeProvider>
     </Provider>,

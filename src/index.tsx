@@ -7,6 +7,7 @@ import "noty/lib/themes/relax.css";
 
 import "./i18n/i18n";
 import "./index.css";
+import "./themes/manager";
 import App from "./App";
 import * as serviceWorker from "./serviceWorker";
 import Crossnote from "./lib/crossnote";

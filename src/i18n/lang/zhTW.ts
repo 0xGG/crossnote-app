@@ -224,6 +224,7 @@ export const zhTW = {
     "settings/log-out": "登出",
     "settings/author-name": "作者姓名",
     "settings/author-email": "作者郵箱",
+    "settings/theme": "主題",
     "settings/created-cloud-widgets-count": "建立的雲掛件數量",
 
     // Preview

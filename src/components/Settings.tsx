@@ -27,6 +27,7 @@ import {
   Translate,
   ImagePlus,
   Github,
+  ThemeLightDark,
 } from "mdi-material-ui";
 import { CloudContainer } from "../containers/cloud";
 import { smmsUploadImages } from "../utilities/image_uploader";
@@ -36,6 +37,7 @@ import {
 } from "../generated/graphql";
 import { startGitHubOAuth } from "../utilities/utils";
 import GitCommit from "../_git_commit";
+import { themeManager } from "../themes/manager";
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -389,6 +391,35 @@ export function Settings(props: Props) {
             // color: "rgba(0, 0, 0, 0.54)",
             fontSize: "0.75rem",
             marginBottom: "6px",
+            marginTop: "16px",
+          }}
+        >
+          <ThemeLightDark style={{ marginRight: "8px" }}></ThemeLightDark>
+          {t("settings/theme")}
+        </Typography>
+        <Select
+          value={settingsContainer.theme.name}
+          onChange={(event) => {
+            settingsContainer.setTheme(event.target.value as string);
+          }}
+        >
+          {themeManager.themes.map((theme) => {
+            return (
+              <MenuItem key={theme.name} value={theme.name}>
+                {theme.name}
+              </MenuItem>
+            );
+          })}
+        </Select>
+      </Box>
+      <Box className={clsx(classes.section)}>
+        <Typography
+          variant={"body2"}
+          style={{
+            // color: "rgba(0, 0, 0, 0.54)",
+            fontSize: "0.75rem",
+            marginBottom: "6px",
+            marginTop: "16px",
           }}
         >
           {t("settings/editor-cursor-color")}
@@ -465,25 +496,6 @@ export function Settings(props: Props) {
           >
             {t("general/upload-the-profile")}
           </Button>
-          {/*
-        <Box
-          className={clsx(classes.section)}
-          style={{
-            position: "absolute",
-            right: "16px",
-            bottom: "16px"
-          }}
-        >
-          <Link
-            style={{ cursor: "pointer" }}
-            onClick={(event: any) => {
-              event.preventDefault();
-              crossnoteContainer.jumpToStartPage();
-            }}
-          >
-            <Typography>{t("settings/about-this-project")}</Typography>
-          </Link>
-        </Box>*/}
         </Box>
       )}
       <Box className={clsx(classes.section)} style={{ marginTop: "32px" }}>

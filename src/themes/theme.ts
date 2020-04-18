@@ -36,7 +36,17 @@ interface CrossnoteThemeProps {
 export class CrossnoteTheme {
   public name: string;
   public muiTheme: Theme;
-  constructor({ name, muiThemeOptions }: CrossnoteThemeProps) {
+  public previewTheme: PreviewTheme;
+  public codeBlockTheme: CodeBlockTheme;
+  constructor({
+    name,
+    muiThemeOptions,
+    previewTheme,
+    codeBlockTheme,
+  }: CrossnoteThemeProps) {
+    this.name = name;
     this.muiTheme = createMuiTheme(muiThemeOptions);
+    this.previewTheme = previewTheme;
+    this.codeBlockTheme = codeBlockTheme;
   }
 }
