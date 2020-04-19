@@ -47,10 +47,12 @@ const useStyles = makeStyles((theme: Theme) =>
       display: "flex",
       flexDirection: "column",
       height: "100%",
+      backgroundColor: theme.palette.background.default,
     },
     topPanel: {
       padding: theme.spacing(1),
       borderRadius: 0,
+      backgroundColor: theme.palette.background.paper,
     },
     row: {
       display: "flex",
@@ -76,7 +78,7 @@ const useStyles = makeStyles((theme: Theme) =>
     },
     searchIcon: {
       width: theme.spacing(7),
-      color: "rgba(0, 0, 0, 0.54)",
+      // color: "rgba(0, 0, 0, 0.54)",
       height: "100%",
       position: "absolute",
       pointerEvents: "none",
@@ -114,6 +116,9 @@ const useStyles = makeStyles((theme: Theme) =>
       "& svg": {
         color: theme.palette.primary.main,
       },
+    },
+    iconBtnSVG: {
+      color: theme.palette.text.secondary,
     },
   }),
 );
@@ -179,7 +184,7 @@ export default function NotesPanel(props: Props) {
         <Box className={clsx(classes.row)}>
           <Hidden smUp implementation="css">
             <IconButton onClick={props.toggleDrawer}>
-              <MenuIcon></MenuIcon>
+              <MenuIcon className={clsx(classes.iconBtnSVG)}></MenuIcon>
             </IconButton>
           </Hidden>
           <div className={classes.search}>
@@ -203,7 +208,9 @@ export default function NotesPanel(props: Props) {
             onClick={createNewNote}
             disabled={!crossnoteContainer.initialized || isCreatingNote}
           >
-            <FileEditOutline></FileEditOutline>
+            <FileEditOutline
+              className={clsx(classes.iconBtnSVG)}
+            ></FileEditOutline>
           </IconButton>
         </Box>
         <Box
@@ -312,14 +319,14 @@ export default function NotesPanel(props: Props) {
               <IconButton
                 onClick={() => setNotebookConfigurationDialogOpen(true)}
               >
-                <Cog></Cog>
+                <Cog className={clsx(classes.iconBtnSVG)}></Cog>
               </IconButton>
               /*)*/
             }
             <IconButton
               onClick={(event) => setSortMenuAnchorEl(event.currentTarget)}
             >
-              <SortVariant></SortVariant>
+              <SortVariant className={clsx(classes.iconBtnSVG)}></SortVariant>
             </IconButton>
             <Popover
               anchorEl={sortMenuAnchorEl}
@@ -394,7 +401,9 @@ export default function NotesPanel(props: Props) {
                 >
                   <ListItemText primary={"Asc"}></ListItemText>
                   <ListItemIcon style={{ marginLeft: "8px" }}>
-                    <SortAscending></SortAscending>
+                    <SortAscending
+                      className={clsx(classes.iconBtnSVG)}
+                    ></SortAscending>
                   </ListItemIcon>
                 </ListItem>
               </List>

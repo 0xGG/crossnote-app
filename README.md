@@ -1,9 +1,10 @@
 ---
 note:
-    createdAt: 2020-04-12T13:19:52.701Z
-    modifiedAt: 2020-04-12T13:21:46.185Z
-    tags: []
+  createdAt: 2020-04-12T13:19:52.701Z
+  modifiedAt: 2020-04-12T13:21:46.185Z
+  tags: []
 ---
+
 ![](./public/logo192.png)
 
 # 📝 Crossnote 交叉笔记 (beta)

@@ -1,6 +1,11 @@
 import React, { useState, useEffect, useCallback } from "react";
 import LazyLoad from "react-lazyload";
-import { createStyles, makeStyles, Theme } from "@material-ui/core/styles";
+import {
+  createStyles,
+  makeStyles,
+  Theme,
+  lighten,
+} from "@material-ui/core/styles";
 import clsx from "clsx";
 import { CrossnoteContainer } from "../containers/crossnote";
 import { Box, Typography, Button } from "@material-ui/core";
@@ -21,11 +26,13 @@ const useStyles = makeStyles((theme: Theme) =>
       flex: "1",
       overflowY: "auto",
       paddingBottom: theme.spacing(12),
+      marginTop: theme.spacing(0.5),
     },
     updatePanel: {
       padding: theme.spacing(2),
       textAlign: "center",
-      borderBottom: "1px solid #ededed",
+      borderBottom: `1px solid ${theme.palette.divider}`,
+      backgroundColor: theme.palette.background.paper,
     },
   }),
 );

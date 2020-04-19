@@ -81,7 +81,7 @@ const HMDFold = {
   html: true, // maybe dangerous
   emoji: true,
   widget: true,
-  code: true
+  code: true,
 };
 
 const previewZIndex = 99;
@@ -100,8 +100,9 @@ const useStyles = makeStyles((theme: Theme) =>
       display: "flex",
       alignItems: "center",
       justifyContent: "space-between",
-      borderBottom: "1px solid #eee",
+      // borderBottom: "1px solid #eee",
       overflow: "auto",
+      backgroundColor: theme.palette.background.paper,
     },
     bottomPanel: {
       position: "relative",
@@ -109,7 +110,8 @@ const useStyles = makeStyles((theme: Theme) =>
       display: "flex",
       alignItems: "center",
       justifyContent: "space-between",
-      borderTop: "1px solid #eee",
+      backgroundColor: theme.palette.background.paper,
+      // borderTop: "1px solid #eee",
       // color: theme.palette.primary.contrastText,
       // backgroundColor: theme.palette.primary.main
     },
@@ -138,6 +140,7 @@ const useStyles = makeStyles((theme: Theme) =>
       //     display: "contents",
       "flex": 1,
       "overflow": "auto",
+      "backgroundColor": theme.palette.background.paper,
       "& .CodeMirror-gutters": {
         display: "none",
       },
@@ -296,6 +299,7 @@ export default function Editor(props: Props) {
   const [editImageDialogOpen, setEditImageDialogOpen] = useState<boolean>(
     false,
   );
+  const [forceUpdate, setForceUpdate] = useState<number>(Date.now());
 
   const crossnoteContainer = CrossnoteContainer.useContainer();
   const settingsContainer = SettingsContainer.useContainer();
@@ -539,6 +543,7 @@ export default function Editor(props: Props) {
         note.config.encryption ? decryptionPassword : "",
         (status) => {
           setGitStatus(status);
+          setForceUpdate(Date.now());
         },
       );
     }
@@ -645,6 +650,8 @@ export default function Editor(props: Props) {
           });
         }
       });
+      editor.getWrapperElement().classList.remove("cm-s-hypermd-light");
+      editor.getWrapperElement().classList.add("vickymd-theme");
       setEditor(editor);
       initMathPreview(editor);
     }
@@ -704,14 +711,7 @@ export default function Editor(props: Props) {
       const loadImage = async (args: any) => {
         const element = args.element;
         const imageSrc = element.getAttribute("data-src");
-        element.setAttribute(
-          "src",
-          await resolveNoteImageSrc(
-            crossnoteContainer.crossnote,
-            note,
-            imageSrc,
-          ),
-        );
+        element.setAttribute("src", await resolveNoteImageSrc(note, imageSrc));
       };
       editor.on("imageReadyToLoad", loadImage);
 
@@ -778,11 +778,7 @@ export default function Editor(props: Props) {
             const imageSrc = image.getAttribute("src");
             image.setAttribute(
               "src",
-              await resolveNoteImageSrc(
-                crossnoteContainer.crossnote,
-                note,
-                imageSrc,
-              ),
+              await resolveNoteImageSrc(note, imageSrc),
             );
           }
         };

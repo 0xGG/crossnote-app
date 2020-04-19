@@ -65,7 +65,7 @@ function NeteaseMusicWidget(props: WidgetArgs) {
           height: "86px",
           border: "none",
         }}
-        src={`https://music.163.com/outchain/player?type=2&id=${
+        src={`https://music.163.com/outchain/player?type=3&id=${
           attributes["id"]
         }&auto=${attributes["autoplay"] ? "1" : "0"}&height=66`}
       ></iframe>

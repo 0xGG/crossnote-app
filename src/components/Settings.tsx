@@ -27,6 +27,9 @@ import {
   Translate,
   ImagePlus,
   Github,
+  ThemeLightDark,
+  Cloud,
+  CloudOutline,
 } from "mdi-material-ui";
 import { CloudContainer } from "../containers/cloud";
 import { smmsUploadImages } from "../utilities/image_uploader";
@@ -36,6 +39,7 @@ import {
 } from "../generated/graphql";
 import { startGitHubOAuth } from "../utilities/utils";
 import GitCommit from "../_git_commit";
+import { themeManager } from "../themes/manager";
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -71,6 +75,13 @@ const useStyles = makeStyles((theme: Theme) =>
       flexDirection: "row",
       alignItems: "center",
     },
+    loggedInSection: {
+      padding: theme.spacing(0, 2),
+      border: `1px solid ${theme.palette.primary.light}`,
+      marginBottom: theme.spacing(4),
+      marginTop: theme.spacing(4),
+      borderRadius: "4px",
+    },
     avatar: {
       marginTop: theme.spacing(2),
       width: "64px",
@@ -78,7 +89,7 @@ const useStyles = makeStyles((theme: Theme) =>
       borderRadius: "4px",
     },
     saveBtn: {
-      marginTop: theme.spacing(2),
+      marginBottom: theme.spacing(2),
     },
     logoutBtn: {
       position: "absolute",
@@ -109,6 +120,9 @@ const useStyles = makeStyles((theme: Theme) =>
       borderLeftWidth: "2px",
       padding: "0",
       position: "relative",
+    },
+    iconBtnSVG: {
+      color: theme.palette.text.secondary,
     },
   }),
 );
@@ -231,17 +245,24 @@ export function Settings(props: Props) {
       >
         <Hidden smUp implementation="css">
           <IconButton onClick={props.toggleDrawer}>
-            <MenuIcon></MenuIcon>
+            <MenuIcon className={clsx(classes.iconBtnSVG)}></MenuIcon>
           </IconButton>
         </Hidden>
         <Typography variant={"h6"}>{t("general/Settings")}</Typography>
       </Box>
       {cloudContainer.loggedIn ? (
-        <>
+        <Box className={clsx(classes.loggedInSection)}>
           <Box className={clsx(classes.section)}>
-            <Typography variant={"h6"}>
-              @{cloudContainer.viewer.username}
-            </Typography>
+            <Box className={clsx(classes.row)}>
+              <img
+                src="/logo.svg"
+                style={{ width: "48px", height: "48px" }}
+                alt={"Crossnote"}
+              ></img>
+              <Typography variant={"h6"}>
+                @{cloudContainer.viewer.username}
+              </Typography>
+            </Box>
             <Typography>{cloudContainer.viewer.email}</Typography>
             <Typography variant={"caption"}>
               {t("settings/created-cloud-widgets-count") +
@@ -279,14 +300,14 @@ export function Settings(props: Props) {
               />
               <Tooltip title={t("settings/upload-image")}>
                 <IconButton disabled={uploadingAvatar} onClick={uploadAvatar}>
-                  <ImagePlus></ImagePlus>
+                  <ImagePlus className={clsx(classes.iconBtnSVG)}></ImagePlus>
                 </IconButton>
               </Tooltip>
             </Box>
           </Box>
           <Box
             className={clsx(classes.section)}
-            style={{ marginBottom: "32px" }}
+            style={{ marginBottom: "16px" }}
           >
             {resGitHubUser.data &&
             resGitHubUser.data.viewer &&
@@ -325,13 +346,32 @@ export function Settings(props: Props) {
               ></Chip>
             )}
           </Box>
-        </>
+          <Box className={clsx(classes.section)}>
+            <Button
+              variant={"contained"}
+              color={"primary"}
+              className={clsx(classes.saveBtn)}
+              onClick={() => {
+                cloudContainer.setUserInfo({
+                  name: settingsContainer.authorName,
+                  cover: "",
+                  avatar,
+                  editorCursorColor: settingsContainer.editorCursorColor,
+                  language: settingsContainer.language,
+                });
+              }}
+              disabled={cloudContainer.resSetUserInfo.fetching}
+            >
+              {t("general/upload-the-profile")}
+            </Button>
+          </Box>
+        </Box>
       ) : null}
       <Box className={clsx(classes.section)}>
         <Typography
           variant={"body2"}
           style={{
-            color: "rgba(0, 0, 0, 0.54)",
+            // color: "rgba(0, 0, 0, 0.54)",
             fontSize: "0.75rem",
             marginBottom: "6px",
           }}
@@ -386,9 +426,37 @@ export function Settings(props: Props) {
         <Typography
           variant={"body2"}
           style={{
-            color: "rgba(0, 0, 0, 0.54)",
+            // color: "rgba(0, 0, 0, 0.54)",
             fontSize: "0.75rem",
             marginBottom: "6px",
+            marginTop: "16px",
+          }}
+        >
+          <ThemeLightDark style={{ marginRight: "8px" }}></ThemeLightDark>
+          {t("settings/theme") + " (beta)"}
+        </Typography>
+        <Select
+          value={settingsContainer.theme.name}
+          onChange={(event) => {
+            settingsContainer.setTheme(event.target.value as string);
+          }}
+        >
+          {themeManager.themes.map((theme) => {
+            return (
+              <MenuItem key={theme.name} value={theme.name}>
+                {theme.name}
+              </MenuItem>
+            );
+          })}
+        </Select>
+      </Box>
+      <Box className={clsx(classes.section)}>
+        <Typography
+          variant={"body2"}
+          style={{
+            fontSize: "0.75rem",
+            marginBottom: "6px",
+            marginTop: "16px",
           }}
         >
           {t("settings/editor-cursor-color")}
@@ -416,7 +484,8 @@ export function Settings(props: Props) {
             <span
               className={clsx(classes.editorCursor)}
               style={{
-                borderLeftColor: settingsContainer.editorCursorColor || "#333",
+                borderLeftColor:
+                  settingsContainer.editorCursorColor || "#4A90E2",
               }}
             ></span>
             {t("settings/world")}
@@ -446,46 +515,6 @@ export function Settings(props: Props) {
           ></SketchPicker>
         </Popover>
       </Box>
-      {cloudContainer.loggedIn && (
-        <Box className={clsx(classes.section)}>
-          <Button
-            variant={"contained"}
-            color={"primary"}
-            className={clsx(classes.saveBtn)}
-            onClick={() => {
-              cloudContainer.setUserInfo({
-                name: settingsContainer.authorName,
-                cover: "",
-                avatar,
-                editorCursorColor: settingsContainer.editorCursorColor,
-                language: settingsContainer.language,
-              });
-            }}
-            disabled={cloudContainer.resSetUserInfo.fetching}
-          >
-            {t("general/upload-the-profile")}
-          </Button>
-          {/*
-        <Box
-          className={clsx(classes.section)}
-          style={{
-            position: "absolute",
-            right: "16px",
-            bottom: "16px"
-          }}
-        >
-          <Link
-            style={{ cursor: "pointer" }}
-            onClick={(event: any) => {
-              event.preventDefault();
-              crossnoteContainer.jumpToStartPage();
-            }}
-          >
-            <Typography>{t("settings/about-this-project")}</Typography>
-          </Link>
-        </Box>*/}
-        </Box>
-      )}
       <Box className={clsx(classes.section)} style={{ marginTop: "32px" }}>
         <Link
           href={

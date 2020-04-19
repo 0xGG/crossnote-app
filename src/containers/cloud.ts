@@ -46,7 +46,7 @@ function useCloudContainer(initialState: InitialState) {
       cover = "",
       avatar = "",
       language = "en-US",
-      editorCursorColor = "rgba(51, 51, 51, 1)",
+      editorCursorColor = "rgba(74, 144, 226, 1)",
     }) => {
       executeSetUserInfoMutation({
         cover,
@@ -101,10 +101,11 @@ function useCloudContainer(initialState: InitialState) {
     if (viewer) {
       setLoggedIn(true);
       if (!loggedIn) {
-        settingsContainer.setLanguage(viewer.language);
-        settingsContainer.setAuthorName(viewer.name);
-        settingsContainer.setAuthorEmail(viewer.email);
-        settingsContainer.setEditorCursorColor(viewer.editorCursorColor);
+        // NOTE: Stop syncing properties below from the cloud
+        // settingsContainer.setLanguage(viewer.language);
+        // settingsContainer.setAuthorName(viewer.name);
+        // settingsContainer.setAuthorEmail(viewer.email);
+        // settingsContainer.setEditorCursorColor(viewer.editorCursorColor);
       }
     }
   }, [loggedIn, viewer]);

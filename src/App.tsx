@@ -7,10 +7,12 @@ import { browserHistory } from "./utilities/history";
 import { Home } from "./pages/Home";
 import { GitHubOAuthCallback } from "./components/GitHubOAuthCallback";
 import "./editor";
-import { crossnoteTheme } from "./utilities/theme";
 import { HomeSection } from "./containers/crossnote";
+import { themeManager } from "./themes/manager";
+import { SettingsContainer } from "./containers/settings";
 
 const App: React.FC = () => {
+  const settingsContainer = SettingsContainer.useContainer();
   useEffect(() => {
     const handler = (event: any) => {
       event.preventDefault();
@@ -25,7 +27,7 @@ const App: React.FC = () => {
     };
   }, []);
   return (
-    <ThemeProvider theme={crossnoteTheme}>
+    <ThemeProvider theme={settingsContainer.theme.muiTheme}>
       <div className="App">
         <Router history={browserHistory}>
           <Switch>

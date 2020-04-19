@@ -231,6 +231,7 @@ export const jaJP = {
     "settings/log-out": "ログアウトする",
     "settings/author-name": "著者名",
     "settings/author-email": "著者の電子メール",
+    "settings/theme": "テーマ",
     "settings/created-cloud-widgets-count": "作成されたクラウドウィジェット数",
 
     // Preview

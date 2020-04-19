@@ -12,7 +12,12 @@ import {
   DialogContent,
   DialogActions,
 } from "@material-ui/core";
-import { createStyles, makeStyles, Theme } from "@material-ui/core/styles";
+import {
+  createStyles,
+  makeStyles,
+  Theme,
+  ThemeProvider,
+} from "@material-ui/core/styles";
 import clsx from "clsx";
 import {
   CardPlus,
@@ -29,6 +34,7 @@ import { useTranslation } from "react-i18next";
 import Board from "@lourenci/react-kanban";
 import { Editor as CodeMirrorEditor } from "codemirror";
 import { renderPreview } from "vickymd/preview";
+import { globalContainers } from "../../../containers/global";
 const VickyMD = require("vickymd/core");
 
 const useStyles = makeStyles((theme: Theme) =>
@@ -39,11 +45,14 @@ const useStyles = makeStyles((theme: Theme) =>
       display: "flex",
       alignItems: "center",
       justifyContent: "space-between",
+      color: "#000", // BUG: TODO: Wait for react-kanban styling support
     },
     kanbanCard: {
       width: "256px",
       maxWidth: "100%",
       position: "relative",
+      backgroundColor: theme.palette.background.paper,
+      color: theme.palette.text.primary,
       [theme.breakpoints.down("sm")]: {
         marginTop: "4px",
         marginBottom: "4px",
@@ -62,6 +71,9 @@ const useStyles = makeStyles((theme: Theme) =>
     },
     preview: {
       padding: theme.spacing(2),
+    },
+    iconBtnSVG: {
+      color: theme.palette.text.secondary,
     },
   }),
 );
@@ -217,6 +229,8 @@ function KanbanCardDisplay(props: KanbanCardProps) {
         setDescription(editor.getValue());
       });
       editor.focus();
+      editor.getWrapperElement().classList.remove("cm-s-hypermd-light");
+      editor.getWrapperElement().classList.add("vickymd-theme");
       /*
       // Cause save not working
       editor.on("blur", () => {
@@ -246,7 +260,7 @@ function KanbanCardDisplay(props: KanbanCardProps) {
       {!isPreview && (
         <Box style={{ position: "absolute", top: "0", right: "0", zIndex: 99 }}>
           <IconButton onClick={() => setEditDialogOpen(true)}>
-            <Pencil></Pencil>
+            <Pencil className={clsx(classes.iconBtnSVG)}></Pencil>
           </IconButton>
           <IconButton
             onClick={() => {
@@ -256,7 +270,7 @@ function KanbanCardDisplay(props: KanbanCardProps) {
               props.refreshBoard(board);
             }}
           >
-            <Close></Close>
+            <Close className={clsx(classes.iconBtnSVG)}></Close>
           </IconButton>
         </Box>
       )}
@@ -286,7 +300,7 @@ function KanbanCardDisplay(props: KanbanCardProps) {
               setEditDialogOpen(false);
             }}
           >
-            <ContentSave></ContentSave>
+            <ContentSave className={clsx(classes.iconBtnSVG)}></ContentSave>
           </IconButton>
           <IconButton
             onClick={() => {
@@ -297,7 +311,7 @@ function KanbanCardDisplay(props: KanbanCardProps) {
               setEditDialogOpen(false);
             }}
           >
-            <Cancel></Cancel>
+            <Cancel className={clsx(classes.iconBtnSVG)}></Cancel>
           </IconButton>
         </DialogActions>
       </Dialog>
@@ -421,6 +435,11 @@ function KanbanWidget(props: WidgetArgs) {
 
 export const KanbanWidgetCreator: WidgetCreator = (args) => {
   const el = document.createElement("span");
-  ReactDOM.render(<KanbanWidget {...args}></KanbanWidget>, el);
+  ReactDOM.render(
+    <ThemeProvider theme={globalContainers.settingsContainer.theme.muiTheme}>
+      <KanbanWidget {...args}></KanbanWidget>
+    </ThemeProvider>,
+    el,
+  );
   return el;
 };

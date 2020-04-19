@@ -7,7 +7,8 @@ import ReactDOM from "react-dom";
 import { WidgetArgs, WidgetCreator } from "vickymd/widget";
 import { ErrorWidget } from "vickymd/widget/error/error";
 import { useTheme, ThemeProvider } from "@material-ui/core";
-import { crossnoteTheme } from "../../../utilities/theme";
+import { themeManager } from "../../../themes/manager";
+import { globalContainers } from "../../../containers/global";
 
 function Timer(props: WidgetArgs) {
   const attributes = props.attributes;
@@ -56,7 +57,7 @@ export const TimerWidgetCreator: WidgetCreator = (args) => {
     });
   }
   ReactDOM.render(
-    <ThemeProvider theme={crossnoteTheme}>
+    <ThemeProvider theme={globalContainers.settingsContainer.theme.muiTheme}>
       <Timer attributes={args.attributes} isPreview={args.isPreview}></Timer>
     </ThemeProvider>,
     el,

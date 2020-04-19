@@ -227,6 +227,7 @@ export const enUS = {
     "settings/log-out": "Log out",
     "settings/author-name": "Author name",
     "settings/author-email": "Author email",
+    "settings/theme": "Theme",
     "settings/created-cloud-widgets-count": "Created cloud widgets count",
 
     // Preview

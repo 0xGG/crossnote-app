@@ -28,6 +28,7 @@ const useStyles = makeStyles((theme: Theme) =>
       padding: theme.spacing(2, 0.5, 0),
       textAlign: "left",
       cursor: "default",
+      backgroundColor: theme.palette.background.paper,
     },
     selected: {
       borderLeft: `4px solid ${theme.palette.primary.main}`,
@@ -44,7 +45,7 @@ const useStyles = makeStyles((theme: Theme) =>
     },
     rightPanel: {
       width: "calc(100% - 48px)",
-      borderBottom: "1px solid #ededed",
+      borderBottom: `1px solid ${theme.palette.divider}`,
     },
     header: {
       marginBottom: theme.spacing(1),
@@ -132,9 +133,7 @@ export default function NoteCard(props: Props) {
 
         // render images
         const imagePromises = Promise.all(
-          summary.images.map((image) =>
-            resolveNoteImageSrc(crossnoteContainer.crossnote, note, image),
-          ),
+          summary.images.map((image) => resolveNoteImageSrc(note, image)),
         );
         imagePromises
           .then((imageSrcs) => {

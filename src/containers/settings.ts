@@ -1,6 +1,8 @@
 import { createContainer } from "unstated-next";
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useTranslation } from "react-i18next";
+import { CrossnoteTheme } from "../themes/theme";
+import { themeManager } from "../themes/manager";
 
 interface InitialState {}
 
@@ -9,13 +11,18 @@ function useSettingsContainer(initialState: InitialState) {
     localStorage.getItem("settings/language") || "en-US",
   );
   const [editorCursorColor, setEditorCursorColor] = useState<string>(
-    localStorage.getItem("settings/editorCursorColor") || "rgba(51, 51, 51, 1)",
+    localStorage.getItem("settings/editorCursorColor") ||
+      "rgba(74, 144, 226, 1)",
   );
   const [authorName, setAuthorName] = useState<string>(
     localStorage.getItem("settings/authorName") || "Anonymous",
   );
   const [authorEmail, setAuthorEmail] = useState<string>(
     localStorage.getItem("settings/authorEmail") || "anonymous@crossnote.app",
+  );
+  const [theme, setTheme] = useState<CrossnoteTheme>(
+    themeManager.getTheme(localStorage.getItem("settings/theme")) ||
+      themeManager.selectedTheme,
   );
 
   const { t, i18n } = useTranslation();
@@ -41,7 +48,7 @@ function useSettingsContainer(initialState: InitialState) {
   );
 
   const _setEditorCursorColor = useCallback((editorCursorColor: string) => {
-    editorCursorColor = editorCursorColor || "rgba(51, 51, 51, 1)";
+    editorCursorColor = editorCursorColor || "rgba(74, 144, 226, 1)";
     localStorage.setItem("settings/editorCursorColor", editorCursorColor);
     setEditorCursorColor(editorCursorColor);
   }, []);
@@ -56,6 +63,19 @@ function useSettingsContainer(initialState: InitialState) {
     setAuthorEmail(authorEmail);
   }, []);
 
+  const _setTheme = useCallback((themeName: string) => {
+    themeManager.selectTheme(themeName);
+    localStorage.setItem("settings/theme", themeManager.selectedTheme.name);
+    setTheme(themeManager.selectedTheme);
+  }, []);
+
+  useEffect(() => {
+    const themeName = localStorage.getItem("settings/theme");
+    if (themeName) {
+      _setTheme(themeName);
+    }
+  }, [_setTheme]);
+
   return {
     language,
     setLanguage: _setLanguage,
@@ -65,6 +85,8 @@ function useSettingsContainer(initialState: InitialState) {
     setAuthorName: _setAuthorName,
     authorEmail,
     setAuthorEmail: _setAuthorEmail,
+    theme,
+    setTheme: _setTheme,
   };
 }
 

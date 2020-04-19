@@ -23,6 +23,8 @@ import {
   makeStyles,
   Theme,
   useTheme,
+  darken,
+  lighten,
 } from "@material-ui/core/styles";
 import clsx from "clsx";
 import React, { useState, useCallback, useEffect } from "react";
@@ -64,7 +66,6 @@ const useStyles = makeStyles((theme: Theme) =>
       display: "flex",
       width: "100%",
       height: "100%",
-      backgroundColor: "#2196F1",
     },
     appBar: {
       zIndex: theme.zIndex.drawer + 1,
@@ -121,8 +122,11 @@ const useStyles = makeStyles((theme: Theme) =>
     },
     drawerPaper: {
       width: drawerWidth,
-      // backgroundColor: "#2196f1",
+      backgroundColor: lighten(theme.palette.background.paper, 0.05),
       // color: "#fff"
+    },
+    listItemIcon: {
+      color: theme.palette.text.secondary,
     },
     avatar: {
       width: "24px",
@@ -151,12 +155,13 @@ const useStyles = makeStyles((theme: Theme) =>
       flexDirection: "row",
       flexGrow: 1,
       overflow: "auto",
-      backgroundColor: "#eee",
+      backgroundColor: theme.palette.background.default,
     },
     notesPanel: {
       maxWidth: "100%",
       height: "100%",
       borderRadius: 0,
+      backgroundColor: theme.palette.background.default,
       [theme.breakpoints.down("xs")]: {
         width: "100%",
       },
@@ -166,6 +171,7 @@ const useStyles = makeStyles((theme: Theme) =>
       width: "100%",
       height: "100%",
       borderRadius: 0,
+      backgroundColor: theme.palette.background.default,
       [theme.breakpoints.down("md")]: {
         // width: `calc(100% - ${notesPanelWidth}px)`,
         // left: `${notesPanelWidth}px`
@@ -279,23 +285,9 @@ export function Home(props: Props) {
   const drawer = (
     <div>
       <List disablePadding={true}>
-        {/*
-        <ListItem button onClick={() => browserHistory.push(`/explore`)}>
-          <ListItemIcon>
-            <LibraryBooks></LibraryBooks>
-          </ListItemIcon>
-          <ListItemText primary={t("general/Explore")}></ListItemText>
-        </ListItem>
-        <ListItem button>
-          <ListItemIcon>
-            <Cube></Cube>
-          </ListItemIcon>
-          <ListItemText primary={"My Blocks"}></ListItemText>
-        </ListItem>
-        */}
         <ListItem button onClick={() => browserHistory.push(`/settings`)}>
           {cloudContainer.viewer ? (
-            <ListItemIcon>
+            <ListItemIcon className={clsx(classes.listItemIcon)}>
               <Avatar
                 className={clsx(classes.avatar)}
                 variant={"rounded"}
@@ -312,7 +304,7 @@ export function Home(props: Props) {
               ></Avatar>
             </ListItemIcon>
           ) : (
-            <ListItemIcon>
+            <ListItemIcon className={clsx(classes.listItemIcon)}>
               <SettingsIcon></SettingsIcon>
             </ListItemIcon>
           )}
@@ -323,7 +315,7 @@ export function Home(props: Props) {
             button
             onClick={() => browserHistory.push(`/notifications`)}
           >
-            <ListItemIcon>
+            <ListItemIcon className={clsx(classes.listItemIcon)}>
               {cloudContainer.viewer.notifications.totalCount > 0 ? (
                 <Badge
                   color={"secondary"}
@@ -342,14 +334,17 @@ export function Home(props: Props) {
         )}
         <Divider></Divider>
         <ListItem>
-          <ListItemIcon>
+          <ListItemIcon className={clsx(classes.listItemIcon)}>
             <Notebook></Notebook>
           </ListItemIcon>
           <ListItemText primary={t("general/Notebooks")}></ListItemText>
           <ListItemSecondaryAction style={{ right: "0" }}>
             {crossnoteContainer.initialized && (
               <Tooltip title={t("general/add-a-notebook")}>
-                <IconButton onClick={() => setAddNotebookDialogOpen(true)}>
+                <IconButton
+                  className={clsx(classes.listItemIcon)}
+                  onClick={() => setAddNotebookDialogOpen(true)}
+                >
                   <PlusCircleOutline></PlusCircleOutline>
                 </IconButton>
               </Tooltip>
@@ -379,24 +374,24 @@ export function Home(props: Props) {
   const notesPanel =
     props.section === HomeSection.Notebooks &&
     (crossnoteContainer.selectedSection.type !== SelectedSectionType.Wiki ? (
-      <Paper className={clsx(classes.notesPanel)} id={"notes-panel"}>
+      <Box className={clsx(classes.notesPanel)} id={"notes-panel"}>
         <NotesPanel toggleDrawer={toggleDrawer}></NotesPanel>
-      </Paper>
+      </Box>
     ) : (
-      <Paper className={clsx(classes.notesPanel)} id={"notes-panel"}>
+      <Box className={clsx(classes.notesPanel)} id={"notes-panel"}>
         <WikiPanel toggleDrawer={toggleDrawer}></WikiPanel>
-      </Paper>
+      </Box>
     ));
 
   const editorPanel = (
-    <Paper
+    <Box
       className={clsx(classes.editorPanel, "editor-panel")}
       style={{
         display: crossnoteContainer.displayMobileEditor && "block",
       }}
     >
       <Editor note={crossnoteContainer.selectedNote}></Editor>
-    </Paper>
+    </Box>
   );
 
   return (

@@ -9,6 +9,7 @@ import { randomID } from "../utilities/utils";
 import AES from "crypto-js/aes";
 import { Stats } from "fs";
 import { getHeaderFromMarkdown } from "../utilities/note";
+import { pfs, fs } from "./fs";
 
 export interface Notebook {
   _id: string;
@@ -70,9 +71,6 @@ export interface NotebookConfig {
   contributors: string[];
 }
 
-interface CrossnoteConstructorProps {
-  fs: any;
-}
 interface CloneNotebookArgs {
   name?: string;
   corsProxy?: string;
@@ -130,25 +128,9 @@ type Cache = {
 };
 
 export default class Crossnote {
-  private fs: any;
-
-  private readFile: (path: string, opts?: any) => Promise<string | Uint8Array>;
-  public writeFile: (path: string, data: string) => Promise<void>;
-  private readdir: (path: string) => Promise<string[]>;
-  private unlink: (path: string) => Promise<void>;
-  private stats: (path: string) => Promise<Stats>;
-  private mkdir: (path: string) => Promise<void>;
-  private exists: (path: string) => Promise<boolean>;
-  private rename: (oldPath: string, newPath: string) => Promise<void>;
-  private rmdir: (path: string) => Promise<void>;
-  private mkdirp: (path: string) => Promise<void>;
-
   private notebookDB: PouchDB.Database<Notebook>;
 
-  constructor(props: CrossnoteConstructorProps) {
-    this.fs = props.fs;
-    this.setUpFSMethods();
-
+  constructor() {
     PouchDB.plugin(PouchdbFind);
     this.notebookDB = new PouchDB("notebooks");
     this.notebookDB.createIndex({
@@ -156,134 +138,6 @@ export default class Crossnote {
         fields: ["gitURL"],
       },
     });
-  }
-
-  private setUpFSMethods() {
-    this.readFile = (path: string, opts?: any) => {
-      return new Promise((resolve, reject) => {
-        this.fs.readFile(path, opts, (error: Error, data: string) => {
-          if (error) {
-            return reject(error);
-          } else {
-            return resolve(data.toString());
-          }
-        });
-      });
-    };
-    this.writeFile = (path: string, data: string) => {
-      return new Promise((resolve, reject) => {
-        this.fs.writeFile(path, data, { encoding: "utf8" }, (error: Error) => {
-          if (error) {
-            return reject(error);
-          } else {
-            return resolve();
-          }
-        });
-      });
-    };
-    this.readdir = (path: string) => {
-      return new Promise((resolve, reject) => {
-        this.fs.readdir(path, (error: Error, files: string[]) => {
-          if (error) {
-            return reject(error);
-          } else {
-            return resolve(files);
-          }
-        });
-      });
-    };
-    this.unlink = (path: string) => {
-      return new Promise((resolve, reject) => {
-        this.fs.unlink(path, (error: Error) => {
-          if (error) {
-            return reject(error);
-          } else {
-            return resolve();
-          }
-        });
-      });
-    };
-    this.stats = (path: string) => {
-      return new Promise((resolve, reject) => {
-        this.fs.stat(path, (error: Error, stats: Stats) => {
-          if (error) {
-            return reject(error);
-          } else {
-            return resolve(stats);
-          }
-        });
-      });
-    };
-    this.mkdir = (path: string) => {
-      return new Promise((resolve, reject) => {
-        this.fs.mkdir(path, "0777", (error: Error) => {
-          if (error) {
-            return reject(error);
-          } else {
-            return resolve();
-          }
-        });
-      });
-    };
-    this.exists = (path: string) => {
-      return new Promise((resolve, reject) => {
-        this.fs.stat(path, (error: Error, stats: Stats) => {
-          if (error) {
-            return resolve(false);
-          } else {
-            return resolve(true);
-          }
-        });
-      });
-    };
-    this.rename = (oldPath: string, newPath: string) => {
-      return new Promise((resolve, reject) => {
-        this.fs.rename(oldPath, newPath, (error: Error) => {
-          if (error) {
-            return reject(error);
-          } else {
-            return resolve();
-          }
-        });
-      });
-    };
-
-    const rmdir = (path: string) => {
-      return new Promise((resolve, reject) => {
-        this.fs.rmdir(path, (error: Error) => {
-          if (error) {
-            return reject(error);
-          } else {
-            return resolve();
-          }
-        });
-      });
-    };
-    // Remove the directory recursively
-    this.rmdir = async (dirPath: string) => {
-      const files = await this.readdir(dirPath);
-      for (let i = 0; i < files.length; i++) {
-        const file = files[i];
-        const filePath = path.resolve(dirPath, file);
-        const stats = await this.stats(filePath);
-        if (stats.isDirectory()) {
-          await this.rmdir(filePath);
-        } else {
-          await this.unlink(filePath);
-        }
-      }
-
-      await rmdir(dirPath);
-    };
-
-    this.mkdirp = async (dirPath: string) => {
-      if (await this.exists(dirPath)) {
-        return;
-      } else {
-        await this.mkdirp(path.dirname(dirPath));
-        await this.mkdir(dirPath);
-      }
-    };
   }
 
   public async addNotebook({
@@ -324,14 +178,14 @@ export default class Crossnote {
         remoteSha: "",
         localSha: "",
       };
-      if (!(await this.exists("/notebooks"))) {
-        await this.mkdir("/notebooks");
+      if (!(await pfs.exists("/notebooks"))) {
+        await pfs.mkdir("/notebooks");
       }
-      if (!(await this.exists(dir))) {
-        await this.mkdir(dir);
+      if (!(await pfs.exists(dir))) {
+        await pfs.mkdir(dir);
       }
       await git.init({
-        fs: this.fs,
+        fs: fs,
         dir,
       });
 
@@ -340,7 +194,7 @@ export default class Crossnote {
         await this.notebookDB.put(notebook);
       } catch (error) {
         // Failed to save to DB
-        await this.rmdir(dir);
+        await pfs.rmdir(dir);
       }
 
       return notebook;
@@ -385,7 +239,7 @@ export default class Crossnote {
     const dir = `/notebooks/${_id}`;
 
     await git.clone({
-      fs: this.fs,
+      fs: fs,
       http,
       dir,
       corsProxy,
@@ -426,7 +280,7 @@ export default class Crossnote {
       await this.notebookDB.put(notebook);
     } catch (error) {
       // Failed to save to DB
-      await this.rmdir(dir);
+      await pfs.rmdir(dir);
     }
 
     return notebook;
@@ -442,7 +296,7 @@ export default class Crossnote {
 
   public async deleteNotebook(notebookID: string) {
     const notebook = await this.notebookDB.get(notebookID);
-    await this.rmdir(notebook.dir);
+    await pfs.rmdir(notebook.dir);
     await this.notebookDB.remove(notebook);
   }
   public async updateNotebook(notebook: Notebook) {
@@ -490,25 +344,25 @@ export default class Crossnote {
 
     const oldFilePath = note.filePath;
     const newDirPath = path.dirname(path.resolve(notebook.dir, newFilePath));
-    await this.mkdirp(newDirPath);
+    await pfs.mkdirp(newDirPath);
 
     // TODO: Check if newFilePath already exists. If so don't overwrite
-    const exists = await this.exists(path.resolve(notebook.dir, newFilePath));
+    const exists = await pfs.exists(path.resolve(notebook.dir, newFilePath));
     if (exists) {
       throw new Error("error/target-file-already-exists");
     }
 
-    await this.rename(
+    await pfs.rename(
       path.resolve(notebook.dir, oldFilePath),
       path.resolve(notebook.dir, newFilePath),
     );
     await git.remove({
-      fs: this.fs,
+      fs: fs,
       dir: notebook.dir,
       filepath: oldFilePath,
     });
     await git.add({
-      fs: this.fs,
+      fs: fs,
       dir: notebook.dir,
       filepath: newFilePath,
     });
@@ -522,14 +376,14 @@ export default class Crossnote {
           continue;
         }
         const status = await git.status({
-          fs: this.fs,
+          fs: fs,
           dir: notebook.dir,
           filepath: stagedFiles[i],
         });
         if (status.match(/^\*?(modified|added)/)) {
           cache[stagedFiles[i]] = {
             status,
-            markdown: (await this.readFile(
+            markdown: (await pfs.readFile(
               path.resolve(notebook.dir, stagedFiles[i]),
               { encoding: "utf8" },
             )) as string,
@@ -546,7 +400,7 @@ export default class Crossnote {
     await createCache(
       // Check previous staged file for `delete` status
       await git.listFiles({
-        fs: this.fs,
+        fs: fs,
         dir: notebook.dir,
         ref: "HEAD",
       }),
@@ -555,7 +409,7 @@ export default class Crossnote {
     await createCache(
       // Check current staged file for `add` status
       await git.listFiles({
-        fs: this.fs,
+        fs: fs,
         dir: notebook.dir,
       }),
     );
@@ -591,7 +445,7 @@ export default class Crossnote {
     const localSha = notebook.localSha;
 
     const sha = await git.commit({
-      fs: this.fs,
+      fs: fs,
       dir: notebook.dir,
       author: {
         name: authorName,
@@ -603,7 +457,7 @@ export default class Crossnote {
     const restoreSHA = async () => {
       const gitBranch = notebook.gitBranch || "master";
       // Perform a soft reset
-      await this.writeFile(
+      await pfs.writeFile(
         path.resolve(notebook.dir, `.git/refs/heads/${gitBranch}`),
         localSha,
       );
@@ -611,7 +465,7 @@ export default class Crossnote {
 
     // console.log(sha);
     const pushResult = await git.push({
-      fs: this.fs,
+      fs: fs,
       http,
       onAuth: (url, auth) => {
         return {
@@ -665,7 +519,7 @@ export default class Crossnote {
   public async getGitSHA(dir: string, ref: string = "master"): Promise<string> {
     try {
       let logs = await git.log({
-        fs: this.fs,
+        fs: fs,
         dir: dir,
         ref: ref,
         depth: 5,
@@ -681,14 +535,14 @@ export default class Crossnote {
   }
 
   public async hardResetNotebook(notebook: Notebook, sha: string) {
-    await this.writeFile(
+    await pfs.writeFile(
       path.resolve(notebook.dir, `.git/refs/heads/${notebook.gitBranch}`),
       sha,
     );
-    await this.unlink(path.resolve(notebook.dir, `.git/index`));
+    await pfs.unlink(path.resolve(notebook.dir, `.git/index`));
     await git.checkout({
       dir: notebook.dir,
-      fs: this.fs,
+      fs: fs,
       ref: notebook.gitBranch || "master",
     });
   }
@@ -706,10 +560,10 @@ export default class Crossnote {
       }
       const markdown = cache[filePath].markdown;
       const dirname = path.dirname(path.resolve(notebook.dir, filePath));
-      await this.mkdirp(dirname);
-      await this.writeFile(path.resolve(notebook.dir, filePath), markdown);
+      await pfs.mkdirp(dirname);
+      await pfs.writeFile(path.resolve(notebook.dir, filePath), markdown);
       await git.add({
-        fs: this.fs,
+        fs: fs,
         dir: notebook.dir,
         filepath: filePath,
       });
@@ -729,7 +583,7 @@ export default class Crossnote {
   }: PullNotebookArgs): Promise<PullNotebookResult> {
     // Stop using git.pull as merge will cause error
     const result = await git.fetch({
-      fs: this.fs,
+      fs: fs,
       http,
       dir: notebook.dir,
       singleBranch: true,
@@ -783,12 +637,12 @@ export default class Crossnote {
       // const baseName = "base";
       for (const filePath in cache) {
         const ourContent = cache[filePath].markdown;
-        if (await this.exists(path.resolve(notebook.dir, filePath))) {
+        if (await pfs.exists(path.resolve(notebook.dir, filePath))) {
           let baseContent: string = "";
           let theirContent: string = "";
           try {
             const baseContentBlobResult = await git.readBlob({
-              fs: this.fs,
+              fs: fs,
               dir: notebook.dir,
               oid: localSha,
               filepath: filePath,
@@ -799,7 +653,7 @@ export default class Crossnote {
           } catch (error) {}
           try {
             const theirContentBlobTresult = await git.readBlob({
-              fs: this.fs,
+              fs: fs,
               dir: notebook.dir,
               oid: remoteSha,
               filepath: filePath,
@@ -848,23 +702,20 @@ export default class Crossnote {
 
           // console.log("mergedText: ", mergedText);
           const dirname = path.dirname(path.resolve(notebook.dir, filePath));
-          await this.mkdirp(dirname);
-          await this.writeFile(
-            path.resolve(notebook.dir, filePath),
-            mergedText,
-          );
+          await pfs.mkdirp(dirname);
+          await pfs.writeFile(path.resolve(notebook.dir, filePath), mergedText);
           await git.add({
-            fs: this.fs,
+            fs: fs,
             dir: notebook.dir,
             filepath: filePath,
           });
         } else {
           const markdown = cache[filePath].markdown;
           const dirname = path.dirname(path.resolve(notebook.dir, filePath));
-          await this.mkdirp(dirname);
-          await this.writeFile(path.resolve(notebook.dir, filePath), markdown);
+          await pfs.mkdirp(dirname);
+          await pfs.writeFile(path.resolve(notebook.dir, filePath), markdown);
           await git.add({
-            fs: this.fs,
+            fs: fs,
             dir: notebook.dir,
             filepath: filePath,
           });
@@ -895,7 +746,7 @@ export default class Crossnote {
   }: FetchNotebookArgs): Promise<boolean> {
     const localSha = notebook.localSha;
     const result = await git.fetch({
-      fs: this.fs,
+      fs: fs,
       http,
       dir: notebook.dir,
       singleBranch: true,
@@ -935,17 +786,17 @@ export default class Crossnote {
   public async checkoutNote(note: Note): Promise<Note> {
     try {
       await git.checkout({
-        fs: this.fs,
+        fs: fs,
         dir: note.notebook.dir,
         // ref: "HEAD"
         // ref: note.notebook.gitBranch,
         filepaths: [note.filePath],
         force: true,
       });
-      if (await this.exists(path.resolve(note.notebook.dir, note.filePath))) {
+      if (await pfs.exists(path.resolve(note.notebook.dir, note.filePath))) {
         await git.add({
           // .remove is wrong
-          fs: this.fs,
+          fs: fs,
           dir: note.notebook.dir,
           filepath: note.filePath,
         });
@@ -991,7 +842,7 @@ export default class Crossnote {
       const sha = notebook.localSha || "";
       try {
         // Perform a soft reset
-        await this.writeFile(
+        await pfs.writeFile(
           path.resolve(notebook.dir, `.git/refs/heads/${gitBranch}`),
           sha,
         );
@@ -1013,7 +864,7 @@ export default class Crossnote {
         // NOTE: Seems like there is a bug somewhere that caused all files to become *undeleted
         // So we run git.add again.
         await git.add({
-          fs: this.fs,
+          fs: fs,
           dir: notebook.dir,
           filepath: ".",
         });
@@ -1069,13 +920,13 @@ ${markdown}`;
     const absFilePath = path.resolve(notebook.dir, filePath);
     if (!stats) {
       try {
-        stats = await this.stats(absFilePath);
+        stats = await pfs.stats(absFilePath);
       } catch (error) {
         return null;
       }
     }
     if (stats.isFile() && filePath.endsWith(".md")) {
-      let markdown = (await this.readFile(absFilePath, {
+      let markdown = (await pfs.readFile(absFilePath, {
         encoding: "utf8",
       })) as string;
       // console.log("read: ", filePath, markdown);
@@ -1123,7 +974,7 @@ ${markdown}`;
     let notes: Note[] = [];
     let files: string[] = [];
     try {
-      files = await this.readdir(path.resolve(notebook.dir, dir));
+      files = await pfs.readdir(path.resolve(notebook.dir, dir));
     } catch (error) {
       files = [];
     }
@@ -1131,7 +982,7 @@ ${markdown}`;
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
       const absFilePath = path.resolve(notebook.dir, dir, file);
-      const stats = await this.stats(absFilePath);
+      const stats = await pfs.stats(absFilePath);
       const note = await this.getNote(
         notebook,
         path.relative(notebook.dir, absFilePath),
@@ -1196,19 +1047,19 @@ ${markdown}`;
       markdown = this.matterStringify(markdown, { note: noteConfig });
     }
 
-    await this.writeFile(path.resolve(notebook.dir, filePath), markdown);
+    await pfs.writeFile(path.resolve(notebook.dir, filePath), markdown);
     await git.add({
-      fs: this.fs,
+      fs: fs,
       dir: notebook.dir,
       filepath: filePath,
     });
     return noteConfig;
   }
   public async deleteNote(notebook: Notebook, filePath: string) {
-    if (await this.exists(path.resolve(notebook.dir, filePath))) {
-      await this.unlink(path.resolve(notebook.dir, filePath));
+    if (await pfs.exists(path.resolve(notebook.dir, filePath))) {
+      await pfs.unlink(path.resolve(notebook.dir, filePath));
       await git.remove({
-        fs: this.fs,
+        fs: fs,
         dir: notebook.dir,
         filepath: filePath,
       });
@@ -1311,7 +1162,7 @@ ${markdown}`;
     if (!notebook || !notebook.dir) {
       return false;
     }
-    return await this.exists(path.resolve(notebook.dir, "SUMMARY.md"));
+    return await pfs.exists(path.resolve(notebook.dir, "SUMMARY.md"));
   }
 
   private getDefaultNotebookNameFromGitURL(gitURL: string) {
@@ -1321,37 +1172,9 @@ ${markdown}`;
 
   public async getStatus(note: Note) {
     return await git.status({
-      fs: this.fs,
+      fs: fs,
       dir: note.notebook.dir,
       filepath: note.filePath,
     });
-  }
-
-  public async loadImageAsBase64(
-    note: Note,
-    imageSrc: string,
-  ): Promise<string> {
-    let imageFilePath;
-    if (imageSrc.startsWith("/")) {
-      imageFilePath = path.resolve(note.notebook.dir, "." + imageSrc);
-    } else {
-      imageFilePath = path.resolve(note.notebook.dir, imageSrc);
-    }
-    if (await this.exists(imageFilePath)) {
-      const data: Uint8Array = new Uint8Array(
-        // @ts-ignore
-        (await this.readFile(imageFilePath)).split(","),
-      );
-      const base64 = Buffer.from(data.buffer).toString("base64");
-      let imageType = path.extname(imageSrc).slice(1);
-      if (imageType.match(/^svg$/i)) {
-        imageType = "svg+xml";
-      } else if (imageType.match(/^jpg$/i)) {
-        imageType = "jpeg";
-      }
-      return `data:image/${imageType};base64,${base64}`;
-    } else {
-      return "";
-    }
   }
 }

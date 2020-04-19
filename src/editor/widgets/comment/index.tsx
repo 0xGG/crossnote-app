@@ -6,6 +6,7 @@ import {
   makeStyles,
   Theme,
   ThemeProvider,
+  darken,
 } from "@material-ui/core/styles";
 import clsx from "clsx";
 import {
@@ -31,7 +32,6 @@ import {
   Chip,
 } from "@material-ui/core";
 import { CommentOutline, StickerEmoji } from "mdi-material-ui";
-import { crossnoteTheme } from "../../../utilities/theme";
 import { Emoji, Picker as EmojiPicker } from "emoji-mart";
 import "emoji-mart/css/emoji-mart.css";
 import { globalContainers } from "../../../containers/global";
@@ -42,8 +42,8 @@ const useStyles = makeStyles((theme: Theme) =>
   createStyles({
     commentWidget: {
       position: "relative",
-      // borderLeft: `4px solid ${theme.palette.primary.light}`,
-      backgroundColor: theme.palette.grey[100],
+      // backgroundColor: theme.palette.grey[100],
+      backgroundColor: darken(theme.palette.background.paper, 0.05),
     },
     topPanel: {
       paddingLeft: theme.spacing(2),
@@ -55,13 +55,16 @@ const useStyles = makeStyles((theme: Theme) =>
       alignItems: "center",
     },
     button: {
-      color: "rgba(0, 0, 0, 0.54)",
+      // color: "rgba(0, 0, 0, 0.54)",
     },
     reactionChip: {
       "marginBottom": "2px",
       "&:hover": {
         cursor: "pointer",
       },
+    },
+    iconBtnSVG: {
+      color: theme.palette.text.secondary,
     },
   }),
 );
@@ -256,7 +259,9 @@ function CommentWidget(props: WidgetArgs) {
               setCommentDialogOpen(true);
             }}
           >
-            <CommentOutline></CommentOutline>
+            <CommentOutline
+              className={clsx(classes.iconBtnSVG)}
+            ></CommentOutline>
             {commentWidget.instance.commentWidget.messagesCount > 0 ? (
               <Typography style={{ marginLeft: "4px", marginBottom: "0" }}>
                 {commentWidget.instance.commentWidget.messagesCount}
@@ -271,7 +276,7 @@ function CommentWidget(props: WidgetArgs) {
           >
             <Badge style={{ zIndex: 0 }} color={"secondary"}>
               {/* badgeContent={(note.reactions || "+").toString()} */}
-              <StickerEmoji />
+              <StickerEmoji className={clsx(classes.iconBtnSVG)} />
               {commentWidget.instance.commentWidget.reactionsCount > 0 ? (
                 <Typography style={{ marginLeft: "4px", marginBottom: "0" }}>
                   {commentWidget.instance.commentWidget.reactionsCount}
@@ -374,7 +379,7 @@ export const CommentWidgetCreator: WidgetCreator = (args) => {
   const el = document.createElement("span");
   ReactDOM.render(
     <Provider value={GraphQLClient}>
-      <ThemeProvider theme={crossnoteTheme}>
+      <ThemeProvider theme={globalContainers.settingsContainer.theme.muiTheme}>
         <CommentWidget {...args}></CommentWidget>
       </ThemeProvider>
     </Provider>,
