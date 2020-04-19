@@ -6,6 +6,7 @@ import {
   makeStyles,
   Theme,
   ThemeProvider,
+  darken,
 } from "@material-ui/core/styles";
 import clsx from "clsx";
 import {
@@ -36,14 +37,13 @@ import "emoji-mart/css/emoji-mart.css";
 import { globalContainers } from "../../../containers/global";
 import { CommentDialog } from "./CommentDialog";
 import { WidgetTopPanel } from "../widget/WidgetTopPanel";
-import { themeManager } from "../../../themes/manager";
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
     commentWidget: {
       position: "relative",
-      // borderLeft: `4px solid ${theme.palette.primary.light}`,
-      backgroundColor: theme.palette.grey[100],
+      // backgroundColor: theme.palette.grey[100],
+      backgroundColor: darken(theme.palette.background.paper, 0.05),
     },
     topPanel: {
       paddingLeft: theme.spacing(2),
@@ -62,6 +62,9 @@ const useStyles = makeStyles((theme: Theme) =>
       "&:hover": {
         cursor: "pointer",
       },
+    },
+    iconBtnSVG: {
+      color: theme.palette.text.secondary,
     },
   }),
 );
@@ -256,7 +259,9 @@ function CommentWidget(props: WidgetArgs) {
               setCommentDialogOpen(true);
             }}
           >
-            <CommentOutline></CommentOutline>
+            <CommentOutline
+              className={clsx(classes.iconBtnSVG)}
+            ></CommentOutline>
             {commentWidget.instance.commentWidget.messagesCount > 0 ? (
               <Typography style={{ marginLeft: "4px", marginBottom: "0" }}>
                 {commentWidget.instance.commentWidget.messagesCount}
@@ -271,7 +276,7 @@ function CommentWidget(props: WidgetArgs) {
           >
             <Badge style={{ zIndex: 0 }} color={"secondary"}>
               {/* badgeContent={(note.reactions || "+").toString()} */}
-              <StickerEmoji />
+              <StickerEmoji className={clsx(classes.iconBtnSVG)} />
               {commentWidget.instance.commentWidget.reactionsCount > 0 ? (
                 <Typography style={{ marginLeft: "4px", marginBottom: "0" }}>
                   {commentWidget.instance.commentWidget.reactionsCount}

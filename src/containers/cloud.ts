@@ -101,10 +101,11 @@ function useCloudContainer(initialState: InitialState) {
     if (viewer) {
       setLoggedIn(true);
       if (!loggedIn) {
-        settingsContainer.setLanguage(viewer.language);
-        settingsContainer.setAuthorName(viewer.name);
-        settingsContainer.setAuthorEmail(viewer.email);
-        settingsContainer.setEditorCursorColor(viewer.editorCursorColor);
+        // NOTE: Stop syncing properties below from the cloud
+        // settingsContainer.setLanguage(viewer.language);
+        // settingsContainer.setAuthorName(viewer.name);
+        // settingsContainer.setAuthorEmail(viewer.email);
+        // settingsContainer.setEditorCursorColor(viewer.editorCursorColor);
       }
     }
   }, [loggedIn, viewer]);

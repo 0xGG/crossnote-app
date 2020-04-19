@@ -7,6 +7,7 @@ import {
   Box,
   Card,
   Typography,
+  darken,
 } from "@material-ui/core";
 import clsx from "clsx";
 import { useTranslation } from "react-i18next";
@@ -32,7 +33,7 @@ const useStyles = makeStyles((theme: Theme) =>
       flexDirection: "row",
       justifyContent: "flex-end",
       padding: "1px 4px 1px 4px",
-      backgroundColor: "#eee",
+      backgroundColor: darken(theme.palette.background.paper, 0.05),
     },
     toolbarLeft: {
       display: "flex",
@@ -85,6 +86,8 @@ export function CommentEditor(props: Props) {
       editor.setValue("");
       editor.setOption("lineNumbers", false);
       editor.focus();
+      editor.getWrapperElement().classList.remove("cm-s-hypermd-light");
+      editor.getWrapperElement().classList.add("vickymd-theme");
       setEditor(editor);
     }
   }, [textAreaElement]);
