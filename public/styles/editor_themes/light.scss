@@ -495,7 +495,7 @@
   pre.HyperMD-codeblock {
     @extend %monospace;
     line-height: 1.2;
-    color: #922;
+    color: #922 !important;
 
     // &.hmd-codeblock-indent {
     span.cm-inline-code {

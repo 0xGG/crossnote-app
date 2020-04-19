@@ -588,7 +588,7 @@
 
 .vickymd-theme pre.HyperMD-codeblock {
   line-height: 1.2;
-  color: #922;
+  color: #922 !important;
 }
 
 .vickymd-theme pre.HyperMD-codeblock span.cm-inline-code {
