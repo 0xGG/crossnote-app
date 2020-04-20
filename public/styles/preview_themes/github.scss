@@ -1,6 +1,6 @@
 @import "../common/math.scss";
 @import "../common/color.scss";
-
+@import "../common/constant.scss";
 
 @mixin github($fg, $bg, $urlColor) {
   $fg-strong: contrast($bg, darken($fg, 32%), lighten($fg, 32%));
@@ -42,32 +42,32 @@
     }
 
     h1 {
-      font-size: 2.25em;
-      padding-bottom: 0.3em;
+      font-size: $h1-font-size;
+      padding-bottom: $h1-padding-bottom;
     }
 
     h2 {
-      font-size: 1.75em;
-      padding-bottom: 0.3em;
+      font-size: $h2-font-size;
+      padding-bottom: $h2-padding-bottom;
     }
 
     h3 {
-      font-size: 1.5em;
+      font-size: $h3-font-size;
       //font-weight: 500;
     }
 
     h4 {
-      font-size: 1.25em;
+      font-size: $h4-font-size;
       //font-weight: 600;
     }
 
     h5 {
-      font-size: 1.1em;
+      font-size: $h5-font-size;
       //font-weight: 600;
     }
 
     h6 {
-      font-size: 1.0em;
+      font-size: $h6-font-size;
       //font-weight: 600;
     }
 

@@ -1,5 +1,6 @@
 @import "../common/math.scss";
 @import "../common/color.scss";
+@import "../common/constant.scss";
 
 @font-face {
   font-family: "HyperMD-Bullets";
@@ -8,11 +9,12 @@
   font-style: normal;
 }
 
-.vickymd-theme {
-  $fs: 12pt; //default font-size
-
-  $bg: #fff;
+.vickymd-theme.vickymd-theme {
   $fg: #333;
+  $bg: #fff;
+
+
+  $fs: 16px; //default font-size
   $editor-background: $bg;
   $editor-color: $fg;
 
@@ -36,11 +38,13 @@
   $table-sep-image: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mOc+R8AAjcBmvywMWoAAAAASUVORK5CYII=";
   $table-row-1-image: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAACCAQAAAAziH6sAAAADklEQVR42mOc+Z9x5n8ACTkDM4ikM1IAAAAASUVORK5CYII=";
 
-  $codeblock-border: none; // 1px solid #ccc;
-  $codeblock-padding: 5px;
   $codeblock-toolbar-bg: #f3f3f3;
   $codeblock-toolbar-color: #922;
+  $codeblock-border: none; // 1px solid #ccc;
+  $codeblock-padding: 5px;
 
+  $hashtag-bg: #999;
+  $hashtag-color: #fff;
   $hashtag-fontsize: 0.84em;
   $hashtag-padding-x: 6px;
   $hashtag-padding-y: 0.1em;
@@ -50,17 +54,25 @@
   $hr-image: $table-row-1-image;
   $hr-padding: 5px;
 
-  $hashtag-bg: #999;
-  $hashtag-color: #fff;
-
-  $inline-code-color: black;
+  $inline-code-color: $fg;
   $inline-code-bg: contrast($bg, lighten($bg, 8%), darken($bg, 6%));
   $inline-code-border: none; // #ccc solid 1px;
 
-  font-family: -apple-system, BlinkMacSystemFont, "Open Sans",
-    "Helvetica Neue", Helvetica, Arial, "Hiragino Sans GB",
-    "WenQuanYi Micro Hei", "Noto Sans CJK SC", "Microsoft YaHei", STHeiti,
-    "Microsoft Jhenghei", sans-serif, "Apple Color Emoji", "Segoe UI Emoji",
+  font-family: -apple-system,
+    BlinkMacSystemFont,
+    "Open Sans",
+    "Helvetica Neue",
+    Helvetica,
+    Arial,
+    "Hiragino Sans GB",
+    "WenQuanYi Micro Hei",
+    "Noto Sans CJK SC",
+    "Microsoft YaHei",
+    STHeiti,
+    "Microsoft Jhenghei",
+    sans-serif,
+    "Apple Color Emoji",
+    "Segoe UI Emoji",
     "Segoe UI Symbol";
   -webkit-font-smoothing: antialiased;
 
@@ -113,6 +125,7 @@
 
   .cm-header,
   .cm-strong {
+    color: $fg;
     font-weight: 600;
   }
 
@@ -126,7 +139,7 @@
 
   span.cm-keyword {
     line-height: 1em;
-    // font-weight: bold;
+    font-weight: 400;
     color: #a71d5d;
   }
 
@@ -313,17 +326,29 @@
     }
 
     &.HyperMD-header-1 {
-      font-weight: 600;
-      font-size: $fs * 2;
+      font-size: $h1-font-size;
+      padding-bottom: $h1-padding-bottom;
     }
 
     &.HyperMD-header-2 {
-      font-weight: 600;
-      font-size: $fs * 1.5;
+      font-size: $h2-font-size;
+      padding-bottom: $h2-padding-bottom;
     }
 
     &.HyperMD-header-3 {
-      font-size: $fs * 1.2;
+      font-size: $h3-font-size;
+    }
+
+    &.HyperMD-header-4 {
+      font-size: $h4-font-size;
+    }
+
+    &.HyperMD-header-5 {
+      font-size: $h5-font-size;
+    }
+
+    &.HyperMD-header-6 {
+      font-size: $h6-font-size;
     }
 
     &.HyperMD-header-1,
@@ -435,10 +460,12 @@
   }
 
   @for $i from 1 through 9 {
-    $indent_i: $list-indent * $i + $list-margin;
+    $indent_i: $list-indent * $i; // + $list-margin;
 
     pre.HyperMD-list-line-#{$i} {
-      padding-left: $line-padding + $indent_i;
+      padding-left:
+        /*$line-padding +*/
+        $indent_i;
     }
   }
 
@@ -569,7 +596,7 @@
   }
 
   span.hmd-link-icon {
-    background: url(hypermd-image-link.png) no-repeat center center;
+    background: none;
     width: 20px;
     height: 16px;
     display: inline-block;
@@ -581,7 +608,7 @@
     }
 
     &:after {
-      content: ""; //remove default stuff
+      content: "🔗"; //remove default stuff
     }
   }
 
@@ -597,11 +624,21 @@
     &.hmd-image-error {
       min-width: 24px;
       min-height: 24px;
-      background: #eeeeee url(hypermd-image-spin.gif) no-repeat center center;
+      background: none; // #eeeeee url(hypermd-image-spin.gif) no-repeat center center;
+    }
+
+    &.hmd-image-loading {
+      &::after {
+        content: " ◌ "
+      }
     }
 
     &.hmd-image-error {
-      background-image: url(hypermd-image-error.png);
+      background-image: none; // url(hypermd-image-error.png);
+
+      &::after {
+        content: " 🚫 ";
+      }
     }
   }
 
