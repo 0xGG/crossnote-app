@@ -1,4 +1,4 @@
-@use 'sass:math';
+@import "./math.scss";
 
 @function de-gamma($n) {
   @if $n <=0.03928 {
@@ -6,7 +6,7 @@
   }
 
   @else {
-    @return math.pow((($n + 0.055)/1.055), 2.4);
+    @return pow((($n + 0.055)/1.055), 2.4);
   }
 }
 
