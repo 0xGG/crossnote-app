@@ -501,6 +501,7 @@
     &.cm-property {
       // checked
       background-position-y: -1em;
+      color: $fg;
     }
 
     color: rgba(#000, 0.5);
@@ -980,6 +981,7 @@
   span.hmd-hidden-token {
     &.cm-formatting-task {
       color: transparent !important;
+      filter: invert(1);
     }
   }
 
