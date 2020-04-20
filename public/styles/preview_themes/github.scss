@@ -1,9 +1,43 @@
-// out: false
-.github(@fg, @bg, @urlColor) {
-  @fg-strong: contrast(@bg, darken(@fg, 32%), lighten(@fg, 32%));
-  @fg-subtle: contrast(@fg, lighten(@fg, 16%), darken(@fg, 16%));
-  @border: contrast(@bg, lighten(@bg, 16%), darken(@bg, 16%));
-  @margin: 16px;
+@use 'sass:math';
+
+@function de-gamma($n) {
+  @if $n <=0.03928 {
+    @return $n / 12.92;
+  }
+
+  @else {
+    @return math.pow((($n + 0.055)/1.055), 2.4);
+  }
+}
+
+// sRGB BT-709 BRIGHTNESS
+@function brightness($c) {
+  $rlin: de-gamma(red($c)/255);
+  $glin: de-gamma(green($c)/255);
+  $blin: de-gamma(blue($c)/255);
+  @return (0.2126 * $rlin + 0.7152 * $glin + 0.0722 * $blin) * 100;
+}
+
+// Compares contrast of a given color to the light/dark arguments and returns whichever is most "contrasty"
+@function contrast-color($color, $dark: #000000, $light: #FFFFFF) {
+  @if $color==null {
+    @return null;
+  }
+
+  @else {
+    $color-brightness: brightness($color);
+    $light-text-brightness: brightness($light);
+    $dark-text-brightness: brightness($dark);
+
+    @return if(abs($color-brightness - $light-text-brightness) > abs($color-brightness - $dark-text-brightness), $light, $dark);
+  }
+}
+
+@mixin github($fg, $bg, $urlColor) {
+  $fg-strong: contrast-color($bg, darken($fg, 32%), lighten($fg, 32%));
+  $fg-subtle: contrast-color($fg, lighten($fg, 16%), darken($fg, 16%));
+  $border: contrast-color($bg, lighten($bg, 16%), darken($bg, 16%));
+  $margin: 16px;
 
   .preview.preview {
     font-family: -apple-system, BlinkMacSystemFont, 'Noto Sans SC', 'Segoe UI', 'Roboto', 'Oxygen',
@@ -14,8 +48,8 @@
     // font-size: 1.2em;
     font-size: 16px;
     line-height: 1.6;
-    color: @fg;
-    background-color: @bg;
+    color: $fg;
+    background-color: $bg;
     overflow: initial;
     box-sizing: border-box;
     word-wrap: break-word;
@@ -35,7 +69,7 @@
       // margin-top: 1em;
       // margin-bottom: @margin;
       margin: 0;
-      color: @fg-strong;
+      color: $fg-strong;
     }
 
     h1 {
@@ -85,11 +119,11 @@
     // Emphasis --------------------
 
     strong {
-      color: @fg-strong;
+      color: $fg-strong;
     }
 
     del {
-      color: @fg-subtle;
+      color: $fg-subtle;
     }
 
 
@@ -101,13 +135,13 @@
 
     a {
       // color: #08c;
-      color: @urlColor;
+      color: $urlColor;
       text-decoration: none;
     }
 
     a:hover {
       // color: #0050a3;
-      color: contrast(@urlColor, lighten(@urlColor, 8%), darken(@urlColor, 6%));
+      color: contrast($urlColor, lighten($urlColor, 8%), darken($urlColor, 6%));
       text-decoration: none;
     }
 
@@ -122,7 +156,7 @@
 
     &>p {
       margin-top: 0;
-      margin-bottom: @margin;
+      margin-bottom: $margin;
       word-wrap: break-word;
     }
 
@@ -130,7 +164,7 @@
 
     &>ul,
     &>ol {
-      margin-bottom: @margin;
+      margin-bottom: $margin;
     }
 
     ul,
@@ -195,11 +229,11 @@
     // Blockquotes --------------------
 
     blockquote {
-      margin: @margin 0;
+      margin: $margin 0;
       font-size: inherit;
       padding: 0 15px;
-      color: @fg-subtle;
-      border-left: 4px solid @border;
+      color: $fg-subtle;
+      border-left: 4px solid $border;
 
       > :first-child {
         margin-top: 0;
@@ -213,8 +247,8 @@
     // HR --------------------
     hr {
       height: 4px;
-      margin: @margin*2 0;
-      background-color: @border;
+      margin: $margin*2 0;
+      background-color: $border;
       border: 0 none;
     }
 
@@ -232,12 +266,12 @@
 
       th {
         font-weight: bold;
-        color: @fg-strong;
+        color: $fg-strong;
       }
 
       td,
       th {
-        border: 1px solid @border;
+        border: 1px solid $border;
         padding: 6px 13px;
       }
     }
@@ -264,8 +298,8 @@
     code {
       font-family: Menlo, Monaco, Consolas, 'Courier New', monospace;
       font-size: 0.85em !important;
-      color: @fg-strong;
-      background-color: contrast(@bg, lighten(@bg, 8%), darken(@bg, 6%));
+      color: $fg-strong;
+      background-color: contrast($bg, lighten($bg, 8%), darken($bg, 6%));
       border-radius: 3px;
       padding: 0.2em 6px;
 
@@ -291,7 +325,7 @@
     }
 
     .highlight {
-      margin-bottom: @margin;
+      margin-bottom: $margin;
     }
 
     .highlight pre,
@@ -306,7 +340,7 @@
       // color: @fg;
       // background-color: contrast(@bg, lighten(@bg, 4%), darken(@bg, 6%)) !important;
 
-      border: @border;
+      border: $border;
       border-radius: 3px;
     }
 
@@ -351,17 +385,17 @@
     dl,
     pre {
       margin-top: 0;
-      margin-bottom: @margin;
+      margin-bottom: $margin;
       // word-wrap: break-word;
     }
 
     // KBD --------------------
     kbd {
-      color: @fg-strong;
-      border: 1px solid @border;
-      border-bottom: 2px solid darken(@border, 6%);
+      color: $fg-strong;
+      border: 1px solid $border;
+      border-bottom: 2px solid darken($border, 6%);
       padding: 2px 4px;
-      background-color: contrast(@bg, lighten(@bg, 8%), darken(@bg, 6%));
+      background-color: contrast($bg, lighten($bg, 8%), darken($bg, 6%));
       border-radius: 3px;
       // box-shadow: inset 0 -1px 0 #bbb;
     }
@@ -389,7 +423,7 @@
     // very nice tutorial & intro
     // https://www.smashingmagazine.com/2015/01/designing-for-print-with-css/
     @media print {
-      background-color: @bg;
+      background-color: $bg;
 
       h1,
       h2,
@@ -397,12 +431,12 @@
       h4,
       h5,
       h6 {
-        color: @fg-strong;
+        color: $fg-strong;
         page-break-after: avoid;
       }
 
       blockquote {
-        color: @fg-subtle;
+        color: $fg-subtle;
       }
 
       /*table,*/

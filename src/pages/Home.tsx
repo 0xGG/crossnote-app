@@ -16,6 +16,7 @@ import {
   useMediaQuery,
   ListItemSecondaryAction,
   Tooltip,
+  Card,
 } from "@material-ui/core";
 import {
   fade,
@@ -384,14 +385,14 @@ export function Home(props: Props) {
     ));
 
   const editorPanel = (
-    <Box
+    <Card
       className={clsx(classes.editorPanel, "editor-panel")}
       style={{
         display: crossnoteContainer.displayMobileEditor && "block",
       }}
     >
       <Editor note={crossnoteContainer.selectedNote}></Editor>
-    </Box>
+    </Card>
   );
 
   return (

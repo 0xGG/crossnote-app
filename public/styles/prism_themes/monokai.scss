@@ -5,49 +5,49 @@
 
 // These colors are specific to the theme. Do not use in a package!
 
-@ghost-white: #F8F8F0;
-@light-ghost-white: #F8F8F2;
-@light-gray: #CCC;
-@gray: #888;
-@brown-gray: #49483E;
-@dark-gray: #282828;
+$ghost-white: #F8F8F0;
+$light-ghost-white: #F8F8F2;
+$light-gray: #CCC;
+$gray: #888;
+$brown-gray: #49483E;
+$dark-gray: #282828;
 
-@yellow: #E6DB74;
-@blue: #66D9EF;
-@pink: #F92672;
-@purple: #AE81FF;
-@brown: #75715E;
-@orange: #FD971F;
-@light-orange: #FFD569;
-@green: #A6E22E;
-@sea-green: #529B2F;
+$yellow: #E6DB74;
+$blue: #66D9EF;
+$pink: #F92672;
+$purple: #AE81FF;
+$brown: #75715E;
+$orange: #FD971F;
+$light-orange: #FFD569;
+$green: #A6E22E;
+$sea-green: #529B2F;
 
 // General colors
-@syntax-text-color: @light-ghost-white;
-@syntax-cursor-color: @ghost-white;
-@syntax-selection-color: @brown-gray;
-@syntax-background-color: @dark-gray;
+$syntax-text-color: $light-ghost-white;
+$syntax-cursor-color: $ghost-white;
+$syntax-selection-color: $brown-gray;
+$syntax-background-color: $dark-gray;
 
 // Guide colors
-@syntax-wrap-guide-color: rgba(255, 255, 255, .1);
-@syntax-indent-guide-color: rgba(255, 255, 255, .15);
-@syntax-invisible-character-color: rgba(197, 200, 198, .2);
+$syntax-wrap-guide-color: rgba(255, 255, 255, .1);
+$syntax-indent-guide-color: rgba(255, 255, 255, .15);
+$syntax-invisible-character-color: rgba(197, 200, 198, .2);
 
 // For find and replace markers
-@syntax-result-marker-color: @gray;
-@syntax-result-marker-color-selected: white;
+$syntax-result-marker-color: $gray;
+$syntax-result-marker-color-selected: white;
 
 // Gutter colors
-@syntax-gutter-text-color: @syntax-text-color;
-@syntax-gutter-text-color-selected: @syntax-gutter-text-color;
-@syntax-gutter-background-color: lighten(@syntax-background-color, 3%);
-@syntax-gutter-background-color-selected: @syntax-selection-color;
+$syntax-gutter-text-color: $syntax-text-color;
+$syntax-gutter-text-color-selected: $syntax-gutter-text-color;
+$syntax-gutter-background-color: lighten($syntax-background-color, 3%);
+$syntax-gutter-background-color-selected: $syntax-selection-color;
 
 // For git diff info. i.e. in the gutter
-@syntax-color-renamed: @light-orange;
-@syntax-color-added: @sea-green;
-@syntax-color-modified: @yellow;
-@syntax-color-removed: @pink;
+$syntax-color-renamed: $light-orange;
+$syntax-color-added: $sea-green;
+$syntax-color-modified: $yellow;
+$syntax-color-removed: $pink;
 
 .preview {
 
@@ -68,9 +68,9 @@
     line-height: 1.5;
     tab-size: 4;
     hyphens: none;
-    color: @syntax-text-color;
-    background-color: contrast(@syntax-background-color, lighten(@syntax-background-color, 4%), darken(@syntax-background-color, 6%)) !important;
-    border: contrast(@syntax-background-color, lighten(@syntax-background-color, 16%), darken(@syntax-background-color, 16%));
+    color: $syntax-text-color;
+    background-color: contrast($syntax-background-color, lighten($syntax-background-color, 4%), darken($syntax-background-color, 6%)) !important;
+    border: contrast($syntax-background-color, lighten($syntax-background-color, 16%), darken($syntax-background-color, 16%));
     border-radius: 3px;
   }
 
@@ -86,7 +86,7 @@
     .token.prolog,
     .token.doctype,
     .token.cdata {
-      color: @brown;
+      color: $brown;
     }
 
     .token.punctuation {
@@ -106,7 +106,7 @@
     .token.constant,
     .token.symbol,
     .token.deleted {
-      color: @purple;
+      color: $purple;
     }
 
     .token.selector,
@@ -115,43 +115,43 @@
     .token.char,
     .token.builtin,
     .token.inserted {
-      color: @yellow;
+      color: $yellow;
     }
 
     .token.entity {
-      color: @purple;
+      color: $purple;
     }
 
     .token.url {
-      color: @light-gray;
+      color: $light-gray;
     }
 
     .token.operator {
-      color: @pink;
+      color: $pink;
     }
 
     .token.atrule,
     .token.attr-value,
     .token.keyword {
       // color: @pink !important;
-      color: @blue;
+      color: $blue;
     }
 
     .token.function {
-      color: @green;
+      color: $green;
     }
 
     .token.class-name {
-      color: @green;
+      color: $green;
     }
 
     .token.regex {
-      color: @purple;
+      color: $purple;
     }
 
     .token.important,
     .token.variable {
-      color: @green;
+      color: $green;
     }
 
     .token.important,
