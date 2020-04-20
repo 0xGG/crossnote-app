@@ -76,10 +76,11 @@ const useStyles = makeStyles((theme: Theme) =>
       alignItems: "center",
     },
     loggedInSection: {
+      position: "relative",
       padding: theme.spacing(0, 2),
       border: `1px solid ${theme.palette.primary.light}`,
       marginBottom: theme.spacing(4),
-      marginTop: theme.spacing(4),
+      marginTop: theme.spacing(2),
       borderRadius: "4px",
     },
     avatar: {
@@ -365,6 +366,16 @@ export function Settings(props: Props) {
               {t("general/upload-the-profile")}
             </Button>
           </Box>
+          <Button
+            variant={"outlined"}
+            color="secondary"
+            className={clsx(classes.logoutBtn)}
+            onClick={() => {
+              cloudContainer.logout();
+            }}
+          >
+            {t("settings/log-out")}
+          </Button>
         </Box>
       ) : null}
       <Box className={clsx(classes.section)}>
@@ -538,18 +549,7 @@ export function Settings(props: Props) {
           </Typography>
         </Link>
       </Box>
-      {cloudContainer.loggedIn ? (
-        <Button
-          variant={"outlined"}
-          color="secondary"
-          className={clsx(classes.logoutBtn)}
-          onClick={() => {
-            cloudContainer.logout();
-          }}
-        >
-          {t("settings/log-out")}
-        </Button>
-      ) : (
+      {!cloudContainer.loggedIn && (
         <Button
           variant={"outlined"}
           color={"primary"}

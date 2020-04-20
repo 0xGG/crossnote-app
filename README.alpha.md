@@ -6,7 +6,7 @@
 
 Thank you for all your support and helps!
 
-![](logo192.png)
+![](./public/logo192.png)
 
 https://crossnote.app
 

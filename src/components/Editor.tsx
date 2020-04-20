@@ -151,15 +151,17 @@ const useStyles = makeStyles((theme: Theme) =>
         height: "100%",
         padding: theme.spacing(0, 2),
         [theme.breakpoints.down("sm")]: {
-          padding: theme.spacing(0),
+          padding: theme.spacing(1),
         },
       },
       "& .CodeMirror-vscrollbar": {
         // display: "none !important",
       },
+      /*
       [theme.breakpoints.down("sm")]: {
         padding: theme.spacing(1),
       },
+      */
     },
     presentation: {
       padding: "0 !important",

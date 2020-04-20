@@ -1,3 +1,7 @@
+@import "../common/math.scss";
+@import "../common/color.scss";
+@import "../common/constant.scss";
+
 @font-face {
   font-family: "HyperMD-Bullets";
   src: url("data:application/x-font-woff;charset=utf-8;base64,d09GRk9UVE8AAATYAAsAAAAABrQAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAABDRkYgAAADLAAAAVkAAAFgkDDiyEZGVE0AAASsAAAAGwAAABx9TbkrR0RFRgAABIgAAAAiAAAAJgAnACpPUy8yAAABZAAAAEcAAABgVTNgQ2NtYXAAAALUAAAAQwAAAUoBRQLkaGVhZAAAAQgAAAAzAAAANgrgpUBoaGVhAAABPAAAAB4AAAAkBOsD+WhtdHgAAATIAAAAEAAAABALoAL5bWF4cAAAAVwAAAAGAAAABgAEUABuYW1lAAABrAAAASYAAAITC0mo3nBvc3QAAAMYAAAAEwAAACD/gwAzeJxjYGRgYABil5kPquP5bb4ycLMwgMCVWRq+ENpyHoMxAwNTNFMEkMvBwAQSBQAX2QkFAHicY2BkYGAyZtjFEMNsxQAETNEMjAyogAUAMnAB7AAAAABQAAAEAAB4nGNgYTZlnMDAysDANIvpDAMDQz+EZnzFYMTIARRlYOVkgAFGBiQQkOaawtDAoMWgy2z835ghhsn4vxuKGgUgZAQARsULIwB4nIWOMWvDMBSET4mT4g6lhC7dtBQSiI1kSgNZAw506FBIlk52YhyDsIPiDIGO/T39Lf01nXtyRJYOMcjv09O9ewfgDt8QOH+PePYsECL33MMNPj338YQfzwFCcet5gHvx4nnI/geVIgh5S7opxwIjvHnuca/x3McrvjwH1Px6HkCKB89DjMQSCzTY4wSLCiV2aCExxgYT1gQKGjNMyQYZlTmOwKLZn2xV7lo53kxkovRsKk3W5HxaoaZDxWNQYMtprOq2ak2xJb6zV9LBeVlei/JoMkJKZzfnqqWi6HbH3C4x5/nveu5rKiL+o0tSpE3dpo0tC5nESs7lZTtZq0hHLu61nGv2LA58d7kkvZ173FWXCevCHqqmlkrpWCklrxj+AequT5gAAHicY2BgYGaAYBkGRgYQcAHyGMF8FgYNIM0GpBkZmBi0GXT//wfytUD0/+v/r0HVAwEjGwOCQxAwMoHtG2YAAPijCSYAeJxjYGYAg/8NDMYMWAAAKBQBtgB4nEWOsUsCYRjG38+7y/O8zoxOIi8RXBLE0iWCtkYjLLBoNMsSJC2sKILIFuuDKIhKbBKDwDFovAgC5eb8AwqaCqql740TzBZ7nuU3Pb+HAM8DIUSKreZSufTSYgiIBQhE0AHoJqhZcJDDft7zbKm0ZM4zXW7JvEcC2+bsMKUdkK06xQ98FzQoOTSAHg3KTg1UjUR6gfsbHAAfBCYy2e311PJKzjuU8HvDI6HRgDcdzyxsdOz/N9qxgwwK8IT4ssflb6pjVCe6zuo6p7swiHfNYJfePFAxyurNqFXBBG6pGWYTYmvZZGFONO3nwtlUNX6/I86bnFAsXNILekurpcqN+DIuFK9PK7TdfHm3In7VhHQ1dZWkebp/tHcoKjiGYXxTJ0236Ywx54xhumrMxdRHU30QFPbaIJ/M4NgJ2lRmPJlGl/JT60O/SmWpITVkmRl2Zsjdv2uJiQgAAAB4nGNgZGBg4AFiMQY5BiYGRiBkBmIWoAgTEDNCMAAIgwBSAAB4nGNgYGBkAIIrkuH2YHqWhi+EtpwHADfuBa0AAgAAMwMzAOgDOgDiAzMA/A==") format("woff");
@@ -5,11 +9,16 @@
   font-style: normal;
 }
 
-.vickymd-theme {
-  $fs: 12pt; //default font-size
+.vickymd-theme.vickymd-theme {
+  $fg: #ccc;
+  $bg: #0c0c0c;
+  $fg-strong: contrast($bg, darken($fg, 32%), lighten($fg, 32%));
+  $fg-subtle: contrast($fg, lighten($fg, 16%), darken($fg, 16%));
+  $border: contrast($bg, lighten($bg, 16%), darken($bg, 16%));
 
-  $editor-background: #0c0c0c;
-  $editor-color: #ccc;
+  $fs: 16px; //default font-size
+  $editor-background: $bg;
+  $editor-color: $fg;
 
   $line-height: 1.5;
   $line-margin: 10px;
@@ -31,11 +40,15 @@
   $table-sep-image: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mOc+R8AAjcBmvywMWoAAAAASUVORK5CYII=";
   $table-row-1-image: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAACCAQAAAAziH6sAAAADklEQVR42mOc+Z9x5n8ACTkDM4ikM1IAAAAASUVORK5CYII=";
 
-  $codeblock-border: 1px solid transparent;
+  $dark-gray: #282828;
+  $codeblock-toolbar-bg: contrast($dark-gray, lighten($dark-gray, 4%), darken($dark-gray, 6%));
+  $codeblock-toolbar-color: #FF9800;
+  $codeblock-bg: contrast($dark-gray, lighten($dark-gray, 4%), darken($dark-gray, 6%));
+  $codeblock-border: none; // 1px solid #ccc;
   $codeblock-padding: 5px;
-  $codeblock-panel-bg: #323232;
-  $codeblock-bg: #323232;
 
+  $hashtag-bg: contrast($bg, lighten($bg, 8%), darken($bg, 6%));
+  $hashtag-color: $fg;
   $hashtag-fontsize: 0.84em;
   $hashtag-padding-x: 6px;
   $hashtag-padding-y: 0.1em;
@@ -45,13 +58,25 @@
   $hr-image: $table-row-1-image;
   $hr-padding: 5px;
 
-  $hashtag-bg: #999;
-  $hashtag-color: #fff;
+  $inline-code-color: $fg;
+  $inline-code-bg: contrast($bg, lighten($bg, 8%), darken($bg, 6%));
+  $inline-code-border: none; // #ccc solid 1px;
 
-  font-family: -apple-system, BlinkMacSystemFont, "Open Sans",
-    "Helvetica Neue", Helvetica, Arial, "Hiragino Sans GB",
-    "WenQuanYi Micro Hei", "Noto Sans CJK SC", "Microsoft YaHei", STHeiti,
-    "Microsoft Jhenghei", sans-serif, "Apple Color Emoji", "Segoe UI Emoji",
+  font-family: -apple-system,
+    BlinkMacSystemFont,
+    "Open Sans",
+    "Helvetica Neue",
+    Helvetica,
+    Arial,
+    "Hiragino Sans GB",
+    "WenQuanYi Micro Hei",
+    "Noto Sans CJK SC",
+    "Microsoft YaHei",
+    STHeiti,
+    "Microsoft Jhenghei",
+    sans-serif,
+    "Apple Color Emoji",
+    "Segoe UI Emoji",
     "Segoe UI Symbol";
   -webkit-font-smoothing: antialiased;
 
@@ -63,8 +88,8 @@
 
   line-height: $line-height;
   font-size: $fs;
-  background: $editor-background !important;
-  color: $editor-color !important;
+  background: $editor-background;
+  color: $editor-color;
 
   /// Fold-HTML
 
@@ -104,11 +129,12 @@
 
   .cm-header,
   .cm-strong {
+    color: $fg-strong;
     font-weight: 600;
   }
 
   span.cm-quote {
-    color: #666;
+    color: $fg-subtle;
   }
 
   span.cm-meta {
@@ -117,7 +143,7 @@
 
   span.cm-keyword {
     line-height: 1em;
-    font-weight: bold;
+    font-weight: 400;
     color: #66D9EF;
   }
 
@@ -126,7 +152,7 @@
   }
 
   span.cm-number {
-    color: #164;
+    color: #AE81FF;
   }
 
   span.cm-def {
@@ -154,11 +180,11 @@
   }
 
   span.cm-comment {
-    color: #4f9f5f;
+    color: #75715E;
   }
 
   span.cm-string {
-    color: #2a00ff;
+    color: #E6DB74;
   }
 
   span.cm-string-2 {
@@ -304,17 +330,29 @@
     }
 
     &.HyperMD-header-1 {
-      font-weight: 600;
-      font-size: $fs * 2;
+      font-size: $h1-font-size;
+      padding-bottom: $h1-padding-bottom;
     }
 
     &.HyperMD-header-2 {
-      font-weight: 600;
-      font-size: $fs * 1.5;
+      font-size: $h2-font-size;
+      padding-bottom: $h2-padding-bottom;
     }
 
     &.HyperMD-header-3 {
-      font-size: $fs * 1.2;
+      font-size: $h3-font-size;
+    }
+
+    &.HyperMD-header-4 {
+      font-size: $h4-font-size;
+    }
+
+    &.HyperMD-header-5 {
+      font-size: $h5-font-size;
+    }
+
+    &.HyperMD-header-6 {
+      font-size: $h6-font-size;
     }
 
     &.HyperMD-header-1,
@@ -346,14 +384,13 @@
   /// blockquote
 
   pre.HyperMD-quote {
-    &:before {
+    &::before {
       content: " ";
       position: absolute;
       left: $quote-margin;
       top: 0;
       height: 100%;
-      background: url("data:image/gif;base64,R0lGODlhIAABAIABAOjo6P///yH5BAEAAAEALAAAAAAgAAEAAAIHhI8Yy+1cAAA7") 0 0;
-      background-size: $quote-padding 1px;
+      border-left: 4px solid $border;
     }
   }
 
@@ -426,10 +463,12 @@
   }
 
   @for $i from 1 through 9 {
-    $indent_i: $list-indent * $i + $list-margin;
+    $indent_i: $list-indent * $i; // + $list-margin;
 
     pre.HyperMD-list-line-#{$i} {
-      padding-left: $line-padding + $indent_i;
+      padding-left:
+        /*$line-padding +*/
+        $indent_i;
     }
   }
 
@@ -462,6 +501,7 @@
     &.cm-property {
       // checked
       background-position-y: -1em;
+      color: $fg;
     }
 
     color: rgba(#000, 0.5);
@@ -497,7 +537,6 @@
   pre.HyperMD-codeblock {
     @extend %monospace;
     line-height: 1.2;
-    color: #922;
 
     // &.hmd-codeblock-indent {
     span.cm-inline-code {
@@ -532,7 +571,12 @@
 
   div.HyperMD-codeblock-begin-bg,
   div.HyperMD-codeblock-end-bg {
-    background-color: $codeblock-panel-bg;
+    background-color: $codeblock-toolbar-bg;
+  }
+
+  pre.HyperMD-codeblock-begin,
+  pre.HyperMD-codeblock-end {
+    color: $codeblock-toolbar-color;
   }
 
   /// link
@@ -560,7 +604,7 @@
   }
 
   span.hmd-link-icon {
-    background: url(hypermd-image-link.png) no-repeat center center;
+    background: none;
     width: 20px;
     height: 16px;
     display: inline-block;
@@ -572,7 +616,7 @@
     }
 
     &:after {
-      content: ""; //remove default stuff
+      content: "🔗"; //remove default stuff
     }
   }
 
@@ -588,11 +632,21 @@
     &.hmd-image-error {
       min-width: 24px;
       min-height: 24px;
-      background: #eeeeee url(hypermd-image-spin.gif) no-repeat center center;
+      background: none; // #eeeeee url(hypermd-image-spin.gif) no-repeat center center;
+    }
+
+    &.hmd-image-loading {
+      &::after {
+        content: " ◌ "
+      }
     }
 
     &.hmd-image-error {
-      background-image: url(hypermd-image-error.png);
+      background-image: none; // url(hypermd-image-error.png);
+
+      &::after {
+        content: " 🚫 ";
+      }
     }
   }
 
@@ -628,15 +682,15 @@
 
   span.cm-inline-code {
     @extend %monospace;
-    color: #922;
+    color: $inline-code-color;
     font-size: 90%;
 
     &:not(.cm-formatting):not(.cm-hmd-indented-code) {
-      background-color: rgba(#eee, 0.5);
+      background-color: $inline-code-bg;
       border-radius: 4px;
-      vertical-align: baseline;
-      border: #ccc solid 1px;
-      padding: 1px 0.4em;
+      vertical-align: middle;
+      border: $inline-code-border;
+      padding: 0.2em 0.4em;
     }
 
     &.hmd-hidden-token {
@@ -927,6 +981,7 @@
   span.hmd-hidden-token {
     &.cm-formatting-task {
       color: transparent !important;
+      filter: invert(1);
     }
   }
 
