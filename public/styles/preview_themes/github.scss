@@ -372,9 +372,10 @@
 
     // Tags
     a.tag.tag-topic {
-      background-color: #999;
+      background-color: contrast($bg, lighten($bg, 8%), darken($bg, 6%));
+      ;
       // background-color: rgba(0, 0, 0, 0.3);
-      color: #fff;
+      color: $fg;
       font-size: 0.84em;
       display: inline-block;
       vertical-align: middle;

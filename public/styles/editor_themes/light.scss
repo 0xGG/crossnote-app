@@ -12,7 +12,9 @@
 .vickymd-theme.vickymd-theme {
   $fg: #333;
   $bg: #fff;
-
+  $fg-strong: contrast($bg, darken($fg, 32%), lighten($fg, 32%));
+  $fg-subtle: contrast($fg, lighten($fg, 16%), darken($fg, 16%));
+  $border: contrast($bg, lighten($bg, 16%), darken($bg, 16%));
 
   $fs: 16px; //default font-size
   $editor-background: $bg;
@@ -40,6 +42,7 @@
 
   $codeblock-toolbar-bg: #f3f3f3;
   $codeblock-toolbar-color: #922;
+  $codeblock-bg: #fafafa;
   $codeblock-border: none; // 1px solid #ccc;
   $codeblock-padding: 5px;
 
@@ -125,12 +128,12 @@
 
   .cm-header,
   .cm-strong {
-    color: $fg;
+    color: $fg-strong;
     font-weight: 600;
   }
 
   span.cm-quote {
-    color: #666;
+    color: $fg-subtle;
   }
 
   span.cm-meta {
@@ -380,14 +383,13 @@
   /// blockquote
 
   pre.HyperMD-quote {
-    &:before {
+    &::before {
       content: " ";
       position: absolute;
       left: $quote-margin;
       top: 0;
       height: 100%;
-      background: url("data:image/gif;base64,R0lGODlhIAABAIABAOjo6P///yH5BAEAAAEALAAAAAAgAAEAAAIHhI8Yy+1cAAA7") 0 0;
-      background-size: $quote-padding 1px;
+      border-left: 4px solid $border;
     }
   }
 
@@ -533,7 +535,6 @@
   pre.HyperMD-codeblock {
     @extend %monospace;
     line-height: 1.2;
-    color: $codeblock-toolbar-color !important;
 
     // &.hmd-codeblock-indent {
     span.cm-inline-code {
@@ -549,7 +550,7 @@
   div.HyperMD-codeblock-bg {
     left: $line-padding - $codeblock-padding;
     right: $line-padding - $codeblock-padding;
-    background-color: #fafafa;
+    background-color: $codeblock-bg;
     border-left: $codeblock-border;
     border-right: $codeblock-border;
   }
@@ -569,6 +570,11 @@
   div.HyperMD-codeblock-begin-bg,
   div.HyperMD-codeblock-end-bg {
     background-color: $codeblock-toolbar-bg;
+  }
+
+  pre.HyperMD-codeblock-begin,
+  pre.HyperMD-codeblock-end {
+    color: $codeblock-toolbar-color;
   }
 
   /// link

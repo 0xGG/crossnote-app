@@ -5,6 +5,9 @@
 
 // These colors are specific to the theme. Do not use in a package!
 
+@import "../common/math.scss";
+@import "../common/color.scss";
+
 $ghost-white: #F8F8F0;
 $light-ghost-white: #F8F8F2;
 $light-gray: #CCC;
