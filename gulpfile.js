@@ -1,11 +1,13 @@
 // Sass configuration
-var gulp = require("gulp");
-var sass = require("gulp-sass");
+const gulp = require("gulp");
+const sass = require("gulp-sass");
+const plumber = require("gulp-plumber");
 
 const src = "./public/styles/**/*.scss";
 gulp.task("sass", function (cb) {
   gulp
     .src(src)
+    .pipe(plumber())
     .pipe(sass())
     .pipe(
       gulp.dest(function (f) {
