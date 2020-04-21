@@ -9,7 +9,6 @@ import "./i18n/i18n";
 import "./index.css";
 import "./themes/manager";
 import App from "./App";
-import * as serviceWorker from "./serviceWorker";
 import Crossnote from "./lib/crossnote";
 import "./lib/fs";
 import { CrossnoteContainer } from "./containers/crossnote";
@@ -48,4 +47,4 @@ try {
 // unregister() to register() below. Note this comes with some pitfalls.
 // Learn more about service workers: https://bit.ly/CRA-PWA
 // serviceWorker.unregister();
-serviceWorker.register();
+//// serviceWorker.register();
