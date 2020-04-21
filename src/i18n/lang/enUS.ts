@@ -207,6 +207,7 @@ export const enUS = {
 
     // Notifications
     "notifications/refresh": "Refresh to see new notifications",
+    "notifications/new-version-available": "A new version is available!",
 
     // Settings
     "settings/about-this-project": "About this project",
