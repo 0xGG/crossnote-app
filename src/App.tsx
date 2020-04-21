@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, FC } from "react";
 import "./App.css";
 import { ThemeProvider } from "@material-ui/styles";
 import * as qs from "qs";
@@ -8,10 +8,10 @@ import { Home } from "./pages/Home";
 import { GitHubOAuthCallback } from "./components/GitHubOAuthCallback";
 import "./editor";
 import { HomeSection } from "./containers/crossnote";
-import { themeManager } from "./themes/manager";
 import { SettingsContainer } from "./containers/settings";
+import ServiceWorkerWrapper from "./components/ServiceWorkerWrapper";
 
-const App: React.FC = () => {
+const App: FC = () => {
   const settingsContainer = SettingsContainer.useContainer();
   useEffect(() => {
     const handler = (event: any) => {
@@ -74,6 +74,7 @@ const App: React.FC = () => {
             ></Route>
           </Switch>
         </Router>
+        <ServiceWorkerWrapper></ServiceWorkerWrapper>
       </div>
     </ThemeProvider>
   );

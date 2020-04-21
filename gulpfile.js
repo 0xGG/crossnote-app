@@ -3,7 +3,8 @@ const gulp = require("gulp");
 const sass = require("gulp-sass");
 const plumber = require("gulp-plumber");
 
-const src = "./public/styles/**/*.scss";
+//const src = "./public/styles/**/*.scss";
+/*
 gulp.task("sass", function (cb) {
   gulp
     .src(src)
@@ -31,3 +32,11 @@ gulp.task(
     cb();
   }),
 );
+*/
+
+gulp.task("copy-css-files", function (cb) {
+  gulp
+    .src(["./node_modules/vickymd/theme/**/*"])
+    .pipe(gulp.dest("./public/styles/"));
+  cb();
+});

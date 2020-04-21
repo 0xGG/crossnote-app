@@ -32,6 +32,8 @@ import {
 import { renderPreview } from "vickymd/preview";
 import { Widget } from "../../../generated/graphql";
 import { browserHistory } from "../../../utilities/history";
+import { setTheme } from "vickymd/theme";
+import { globalContainers } from "../../../containers/global";
 const VickyMD = require("vickymd/core");
 
 const useStyles = makeStyles((theme: Theme) =>
@@ -85,6 +87,9 @@ const useStyles = makeStyles((theme: Theme) =>
       "& br": {
         // display: "none"
       },
+    },
+    iconBtnSVG: {
+      color: theme.palette.text.secondary,
     },
   }),
 );
@@ -210,6 +215,16 @@ export function WidgetTopPanel(props: Props) {
   }, [textAreaElement, widget]);
 
   useEffect(() => {
+    if (editor && globalContainers.settingsContainer.theme) {
+      setTheme({
+        editor,
+        themeName: globalContainers.settingsContainer.theme.name,
+        baseUri: "/styles/",
+      });
+    }
+  }, [editor]);
+
+  useEffect(() => {
     if (widget) {
       setWidgetSource(widget.source);
     } else {
@@ -244,7 +259,7 @@ export function WidgetTopPanel(props: Props) {
               }}
             >
               <IconButton>
-                <LinkVariant></LinkVariant>
+                <LinkVariant className={clsx(classes.iconBtnSVG)}></LinkVariant>
               </IconButton>
             </Link>
           </Tooltip>
@@ -265,14 +280,16 @@ export function WidgetTopPanel(props: Props) {
         {!props.isPreview && widget.canConfigure && (
           <Tooltip title={t("general/Edit")}>
             <IconButton onClick={() => setEditDialogOpen(true)}>
-              <Pencil></Pencil>
+              <Pencil className={clsx(classes.iconBtnSVG)}></Pencil>
             </IconButton>
           </Tooltip>
         )}
         {!props.isPreview && widget.canConfigure && (
           <Tooltip title={t("general/Delete")}>
             <IconButton onClick={deleteWidget}>
-              <TrashCanOutline></TrashCanOutline>
+              <TrashCanOutline
+                className={clsx(classes.iconBtnSVG)}
+              ></TrashCanOutline>
             </IconButton>
           </Tooltip>
         )}
@@ -302,10 +319,10 @@ export function WidgetTopPanel(props: Props) {
         </DialogContent>
         <DialogActions>
           <IconButton onClick={updateWidget}>
-            <ContentSave></ContentSave>
+            <ContentSave className={clsx(classes.iconBtnSVG)}></ContentSave>
           </IconButton>
           <IconButton onClick={closeEditDialog}>
-            <Cancel></Cancel>
+            <Cancel className={clsx(classes.iconBtnSVG)}></Cancel>
           </IconButton>
         </DialogActions>
       </Dialog>

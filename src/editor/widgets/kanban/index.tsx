@@ -35,6 +35,7 @@ import Board from "@lourenci/react-kanban";
 import { Editor as CodeMirrorEditor } from "codemirror";
 import { renderPreview } from "vickymd/preview";
 import { globalContainers } from "../../../containers/global";
+import { setTheme } from "vickymd/theme";
 const VickyMD = require("vickymd/core");
 
 const useStyles = makeStyles((theme: Theme) =>
@@ -229,8 +230,6 @@ function KanbanCardDisplay(props: KanbanCardProps) {
         setDescription(editor.getValue());
       });
       editor.focus();
-      editor.getWrapperElement().classList.remove("cm-s-hypermd-light");
-      editor.getWrapperElement().classList.add("vickymd-theme");
       /*
       // Cause save not working
       editor.on("blur", () => {
@@ -242,6 +241,16 @@ function KanbanCardDisplay(props: KanbanCardProps) {
       setEditor(editor);
     }
   }, [textAreaElement]);
+
+  useEffect(() => {
+    if (editor && globalContainers.settingsContainer.theme) {
+      setTheme({
+        editor,
+        themeName: globalContainers.settingsContainer.theme.name,
+        baseUri: "/styles/",
+      });
+    }
+  }, [editor]);
 
   useEffect(() => {
     if (previewElement) {
