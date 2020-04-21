@@ -89,3 +89,4 @@ test.js
 _git_commit.js
 *.css
 *.css.map
+public/styles
