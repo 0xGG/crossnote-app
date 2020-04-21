@@ -5133,6 +5133,11 @@ d3-format@1, d3-format@^1.4.2:
   resolved "https://registry.npm.taobao.org/d3-format/download/d3-format-1.4.3.tgz#4e8eb4dff3fdcb891a8489ec6e698601c41b96f1"
   integrity sha1-To603/P9y4kahInsbmmGAcQblvE=
 
+d3-format@^1.4.3:
+  version "1.4.4"
+  resolved "https://registry.npm.taobao.org/d3-format/download/d3-format-1.4.4.tgz#356925f28d0fd7c7983bfad593726fce46844030"
+  integrity sha1-NWkl8o0P18eYO/rVk3JvzkaEQDA=
+
 d3-geo-projection@^2.7.1:
   version "2.8.1"
   resolved "https://registry.npm.taobao.org/d3-geo-projection/download/d3-geo-projection-2.8.1.tgz?cache=0&other_urls=https%3A%2F%2Fregistry.npm.taobao.org%2Fd3-geo-projection%2Fdownload%2Fd3-geo-projection-2.8.1.tgz#80447ef6cc6ab561646d251c20f4882c81879938"
@@ -10174,10 +10179,10 @@ markdown-it@^10.0.0:
     mdurl "^1.0.1"
     uc.micro "^1.0.5"
 
-marked@^0.8.1:
-  version "0.8.2"
-  resolved "https://registry.npm.taobao.org/marked/download/marked-0.8.2.tgz#4faad28d26ede351a7a1aaa5fec67915c869e355"
-  integrity sha1-T6rSjSbt41Gnoaql/sZ5Fchp41U=
+marked@^1.0.0:
+  version "1.0.0"
+  resolved "https://registry.npm.taobao.org/marked/download/marked-1.0.0.tgz?cache=0&sync_timestamp=1587431551882&other_urls=https%3A%2F%2Fregistry.npm.taobao.org%2Fmarked%2Fdownload%2Fmarked-1.0.0.tgz#d35784245a04871e5988a491e28867362e941693"
+  integrity sha1-01eEJFoEhx5ZiKSR4ohnNi6UFpM=
 
 matchdep@^2.0.0:
   version "2.0.0"
@@ -10194,10 +10199,10 @@ material-colors@^1.2.1:
   resolved "https://registry.npm.taobao.org/material-colors/download/material-colors-1.2.6.tgz#6d1958871126992ceecc72f4bcc4d8f010865f46"
   integrity sha1-bRlYhxEmmSzuzHL0vMTY8BCGX0Y=
 
-mathjax@^3.0.1:
-  version "3.0.1"
-  resolved "https://registry.npm.taobao.org/mathjax/download/mathjax-3.0.1.tgz#cb8f7a1342557e2b03fef0c13e43785dfeb00b9b"
-  integrity sha1-y496E0JVfisD/vDBPkN4Xf6wC5s=
+mathjax@^3.0.5:
+  version "3.0.5"
+  resolved "https://registry.npm.taobao.org/mathjax/download/mathjax-3.0.5.tgz#707e703a9c1d95f0790bbd404b895566f459d514"
+  integrity sha1-cH5wOpwdlfB5C71AS4lVZvRZ1RQ=
 
 md5.js@^1.3.4:
   version "1.3.5"
@@ -10303,10 +10308,10 @@ merge2@^1.2.3, merge2@^1.3.0:
   resolved "https://registry.npm.taobao.org/merge2/download/merge2-1.3.0.tgz#5b366ee83b2f1582c48f87e47cf1a9352103ca81"
   integrity sha1-WzZu6DsvFYLEj4fkfPGpNSEDyoE=
 
-mermaid@^8.4.8:
-  version "8.4.8"
-  resolved "https://registry.npm.taobao.org/mermaid/download/mermaid-8.4.8.tgz#8adcfdbc505d6bca52df167cff690427c9727b60"
-  integrity sha1-itz9vFBda8pS3xZ8/2kEJ8lye2A=
+mermaid@^8.5.0:
+  version "8.5.0"
+  resolved "https://registry.npm.taobao.org/mermaid/download/mermaid-8.5.0.tgz#8ab141359e0ab2d20d00ff887f45648982b56158"
+  integrity sha1-irFBNZ4KstINAP+If0VkiYK1YVg=
   dependencies:
     "@braintree/sanitize-url" "^3.1.0"
     crypto-random-string "^3.0.1"
@@ -12635,13 +12640,6 @@ prisma-yml@1.34.10:
     scuid "^1.0.2"
     yaml-ast-parser "^0.0.40"
 
-prismjs@^1.19.0:
-  version "1.19.0"
-  resolved "https://registry.npm.taobao.org/prismjs/download/prismjs-1.19.0.tgz#713afbd45c3baca4b321569f2df39e17e729d4dc"
-  integrity sha1-cTr71Fw7rKSzIVafLfOeF+cp1Nw=
-  optionalDependencies:
-    clipboard "^2.0.0"
-
 prismjs@^1.20.0:
   version "1.20.0"
   resolved "https://registry.npm.taobao.org/prismjs/download/prismjs-1.20.0.tgz#9b685fc480a3514ee7198eac6a3bf5024319ff03"
@@ -13969,10 +13967,10 @@ semver@7.0.0:
   resolved "https://registry.npm.taobao.org/semver/download/semver-7.0.0.tgz?cache=0&sync_timestamp=1581458146669&other_urls=https%3A%2F%2Fregistry.npm.taobao.org%2Fsemver%2Fdownload%2Fsemver-7.0.0.tgz#5f3ca35761e47e05b206c6daff2cf814f0316b8e"
   integrity sha1-XzyjV2HkfgWyBsba/yz4FPAxa44=
 
-semver@^7.1.3:
-  version "7.1.3"
-  resolved "https://registry.npm.taobao.org/semver/download/semver-7.1.3.tgz?cache=0&sync_timestamp=1581458146669&other_urls=https%3A%2F%2Fregistry.npm.taobao.org%2Fsemver%2Fdownload%2Fsemver-7.1.3.tgz#e4345ce73071c53f336445cfc19efb1c311df2a6"
-  integrity sha1-5DRc5zBxxT8zZEXPwZ77HDEd8qY=
+semver@^7.3.2:
+  version "7.3.2"
+  resolved "https://registry.npm.taobao.org/semver/download/semver-7.3.2.tgz?cache=0&sync_timestamp=1586886301819&other_urls=https%3A%2F%2Fregistry.npm.taobao.org%2Fsemver%2Fdownload%2Fsemver-7.3.2.tgz#604962b052b81ed0786aae84389ffba70ffd3938"
+  integrity sha1-YElisFK4HtB4aq6EOJ/7pw/9OTg=
 
 semver@~5.3.0:
   version "5.3.0"
@@ -15677,30 +15675,30 @@ vega-dataflow@^5.1.0, vega-dataflow@^5.1.1, vega-dataflow@^5.4.0, vega-dataflow@
     vega-loader "^4.0.0"
     vega-util "^1.11.0"
 
-vega-embed@^6.5.1:
-  version "6.5.2"
-  resolved "https://registry.npm.taobao.org/vega-embed/download/vega-embed-6.5.2.tgz#eea405fe7518390db01fc2ad35ab23238e5c148f"
-  integrity sha1-7qQF/nUYOQ2wH8KtNasjI45cFI8=
+vega-embed@^6.6.0:
+  version "6.6.0"
+  resolved "https://registry.npm.taobao.org/vega-embed/download/vega-embed-6.6.0.tgz#a11046069ceb8774c63c35533f2d2aac72789d16"
+  integrity sha1-oRBGBpzrh3TGPDVTPy0qrHJ4nRY=
   dependencies:
     fast-json-patch "^3.0.0-1"
     json-stringify-pretty-compact "^2.0.0"
-    semver "^7.1.3"
+    semver "^7.3.2"
     vega-schema-url-parser "^1.1.0"
-    vega-themes "^2.8.2"
-    vega-tooltip "^0.22.0"
+    vega-themes "^2.8.3"
+    vega-tooltip "^0.22.1"
 
-vega-encode@~4.5.2:
-  version "4.5.2"
-  resolved "https://registry.npm.taobao.org/vega-encode/download/vega-encode-4.5.2.tgz#236dca241be0340a31354755913dc3919867726d"
-  integrity sha1-I23KJBvgNAoxNUdVkT3DkZhncm0=
+vega-encode@~4.5.3:
+  version "4.5.3"
+  resolved "https://registry.npm.taobao.org/vega-encode/download/vega-encode-4.5.3.tgz#a243cbe2af461313a8a2eef88400548b89cdf52c"
+  integrity sha1-okPL4q9GExOoou74hABUi4nN9Sw=
   dependencies:
     d3-array "^2.4.0"
-    d3-format "^1.4.2"
+    d3-format "^1.4.3"
     d3-interpolate "^1.4.0"
     vega-dataflow "^5.5.0"
     vega-scale "^6.0.0"
     vega-time "^1.0.0"
-    vega-util "^1.12.2"
+    vega-util "^1.13.1"
 
 vega-event-selector@^2.0.2, vega-event-selector@~2.0.2:
   version "2.0.2"
@@ -15765,10 +15763,10 @@ vega-hierarchy@~4.0.3:
     vega-dataflow "^5.4.0"
     vega-util "^1.11.0"
 
-vega-lite@^4.8.0:
-  version "4.8.1"
-  resolved "https://registry.npm.taobao.org/vega-lite/download/vega-lite-4.8.1.tgz#cbe3c00ecad2d6f649d474dc02f09477a90c3109"
-  integrity sha1-y+PADsrS1vZJ1HTcAvCUd6kMMQk=
+vega-lite@^4.10.5:
+  version "4.10.5"
+  resolved "https://registry.npm.taobao.org/vega-lite/download/vega-lite-4.10.5.tgz#ea2203cdb062fb7c720982f495b08610727fc2fe"
+  integrity sha1-6iIDzbBi+3xyCYL0lbCGEHJ/wv4=
   dependencies:
     "@types/clone" "~0.1.30"
     "@types/fast-json-stable-stringify" "^2.0.0"
@@ -15780,11 +15778,10 @@ vega-lite@^4.8.0:
     tslib "~1.11.1"
     vega-event-selector "~2.0.2"
     vega-expression "~2.6.3"
-    vega-scale "^6.0.0"
     vega-util "~1.13.1"
     yargs "~15.3.1"
 
-vega-loader@^4.0.0, vega-loader@^4.2.0, vega-loader@~4.2.0:
+vega-loader@^4.0.0, vega-loader@^4.2.0:
   version "4.2.0"
   resolved "https://registry.npm.taobao.org/vega-loader/download/vega-loader-4.2.0.tgz#fcc99b34522ff4fc73416be2766d003ec0bc1030"
   integrity sha1-/MmbNFIv9PxzQWvidm0APsC8EDA=
@@ -15795,10 +15792,21 @@ vega-loader@^4.0.0, vega-loader@^4.2.0, vega-loader@~4.2.0:
     topojson-client "^3.1.0"
     vega-util "^1.13.1"
 
-vega-parser@~5.13.0:
-  version "5.13.0"
-  resolved "https://registry.npm.taobao.org/vega-parser/download/vega-parser-5.13.0.tgz#c6c473125d8227ae284e65f8dc5c800e26d03f48"
-  integrity sha1-xsRzEl2CJ64oTmX43FyADibQP0g=
+vega-loader@~4.2.1:
+  version "4.2.1"
+  resolved "https://registry.npm.taobao.org/vega-loader/download/vega-loader-4.2.1.tgz#556554e6e70f254dc68da15a391ba0d3ad6d1373"
+  integrity sha1-VWVU5ucPJU3GjaFaORug061tE3M=
+  dependencies:
+    d3-dsv "^1.2.0"
+    d3-time-format "^2.2.3"
+    node-fetch "^2.6.0"
+    topojson-client "^3.1.0"
+    vega-util "^1.13.1"
+
+vega-parser@~5.13.1:
+  version "5.13.1"
+  resolved "https://registry.npm.taobao.org/vega-parser/download/vega-parser-5.13.1.tgz#37770fe599808988a4c31e36bb632976a0119786"
+  integrity sha1-N3cP5ZmAiYikwx42u2MpdqARl4Y=
   dependencies:
     vega-dataflow "^5.5.0"
     vega-event-selector "^2.0.2"
@@ -15843,7 +15851,7 @@ vega-scale@^6.0.0, vega-scale@~6.0.0:
     d3-scale "^3.2.1"
     vega-util "^1.12.1"
 
-vega-scenegraph@^4.4.0, vega-scenegraph@^4.5.0, vega-scenegraph@^4.6.0, vega-scenegraph@~4.6.0:
+vega-scenegraph@^4.5.0, vega-scenegraph@^4.6.0, vega-scenegraph@~4.6.0:
   version "4.6.0"
   resolved "https://registry.npm.taobao.org/vega-scenegraph/download/vega-scenegraph-4.6.0.tgz#431b31c72ce528285c5808593dbb29cf8ed981e8"
   integrity sha1-QxsxxyzlKChcWAhZPbspz47Zgeg=
@@ -15874,7 +15882,7 @@ vega-statistics@^1.7.1, vega-statistics@^1.7.3, vega-statistics@~1.7.3:
   dependencies:
     d3-array "^2.4.0"
 
-vega-themes@^2.8.2:
+vega-themes@^2.8.3:
   version "2.8.3"
   resolved "https://registry.npm.taobao.org/vega-themes/download/vega-themes-2.8.3.tgz#3f42a9d29b7274bf963d9d4e1c30ac0d5841d4fa"
   integrity sha1-P0Kp0ptydL+WPZ1OHDCsDVhB1Po=
@@ -15889,17 +15897,17 @@ vega-time@^1.0.0, vega-time@~1.0.0:
     d3-time-format "^2.2.1"
     vega-util "^1.12.0"
 
-vega-tooltip@^0.22.0:
+vega-tooltip@^0.22.1:
   version "0.22.1"
   resolved "https://registry.npm.taobao.org/vega-tooltip/download/vega-tooltip-0.22.1.tgz#231d6c8a105b6ac531bf8275cd0950c30373e558"
   integrity sha1-Ix1sihBbasUxv4J1zQlQwwNz5Vg=
   dependencies:
     vega-util "^1.13.1"
 
-vega-transforms@~4.7.0:
-  version "4.7.0"
-  resolved "https://registry.npm.taobao.org/vega-transforms/download/vega-transforms-4.7.0.tgz#50b90006ea52eccaaaf15536905f1ceba1aa0fa4"
-  integrity sha1-ULkABupS7Mqq8VU2kF8c66GqD6Q=
+vega-transforms@~4.7.1:
+  version "4.7.1"
+  resolved "https://registry.npm.taobao.org/vega-transforms/download/vega-transforms-4.7.1.tgz#6bde7a05d43df4aa12e9cefe8ae559812c52b21c"
+  integrity sha1-a956BdQ99KoS6c7+iuVZgSxSshw=
   dependencies:
     d3-array "^2.4.0"
     vega-dataflow "^5.5.0"
@@ -15907,10 +15915,10 @@ vega-transforms@~4.7.0:
     vega-time "^1.0.0"
     vega-util "^1.13.1"
 
-vega-typings@~0.14.0:
-  version "0.14.2"
-  resolved "https://registry.npm.taobao.org/vega-typings/download/vega-typings-0.14.2.tgz#30a401c3abad96745aa50563f7443e6d430cf3a4"
-  integrity sha1-MKQBw6utlnRapQVj90Q+bUMM86Q=
+vega-typings@~0.15.0:
+  version "0.15.4"
+  resolved "https://registry.npm.taobao.org/vega-typings/download/vega-typings-0.15.4.tgz#e478079800dc605ac3558f044dd1f5e8f93c8d86"
+  integrity sha1-5HgHmADcYFrDVY8ETdH16Pk8jYY=
   dependencies:
     vega-util "^1.13.1"
 
@@ -15919,13 +15927,13 @@ vega-util@^1.11.0, vega-util@^1.12.0, vega-util@^1.12.1, vega-util@^1.12.2, vega
   resolved "https://registry.npm.taobao.org/vega-util/download/vega-util-1.13.1.tgz#3eae51043184c6b873c17b148755c21b01274a0e"
   integrity sha1-Pq5RBDGExrhzwXsUh1XCGwEnSg4=
 
-vega-view-transforms@~4.5.1:
-  version "4.5.1"
-  resolved "https://registry.npm.taobao.org/vega-view-transforms/download/vega-view-transforms-4.5.1.tgz#ff7afc67adabec290cf80ea596a789f892952174"
-  integrity sha1-/3r8Z62r7CkM+A6llqeJ+JKVIXQ=
+vega-view-transforms@~4.5.2:
+  version "4.5.2"
+  resolved "https://registry.npm.taobao.org/vega-view-transforms/download/vega-view-transforms-4.5.2.tgz#46b488aacc28be4c2f134be2e13f80378f399844"
+  integrity sha1-RrSIqswovkwvE0vi4T+AN485mEQ=
   dependencies:
-    vega-dataflow "^5.4.1"
-    vega-scenegraph "^4.4.0"
+    vega-dataflow "^5.5.0"
+    vega-scenegraph "^4.6.0"
     vega-util "^1.13.1"
 
 vega-view@~5.5.0:
@@ -15961,22 +15969,22 @@ vega-wordcloud@~4.0.4:
     vega-statistics "^1.7.1"
     vega-util "^1.12.1"
 
-vega@^5.10.0:
-  version "5.10.0"
-  resolved "https://registry.npm.taobao.org/vega/download/vega-5.10.0.tgz#9b5a823158a8a3b6339c72a028b79e899acb1865"
-  integrity sha1-m1qCMVioo7YznHKgKLeeiZrLGGU=
+vega@^5.10.1:
+  version "5.10.1"
+  resolved "https://registry.npm.taobao.org/vega/download/vega-5.10.1.tgz#4eafef108c065cefa463375350bab7db27e06836"
+  integrity sha1-Tq/vEIwGXO+kYzdTULq32yfgaDY=
   dependencies:
     vega-crossfilter "~4.0.1"
     vega-dataflow "~5.5.0"
-    vega-encode "~4.5.2"
+    vega-encode "~4.5.3"
     vega-event-selector "~2.0.2"
     vega-expression "~2.6.3"
     vega-force "~4.0.3"
     vega-functions "~5.5.1"
     vega-geo "~4.3.0"
     vega-hierarchy "~4.0.3"
-    vega-loader "~4.2.0"
-    vega-parser "~5.13.0"
+    vega-loader "~4.2.1"
+    vega-parser "~5.13.1"
     vega-projection "~1.4.0"
     vega-regression "~1.0.5"
     vega-runtime "~5.0.2"
@@ -15984,11 +15992,11 @@ vega@^5.10.0:
     vega-scenegraph "~4.6.0"
     vega-statistics "~1.7.3"
     vega-time "~1.0.0"
-    vega-transforms "~4.7.0"
-    vega-typings "~0.14.0"
+    vega-transforms "~4.7.1"
+    vega-typings "~0.15.0"
     vega-util "~1.13.1"
     vega-view "~5.5.0"
-    vega-view-transforms "~4.5.1"
+    vega-view-transforms "~4.5.2"
     vega-voronoi "~4.1.1"
     vega-wordcloud "~4.0.4"
 
@@ -16006,10 +16014,10 @@ verror@1.10.0:
     core-util-is "1.0.2"
     extsprintf "^1.2.0"
 
-vickymd@^0.1.17:
-  version "0.1.17"
-  resolved "https://registry.npm.taobao.org/vickymd/download/vickymd-0.1.17.tgz#94d393c6ef85175bf6b27c84e9711ecf94978e60"
-  integrity sha1-lNOTxu+FF1v2snyE6XEez5SXjmA=
+vickymd@^0.1.18:
+  version "0.1.18"
+  resolved "https://registry.npm.taobao.org/vickymd/download/vickymd-0.1.18.tgz#534351301a80b495026fe46c50329e579d17ccd0"
+  integrity sha1-U0NRMBqAtJUCb+RsUDKeV50XzNA=
   optionalDependencies:
     echarts "^4.7.0"
     emojione "^4.5.0"
@@ -16022,19 +16030,19 @@ vickymd@^0.1.17:
     markdown-it-emoji "^1.4.0"
     markdown-it-footnote "^3.0.2"
     markdown-it-task-lists "^2.1.1"
-    marked "^0.8.1"
-    mathjax "^3.0.1"
-    mermaid "^8.4.8"
+    marked "^1.0.0"
+    mathjax "^3.0.5"
+    mermaid "^8.5.0"
     plantuml-encoder "^1.4.0"
-    prismjs "^1.19.0"
+    prismjs "^1.20.0"
     react "^16.13.1"
     react-dom "^16.13.1"
     turndown "^6.0.0"
     turndown-plugin-gfm "^1.0.2"
     twemoji "^12.1.5"
-    vega "^5.10.0"
-    vega-embed "^6.5.1"
-    vega-lite "^4.8.0"
+    vega "^5.10.1"
+    vega-embed "^6.6.0"
+    vega-lite "^4.10.5"
     yamljs "^0.3.0"
 
 vinyl-fs@^3.0.0:
