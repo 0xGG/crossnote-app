@@ -86,6 +86,9 @@ const useStyles = makeStyles((theme: Theme) =>
         // display: "none"
       },
     },
+    iconBtnSVG: {
+      color: theme.palette.text.secondary,
+    },
   }),
 );
 
@@ -244,7 +247,7 @@ export function WidgetTopPanel(props: Props) {
               }}
             >
               <IconButton>
-                <LinkVariant></LinkVariant>
+                <LinkVariant className={clsx(classes.iconBtnSVG)}></LinkVariant>
               </IconButton>
             </Link>
           </Tooltip>
@@ -265,14 +268,16 @@ export function WidgetTopPanel(props: Props) {
         {!props.isPreview && widget.canConfigure && (
           <Tooltip title={t("general/Edit")}>
             <IconButton onClick={() => setEditDialogOpen(true)}>
-              <Pencil></Pencil>
+              <Pencil className={clsx(classes.iconBtnSVG)}></Pencil>
             </IconButton>
           </Tooltip>
         )}
         {!props.isPreview && widget.canConfigure && (
           <Tooltip title={t("general/Delete")}>
             <IconButton onClick={deleteWidget}>
-              <TrashCanOutline></TrashCanOutline>
+              <TrashCanOutline
+                className={clsx(classes.iconBtnSVG)}
+              ></TrashCanOutline>
             </IconButton>
           </Tooltip>
         )}
