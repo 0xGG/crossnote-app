@@ -13,6 +13,7 @@ import clsx from "clsx";
 import { useTranslation } from "react-i18next";
 import { Editor as CodeMirrorEditor } from "codemirror";
 import { globalContainers } from "../../../containers/global";
+import { setTheme } from "vickymd/theme";
 const VickyMD = require("vickymd/core");
 
 export const ChatMessageEditorHeight = "150";
@@ -86,11 +87,19 @@ export function CommentEditor(props: Props) {
       editor.setValue("");
       editor.setOption("lineNumbers", false);
       editor.focus();
-      editor.getWrapperElement().classList.remove("cm-s-hypermd-light");
-      editor.getWrapperElement().classList.add("vickymd-theme");
       setEditor(editor);
     }
   }, [textAreaElement]);
+
+  useEffect(() => {
+    if (editor && globalContainers.settingsContainer.theme) {
+      setTheme({
+        editor,
+        themeName: globalContainers.settingsContainer.theme.name,
+        baseUri: "/styles/",
+      });
+    }
+  }, [editor]);
 
   useEffect(() => {
     props.setEditor(editor);

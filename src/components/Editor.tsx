@@ -70,6 +70,7 @@ import EmojiDefinitions from "vickymd/addon/emoji";
 import { TagStopRegExp } from "../utilities/markdown";
 import { resolveNoteImageSrc } from "../utilities/image";
 import { DeleteDialog } from "./DeleteDialog";
+import { setTheme } from "vickymd/theme";
 
 const VickyMD = require("vickymd/core");
 const is = require("is_js");
@@ -181,6 +182,7 @@ const useStyles = makeStyles((theme: Theme) =>
       width: "100%",
       height: "100%",
       backgroundColor: theme.palette.background.default,
+      border: "none",
     },
     preview: {
       position: "relative",
@@ -653,12 +655,20 @@ export default function Editor(props: Props) {
           });
         }
       });
-      editor.getWrapperElement().classList.remove("cm-s-hypermd-light");
-      editor.getWrapperElement().classList.add("vickymd-theme");
       setEditor(editor);
       initMathPreview(editor);
     }
   }, [textAreaElement, note, editor]);
+
+  useEffect(() => {
+    if (editor && settingsContainer.theme) {
+      setTheme({
+        editor,
+        themeName: settingsContainer.theme.name,
+        baseUri: "/styles/",
+      });
+    }
+  }, [settingsContainer.theme, editor]);
 
   useEffect(() => {
     if (editor && note) {

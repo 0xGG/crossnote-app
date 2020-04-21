@@ -9,7 +9,4 @@ export const LightTheme: CrossnoteTheme = new CrossnoteTheme({
       secondary: orange,
     },
   },
-  codeBlockTheme: "github",
-  previewTheme: "github-light",
-  editorTheme: "light",
 });

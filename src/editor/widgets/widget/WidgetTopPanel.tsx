@@ -32,6 +32,8 @@ import {
 import { renderPreview } from "vickymd/preview";
 import { Widget } from "../../../generated/graphql";
 import { browserHistory } from "../../../utilities/history";
+import { setTheme } from "vickymd/theme";
+import { globalContainers } from "../../../containers/global";
 const VickyMD = require("vickymd/core");
 
 const useStyles = makeStyles((theme: Theme) =>
@@ -213,6 +215,16 @@ export function WidgetTopPanel(props: Props) {
   }, [textAreaElement, widget]);
 
   useEffect(() => {
+    if (editor && globalContainers.settingsContainer.theme) {
+      setTheme({
+        editor,
+        themeName: globalContainers.settingsContainer.theme.name,
+        baseUri: "/styles/",
+      });
+    }
+  }, [editor]);
+
+  useEffect(() => {
     if (widget) {
       setWidgetSource(widget.source);
     } else {
@@ -307,10 +319,10 @@ export function WidgetTopPanel(props: Props) {
         </DialogContent>
         <DialogActions>
           <IconButton onClick={updateWidget}>
-            <ContentSave></ContentSave>
+            <ContentSave className={clsx(classes.iconBtnSVG)}></ContentSave>
           </IconButton>
           <IconButton onClick={closeEditDialog}>
-            <Cancel></Cancel>
+            <Cancel className={clsx(classes.iconBtnSVG)}></Cancel>
           </IconButton>
         </DialogActions>
       </Dialog>
