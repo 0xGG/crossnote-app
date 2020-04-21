@@ -158,6 +158,9 @@ const useStyles = makeStyles((theme: Theme) =>
       "& .CodeMirror-vscrollbar": {
         // display: "none !important",
       },
+      "& .CodeMirror-placeholder": {
+        color: `${theme.palette.action.disabled} !important`,
+      },
       /*
       [theme.breakpoints.down("sm")]: {
         padding: theme.spacing(1),
