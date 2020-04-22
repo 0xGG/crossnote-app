@@ -19,11 +19,18 @@ import {
   ButtonGroup,
   Button,
 } from "@material-ui/core";
-import { createStyles, makeStyles, Theme } from "@material-ui/core/styles";
+import {
+  createStyles,
+  makeStyles,
+  Theme,
+  ThemeProvider,
+  darken,
+} from "@material-ui/core/styles";
 import clsx from "clsx";
 import { TrashCan } from "mdi-material-ui";
 import { useTranslation } from "react-i18next";
 import { createWorker } from "tesseract.js";
+import { globalContainers } from "../../../containers/global";
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -43,7 +50,7 @@ const useStyles = makeStyles((theme: Theme) =>
       "textAlign": "center",
       "padding": "24px",
       "border": "4px dotted #c7c7c7",
-      "backgroundColor": "#f1f1f1",
+      "backgroundColor": darken(theme.palette.background.paper, 0.01),
       "cursor": "pointer",
       "&:hover": {
         backgroundColor: "#eee",
@@ -59,6 +66,9 @@ const useStyles = makeStyles((theme: Theme) =>
     },
     disabled: {
       cursor: "not-allowed",
+    },
+    iconBtnSVG: {
+      color: theme.palette.text.secondary,
     },
   }),
 );
@@ -342,7 +352,7 @@ function OCRWidget(props: WidgetArgs) {
       <Box className={clsx(classes.actionButtons)}>
         <Tooltip title={t("general/Delete")}>
           <IconButton onClick={() => props.removeSelf()}>
-            <TrashCan></TrashCan>
+            <TrashCan className={clsx(classes.iconBtnSVG)}></TrashCan>
           </IconButton>
         </Tooltip>
       </Box>
@@ -403,6 +413,11 @@ function OCRWidget(props: WidgetArgs) {
 
 export const OCRWidgetCreator: WidgetCreator = (args) => {
   const el = document.createElement("span");
-  ReactDOM.render(<OCRWidget {...args}></OCRWidget>, el);
+  ReactDOM.render(
+    <ThemeProvider theme={globalContainers.settingsContainer.theme.muiTheme}>
+      <OCRWidget {...args}></OCRWidget>
+    </ThemeProvider>,
+    el,
+  );
   return el;
 };

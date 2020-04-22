@@ -2,15 +2,21 @@ import { WidgetCreator, WidgetArgs } from "vickymd/widget";
 import React, { useState, useEffect } from "react";
 import ReactDOM from "react-dom";
 import clsx from "clsx";
-import { createStyles, makeStyles, Theme } from "@material-ui/core/styles";
-import { Box, IconButton, Card } from "@material-ui/core";
+import {
+  createStyles,
+  makeStyles,
+  Theme,
+  ThemeProvider,
+} from "@material-ui/core/styles";
+import { Box, IconButton, Card, Tooltip } from "@material-ui/core";
 import { useTranslation } from "react-i18next";
 import { generateUUID } from "../../../utilities/utils";
 
 // @ts-ignore
 import abcjs from "abcjs";
 import "abcjs/abcjs-audio.css";
-import { ContentSave } from "mdi-material-ui";
+import { ContentSave, TrashCan } from "mdi-material-ui";
+import { globalContainers } from "../../../containers/global";
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -27,15 +33,22 @@ const useStyles = makeStyles((theme: Theme) =>
       height: "128px",
       resize: "none",
       border: "none",
+      backgroundColor: theme.palette.background.paper,
+      color: theme.palette.text.primary,
     },
     canvas: {
       overflow: "auto !important",
       height: "100% !important",
     },
-    saveBtn: {
+    actionButtonsGroup: {
       position: "absolute",
       top: "0",
       right: "0",
+      display: "flex",
+      alignItems: "center",
+    },
+    iconBtnSVG: {
+      color: theme.palette.text.secondary,
     },
   }),
 );
@@ -71,9 +84,13 @@ K: Emin
       editorElement &&
       warningsElement &&
       canvasElement &&
-      audioControlElement
+      audioControlElement &&
+      editorElement.id
     ) {
       setTimeout(() => {
+        if (!document.getElementById(editorElement.id)) {
+          return;
+        }
         const editor = new abcjs.Editor(editorElement.id, {
           canvas_id: canvasElement.id,
           warnings_id: warningsElement.id,
@@ -120,16 +137,23 @@ K: Emin
           }}
           readOnly={props.isPreview}
         ></textarea>
-        {!props.isPreview && attributes["abc"] !== abc && (
-          <IconButton
-            className={clsx(classes.saveBtn)}
-            onClick={() => {
-              props.setAttributes(Object.assign(props.attributes, { abc }));
-            }}
-          >
-            <ContentSave></ContentSave>
-          </IconButton>
-        )}
+        <Box className={clsx(classes.actionButtonsGroup)}>
+          {!props.isPreview && attributes["abc"] !== abc && (
+            <IconButton
+              onClick={() => {
+                props.setAttributes(Object.assign(props.attributes, { abc }));
+              }}
+            >
+              <ContentSave className={clsx(classes.iconBtnSVG)}></ContentSave>
+            </IconButton>
+          )}
+
+          <Tooltip title={t("general/Delete")}>
+            <IconButton onClick={() => props.removeSelf()}>
+              <TrashCan className={clsx(classes.iconBtnSVG)}></TrashCan>
+            </IconButton>
+          </Tooltip>
+        </Box>
       </Card>
       <div
         id={abcWarningsID}
@@ -156,6 +180,11 @@ K: Emin
 
 export const ABCWidgetCreator: WidgetCreator = (args) => {
   const el = document.createElement("span");
-  ReactDOM.render(<ABCWidget {...args}></ABCWidget>, el);
+  ReactDOM.render(
+    <ThemeProvider theme={globalContainers.settingsContainer.theme.muiTheme}>
+      <ABCWidget {...args}></ABCWidget>
+    </ThemeProvider>,
+    el,
+  );
   return el;
 };

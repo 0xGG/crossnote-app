@@ -1,6 +1,8 @@
 import { CrossnoteTheme } from "./theme";
 import { LightTheme } from "./light";
 import { DarkTheme } from "./dark";
+import { OneDarkTheme } from "./one-dark";
+import { SolarizedLight } from "./solarized-light";
 
 export class ThemeManager {
   public themes: CrossnoteTheme[] = [];
@@ -31,5 +33,7 @@ export class ThemeManager {
 const _themeManager = new ThemeManager();
 _themeManager.addTheme(LightTheme);
 _themeManager.addTheme(DarkTheme);
+_themeManager.addTheme(OneDarkTheme);
+_themeManager.addTheme(SolarizedLight);
 
 export const themeManager = _themeManager;
