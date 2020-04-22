@@ -233,7 +233,7 @@ export default function NotesPanel(props: Props) {
             SelectedSectionType.Today ? (
             <Box className={clsx(classes.row)}>
               <span role="img" aria-label="today-notes">
-                🗓
+                📅
               </span>
               <Typography className={clsx(classes.sectionName)}>
                 {t("general/today")}
