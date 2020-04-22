@@ -11,10 +11,16 @@ import {
   Switch,
   FormControlLabel,
 } from "@material-ui/core";
-import { createStyles, makeStyles, Theme } from "@material-ui/core/styles";
+import {
+  createStyles,
+  makeStyles,
+  Theme,
+  ThemeProvider,
+} from "@material-ui/core/styles";
 import clsx from "clsx";
 import { TrashCan } from "mdi-material-ui";
 import { useTranslation } from "react-i18next";
+import { globalContainers } from "../../../containers/global";
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -42,6 +48,9 @@ const useStyles = makeStyles((theme: Theme) =>
     },
     disabled: {
       cursor: "not-allowed",
+    },
+    iconBtnSVG: {
+      color: theme.palette.text.secondary,
     },
   }),
 );
@@ -88,7 +97,7 @@ function AudioWidget(props: WidgetArgs) {
       <Box className={clsx(classes.actionButtons)}>
         <Tooltip title={t("general/Delete")}>
           <IconButton onClick={() => props.removeSelf()}>
-            <TrashCan></TrashCan>
+            <TrashCan className={clsx(classes.iconBtnSVG)}></TrashCan>
           </IconButton>
         </Tooltip>
       </Box>
@@ -172,6 +181,11 @@ function AudioWidget(props: WidgetArgs) {
 
 export const AudioWidgetCreator: WidgetCreator = (args) => {
   const el = document.createElement("span");
-  ReactDOM.render(<AudioWidget {...args}></AudioWidget>, el);
+  ReactDOM.render(
+    <ThemeProvider theme={globalContainers.settingsContainer.theme.muiTheme}>
+      <AudioWidget {...args}></AudioWidget>
+    </ThemeProvider>,
+    el,
+  );
   return el;
 };
