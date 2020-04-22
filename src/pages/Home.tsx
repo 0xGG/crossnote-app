@@ -6,7 +6,6 @@ import {
   List,
   ListItem,
   IconButton,
-  Paper,
   Divider,
   ListItemIcon,
   ListItemText,
@@ -24,7 +23,6 @@ import {
   makeStyles,
   Theme,
   useTheme,
-  darken,
   lighten,
 } from "@material-ui/core/styles";
 import clsx from "clsx";

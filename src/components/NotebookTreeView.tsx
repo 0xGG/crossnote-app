@@ -2,7 +2,7 @@ import { TreeView, TreeItem } from "@material-ui/lab";
 import { createStyles, makeStyles, Theme } from "@material-ui/core/styles";
 import clsx from "clsx";
 import React, { useState, useCallback, useEffect } from "react";
-import { IconButton, Box, Typography, Badge } from "@material-ui/core";
+import { IconButton, Box, Typography } from "@material-ui/core";
 import { ChevronRight, ChevronDown } from "mdi-material-ui";
 import {
   CrossnoteContainer,
@@ -11,7 +11,6 @@ import {
 } from "../containers/crossnote";
 import { useTranslation } from "react-i18next";
 import { Directory, Notebook, TagNode } from "../lib/crossnote";
-import { browserHistory } from "../utilities/history";
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -289,7 +288,7 @@ export default function NotebookTreeView(props: Props) {
               className={clsx(classes.treeItemLabelRoot)}
             >
               <span role="img" aria-label="today-notes">
-                🗓
+                📅
               </span>
               <Typography className={clsx(classes.treeItemLabelText)}>
                 {t("general/today")}
@@ -343,7 +342,7 @@ export default function NotebookTreeView(props: Props) {
               className={clsx(classes.treeItemLabelRoot)}
             >
               <span role="img" aria-label="directories">
-                🗂
+                📁
               </span>
               <Typography className={clsx(classes.treeItemLabelText)}>
                 {t("general/notes")}
