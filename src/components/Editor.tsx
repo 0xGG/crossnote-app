@@ -248,6 +248,9 @@ const useStyles = makeStyles((theme: Theme) =>
     floatWinClose: {
       color: "#eee",
     },
+    iconBtnSVG: {
+      color: theme.palette.text.secondary,
+    },
   }),
 );
 
@@ -1567,7 +1570,7 @@ export default function Editor(props: Props) {
                       >
                         <Typography>{tagName}</Typography>
                         <IconButton onClick={() => deleteTag(tagName)}>
-                          <Close></Close>
+                          <Close className={clsx(classes.iconBtnSVG)}></Close>
                         </IconButton>
                       </Box>
                     </ListItem>

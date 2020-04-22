@@ -1,27 +1,18 @@
 import { CrossnoteTheme } from "./theme";
 import { lighten } from "@material-ui/core";
+import { blueGrey, cyan } from "@material-ui/core/colors";
 
-export const DarkTheme: CrossnoteTheme = new CrossnoteTheme({
-  name: "dark",
+export const OneDarkTheme: CrossnoteTheme = new CrossnoteTheme({
+  name: "one-dark",
   muiThemeOptions: {
     palette: {
       common: { black: "#000", white: "#fff" },
       background: {
-        paper: lighten("#1e1e1e", 0.05),
-        default: "#1e1e1e",
+        paper: lighten("#282c34", 0.05),
+        default: "#282c34",
       },
-      primary: {
-        light: "#7986cb",
-        main: "rgba(144, 19, 254, 1)",
-        dark: "#303f9f",
-        contrastText: "#fff",
-      },
-      secondary: {
-        light: "#ff4081",
-        main: "#f50057",
-        dark: "#c51162",
-        contrastText: "#fff",
-      },
+      primary: cyan,
+      secondary: blueGrey,
       error: {
         light: "#e57373",
         main: "#f44336",
