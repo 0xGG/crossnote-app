@@ -503,5 +503,12 @@ export const zhCN = {
     "edit-image-dialog/image-url": "图片 URL",
     "edit-image-dialog/image-title": "图片标题",
     "edit-image-dialog/image-alt-text": "图片替代文本",
+
+    // react-ios-pwa-prompt
+    "react-ios-pwa-prompt/copy-title": "添加到主屏幕",
+    "react-ios-pwa-prompt/copy-body":
+      "这个网站拥有软件功能。将它添加到你的主屏幕来开启全屏以及离线使用功能。",
+    "react-ios-pwa-prompt/copy-share-button-label": "1) 点击 '分享' 按钮",
+    "react-ios-pwa-prompt/copy-add-home-button-label": "2) 点击 '添加到主屏幕'",
   },
 };

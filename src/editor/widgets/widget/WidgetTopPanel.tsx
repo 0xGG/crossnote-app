@@ -197,7 +197,7 @@ export function WidgetTopPanel(props: Props) {
           name: "hypermd",
           hashtag: true,
         },
-        inputStyle: "textarea",
+        // inputStyle: "textarea",
         // autofocus: false
       });
       editor.setValue(widget.description);

@@ -503,5 +503,12 @@ export const zhTW = {
     "edit-image-dialog/image-url": "圖片 URL",
     "edit-image-dialog/image-title": "圖片標題",
     "edit-image-dialog/image-alt-text": "圖片替代文本",
+
+    "react-ios-pwa-prompt/copy-title": "新增到主畫面",
+    "react-ios-pwa-prompt/copy-body":
+      "本網站具有應用功能。將其添加到主螢幕,以全屏和脫機時使用。",
+    "react-ios-pwa-prompt/copy-share-button-label": "1) 按下「共用」按鈕",
+    "react-ios-pwa-prompt/copy-add-home-button-label":
+      "2) 按下「添加到主螢幕」",
   },
 };

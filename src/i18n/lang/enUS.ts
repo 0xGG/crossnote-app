@@ -523,5 +523,14 @@ export const enUS = {
     "edit-image-dialog/image-url": "image URL",
     "edit-image-dialog/image-title": "image title",
     "edit-image-dialog/image-alt-text": "image alt text",
+
+    // react-ios-pwa-prompt
+    "react-ios-pwa-prompt/copy-title": "Add to Home Screen",
+    "react-ios-pwa-prompt/copy-body":
+      "This website has app functionality. Add it to your home screen to use it in fullscreen and while offline.",
+    "react-ios-pwa-prompt/copy-share-button-label":
+      "1) Press the 'Share' button",
+    "react-ios-pwa-prompt/copy-add-home-button-label":
+      "2) Press 'Add to Home Screen'",
   },
 };

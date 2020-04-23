@@ -10,8 +10,12 @@ import "./editor";
 import { HomeSection } from "./containers/crossnote";
 import { SettingsContainer } from "./containers/settings";
 import ServiceWorkerWrapper from "./components/ServiceWorkerWrapper";
+// @ts-ignore
+import PWAPrompt from "react-ios-pwa-prompt";
+import { useTranslation } from "react-i18next";
 
 const App: FC = () => {
+  const { t } = useTranslation();
   const settingsContainer = SettingsContainer.useContainer();
   useEffect(() => {
     const handler = (event: any) => {
@@ -75,6 +79,17 @@ const App: FC = () => {
           </Switch>
         </Router>
         <ServiceWorkerWrapper></ServiceWorkerWrapper>
+        <PWAPrompt
+          copyTitle={t("react-ios-pwa-prompt/copy-title")}
+          copyBody={t("react-ios-pwa-prompt/copy-body")}
+          copyShareButtonLabel={t(
+            "react-ios-pwa-prompt/copy-share-button-label",
+          )}
+          copyAddHomeButtonLabel={t(
+            "react-ios-pwa-prompt/copy-add-home-button-label",
+          )}
+          copyClosePrompt={t("general/cancel")}
+        ></PWAPrompt>
       </div>
     </ThemeProvider>
   );
