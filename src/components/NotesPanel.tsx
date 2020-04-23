@@ -387,7 +387,9 @@ export default function NotesPanel(props: Props) {
                 >
                   <ListItemText primary={"Desc"}></ListItemText>
                   <ListItemIcon style={{ marginLeft: "8px" }}>
-                    <SortDescending></SortDescending>
+                    <SortDescending
+                      className={clsx(classes.iconBtnSVG)}
+                    ></SortDescending>
                   </ListItemIcon>
                 </ListItem>
                 <ListItem
