@@ -90,3 +90,4 @@ _git_commit.js
 *.css
 *.css.map
 public/styles
+package-lock.json
