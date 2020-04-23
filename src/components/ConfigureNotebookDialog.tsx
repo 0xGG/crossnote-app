@@ -48,6 +48,11 @@ export default function ConfigureNotebookDialog(props: Props) {
   const { t } = useTranslation();
 
   useEffect(() => {
+    setClickDeleteCount(MaxClickDeleteCount);
+    setClickHardResetCount(MaxClickDeleteCount);
+  }, [props.open]);
+
+  useEffect(() => {
     const notebook = props.notebook;
     if (!notebook) {
       return;

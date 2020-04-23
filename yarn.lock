@@ -8615,10 +8615,10 @@ isomorphic-fetch@^2.1.1, isomorphic-fetch@^2.2.1:
     node-fetch "^1.0.1"
     whatwg-fetch ">=0.10.0"
 
-isomorphic-git@^1.3.2:
-  version "1.3.2"
-  resolved "https://registry.npm.taobao.org/isomorphic-git/download/isomorphic-git-1.3.2.tgz#09fedfdebd4c4d5aab6e3a17cbbc638b48d66e68"
-  integrity sha1-Cf7f3r1MTVqrbjoXy7xji0jWbmg=
+isomorphic-git@1.3.1:
+  version "1.3.1"
+  resolved "https://registry.npm.taobao.org/isomorphic-git/download/isomorphic-git-1.3.1.tgz#6f18f7cb86df6a968c3ce3b518b62aea39f678aa"
+  integrity sha1-bxj3y4bfapaMPOO1GLYq6jn2eKo=
   dependencies:
     async-lock "^1.1.0"
     clean-git-ref "^2.0.1"
