@@ -82,7 +82,7 @@ export function CommentEditor(props: Props) {
           name: "hypermd",
           hashtag: true,
         },
-        inputStyle: "textarea",
+        // inputStyle: "textarea",
       });
       editor.setValue("");
       editor.setOption("lineNumbers", false);

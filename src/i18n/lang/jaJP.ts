@@ -540,5 +540,14 @@ export const jaJP = {
     "edit-image-dialog/image-url": "画像の URL",
     "edit-image-dialog/image-title": "画像のタイトル",
     "edit-image-dialog/image-alt-text": "画像代替テキスト",
+
+    // react-ios-pwa-prompt
+    "react-ios-pwa-prompt/copy-title": "ホーム画面に追加",
+    "react-ios-pwa-prompt/copy-body":
+      "このウェブサイトにはアプリ機能があります。フルスクリーンとオフライン中に使用するためにあなたのホーム画面にそれを追加します。",
+    "react-ios-pwa-prompt/copy-share-button-label":
+      "1) [共有] ボタンを押します。",
+    "react-ios-pwa-prompt/copy-add-home-button-label":
+      "2) 「ホーム画面に追加」を押します。",
   },
 };

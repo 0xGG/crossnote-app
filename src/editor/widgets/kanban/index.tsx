@@ -216,7 +216,7 @@ function KanbanCardDisplay(props: KanbanCardProps) {
           name: "hypermd",
           hashtag: true,
         },
-        inputStyle: "textarea",
+        // inputStyle: "textarea",
         // autofocus: false
       });
       editor.setValue(card.description);

@@ -646,7 +646,7 @@ export default function Editor(props: Props) {
           name: "hypermd",
           hashtag: true,
         },
-        inputStyle: "textarea",
+        // inputStyle: "textarea", // Break mobile device paste functionality
         hmdFold: HMDFold,
       });
       editor.setOption("lineNumbers", false);
