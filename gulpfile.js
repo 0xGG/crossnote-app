@@ -1,7 +1,8 @@
 // Sass configuration
 const gulp = require("gulp");
-const sass = require("gulp-sass");
-const plumber = require("gulp-plumber");
+// const sass = require("gulp-sass");
+// const plumber = require("gulp-plumber");
+const workboxBuild = require("workbox-build");
 
 //const src = "./public/styles/**/*.scss";
 /*
@@ -39,4 +40,21 @@ gulp.task("copy-css-files", function (cb) {
     .src(["./node_modules/vickymd/theme/**/*"])
     .pipe(gulp.dest("./public/styles/"));
   cb();
+});
+
+gulp.task("service-worker", () => {
+  return workboxBuild
+    .injectManifest({
+      swSrc: "src/sw.js",
+      swDest: "build/service-worker.js",
+      globDirectory: "build",
+      globPatterns: ["**/*.{js,css,html,png,tff,woff,woff2}"],
+      maximumFileSizeToCacheInBytes: 1024 * 1024 * 8, // 8mb
+      mode: "production",
+    })
+    .then(({ count, size, warnings }) => {
+      // Optionally, log any warnings and details.
+      warnings.forEach(console.warn);
+      console.log(`${count} files will be precached, totaling ${size} bytes.`);
+    });
 });

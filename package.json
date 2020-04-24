@@ -73,12 +73,14 @@
   "scripts": {
     "git-info": "echo export default \"{\\\"logMessage\\\": \\\"$(git log -1 --oneline)\\\"}\"  > src/_git_commit.js",
     "start": "npm-run-all --parallel start:*",
-    "start:react-scripts": "yarn git-info; react-scripts start",
+    "start:react-scripts": "yarn git-info; react-app-rewired start",
     "start:copy-css-files": "gulp copy-css-files",
-    "build": "npm-run-all --parallel build:*",
-    "build:react-scripts": "yarn git-info; react-scripts build",
+    "build": "yarn build:copy-css-files; yarn build:react-scripts; yarn build:service-worker",
+    "build:react-scripts": "yarn git-info; react-app-rewired build",
     "build:copy-css-files": "gulp copy-css-files",
-    "test": "react-scripts test",
+    "build:service-worker": "gulp service-worker",
+    "test": "react-app-rewired test",
+    "test:production": "cd build && http-server",
     "eject": "react-scripts eject",
     "dev:graphql-codegen": "graphql-codegen -c codegen.dev.yml",
     "predeploy": "yarn build",
@@ -127,8 +129,11 @@
     "gulp": "^4.0.2",
     "gulp-plumber": "^1.2.1",
     "gulp-sass": "^4.1.0",
+    "http-server": "^0.12.1",
     "npm-run-all": "^4.1.5",
-    "prettier": "^2.0.5"
+    "prettier": "^2.0.5",
+    "react-app-rewired": "^2.1.5",
+    "workbox-build": "^5.1.2"
   },
   "homepage": "https://crossnote.app"
 }

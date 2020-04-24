@@ -19,11 +19,15 @@ const App: FC = () => {
   const settingsContainer = SettingsContainer.useContainer();
   useEffect(() => {
     const handler = (event: any) => {
-      event.preventDefault();
-      event.prompt();
-      event.userChoice.then((choiceResult: any) => {
-        console.log(choiceResult);
-      });
+      try {
+        event.preventDefault();
+        event.prompt();
+        event.userChoice.then((choiceResult: any) => {
+          console.log(choiceResult);
+        });
+      } catch (error) {
+        console.log(error);
+      }
     };
     window.addEventListener("beforeinstallprompt", handler);
     return () => {

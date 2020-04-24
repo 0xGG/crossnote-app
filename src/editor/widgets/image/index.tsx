@@ -44,7 +44,7 @@ const useStyles = makeStyles((theme: Theme) =>
       "backgroundColor": darken(theme.palette.background.paper, 0.01),
       "cursor": "pointer",
       "&:hover": {
-        backgroundColor: "#eee",
+        backgroundColor: darken(theme.palette.background.paper, 0.2),
       },
     },
     disabled: {
