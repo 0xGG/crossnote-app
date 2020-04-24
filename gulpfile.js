@@ -49,7 +49,7 @@ gulp.task("service-worker", () => {
       swDest: "build/service-worker.js",
       globDirectory: "build",
       globPatterns: ["**/*.{js,css,html,png,tff,woff,woff2}"],
-      maximumFileSizeToCacheInBytes: 1024 * 1024 * 4, // 4mb
+      maximumFileSizeToCacheInBytes: 1024 * 1024 * 8, // 8mb
       mode: "production",
     })
     .then(({ count, size, warnings }) => {

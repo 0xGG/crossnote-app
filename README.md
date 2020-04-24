@@ -13,7 +13,7 @@ note:
 
 https://crossnote.app
 
-**Crossnote** is probably the world's first markdown notes reader & editor progressive web application that works offline ~~perfectly~~ (maybe not yet but soon 😂) and supports syncing with arbitrary git repository right inside your browser.
+**Crossnote** is probably the world's first markdown notes reader & editor Progressive Web Application that works offline and supports syncing with arbitrary git repository right inside your browser.
 
 We also offer an extension for VSCode (Still under development): [0xGG/vscode-crossnote](https://github.com/0xGG/vscode-crossnote) | [VSCode Marketplace](https://marketplace.visualstudio.com/items?itemName=shd101wyy.crossnote)
 
