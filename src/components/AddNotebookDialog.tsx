@@ -106,7 +106,7 @@ export default function AddNotebookDialog(props: Props) {
       setGitPassword("");
       setExpanded(false);
     };
-  }, [props]);
+  }, [props.open]);
 
   return (
     <Dialog

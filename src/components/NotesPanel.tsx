@@ -26,6 +26,7 @@ import {
   ListItemText,
   ListItemIcon,
   Divider,
+  Tooltip,
 } from "@material-ui/core";
 import {
   Magnify,
@@ -209,9 +210,11 @@ export default function NotesPanel(props: Props) {
             onClick={createNewNote}
             disabled={!crossnoteContainer.initialized || isCreatingNote}
           >
-            <FileEditOutline
-              className={clsx(classes.iconBtnSVG)}
-            ></FileEditOutline>
+            <Tooltip title={t("general/new-note")}>
+              <FileEditOutline
+                className={clsx(classes.iconBtnSVG)}
+              ></FileEditOutline>
+            </Tooltip>
           </IconButton>
         </Box>
         <Box
@@ -320,7 +323,9 @@ export default function NotesPanel(props: Props) {
               <IconButton
                 onClick={() => setNotebookConfigurationDialogOpen(true)}
               >
-                <Cog className={clsx(classes.iconBtnSVG)}></Cog>
+                <Tooltip title={t("general/configure-the-notebook")}>
+                  <Cog className={clsx(classes.iconBtnSVG)}></Cog>
+                </Tooltip>
               </IconButton>
               /*)*/
             }
