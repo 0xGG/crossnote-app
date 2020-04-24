@@ -42,12 +42,14 @@ const useStyles = makeStyles((theme: Theme) =>
       "&:first-child": {
         marginTop: theme.spacing(2),
       },
+      /*
       "&:hover": {
         backgroundColor: "#f6f6f6",
       },
       "&:hover .preview": {
         backgroundColor: "#f6f6f6 !important",
       },
+      */
     },
     avatarPanel: {
       display: "grid",
@@ -71,11 +73,14 @@ const useStyles = makeStyles((theme: Theme) =>
       gridArea: "time",
     },
     message: {
-      "marginLeft": `${messageMarginLeft}px`,
-      "cursor": "pointer",
+      marginLeft: `${messageMarginLeft}px`,
+      cursor: "pointer",
+      backgroundColor: "inherit !important",
+      /*
       "&:hover": {
         backgroundColor: "#f6f6f6 !important",
       },
+      */
     },
     reactions: {
       marginLeft: `${messageMarginLeft}px`,
@@ -92,6 +97,9 @@ const useStyles = makeStyles((theme: Theme) =>
       "&:hover": {
         cursor: "pointer",
       },
+    },
+    iconBtnSVG: {
+      color: theme.palette.text.secondary,
     },
   }),
 );
@@ -332,14 +340,20 @@ export function CommentMessage(props: Props) {
         <Card>
           <Tooltip title={t("widget/crossnote.comment/reply-to-this-user")}>
             <IconButton onClick={handleReply}>
-              <Reply style={actionBtnClass}></Reply>
+              <Reply
+                className={clsx(classes.iconBtnSVG)}
+                style={actionBtnClass}
+              ></Reply>
             </IconButton>
           </Tooltip>
           <Tooltip
             title={t("widget/crossnote.comment/add-reaction-to-this-comment")}
           >
             <IconButton onClick={() => setEmojiPickerOpen(true)}>
-              <StickerEmoji style={actionBtnClass}></StickerEmoji>
+              <StickerEmoji
+                className={clsx(classes.iconBtnSVG)}
+                style={actionBtnClass}
+              ></StickerEmoji>
             </IconButton>
           </Tooltip>
           {globalContainers.cloudContainer.loggedIn &&
@@ -348,7 +362,10 @@ export function CommentMessage(props: Props) {
                 <IconButton
                   onClick={() => props.onModifyChatMessage(message.id)}
                 >
-                  <FileEditOutline style={actionBtnClass}></FileEditOutline>
+                  <FileEditOutline
+                    className={clsx(classes.iconBtnSVG)}
+                    style={actionBtnClass}
+                  ></FileEditOutline>
                 </IconButton>
               </Tooltip>
             )}

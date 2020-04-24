@@ -16,6 +16,7 @@ import {
   makeStyles,
   Theme,
   ThemeProvider,
+  fade,
 } from "@material-ui/core/styles";
 import clsx from "clsx";
 import { TrashCan } from "mdi-material-ui";
@@ -35,16 +36,6 @@ const useStyles = makeStyles((theme: Theme) =>
     },
     section: {
       marginTop: theme.spacing(2),
-    },
-    dropArea: {
-      "textAlign": "center",
-      "padding": "24px",
-      "border": "4px dotted #c7c7c7",
-      "backgroundColor": "#f1f1f1",
-      "cursor": "pointer",
-      "&:hover": {
-        backgroundColor: "#eee",
-      },
     },
     disabled: {
       cursor: "not-allowed",

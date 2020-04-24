@@ -50,6 +50,6 @@ registerWidgetCreator("crossnote.bilibili", BilibiliWidgetCreator);
 registerWidgetCreator("crossnote.youtube", YoutubeWidgetCreator);
 registerWidgetCreator("crossnote.ocr", OCRWidgetCreator);
 registerWidgetCreator("crossnote.kanban", KanbanWidgetCreator);
-registerWidgetCreator("crossnote.abc", ABCWidgetCreator);
+// registerWidgetCreator("crossnote.abc", ABCWidgetCreator);
 registerWidgetCreator("crossnote.comment", CommentWidgetCreator);
 registerWidgetCreator("crossnote.github_gist", GitHubGistWidgetCreator);
