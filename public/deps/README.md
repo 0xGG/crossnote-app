@@ -1,7 +1,6 @@
 ```json
 {
   "prism": "1.17.1",
-  "katex": "0.11.1",
   "mermaid": "8.4.8",
   "marked": "0.7.0",
   "plantuml-encoder": "1.4.0",
