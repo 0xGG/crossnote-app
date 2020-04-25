@@ -3,6 +3,7 @@ const gulp = require("gulp");
 // const sass = require("gulp-sass");
 // const plumber = require("gulp-plumber");
 const workboxBuild = require("workbox-build");
+const del = require("del");
 
 //const src = "./public/styles/**/*.scss";
 /*
@@ -36,6 +37,7 @@ gulp.task(
 */
 
 gulp.task("copy-css-files", function (cb) {
+  del.sync("./public/styles/");
   gulp
     .src(["./node_modules/vickymd/theme/**/*"])
     .pipe(gulp.dest("./public/styles/"));
