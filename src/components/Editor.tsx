@@ -70,7 +70,7 @@ import EmojiDefinitions from "vickymd/addon/emoji";
 import { TagStopRegExp } from "../utilities/markdown";
 import { resolveNoteImageSrc } from "../utilities/image";
 import { DeleteDialog } from "./DeleteDialog";
-import { setTheme } from "vickymd/theme";
+import { setTheme, ThemeName } from "vickymd/theme";
 
 const VickyMD = require("vickymd/core");
 const is = require("is_js");
@@ -1209,9 +1209,20 @@ export default function Editor(props: Props) {
       tempPreviewElement.classList.add("preview");
       tempPreviewElement.style.zIndex = "999999";
       document.body.appendChild(tempPreviewElement);
+      const currentTheme = editor.getOption("theme") as ThemeName;
+      setTheme({
+        editor,
+        themeName: "light",
+        baseUri: "/styles/",
+      });
       const printDone = () => {
-        setNeedsToPrint(false);
         tempPreviewElement.remove();
+        setTheme({
+          editor,
+          themeName: currentTheme,
+          baseUri: "/styles/",
+        });
+        setNeedsToPrint(false);
       };
       renderPreview(
         tempPreviewElement,

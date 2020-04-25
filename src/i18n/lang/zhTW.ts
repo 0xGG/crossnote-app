@@ -204,7 +204,7 @@ export const zhTW = {
 
     // Notifications
     "notifications/refresh": "刷新來查看新的消息",
-    "notifications/new-version-available": "發現了新的版本可用更新!",
+    "notifications/new-version-available": "發現了新的軟體版本可用更新!",
 
     // Settings
     "settings/about-this-project": "關於這個項目",

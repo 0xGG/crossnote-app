@@ -1,4 +1,4 @@
-import React, { FC, useEffect } from "react";
+import React, { FC, useEffect, useCallback } from "react";
 import { Snackbar, Button } from "@material-ui/core";
 import * as serviceWorker from "../serviceWorker";
 import { useTranslation } from "react-i18next";
@@ -20,11 +20,11 @@ const ServiceWorkerWrapper: FC = () => {
     serviceWorker.register({ onUpdate: onSWUpdate });
   }, []);
 
-  const reloadPage = () => {
+  const reloadPage = useCallback(() => {
     waitingWorker?.postMessage({ type: "SKIP_WAITING" });
     setShowReload(false);
     window.location.reload(true);
-  };
+  }, [waitingWorker]);
 
   return (
     <Snackbar
