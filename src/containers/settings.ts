@@ -3,6 +3,7 @@ import { useState, useCallback, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { CrossnoteTheme } from "../themes/theme";
 import { themeManager } from "../themes/manager";
+import { setTheme as VickMDSetTheme, ThemeName } from "vickymd/theme";
 
 interface InitialState {}
 
@@ -70,9 +71,13 @@ function useSettingsContainer(initialState: InitialState) {
   }, []);
 
   useEffect(() => {
-    const themeName = localStorage.getItem("settings/theme");
+    const themeName = localStorage.getItem("settings/theme") as ThemeName;
     if (themeName) {
       _setTheme(themeName);
+      VickMDSetTheme({
+        themeName: themeName,
+        baseUri: "/styles/",
+      });
     }
   }, [_setTheme]);
 
