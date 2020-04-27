@@ -1,0 +1,31 @@
+fragment NotebookFields on Notebook {
+  id
+  createdAt
+  updatedAt
+  owner {
+    id
+    avatar
+    username
+  }
+  gitURL
+  gitBranch
+  markdown
+  starsCount
+  isStarred  
+}
+
+query Notebooks(
+  $query: String = ""
+  $orderBy: NotebookOrderBy = TOTAL_STARS_COUNT
+  $page: Int = 0
+  $perPage: Int = 10
+) {
+  notebooks(
+    query: $query
+    orderBy: $orderBy
+    page: $page
+    perPage: $perPage
+  ) {
+    ...NotebookFields
+  }
+}

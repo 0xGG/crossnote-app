@@ -101,12 +101,6 @@ const useStyles = makeStyles((theme: Theme) =>
         // width: 200
       },
     },
-    notesList: {
-      position: "relative",
-      flex: "1",
-      overflowY: "auto",
-      paddingBottom: theme.spacing(12),
-    },
     loading: {
       position: "absolute",
       top: "40%",

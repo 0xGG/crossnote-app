@@ -56,6 +56,7 @@ export enum OrderDirection {
 
 export enum HomeSection {
   Notebooks = "Notebooks",
+  Explore = "Explore",
   Settings = "Settings",
   Notifications = "Notifications",
 }

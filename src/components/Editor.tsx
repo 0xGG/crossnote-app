@@ -1637,7 +1637,9 @@ export default function Editor(props: Props) {
             }}
             onClick={() => setFullScreenMode(false)}
           >
-            <FullscreenExit></FullscreenExit>
+            <FullscreenExit
+              className={clsx(classes.iconBtnSVG)}
+            ></FullscreenExit>
           </IconButton>
         )}
       </Box>

@@ -1,0 +1,35 @@
+mutation PublishNotebook(
+    $gitURL: String!
+    $gitBranch: String!
+) {
+  publishNotebook(
+    input: {
+      gitURL: $gitURL
+      gitBranch: $gitBranch
+    }
+  ) {
+    ...NotebookFields
+  }
+}
+
+mutation UnpublishNotebook(
+  $notebookID: UUID!
+) {
+  unpublishNotebook(
+    input: {
+      notebookID: $notebookID
+    }
+  )
+}
+
+mutation StarNotebook($notebookID: UUID!) {
+  starNotebook(input: {
+    notebookID: $notebookID
+  })
+}
+
+mutation UnstarNotebook($notebookID: UUID!) {
+  unstarNotebook(input: {
+    notebookID: $notebookID
+  })
+}

@@ -54,6 +54,9 @@ import { globalContainers } from "../containers/global";
 import { SettingsContainer } from "../containers/settings";
 import { AuthDialog } from "../components/AuthDialog";
 import { Notifications } from "../components/Notifications";
+import ExplorePanel from "../components/ExplorePanel";
+import { NotebookPanel } from "../components/NotebookPanel";
+const is = require("is_js");
 
 const drawerWidth = 200;
 const notesPanelWidth = 350;
@@ -284,6 +287,20 @@ export function Home(props: Props) {
   const drawer = (
     <div>
       <List disablePadding={true}>
+        <ListItem
+          button
+          onClick={() => browserHistory.push(`/explore`)}
+          style={{ display: is.online() ? "flex" : "none" }}
+        >
+          <ListItemIcon className={clsx(classes.listItemIcon)}>
+            <img
+              src="/logo.svg"
+              style={{ width: "28px", height: "28px" }}
+              alt={"Crossnote"}
+            ></img>
+          </ListItemIcon>
+          <ListItemText primary={t("general/Explore")}></ListItemText>
+        </ListItem>
         <ListItem button onClick={() => browserHistory.push(`/settings`)}>
           {cloudContainer.viewer ? (
             <ListItemIcon className={clsx(classes.listItemIcon)}>
@@ -382,7 +399,7 @@ export function Home(props: Props) {
       </Box>
     ));
 
-  const editorPanel = (
+  const editorPanel = props.section === HomeSection.Notebooks && (
     <Card
       className={clsx(classes.editorPanel, "editor-panel")}
       style={{
@@ -391,6 +408,18 @@ export function Home(props: Props) {
     >
       <Editor note={crossnoteContainer.selectedNote}></Editor>
     </Card>
+  );
+
+  const explorePanel = props.section === HomeSection.Explore && (
+    <Box className={clsx(classes.notesPanel)}>
+      <ExplorePanel toggleDrawer={toggleDrawer}></ExplorePanel>
+    </Box>
+  );
+
+  const notebookPanel = props.section === HomeSection.Explore && (
+    <Box className={clsx(classes.editorPanel)}>
+      <NotebookPanel></NotebookPanel>
+    </Box>
   );
 
   return (
@@ -441,6 +470,23 @@ export function Home(props: Props) {
             >
               {notesPanel}
               {editorPanel}
+            </SplitPane>
+          ))}
+        {props.section === HomeSection.Explore &&
+          (isMobile ? (
+            <React.Fragment>
+              {explorePanel}
+              {notebookPanel}
+            </React.Fragment>
+          ) : (
+            <SplitPane
+              defaultSize={notesPanelWidth}
+              minSize={notesPanelMinWidth}
+              maxSize={notesPanelMaxWidth}
+              className={"main-panel-split-pane"}
+            >
+              {explorePanel}
+              {notebookPanel}
             </SplitPane>
           ))}
         {props.section === HomeSection.Settings && (
