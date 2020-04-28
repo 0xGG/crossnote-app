@@ -34,6 +34,7 @@ import { CrossnoteContainer } from "../containers/crossnote";
 import AddNotebookDialog from "./AddNotebookDialog";
 import ConfigurePublishedNotebookDialog from "./ConfigurePublishedNotebookDialog";
 import { resolveNotebookFilePath } from "../utilities/image";
+import { browserHistory } from "../utilities/history";
 
 const previewZIndex = 99;
 const useStyles = makeStyles((theme: Theme) =>
@@ -234,12 +235,30 @@ export function NotebookPanel(props: Props) {
         const link = links[i] as HTMLAnchorElement;
         link.onclick = (event) => {
           event.preventDefault();
-          const url = resolveNotebookFilePath(
-            notebook,
-            link.getAttribute("href"),
-          );
-          if (url.startsWith("https://") || url.startsWith("http://")) {
-            window.open(url, "_blank");
+          const href = link.getAttribute("href");
+          if (!href.match(/^(https?|data):/)) {
+            const alreadyDownloaded = !!crossnoteContainer.notebooks.find(
+              (nb) =>
+                nb.gitURL === notebook.gitURL &&
+                nb.gitBranch === notebook.gitBranch,
+            );
+            if (alreadyDownloaded) {
+              const filePath = href.replace(/^\/+/, "").replace(/^\.\/+/, "");
+              browserHistory.push(
+                `/?repo=${encodeURIComponent(
+                  notebook.gitURL,
+                )}&branch=${encodeURIComponent(
+                  notebook.gitBranch || "master",
+                )}&filePath=${encodeURIComponent(filePath)}`,
+              );
+            } else {
+              setAddNotebookDialogOpen(true);
+            }
+          } else {
+            const url = resolveNotebookFilePath(notebook, href);
+            if (url.startsWith("https://") || url.startsWith("http://")) {
+              window.open(url, "_blank");
+            }
           }
         };
       }
@@ -279,7 +298,7 @@ export function NotebookPanel(props: Props) {
       resolveImages(previewElement);
       setPreviewIsPresentation(false);
     }
-  }, [notebook, previewElement]);
+  }, [notebook, previewElement, crossnoteContainer.notebooks]);
 
   useEffect(() => {
     if (!notebook) {
