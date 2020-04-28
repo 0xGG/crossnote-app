@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Dialog,
   DialogTitle,
@@ -7,11 +7,14 @@ import {
   DialogActions,
   Button,
   Typography,
-  Divider,
   Box,
+  useTheme,
+  darken,
 } from "@material-ui/core";
 import { useTranslation } from "react-i18next";
+import { usePublishNotebookMutation } from "../generated/graphql";
 import { CloudContainer } from "../containers/cloud";
+import Noty from "noty";
 
 interface Props {
   open: boolean;
@@ -19,9 +22,35 @@ interface Props {
 }
 export default function PublishNotebookDialog(props: Props) {
   const { t } = useTranslation();
+  const theme = useTheme();
   const cloudContainer = CloudContainer.useContainer();
   const [gitURL, setGitURL] = useState<string>("");
   const [gitBranch, setGitBranch] = useState<string>("master");
+  const [
+    resPublishNotebook,
+    executePublishNotebookMutation,
+  ] = usePublishNotebookMutation();
+
+  useEffect(() => {
+    if (resPublishNotebook.error) {
+      new Noty({
+        type: "error",
+        text: "Failed to publish the notebook",
+        layout: "topRight",
+        theme: "relax",
+        timeout: 2000,
+      }).show();
+    } else if (resPublishNotebook.data) {
+      new Noty({
+        type: "success",
+        text: "Notebook is published",
+        layout: "topRight",
+        theme: "relax",
+        timeout: 2000,
+      }).show();
+      props.onClose();
+    }
+  }, [resPublishNotebook]);
 
   return (
     <Dialog open={props.open} onClose={props.onClose}>
@@ -44,17 +73,23 @@ export default function PublishNotebookDialog(props: Props) {
         <Box style={{ marginTop: "32px" }}></Box>
         <Typography variant={"caption"}>
           {
-            "* We currently only support publishing the notebook from a public repository on GitHub, GitLab, Gitea, or Gitea."
+            "* We currently only support publishing the notebook from a public repository on GitHub, GitLab, Gitea, or Gitea. We only collect README.md file."
           }
         </Typography>
         <br></br>
         <Typography variant={"caption"}>
           {
-            "* Please declare the ownership of your notebook by adding the following front-matter to README.md in remote repository."
+            "* Please declare the ownership of your notebook by adding the following front-matter to README.md in remote repository:"
           }
         </Typography>
-        <pre>
-          <code className="language-yaml">
+        <pre
+          style={{
+            padding: theme.spacing(1),
+            backgroundColor: darken(theme.palette.background.default, 0.01),
+            color: theme.palette.text.primary,
+          }}
+        >
+          <code className="language-markdown">
             {`--- 
 notebook: 
   owner: ${
@@ -63,6 +98,9 @@ notebook:
       : t("general/Username")
   }
 ---
+
+# ${t("general/notebook-name")}
+...
 `}
           </code>
         </pre>
@@ -77,7 +115,19 @@ notebook:
         */}
       </DialogContent>
       <DialogActions>
-        <Button variant={"contained"} color={"primary"}>
+        <Button
+          variant={"contained"}
+          color={"primary"}
+          disabled={resPublishNotebook.fetching}
+          onClick={() => {
+            if (gitURL.trim().length > 0) {
+              executePublishNotebookMutation({
+                gitURL: gitURL.trim(),
+                gitBranch: gitBranch.trim() || "master",
+              });
+            }
+          }}
+        >
           {t("general/Publish")}
         </Button>
         <Button onClick={props.onClose}>{t("general/cancel")}</Button>

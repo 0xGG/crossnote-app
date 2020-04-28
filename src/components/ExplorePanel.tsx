@@ -26,6 +26,7 @@ import {
 import { useTranslation } from "react-i18next";
 import PublishNotebookDialog from "./PublishNotebookDialog";
 import { CloudContainer } from "../containers/cloud";
+import { Notebooks } from "./Notebooks";
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -193,6 +194,8 @@ export default function ExplorePanel(props: Props) {
         open={publishNotebookDialogOpen}
         onClose={() => setPublishNotebookDialogOpen(false)}
       ></PublishNotebookDialog>
+
+      <Notebooks searchValue={finalSearchValue}></Notebooks>
     </Box>
   );
 }
