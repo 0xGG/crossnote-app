@@ -125,7 +125,16 @@ const useStyles = makeStyles((theme: Theme) =>
     drawerPaper: {
       width: drawerWidth,
       backgroundColor: lighten(theme.palette.background.paper, 0.05),
-      // color: "#fff"
+      display: "flex",
+      flexDirection: "column",
+      justifyContent: "space-between",
+      overflow: "hidden",
+    },
+    notebooksSection: {
+      overflowY: "auto",
+    },
+    controllersSection: {
+      // flex: 1,
     },
     listItemIcon: {
       color: theme.palette.text.secondary,
@@ -285,106 +294,116 @@ export function Home(props: Props) {
   }, [props.section]);
 
   const drawer = (
-    <div>
-      <List disablePadding={true}>
-        <ListItem
-          button
-          onClick={() => browserHistory.push(`/explore`)}
-          style={{ display: is.online() ? "flex" : "none" }}
-        >
-          <ListItemIcon className={clsx(classes.listItemIcon)}>
-            <img
-              src="/logo.svg"
-              style={{ width: "28px", height: "28px" }}
-              alt={"Crossnote"}
-            ></img>
-          </ListItemIcon>
-          <ListItemText primary={t("general/Explore")}></ListItemText>
-        </ListItem>
-        <ListItem button onClick={() => browserHistory.push(`/settings`)}>
-          {cloudContainer.viewer ? (
+    <React.Fragment>
+      <Box className={clsx(classes.notebooksSection)}>
+        <List disablePadding={true}>
+          <ListItem>
             <ListItemIcon className={clsx(classes.listItemIcon)}>
-              <Avatar
-                className={clsx(classes.avatar)}
-                variant={"rounded"}
-                src={
-                  cloudContainer.viewer.avatar ||
-                  "data:image/png;base64," +
-                    new Identicon(
-                      sha256(
-                        cloudContainer.viewer && cloudContainer.viewer.username,
-                      ),
-                      80,
-                    ).toString()
-                }
-              ></Avatar>
+              <Notebook></Notebook>
             </ListItemIcon>
-          ) : (
-            <ListItemIcon className={clsx(classes.listItemIcon)}>
-              <SettingsIcon></SettingsIcon>
-            </ListItemIcon>
+            <ListItemText primary={t("general/Notebooks")}></ListItemText>
+            <ListItemSecondaryAction style={{ right: "0" }}>
+              {crossnoteContainer.initialized && (
+                <Tooltip title={t("general/add-a-notebook")}>
+                  <IconButton
+                    className={clsx(classes.listItemIcon)}
+                    onClick={() => setAddNotebookDialogOpen(true)}
+                  >
+                    <PlusCircleOutline></PlusCircleOutline>
+                  </IconButton>
+                </Tooltip>
+              )}
+            </ListItemSecondaryAction>
+          </ListItem>
+        </List>
+        <List disablePadding={true}>
+          {crossnoteContainer.notebooks.map((notebook) => {
+            return (
+              <ListItem
+                disableGutters={true}
+                style={{ padding: "0" }}
+                key={notebook._id}
+              >
+                <NotebookTreeView notebook={notebook}></NotebookTreeView>
+              </ListItem>
+            );
+          })}
+          {!crossnoteContainer.initialized && (
+            <ListItem>
+              <CircularProgress style={{ margin: "0 auto" }}></CircularProgress>
+            </ListItem>
           )}
-          <ListItemText primary={t("general/Settings")}></ListItemText>
-        </ListItem>
-        {cloudContainer.loggedIn && (
+        </List>
+      </Box>
+
+      <Box className={clsx(classes.controllersSection)}>
+        <Divider></Divider>
+        <List disablePadding={true}>
           <ListItem
             button
-            onClick={() => browserHistory.push(`/notifications`)}
+            onClick={() => browserHistory.push(`/explore`)}
+            style={{ display: is.online() ? "flex" : "none" }}
           >
             <ListItemIcon className={clsx(classes.listItemIcon)}>
-              {cloudContainer.viewer.notifications.totalCount > 0 ? (
-                <Badge
-                  color={"secondary"}
-                  badgeContent={
-                    cloudContainer.viewer.notifications.totalCount || ""
-                  }
-                >
-                  <Bell></Bell>
-                </Badge>
-              ) : (
-                <Bell></Bell>
-              )}
+              <img
+                src="/logo.svg"
+                style={{ width: "28px", height: "28px" }}
+                alt={"Crossnote"}
+              ></img>
             </ListItemIcon>
-            <ListItemText primary={t("general/Notifications")}></ListItemText>
+            <ListItemText primary={t("general/Explore")}></ListItemText>
           </ListItem>
-        )}
-        <Divider></Divider>
-        <ListItem>
-          <ListItemIcon className={clsx(classes.listItemIcon)}>
-            <Notebook></Notebook>
-          </ListItemIcon>
-          <ListItemText primary={t("general/Notebooks")}></ListItemText>
-          <ListItemSecondaryAction style={{ right: "0" }}>
-            {crossnoteContainer.initialized && (
-              <Tooltip title={t("general/add-a-notebook")}>
-                <IconButton
-                  className={clsx(classes.listItemIcon)}
-                  onClick={() => setAddNotebookDialogOpen(true)}
-                >
-                  <PlusCircleOutline></PlusCircleOutline>
-                </IconButton>
-              </Tooltip>
+          <ListItem button onClick={() => browserHistory.push(`/settings`)}>
+            {cloudContainer.viewer ? (
+              <ListItemIcon className={clsx(classes.listItemIcon)}>
+                <Avatar
+                  className={clsx(classes.avatar)}
+                  variant={"rounded"}
+                  src={
+                    cloudContainer.viewer.avatar ||
+                    "data:image/png;base64," +
+                      new Identicon(
+                        sha256(
+                          cloudContainer.viewer &&
+                            cloudContainer.viewer.username,
+                        ),
+                        80,
+                      ).toString()
+                  }
+                ></Avatar>
+              </ListItemIcon>
+            ) : (
+              <ListItemIcon className={clsx(classes.listItemIcon)}>
+                <SettingsIcon></SettingsIcon>
+              </ListItemIcon>
             )}
-          </ListItemSecondaryAction>
-        </ListItem>
-        {crossnoteContainer.notebooks.map((notebook) => {
-          return (
-            <ListItem
-              disableGutters={true}
-              style={{ padding: "0" }}
-              key={notebook._id}
-            >
-              <NotebookTreeView notebook={notebook}></NotebookTreeView>
-            </ListItem>
-          );
-        })}
-        {!crossnoteContainer.initialized && (
-          <ListItem>
-            <CircularProgress style={{ margin: "0 auto" }}></CircularProgress>
+            <ListItemText primary={t("general/Settings")}></ListItemText>
           </ListItem>
-        )}
-      </List>
-    </div>
+          {cloudContainer.loggedIn && (
+            <ListItem
+              button
+              onClick={() => browserHistory.push(`/notifications`)}
+            >
+              <ListItemIcon className={clsx(classes.listItemIcon)}>
+                {cloudContainer.viewer.notifications.totalCount > 0 ? (
+                  <Badge
+                    color={"secondary"}
+                    badgeContent={
+                      cloudContainer.viewer.notifications.totalCount || ""
+                    }
+                  >
+                    <Bell></Bell>
+                  </Badge>
+                ) : (
+                  <Bell></Bell>
+                )}
+              </ListItemIcon>
+              <ListItemText primary={t("general/Notifications")}></ListItemText>
+            </ListItem>
+          )}
+        </List>
+      </Box>
+    </React.Fragment>
   );
 
   const notesPanel =

@@ -123,7 +123,7 @@ export default function ExplorePanel(props: Props) {
       }
       const timeout = setTimeout(() => {
         setFinalSearchValue(value);
-      }, 400);
+      }, 600);
       setSearchValueInputTimeout(timeout);
     },
     [searchValueInputTimeout],
