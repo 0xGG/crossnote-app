@@ -138,7 +138,6 @@ const useStyles = makeStyles((theme: Theme) =>
       zIndex: 150,
     },
     editorWrapper: {
-      //     display: "contents",
       "flex": 1,
       "overflow": "auto",
       "backgroundColor": theme.palette.background.paper,

@@ -22,6 +22,22 @@ mutation UnpublishNotebook(
   )
 }
 
+mutation UpdateNotebook(
+  $notebookID: UUID!
+  $gitURL: String!
+  $gitBranch: String!
+) {
+  updateNotebook(
+    input: {
+      notebookID: $notebookID
+      gitURL: $gitURL
+      gitBranch: $gitBranch
+    }
+  ) {
+    ...NotebookFields
+  }
+}
+
 mutation StarNotebook($notebookID: UUID!) {
   starNotebook(input: {
     notebookID: $notebookID

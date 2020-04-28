@@ -11,31 +11,82 @@ export interface Scalars {
   Int: number;
   Float: number;
   Upload: any;
-  UUID: any;
   Time: any;
+  UUID: any;
 }
 
-export interface CreateWidget {
-  type: WidgetType;
+export interface AddReactionToCommentWidgetMessage {
+  messageID: Scalars['UUID'];
+  reaction: Scalars['String'];
+}
+
+export interface UnfollowUser {
+  userID: Scalars['UUID'];
+}
+
+export interface UpdateWidget {
+  id: Scalars['UUID'];
   description: Scalars['String'];
   source: Scalars['String'];
 }
 
-export interface SignUpInput {
-  /** Username */
-  username: Scalars['String'];
-  /** Email */
-  email: Scalars['String'];
-  /** Password */
-  password: Scalars['String'];
+export interface AuthReturn {
+   __typename?: 'AuthReturn';
+  /** JSON Web Token */
+  token: Scalars['String'];
+  /** User */
+  user: User;
 }
 
-export interface CommentWidgetMessageEdge {
-   __typename?: 'CommentWidgetMessageEdge';
-  /** A cursor for use in pagination. */
-  cursor: Scalars['UUID'];
-  /** The item at the end of the edge. */
-  node: CommentWidgetMessage;
+export interface AddReactionToCommentWidget {
+  widgetID: Scalars['UUID'];
+  reaction: Scalars['String'];
+}
+
+
+export interface UpdateNotebook {
+  notebookID: Scalars['UUID'];
+  gitURL: Scalars['String'];
+  gitBranch: Scalars['String'];
+}
+
+export interface DeleteNotification {
+  notificationID: Scalars['UUID'];
+}
+
+export interface PageInfo {
+   __typename?: 'PageInfo';
+  startCursor: Scalars['UUID'];
+  endCursor: Scalars['UUID'];
+  hasPreviousPage: Scalars['Boolean'];
+  hasNextPage: Scalars['Boolean'];
+}
+
+export interface UnstarNotebook {
+  notebookID: Scalars['UUID'];
+}
+
+export interface NotificationEventUserFollowing  extends NotificationEvent {
+   __typename?: 'NotificationEventUserFollowing';
+  type: NotificationEventType;
+}
+
+export enum WidgetType {
+  Comment = 'COMMENT'
+}
+
+export interface Widget {
+   __typename?: 'Widget';
+  id: Scalars['UUID'];
+  instance: WidgetInstance;
+  owner: User;
+  description: Scalars['String'];
+  source: Scalars['String'];
+  canConfigure: Scalars['Boolean'];
+}
+
+export interface UnsubscribeFromCommentWidget {
+  widgetID: Scalars['UUID'];
 }
 
 export interface Mutation {
@@ -56,6 +107,7 @@ export interface Mutation {
   unlinkGitHubAccount: Scalars['Boolean'];
   publishNotebook: Notebook;
   unpublishNotebook: Scalars['Boolean'];
+  updateNotebook: Notebook;
   starNotebook: Scalars['Boolean'];
   unstarNotebook: Scalars['Boolean'];
   createWidget: Widget;
@@ -142,6 +194,11 @@ export interface MutationUnpublishNotebookArgs {
 }
 
 
+export interface MutationUpdateNotebookArgs {
+  input: UpdateNotebook;
+}
+
+
 export interface MutationStarNotebookArgs {
   input: StarNotebook;
 }
@@ -206,35 +263,98 @@ export interface MutationUnsubscribeFromCommentWidgetArgs {
   input: Maybe<UnsubscribeFromCommentWidget>;
 }
 
+export interface NotificationEdge {
+   __typename?: 'NotificationEdge';
+  cursor: Scalars['UUID'];
+  node: Notification;
+}
+
+export interface NotificationConnection {
+   __typename?: 'NotificationConnection';
+  totalCount: Scalars['Int'];
+  pageInfo: PageInfo;
+  edges: Array<NotificationEdge>;
+}
+
+export interface WidgetInstance {
+  type: WidgetType;
+}
+
+export interface NotificationEvent {
+  type: NotificationEventType;
+}
+
+export interface NotificationEventCommentWidgetMessagePosting  extends NotificationEvent {
+   __typename?: 'NotificationEventCommentWidgetMessagePosting';
+  type: NotificationEventType;
+  message: CommentWidgetMessage;
+}
+
+export interface CommentWidgetMessageConnection {
+   __typename?: 'CommentWidgetMessageConnection';
+  /** Identifies the total count of items in the connection. */
+  totalCount: Scalars['Int'];
+  /** Information to aid in pagination. */
+  pageInfo: PageInfo;
+  /** A list of edges. */
+  edges: Array<CommentWidgetMessageEdge>;
+}
+
+export interface CommentWidgetReaction {
+   __typename?: 'CommentWidgetReaction';
+  widget: Widget;
+  user: User;
+  reaction: Scalars['String'];
+}
+
+export interface Stats {
+   __typename?: 'Stats';
+  numUsers: Scalars['Int'];
+  numNotebooks: Scalars['Int'];
+}
+
+export interface WidgetEdge {
+   __typename?: 'WidgetEdge';
+  /** A cursor for use in pagination. */
+  cursor: Scalars['UUID'];
+  /** The item at the end of the edge. */
+  node: Widget;
+}
+
+export interface DeleteWidget {
+  id: Scalars['UUID'];
+}
+
+export interface CommentWidgetMessageEdge {
+   __typename?: 'CommentWidgetMessageEdge';
+  /** A cursor for use in pagination. */
+  cursor: Scalars['UUID'];
+  /** The item at the end of the edge. */
+  node: CommentWidgetMessage;
+}
+
+export interface SubscribeToCommentWidget {
+  widgetID: Scalars['UUID'];
+}
+
 export interface PublishNotebook {
   gitURL: Scalars['String'];
   gitBranch: Scalars['String'];
 }
 
-export interface StarNotebook {
-  notebookID: Scalars['UUID'];
+export interface RemoveReactionFromCommentWidgetMessage {
+  messageID: Scalars['UUID'];
+  reaction: Scalars['String'];
 }
 
-export interface DeleteNotification {
-  notificationID: Scalars['UUID'];
+export interface LinkWithGitHubAccount {
+  code: Scalars['String'];
 }
 
-export interface SetUserInfo {
-  name: Scalars['String'];
-  avatar: Scalars['String'];
-  cover: Scalars['String'];
-  bio: Scalars['String'];
-  location: Scalars['String'];
-  language: Scalars['String'];
-  editorCursorColor: Scalars['String'];
-}
-
-export interface UnsubscribeFromCommentWidget {
-  widgetID: Scalars['UUID'];
-}
-
-export interface UnpublishNotebook {
-  notebookID: Scalars['UUID'];
+export interface ResetPassword {
+  email: Scalars['String'];
+  verificationCode: Scalars['String'];
+  password: Scalars['String'];
 }
 
 export interface UpdateCommentWidgetMessage {
@@ -242,18 +362,17 @@ export interface UpdateCommentWidgetMessage {
   markdown: Scalars['String'];
 }
 
-export interface UserWidget {
-   __typename?: 'UserWidget';
-  type: WidgetType;
-  count: Scalars['Int'];
+export interface GitHubUser {
+   __typename?: 'GitHubUser';
+  login: Scalars['String'];
+  avatar: Scalars['String'];
+  email: Scalars['String'];
 }
 
-export interface PageInfo {
-   __typename?: 'PageInfo';
-  startCursor: Scalars['UUID'];
-  endCursor: Scalars['UUID'];
-  hasPreviousPage: Scalars['Boolean'];
-  hasNextPage: Scalars['Boolean'];
+export interface CreateWidget {
+  type: WidgetType;
+  description: Scalars['String'];
+  source: Scalars['String'];
 }
 
 export interface SignInInput {
@@ -263,13 +382,8 @@ export interface SignInInput {
   password: Scalars['String'];
 }
 
-export interface SendEmailVerificationCode {
-  email: Scalars['String'];
-}
-
-export interface VerifyEmail {
-  email: Scalars['String'];
-  verificationCode: Scalars['String'];
+export interface SignInWithGitHubAccount {
+  code: Scalars['String'];
 }
 
 export interface CommentWidgetMessageReaction {
@@ -279,38 +393,10 @@ export interface CommentWidgetMessageReaction {
   reaction: Scalars['String'];
 }
 
-export interface NotificationEventUserFollowing  extends NotificationEvent {
-   __typename?: 'NotificationEventUserFollowing';
-  type: NotificationEventType;
-}
-
-
-export enum WidgetType {
-  Comment = 'COMMENT'
-}
-
-export interface NotificationEventCommentWidgetMessagePosting  extends NotificationEvent {
-   __typename?: 'NotificationEventCommentWidgetMessagePosting';
-  type: NotificationEventType;
-  message: CommentWidgetMessage;
-}
-
-
-export interface UpdateWidget {
-  id: Scalars['UUID'];
-  description: Scalars['String'];
-  source: Scalars['String'];
-}
-
-export interface RemoveReactionFromCommentWidget {
-  widgetID: Scalars['UUID'];
-  reaction: Scalars['String'];
-}
-
-export interface ResetPassword {
+export interface SignUpWithGitHubAccount {
+  username: Scalars['String'];
   email: Scalars['String'];
-  verificationCode: Scalars['String'];
-  password: Scalars['String'];
+  accessToken: Scalars['String'];
 }
 
 export interface Notebook {
@@ -329,59 +415,17 @@ export interface Notebook {
   isStarred: Scalars['Boolean'];
 }
 
-export enum NotificationEventType {
-  UserFollowing = 'USER_FOLLOWING',
-  CommentWidgetMessagePosting = 'COMMENT_WIDGET_MESSAGE_POSTING'
-}
-
-export interface AuthReturn {
-   __typename?: 'AuthReturn';
-  /** JSON Web Token */
-  token: Scalars['String'];
-  /** User */
-  user: User;
-}
-
-export interface CommentWidgetReaction {
-   __typename?: 'CommentWidgetReaction';
-  widget: Widget;
-  user: User;
-  reaction: Scalars['String'];
-}
-
-export interface NotificationEdge {
-   __typename?: 'NotificationEdge';
-  cursor: Scalars['UUID'];
-  node: Notification;
-}
-
-export interface WidgetConnection {
-   __typename?: 'WidgetConnection';
-  /** Identifies the total count of items in the connection. */
+export interface NotebookConnection {
+   __typename?: 'NotebookConnection';
   totalCount: Scalars['Int'];
-  /** Information to aid in pagination. */
   pageInfo: PageInfo;
-  /** A list of edges. */
-  edges: Array<WidgetEdge>;
+  edges: Array<NotebookEdge>;
 }
 
-export interface FollowUser {
-  userID: Scalars['UUID'];
-}
-
-export interface PostCommentWidgetMessage {
-  widgetID: Scalars['UUID'];
-  markdown: Scalars['String'];
-  notifyUsers: Array<Maybe<Scalars['String']>>;
-}
-
-export interface AddReactionToCommentWidgetMessage {
-  messageID: Scalars['UUID'];
-  reaction: Scalars['String'];
-}
-
-export interface NotificationEvent {
-  type: NotificationEventType;
+export interface NotebookEdge {
+   __typename?: 'NotebookEdge';
+  cursor: Scalars['UUID'];
+  node: Notebook;
 }
 
 export interface User {
@@ -452,78 +496,59 @@ export interface UserStarredNotebooksArgs {
   last?: Maybe<Scalars['Int']>;
 }
 
+export interface RemoveReactionFromCommentWidget {
+  widgetID: Scalars['UUID'];
+  reaction: Scalars['String'];
+}
+
+export enum NotebookOrderBy {
+  TotalStarsCount = 'TOTAL_STARS_COUNT',
+  DailyStarsCount = 'DAILY_STARS_COUNT',
+  WeeklyStarsCount = 'WEEKLY_STARS_COUNT',
+  MonthlyStarsCount = 'MONTHLY_STARS_COUNT'
+}
+
+export interface SendEmailVerificationCode {
+  email: Scalars['String'];
+}
+
+export interface CommentWidgetMessage {
+   __typename?: 'CommentWidgetMessage';
+  /** Comment message ID */
+  id: Scalars['UUID'];
+  /** The comment widget that this comment belongs to */
+  widget: Widget;
+  /** Author of this comment message */
+  author: User;
+  /** Comment message (markdown content) */
+  markdown: Scalars['String'];
+  /** Created At */
+  createdAt: Scalars['Time'];
+  /** updatedAt at */
+  updatedAt: Scalars['Time'];
+  /** Reaction summaries */
+  reactionSummaries: Array<ReactionSummary>;
+}
+
+
+export interface CommentWidgetMessageReactionSummariesArgs {
+  size?: Maybe<Scalars['Int']>;
+}
+
+export interface SetUserInfo {
+  name: Scalars['String'];
+  avatar: Scalars['String'];
+  cover: Scalars['String'];
+  bio: Scalars['String'];
+  location: Scalars['String'];
+  language: Scalars['String'];
+  editorCursorColor: Scalars['String'];
+}
+
 export interface CommentWidgetInstance  extends WidgetInstance {
    __typename?: 'CommentWidgetInstance';
   type: WidgetType;
   commentWidget: CommentWidget;
-}
-
-export interface DeleteWidget {
-  id: Scalars['UUID'];
-}
-
-export interface LinkWithGitHubAccount {
-  code: Scalars['String'];
-}
-
-export interface SignUpWithGitHubAccount {
-  username: Scalars['String'];
-  email: Scalars['String'];
-  accessToken: Scalars['String'];
-}
-
-export interface SignInWithGitHubAccount {
-  code: Scalars['String'];
-}
-
-export interface NotebookConnection {
-   __typename?: 'NotebookConnection';
-  totalCount: Scalars['Int'];
-  pageInfo: PageInfo;
-  edges: Array<NotebookEdge>;
-}
-
-export interface UnfollowUser {
-  userID: Scalars['UUID'];
-}
-
-export interface WidgetEdge {
-   __typename?: 'WidgetEdge';
-  /** A cursor for use in pagination. */
-  cursor: Scalars['UUID'];
-  /** The item at the end of the edge. */
-  node: Widget;
-}
-
-export interface RemoveReactionFromCommentWidgetMessage {
-  messageID: Scalars['UUID'];
-  reaction: Scalars['String'];
-}
-
-export interface SubscribeToCommentWidget {
-  widgetID: Scalars['UUID'];
-}
-
-export interface NotebookEdge {
-   __typename?: 'NotebookEdge';
-  cursor: Scalars['UUID'];
-  node: Notebook;
-}
-
-export interface Stats {
-   __typename?: 'Stats';
-  numUsers: Scalars['Int'];
-  numNotebooks: Scalars['Int'];
-}
-
-export interface Notification {
-   __typename?: 'Notification';
-  id: Scalars['UUID'];
-  createdAt: Scalars['Time'];
-  event: NotificationEvent;
-  meta: Scalars['String'];
-  receiver: User;
-  origin: User;
 }
 
 export interface Query {
@@ -555,23 +580,44 @@ export interface QueryUserArgs {
   username?: Maybe<Scalars['String']>;
 }
 
-export interface AddReactionToCommentWidget {
-  widgetID: Scalars['UUID'];
-  reaction: Scalars['String'];
-}
 
-export enum NotebookOrderBy {
-  TotalStarsCount = 'TOTAL_STARS_COUNT',
-  DailyStarsCount = 'DAILY_STARS_COUNT',
-  WeeklyStarsCount = 'WEEKLY_STARS_COUNT',
-  MonthlyStarsCount = 'MONTHLY_STARS_COUNT'
-}
-
-export interface NotificationConnection {
-   __typename?: 'NotificationConnection';
+export interface WidgetConnection {
+   __typename?: 'WidgetConnection';
+  /** Identifies the total count of items in the connection. */
   totalCount: Scalars['Int'];
+  /** Information to aid in pagination. */
   pageInfo: PageInfo;
-  edges: Array<NotificationEdge>;
+  /** A list of edges. */
+  edges: Array<WidgetEdge>;
+}
+
+export interface UserWidget {
+   __typename?: 'UserWidget';
+  type: WidgetType;
+  count: Scalars['Int'];
+}
+
+export interface SignUpInput {
+  /** Username */
+  username: Scalars['String'];
+  /** Email */
+  email: Scalars['String'];
+  /** Password */
+  password: Scalars['String'];
+}
+
+export interface Notification {
+   __typename?: 'Notification';
+  id: Scalars['UUID'];
+  createdAt: Scalars['Time'];
+  event: NotificationEvent;
+  meta: Scalars['String'];
+  receiver: User;
+  origin: User;
+}
+
+export interface StarNotebook {
+  notebookID: Scalars['UUID'];
 }
 
 export interface ReactionSummary {
@@ -581,19 +627,8 @@ export interface ReactionSummary {
   selfAuthored: Scalars['Boolean'];
 }
 
-
-export interface WidgetInstance {
-  type: WidgetType;
-}
-
-export interface Widget {
-   __typename?: 'Widget';
-  id: Scalars['UUID'];
-  instance: WidgetInstance;
-  owner: User;
-  description: Scalars['String'];
-  source: Scalars['String'];
-  canConfigure: Scalars['Boolean'];
+export interface FollowUser {
+  userID: Scalars['UUID'];
 }
 
 export interface CommentWidget {
@@ -629,48 +664,25 @@ export interface CommentWidgetReactionSummariesArgs {
   size?: Maybe<Scalars['Int']>;
 }
 
-export interface CommentWidgetMessageConnection {
-   __typename?: 'CommentWidgetMessageConnection';
-  /** Identifies the total count of items in the connection. */
-  totalCount: Scalars['Int'];
-  /** Information to aid in pagination. */
-  pageInfo: PageInfo;
-  /** A list of edges. */
-  edges: Array<CommentWidgetMessageEdge>;
-}
-
-export interface CommentWidgetMessage {
-   __typename?: 'CommentWidgetMessage';
-  /** Comment message ID */
-  id: Scalars['UUID'];
-  /** The comment widget that this comment belongs to */
-  widget: Widget;
-  /** Author of this comment message */
-  author: User;
-  /** Comment message (markdown content) */
-  markdown: Scalars['String'];
-  /** Created At */
-  createdAt: Scalars['Time'];
-  /** updatedAt at */
-  updatedAt: Scalars['Time'];
-  /** Reaction summaries */
-  reactionSummaries: Array<ReactionSummary>;
-}
-
-
-export interface CommentWidgetMessageReactionSummariesArgs {
-  size?: Maybe<Scalars['Int']>;
-}
-
-export interface GitHubUser {
-   __typename?: 'GitHubUser';
-  login: Scalars['String'];
-  avatar: Scalars['String'];
-  email: Scalars['String'];
-}
-
-export interface UnstarNotebook {
+export interface UnpublishNotebook {
   notebookID: Scalars['UUID'];
+}
+
+export enum NotificationEventType {
+  UserFollowing = 'USER_FOLLOWING',
+  CommentWidgetMessagePosting = 'COMMENT_WIDGET_MESSAGE_POSTING'
+}
+
+
+export interface VerifyEmail {
+  email: Scalars['String'];
+  verificationCode: Scalars['String'];
+}
+
+export interface PostCommentWidgetMessage {
+  widgetID: Scalars['UUID'];
+  markdown: Scalars['String'];
+  notifyUsers: Array<Maybe<Scalars['String']>>;
 }
 
 export type SignUpMutationVariables = {
@@ -926,6 +938,21 @@ export type UnpublishNotebookMutationVariables = {
 export type UnpublishNotebookMutation = (
   { __typename?: 'Mutation' }
   & Pick<Mutation, 'unpublishNotebook'>
+);
+
+export type UpdateNotebookMutationVariables = {
+  notebookID: Scalars['UUID'];
+  gitURL: Scalars['String'];
+  gitBranch: Scalars['String'];
+};
+
+
+export type UpdateNotebookMutation = (
+  { __typename?: 'Mutation' }
+  & { updateNotebook: (
+    { __typename?: 'Notebook' }
+    & NotebookFieldsFragment
+  ) }
 );
 
 export type StarNotebookMutationVariables = {
@@ -1682,6 +1709,22 @@ export const UnpublishNotebookComponent = (props: Omit<Urql.MutationProps<Unpubl
 
 export function useUnpublishNotebookMutation() {
   return Urql.useMutation<UnpublishNotebookMutation, UnpublishNotebookMutationVariables>(UnpublishNotebookDocument);
+};
+export const UpdateNotebookDocument = gql`
+    mutation UpdateNotebook($notebookID: UUID!, $gitURL: String!, $gitBranch: String!) {
+  updateNotebook(input: {notebookID: $notebookID, gitURL: $gitURL, gitBranch: $gitBranch}) {
+    ...NotebookFields
+  }
+}
+    ${NotebookFieldsFragmentDoc}`;
+
+export const UpdateNotebookComponent = (props: Omit<Urql.MutationProps<UpdateNotebookMutation, UpdateNotebookMutationVariables>, 'query'> & { variables?: UpdateNotebookMutationVariables }) => (
+  <Urql.Mutation {...props} query={UpdateNotebookDocument} />
+);
+
+
+export function useUpdateNotebookMutation() {
+  return Urql.useMutation<UpdateNotebookMutation, UpdateNotebookMutationVariables>(UpdateNotebookDocument);
 };
 export const StarNotebookDocument = gql`
     mutation StarNotebook($notebookID: UUID!) {

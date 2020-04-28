@@ -436,9 +436,14 @@ export function Home(props: Props) {
   );
 
   const notebookPanel = props.section === HomeSection.Explore && (
-    <Box className={clsx(classes.editorPanel)}>
-      <NotebookPanel></NotebookPanel>
-    </Box>
+    <Card
+      className={clsx(classes.editorPanel)}
+      style={{
+        display: cloudContainer.displayNotebookPreview && "block",
+      }}
+    >
+      <NotebookPanel notebook={cloudContainer.selectedNotebook}></NotebookPanel>
+    </Card>
   );
 
   return (

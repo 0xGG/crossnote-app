@@ -1,7 +1,12 @@
 import React, { useState, useEffect } from "react";
-import { createStyles, makeStyles, Theme } from "@material-ui/core/styles";
+import {
+  createStyles,
+  makeStyles,
+  Theme,
+  useTheme,
+} from "@material-ui/core/styles";
 import clsx from "clsx";
-import { Box, Typography } from "@material-ui/core";
+import { Box, Typography, CircularProgress, Button } from "@material-ui/core";
 import {
   NotebookFieldsFragment,
   useNotebooksQuery,
@@ -31,6 +36,7 @@ const perPage = 20;
 export function Notebooks(props: Props) {
   const classes = useStyles(props);
   const { t } = useTranslation();
+  const theme = useTheme();
   const cloudContainer = CloudContainer.useContainer();
   const [notebooksListElement, setNotebooksListElement] = useState<
     HTMLDivElement
@@ -61,10 +67,17 @@ export function Notebooks(props: Props) {
   }, [props.searchValue]);
 
   useEffect(() => {
+    // Init
     if (notebooks.length === 0 && page === 0 && finishedLoadingAll === false) {
       executeNotebooksQuery();
     }
   }, [notebooks, page, finishedLoadingAll, executeNotebooksQuery]);
+
+  useEffect(() => {
+    if (!finishedLoadingAll && page !== 0) {
+      executeNotebooksQuery();
+    }
+  }, [page, finishedLoadingAll]);
 
   useEffect(() => {
     if (resNotebooks.error) {
@@ -105,7 +118,26 @@ export function Notebooks(props: Props) {
           <NotebookCard notebook={notebook} key={notebook.id}></NotebookCard>
         );
       })}
-      {finishedLoadingAll && notebooks.length === 0 && (
+      {!finishedLoadingAll &&
+        (resNotebooks.fetching ? (
+          <Box style={{ marginTop: theme.spacing(2), textAlign: "center" }}>
+            <CircularProgress></CircularProgress>
+          </Box>
+        ) : (
+          <Box style={{ textAlign: "center", margin: theme.spacing(2) }}>
+            <Button
+              color={"primary"}
+              variant={"outlined"}
+              onClick={() => {
+                console.log("clicked");
+                setPage((page) => page + 1);
+              }}
+            >
+              {"View more notebooks"}
+            </Button>
+          </Box>
+        ))}
+      {finishedLoadingAll ? (
         <Typography
           style={{
             textAlign: "center",
@@ -113,9 +145,9 @@ export function Notebooks(props: Props) {
           }}
           variant={"body2"}
         >
-          {"🧐 " + t("general/no-notebooks-found")}
+          {"🧐 " + t("general/no-more-notebooks-found")}
         </Typography>
-      )}
+      ) : null}
     </div>
   );
 }
