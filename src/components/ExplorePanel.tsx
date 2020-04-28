@@ -187,7 +187,7 @@ export default function ExplorePanel(props: Props) {
               }}
             >
               <Publish></Publish>
-              {"publish your notebook"}
+              {t("general/Publish")}
             </Button>
           </Box>
         </Box>

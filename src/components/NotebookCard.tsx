@@ -20,6 +20,7 @@ import Identicon from "identicon.js";
 import { sha256 } from "js-sha256";
 import { Star, StarOutline } from "mdi-material-ui";
 import { CloudContainer } from "../containers/cloud";
+import { resolveNotebookFilePath } from "../utilities/image";
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -127,8 +128,10 @@ export function NotebookCard(props: Props) {
 
         // render images
         setImages(
-          summary.images.filter((x) => x.startsWith("https://")).slice(0, 3) ||
-            [],
+          summary.images
+            .map((image) => resolveNotebookFilePath(notebook, image))
+            .filter((x) => x.length > 0)
+            .slice(0, 3) || [],
         );
       })
       .catch((error) => {});

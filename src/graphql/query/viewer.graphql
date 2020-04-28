@@ -13,6 +13,8 @@ fragment ViewerFields on User {
   verifiedEmail
   updatedAt
   widgetsCount
+  notebooksCount
+  starredNotebooksCount
   #isFollowing
   #areFriends
   #followersCount

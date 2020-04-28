@@ -49,6 +49,7 @@ export default function PublishNotebookDialog(props: Props) {
         timeout: 2000,
       }).show();
       props.onClose();
+      window.location.reload();
     }
   }, [resPublishNotebook]);
 
@@ -73,7 +74,7 @@ export default function PublishNotebookDialog(props: Props) {
         <Box style={{ marginTop: "32px" }}></Box>
         <Typography variant={"caption"}>
           {
-            "* We currently only support publishing the notebook from a public repository on GitHub, GitLab, Gitea, or Gitea. We only collect README.md file."
+            "* We currently only support publishing the notebook from a public repository on GitHub, GitLab, Gitea, or Gitea. We only collect README.md file data."
           }
         </Typography>
         <br></br>

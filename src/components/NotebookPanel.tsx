@@ -32,6 +32,7 @@ import { useTranslation } from "react-i18next";
 import { renderPreview } from "vickymd/preview";
 import { CrossnoteContainer } from "../containers/crossnote";
 import AddNotebookDialog from "./AddNotebookDialog";
+import ConfigurePublishedNotebookDialog from "./ConfigurePublishedNotebookDialog";
 
 const previewZIndex = 99;
 const useStyles = makeStyles((theme: Theme) =>
@@ -136,6 +137,10 @@ export function NotebookPanel(props: Props) {
   const [addNotebookDialogOpen, setAddNotebookDialogOpen] = useState<boolean>(
     false,
   );
+  const [
+    configureNotebookDialogOpen,
+    setConfigureNotebookDialogOpen,
+  ] = useState<boolean>(false);
   const [forceUpdate, setForceUpdate] = useState<number>(Date.now());
   const [
     resStarNotebook,
@@ -154,27 +159,19 @@ export function NotebookPanel(props: Props) {
     const gitURLArr = gitURL.replace("https://", "").split("/");
     const gitHost = gitURLArr[0].toLowerCase();
     const gitOwner = gitURLArr[1];
-    const gitRepo = gitURLArr[2];
+    const gitRepo = gitURLArr[2].replace(/\.git$/, "");
+    let url = "";
     if (gitHost === "github.com") {
-      window.open(
-        `https://github.com/${gitOwner}/${gitRepo}/tree/${gitBranch}`,
-        "_blank",
-      );
+      url = `https://github.com/${gitOwner}/${gitRepo}/tree/${gitBranch}`;
     } else if (gitHost === "gitlab.com") {
-      window.open(
-        `https://gitlab.com/${gitOwner}/${gitRepo}/-/tree/${gitBranch}`,
-        "_blank",
-      );
+      url = `https://gitlab.com/${gitOwner}/${gitRepo}/-/tree/${gitBranch}`;
     } else if (gitHost === "gitee.com") {
-      window.open(
-        `https://gitee.com/${gitOwner}/${gitRepo}/tree/${gitBranch}`,
-        "_blank",
-      );
+      url = `https://gitee.com/${gitOwner}/${gitRepo}/tree/${gitBranch}`;
     } else if (gitHost === "gitea.com") {
-      window.open(
-        `https://gitea.com/${gitOwner}/${gitRepo}/src/branch/${gitBranch}`,
-        "_blank",
-      );
+      url = `https://gitea.com/${gitOwner}/${gitRepo}/src/branch/${gitBranch}`;
+    }
+    if (url.length) {
+      window.open(url, "_blank");
     }
   }, [notebook]);
 
@@ -342,7 +339,7 @@ export function NotebookPanel(props: Props) {
                 <BookOpenPageVariant
                   style={{ marginRight: theme.spacing(0.5) }}
                 ></BookOpenPageVariant>
-                {"Open"}
+                {t("general/Open")}
               </Button>
             </ButtonGroup>
           ) : (
@@ -355,16 +352,19 @@ export function NotebookPanel(props: Props) {
                 <CloudDownloadOutline
                   style={{ marginRight: theme.spacing(0.5) }}
                 ></CloudDownloadOutline>
-                {"Download"}
+                {t("general/Download")}
               </Button>
             </ButtonGroup>
           )}
           {cloudContainer.viewer &&
             cloudContainer.viewer.username === notebook.owner.username && (
               <ButtonGroup style={{ marginLeft: theme.spacing(1) }}>
-                <Button className={clsx(classes.controlBtn)}>
+                <Button
+                  className={clsx(classes.controlBtn)}
+                  onClick={() => setConfigureNotebookDialogOpen(true)}
+                >
                   <Cog></Cog>
-                  {t("general/Settings")}
+                  {t("general/Configure")}
                 </Button>
               </ButtonGroup>
             )}
@@ -405,6 +405,11 @@ export function NotebookPanel(props: Props) {
         gitBranch={notebook.gitBranch}
         canCancel={true}
       ></AddNotebookDialog>
+      <ConfigurePublishedNotebookDialog
+        notebook={notebook}
+        open={configureNotebookDialogOpen}
+        onClose={() => setConfigureNotebookDialogOpen(false)}
+      ></ConfigurePublishedNotebookDialog>
     </Box>
   );
 }
