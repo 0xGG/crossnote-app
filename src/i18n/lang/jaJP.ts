@@ -1,7 +1,8 @@
 export const jaJP = {
   translation: {
     "title/Crossnote": "クロスノート",
-    "search/placeholder": "ノートを検索する",
+    "search/notes": "ノートを検索する",
+    "search/notebooks": "ノートブックを検索する",
 
     // Account
     "account/Anonymous": "匿名",
@@ -83,7 +84,10 @@ export const jaJP = {
     "general/enter-presentation-mode": "スライドショーモードに入る",
     "general/math-preview": "数学プレビュー",
     "general/this-note-is-empty": "このノートには内容がありません",
+    "general/this-notebook-is-empty": "このノートブックには内容がありません",
+    "general/nothing-here": "ここには何もない",
     "general/no-notes-found": "他のノートは見つかりませんでした",
+    "general/no-more-notebooks-found": "ノートブックが見つかりません",
     "general/no-notifications-found": "他のニュースは見つかりませんでした",
     "general/clear-all": "すべてクリア",
     "general/Save": "保存",
@@ -116,12 +120,18 @@ export const jaJP = {
     "general/Languages": "言語",
     "general/track": "たどる",
     "general/Publish": "公開",
+    "general/Unpublish": "非公開",
+    "general/Open": "開く",
+    "general/Download": "ダウンロード",
+    "general/Configure": "構成",
+    "general/Update": "更新",
     "general/empty": "空",
     "general/Explore": "探索",
     "general/Notebooks": "ノートブック",
     "general/add-a-notebook": "ノートブックを追加する",
     "general/add-a-note": "ノートを追加する",
     "general/configure-the-notebook": "ノートブックを構成する",
+    "general/publish-your-notebook": "ノートブックを発行する",
     "general/notebook-name": "ノートブック名",
     "general/git-repository": "git リポジトリ",
     "general/optional": "オプション",
@@ -182,6 +192,10 @@ export const jaJP = {
     "error/failed-to-change-file-path": "ファイル パスの変更に失敗しました",
     "error/failed-to-create-widget": "ウィジェットの作成に失敗しました",
     "error/failed-to-load-widget": "ウィジェットを読み込めませんでした",
+    "error/failed-to-update-the-notebook": "ノートブックの更新に失敗しました",
+    "error/failed-to-unpublish-the-notebook":
+      "ノートブックの公開を取り消すことができませんでした",
+    "error/failed-to-publish-notebook": "ノートブックを発行できませんでした",
 
     // Success
     "success/notebook-uploaded": "ノートブックがアップロードされます",
@@ -550,5 +564,11 @@ export const jaJP = {
       "1) [共有] ボタンを押します。",
     "react-ios-pwa-prompt/copy-add-home-button-label":
       "2) 「ホーム画面に追加」を押します。",
+
+    // Publish notebook
+    "publish-notebook/disclaimer-1":
+      "現在、GitHub、GitLab、Gitea、またはコードクラウドのパブリックウェアハウスからノートブックをリリースする場合のみサポートしています。 README.md ファイル データのみを収集します。",
+    "publish-notebook/disclaimer-2":
+      "リモート ウェアハウスで次の front-matter を README.md に追加して、ノートブックの所有権を主張します。",
   },
 };

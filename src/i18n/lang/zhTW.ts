@@ -1,7 +1,8 @@
 export const zhTW = {
   translation: {
     "title/Crossnote": "交叉筆記",
-    "search/placeholder": "搜索筆記",
+    "search/notes": "搜索筆記",
+    "search/notebooks": "搜尋筆記本",
 
     // Account
     "account/Anonymous": "匿名",
@@ -83,7 +84,10 @@ export const zhTW = {
     "general/enter-presentation-mode": "進入幻燈片模式",
     "general/math-preview": "數學預覽",
     "general/this-note-is-empty": "這個筆記沒有內容",
+    "general/this-notebook-is-empty": "這個筆記本沒有內容",
+    "general/nothing-here": "這裡什麼都沒有",
     "general/no-notes-found": "沒有找到其它的筆記",
+    "general/no-more-notebooks-found": "沒有找到其它的筆記本",
     "general/no-notifications-found": "沒有找到其它的消息",
     "general/clear-all": "清空所有",
     "general/Save": "保存",
@@ -116,12 +120,18 @@ export const zhTW = {
     "general/Languages": "語言",
     "general/track": "跟蹤",
     "general/Publish": "發布",
+    "general/Unpublish": "取消發佈",
+    "general/Open": "開啟",
+    "general/Download": "下載",
+    "general/Configure": "設定",
+    "general/Update": "更新",
     "general/empty": "空的",
     "general/Explore": "探索",
     "general/Notebooks": "筆記本",
     "general/add-a-notebook": "添加一個筆記本",
     "general/add-a-note": "添加一个筆記",
     "general/configure-the-notebook": "設置筆記本",
+    "general/publish-your-notebook": "發佈你的筆記本",
     "general/notebook-name": "筆記本名稱",
     "general/git-repository": "git 倉庫",
     "general/optional": "可選",
@@ -177,6 +187,9 @@ export const zhTW = {
     "error/failed-to-change-file-path": "更改文件路徑失敗",
     "error/failed-to-create-widget": "創建掛件失敗",
     "error/failed-to-load-widget": "讀取掛件失敗",
+    "error/failed-to-update-the-notebook": "更新筆記本失敗",
+    "error/failed-to-unpublish-the-notebook": "取消發佈筆記本失敗",
+    "error/failed-to-publish-notebook": "發佈筆記本失敗",
 
     // Success
     "success/notebook-uploaded": "筆記本已上傳",
@@ -510,5 +523,11 @@ export const zhTW = {
     "react-ios-pwa-prompt/copy-share-button-label": "1) 按下「共用」按鈕",
     "react-ios-pwa-prompt/copy-add-home-button-label":
       "2) 按下「添加到主螢幕」",
+
+    // Publish notebook
+    "publish-notebook/disclaimer-1":
+      "我們目前僅支援從 GitHub、GitLab、Gitea 或碼雲的公共倉庫發佈筆記本。 我們只收集 README.md 文件數據。",
+    "publish-notebook/disclaimer-2":
+      "請通過在遠端倉庫中向 README.md 添加以下 front-matter 來聲明筆記本的擁有權:",
   },
 };

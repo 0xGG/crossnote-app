@@ -66,7 +66,7 @@ export default function ConfigurePublishedNotebookDialog(props: Props) {
     if (resUpdateNotebook.error) {
       new Noty({
         type: "error",
-        text: "Failed to update the notebook",
+        text: t("error/failed-to-update-the-notebook"),
         layout: "topRight",
         theme: "relax",
         timeout: 2000,
@@ -81,7 +81,7 @@ export default function ConfigurePublishedNotebookDialog(props: Props) {
     if (resUnpublishNotebook.error) {
       new Noty({
         type: "error",
-        text: "Failed to unpublish the notebook",
+        text: t("error/failed-to-unpublish-the-notebook"),
         layout: "topRight",
         theme: "relax",
         timeout: 2000,

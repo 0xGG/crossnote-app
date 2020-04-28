@@ -1,7 +1,8 @@
 export const zhCN = {
   translation: {
     "title/Crossnote": "交叉笔记",
-    "search/placeholder": "搜索笔记",
+    "search/notes": "搜索笔记",
+    "search/notebooks": "搜索笔记本",
 
     // Account
     "account/Anonymous": "匿名",
@@ -83,7 +84,10 @@ export const zhCN = {
     "general/enter-presentation-mode": "进入幻灯片模式",
     "general/math-preview": "数学预览",
     "general/this-note-is-empty": "这个笔记没有内容",
+    "general/this-notebook-is-empty": "这个笔记本没有内容",
+    "general/nothing-here": "这里什么也没有",
     "general/no-notes-found": "没有找到其它的笔记",
+    "general/no-more-notebooks-found": "没有找到其它的笔记本",
     "general/no-notifications-found": "没有找到其它的消息",
     "general/clear-all": "清空所有",
     "general/Save": "保存",
@@ -116,12 +120,18 @@ export const zhCN = {
     "general/Languages": "语言",
     "general/track": "跟踪",
     "general/Publish": "发布",
+    "general/Unpublish": "取消发布",
+    "general/Open": "打开",
+    "general/Download": "下载",
+    "general/Configure": "配置",
+    "general/Update": "更新",
     "general/empty": "空的",
     "general/Explore": "探索",
     "general/Notebooks": "笔记本",
     "general/add-a-notebook": "添加一个笔记本",
     "general/add-a-note": "添加一个笔记",
     "general/configure-the-notebook": "设置笔记本",
+    "general/publish-your-notebook": "发布你的笔记本",
     "general/notebook-name": "笔记本名称",
     "general/git-repository": "git 仓库",
     "general/optional": "可选",
@@ -177,6 +187,9 @@ export const zhCN = {
     "error/failed-to-change-file-path": "更改文件路径失败",
     "error/failed-to-create-widget": "创建挂件失败",
     "error/failed-to-load-widget": "读取挂件失败",
+    "error/failed-to-update-the-notebook": "更新笔记本失败",
+    "error/failed-to-unpublish-the-notebook": "取消发布笔记本失败",
+    "error/failed-to-publish-notebook": "发布笔记本失败",
 
     // Success
     "success/notebook-uploaded": "笔记本已上传",
@@ -510,5 +523,11 @@ export const zhCN = {
       "这个网站拥有软件功能。将它添加到你的主屏幕来开启全屏以及离线使用功能。",
     "react-ios-pwa-prompt/copy-share-button-label": "1) 点击 '分享' 按钮",
     "react-ios-pwa-prompt/copy-add-home-button-label": "2) 点击 '添加到主屏幕'",
+
+    // Publish notebook
+    "publish-notebook/disclaimer-1":
+      "我们目前仅支持从 GitHub、GitLab、Gitea 或码云的公共仓库发布笔记本。我们只收集 README.md 文件数据。",
+    "publish-notebook/disclaimer-2":
+      "请通过在远程仓库中向 README.md 添加以下 front-matter 来声明笔记本的所有权：",
   },
 };

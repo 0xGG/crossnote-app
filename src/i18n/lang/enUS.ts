@@ -1,7 +1,8 @@
 export const enUS = {
   translation: {
     "title/Crossnote": "Crossnote",
-    "search/placeholder": "Search Notes",
+    "search/notes": "Search Notes",
+    "search/notebooks": "Search Notebooks",
 
     // Account
     "account/Anonymous": "Anonymous",
@@ -83,7 +84,10 @@ export const enUS = {
     "general/enter-presentation-mode": "Enter presentation mode",
     "general/math-preview": "Math Preview",
     "general/this-note-is-empty": "This note is empty",
+    "general/this-notebook-is-empty": "This notebook is empty",
+    "general/nothing-here": "Nothing here",
     "general/no-notes-found": "No notes found",
+    "general/no-more-notebooks-found": "No more notebooks found",
     "general/no-notifications-found": "No notifications found",
     "general/clear-all": "Clear all",
     "general/Save": "Save",
@@ -116,12 +120,18 @@ export const enUS = {
     "general/Languages": "Languages",
     "general/track": "Track",
     "general/Publish": "Publish",
+    "general/Unpublish": "Unpublish",
+    "general/Open": "Open",
+    "general/Download": "Download",
+    "general/Configure": "Configure",
+    "general/Update": "Update",
     "general/empty": "empty",
     "general/Explore": "Explore",
     "general/Notebooks": "Notebooks",
     "general/add-a-notebook": "Add a notebook",
     "general/add-a-note": "Add a note",
     "general/configure-the-notebook": "Configure the notebook",
+    "general/publish-your-notebook": "Publish your notebook",
     "general/notebook-name": "Notebook name",
     "general/git-repository": "git repository",
     "general/optional": "optional",
@@ -180,6 +190,10 @@ export const enUS = {
     "error/failed-to-change-file-path": "Failed to change file path",
     "error/failed-to-create-widget": "Failed to create widget",
     "error/failed-to-load-widget": "Failed to load widget",
+    "error/failed-to-update-the-notebook": "Failed to update the notebook",
+    "error/failed-to-unpublish-the-notebook":
+      "Failed to unpublish the notebook",
+    "error/failed-to-publish-notebook": "Failed to publish the notebook",
 
     // Success
     "success/notebook-uploaded": "Notebook uploaded",
@@ -533,5 +547,11 @@ export const enUS = {
       "1) Press the 'Share' button",
     "react-ios-pwa-prompt/copy-add-home-button-label":
       "2) Press 'Add to Home Screen'",
+
+    // Publish notebook
+    "publish-notebook/disclaimer-1":
+      "We currently only support publishing the notebook from a public repository on GitHub, GitLab, Gitea, or Gitea. We only collect README.md file data.",
+    "publish-notebook/disclaimer-2":
+      "Please declare the ownership of your notebook by adding the following front-matter to README.md in remote repository:",
   },
 };

@@ -35,12 +35,13 @@ export default function PublishNotebookDialog(props: Props) {
     if (resPublishNotebook.error) {
       new Noty({
         type: "error",
-        text: "Failed to publish the notebook",
+        text: t("error/failed-to-publish-notebook"),
         layout: "topRight",
         theme: "relax",
         timeout: 2000,
       }).show();
     } else if (resPublishNotebook.data) {
+      /*
       new Noty({
         type: "success",
         text: "Notebook is published",
@@ -48,14 +49,14 @@ export default function PublishNotebookDialog(props: Props) {
         theme: "relax",
         timeout: 2000,
       }).show();
-      props.onClose();
+      props.onClose();*/
       window.location.reload();
     }
   }, [resPublishNotebook]);
 
   return (
     <Dialog open={props.open} onClose={props.onClose}>
-      <DialogTitle>{"Publish your notebook"}</DialogTitle>
+      <DialogTitle>{t("general/publish-your-notebook")}</DialogTitle>
       <DialogContent>
         <TextField
           label={t("general/url")}
@@ -73,15 +74,11 @@ export default function PublishNotebookDialog(props: Props) {
         ></TextField>
         <Box style={{ marginTop: "32px" }}></Box>
         <Typography variant={"caption"}>
-          {
-            "* We currently only support publishing the notebook from a public repository on GitHub, GitLab, Gitea, or Gitea. We only collect README.md file data."
-          }
+          {"* " + t("publish-notebook/disclaimer-1")}
         </Typography>
         <br></br>
         <Typography variant={"caption"}>
-          {
-            "* Please declare the ownership of your notebook by adding the following front-matter to README.md in remote repository:"
-          }
+          {"* " + t("publish-notebook/disclaimer-2")}
         </Typography>
         <pre
           style={{

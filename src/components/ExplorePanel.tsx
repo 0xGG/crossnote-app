@@ -144,7 +144,7 @@ export default function ExplorePanel(props: Props) {
               <Magnify />
             </div>
             <InputBase
-              placeholder={"Search Notebooks"}
+              placeholder={t("search/notebooks")}
               classes={{
                 root: classes.inputRoot,
                 input: classes.inputInput,

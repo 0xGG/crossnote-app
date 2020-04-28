@@ -33,6 +33,7 @@ import { renderPreview } from "vickymd/preview";
 import { CrossnoteContainer } from "../containers/crossnote";
 import AddNotebookDialog from "./AddNotebookDialog";
 import ConfigurePublishedNotebookDialog from "./ConfigurePublishedNotebookDialog";
+import { resolveNotebookFilePath } from "../utilities/image";
 
 const previewZIndex = 99;
 const useStyles = makeStyles((theme: Theme) =>
@@ -226,6 +227,31 @@ export function NotebookPanel(props: Props) {
     if (!notebook || !previewElement) {
       return;
     }
+    const handleLinksClickEvent = (preview: HTMLElement) => {
+      // Handle link click event
+      const links = preview.getElementsByTagName("A");
+      for (let i = 0; i < links.length; i++) {
+        const link = links[i] as HTMLAnchorElement;
+        link.onclick = (event) => {
+          event.preventDefault();
+          const url = resolveNotebookFilePath(
+            notebook,
+            link.getAttribute("href"),
+          );
+          if (url.startsWith("https://") || url.startsWith("http://")) {
+            window.open(url, "_blank");
+          }
+        };
+      }
+    };
+    const resolveImages = (preview: HTMLElement) => {
+      const images = preview.getElementsByTagName("IMG");
+      for (let i = 0; i < images.length; i++) {
+        const image = images[i] as HTMLImageElement;
+        const imageSrc = image.getAttribute("src");
+        image.setAttribute("src", resolveNotebookFilePath(notebook, imageSrc));
+      }
+    };
     renderPreview(previewElement, notebook.markdown);
     if (
       previewElement.childElementCount &&
@@ -235,24 +261,22 @@ export function NotebookPanel(props: Props) {
       previewElement.style.maxWidth = "100%";
       previewElement.style.height = "100%";
       previewElement.style.overflow = "hidden !important";
-      /*handleLinksClickEvent(
+      handleLinksClickEvent(
         (previewElement.children[0] as HTMLIFrameElement).contentDocument
           .body as HTMLElement,
       );
       resolveImages(
         (previewElement.children[0] as HTMLIFrameElement).contentDocument
           .body as HTMLElement,
-      );*/
+      );
       setPreviewIsPresentation(true);
     } else {
       // normal
       // previewElement.style.maxWidth = `${EditorPreviewMaxWidth}px`;
       previewElement.style.height = "100%";
       previewElement.style.overflow = "hidden !important";
-      /*
       handleLinksClickEvent(previewElement);
       resolveImages(previewElement);
-      */
       setPreviewIsPresentation(false);
     }
   }, [notebook, previewElement]);

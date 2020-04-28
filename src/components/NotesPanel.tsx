@@ -188,7 +188,7 @@ export default function NotesPanel(props: Props) {
               <Magnify />
             </div>
             <InputBase
-              placeholder={t("search/placeholder")}
+              placeholder={t("search/notes")}
               classes={{
                 root: classes.inputRoot,
                 input: classes.inputInput,
