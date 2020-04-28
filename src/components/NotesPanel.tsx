@@ -101,12 +101,6 @@ const useStyles = makeStyles((theme: Theme) =>
         // width: 200
       },
     },
-    notesList: {
-      position: "relative",
-      flex: "1",
-      overflowY: "auto",
-      paddingBottom: theme.spacing(12),
-    },
     loading: {
       position: "absolute",
       top: "40%",
@@ -194,7 +188,7 @@ export default function NotesPanel(props: Props) {
               <Magnify />
             </div>
             <InputBase
-              placeholder={t("search/placeholder")}
+              placeholder={t("search/notes")}
               classes={{
                 root: classes.inputRoot,
                 input: classes.inputInput,

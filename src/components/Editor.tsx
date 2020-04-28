@@ -138,7 +138,6 @@ const useStyles = makeStyles((theme: Theme) =>
       zIndex: 150,
     },
     editorWrapper: {
-      //     display: "contents",
       "flex": 1,
       "overflow": "auto",
       "backgroundColor": theme.palette.background.paper,
@@ -1637,7 +1636,9 @@ export default function Editor(props: Props) {
             }}
             onClick={() => setFullScreenMode(false)}
           >
-            <FullscreenExit></FullscreenExit>
+            <FullscreenExit
+              className={clsx(classes.iconBtnSVG)}
+            ></FullscreenExit>
           </IconButton>
         )}
       </Box>

@@ -45,6 +45,16 @@ export default function AddNotebookDialog(props: Props) {
   >(false);
   const { t } = useTranslation();
 
+  const close = useCallback(() => {
+    setNotebookName("");
+    setGitURL("");
+    setGitBranch("");
+    setGitUsername("");
+    setGitPassword("");
+    setExpanded(false);
+    props.onClose();
+  }, [props]);
+
   const addNotebook = useCallback(async () => {
     try {
       if (gitURL.trim().length) {
@@ -56,7 +66,7 @@ export default function AddNotebookDialog(props: Props) {
           timeout: 2000,
         }).show();
       }
-      props.onClose();
+      close();
       await crossnoteContainer.addNotebook(
         notebookName,
         gitURL.trim(),
@@ -74,7 +84,7 @@ export default function AddNotebookDialog(props: Props) {
         theme: "relax",
         timeout: 2000,
       }).show();
-      props.onClose();
+      close();
     }
   }, [
     props,
@@ -96,17 +106,6 @@ export default function AddNotebookDialog(props: Props) {
     setGitBranch(props.gitBranch);
     setExpanded(true);
   }, [props.gitURL, props.gitBranch]);
-
-  useEffect(() => {
-    return () => {
-      setNotebookName("");
-      setGitURL("");
-      setGitBranch("");
-      setGitUsername("");
-      setGitPassword("");
-      setExpanded(false);
-    };
-  }, [props.open]);
 
   return (
     <Dialog

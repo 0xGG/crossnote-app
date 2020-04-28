@@ -74,10 +74,6 @@ function useSettingsContainer(initialState: InitialState) {
     const themeName = localStorage.getItem("settings/theme") as ThemeName;
     if (themeName) {
       _setTheme(themeName);
-      VickMDSetTheme({
-        themeName: themeName,
-        baseUri: "/styles/",
-      });
     }
   }, [_setTheme]);
 

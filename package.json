@@ -125,6 +125,7 @@
     "@types/react-i18next": "^8.1.0",
     "@types/react-lazyload": "^2.6.0",
     "@types/react-router-dom": "^5.1.4",
+    "del": "^5.1.0",
     "gh-pages": "^2.2.0",
     "gulp": "^4.0.2",
     "gulp-plumber": "^1.2.1",

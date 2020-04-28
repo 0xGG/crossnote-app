@@ -1,6 +1,7 @@
 import { Note } from "../lib/crossnote";
 import * as path from "path";
 import { pfs } from "../lib/fs";
+import { NotebookFieldsFragment } from "../generated/graphql";
 
 export async function resolveNoteImageSrc(note: Note, imageSrc: string) {
   if (!note) {
@@ -12,6 +13,39 @@ export async function resolveNoteImageSrc(note: Note, imageSrc: string) {
     return "";
   } else {
     return await loadImageAsBase64(note, imageSrc);
+  }
+}
+
+export function resolveNotebookFilePath(
+  notebook: NotebookFieldsFragment,
+  filePath: string,
+) {
+  if (!notebook) {
+    return filePath;
+  }
+  if (filePath.startsWith("https://") || filePath.startsWith("data:")) {
+    return filePath;
+  } else if (filePath.startsWith("http://")) {
+    return "";
+  } else {
+    const { gitURL, gitBranch } = notebook;
+    const gitURLArr = gitURL.replace("https://", "").split("/");
+    const gitHost = gitURLArr[0].toLowerCase();
+    const gitOwner = gitURLArr[1];
+    const gitRepo = gitURLArr[2].replace(/\.git$/, "");
+    let outFilePath = "";
+    filePath = filePath.replace(/^\/+/, "").replace(/^\.\/+/, "");
+    if (gitHost === "github.com") {
+      outFilePath = `https://github.com/${gitOwner}/${gitRepo}/raw/${gitBranch}/${filePath}`;
+    } else if (gitHost === "gitlab.com") {
+      outFilePath = `https://gitlab.com/${gitOwner}/${gitRepo}/-/raw/${gitBranch}/${filePath}`;
+    } else if (gitHost === "gitee.com") {
+      outFilePath = `https://gitee.com/${gitOwner}/${gitRepo}/raw/${gitBranch}/${filePath}`;
+    } else if (gitHost === "gitea.com") {
+      outFilePath = `https://gitea.com/${gitOwner}/${gitRepo}/raw/branch/${gitBranch}/${filePath}`;
+    }
+
+    return outFilePath;
   }
 }
 

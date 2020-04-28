@@ -13,6 +13,7 @@ import ServiceWorkerWrapper from "./components/ServiceWorkerWrapper";
 // @ts-ignore
 import PWAPrompt from "react-ios-pwa-prompt";
 import { useTranslation } from "react-i18next";
+const is = require("is_js");
 
 const App: FC = () => {
   const { t } = useTranslation();
@@ -44,6 +45,13 @@ const App: FC = () => {
               exact={true}
               render={(props) => (
                 <Home section={HomeSection.Settings} queryParams={{}}></Home>
+              )}
+            ></Route>
+            <Route
+              path={`/explore`}
+              exact={true}
+              render={(props) => (
+                <Home section={HomeSection.Explore} queryParams={{}}></Home>
               )}
             ></Route>
             <Route
@@ -83,17 +91,19 @@ const App: FC = () => {
           </Switch>
         </Router>
         <ServiceWorkerWrapper></ServiceWorkerWrapper>
-        <PWAPrompt
-          copyTitle={t("react-ios-pwa-prompt/copy-title")}
-          copyBody={t("react-ios-pwa-prompt/copy-body")}
-          copyShareButtonLabel={t(
-            "react-ios-pwa-prompt/copy-share-button-label",
-          )}
-          copyAddHomeButtonLabel={t(
-            "react-ios-pwa-prompt/copy-add-home-button-label",
-          )}
-          copyClosePrompt={t("general/cancel")}
-        ></PWAPrompt>
+        {is.safari() ? (
+          <PWAPrompt
+            copyTitle={t("react-ios-pwa-prompt/copy-title")}
+            copyBody={t("react-ios-pwa-prompt/copy-body")}
+            copyShareButtonLabel={t(
+              "react-ios-pwa-prompt/copy-share-button-label",
+            )}
+            copyAddHomeButtonLabel={t(
+              "react-ios-pwa-prompt/copy-add-home-button-label",
+            )}
+            copyClosePrompt={t("general/cancel")}
+          ></PWAPrompt>
+        ) : null}
       </div>
     </ThemeProvider>
   );

@@ -3,6 +3,7 @@ const gulp = require("gulp");
 // const sass = require("gulp-sass");
 // const plumber = require("gulp-plumber");
 const workboxBuild = require("workbox-build");
+const del = require("del");
 
 //const src = "./public/styles/**/*.scss";
 /*
@@ -36,6 +37,7 @@ gulp.task(
 */
 
 gulp.task("copy-css-files", function (cb) {
+  del.sync("./public/styles/");
   gulp
     .src(["./node_modules/vickymd/theme/**/*"])
     .pipe(gulp.dest("./public/styles/"));
@@ -48,7 +50,7 @@ gulp.task("service-worker", () => {
       swSrc: "src/sw.js",
       swDest: "build/service-worker.js",
       globDirectory: "build",
-      globPatterns: ["**/*.{js,css,html,png,tff,woff,woff2}"],
+      globPatterns: ["**/*.{js,css,html,png,svg,tff,woff,woff2}"],
       maximumFileSizeToCacheInBytes: 1024 * 1024 * 8, // 8mb
       mode: "production",
     })

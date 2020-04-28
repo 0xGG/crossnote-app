@@ -4,6 +4,7 @@ import {
   User,
   useViewerQuery,
   useSetUserInfoMutation,
+  NotebookFieldsFragment,
 } from "../generated/graphql";
 import Noty from "noty";
 import { SettingsContainer } from "./settings";
@@ -12,6 +13,8 @@ import { useTranslation } from "react-i18next";
 interface InitialState {}
 
 function useCloudContainer(initialState: InitialState) {
+  const { t } = useTranslation();
+
   const [authDialogOpen, setAuthDialogOpen] = useState<boolean>(false);
   const [loggedIn, setLoggedIn] = useState<boolean>(false);
   const [viewer, setViewer] = useState<User>(null);
@@ -23,8 +26,13 @@ function useCloudContainer(initialState: InitialState) {
   const [token, setToken] = useState<string>(
     localStorage.getItem("token") || "",
   );
+  const [selectedNotebook, setSelectedNotebook] = useState<
+    NotebookFieldsFragment
+  >(null);
+  const [displayNotebookPreview, setDisplayNotebookPreview] = useState<boolean>(
+    false,
+  );
   const settingsContainer = SettingsContainer.useContainer();
-  const [t] = useTranslation();
 
   const refetchViewer = useCallback(() => {
     if (token) {
@@ -154,6 +162,10 @@ function useCloudContainer(initialState: InitialState) {
     setUserInfo,
     reduceNotificationsCountByOne,
     clearNotificationsCount,
+    selectedNotebook,
+    setSelectedNotebook,
+    displayNotebookPreview,
+    setDisplayNotebookPreview,
   };
 }
 

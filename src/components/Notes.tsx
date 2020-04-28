@@ -1,11 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import LazyLoad from "react-lazyload";
-import {
-  createStyles,
-  makeStyles,
-  Theme,
-  lighten,
-} from "@material-ui/core/styles";
+import { createStyles, makeStyles, Theme } from "@material-ui/core/styles";
 import clsx from "clsx";
 import { CrossnoteContainer } from "../containers/crossnote";
 import { Box, Typography, Button } from "@material-ui/core";

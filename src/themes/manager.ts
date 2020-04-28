@@ -3,6 +3,7 @@ import { LightTheme } from "./light";
 import { DarkTheme } from "./dark";
 import { OneDarkTheme } from "./one-dark";
 import { SolarizedLight } from "./solarized-light";
+import { setTheme } from "vickymd/theme";
 
 export class ThemeManager {
   public themes: CrossnoteTheme[] = [];
@@ -27,6 +28,10 @@ export class ThemeManager {
       return;
     }
     this.selectedTheme = theme;
+    setTheme({
+      themeName: theme.name,
+      baseUri: "/styles/",
+    });
   }
 }
 
