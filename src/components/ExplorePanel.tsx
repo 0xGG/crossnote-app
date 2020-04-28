@@ -13,6 +13,7 @@ import {
   SortVariant,
   SortDescending,
   SortAscending,
+  Publish,
 } from "mdi-material-ui";
 import {
   Box,
@@ -185,6 +186,7 @@ export default function ExplorePanel(props: Props) {
                 }
               }}
             >
+              <Publish></Publish>
               {"publish your notebook"}
             </Button>
           </Box>

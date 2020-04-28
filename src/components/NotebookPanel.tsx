@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   Box,
   Hidden,
@@ -13,7 +13,11 @@ import {
   useTheme,
 } from "@material-ui/core/styles";
 import clsx from "clsx";
-import { NotebookFieldsFragment } from "../generated/graphql";
+import {
+  NotebookFieldsFragment,
+  useStarNotebookMutation,
+  useUnstarNotebookMutation,
+} from "../generated/graphql";
 import { CloudContainer } from "../containers/cloud";
 import {
   ChevronLeft,
@@ -27,6 +31,7 @@ import {
 import { useTranslation } from "react-i18next";
 import { renderPreview } from "vickymd/preview";
 import { CrossnoteContainer } from "../containers/crossnote";
+import AddNotebookDialog from "./AddNotebookDialog";
 
 const previewZIndex = 99;
 const useStyles = makeStyles((theme: Theme) =>
@@ -128,6 +133,91 @@ export function NotebookPanel(props: Props) {
   const [alreadyDownloadedNotebook, setAlreadyDownloadedNotebook] = useState<
     boolean
   >(false);
+  const [addNotebookDialogOpen, setAddNotebookDialogOpen] = useState<boolean>(
+    false,
+  );
+  const [forceUpdate, setForceUpdate] = useState<number>(Date.now());
+  const [
+    resStarNotebook,
+    executeStarNotebookMutation,
+  ] = useStarNotebookMutation();
+  const [
+    resUnstarNotebook,
+    executeUnstarNotebookMutation,
+  ] = useUnstarNotebookMutation();
+
+  const openGitURLWithBranch = useCallback(() => {
+    if (!notebook) {
+      return;
+    }
+    const { gitURL, gitBranch } = notebook;
+    const gitURLArr = gitURL.replace("https://", "").split("/");
+    const gitHost = gitURLArr[0].toLowerCase();
+    const gitOwner = gitURLArr[1];
+    const gitRepo = gitURLArr[2];
+    if (gitHost === "github.com") {
+      window.open(
+        `https://github.com/${gitOwner}/${gitRepo}/tree/${gitBranch}`,
+        "_blank",
+      );
+    } else if (gitHost === "gitlab.com") {
+      window.open(
+        `https://gitlab.com/${gitOwner}/${gitRepo}/-/tree/${gitBranch}`,
+        "_blank",
+      );
+    } else if (gitHost === "gitee.com") {
+      window.open(
+        `https://gitee.com/${gitOwner}/${gitRepo}/tree/${gitBranch}`,
+        "_blank",
+      );
+    } else if (gitHost === "gitea.com") {
+      window.open(
+        `https://gitea.com/${gitOwner}/${gitRepo}/src/branch/${gitBranch}`,
+        "_blank",
+      );
+    }
+  }, [notebook]);
+
+  const starOrUnstarTheNotebook = useCallback(() => {
+    if (!notebook) {
+      return;
+    }
+    if (!cloudContainer.loggedIn) {
+      cloudContainer.setAuthDialogOpen(true);
+      return;
+    }
+    const starred = notebook.isStarred;
+    notebook.isStarred = !notebook.isStarred;
+    if (starred) {
+      notebook.starsCount = Math.max(0, notebook.starsCount - 1);
+      executeUnstarNotebookMutation({
+        notebookID: notebook.id,
+      });
+    } else {
+      notebook.starsCount += 1;
+      executeStarNotebookMutation({
+        notebookID: notebook.id,
+      });
+    }
+    setForceUpdate(Date.now());
+  }, [
+    notebook,
+    executeStarNotebookMutation,
+    executeUnstarNotebookMutation,
+    cloudContainer.loggedIn,
+  ]);
+
+  const openNotebook = useCallback(() => {
+    if (!notebook || !crossnoteContainer.notebooks.length) {
+      return;
+    }
+    const nb = crossnoteContainer.notebooks.find(
+      (n) => n.gitURL === notebook.gitURL && n.gitBranch === notebook.gitBranch,
+    );
+    if (nb) {
+      crossnoteContainer.setSelectedNotebook(nb);
+    }
+  }, [notebook, crossnoteContainer.notebooks]);
 
   useEffect(() => {
     return () => {
@@ -228,7 +318,10 @@ export function NotebookPanel(props: Props) {
             </Button>
           </ButtonGroup>
           <ButtonGroup>
-            <Button className={clsx(classes.controlBtn)}>
+            <Button
+              className={clsx(classes.controlBtn)}
+              onClick={starOrUnstarTheNotebook}
+            >
               {notebook.isStarred ? (
                 <Star className={clsx(classes.star)}></Star>
               ) : (
@@ -242,7 +335,10 @@ export function NotebookPanel(props: Props) {
           </ButtonGroup>
           {alreadyDownloadedNotebook ? (
             <ButtonGroup style={{ marginLeft: theme.spacing(1) }}>
-              <Button className={clsx(classes.controlBtn)}>
+              <Button
+                className={clsx(classes.controlBtn)}
+                onClick={openNotebook}
+              >
                 <BookOpenPageVariant
                   style={{ marginRight: theme.spacing(0.5) }}
                 ></BookOpenPageVariant>
@@ -251,7 +347,11 @@ export function NotebookPanel(props: Props) {
             </ButtonGroup>
           ) : (
             <ButtonGroup style={{ marginLeft: theme.spacing(1) }}>
-              <Button className={clsx(classes.controlBtn)}>
+              <Button
+                className={clsx(classes.controlBtn)}
+                disabled={crossnoteContainer.isAddingNotebook}
+                onClick={() => setAddNotebookDialogOpen(true)}
+              >
                 <CloudDownloadOutline
                   style={{ marginRight: theme.spacing(0.5) }}
                 ></CloudDownloadOutline>
@@ -294,9 +394,17 @@ export function NotebookPanel(props: Props) {
             variant={"caption"}
             style={{ cursor: "pointer" }}
             color={"textPrimary"}
+            onClick={openGitURLWithBranch}
           >{`${notebook.gitURL}:${notebook.gitBranch}`}</Typography>
         </Box>
       </Box>
+      <AddNotebookDialog
+        open={addNotebookDialogOpen}
+        onClose={() => setAddNotebookDialogOpen(false)}
+        gitURL={notebook.gitURL}
+        gitBranch={notebook.gitBranch}
+        canCancel={true}
+      ></AddNotebookDialog>
     </Box>
   );
 }
