@@ -651,7 +651,6 @@ export default function Editor(props: Props) {
         // inputStyle: "textarea", // Break mobile device paste functionality
         hmdFold: HMDFold,
         keyMap: settingsContainer.keyMap,
-        matchBrackets: true,
         showCursorWhenSelecting: true,
         inputStyle: "contenteditable",
       });
