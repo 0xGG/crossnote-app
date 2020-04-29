@@ -472,7 +472,7 @@ export function Settings(props: Props) {
             marginTop: "16px",
           }}
         >
-          {t("settings/editor-cursor-color")}
+          {t("settings/editor-cursor-color") + " (beta)"}
         </Typography>
         <Box
           style={{
