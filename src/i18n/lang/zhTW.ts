@@ -174,6 +174,9 @@ export const zhTW = {
     "general/check-notebook-updates-periodically": "週期性地檢查筆記本更新",
     "general/minutes": "分鐘",
     "general/hard-reset": "硬重設",
+    "general/Default": "預設",
+    "general/Vim": "Vim",
+    "general/Emacs": "Emacs",
 
     // Error
     "error/authentication-failed": "認証失敗",
@@ -240,6 +243,7 @@ export const zhTW = {
     "settings/author-email": "作者郵箱",
     "settings/theme": "主題",
     "settings/created-cloud-widgets-count": "建立的雲掛件數量",
+    "settings/key-map": "鍵盤對應",
 
     // Preview
     "preview/attach-a-note": "附加一個筆記",

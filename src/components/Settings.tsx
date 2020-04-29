@@ -30,6 +30,7 @@ import {
   ThemeLightDark,
   Cloud,
   CloudOutline,
+  Keyboard,
 } from "mdi-material-ui";
 import { CloudContainer } from "../containers/cloud";
 import { smmsUploadImages } from "../utilities/image_uploader";
@@ -40,6 +41,7 @@ import {
 import { startGitHubOAuth } from "../utilities/utils";
 import GitCommit from "../_git_commit";
 import { themeManager } from "../themes/manager";
+import { KeyMap } from "../lib/keymap";
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -525,6 +527,30 @@ export function Settings(props: Props) {
             }}
           ></SketchPicker>
         </Popover>
+      </Box>
+      <Box className={clsx(classes.section)}>
+        <Typography
+          variant={"body2"}
+          style={{
+            // color: "rgba(0, 0, 0, 0.54)",
+            fontSize: "0.75rem",
+            marginBottom: "6px",
+            marginTop: "16px",
+          }}
+        >
+          <Keyboard style={{ marginRight: "8px" }}></Keyboard>
+          {t("settings/key-map") + " (beta)"}
+        </Typography>
+        <Select
+          value={settingsContainer.keyMap}
+          onChange={(event) => {
+            settingsContainer.setKeyMap(event.target.value as KeyMap);
+          }}
+        >
+          <MenuItem value={KeyMap.DEFAULT}>{t("general/Default")}</MenuItem>
+          <MenuItem value={KeyMap.VIM}>{t("general/Vim")}</MenuItem>
+          <MenuItem value={KeyMap.EMACS}>{t("general/Emacs")}</MenuItem>
+        </Select>
       </Box>
       <Box className={clsx(classes.section)} style={{ marginTop: "32px" }}>
         <Link

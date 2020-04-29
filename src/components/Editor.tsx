@@ -608,7 +608,10 @@ export default function Editor(props: Props) {
     style.innerText = `
   .CodeMirror-cursor.CodeMirror-cursor {
     border-left: 2px solid ${settingsContainer.editorCursorColor || "#333"};
-  }    
+  }
+  .cm-fat-cursor-mark.cm-fat-cursor-mark {
+    background-color: ${settingsContainer.editorCursorColor || "#333"};
+  }
   `;
   }, [settingsContainer.editorCursorColor]);
 
@@ -647,6 +650,10 @@ export default function Editor(props: Props) {
         },
         // inputStyle: "textarea", // Break mobile device paste functionality
         hmdFold: HMDFold,
+        keyMap: settingsContainer.keyMap,
+        matchBrackets: true,
+        showCursorWhenSelecting: true,
+        inputStyle: "contenteditable",
       });
       editor.setOption("lineNumbers", false);
       editor.setOption("foldGutter", false);
@@ -662,6 +669,7 @@ export default function Editor(props: Props) {
       });
       setEditor(editor);
       initMathPreview(editor);
+      console.log(editor.getOption("keyMap"));
     }
   }, [textAreaElement, note, editor]);
 

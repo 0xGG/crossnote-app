@@ -174,6 +174,9 @@ export const zhCN = {
     "general/check-notebook-updates-periodically": "周期性地检查笔记本更新",
     "general/minutes": "分钟",
     "general/hard-reset": "硬重置",
+    "general/Default": "默认",
+    "general/Vim": "Vim",
+    "general/Emacs": "Emacs",
 
     // Error
     "error/authentication-failed": "认证失败",
@@ -240,6 +243,7 @@ export const zhCN = {
     "settings/author-email": "作者邮箱",
     "settings/theme": "主题",
     "settings/created-cloud-widgets-count": "创建的云挂件数量",
+    "settings/key-map": "键盘映射",
 
     // Preview
     "preview/attach-a-note": "附加一个笔记",

@@ -177,6 +177,9 @@ export const enUS = {
       "Check notebook updates periodically",
     "general/minutes": "minute(s)",
     "general/hard-reset": "Hard reset",
+    "general/Default": "Default",
+    "general/Vim": "Vim",
+    "general/Emacs": "Emacs",
 
     // Error
     "error/authentication-failed": "Authentication failed",
@@ -245,6 +248,7 @@ export const enUS = {
     "settings/author-email": "Author email",
     "settings/theme": "Theme",
     "settings/created-cloud-widgets-count": "Created cloud widgets count",
+    "settings/key-map": "Key Map",
 
     // Preview
     "preview/attach-a-note": "Attach a note",
