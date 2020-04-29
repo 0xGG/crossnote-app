@@ -1,8 +1,18 @@
 diff --git a/node_modules/codemirror/lib/codemirror.js b/node_modules/codemirror/lib/codemirror.js
-index ccb7c62..d1c05aa 100644
+index ccb7c62..49f6d63 100644
 --- a/node_modules/codemirror/lib/codemirror.js
 +++ b/node_modules/codemirror/lib/codemirror.js
-@@ -7190,6 +7190,7 @@
+@@ -4050,7 +4050,8 @@
+   function restoreSelection(snapshot) {
+     if (!snapshot || !snapshot.activeElt || snapshot.activeElt == activeElt()) { return }
+     snapshot.activeElt.focus();
+-    if (snapshot.anchorNode && contains(document.body, snapshot.anchorNode) && contains(document.body, snapshot.focusNode)) {
++    if (!/^(INPUT|TEXTAREA)$/.test(snapshot.activeElt.nodeName) &&
++      snapshot.anchorNode && contains(document.body, snapshot.anchorNode) && contains(document.body, snapshot.focusNode)) {
+       var sel = window.getSelection(), range = document.createRange();
+       range.setEnd(snapshot.anchorNode, snapshot.anchorOffset);
+       range.collapse(false);
+@@ -7190,6 +7191,7 @@
    var lastStoppedKey = null;
    function onKeyDown(e) {
      var cm = this;
@@ -10,7 +20,7 @@ index ccb7c62..d1c05aa 100644
      cm.curOp.focus = activeElt();
      if (signalDOMEvent(cm, e)) { return }
      // IE does strange things with escape.
-@@ -7233,6 +7234,7 @@
+@@ -7233,6 +7235,7 @@
  
    function onKeyPress(e) {
      var cm = this;
