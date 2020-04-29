@@ -219,7 +219,6 @@ function KanbanCardDisplay(props: KanbanCardProps) {
         // inputStyle: "textarea",
         // autofocus: false
         keyMap: globalContainers.settingsContainer.keyMap,
-        matchBrackets: true,
         showCursorWhenSelecting: true,
         inputStyle: "contenteditable",
       });

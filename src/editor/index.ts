@@ -13,7 +13,6 @@ import "codemirror/mode/javascript/javascript"; // eg. javascript
 import "codemirror/mode/python/python";
 import "codemirror/addon/display/placeholder";
 import "codemirror/addon/hint/show-hint";
-import "codemirror/addon/edit/matchbrackets";
 import "codemirror/keymap/vim";
 import "codemirror/keymap/emacs";
 

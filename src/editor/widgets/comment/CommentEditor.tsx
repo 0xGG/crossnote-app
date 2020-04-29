@@ -84,7 +84,6 @@ export function CommentEditor(props: Props) {
         },
         // inputStyle: "textarea",
         keyMap: globalContainers.settingsContainer.keyMap,
-        matchBrackets: true,
         showCursorWhenSelecting: true,
         inputStyle: "contenteditable",
       });
