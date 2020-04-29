@@ -177,6 +177,9 @@ export const jaJP = {
       "ノートブックの更新を定期的に確認する",
     "general/minutes": "分",
     "general/hard-reset": "ハードリセット",
+    "general/Default": "既定",
+    "general/Vim": "Vim",
+    "general/Emacs": "Emacs",
 
     // Error
     "error/authentication-failed": "認証に失敗しました",
@@ -249,6 +252,7 @@ export const jaJP = {
     "settings/author-email": "著者の電子メール",
     "settings/theme": "テーマ",
     "settings/created-cloud-widgets-count": "作成されたクラウドウィジェット数",
+    "settings/key-map": "キーマップ",
 
     // Preview
     "preview/attach-a-note": "ノートを添付",

@@ -3,7 +3,8 @@ import { useState, useCallback, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { CrossnoteTheme } from "../themes/theme";
 import { themeManager } from "../themes/manager";
-import { setTheme as VickMDSetTheme, ThemeName } from "vickymd/theme";
+import { ThemeName } from "vickymd/theme";
+import { KeyMap, getKeyMap } from "../lib/keymap";
 
 interface InitialState {}
 
@@ -24,6 +25,9 @@ function useSettingsContainer(initialState: InitialState) {
   const [theme, setTheme] = useState<CrossnoteTheme>(
     themeManager.getTheme(localStorage.getItem("settings/theme")) ||
       themeManager.selectedTheme,
+  );
+  const [keyMap, setKeyMap] = useState<KeyMap>(
+    getKeyMap(localStorage.getItem("settings/keyMap")) || KeyMap.DEFAULT,
   );
 
   const { t, i18n } = useTranslation();
@@ -70,6 +74,11 @@ function useSettingsContainer(initialState: InitialState) {
     setTheme(themeManager.selectedTheme);
   }, []);
 
+  const _setKeyMap = useCallback((keyMap: KeyMap) => {
+    localStorage.setItem("settings/keyMap", keyMap);
+    setKeyMap(keyMap);
+  }, []);
+
   useEffect(() => {
     const themeName = localStorage.getItem("settings/theme") as ThemeName;
     if (themeName) {
@@ -88,6 +97,8 @@ function useSettingsContainer(initialState: InitialState) {
     setAuthorEmail: _setAuthorEmail,
     theme,
     setTheme: _setTheme,
+    keyMap,
+    setKeyMap: _setKeyMap,
   };
 }
 

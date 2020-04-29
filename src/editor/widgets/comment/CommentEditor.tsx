@@ -83,6 +83,10 @@ export function CommentEditor(props: Props) {
           hashtag: true,
         },
         // inputStyle: "textarea",
+        keyMap: globalContainers.settingsContainer.keyMap,
+        matchBrackets: true,
+        showCursorWhenSelecting: true,
+        inputStyle: "contenteditable",
       });
       editor.setValue("");
       editor.setOption("lineNumbers", false);

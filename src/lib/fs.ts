@@ -126,17 +126,18 @@ class FileSystem {
     // Remove the directory recursively
     this.rmdir = async (dirPath: string) => {
       const files = await this.readdir(dirPath);
+      const promises = [];
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
         const filePath = path.resolve(dirPath, file);
         const stats = await this.stats(filePath);
         if (stats.isDirectory()) {
-          await this.rmdir(filePath);
+          promises.push(this.rmdir(filePath));
         } else {
-          await this.unlink(filePath);
+          promises.push(this.unlink(filePath));
         }
       }
-
+      await Promise.all(promises);
       await rmdir(dirPath);
     };
 
