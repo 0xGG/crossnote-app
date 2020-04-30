@@ -79,6 +79,7 @@
     "build:react-scripts": "yarn git-info; react-app-rewired build",
     "build:copy-css-files": "gulp copy-css-files",
     "build:service-worker": "gulp service-worker",
+    "build:splash-screen": "cd public && npx pwa-asset-generator logo.svg ./assets -i ./index.html -m manifest.json",
     "test": "react-app-rewired test",
     "test:production": "cd build && http-server",
     "eject": "react-scripts eject",
