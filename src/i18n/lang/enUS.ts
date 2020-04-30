@@ -229,6 +229,8 @@ export const enUS = {
 
     // Settings
     "settings/about-this-project": "About this project",
+    "settings/issues-and-feature-requests":
+      "Found issues or have feature requests?",
     "settings/uploading-cover-image": "Uploading cover image",
     "settings/upload-image-failure": "Failed to upload image",
     "settings/Cover": "Cover",

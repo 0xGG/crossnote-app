@@ -231,6 +231,8 @@ export const jaJP = {
 
     // Settings
     "settings/about-this-project": "このプロジェクトについて",
+    "settings/issues-and-feature-requests":
+      "問題を発見したか、機能要求がありますか？",
     "settings/uploading-cover-image": "カバー画像をアップロード",
     "settings/upload-image-failure": "画像のアップロードに失敗しました",
     "settings/Cover": "カバー写真",
