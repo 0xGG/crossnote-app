@@ -321,7 +321,7 @@ export function Home(props: Props) {
             </ListItemSecondaryAction>
           </ListItem>
         </List>
-        <List disablePadding={true}>
+        <List disablePadding={true} style={{ marginBottom: theme.spacing(16) }}>
           {crossnoteContainer.notebooks.map((notebook) => {
             return (
               <ListItem
