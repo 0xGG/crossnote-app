@@ -818,60 +818,64 @@ export default class Crossnote {
     ).docs;
     // console.log(notebooks);
 
-    // Restore to remote ref
-    for (let i = 0; i < notebooks.length; i++) {
-      const notebook = notebooks[i];
-      notebook.fetchedAt = new Date(notebook.fetchedAt || 0);
-      if (notebook.gitURL.trim().length <= 0) {
-        // no remote set
-        continue;
-      }
-      if (typeof notebook.autoFetchPeriod === "undefined") {
-        notebook.autoFetchPeriod = 3600000; // 60 minutes
-      }
-      if (typeof notebook.localSha === "undefined") {
-        notebook.localSha = await this.getGitSHA(
-          notebook.dir,
-          `origin/${notebook.gitBranch}`,
-        );
-      }
-      if (typeof notebook.remoteSha === "undefined") {
-        notebook.remoteSha = notebook.localSha;
-      }
-      const gitBranch = notebook.gitBranch || "master";
-      const sha = notebook.localSha || "";
-      try {
-        // Perform a soft reset
-        await pfs.writeFile(
-          path.resolve(notebook.dir, `.git/refs/heads/${gitBranch}`),
-          sha,
-        );
-
-        // Restore cached files from failed `git` pull event
-        const pendingPull = localStorage.getItem(
-          `pending/pull/${notebook._id}`,
-        );
-        if (pendingPull) {
-          try {
-            await this.restoreFilesFromCache(
-              JSON.parse(pendingPull).cache,
-              notebook,
-            );
-          } catch (error) {}
-          localStorage.removeItem(`pending/pull/${notebook._id}`);
+    const promises = notebooks.map((notebook, i) => {
+      return (async (i: number) => {
+        const notebook = notebooks[i];
+        notebook.fetchedAt = new Date(notebook.fetchedAt || 0);
+        if (notebook.gitURL.trim().length <= 0) {
+          // no remote set
+          return;
         }
+        if (typeof notebook.autoFetchPeriod === "undefined") {
+          notebook.autoFetchPeriod = 3600000; // 60 minutes
+        }
+        if (typeof notebook.localSha === "undefined") {
+          notebook.localSha = await this.getGitSHA(
+            notebook.dir,
+            `origin/${notebook.gitBranch}`,
+          );
+        }
+        if (typeof notebook.remoteSha === "undefined") {
+          notebook.remoteSha = notebook.localSha;
+        }
+        const gitBranch = notebook.gitBranch || "master";
+        const sha = notebook.localSha || "";
+        try {
+          // Perform a soft reset
+          await pfs.writeFile(
+            path.resolve(notebook.dir, `.git/refs/heads/${gitBranch}`),
+            sha,
+          );
 
-        // NOTE: Seems like there is a bug somewhere that caused all files to become *undeleted
-        // So we run git.add again.
-        await git.add({
-          fs: fs,
-          dir: notebook.dir,
-          filepath: ".",
-        });
-      } catch (error) {
-        notebooks[i] = null;
-      }
-    }
+          // Restore cached files from failed `git` pull event
+          const pendingPull = localStorage.getItem(
+            `pending/pull/${notebook._id}`,
+          );
+          if (pendingPull) {
+            try {
+              await this.restoreFilesFromCache(
+                JSON.parse(pendingPull).cache,
+                notebook,
+              );
+            } catch (error) {}
+            localStorage.removeItem(`pending/pull/${notebook._id}`);
+          }
+
+          // NOTE: Seems like there is a bug somewhere that caused all files to become *undeleted
+          // So we run git.add again.
+          await git.add({
+            fs: fs,
+            dir: notebook.dir,
+            filepath: ".",
+          });
+        } catch (error) {
+          notebooks[i] = null;
+        }
+      })(i);
+    });
+
+    await Promise.all(promises);
+
     return notebooks
       .filter((nb) => nb)
       .sort((x, y) => x.name.localeCompare(y.name));

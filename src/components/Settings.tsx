@@ -565,6 +565,15 @@ export function Settings(props: Props) {
         </Link>
         <br></br>
         <Link
+          href={`https://github.com/0xGG/crossnote/issues`}
+          target={"_blank"}
+        >
+          <Typography variant={"caption"}>
+            {"👀 " + t("settings/issues-and-feature-requests")}
+          </Typography>
+        </Link>
+        <br></br>
+        <Link
           href={`https://github.com/0xGG/crossnote/commit/${
             GitCommit.logMessage.split(/\s+/)[0]
           }`}

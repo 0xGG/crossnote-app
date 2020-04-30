@@ -224,6 +224,7 @@ export const zhCN = {
 
     // Settings
     "settings/about-this-project": "关于这个项目",
+    "settings/issues-and-feature-requests": "发现了问题或者有功能请求？",
     "settings/uploading-cover-image": "上传封面图片",
     "settings/upload-image-failure": "上传图片失败",
     "settings/Cover": "封面图片",

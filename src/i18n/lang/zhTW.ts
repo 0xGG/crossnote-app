@@ -224,6 +224,7 @@ export const zhTW = {
 
     // Settings
     "settings/about-this-project": "關於這個項目",
+    "settings/issues-and-feature-requests": "發現左問題或者有功能請求?",
     "settings/uploading-cover-image": "上傳封面圖片",
     "settings/upload-image-failure": "上傳圖片失敗",
     "settings/Cover": "封面圖片",

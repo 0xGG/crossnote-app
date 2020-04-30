@@ -295,7 +295,12 @@ export function Home(props: Props) {
 
   const drawer = (
     <React.Fragment>
-      <Box className={clsx(classes.notebooksSection)}>
+      <Box
+        className={clsx(classes.notebooksSection)}
+        style={{
+          overflowY: crossnoteContainer.initialized ? "auto" : "hidden",
+        }}
+      >
         <List disablePadding={true}>
           <ListItem>
             <ListItemIcon className={clsx(classes.listItemIcon)}>
