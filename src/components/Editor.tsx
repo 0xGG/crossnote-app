@@ -1301,6 +1301,7 @@ export default function Editor(props: Props) {
                   className={clsx(classes.controlBtn)}
                   onClick={() => {
                     crossnoteContainer.setDisplayMobileEditor(false);
+                    crossnoteContainer.setEditorMode(EditorMode.Preview);
                   }}
                 >
                   <ChevronLeft></ChevronLeft>
@@ -1341,6 +1342,7 @@ export default function Editor(props: Props) {
               className={clsx(classes.controlBtn)}
               onClick={() => {
                 crossnoteContainer.setDisplayMobileEditor(false);
+                crossnoteContainer.setEditorMode(EditorMode.Preview);
               }}
             >
               <ChevronLeft></ChevronLeft>

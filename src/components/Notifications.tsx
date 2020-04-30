@@ -48,6 +48,9 @@ const useStyles = makeStyles((theme: Theme) =>
       flexDirection: "row",
       alignItems: "center",
     },
+    iconBtnSVG: {
+      color: theme.palette.text.secondary,
+    },
   }),
 );
 
@@ -93,7 +96,7 @@ export function Notifications(props: Props) {
         <Box className={clsx(classes.row)}>
           <Hidden smUp implementation="css">
             <IconButton onClick={props.toggleDrawer}>
-              <MenuIcon></MenuIcon>
+              <MenuIcon className={clsx(classes.iconBtnSVG)}></MenuIcon>
             </IconButton>
           </Hidden>
           <Typography variant={"h6"}>{t("general/Notifications")}</Typography>
