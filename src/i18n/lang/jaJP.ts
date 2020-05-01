@@ -227,7 +227,7 @@ export const jaJP = {
     // Notifications
     "notifications/refresh": "更新して新しいメッセージを表示",
     "notifications/new-version-available":
-      "新しいアプリケーションバージョンが利用可能です!",
+      "クロスノートの新バージョンが利用可能です!",
 
     // Settings
     "settings/about-this-project": "このプロジェクトについて",

@@ -36,6 +36,12 @@ if ("function" === typeof importScripts) {
         ],
       }),
     );
+
+    self.addEventListener("message", (event) => {
+      if (event.data && event.data.type === "SKIP_WAITING") {
+        self.skipWaiting();
+      }
+    });
   } else {
     console.log("Workbox could not be loaded. No Offline support");
   }
