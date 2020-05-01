@@ -1,5 +1,11 @@
 import { TreeView, TreeItem } from "@material-ui/lab";
-import { createStyles, makeStyles, Theme } from "@material-ui/core/styles";
+import {
+  createStyles,
+  makeStyles,
+  Theme,
+  darken,
+  fade,
+} from "@material-ui/core/styles";
 import clsx from "clsx";
 import React, { useState, useCallback, useEffect } from "react";
 import { IconButton, Box, Typography } from "@material-ui/core";
@@ -18,13 +24,11 @@ const useStyles = makeStyles((theme: Theme) =>
       "paddingLeft": "4px",
       // color: theme.palette.text.secondary,
       "&:focus > $treeItemContent": {
-        color: "#1a73e8",
-        backgroundColor: "#e8f0fe", //theme.palette.primary.main
-        // backgroundColor: `var(--tree-view-bg-color, ${theme.palette.grey[400]})`,
-        // color: "var(--tree-view-color)"
+        color: theme.palette.text.primary,
+        backgroundColor: darken(theme.palette.background.paper, 0.05),
       },
       "&:focus > $treeItemLabelIcon": {
-        color: "#1a73e8",
+        color: theme.palette.text.primary,
       },
     },
     treeItemContent: {
@@ -48,6 +52,7 @@ const useStyles = makeStyles((theme: Theme) =>
     treeItemLabel: {
       fontWeight: "inherit",
       color: "inherit",
+      backgroundColor: "transparent !important",
     },
     treeItemLabelRoot: {
       display: "flex",

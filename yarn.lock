@@ -16439,10 +16439,10 @@ verror@1.10.0:
     core-util-is "1.0.2"
     extsprintf "^1.2.0"
 
-vickymd@^0.1.25:
-  version "0.1.25"
-  resolved "https://registry.npm.taobao.org/vickymd/download/vickymd-0.1.25.tgz#5b99b865ff32821760ea3908ac9538019efc1a76"
-  integrity sha1-W5m4Zf8yghdg6jkIrJU4AZ78GnY=
+vickymd@^0.1.26:
+  version "0.1.26"
+  resolved "https://registry.npm.taobao.org/vickymd/download/vickymd-0.1.26.tgz?cache=0&sync_timestamp=1588323775616&other_urls=https%3A%2F%2Fregistry.npm.taobao.org%2Fvickymd%2Fdownload%2Fvickymd-0.1.26.tgz#8944ec6bd42af99cd3c95988f52c0b650800b062"
+  integrity sha1-iUTsa9Qq+ZzTyVmI9SwLZQgAsGI=
   optionalDependencies:
     echarts "^4.7.0"
     emojione "^4.5.0"
