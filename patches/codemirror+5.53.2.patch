@@ -1,5 +1,5 @@
 diff --git a/node_modules/codemirror/lib/codemirror.js b/node_modules/codemirror/lib/codemirror.js
-index ccb7c62..49f6d63 100644
+index ccb7c62..c7eb7f2 100644
 --- a/node_modules/codemirror/lib/codemirror.js
 +++ b/node_modules/codemirror/lib/codemirror.js
 @@ -4050,7 +4050,8 @@
@@ -28,3 +28,30 @@ index ccb7c62..49f6d63 100644
      if (eventInWidget(cm.display, e) || signalDOMEvent(cm, e) || e.ctrlKey && !e.altKey || mac && e.metaKey) { return }
      var keyCode = e.keyCode, charCode = e.charCode;
      if (presto && keyCode == lastStoppedKey) {lastStoppedKey = null; e_preventDefault(e); return}
+@@ -8744,8 +8747,16 @@
+     var div = input.div = display.lineDiv;
+     disableBrowserMagic(div, cm.options.spellcheck, cm.options.autocorrect, cm.options.autocapitalize);
+ 
++    function belongsToInput(e) {
++      for (let t = e.target; t; t = t.parentNode) {
++        if (t == div) return true
++        if (/\bCodeMirror-(?:line)?widget\b/.test(t.className)) break
++      }
++      return false
++    }
++
+     on(div, "paste", function (e) {
+-      if (signalDOMEvent(cm, e) || handlePaste(e, cm)) { return }
++      if (!belongsToInput(e) || signalDOMEvent(cm, e) || handlePaste(e, cm)) { return }
+       // IE doesn't fire input events, so we schedule a read for the pasted content in this way
+       if (ie_version <= 11) { setTimeout(operation(cm, function () { return this$1.updateFromDOM(); }), 20); }
+     });
+@@ -8770,7 +8781,7 @@
+     });
+ 
+     function onCopyCut(e) {
+-      if (signalDOMEvent(cm, e)) { return }
++      if (!belongsToInput(e) || signalDOMEvent(cm, e)) { return }
+       if (cm.somethingSelected()) {
+         setLastCopied({lineWise: false, text: cm.getSelections()});
+         if (e.type == "cut") { cm.replaceSelection("", null, "cut"); }

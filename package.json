@@ -68,7 +68,7 @@
     "unstated-next": "^1.1.0",
     "urql": "^1.9.7",
     "uuid": "^7.0.3",
-    "vickymd": "^0.1.24"
+    "vickymd": "^0.1.25"
   },
   "scripts": {
     "git-info": "echo export default \"{\\\"logMessage\\\": \\\"$(git log -1 --oneline)\\\"}\"  > src/_git_commit.js",
