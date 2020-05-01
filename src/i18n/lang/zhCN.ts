@@ -220,7 +220,7 @@ export const zhCN = {
 
     // Notifications
     "notifications/refresh": "刷新来查看新的消息",
-    "notifications/new-version-available": "发现了新的应用版本可用更新！",
+    "notifications/new-version-available": "发现了新版本的交叉笔记！",
 
     // Settings
     "settings/about-this-project": "关于这个项目",
