@@ -140,21 +140,13 @@ function YoutubeWidget(props: WidgetArgs) {
                 const attrs = {
                   videoID,
                 };
-                props.replaceSelf(
-                  `<!-- @crossnote.youtube ${JSON.stringify(attrs)
-                    .replace(/^{/, "")
-                    .replace(/}$/, "")} -->`,
-                );
+                props.setAttributes(attrs);
               } else if (url && url.match(/\/youtu\.be\/(.+?)(\?|$)/)) {
                 const videoID = url.match(/\/youtu\.be\/(.+?)(\?|$)/)[1];
                 const attrs = {
                   videoID,
                 };
-                props.replaceSelf(
-                  `<!-- @crossnote.youtube ${JSON.stringify(attrs)
-                    .replace(/^{/, "")
-                    .replace(/}$/, "")} -->`,
-                );
+                props.setAttributes(attrs);
               } else {
                 setError(t("widget/crossnote.youtube/error_message"));
               }
