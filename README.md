@@ -23,6 +23,10 @@ Let's open the [Welcome Notebook](https://crossnote.app/?repo=https%3A%2F%2Fgith
 
 ![Screenshot from 2020-03-26 23-44-08](https://user-images.githubusercontent.com/1908863/77666346-cd2bf900-6fbb-11ea-9aee-395262c7e169.png)
 
+## Development
+
+Please check [this documentation](https://github.com/0xGG/welcome-notebook/tree/master/development).
+
 ## License
 
 AGPL3

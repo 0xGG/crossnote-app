@@ -15,7 +15,6 @@ body {
 }
 
 @media print {
-
   html,
   body {
     background-color: #fff;
