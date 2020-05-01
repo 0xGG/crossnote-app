@@ -27,6 +27,7 @@ import {
   useResetPasswordMutation,
 } from "../generated/graphql";
 import { startGitHubOAuth } from "../utilities/utils";
+import Noty from "noty";
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
