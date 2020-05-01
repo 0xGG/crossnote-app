@@ -128,11 +128,7 @@ function VideoWidget(props: WidgetArgs) {
                   src: source,
                   poster,
                 };
-                props.replaceSelf(
-                  `<!-- @crossnote.video ${JSON.stringify(attrs)
-                    .replace(/^{/, "")
-                    .replace(/}$/, "")} -->`,
-                );
+                props.setAttributes(attrs);
               }
             }
           }}

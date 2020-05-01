@@ -135,21 +135,13 @@ function BilibiliWidget(props: WidgetArgs) {
                 const attrs = {
                   aid,
                 };
-                props.replaceSelf(
-                  `<!-- @crossnote.bilibili ${JSON.stringify(attrs)
-                    .replace(/^{/, "")
-                    .replace(/}$/, "")} -->`,
-                );
+                props.setAttributes(attrs);
               } else if (url && url.match(/\/BV(.+?)($|\/|\?)/)) {
                 const bvid = url.match(/\/BV(.+?)($|\/|\?)/)[1];
                 const attrs = {
                   bvid,
                 };
-                props.replaceSelf(
-                  `<!-- @crossnote.bilibili ${JSON.stringify(attrs)
-                    .replace(/^{/, "")
-                    .replace(/}$/, "")} -->`,
-                );
+                props.setAttributes(attrs);
               } else {
                 setError(t("widget/crossnote.bilibili/error_message"));
               }
