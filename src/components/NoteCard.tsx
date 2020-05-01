@@ -221,7 +221,7 @@ export default function NoteCard(props: Props) {
         )}
         {summary && summary.summary.trim().length > 0 && (
           <Typography className={clsx(classes.summary)}>
-            {summary && summary.summary}
+            {summary && summary.summary.slice(0, 200)}
           </Typography>
         )}
         {images.length > 0 && (
