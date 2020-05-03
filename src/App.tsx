@@ -78,6 +78,13 @@ const App: FC = () => {
               )}
             ></Route>
             <Route
+              path={`/privacy`}
+              exact={true}
+              render={(props) => (
+                <Home section={HomeSection.Privacy} queryParams={{}}></Home>
+              )}
+            ></Route>
+            <Route
               path={`/`}
               render={(props) => (
                 <Home

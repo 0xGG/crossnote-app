@@ -59,6 +59,7 @@ export enum HomeSection {
   Explore = "Explore",
   Settings = "Settings",
   Notifications = "Notifications",
+  Privacy = "Privacy",
 }
 
 /**

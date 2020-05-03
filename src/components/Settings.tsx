@@ -28,8 +28,6 @@ import {
   ImagePlus,
   Github,
   ThemeLightDark,
-  Cloud,
-  CloudOutline,
   Keyboard,
 } from "mdi-material-ui";
 import { CloudContainer } from "../containers/cloud";
@@ -42,6 +40,7 @@ import { startGitHubOAuth } from "../utilities/utils";
 import GitCommit from "../_git_commit";
 import { themeManager } from "../themes/manager";
 import { KeyMap } from "../lib/keymap";
+import { browserHistory } from "../utilities/history";
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -582,6 +581,16 @@ export function Settings(props: Props) {
           <Typography variant={"caption"}>
             {"🛠 build " + GitCommit.logMessage}
           </Typography>
+        </Link>
+        <br></br>
+        <Link
+          href={`/privacy`}
+          onClick={(event: any) => {
+            event.preventDefault();
+            browserHistory.push(`/privacy`);
+          }}
+        >
+          <Typography variant={"caption"}>{"🔏 Privacy policy"}</Typography>
         </Link>
       </Box>
       {!cloudContainer.loggedIn && (
