@@ -13,7 +13,6 @@ import ServiceWorkerWrapper from "./components/ServiceWorkerWrapper";
 // @ts-ignore
 import PWAPrompt from "react-ios-pwa-prompt";
 import { useTranslation } from "react-i18next";
-import { PrivacyPolicy } from "./pages/Privacy";
 const is = require("is_js");
 
 const App: FC = () => {
