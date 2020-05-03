@@ -56,6 +56,7 @@ import { AuthDialog } from "../components/AuthDialog";
 import { Notifications } from "../components/Notifications";
 import ExplorePanel from "../components/ExplorePanel";
 import { NotebookPanel } from "../components/NotebookPanel";
+import { PrivacyPolicy } from "./Privacy";
 const is = require("is_js");
 
 const drawerWidth = 200;
@@ -523,6 +524,9 @@ export function Home(props: Props) {
         )}
         {props.section === HomeSection.Notifications && (
           <Notifications toggleDrawer={toggleDrawer}></Notifications>
+        )}
+        {props.section === HomeSection.Privacy && (
+          <PrivacyPolicy toggleDrawer={toggleDrawer}></PrivacyPolicy>
         )}
       </Box>
       <AddNotebookDialog
