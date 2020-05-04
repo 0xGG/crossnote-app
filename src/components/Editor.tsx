@@ -1,5 +1,10 @@
 import React, { useState, useCallback, useEffect } from "react";
-import { createStyles, makeStyles, Theme } from "@material-ui/core/styles";
+import {
+  createStyles,
+  makeStyles,
+  Theme,
+  useTheme,
+} from "@material-ui/core/styles";
 import clsx from "clsx";
 import { Note, TagNode } from "../lib/crossnote";
 import {
@@ -56,6 +61,8 @@ import {
   Printer,
   Tag,
   ContentDuplicate,
+  ShareVariant,
+  ContentCopy,
 } from "mdi-material-ui";
 import { renderPreview } from "vickymd/preview";
 import PushNotebookDialog from "./PushNotebookDialog";
@@ -72,6 +79,7 @@ import { TagStopRegExp } from "../utilities/markdown";
 import { resolveNoteImageSrc } from "../utilities/image";
 import { DeleteDialog } from "./DeleteDialog";
 import { setTheme, ThemeName } from "vickymd/theme";
+import { copyToClipboard } from "../utilities/utils";
 
 const VickyMD = require("vickymd/core");
 const is = require("is_js");
@@ -266,6 +274,7 @@ interface Props {
 export default function Editor(props: Props) {
   const note = props.note;
   const classes = useStyles(props);
+  const theme = useTheme();
   const [textAreaElement, setTextAreaElement] = useState<HTMLTextAreaElement>(
     null,
   );
@@ -286,6 +295,7 @@ export default function Editor(props: Props) {
   const [tagsMenuAnchorEl, setTagsMenuAnchorEl] = useState<HTMLElement>(null);
   const [tagName, setTagName] = useState<string>("");
   const [tagNames, setTagNames] = useState<string[]>([]);
+  const [shareAnchorEl, setShareAnchorEl] = useState<HTMLElement>(null);
   const [toggleEncryptionDialogOpen, setToggleEncryptionDialogOpen] = useState<
     boolean
   >(false);
@@ -1497,6 +1507,14 @@ export default function Editor(props: Props) {
                 </Button>
               </Tooltip>
             )}
+            <Tooltip title={t("general/Share")}>
+              <Button
+                className={clsx(classes.controlBtn)}
+                onClick={(event) => setShareAnchorEl(event.currentTarget)}
+              >
+                <ShareVariant></ShareVariant>
+              </Button>
+            </Tooltip>
           </ButtonGroup>
           <ButtonGroup style={{ marginLeft: "8px" }}>
             <Tooltip title={t("general/Fullscreen")}>
@@ -1604,6 +1622,62 @@ export default function Editor(props: Props) {
                 </ListItem>
               )}
             </List>
+          </Popover>
+          <Popover
+            open={Boolean(shareAnchorEl)}
+            anchorEl={shareAnchorEl}
+            keepMounted
+            onClose={() => setShareAnchorEl(null)}
+          >
+            <Box style={{ padding: theme.spacing(1) }}>
+              <Typography variant={"subtitle2"}>
+                {t("editor/note-control/shareable-link")}
+              </Typography>
+              <Box className={clsx(classes.row)}>
+                <Tooltip
+                  title={t("editor/note-control/copy-to-clipboard")}
+                  onClick={() => {
+                    copyToClipboard(
+                      note.notebook.gitURL
+                        ? `${window.location.origin}/?repo=${encodeURIComponent(
+                            note.notebook.gitURL,
+                          )}&branch=${encodeURIComponent(
+                            note.notebook.gitBranch || "master",
+                          )}&filePath=${encodeURIComponent(note.filePath)}`
+                        : `${window.location.origin}/?notebookID=${
+                            note.notebook._id
+                          }&filePath=${encodeURIComponent(note.filePath)}`,
+                    );
+                  }}
+                >
+                  <IconButton>
+                    <ContentCopy></ContentCopy>
+                  </IconButton>
+                </Tooltip>
+                <TextField
+                  onChange={(event) => event.preventDefault()}
+                  value={
+                    note.notebook.gitURL
+                      ? `${window.location.origin}/?repo=${encodeURIComponent(
+                          note.notebook.gitURL,
+                        )}&branch=${encodeURIComponent(
+                          note.notebook.gitBranch || "master",
+                        )}&filePath=${encodeURIComponent(note.filePath)}`
+                      : `${window.location.origin}/?notebookID=${
+                          note.notebook._id
+                        }&filePath=${encodeURIComponent(note.filePath)}`
+                  }
+                  inputRef={(input: HTMLInputElement) => {
+                    if (input) {
+                      input.focus();
+                      if (input.setSelectionRange) {
+                        input.setSelectionRange(0, input.value.length);
+                      }
+                    }
+                  }}
+                ></TextField>
+              </Box>
+            </Box>
           </Popover>
         </Box>
       </Box>

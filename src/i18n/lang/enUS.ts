@@ -64,6 +64,7 @@ export const enUS = {
     "general/Agree": "Agree",
     "general/Disagree": "Disagree",
     "general/Print": "Print",
+    "general/Share": "Share",
     "Editor": "Editor",
     "EDITOR": "EDITOR",
     "Viewer": "Viewer",

@@ -64,6 +64,7 @@ export const zhTW = {
     "general/Agree": "同意",
     "general/Disagree": "不同意",
     "general/Print": "打印",
+    "general/Share": "分享",
     "Editor": "編輯者",
     "EDITOR": "編輯者",
     "Viewer": "閱讀者",
