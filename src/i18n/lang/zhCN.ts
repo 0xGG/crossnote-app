@@ -64,6 +64,7 @@ export const zhCN = {
     "general/Agree": "同意",
     "general/Disagree": "不同意",
     "general/Print": "打印",
+    "general/Share": "分享",
     "Editor": "编辑者",
     "EDITOR": "编辑者",
     "Viewer": "阅读者",

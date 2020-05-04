@@ -64,6 +64,7 @@ export const jaJP = {
     "general/Agree": "同意する",
     "general/Disagree": "同意しない",
     "general/Print": "印刷する",
+    "general/Share": "シェア",
     "Editor": "編集者",
     "EDITOR": "編集者",
     "Viewer": "読者",
