@@ -57,6 +57,7 @@ export const jaJP = {
     "general/onymous": "公開署名",
     "general/Tag": "タグ",
     "general/no-tags": "タグなし",
+    "general/Directory": "ディレクトリ",
     "general/Untitled": "無題",
     "general/untitled": "無題",
     "general/Unknown": "不明",

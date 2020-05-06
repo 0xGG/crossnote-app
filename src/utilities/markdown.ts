@@ -12,3 +12,14 @@ export function getTags(markdown: string): string[] {
     (tag) => tag.replace(TagStopRegExp, "").trim(), // Don't remove \s here
   );
 }
+
+export function sanitizeTag(tagName: string): string {
+  let tag = tagName.trim() || "";
+  return tag
+    .replace(/\s+/g, " ")
+    .replace(TagStopRegExp, "")
+    .split("/")
+    .map((t) => t.trim())
+    .filter((x) => x.length > 0)
+    .join("/");
+}

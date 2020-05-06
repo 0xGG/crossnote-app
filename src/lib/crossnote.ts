@@ -385,7 +385,7 @@ export default class Crossnote {
     await git.add({
       fs: fs,
       dir: notebook.dir,
-      filepath: newDirName,
+      filepath: newDirName || ".",
     });
   }
 
@@ -1080,6 +1080,30 @@ ${markdown}`;
     });
     return noteConfig;
   }
+
+  /**
+   * Update noteConfig only without updating markdown (excluding the front-matter)
+   * @param notebook
+   * @param filePath
+   * @param noteConfig
+   */
+  public async updateNoteConfig(
+    notebook: Notebook,
+    filePath: string,
+    noteConfig: NoteConfig,
+  ) {
+    const note = await this.getNote(notebook, filePath);
+    const data = this.matter(note.markdown);
+    const frontMatter = Object.assign(data.data || {}, { note: noteConfig });
+    const markdown = this.matterStringify(data.content, frontMatter);
+    await pfs.writeFile(path.resolve(notebook.dir, filePath), markdown);
+    await git.add({
+      fs: fs,
+      dir: notebook.dir,
+      filepath: filePath,
+    });
+  }
+
   public async deleteNote(notebook: Notebook, filePath: string) {
     if (await pfs.exists(path.resolve(notebook.dir, filePath))) {
       await pfs.unlink(path.resolve(notebook.dir, filePath));

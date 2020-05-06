@@ -57,6 +57,7 @@ export const enUS = {
     "general/onymous": "Onymous",
     "general/Tag": "Tag",
     "general/no-tags": "No tags",
+    "general/Directory": "Directory",
     "general/Untitled": "Untitled",
     "general/untitled": "untitled",
     "general/Unknown": "Unknown",

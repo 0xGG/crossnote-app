@@ -53,7 +53,7 @@ export default function ChangeFilePathDialog(props: Props) {
     if (note) {
       setNewFilePath(note.filePath);
     }
-  }, [note]);
+  }, [note, props.open]);
 
   useEffect(() => {
     if (!inputEl) return;

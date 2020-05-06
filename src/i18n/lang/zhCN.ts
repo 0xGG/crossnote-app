@@ -57,6 +57,7 @@ export const zhCN = {
     "general/onymous": "公开署名",
     "general/Tag": "标签",
     "general/no-tags": "没有标签",
+    "general/Directory": "目录",
     "general/Untitled": "无标题",
     "general/untitled": "无标题",
     "general/Unknown": "未知",

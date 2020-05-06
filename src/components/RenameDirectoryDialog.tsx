@@ -40,10 +40,15 @@ export function RenameDirectoryDialog(props: Props) {
       <DialogTitle>{t("general/rename-directory")}</DialogTitle>
       <DialogContent>
         <TextField
-          placeholder={props.directory}
+          placeholder={t("general/Directory")}
           value={directory}
           onChange={(event) => setDirectory(event.target.value)}
           fullWidth={true}
+          onKeyUp={(event) => {
+            if (event.which === 13) {
+              renameDirectory();
+            }
+          }}
         ></TextField>
       </DialogContent>
       <DialogActions>

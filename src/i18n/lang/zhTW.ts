@@ -57,6 +57,7 @@ export const zhTW = {
     "general/onymous": "公開署名",
     "general/Tag": "標籤",
     "general/no-tags": "沒有標籤",
+    "general/Directory": "目錄",
     "general/Untitled": "無標題",
     "general/untitled": "無標題",
     "general/Unknown": "未知",

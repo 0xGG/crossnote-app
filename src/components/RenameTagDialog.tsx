@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   Dialog,
   DialogTitle,
@@ -8,6 +8,7 @@ import {
   Button,
 } from "@material-ui/core";
 import { useTranslation } from "react-i18next";
+import { CrossnoteContainer } from "../containers/crossnote";
 
 interface Props {
   open: boolean;
@@ -16,7 +17,19 @@ interface Props {
 }
 export function RenameTagDialog(props: Props) {
   const { t } = useTranslation();
+  const crossnoteContainer = CrossnoteContainer.useContainer();
   const [tag, setTag] = useState<string>("");
+
+  const renameTag = useCallback(() => {
+    crossnoteContainer
+      .renameTag(props.tag, tag)
+      .then(() => {
+        props.onClose();
+      })
+      .catch(() => {
+        props.onClose();
+      });
+  }, [props, tag]);
 
   useEffect(() => {
     setTag(props.tag);
@@ -27,14 +40,19 @@ export function RenameTagDialog(props: Props) {
       <DialogTitle>{t("general/rename-tag")}</DialogTitle>
       <DialogContent>
         <TextField
-          placeholder={props.tag}
+          placeholder={t("general/Tag")}
           value={tag}
           onChange={(event) => setTag(event.target.value)}
           fullWidth={true}
+          onKeyUp={(event) => {
+            if (event.which === 13) {
+              renameTag();
+            }
+          }}
         ></TextField>
       </DialogContent>
       <DialogActions>
-        <Button variant={"contained"} color={"primary"}>
+        <Button variant={"contained"} color={"primary"} onClick={renameTag}>
           {t("general/Update")}
         </Button>
         <Button onClick={props.onClose}>{t("general/cancel")}</Button>

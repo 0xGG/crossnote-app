@@ -75,7 +75,7 @@ import ChangeFilePathDialog from "./ChangeFilePathDialog";
 import { SettingsContainer } from "../containers/settings";
 import { initMathPreview } from "../editor/views/math-preview";
 import EmojiDefinitions from "vickymd/addon/emoji";
-import { TagStopRegExp } from "../utilities/markdown";
+import { TagStopRegExp, sanitizeTag } from "../utilities/markdown";
 import { resolveNoteImageSrc } from "../utilities/image";
 import { DeleteDialog } from "./DeleteDialog";
 import { setTheme, ThemeName } from "vickymd/theme";
@@ -389,17 +389,10 @@ export default function Editor(props: Props) {
 
   const addTag = useCallback(
     (tagName: string) => {
-      let tag = tagName.trim() || "";
-      if (!note || !tag.length || !editor || !isDecrypted) {
+      if (!note || !editor || !isDecrypted) {
         return;
       }
-      tag = tag
-        .replace(/\s+/g, " ")
-        .replace(TagStopRegExp, "")
-        .split("/")
-        .map((t) => t.trim())
-        .filter((x) => x.length > 0)
-        .join("/");
+      const tag = sanitizeTag(tagName);
       if (!tag.length) {
         return;
       }
@@ -756,6 +749,11 @@ export default function Editor(props: Props) {
       };
     }
   }, [editor, note, decryptionPassword, isDecrypted, openURL]);
+
+  useEffect(() => {
+    // Hack: for update after crossnoteContainer.renameTag
+    setTagNames(note?.config.tags || []);
+  }, [note?.config.tags]);
 
   useEffect(() => {
     if (!editor || !note) return;
