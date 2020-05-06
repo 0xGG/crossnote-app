@@ -26,7 +26,8 @@ export function RenameDirectoryDialog(props: Props) {
       .then(() => {
         props.onClose();
       })
-      .catch(() => {
+      .catch((error) => {
+        console.log(error);
         props.onClose();
       });
   }, [props, directory]);

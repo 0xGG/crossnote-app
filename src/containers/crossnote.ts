@@ -285,6 +285,24 @@ function useCrossnoteContainer(initialState: InitialState) {
     [selectedNotebook, notebookNotes, crossnote],
   );
 
+  const deleteDirectory = useCallback(
+    async (dirName: string) => {
+      await crossnote.deleteDirectory(selectedNotebook, dirName);
+      const newNotes = notebookNotes.filter((n) => {
+        return !n.filePath.startsWith(dirName + "/");
+      });
+      setNotebookNotes(newNotes);
+      setNotebookDirectories(
+        await crossnote.getNotebookDirectoriesFromNotes(newNotes),
+      );
+      setSelectedSection({
+        type: SelectedSectionType.Notes,
+      });
+      _setSelectedNote(newNotes[0]);
+    },
+    [selectedNotebook, notebookNotes, _setSelectedNote, crossnote],
+  );
+
   const renameTag = useCallback(
     async (oldTagName: string, newTagName: string) => {
       newTagName = sanitizeTag(newTagName);
@@ -1005,6 +1023,7 @@ Please also check the [Explore](https://crossnote.app/explore) section to discov
     deleteNote,
     changeNoteFilePath,
     renameDirectory,
+    deleteDirectory,
     renameTag,
     duplicateNote,
     notebookDirectories,

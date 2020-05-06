@@ -37,12 +37,16 @@ import {
   SortDescending,
   SortAscending,
   Pencil,
+  FileEdit,
+  ChevronDown,
+  TrashCan,
 } from "mdi-material-ui";
 import { useTranslation } from "react-i18next";
 import ConfigureNotebookDialog from "./ConfigureNotebookDialog";
 import Notes from "./Notes";
 import { RenameDirectoryDialog } from "./RenameDirectoryDialog";
 import { RenameTagDialog } from "./RenameTagDialog";
+import { DeleteDirectoryDialog } from "./DeleteDirectoryDialog";
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -131,12 +135,25 @@ export default function NotesPanel(props: Props) {
   const { t } = useTranslation();
   const [sortMenuAnchorEl, setSortMenuAnchorEl] = useState<HTMLElement>(null);
   const [isCreatingNote, setIsCreatingNote] = useState<boolean>(false);
+  const [directoryActionsAnchorEl, setDirectoryActionsAnchorEl] = useState<
+    HTMLElement
+  >(null);
+  const [tagActionsAnchorEl, setTagActionsAnchorEl] = useState<HTMLElement>(
+    null,
+  );
   const [renameDirectoryDialogOpen, setRenameDirectoryDialogOpen] = useState<
+    boolean
+  >(false);
+  const [deleteDirectoryDialogOpen, setDeleteDirectoryDialogOpen] = useState<
     boolean
   >(false);
   const [renameTagDialogOpen, setRenameTagDialogOpen] = useState<boolean>(
     false,
   );
+  const [deleteTagDialogOpen, setDeleteTagDialogOpen] = useState<boolean>(
+    false,
+  );
+
   const crossnoteContainer = CrossnoteContainer.useContainer();
 
   // Search
@@ -183,17 +200,6 @@ export default function NotesPanel(props: Props) {
     setFinalSearchValue("");
   }, [crossnoteContainer.selectedNotebook]);
 
-  useEffect(() => {
-    if (
-      crossnoteContainer.selectedSection.type !== SelectedSectionType.Directory
-    ) {
-      setRenameDirectoryDialogOpen(false);
-    }
-    if (crossnoteContainer.selectedSection.type !== SelectedSectionType.Tag) {
-      setRenameTagDialogOpen(false);
-    }
-  }, [crossnoteContainer.selectedSection]);
-
   return (
     <Box className={clsx(classes.notesPanel)}>
       <Card className={clsx(classes.topPanel)}>
@@ -239,7 +245,7 @@ export default function NotesPanel(props: Props) {
           SelectedSectionType.Notes ? (
             <Box className={clsx(classes.row)}>
               <span role="img" aria-label="notes">
-                📒
+                {"📒"}
               </span>
               <Typography className={clsx(classes.sectionName)}>
                 {crossnoteContainer.selectedNotebook &&
@@ -250,7 +256,7 @@ export default function NotesPanel(props: Props) {
             SelectedSectionType.Today ? (
             <Box className={clsx(classes.row)}>
               <span role="img" aria-label="today-notes">
-                📅
+                {"📅"}
               </span>
               <Typography className={clsx(classes.sectionName)}>
                 {t("general/today")}
@@ -260,7 +266,7 @@ export default function NotesPanel(props: Props) {
             SelectedSectionType.Todo ? (
             <Box className={clsx(classes.row)}>
               <span role="img" aria-label="todo-notes">
-                ☑️
+                {"☑️"}
               </span>
               <Typography className={clsx(classes.sectionName)}>
                 {t("general/todo")}
@@ -270,7 +276,7 @@ export default function NotesPanel(props: Props) {
             SelectedSectionType.Tagged ? (
             <Box className={clsx(classes.row)}>
               <span role="img" aria-label="tagged-notes">
-                🏷️
+                {"🏷️"}
               </span>
               <Typography className={clsx(classes.sectionName)}>
                 {t("general/tagged")}
@@ -280,7 +286,7 @@ export default function NotesPanel(props: Props) {
             SelectedSectionType.Untagged ? (
             <Box className={clsx(classes.row)}>
               <span role="img" aria-label="untagged-notes">
-                🈚
+                {"🈚"}
               </span>
               <Typography className={clsx(classes.sectionName)}>
                 {t("general/untagged")}
@@ -291,20 +297,21 @@ export default function NotesPanel(props: Props) {
             <Box
               className={clsx(classes.row)}
               style={{ cursor: "pointer" }}
-              onClick={() => setRenameTagDialogOpen(true)}
+              onClick={(event) => setTagActionsAnchorEl(event.currentTarget)}
             >
               <span role="img" aria-label="tag">
-                🏷️
+                {"🏷️"}
               </span>
               <Typography className={clsx(classes.sectionName)}>
                 {crossnoteContainer.selectedSection.path}
               </Typography>
+              <ChevronDown className={clsx(classes.iconBtnSVG)}></ChevronDown>
             </Box>
           ) : crossnoteContainer.selectedSection.type ===
             SelectedSectionType.Encrypted ? (
             <Box className={clsx(classes.row)}>
               <span role="img" aria-label="encrypted-notes">
-                🔐
+                {"🔐"}
               </span>
               <Typography className={clsx(classes.sectionName)}>
                 {t("general/encrypted")}
@@ -326,7 +333,9 @@ export default function NotesPanel(props: Props) {
               <Box
                 className={clsx(classes.row)}
                 style={{ cursor: "pointer" }}
-                onClick={() => setRenameDirectoryDialogOpen(true)}
+                onClick={(event) =>
+                  setDirectoryActionsAnchorEl(event.currentTarget)
+                }
               >
                 <span role="img" aria-label="folder">
                   {"📁"}
@@ -334,6 +343,7 @@ export default function NotesPanel(props: Props) {
                 <Typography className={clsx(classes.sectionName)}>
                   {crossnoteContainer.selectedSection.path}
                 </Typography>
+                <ChevronDown className={clsx(classes.iconBtnSVG)}></ChevronDown>
               </Box>
             )
           )}
@@ -448,11 +458,85 @@ export default function NotesPanel(props: Props) {
         notebook={crossnoteContainer.selectedNotebook}
       ></ConfigureNotebookDialog>
 
+      <Popover
+        open={Boolean(directoryActionsAnchorEl)}
+        anchorEl={directoryActionsAnchorEl}
+        keepMounted
+        onClose={() => setDirectoryActionsAnchorEl(null)}
+      >
+        <List>
+          <ListItem
+            button={true}
+            onClick={() => {
+              setDirectoryActionsAnchorEl(null);
+              setRenameDirectoryDialogOpen(true);
+            }}
+          >
+            <ListItemIcon>
+              <Pencil></Pencil>
+            </ListItemIcon>
+            <ListItemText>{t("general/rename-directory")}</ListItemText>
+          </ListItem>
+          <ListItem
+            button={true}
+            onClick={() => {
+              setDirectoryActionsAnchorEl(null);
+              setDeleteDirectoryDialogOpen(true);
+            }}
+          >
+            <ListItemIcon>
+              <TrashCan></TrashCan>
+            </ListItemIcon>
+            <ListItemText>{t("general/delete-directory")}</ListItemText>
+          </ListItem>
+        </List>
+      </Popover>
+
+      <Popover
+        open={Boolean(tagActionsAnchorEl)}
+        anchorEl={tagActionsAnchorEl}
+        keepMounted
+        onClose={() => setTagActionsAnchorEl(null)}
+      >
+        <List>
+          <ListItem
+            button={true}
+            onClick={() => {
+              setTagActionsAnchorEl(null);
+              setRenameTagDialogOpen(true);
+            }}
+          >
+            <ListItemIcon>
+              <Pencil></Pencil>
+            </ListItemIcon>
+            <ListItemText>{t("general/rename-tag")}</ListItemText>
+          </ListItem>
+          <ListItem
+            button={true}
+            onClick={() => {
+              setTagActionsAnchorEl(null);
+              setDeleteTagDialogOpen(true);
+            }}
+          >
+            <ListItemIcon>
+              <TrashCan></TrashCan>
+            </ListItemIcon>
+            <ListItemText>{t("general/delete-tag")}</ListItemText>
+          </ListItem>
+        </List>
+      </Popover>
+
       <RenameDirectoryDialog
         open={renameDirectoryDialogOpen}
         onClose={() => setRenameDirectoryDialogOpen(false)}
         directory={crossnoteContainer.selectedSection.path}
       ></RenameDirectoryDialog>
+
+      <DeleteDirectoryDialog
+        open={deleteDirectoryDialogOpen}
+        onClose={() => setDeleteDirectoryDialogOpen(false)}
+        directory={crossnoteContainer.selectedSection.path}
+      ></DeleteDirectoryDialog>
 
       <RenameTagDialog
         open={renameTagDialogOpen}

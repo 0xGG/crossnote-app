@@ -102,13 +102,19 @@ class FileSystem {
     };
     const rename = (oldPath: string, newPath: string) => {
       return new Promise((resolve, reject) => {
-        this.fs.rename(oldPath, newPath, (error: Error) => {
-          if (error) {
+        this.mkdirp(path.dirname(newPath))
+          .then(() => {
+            this.fs.rename(oldPath, newPath, (error: Error) => {
+              if (error) {
+                return reject(error);
+              } else {
+                return resolve();
+              }
+            });
+          })
+          .catch((error) => {
             return reject(error);
-          } else {
-            return resolve();
-          }
-        });
+          });
       });
     };
     this.rename = async (oldPath: string, newPath: string) => {

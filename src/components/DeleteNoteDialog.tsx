@@ -17,17 +17,17 @@ interface Props {
   note: Note;
 }
 
-export function DeleteDialog(props: Props) {
+export function DeleteNoteDialog(props: Props) {
   const { t } = useTranslation();
   const note = props.note;
   const crossnoteContainer = CrossnoteContainer.useContainer();
 
   return (
     <Dialog open={props.open} onClose={props.onClose}>
-      <DialogTitle>{t("delete-file-dialog/title")}</DialogTitle>
+      <DialogTitle>{t("delete-note-dialog/title")}</DialogTitle>
       <DialogContent>
         <DialogContentText>
-          {t("delete-file-dialog/subtitle")}
+          {t("delete-note-dialog/subtitle")}
         </DialogContentText>
       </DialogContent>
       <DialogActions>

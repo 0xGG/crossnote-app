@@ -389,6 +389,15 @@ export default class Crossnote {
     });
   }
 
+  public async deleteDirectory(notebook: Notebook, dirName: string) {
+    await pfs.rmdir(path.resolve(notebook.dir, dirName));
+    await git.remove({
+      fs: fs,
+      dir: notebook.dir,
+      filepath: dirName,
+    });
+  }
+
   private async generateChangesCache(notebook: Notebook): Promise<Cache> {
     const cache: Cache = {};
     const createCache = async (stagedFiles: string[]) => {

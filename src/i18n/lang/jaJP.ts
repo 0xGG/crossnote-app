@@ -49,7 +49,7 @@ export const jaJP = {
     "general/enter-username": "ユーザー名を入力してください",
     "general/vickymd": "VickyMD(微記)",
     "general/tags": "タグ",
-    "general/add-a-tag": "ラベルを追加する",
+    "general/add-a-tag": "タグを追加する",
     "general/private": "民間",
     "general/public": "公開可見",
     "general/friends-only": "友達にのみ表示",
@@ -175,7 +175,9 @@ export const jaJP = {
     "general/Edit": "編集",
     "general/Rename": "変更",
     "general/rename-directory": "ディレクトリ名を変更する",
+    "general/delete-directory": "ディレクトリ名を削除する",
     "general/rename-tag": "タグの名前を変更する",
+    "general/delete-tag": "タグを削除する",
     "general/notebook-updates-found": "ノートブックの更新が見つかりました",
     "general/update-the-notebook": "ノートブックを更新する",
     "general/check-notebook-updates-periodically":
@@ -224,10 +226,10 @@ export const jaJP = {
     // NoteTags
     "note-tags/send-suggestion-failure": "提案の送信に失敗しました",
     "note-tags/suggestion-sent": "提案を送信しました",
-    "note-tags/suggest-a-tag-to-this-note": "このノートのラベルを提案する",
+    "note-tags/suggest-a-tag-to-this-note": "このノートのタグを提案する",
 
     // UserTags
-    "user-tags/follow-a-tag": "ラベルをフォロー",
+    "user-tags/follow-a-tag": "タグをフォロー",
 
     // Notifications
     "notifications/refresh": "更新して新しいメッセージを表示",
@@ -445,7 +447,7 @@ export const jaJP = {
     // some role
     "notification/of-note": "到筆記",
     // * NoteTagSuggestion
-    "notification/add-tag-failure": "ラベルの追加に失敗しました",
+    "notification/add-tag-failure": "タグの追加に失敗しました",
     "notification/suggested-to-add-tag": "タグの追加を提案する",
     // * UserFollowingNotification
     "notification/started-following-you": "あなたをフォローし始めました",
@@ -558,8 +560,14 @@ export const jaJP = {
     "widget/crossnote.comment/view-more-comments": "その他のコメントを表示する",
 
     // Dialogs
-    "delete-file-dialog/title": "このノートを削除しますか?",
-    "delete-file-dialog/subtitle": "元に戻すことはできません",
+    "delete-note-dialog/title": "このノートを削除しますか?",
+    "delete-note-dialog/subtitle": "この操作を取り消すことはできません。",
+    "delete-directory-dialog/title": "このディレクトリを削除しますか？",
+    "delete-directory-dialog/subtitle":
+      "すべてのサブディレクトリとノートも削除されます。この操作を取り消すことはできません。",
+    "delete-tag-dialog/title": "このタグを削除しますか？",
+    "delete-tag-dialog/subtitle":
+      "すべてのサブタグも削除されます。この操作を取り消すことはできません。",
     "add-notebook-dialog/disclaimer":
       "すべてのノートブックデータは、ブラウザにローカルに保存されます。ノートブックデータを当社のサーバーにアップロードすることはありません。",
     "edit-image-dialog/title": "画像を編集する",

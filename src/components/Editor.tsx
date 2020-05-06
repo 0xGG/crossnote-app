@@ -77,7 +77,7 @@ import { initMathPreview } from "../editor/views/math-preview";
 import EmojiDefinitions from "vickymd/addon/emoji";
 import { TagStopRegExp, sanitizeTag } from "../utilities/markdown";
 import { resolveNoteImageSrc } from "../utilities/image";
-import { DeleteDialog } from "./DeleteDialog";
+import { DeleteNoteDialog } from "./DeleteNoteDialog";
 import { setTheme, ThemeName } from "vickymd/theme";
 import { copyToClipboard } from "../utilities/utils";
 
@@ -283,7 +283,7 @@ export default function Editor(props: Props) {
     line: 0,
     ch: 0,
   });
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState<boolean>(false);
+  const [deleteNoteDialogOpen, setDeleteNoteDialogOpen] = useState<boolean>(false);
   const [filePathDialogOpen, setFilePathDialogOpen] = useState<boolean>(false);
   const [pushDialogOpen, setPushDialogOpen] = useState<boolean>(false);
   const [previewElement, setPreviewElement] = useState<HTMLElement>(null);
@@ -1480,7 +1480,7 @@ export default function Editor(props: Props) {
             <Tooltip title={t("general/Delete")}>
               <Button
                 className={clsx(classes.controlBtn)}
-                onClick={() => setDeleteDialogOpen(true)}
+                onClick={() => setDeleteNoteDialogOpen(true)}
               >
                 <Delete></Delete>
               </Button>
@@ -1762,11 +1762,11 @@ export default function Editor(props: Props) {
           </Typography>
         </Box>
       </Box>
-      <DeleteDialog
-        open={deleteDialogOpen}
-        onClose={() => setDeleteDialogOpen(false)}
+      <DeleteNoteDialog
+        open={deleteNoteDialogOpen}
+        onClose={() => setDeleteNoteDialogOpen(false)}
         note={note}
-      ></DeleteDialog>
+      ></DeleteNoteDialog>
       <ChangeFilePathDialog
         note={note}
         open={filePathDialogOpen}

@@ -173,7 +173,9 @@ export const zhTW = {
     "general/Edit": "編輯",
     "general/Rename": "重命名",
     "general/rename-directory": "重命名目錄",
+    "general/delete-directory": "删除目錄",
     "general/rename-tag": "重命名標籤",
+    "general/delete-tag": "删除標籤",
     "general/notebook-updates-found": "發現筆記本更新",
     "general/update-the-notebook": "更新這個筆記本",
     "general/check-notebook-updates-periodically": "週期性地檢查筆記本更新",
@@ -518,8 +520,13 @@ export const zhTW = {
     "widget/crossnote.comment/view-more-comments": "查看更多的評論",
 
     // Dialogs
-    "delete-file-dialog/title": "妳確定要刪除這個筆記？",
-    "delete-file-dialog/subtitle": "將不能被撤回",
+    "delete-note-dialog/title": "你確定要刪除這個筆記?",
+    "delete-note-dialog/subtitle": "你無法撤銷此操作。",
+    "delete-directory-dialog/title": "你確定要刪除這個目錄?",
+    "delete-directory-dialog/subtitle":
+      "所有子目錄以及筆記也將會被刪除。你無法撤銷此操作。",
+    "delete-tag-dialog/title": "你確定要刪除這個標籤?",
+    "delete-tag-dialog/subtitle": "所有子標籤也將會被刪除。你無法撤銷此操作。",
     "add-notebook-dialog/disclaimer":
       "所有筆記本的數據將只會被保存於瀏覽器本地以供離線使用。我們不會上傳任何你的筆記本數據到我們的伺服器。",
     "edit-image-dialog/title": "編輯圖片",
