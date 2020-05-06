@@ -13,6 +13,8 @@ note:
 
 https://crossnote.app
 
+<a href="https://www.producthunt.com/posts/crossnote?utm_source=badge-featured&utm_medium=badge&utm_souce=badge-crossnote" target="_blank"><img src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=197331&theme=dark" alt="Crossnote - An interesting markdown note taking progressive web app | Product Hunt Embed" style="width: 250px; height: 54px;" width="250px" height="54px" /></a>
+
 **Crossnote** is probably the world's first markdown notes reader & editor Progressive Web Application that works offline and supports syncing with arbitrary git repository right inside your browser.
 
 We also offer an extension for VSCode (Still under development): [0xGG/vscode-crossnote](https://github.com/0xGG/vscode-crossnote) | [VSCode Marketplace](https://marketplace.visualstudio.com/items?itemName=shd101wyy.crossnote)

@@ -15,9 +15,14 @@ body {
 }
 
 @media print {
+
   html,
   body {
     background-color: #fff;
+  }
+
+  .Resizer {
+    display: none;
   }
 }
 

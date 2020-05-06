@@ -75,9 +75,9 @@ import ChangeFilePathDialog from "./ChangeFilePathDialog";
 import { SettingsContainer } from "../containers/settings";
 import { initMathPreview } from "../editor/views/math-preview";
 import EmojiDefinitions from "vickymd/addon/emoji";
-import { TagStopRegExp } from "../utilities/markdown";
+import { TagStopRegExp, sanitizeTag } from "../utilities/markdown";
 import { resolveNoteImageSrc } from "../utilities/image";
-import { DeleteDialog } from "./DeleteDialog";
+import { DeleteNoteDialog } from "./DeleteNoteDialog";
 import { setTheme, ThemeName } from "vickymd/theme";
 import { copyToClipboard } from "../utilities/utils";
 
@@ -203,7 +203,7 @@ const useStyles = makeStyles((theme: Theme) =>
       height: "100%",
       border: "none",
       overflow: "auto !important",
-      padding: theme.spacing(2),
+      padding: theme.spacing(1, 2),
       zIndex: previewZIndex,
       [theme.breakpoints.down("sm")]: {
         padding: theme.spacing(1),
@@ -283,7 +283,9 @@ export default function Editor(props: Props) {
     line: 0,
     ch: 0,
   });
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState<boolean>(false);
+  const [deleteNoteDialogOpen, setDeleteNoteDialogOpen] = useState<boolean>(
+    false,
+  );
   const [filePathDialogOpen, setFilePathDialogOpen] = useState<boolean>(false);
   const [pushDialogOpen, setPushDialogOpen] = useState<boolean>(false);
   const [previewElement, setPreviewElement] = useState<HTMLElement>(null);
@@ -389,17 +391,10 @@ export default function Editor(props: Props) {
 
   const addTag = useCallback(
     (tagName: string) => {
-      let tag = tagName.trim() || "";
-      if (!note || !tag.length || !editor || !isDecrypted) {
+      if (!note || !editor || !isDecrypted) {
         return;
       }
-      tag = tag
-        .replace(/\s+/g, " ")
-        .replace(TagStopRegExp, "")
-        .split("/")
-        .map((t) => t.trim())
-        .filter((x) => x.length > 0)
-        .join("/");
+      const tag = sanitizeTag(tagName);
       if (!tag.length) {
         return;
       }
@@ -756,6 +751,11 @@ export default function Editor(props: Props) {
       };
     }
   }, [editor, note, decryptionPassword, isDecrypted, openURL]);
+
+  useEffect(() => {
+    // Hack: for update after crossnoteContainer.renameTag
+    setTagNames(note?.config.tags || []);
+  }, [note?.config.tags]);
 
   useEffect(() => {
     if (!editor || !note) return;
@@ -1224,16 +1224,29 @@ export default function Editor(props: Props) {
       tempPreviewElement.classList.add("preview");
       tempPreviewElement.style.zIndex = "999999";
       document.body.appendChild(tempPreviewElement);
+
+      const bannerElement = document.createElement("div");
+      bannerElement.style.position = "fixed";
+      bannerElement.style.width = "100%";
+      bannerElement.style.height = "100%";
+      bannerElement.style.top = "0";
+      bannerElement.style.left = "0";
+      bannerElement.style.textAlign = "center";
+      bannerElement.style.backgroundColor = theme.palette.background.default;
+      bannerElement.style.color = theme.palette.text.primary;
+      bannerElement.style.zIndex = "9999";
+      bannerElement.innerHTML = `<p>${t("general/please-wait")}</p>`;
+
       const currentTheme = editor.getOption("theme") as ThemeName;
       setTheme({
-        editor,
+        editor: null,
         themeName: "light",
         baseUri: "/styles/",
       });
       const printDone = () => {
         tempPreviewElement.remove();
         setTheme({
-          editor,
+          editor: null,
           themeName: currentTheme,
           baseUri: "/styles/",
         });
@@ -1245,7 +1258,7 @@ export default function Editor(props: Props) {
         previewIsPresentation,
       )
         .then(() => {
-          printPreview(tempPreviewElement)
+          printPreview(tempPreviewElement, bannerElement)
             .then(() => {
               printDone();
             })
@@ -1482,7 +1495,7 @@ export default function Editor(props: Props) {
             <Tooltip title={t("general/Delete")}>
               <Button
                 className={clsx(classes.controlBtn)}
-                onClick={() => setDeleteDialogOpen(true)}
+                onClick={() => setDeleteNoteDialogOpen(true)}
               >
                 <Delete></Delete>
               </Button>
@@ -1764,11 +1777,11 @@ export default function Editor(props: Props) {
           </Typography>
         </Box>
       </Box>
-      <DeleteDialog
-        open={deleteDialogOpen}
-        onClose={() => setDeleteDialogOpen(false)}
+      <DeleteNoteDialog
+        open={deleteNoteDialogOpen}
+        onClose={() => setDeleteNoteDialogOpen(false)}
         note={note}
-      ></DeleteDialog>
+      ></DeleteNoteDialog>
       <ChangeFilePathDialog
         note={note}
         open={filePathDialogOpen}

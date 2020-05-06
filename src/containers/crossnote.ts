@@ -18,6 +18,7 @@ import { getHeaderFromMarkdown } from "../utilities/note";
 import { browserHistory } from "../utilities/history";
 import * as qs from "qs";
 import { pfs } from "../lib/fs";
+import { sanitizeTag } from "../utilities/markdown";
 
 export enum EditorMode {
   VickyMD = "VickyMD",
@@ -126,6 +127,29 @@ function useCrossnoteContainer(initialState: InitialState) {
     HomeSection.Notebooks,
   );
 
+  const _setSelectedNote = useCallback(
+    (note: Note) => {
+      setSelectedNote(note);
+      const notebook = note.notebook;
+      if (notebook.gitURL) {
+        browserHistory.push(
+          `/?repo=${encodeURIComponent(
+            notebook.gitURL,
+          )}&branch=${encodeURIComponent(
+            notebook.gitBranch || "master",
+          )}&filePath=${encodeURIComponent(note.filePath)}`,
+        );
+      } else {
+        browserHistory.push(
+          `/?notebookID=${notebook._id}&filePath=${encodeURIComponent(
+            note.filePath,
+          )}`,
+        );
+      }
+    },
+    [setSelectedNote],
+  );
+
   const updateNoteMarkdown = useCallback(
     (
       note: Note,
@@ -220,7 +244,149 @@ function useCrossnoteContainer(initialState: InitialState) {
         }
       })();
     },
-    [selectedNotebook, crossnote, notebookNotes],
+    [selectedNotebook, notebookNotes, crossnote],
+  );
+
+  const renameDirectory = useCallback(
+    async (oldDirName: string, newDirName: string) => {
+      newDirName = newDirName
+        .replace(/^\/+/, "")
+        .replace(/^\.+\/+/, "")
+        .replace(/\/+$/, "");
+      if (oldDirName === newDirName) {
+        return;
+      }
+      await crossnote.renameDirectory(selectedNotebook, oldDirName, newDirName);
+      const newNotes = notebookNotes.map((n) => {
+        if (n.filePath.startsWith(oldDirName + "/")) {
+          if (newDirName.length > 0) {
+            n.filePath = n.filePath.replace(oldDirName, newDirName);
+          } else {
+            n.filePath = path.basename(n.filePath);
+          }
+        }
+        return n;
+      });
+      setNotebookNotes(newNotes);
+      setNotebookDirectories(
+        await crossnote.getNotebookDirectoriesFromNotes(newNotes),
+      );
+      if (newDirName.length) {
+        setSelectedSection({
+          type: SelectedSectionType.Directory,
+          path: newDirName,
+        });
+      } else {
+        setSelectedSection({
+          type: SelectedSectionType.Notes,
+        });
+      }
+    },
+    [selectedNotebook, notebookNotes, crossnote],
+  );
+
+  const deleteDirectory = useCallback(
+    async (dirName: string) => {
+      await crossnote.deleteDirectory(selectedNotebook, dirName);
+      const newNotes = notebookNotes.filter((n) => {
+        return !n.filePath.startsWith(dirName + "/");
+      });
+      setNotebookNotes(newNotes);
+      setNotebookDirectories(
+        await crossnote.getNotebookDirectoriesFromNotes(newNotes),
+      );
+      setSelectedSection({
+        type: SelectedSectionType.Notes,
+      });
+      _setSelectedNote(newNotes[0]);
+    },
+    [selectedNotebook, notebookNotes, _setSelectedNote, crossnote],
+  );
+
+  const renameTag = useCallback(
+    async (oldTagName: string, newTagName: string) => {
+      newTagName = sanitizeTag(newTagName);
+      const newNotes: Note[] = [];
+      const promises = [];
+      for (let i = 0; i < notebookNotes.length; i++) {
+        const note = notebookNotes[i];
+        let modified = false;
+        const tags = (note.config.tags || [])
+          .map((tag) => {
+            if ((tag + "/").startsWith(oldTagName + "/")) {
+              tag =
+                newTagName +
+                "/" +
+                tag.slice(oldTagName.length).replace(/^\/+/, "");
+              modified = true;
+            }
+            return tag.replace(/^\/+/, "").replace(/\/+$/, "");
+          })
+          .filter((tag) => tag.length)
+          .filter(
+            (tag, index, self) => self.findIndex((x) => x === tag) === index,
+          );
+        if (modified) {
+          note.config.tags = tags;
+          promises.push(
+            crossnote.updateNoteConfig(
+              selectedNotebook,
+              note.filePath,
+              note.config,
+            ),
+          );
+        }
+        newNotes.push(note);
+      }
+      await Promise.all(promises);
+      setNotebookNotes(newNotes);
+      setNotebookTagNode(crossnote.getNotebookTagNodeFromNotes(newNotes));
+      if (newTagName.length) {
+        setSelectedSection({
+          type: SelectedSectionType.Tag,
+          path: newTagName,
+        });
+      } else {
+        setSelectedSection({
+          type: SelectedSectionType.Notes,
+        });
+      }
+    },
+    [selectedNotebook, notebookNotes, crossnote],
+  );
+
+  const deleteTag = useCallback(
+    async (tagName: string) => {
+      const newNotes: Note[] = [];
+      const promises = [];
+      for (let i = 0; i < notebookNotes.length; i++) {
+        const note = notebookNotes[i];
+        let modified = false;
+        const tags = (note.config.tags || []).filter((tag) => {
+          const hasPrefix = (tag + "/").startsWith(tagName + "/");
+          modified = modified || hasPrefix;
+          return !hasPrefix;
+        });
+        if (modified) {
+          note.config.tags = tags;
+          promises.push(
+            crossnote.updateNoteConfig(
+              selectedNotebook,
+              note.filePath,
+              note.config,
+            ),
+          );
+        }
+        newNotes.push(note);
+      }
+      await Promise.all(promises);
+      setNotebookNotes(newNotes);
+      setNotebookTagNode(crossnote.getNotebookTagNodeFromNotes(newNotes));
+      setSelectedSection({
+        type: SelectedSectionType.Notes,
+      });
+    },
+    [selectedNotebook, notebookNotes, crossnote],
   );
 
   const createNewNote = useCallback(
@@ -566,29 +732,6 @@ function useCrossnoteContainer(initialState: InitialState) {
     [crossnote],
   );
 
-  const _setSelectedNote = useCallback(
-    (note: Note) => {
-      setSelectedNote(note);
-      const notebook = note.notebook;
-      if (notebook.gitURL) {
-        browserHistory.push(
-          `/?repo=${encodeURIComponent(
-            notebook.gitURL,
-          )}&branch=${encodeURIComponent(
-            notebook.gitBranch || "master",
-          )}&filePath=${encodeURIComponent(note.filePath)}`,
-        );
-      } else {
-        browserHistory.push(
-          `/?notebookID=${notebook._id}&filePath=${encodeURIComponent(
-            note.filePath,
-          )}`,
-        );
-      }
-    },
-    [setSelectedNote],
-  );
-
   const openNoteAtPath = useCallback(
     (filePath: string) => {
       if (!crossnote) return;
@@ -897,6 +1040,10 @@ Please also check the [Explore](https://crossnote.app/explore) section to discov
     setIncludeSubdirectories,
     deleteNote,
     changeNoteFilePath,
+    renameDirectory,
+    deleteDirectory,
+    renameTag,
+    deleteTag,
     duplicateNote,
     notebookDirectories,
     notebookTagNode,

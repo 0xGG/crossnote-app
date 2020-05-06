@@ -1,5 +1,4 @@
 import React from "react";
-import { Note } from "../lib/crossnote";
 import { useTranslation } from "react-i18next";
 import { CrossnoteContainer } from "../containers/crossnote";
 import {
@@ -14,27 +13,24 @@ import {
 interface Props {
   open: boolean;
   onClose: () => void;
-  note: Note;
+  tag: string;
 }
 
-export function DeleteDialog(props: Props) {
+export function DeleteTagDialog(props: Props) {
   const { t } = useTranslation();
-  const note = props.note;
   const crossnoteContainer = CrossnoteContainer.useContainer();
 
   return (
     <Dialog open={props.open} onClose={props.onClose}>
-      <DialogTitle>{t("delete-file-dialog/title")}</DialogTitle>
+      <DialogTitle>{t("delete-tag-dialog/title")}</DialogTitle>
       <DialogContent>
-        <DialogContentText>
-          {t("delete-file-dialog/subtitle")}
-        </DialogContentText>
+        <DialogContentText>{t("delete-tag-dialog/subtitle")}</DialogContentText>
       </DialogContent>
       <DialogActions>
         <Button
           style={{ color: "red" }}
           onClick={() => {
-            crossnoteContainer.deleteNote(note);
+            crossnoteContainer.deleteTag(props.tag);
             props.onClose();
           }}
         >

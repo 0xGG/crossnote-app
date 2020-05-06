@@ -368,6 +368,36 @@ export default class Crossnote {
     });
   }
 
+  public async renameDirectory(
+    notebook: Notebook,
+    oldDirName: string,
+    newDirName: string,
+  ) {
+    await pfs.rename(
+      path.resolve(notebook.dir, oldDirName),
+      path.resolve(notebook.dir, newDirName),
+    );
+    await git.remove({
+      fs: fs,
+      dir: notebook.dir,
+      filepath: oldDirName,
+    });
+    await git.add({
+      fs: fs,
+      dir: notebook.dir,
+      filepath: newDirName || ".",
+    });
+  }
+
+  public async deleteDirectory(notebook: Notebook, dirName: string) {
+    await pfs.rmdir(path.resolve(notebook.dir, dirName));
+    await git.remove({
+      fs: fs,
+      dir: notebook.dir,
+      filepath: dirName,
+    });
+  }
+
   private async generateChangesCache(notebook: Notebook): Promise<Cache> {
     const cache: Cache = {};
     const createCache = async (stagedFiles: string[]) => {
@@ -1059,6 +1089,30 @@ ${markdown}`;
     });
     return noteConfig;
   }
+
+  /**
+   * Update noteConfig only without updating markdown (excluding the front-matter)
+   * @param notebook
+   * @param filePath
+   * @param noteConfig
+   */
+  public async updateNoteConfig(
+    notebook: Notebook,
+    filePath: string,
+    noteConfig: NoteConfig,
+  ) {
+    const note = await this.getNote(notebook, filePath);
+    const data = this.matter(note.markdown);
+    const frontMatter = Object.assign(data.data || {}, { note: noteConfig });
+    const markdown = this.matterStringify(data.content, frontMatter);
+    await pfs.writeFile(path.resolve(notebook.dir, filePath), markdown);
+    await git.add({
+      fs: fs,
+      dir: notebook.dir,
+      filepath: filePath,
+    });
+  }
+
   public async deleteNote(notebook: Notebook, filePath: string) {
     if (await pfs.exists(path.resolve(notebook.dir, filePath))) {
       await pfs.unlink(path.resolve(notebook.dir, filePath));

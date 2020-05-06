@@ -100,7 +100,14 @@ class FileSystem {
         });
       });
     };
-    this.rename = (oldPath: string, newPath: string) => {
+    const rename = async (oldPath: string, newPath: string) => {
+      const stats = await this.stats(oldPath);
+      if (stats.isDirectory()) {
+        await this.mkdirp(newPath);
+      } else {
+        await this.mkdirp(path.dirname(newPath));
+      }
+
       return new Promise((resolve, reject) => {
         this.fs.rename(oldPath, newPath, (error: Error) => {
           if (error) {
@@ -111,7 +118,36 @@ class FileSystem {
         });
       });
     };
-
+    this.rename = async (oldPath: string, newPath: string) => {
+      const oldPathStat = await this.stats(oldPath);
+      let newPathStat: Stats;
+      if (await this.exists(newPath)) {
+        newPathStat = await this.stats(newPath);
+      } else {
+        newPathStat = null;
+      }
+      if (
+        oldPathStat.isDirectory() ||
+        (newPathStat && newPathStat.isDirectory())
+      ) {
+        const files = await this.readdir(oldPath);
+        // const promises = []; // <= It seems to cause bug if run parallel
+        for (let i = 0; i < files.length; i++) {
+          const file = files[i];
+          const filePath = path.resolve(oldPath, file);
+          const stats = await this.stats(filePath);
+          if (stats.isDirectory()) {
+            await this.rename(filePath, path.resolve(newPath, file));
+          } else {
+            await rename(filePath, path.resolve(newPath, file));
+          }
+        }
+        // await Promise.all(promises);
+        await this.rmdir(oldPath);
+      } else {
+        await rename(oldPath, newPath);
+      }
+    };
     const rmdir = (path: string) => {
       return new Promise((resolve, reject) => {
         this.fs.rmdir(path, (error: Error) => {

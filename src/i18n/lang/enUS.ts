@@ -57,6 +57,7 @@ export const enUS = {
     "general/onymous": "Onymous",
     "general/Tag": "Tag",
     "general/no-tags": "No tags",
+    "general/Directory": "Directory",
     "general/Untitled": "Untitled",
     "general/untitled": "untitled",
     "general/Unknown": "Unknown",
@@ -172,6 +173,11 @@ export const enUS = {
     "general/Source": "Source",
     "general/Description": "Description",
     "general/Edit": "Edit",
+    "general/Rename": "Rename",
+    "general/rename-directory": "Rename directory",
+    "general/delete-directory": "Delete directory",
+    "general/rename-tag": "Rename tag",
+    "general/delete-tag": "Delete tag",
     "general/notebook-updates-found": "Notebook updates found",
     "general/update-the-notebook": "Update the notebook",
     "general/check-notebook-updates-periodically":
@@ -537,8 +543,14 @@ export const enUS = {
     "widget/crossnote.comment/view-more-comments": "View more comments",
 
     // Dialogs
-    "delete-file-dialog/title": "Are you sure to delete this note?",
-    "delete-file-dialog/subtitle": "Can't be undone",
+    "delete-note-dialog/title": "Are you sure to delete this note?",
+    "delete-note-dialog/subtitle": "You can't undo this action.",
+    "delete-directory-dialog/title": "Are you sure to delete this directory?",
+    "delete-directory-dialog/subtitle":
+      "All the child directories and notes will also be deleted. You can't undo this action.",
+    "delete-tag-dialog/title": "Are you sure to delete this tag?",
+    "delete-tag-dialog/subtitle":
+      "All the child tags will also be deleted. You can't undo this action.",
     "add-notebook-dialog/disclaimer":
       "Notebook data will only be stored locally in browser for offline uses. We won't upload any notebook data to our server.",
     "edit-image-dialog/title": "Edit the image",

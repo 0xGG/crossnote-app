@@ -57,6 +57,7 @@ export const zhCN = {
     "general/onymous": "公开署名",
     "general/Tag": "标签",
     "general/no-tags": "没有标签",
+    "general/Directory": "目录",
     "general/Untitled": "无标题",
     "general/untitled": "无标题",
     "general/Unknown": "未知",
@@ -170,6 +171,11 @@ export const zhCN = {
     "general/Source": "源",
     "general/Description": "描述",
     "general/Edit": "编辑",
+    "general/Rename": "重命名",
+    "general/rename-directory": "重命名目录",
+    "general/delete-directory": "删除目录",
+    "general/rename-tag": "重命名标签",
+    "general/delete-tag": "删除标签",
     "general/notebook-updates-found": "发现笔记本更新",
     "general/update-the-notebook": "更新这个笔记本",
     "general/check-notebook-updates-periodically": "周期性地检查笔记本更新",
@@ -514,8 +520,13 @@ export const zhCN = {
     "widget/crossnote.comment/view-more-comments": "查看更多的评论",
 
     // Dialogs
-    "delete-file-dialog/title": "你确定要删除这个笔记？",
-    "delete-file-dialog/subtitle": "将不能被撤回",
+    "delete-note-dialog/title": "你确定要删除这个笔记？",
+    "delete-note-dialog/subtitle": "你无法撤销此操作。",
+    "delete-directory-dialog/title": "你确定要删除这个目录？",
+    "delete-directory-dialog/subtitle":
+      "所有子目录以及笔记也将会被删除。你无法撤销此操作。",
+    "delete-tag-dialog/title": "你确定要删除这个标签？",
+    "delete-tag-dialog/subtitle": "所有子标签也将会被删除。你无法撤销此操作。",
     "add-notebook-dialog/disclaimer":
       "所有笔记本的数据将只会被保存于浏览器本地以供离线使用。我们不会上传任何你的笔记本数据到我们的服务器。",
     "edit-image-dialog/title": "编辑图片",
