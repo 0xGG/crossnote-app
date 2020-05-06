@@ -314,15 +314,10 @@ function useCrossnoteContainer(initialState: InitialState) {
         const tags = (note.config.tags || [])
           .map((tag) => {
             if ((tag + "/").startsWith(oldTagName + "/")) {
-              if (newTagName.length > 0) {
-                tag =
-                  newTagName +
-                  "/" +
-                  tag.slice(oldTagName.length).replace(/^\/+/, "");
-              } else {
-                // Delete the tag
-                tag = "";
-              }
+              tag =
+                newTagName +
+                "/" +
+                tag.slice(oldTagName.length).replace(/^\/+/, "");
               modified = true;
             }
             return tag.replace(/^\/+/, "").replace(/\/+$/, "");
@@ -356,17 +351,40 @@ function useCrossnoteContainer(initialState: InitialState) {
           type: SelectedSectionType.Notes,
         });
       }
-      /*
-      if (selectedNote) {
-        const note = await crossnote.getNote(
-          selectedNotebook,
-          selectedNote.filePath,
-        );
-        if (note) {
-          _setSelectedNote(note);
+    },
+    [selectedNotebook, notebookNotes, crossnote],
+  );
+
+  const deleteTag = useCallback(
+    async (tagName: string) => {
+      const newNotes: Note[] = [];
+      const promises = [];
+      for (let i = 0; i < notebookNotes.length; i++) {
+        const note = notebookNotes[i];
+        let modified = false;
+        const tags = (note.config.tags || []).filter((tag) => {
+          const hasPrefix = (tag + "/").startsWith(tagName + "/");
+          modified = modified || hasPrefix;
+          return !hasPrefix;
+        });
+        if (modified) {
+          note.config.tags = tags;
+          promises.push(
+            crossnote.updateNoteConfig(
+              selectedNotebook,
+              note.filePath,
+              note.config,
+            ),
+          );
         }
+        newNotes.push(note);
       }
-      */
+      await Promise.all(promises);
+      setNotebookNotes(newNotes);
+      setNotebookTagNode(crossnote.getNotebookTagNodeFromNotes(newNotes));
+      setSelectedSection({
+        type: SelectedSectionType.Notes,
+      });
     },
     [selectedNotebook, notebookNotes, crossnote],
   );
@@ -1025,6 +1043,7 @@ Please also check the [Explore](https://crossnote.app/explore) section to discov
     renameDirectory,
     deleteDirectory,
     renameTag,
+    deleteTag,
     duplicateNote,
     notebookDirectories,
     notebookTagNode,

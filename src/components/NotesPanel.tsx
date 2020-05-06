@@ -37,7 +37,6 @@ import {
   SortDescending,
   SortAscending,
   Pencil,
-  FileEdit,
   ChevronDown,
   TrashCan,
 } from "mdi-material-ui";
@@ -47,6 +46,7 @@ import Notes from "./Notes";
 import { RenameDirectoryDialog } from "./RenameDirectoryDialog";
 import { RenameTagDialog } from "./RenameTagDialog";
 import { DeleteDirectoryDialog } from "./DeleteDirectoryDialog";
+import { DeleteTagDialog } from "./DeleteTagDialog";
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -543,6 +543,12 @@ export default function NotesPanel(props: Props) {
         onClose={() => setRenameTagDialogOpen(false)}
         tag={crossnoteContainer.selectedSection.path}
       ></RenameTagDialog>
+
+      <DeleteTagDialog
+        open={deleteTagDialogOpen}
+        onClose={() => setDeleteTagDialogOpen(false)}
+        tag={crossnoteContainer.selectedSection.path}
+      ></DeleteTagDialog>
 
       {crossnoteContainer.isLoadingNotebook && (
         <CircularProgress className={clsx(classes.loading)}></CircularProgress>

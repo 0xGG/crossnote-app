@@ -13,26 +13,24 @@ import {
 interface Props {
   open: boolean;
   onClose: () => void;
-  directory: string;
+  tag: string;
 }
 
-export function DeleteDirectoryDialog(props: Props) {
+export function DeleteTagDialog(props: Props) {
   const { t } = useTranslation();
   const crossnoteContainer = CrossnoteContainer.useContainer();
 
   return (
     <Dialog open={props.open} onClose={props.onClose}>
-      <DialogTitle>{t("delete-directory-dialog/title")}</DialogTitle>
+      <DialogTitle>{t("delete-tag-dialog/title")}</DialogTitle>
       <DialogContent>
-        <DialogContentText>
-          {t("delete-directory-dialog/subtitle")}
-        </DialogContentText>
+        <DialogContentText>{t("delete-tag-dialog/subtitle")}</DialogContentText>
       </DialogContent>
       <DialogActions>
         <Button
           style={{ color: "red" }}
           onClick={() => {
-            crossnoteContainer.deleteDirectory(props.directory);
+            crossnoteContainer.deleteTag(props.tag);
             props.onClose();
           }}
         >
