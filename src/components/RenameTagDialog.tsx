@@ -49,6 +49,7 @@ export function RenameTagDialog(props: Props) {
               renameTag();
             }
           }}
+          autoFocus={true}
         ></TextField>
       </DialogContent>
       <DialogActions>

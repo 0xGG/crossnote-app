@@ -50,6 +50,7 @@ export function RenameDirectoryDialog(props: Props) {
               renameDirectory();
             }
           }}
+          autoFocus={true}
         ></TextField>
       </DialogContent>
       <DialogActions>

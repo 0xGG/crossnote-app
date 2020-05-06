@@ -260,7 +260,7 @@ function useCrossnoteContainer(initialState: InitialState) {
       const newNotes = notebookNotes.map((n) => {
         if (n.filePath.startsWith(oldDirName + "/")) {
           if (newDirName.length > 0) {
-            n.filePath = newDirName + "/" + path.basename(n.filePath);
+            n.filePath = n.filePath.replace(oldDirName, newDirName);
           } else {
             n.filePath = path.basename(n.filePath);
           }

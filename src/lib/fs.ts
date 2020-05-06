@@ -100,21 +100,22 @@ class FileSystem {
         });
       });
     };
-    const rename = (oldPath: string, newPath: string) => {
+    const rename = async (oldPath: string, newPath: string) => {
+      const stats = await this.stats(oldPath);
+      if (stats.isDirectory()) {
+        await this.mkdirp(newPath);
+      } else {
+        await this.mkdirp(path.dirname(newPath));
+      }
+
       return new Promise((resolve, reject) => {
-        this.mkdirp(path.dirname(newPath))
-          .then(() => {
-            this.fs.rename(oldPath, newPath, (error: Error) => {
-              if (error) {
-                return reject(error);
-              } else {
-                return resolve();
-              }
-            });
-          })
-          .catch((error) => {
+        this.fs.rename(oldPath, newPath, (error: Error) => {
+          if (error) {
             return reject(error);
-          });
+          } else {
+            return resolve();
+          }
+        });
       });
     };
     this.rename = async (oldPath: string, newPath: string) => {
@@ -130,18 +131,18 @@ class FileSystem {
         (newPathStat && newPathStat.isDirectory())
       ) {
         const files = await this.readdir(oldPath);
-        const promises = [];
+        // const promises = []; // <= It seems to cause bug if run parallel
         for (let i = 0; i < files.length; i++) {
           const file = files[i];
           const filePath = path.resolve(oldPath, file);
           const stats = await this.stats(filePath);
           if (stats.isDirectory()) {
-            promises.push(this.rename(filePath, path.resolve(newPath, file)));
+            await this.rename(filePath, path.resolve(newPath, file));
           } else {
-            promises.push(rename(filePath, path.resolve(newPath, file)));
+            await rename(filePath, path.resolve(newPath, file));
           }
         }
-        await Promise.all(promises);
+        // await Promise.all(promises);
         await this.rmdir(oldPath);
       } else {
         await rename(oldPath, newPath);

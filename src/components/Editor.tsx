@@ -283,7 +283,9 @@ export default function Editor(props: Props) {
     line: 0,
     ch: 0,
   });
-  const [deleteNoteDialogOpen, setDeleteNoteDialogOpen] = useState<boolean>(false);
+  const [deleteNoteDialogOpen, setDeleteNoteDialogOpen] = useState<boolean>(
+    false,
+  );
   const [filePathDialogOpen, setFilePathDialogOpen] = useState<boolean>(false);
   const [pushDialogOpen, setPushDialogOpen] = useState<boolean>(false);
   const [previewElement, setPreviewElement] = useState<HTMLElement>(null);
@@ -1222,16 +1224,29 @@ export default function Editor(props: Props) {
       tempPreviewElement.classList.add("preview");
       tempPreviewElement.style.zIndex = "999999";
       document.body.appendChild(tempPreviewElement);
+
+      const bannerElement = document.createElement("div");
+      bannerElement.style.position = "fixed";
+      bannerElement.style.width = "100%";
+      bannerElement.style.height = "100%";
+      bannerElement.style.top = "0";
+      bannerElement.style.left = "0";
+      bannerElement.style.textAlign = "center";
+      bannerElement.style.backgroundColor = theme.palette.background.default;
+      bannerElement.style.color = theme.palette.text.primary;
+      bannerElement.style.zIndex = "9999";
+      bannerElement.innerHTML = `<p>${t("general/please-wait")}</p>`;
+
       const currentTheme = editor.getOption("theme") as ThemeName;
       setTheme({
-        editor,
+        editor: null,
         themeName: "light",
         baseUri: "/styles/",
       });
       const printDone = () => {
         tempPreviewElement.remove();
         setTheme({
-          editor,
+          editor: null,
           themeName: currentTheme,
           baseUri: "/styles/",
         });
@@ -1243,7 +1258,7 @@ export default function Editor(props: Props) {
         previewIsPresentation,
       )
         .then(() => {
-          printPreview(tempPreviewElement)
+          printPreview(tempPreviewElement, bannerElement)
             .then(() => {
               printDone();
             })
