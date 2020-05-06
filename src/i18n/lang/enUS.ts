@@ -172,6 +172,9 @@ export const enUS = {
     "general/Source": "Source",
     "general/Description": "Description",
     "general/Edit": "Edit",
+    "general/Rename": "Rename",
+    "general/rename-directory": "Rename directory",
+    "general/rename-tag": "Rename tag",
     "general/notebook-updates-found": "Notebook updates found",
     "general/update-the-notebook": "Update the notebook",
     "general/check-notebook-updates-periodically":

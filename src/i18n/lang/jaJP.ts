@@ -172,6 +172,9 @@ export const jaJP = {
     "general/Source": "ソース",
     "general/Description": "説明",
     "general/Edit": "編集",
+    "general/Rename": "変更",
+    "general/rename-directory": "ディレクトリ名を変更する",
+    "general/rename-tag": "タグの名前を変更する",
     "general/notebook-updates-found": "ノートブックの更新が見つかりました",
     "general/update-the-notebook": "ノートブックを更新する",
     "general/check-notebook-updates-periodically":

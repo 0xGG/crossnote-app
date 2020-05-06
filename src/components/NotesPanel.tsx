@@ -36,10 +36,13 @@ import {
   SortVariant,
   SortDescending,
   SortAscending,
+  Pencil,
 } from "mdi-material-ui";
 import { useTranslation } from "react-i18next";
 import ConfigureNotebookDialog from "./ConfigureNotebookDialog";
 import Notes from "./Notes";
+import { RenameDirectoryDialog } from "./RenameDirectoryDialog";
+import { RenameTagDialog } from "./RenameTagDialog";
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -51,7 +54,7 @@ const useStyles = makeStyles((theme: Theme) =>
       backgroundColor: theme.palette.background.default,
     },
     topPanel: {
-      padding: theme.spacing(1),
+      padding: theme.spacing(0, 1),
       borderRadius: 0,
       backgroundColor: theme.palette.background.paper,
     },
@@ -128,6 +131,12 @@ export default function NotesPanel(props: Props) {
   const { t } = useTranslation();
   const [sortMenuAnchorEl, setSortMenuAnchorEl] = useState<HTMLElement>(null);
   const [isCreatingNote, setIsCreatingNote] = useState<boolean>(false);
+  const [renameDirectoryDialogOpen, setRenameDirectoryDialogOpen] = useState<
+    boolean
+  >(false);
+  const [renameTagDialogOpen, setRenameTagDialogOpen] = useState<boolean>(
+    false,
+  );
   const crossnoteContainer = CrossnoteContainer.useContainer();
 
   // Search
@@ -173,6 +182,17 @@ export default function NotesPanel(props: Props) {
     setSearchValue("");
     setFinalSearchValue("");
   }, [crossnoteContainer.selectedNotebook]);
+
+  useEffect(() => {
+    if (
+      crossnoteContainer.selectedSection.type !== SelectedSectionType.Directory
+    ) {
+      setRenameDirectoryDialogOpen(false);
+    }
+    if (crossnoteContainer.selectedSection.type !== SelectedSectionType.Tag) {
+      setRenameTagDialogOpen(false);
+    }
+  }, [crossnoteContainer.selectedSection]);
 
   return (
     <Box className={clsx(classes.notesPanel)}>
@@ -268,7 +288,11 @@ export default function NotesPanel(props: Props) {
             </Box>
           ) : crossnoteContainer.selectedSection.type ===
             SelectedSectionType.Tag ? (
-            <Box className={clsx(classes.row)}>
+            <Box
+              className={clsx(classes.row)}
+              style={{ cursor: "pointer" }}
+              onClick={() => setRenameTagDialogOpen(true)}
+            >
               <span role="img" aria-label="tag">
                 🏷️
               </span>
@@ -299,7 +323,11 @@ export default function NotesPanel(props: Props) {
           ) : (
             crossnoteContainer.selectedSection.type ===
               SelectedSectionType.Directory && (
-              <Box className={clsx(classes.row)}>
+              <Box
+                className={clsx(classes.row)}
+                style={{ cursor: "pointer" }}
+                onClick={() => setRenameDirectoryDialogOpen(true)}
+              >
                 <span role="img" aria-label="folder">
                   {"📁"}
                 </span>
@@ -419,6 +447,18 @@ export default function NotesPanel(props: Props) {
         onClose={() => setNotebookConfigurationDialogOpen(false)}
         notebook={crossnoteContainer.selectedNotebook}
       ></ConfigureNotebookDialog>
+
+      <RenameDirectoryDialog
+        open={renameDirectoryDialogOpen}
+        onClose={() => setRenameDirectoryDialogOpen(false)}
+        directory={crossnoteContainer.selectedSection.path}
+      ></RenameDirectoryDialog>
+
+      <RenameTagDialog
+        open={renameTagDialogOpen}
+        onClose={() => setRenameTagDialogOpen(false)}
+        tag={crossnoteContainer.selectedSection.path}
+      ></RenameTagDialog>
 
       {crossnoteContainer.isLoadingNotebook && (
         <CircularProgress className={clsx(classes.loading)}></CircularProgress>

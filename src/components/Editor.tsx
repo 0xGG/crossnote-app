@@ -203,7 +203,7 @@ const useStyles = makeStyles((theme: Theme) =>
       height: "100%",
       border: "none",
       overflow: "auto !important",
-      padding: theme.spacing(2),
+      padding: theme.spacing(1, 2),
       zIndex: previewZIndex,
       [theme.breakpoints.down("sm")]: {
         padding: theme.spacing(1),

@@ -579,7 +579,7 @@ export function Settings(props: Props) {
           target={"_blank"}
         >
           <Typography variant={"caption"}>
-            {"🛠 build " + GitCommit.logMessage}
+            {"🛠 Build " + GitCommit.logMessage}
           </Typography>
         </Link>
         <br></br>

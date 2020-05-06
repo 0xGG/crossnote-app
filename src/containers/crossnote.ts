@@ -220,7 +220,42 @@ function useCrossnoteContainer(initialState: InitialState) {
         }
       })();
     },
-    [selectedNotebook, crossnote, notebookNotes],
+    [selectedNotebook, notebookNotes, crossnote],
+  );
+
+  const renameDirectory = useCallback(
+    async (oldDirName: string, newDirName: string) => {
+      newDirName = newDirName
+        .replace(/^\/+/, "")
+        .replace(/^\.+\/+/, "")
+        .replace(/\/+$/, "");
+      if (oldDirName === newDirName) {
+        return;
+      }
+      await crossnote.renameDirectory(selectedNotebook, oldDirName, newDirName);
+
+      const newNotes = notebookNotes.map((n) => {
+        if (n.filePath.startsWith(oldDirName + "/")) {
+          n.filePath = newDirName + "/" + path.basename(n.filePath);
+        }
+        return n;
+      });
+      setNotebookNotes(newNotes);
+      setNotebookDirectories(
+        await crossnote.getNotebookDirectoriesFromNotes(newNotes),
+      );
+      if (newDirName.length) {
+        setSelectedSection({
+          type: SelectedSectionType.Directory,
+          path: newDirName,
+        });
+      } else {
+        setSelectedSection({
+          type: SelectedSectionType.Notes,
+        });
+      }
+    },
+    [selectedNotebook, notebookNotes, crossnote],
   );
 
   const createNewNote = useCallback(
@@ -897,6 +932,7 @@ Please also check the [Explore](https://crossnote.app/explore) section to discov
     setIncludeSubdirectories,
     deleteNote,
     changeNoteFilePath,
+    renameDirectory,
     duplicateNote,
     notebookDirectories,
     notebookTagNode,

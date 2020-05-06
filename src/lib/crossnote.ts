@@ -368,6 +368,27 @@ export default class Crossnote {
     });
   }
 
+  public async renameDirectory(
+    notebook: Notebook,
+    oldDirName: string,
+    newDirName: string,
+  ) {
+    await pfs.rename(
+      path.resolve(notebook.dir, oldDirName),
+      path.resolve(notebook.dir, newDirName),
+    );
+    await git.remove({
+      fs: fs,
+      dir: notebook.dir,
+      filepath: oldDirName,
+    });
+    await git.add({
+      fs: fs,
+      dir: notebook.dir,
+      filepath: newDirName,
+    });
+  }
+
   private async generateChangesCache(notebook: Notebook): Promise<Cache> {
     const cache: Cache = {};
     const createCache = async (stagedFiles: string[]) => {
