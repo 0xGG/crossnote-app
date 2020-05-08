@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
   Box,
@@ -24,6 +24,13 @@ const useStyles = makeStyles((theme: Theme) =>
   createStyles({
     container: {
       position: "relative",
+      width: "100%",
+      height: "100%",
+      color: theme.palette.text.primary,
+      backgroundColor: theme.palette.background.default,
+    },
+    wrapper: {
+      position: "relative",
       width: "960px",
       maxWidth: "100%",
       margin: "0 auto",
@@ -31,7 +38,6 @@ const useStyles = makeStyles((theme: Theme) =>
       top: "50%",
       padding: "16px",
       boxSizing: "border-box",
-      color: "#fff",
     },
     email: {
       marginBottom: "24px",
@@ -75,8 +81,6 @@ export function GitHubOAuthCallback(props: Props) {
     resSignUpWithGitHubAccount,
     executeSignUpWithGitHubAccount,
   ] = useSignUpWithGitHubAccountMutation();
-
-  console.log("GitHubOAuthCallback: ", i18n.language);
 
   useEffect(() => {
     if (props.code) {
@@ -123,7 +127,7 @@ export function GitHubOAuthCallback(props: Props) {
       resSignInWithGitHubAccount.data.signInWithGitHubAccount.token
     ) {
       if (
-        resSignInWithGitHubAccount.data.signInWithGitHubAccount.user.id ==
+        resSignInWithGitHubAccount.data.signInWithGitHubAccount.user.id ===
         UUIDNil
       ) {
         // Ask user to register for new account
@@ -183,66 +187,69 @@ export function GitHubOAuthCallback(props: Props) {
       <ChevronLeft></ChevronLeft>
     </IconButton>
   );
-  if (accessToken) {
-    return (
-      <Box className={clsx(classes.container)}>
-        {backBtn}
-        <Typography variant="h4" style={{ marginBottom: "0" }}>
-          {t("github-oauth/first-time-sign-in")}
-        </Typography>
-        <Typography variant="h5" style={{ marginBottom: "0" }}>
-          {t("github-oauth/first-time-sign-in-small")}
-        </Typography>
-        <Card elevation={2} className={clsx(classes.card)}>
-          <TextField
-            className={clsx(classes.email)}
-            label={t("general/Username")}
-            variant="outlined"
-            value={username}
-            onChange={(event) => {
-              setErrorMessage("");
-              setUsername(event.target.value);
-            }}
-            fullWidth={true}
-          ></TextField>
-          <TextField
-            className={clsx(classes.email)}
-            label={t("general/Email")}
-            variant="outlined"
-            value={email}
-            onChange={(event) => {
-              setErrorMessage("");
-              setEmail(event.target.value);
-            }}
-            onClick={(event) => {
-              event.currentTarget.focus();
-            }}
-            fullWidth={true}
-          ></TextField>
-          {errorMessage.length ? (
-            <Typography className={clsx(classes.errorMessage)}>
-              {errorMessage}
-            </Typography>
-          ) : null}
-          <Button
-            variant="contained"
-            color="primary"
-            onClick={() => signUpWithGitHubAccessToken()}
-            fullWidth={true}
-            disabled={resSignUpWithGitHubAccount.fetching}
-          >
-            {t("general/Continue")}
-          </Button>
-        </Card>
-      </Box>
-    );
-  }
 
   return (
     <Box className={clsx(classes.container)}>
-      {backBtn}
-      <Typography variant={"h2"}>{title}</Typography>
-      <Typography>{props.code}</Typography>
+      <Box className={clsx(classes.wrapper)}>
+        {accessToken ? (
+          <React.Fragment>
+            {backBtn}
+            <Typography variant="h4" style={{ marginBottom: "0" }}>
+              {t("github-oauth/first-time-sign-in")}
+            </Typography>
+            <Typography variant="h5" style={{ marginBottom: "0" }}>
+              {t("github-oauth/first-time-sign-in-small")}
+            </Typography>
+            <Card elevation={2} className={clsx(classes.card)}>
+              <TextField
+                className={clsx(classes.email)}
+                label={t("general/Username")}
+                variant="outlined"
+                value={username}
+                onChange={(event) => {
+                  setErrorMessage("");
+                  setUsername(event.target.value);
+                }}
+                fullWidth={true}
+              ></TextField>
+              <TextField
+                className={clsx(classes.email)}
+                label={t("general/Email")}
+                variant="outlined"
+                value={email}
+                onChange={(event) => {
+                  setErrorMessage("");
+                  setEmail(event.target.value);
+                }}
+                onClick={(event) => {
+                  event.currentTarget.focus();
+                }}
+                fullWidth={true}
+              ></TextField>
+              {errorMessage.length ? (
+                <Typography className={clsx(classes.errorMessage)}>
+                  {errorMessage}
+                </Typography>
+              ) : null}
+              <Button
+                variant="contained"
+                color="primary"
+                onClick={() => signUpWithGitHubAccessToken()}
+                fullWidth={true}
+                disabled={resSignUpWithGitHubAccount.fetching}
+              >
+                {t("general/Continue")}
+              </Button>
+            </Card>
+          </React.Fragment>
+        ) : (
+          <React.Fragment>
+            {backBtn}
+            <Typography variant={"h2"}>{title}</Typography>
+            <Typography>{props.code}</Typography>
+          </React.Fragment>
+        )}
+      </Box>
     </Box>
   );
 }

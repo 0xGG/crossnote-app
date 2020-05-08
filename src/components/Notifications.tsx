@@ -159,7 +159,7 @@ export function Notifications(props: Props) {
                             cloudContainer.reduceNotificationsCountByOne();
                           }}
                         >
-                          <Close></Close>
+                          <Close className={clsx(classes.iconBtnSVG)}></Close>
                         </IconButton>
                       </ListItemIcon>
                       {notificationComponent}

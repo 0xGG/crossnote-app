@@ -57,6 +57,7 @@ export function CommentWidgetMessagePostingNotification(props: Props) {
         ref={(element: HTMLElement) => {
           setPreviewElement(element);
         }}
+        style={{ backgroundColor: "inherit" }}
       ></div>
     </Box>
   );

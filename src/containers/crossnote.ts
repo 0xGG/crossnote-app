@@ -61,6 +61,7 @@ export enum HomeSection {
   Settings = "Settings",
   Notifications = "Notifications",
   Privacy = "Privacy",
+  Unknown = "Unknown",
 }
 
 /**
@@ -124,7 +125,7 @@ function useCrossnoteContainer(initialState: InitialState) {
     false,
   );
   const [homeSection, setHomeSection] = useState<HomeSection>(
-    HomeSection.Notebooks,
+    HomeSection.Unknown,
   );
 
   const _setSelectedNote = useCallback(
