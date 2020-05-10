@@ -50,7 +50,7 @@ gulp.task("service-worker", () => {
       swSrc: "src/sw.js",
       swDest: "build/service-worker.js",
       globDirectory: "build",
-      globPatterns: ["**/*.{js,css,html,png,svg,tff,woff,woff2}"],
+      globPatterns: ["**/*.{js,css,html,png,svg,ttf,woff,woff2,eot}"],
       globIgnores: ["assets/apple-*"],
       maximumFileSizeToCacheInBytes: 1024 * 1024 * 8, // 8mb
       mode: "production",
