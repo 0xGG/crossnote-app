@@ -1043,7 +1043,7 @@ export default function Editor(props: Props) {
                 {
                   text: "<!-- @crossnote.audio -->  \n",
                   command: "/audio",
-                  description: t("editor/toolbar/audio-url"),
+                  description: t("editor/toolbar/insert-audio"),
                   icon: "mdi-music",
                   render,
                 },
@@ -1058,21 +1058,21 @@ export default function Editor(props: Props) {
                 {
                   text: "<!-- @crossnote.video -->  \n",
                   command: "/video",
-                  description: t("editor/toolbar/video-url"),
+                  description: t("editor/toolbar/insert-video"),
                   icon: "mdi-video",
                   render,
                 },
                 {
                   text: "<!-- @crossnote.youtube -->  \n",
                   command: "/youtube",
-                  description: t("editor/toolbar/youtube"),
+                  description: t("editor/toolbar/insert-youtube"),
                   icon: "mdi-youtube",
                   render,
                 },
                 {
                   text: "<!-- @crossnote.bilibili -->  \n",
                   command: "/bilibili",
-                  description: t("editor/toolbar/bilibili"),
+                  description: t("editor/toolbar/insert-bilibili"),
                   icon: "mdi-television-classic",
                   render,
                 },
