@@ -57,7 +57,11 @@ export async function loadImageAsBase64(
   if (imageSrc.startsWith("/")) {
     imageFilePath = path.resolve(note.notebook.dir, "." + imageSrc);
   } else {
-    imageFilePath = path.resolve(note.notebook.dir, imageSrc);
+    imageFilePath = path.join(
+      note.notebook.dir,
+      path.dirname(note.filePath),
+      imageSrc,
+    );
   }
   if (await pfs.exists(imageFilePath)) {
     const data: Uint8Array = new Uint8Array(
