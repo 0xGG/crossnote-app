@@ -227,9 +227,9 @@ export default function NoteCard(props: Props) {
         {images.length > 0 && (
           <Box className={clsx(classes.images)}>
             <Box className={clsx(classes.imagesWrapper)}>
-              {images.map((image) => (
+              {images.map((image, offset) => (
                 <div
-                  key={image}
+                  key={`${image}-${offset}`}
                   className={clsx(classes.image)}
                   style={{
                     backgroundImage: `url(${image})`,

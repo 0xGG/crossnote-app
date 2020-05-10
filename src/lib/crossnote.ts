@@ -891,13 +891,22 @@ export default class Crossnote {
             localStorage.removeItem(`pending/pull/${notebook._id}`);
           }
 
-          // NOTE: Seems like there is a bug somewhere that caused all files to become *undeleted
-          // So we run git.add again.
-          await git.add({
+          const status = await git.status({
             fs: fs,
             dir: notebook.dir,
             filepath: ".",
           });
+
+          // check: absent, deleted, undeleted
+          if (status.match(/(absent|deleted)/)) {
+            // NOTE: Seems like there is a bug somewhere that caused all files to become *undeleted
+            // So we run git.add again.
+            await git.add({
+              fs: fs,
+              dir: notebook.dir,
+              filepath: ".",
+            });
+          }
         } catch (error) {
           notebooks[i] = null;
         }
