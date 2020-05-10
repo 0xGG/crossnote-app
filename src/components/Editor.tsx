@@ -906,7 +906,6 @@ export default function Editor(props: Props) {
                 data: CommandHint[],
                 cur: CommandHint,
               ) => {
-                console.log(element, data, cur);
                 const wrapper = document.createElement("div");
                 wrapper.style.padding = "6px 0";
                 wrapper.style.display = "flex";
