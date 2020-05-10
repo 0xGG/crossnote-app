@@ -4,6 +4,7 @@ import "typeface-noto-sans-sc";
 import "typeface-roboto";
 import "noty/lib/noty.css";
 import "noty/lib/themes/relax.css";
+import "@mdi/font/css/materialdesignicons.min.css";
 
 import "./i18n/i18n";
 import "./index.css";

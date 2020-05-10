@@ -3,7 +3,6 @@
 import "codemirror";
 // Load these modes if you want highlighting ...
 import "codemirror/lib/codemirror.css";
-import "codemirror/addon/hint/show-hint.css";
 import "codemirror/addon/dialog/dialog.css";
 import "codemirror/mode/htmlmixed/htmlmixed"; // for embedded HTML
 import "codemirror/mode/markdown/markdown";
