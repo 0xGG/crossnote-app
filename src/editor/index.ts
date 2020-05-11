@@ -55,3 +55,6 @@ registerWidgetCreator("crossnote.kanban", KanbanWidgetCreator);
 // registerWidgetCreator("crossnote.abc", ABCWidgetCreator);
 registerWidgetCreator("crossnote.comment", CommentWidgetCreator);
 registerWidgetCreator("crossnote.github_gist", GitHubGistWidgetCreator);
+
+const packageJSON = require("../../package.json");
+export const VickyMDVersion: string = packageJSON.dependencies.vickymd;

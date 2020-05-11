@@ -13,7 +13,7 @@ import clsx from "clsx";
 import { useTranslation } from "react-i18next";
 import { Editor as CodeMirrorEditor } from "codemirror";
 import { globalContainers } from "../../../containers/global";
-import { setTheme } from "vickymd/theme";
+import { setTheme } from "../../../themes/manager";
 const VickyMD = require("vickymd/core");
 
 export const ChatMessageEditorHeight = "150";
@@ -99,7 +99,6 @@ export function CommentEditor(props: Props) {
       setTheme({
         editor,
         themeName: globalContainers.settingsContainer.theme.name,
-        baseUri: "/styles/",
       });
     }
   }, [editor]);

@@ -3,7 +3,23 @@ import { LightTheme } from "./light";
 import { DarkTheme } from "./dark";
 import { OneDarkTheme } from "./one-dark";
 import { SolarizedLight } from "./solarized-light";
-import { setTheme } from "vickymd/theme";
+import { setTheme as VickyMDSetTheme, ThemeName } from "vickymd/theme";
+import { Editor } from "codemirror";
+import { VickyMDVersion } from "../editor";
+
+export function setTheme({
+  editor,
+  themeName,
+}: {
+  editor?: Editor;
+  themeName: ThemeName;
+}) {
+  return VickyMDSetTheme({
+    editor,
+    themeName,
+    baseUri: `/styles/vickymd@${VickyMDVersion}/`,
+  });
+}
 
 export class ThemeManager {
   public themes: CrossnoteTheme[] = [];
@@ -30,7 +46,6 @@ export class ThemeManager {
     this.selectedTheme = theme;
     setTheme({
       themeName: theme.name,
-      baseUri: "/styles/",
     });
   }
 }

@@ -35,7 +35,8 @@ import Board from "@lourenci/react-kanban";
 import { Editor as CodeMirrorEditor } from "codemirror";
 import { renderPreview } from "vickymd/preview";
 import { globalContainers } from "../../../containers/global";
-import { setTheme } from "vickymd/theme";
+import { VickyMDVersion } from "../..";
+import { setTheme } from "../../../themes/manager";
 const VickyMD = require("vickymd/core");
 
 const useStyles = makeStyles((theme: Theme) =>
@@ -250,7 +251,6 @@ function KanbanCardDisplay(props: KanbanCardProps) {
       setTheme({
         editor,
         themeName: globalContainers.settingsContainer.theme.name,
-        baseUri: "/styles/",
       });
     }
   }, [editor]);

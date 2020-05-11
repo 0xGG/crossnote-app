@@ -573,9 +573,7 @@ export function Settings(props: Props) {
         </Link>
         <br></br>
         <Link
-          href={`https://github.com/0xGG/crossnote/commit/${
-            GitCommit.logMessage.split(/\s+/)[0]
-          }`}
+          href={`https://github.com/0xGG/crossnote/commit/${GitCommit.hash}`}
           target={"_blank"}
         >
           <Typography variant={"caption"}>
