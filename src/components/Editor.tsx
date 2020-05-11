@@ -1769,7 +1769,9 @@ export default function Editor(props: Props) {
                   }}
                 >
                   <IconButton>
-                    <ContentCopy></ContentCopy>
+                    <ContentCopy
+                      className={clsx(classes.iconBtnSVG)}
+                    ></ContentCopy>
                   </IconButton>
                 </Tooltip>
                 <TextField
