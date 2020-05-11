@@ -32,8 +32,8 @@ import {
 import { renderPreview } from "vickymd/preview";
 import { Widget } from "../../../generated/graphql";
 import { browserHistory } from "../../../utilities/history";
-import { setTheme } from "vickymd/theme";
 import { globalContainers } from "../../../containers/global";
+import { setTheme } from "../../../themes/manager";
 const VickyMD = require("vickymd/core");
 
 const useStyles = makeStyles((theme: Theme) =>
@@ -222,7 +222,6 @@ export function WidgetTopPanel(props: Props) {
       setTheme({
         editor,
         themeName: globalContainers.settingsContainer.theme.name,
-        baseUri: "/styles/",
       });
     }
   }, [editor]);

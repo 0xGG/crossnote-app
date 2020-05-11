@@ -71,12 +71,12 @@
     "vickymd": "^0.1.29"
   },
   "scripts": {
-    "git-info": "echo export default \"{\\\"logMessage\\\": \\\"$(git log -1 --oneline)\\\"}\"  > src/_git_commit.js",
-    "start": "npm-run-all --parallel start:*",
-    "start:react-scripts": "yarn git-info; react-app-rewired start",
+    "git-info": "echo export default \"{\\\"logMessage\\\": \\\"$(git log -1 --oneline)\\\",\\\"hash\\\":\\\"$(git rev-parse HEAD)\\\"}\"  > src/_git_commit.js",
+    "start": "yarn git-info; npm-run-all --parallel start:*",
+    "start:react-scripts": "react-app-rewired start",
     "start:copy-css-files": "gulp copy-css-files",
-    "build": "yarn build:copy-css-files; yarn build:react-scripts; yarn build:service-worker",
-    "build:react-scripts": "yarn git-info; react-app-rewired build",
+    "build": "yarn git-info; yarn build:copy-css-files; yarn build:react-scripts; yarn build:service-worker",
+    "build:react-scripts": "react-app-rewired build",
     "build:copy-css-files": "gulp copy-css-files",
     "build:service-worker": "gulp service-worker",
     "build:splash-screen": "cd public && npx pwa-asset-generator logo.svg ./assets -i ./index.html -m manifest.json",

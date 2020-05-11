@@ -4,6 +4,8 @@ const gulp = require("gulp");
 // const plumber = require("gulp-plumber");
 const workboxBuild = require("workbox-build");
 const del = require("del");
+const packageJSON = require("./package.json");
+const vickymdVersion = packageJSON.dependencies.vickymd;
 
 //const src = "./public/styles/**/*.scss";
 /*
@@ -37,10 +39,10 @@ gulp.task(
 */
 
 gulp.task("copy-css-files", function (cb) {
-  del.sync("./public/styles/");
+  del.sync(`./public/styles/vickymd*`);
   gulp
     .src(["./node_modules/vickymd/theme/**/*"])
-    .pipe(gulp.dest("./public/styles/"));
+    .pipe(gulp.dest(`./public/styles/vickymd@${vickymdVersion}/`));
   cb();
 });
 
@@ -50,7 +52,7 @@ gulp.task("service-worker", () => {
       swSrc: "src/sw.js",
       swDest: "build/service-worker.js",
       globDirectory: "build",
-      globPatterns: ["**/*.{js,css,html,png,svg,ttf,woff,woff2,eot}"],
+      globPatterns: ["**/*.{js,css,html,png,svg,woff2}"], // We ignore eot,ttf,woff and only support woff2 font
       globIgnores: ["assets/apple-*"],
       maximumFileSizeToCacheInBytes: 1024 * 1024 * 8, // 8mb
       mode: "production",

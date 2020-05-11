@@ -78,8 +78,9 @@ import EmojiDefinitions from "vickymd/addon/emoji";
 import { TagStopRegExp, sanitizeTag } from "../utilities/markdown";
 import { resolveNoteImageSrc } from "../utilities/image";
 import { DeleteNoteDialog } from "./DeleteNoteDialog";
-import { setTheme, ThemeName } from "vickymd/theme";
+import { ThemeName } from "vickymd/theme";
 import { copyToClipboard } from "../utilities/utils";
+import { setTheme } from "../themes/manager";
 
 const VickyMD = require("vickymd/core");
 const is = require("is_js");
@@ -687,7 +688,6 @@ export default function Editor(props: Props) {
       setTheme({
         editor,
         themeName: settingsContainer.theme.name,
-        baseUri: "/styles/",
       });
     }
   }, [settingsContainer.theme, editor]);
@@ -911,6 +911,8 @@ export default function Editor(props: Props) {
                 wrapper.style.display = "flex";
                 wrapper.style.flexDirection = "row";
                 wrapper.style.alignItems = "flex-start";
+                wrapper.style.maxWidth = "100%";
+                wrapper.style.minWidth = "200px";
 
                 const leftPanel = document.createElement("div");
                 const iconWrapper = document.createElement("div");
@@ -1346,14 +1348,12 @@ export default function Editor(props: Props) {
       setTheme({
         editor: null,
         themeName: "light",
-        baseUri: "/styles/",
       });
       const printDone = () => {
         tempPreviewElement.remove();
         setTheme({
           editor: null,
           themeName: currentTheme,
-          baseUri: "/styles/",
         });
         setNeedsToPrint(false);
       };
