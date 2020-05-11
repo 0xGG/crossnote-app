@@ -347,7 +347,10 @@ export function Home(props: Props) {
         <List disablePadding={true}>
           <ListItem
             button
-            onClick={() => browserHistory.push(`/explore`)}
+            onClick={() => {
+              browserHistory.push(`/explore`);
+              setDrawerOpen(false);
+            }}
             style={{ display: is.online() ? "flex" : "none" }}
           >
             <ListItemIcon className={clsx(classes.listItemIcon)}>
@@ -359,7 +362,13 @@ export function Home(props: Props) {
             </ListItemIcon>
             <ListItemText primary={t("general/Explore")}></ListItemText>
           </ListItem>
-          <ListItem button onClick={() => browserHistory.push(`/settings`)}>
+          <ListItem
+            button
+            onClick={() => {
+              browserHistory.push(`/settings`);
+              setDrawerOpen(false);
+            }}
+          >
             {cloudContainer.viewer ? (
               <ListItemIcon className={clsx(classes.listItemIcon)}>
                 <Avatar
@@ -388,7 +397,10 @@ export function Home(props: Props) {
           {cloudContainer.loggedIn && (
             <ListItem
               button
-              onClick={() => browserHistory.push(`/notifications`)}
+              onClick={() => {
+                browserHistory.push(`/notifications`);
+                setDrawerOpen(false);
+              }}
             >
               <ListItemIcon className={clsx(classes.listItemIcon)}>
                 {cloudContainer.viewer.notifications.totalCount > 0 ? (

@@ -35,7 +35,6 @@ import Board from "@lourenci/react-kanban";
 import { Editor as CodeMirrorEditor } from "codemirror";
 import { renderPreview } from "vickymd/preview";
 import { globalContainers } from "../../../containers/global";
-import { VickyMDVersion } from "../..";
 import { setTheme } from "../../../themes/manager";
 const VickyMD = require("vickymd/core");
 

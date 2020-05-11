@@ -80,7 +80,6 @@ import { resolveNoteImageSrc } from "../utilities/image";
 import { DeleteNoteDialog } from "./DeleteNoteDialog";
 import { ThemeName } from "vickymd/theme";
 import { copyToClipboard } from "../utilities/utils";
-import { VickyMDVersion } from "../editor";
 import { setTheme } from "../themes/manager";
 
 const VickyMD = require("vickymd/core");

@@ -33,7 +33,6 @@ import { renderPreview } from "vickymd/preview";
 import { Widget } from "../../../generated/graphql";
 import { browserHistory } from "../../../utilities/history";
 import { globalContainers } from "../../../containers/global";
-import { VickyMDVersion } from "../..";
 import { setTheme } from "../../../themes/manager";
 const VickyMD = require("vickymd/core");
 
