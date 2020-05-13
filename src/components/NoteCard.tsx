@@ -65,7 +65,9 @@ const useStyles = makeStyles((theme: Theme) =>
       "-webkit-box-orient": "vertical",
       "wordBreak": "break-all",
     },
-    filePath: {},
+    filePath: {
+      wordBreak: "break-all",
+    },
     images: {
       display: "flex",
       width: "100%",
@@ -154,9 +156,11 @@ export default function NoteCard(props: Props) {
   ]);
 
   useEffect(() => {
-    crossnoteContainer.crossnote.getStatus(note).then((status) => {
-      setGitStatus(status);
-    });
+    crossnoteContainer.crossnote
+      .getStatus(note.notebook, note.filePath)
+      .then((status) => {
+        setGitStatus(status);
+      });
   }, [
     note.markdown,
     note.config.modifiedAt,

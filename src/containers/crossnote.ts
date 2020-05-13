@@ -13,6 +13,7 @@ import Crossnote, {
   PushNotebookArgs,
   PullNotebookArgs,
   TagNode,
+  Attachment,
 } from "../lib/crossnote";
 import { getHeaderFromMarkdown } from "../utilities/note";
 import { browserHistory } from "../utilities/history";
@@ -37,6 +38,7 @@ export enum SelectedSectionType {
   Conflicted = "Conflicted",
   Encrypted = "Encrypted",
   Wiki = "Wiki",
+  Attachments = "Attachments",
 }
 
 export interface SelectedSection {
@@ -97,6 +99,9 @@ function useCrossnoteContainer(initialState: InitialState) {
   });
   const [notes, setNotes] = useState<Note[]>([]);
   const [selectedNote, setSelectedNote] = useState<Note>(null);
+  const [selectedAttachment, setSelectedAttachment] = useState<Attachment>(
+    null,
+  );
   const [includeSubdirectories, setIncludeSubdirectories] = useState<boolean>(
     true,
   );
@@ -106,9 +111,15 @@ function useCrossnoteContainer(initialState: InitialState) {
   const [isAddingNotebook, setIsAddingNotebook] = useState<boolean>(false);
   const [isPushingNotebook, setIsPushingNotebook] = useState<boolean>(false);
   const [isPullingNotebook, setIsPullingNotebook] = useState<boolean>(false);
+  const [isLoadingAttachments, setIsLoadingAttachments] = useState<boolean>(
+    false,
+  );
   const [displayMobileEditor, setDisplayMobileEditor] = useState<boolean>(
     false,
   ); // For mobile device without any initial data, set to `true` will create empty white page.
+  const [displayAttachmentEditor, setDisplayAttachmentEditor] = useState<
+    boolean
+  >(false);
   const [needsToRefreshNotes, setNeedsToRefreshNotes] = useState<boolean>(
     false,
   );
@@ -170,7 +181,7 @@ function useCrossnoteContainer(initialState: InitialState) {
           note.config = noteConfig;
           note.markdown = markdown;
           if (callback) {
-            crossnote.getStatus(note).then((status) => {
+            crossnote.getStatus(note.notebook, note.filePath).then((status) => {
               callback(status);
             });
           }
@@ -744,6 +755,17 @@ function useCrossnoteContainer(initialState: InitialState) {
     [crossnote, notebookNotes, _setSelectedNote],
   );
 
+  const loadAttachments = useCallback(async () => {
+    setIsLoadingAttachments(true);
+    const attachments = crossnote.listAttachments({
+      notebook: selectedNotebook,
+      dir: "./",
+      includeSubdirectories: true,
+    });
+    setIsLoadingAttachments(false);
+    return attachments;
+  }, [crossnote, selectedNotebook]);
+
   useEffect(() => {
     if (!crossnote || initialized) {
       return;
@@ -1033,6 +1055,8 @@ Please also check the [Explore](https://crossnote.app/explore) section to discov
     notes,
     selectedNote,
     setSelectedNote: _setSelectedNote,
+    selectedAttachment,
+    setSelectedAttachment,
     updateNoteMarkdown,
     createNewNote,
     selectedSection,
@@ -1052,6 +1076,7 @@ Please also check the [Explore](https://crossnote.app/explore) section to discov
     isAddingNotebook,
     isPushingNotebook,
     isPullingNotebook,
+    isLoadingAttachments,
     updateNotebook,
     deleteNotebook,
     hardResetNotebook,
@@ -1060,10 +1085,13 @@ Please also check the [Explore](https://crossnote.app/explore) section to discov
     checkoutNote,
     displayMobileEditor,
     setDisplayMobileEditor,
+    displayAttachmentEditor,
+    setDisplayAttachmentEditor,
     updateNotebookTagNode,
     getNote,
     isLoadingNotebook,
     openNoteAtPath,
+    loadAttachments,
     orderBy,
     setOrderBy,
     orderDirection,

@@ -1,8 +1,9 @@
 export const zhTW = {
   translation: {
     "title/Crossnote": "交叉筆記",
-    "search/notes": "搜索筆記",
+    "search/notes": "搜尋筆記",
     "search/notebooks": "搜尋筆記本",
+    "search/attachments": "搜尋附件",
 
     // Account
     "account/Anonymous": "匿名",
@@ -89,6 +90,7 @@ export const zhTW = {
     "general/this-notebook-is-empty": "這個筆記本沒有內容",
     "general/nothing-here": "這裡什麼都沒有",
     "general/no-notes-found": "沒有找到其它的筆記",
+    "general/no-more-attachments-found": "没有找到其它的附件",
     "general/no-more-notebooks-found": "沒有找到其它的筆記本",
     "general/no-notifications-found": "沒有找到其它的消息",
     "general/clear-all": "清空所有",
@@ -105,6 +107,7 @@ export const zhTW = {
     "general/Archive": "歸檔",
     "general/Trash": "廢紙簍",
     "general/new-note": "新的筆記",
+    "general/new-attachment": "新的附件",
     "general/profile-updated": "用戶信息已更新",
     "general/ID": "ID",
     "general/Audio": "音頻",
@@ -132,6 +135,7 @@ export const zhTW = {
     "general/Notebooks": "筆記本",
     "general/add-a-notebook": "添加一個筆記本",
     "general/add-a-note": "添加一个筆記",
+    "general/add-an-attachment": "添加一个附件",
     "general/configure-the-notebook": "設置筆記本",
     "general/publish-your-notebook": "發佈你的筆記本",
     "general/notebook-name": "筆記本名稱",
@@ -152,6 +156,7 @@ export const zhTW = {
     "general/encrypted": "已加密",
     "general/decrypt": "解密",
     "general/conflicted": "衝突",
+    "general/attachments": "附件",
     "general/Pin": "置頂",
     "general/Encryption": "加密",
     "general/Fullscreen": "全屏",

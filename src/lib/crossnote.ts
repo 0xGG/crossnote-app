@@ -5,11 +5,13 @@ import PouchDB from "pouchdb";
 import PouchdbFind from "pouchdb-find";
 // @ts-ignore
 import diff3Merge from "diff3";
+import { isBinarySync } from "istextorbinary";
 import { randomID } from "../utilities/utils";
 import AES from "crypto-js/aes";
 import { Stats } from "fs";
 import { getHeaderFromMarkdown } from "../utilities/note";
 import { pfs, fs } from "./fs";
+import { isFileAnImage } from "../utilities/image";
 
 export interface Notebook {
   _id: string;
@@ -35,6 +37,14 @@ export interface Note {
   markdown: string;
   config: NoteConfig;
   // createdAt: Date; // <- Can't get modifiedAt time
+}
+
+export interface Attachment {
+  notebook: Notebook;
+  filePath: string;
+  content: string;
+  createdAt: Date;
+  modifiedAt: Date;
 }
 
 export interface Directory {
@@ -87,6 +97,9 @@ interface ListNotesArgs {
   dir: string;
   includeSubdirectories?: Boolean;
 }
+
+type ListAttachmentsArgs = ListNotesArgs;
+
 interface MatterOutput {
   data: any;
   content: string;
@@ -314,23 +327,6 @@ export default class Crossnote {
     nb.localSha = notebook.localSha;
     await this.notebookDB.put(nb, { force: true });
   }
-  /*
-  public async makeDirectoryForNotebook(notebook: Notebook, dir: string) {
-    await this.mkdir(path.resolve(notebook.dir, dir));
-  }
-  public async removeDirectoryForNotebook(notebook: Notebook, dir: string) {
-    const notes = await this.listNotes({
-      notebook,
-      dir,
-      includeSubdirectories: true
-    });
-    for (let i = 0; i < notes.length; i++) {
-      const note = notes[i];
-      await this.deleteNote(notebook, note.filePath);
-    }
-    await this.unlink(path.resolve(notebook.dir, dir));
-  }
-  */
 
   public async changeNoteFilePath(
     notebook: Notebook,
@@ -1053,6 +1049,65 @@ ${markdown}`;
     // console.log("listNotes: ", notes);
     return notes;
   }
+
+  public async listAttachments({
+    notebook,
+    dir = "./",
+    includeSubdirectories = false,
+  }: ListAttachmentsArgs): Promise<Attachment[]> {
+    let attachments: Attachment[] = [];
+    let files: string[] = [];
+    try {
+      files = await pfs.readdir(path.resolve(notebook.dir, dir));
+    } catch (error) {
+      files = [];
+    }
+    const listAttachmentsPromises = [];
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      const absFilePath = path.resolve(notebook.dir, dir, file);
+      const stats = await pfs.stats(absFilePath);
+      if (
+        stats.isFile() &&
+        !absFilePath.endsWith(".md") &&
+        isFileAnImage(file) // TODO: We only support images for now. Supports other types of files in the future
+      ) {
+        const attachment: Attachment = {
+          notebook,
+          filePath: path.relative(notebook.dir, absFilePath),
+          content: isBinarySync(file)
+            ? ""
+            : ((await pfs.readFile(absFilePath, {
+                encoding: "utf8",
+              })) as string),
+          createdAt: new Date(stats.ctimeMs),
+          modifiedAt: new Date(stats.mtimeMs),
+        };
+        attachments.push(attachment);
+        if (isBinarySync(file)) {
+        } else {
+        }
+      }
+
+      if (stats.isDirectory() && file !== ".git" && includeSubdirectories) {
+        listAttachmentsPromises.push(
+          this.listAttachments({
+            notebook,
+            dir: path.relative(notebook.dir, absFilePath),
+            includeSubdirectories,
+          }),
+        );
+      }
+    }
+
+    const res = await Promise.all(listAttachmentsPromises);
+    res.forEach((r) => {
+      attachments = attachments.concat(r);
+    });
+
+    return attachments;
+  }
+
   public async writeNote(
     notebook: Notebook,
     filePath: string,
@@ -1237,11 +1292,11 @@ ${markdown}`;
     return gitURL.slice(i + 1).replace(/\.git/, "");
   }
 
-  public async getStatus(note: Note) {
+  public async getStatus(notebook: Notebook, filePath: string) {
     return await git.status({
       fs: fs,
-      dir: note.notebook.dir,
-      filepath: note.filePath,
+      dir: notebook.dir,
+      filepath: filePath,
     });
   }
 }

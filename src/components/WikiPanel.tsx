@@ -127,19 +127,12 @@ export default function WikiPanel(props: Props) {
           </Hidden>
           <Box className={clsx(classes.row)}>
             <span role="img" aria-label="wiki">
-              📖
+              {"📖"}
             </span>
             <Typography className={clsx(classes.sectionName)}>
               {"wiki"}
             </Typography>
           </Box>
-          {/*<IconButton
-            onClick={() => {
-              crossnoteContainer.createNewNote();
-            }}
-          >
-            <FileEditOutline></FileEditOutline>
-          </IconButton>*/}
         </Box>
       </Card>
       <div
