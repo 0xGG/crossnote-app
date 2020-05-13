@@ -399,6 +399,7 @@ export const jaJP = {
     "editor/note-control/editor-mode": "エディターモード",
     "editor/note-control/source-code": "ソースコード",
     "editor/note-control/preview": "プレビュー",
+    "editor/note-control/split-view": "分割ビュー",
     "editor/note-control/pin-preview": "右にピンプレビュー",
     "editor/note-control/display-modification-records": "変更レコードの表示",
     "editor/note-control/note-visibility": "ノートの可視性",

@@ -385,6 +385,7 @@ export const enUS = {
     "editor/note-control/editor-mode": "Editor mode",
     "editor/note-control/source-code": "Source code",
     "editor/note-control/preview": "Preview",
+    "editor/note-control/split-view": "Split view",
     "editor/note-control/pin-preview": "Pin preview on the side",
     "editor/note-control/display-modification-records":
       "Display modification records",

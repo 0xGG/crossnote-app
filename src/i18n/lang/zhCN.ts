@@ -375,6 +375,7 @@ export const zhCN = {
     "editor/note-control/editor-mode": "编辑器模式",
     "editor/note-control/source-code": "源代码",
     "editor/note-control/preview": "预览",
+    "editor/note-control/split-view": "分栏",
     "editor/note-control/pin-preview": "固定预览到右侧",
     "editor/note-control/display-modification-records": "显示修改记录",
     "editor/note-control/note-visibility": "笔记可见度",

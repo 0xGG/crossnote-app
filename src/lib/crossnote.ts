@@ -894,7 +894,7 @@ export default class Crossnote {
           });
 
           // check: absent, deleted, undeleted
-          if (status.match(/(absent|deleted)/)) {
+          if (status.match(/(absent|deleted)/) || pendingPull) {
             // NOTE: Seems like there is a bug somewhere that caused all files to become *undeleted
             // So we run git.add again.
             await git.add({
