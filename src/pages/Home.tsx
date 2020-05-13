@@ -57,6 +57,7 @@ import { Notifications } from "../components/Notifications";
 import ExplorePanel from "../components/ExplorePanel";
 import { NotebookPanel } from "../components/NotebookPanel";
 import { PrivacyPolicy } from "./Privacy";
+import AttachmentsPanel from "../components/AttachmentsPanel";
 const is = require("is_js");
 
 const drawerWidth = 200;
@@ -426,13 +427,18 @@ export function Home(props: Props) {
 
   const notesPanel =
     props.section === HomeSection.Notebooks &&
-    (crossnoteContainer.selectedSection.type !== SelectedSectionType.Wiki ? (
+    (crossnoteContainer.selectedSection.type === SelectedSectionType.Wiki ? (
       <Box className={clsx(classes.notesPanel)} id={"notes-panel"}>
-        <NotesPanel toggleDrawer={toggleDrawer}></NotesPanel>
+        <WikiPanel toggleDrawer={toggleDrawer}></WikiPanel>
+      </Box>
+    ) : crossnoteContainer.selectedSection.type ===
+      SelectedSectionType.Attachments ? (
+      <Box className={clsx(classes.notesPanel)} id={"notes-panel"}>
+        <AttachmentsPanel toggleDrawer={toggleDrawer}></AttachmentsPanel>
       </Box>
     ) : (
       <Box className={clsx(classes.notesPanel)} id={"notes-panel"}>
-        <WikiPanel toggleDrawer={toggleDrawer}></WikiPanel>
+        <NotesPanel toggleDrawer={toggleDrawer}></NotesPanel>
       </Box>
     ));
 

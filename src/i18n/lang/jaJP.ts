@@ -3,6 +3,7 @@ export const jaJP = {
     "title/Crossnote": "クロスノート",
     "search/notes": "ノートを検索する",
     "search/notebooks": "ノートブックを検索する",
+    "search/attachments": "添付を検索する",
 
     // Account
     "account/Anonymous": "匿名",
@@ -89,6 +90,7 @@ export const jaJP = {
     "general/this-notebook-is-empty": "このノートブックには内容がありません",
     "general/nothing-here": "ここには何もない",
     "general/no-notes-found": "他のノートは見つかりませんでした",
+    "general/no-more-attachments-found": "添付が見つかりません",
     "general/no-more-notebooks-found": "ノートブックが見つかりません",
     "general/no-notifications-found": "他のニュースは見つかりませんでした",
     "general/clear-all": "すべてクリア",
@@ -104,7 +106,8 @@ export const jaJP = {
     "general/Bookmarks": "ブックマーク",
     "general/Archive": "アーカイブ",
     "general/Trash": "ゴミ箱",
-    "general/new-note": "新しいノート",
+    "general/new-note": "新しい添付",
+    "general/new-attachment": "新しい",
     "general/profile-updated": "ユーザー情報が更新されました",
     "general/ID": "ID",
     "general/Audio": "音声",
@@ -152,6 +155,7 @@ export const jaJP = {
     "general/encrypted": "暗号化",
     "general/decrypt": "復号化",
     "general/conflicted": "競合",
+    "general/attachments": "添付",
     "general/Pin": "ピン",
     "general/Encryption": "暗号化",
     "general/Fullscreen": "フルスクリーン",

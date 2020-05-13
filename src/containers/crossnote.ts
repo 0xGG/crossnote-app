@@ -37,6 +37,7 @@ export enum SelectedSectionType {
   Conflicted = "Conflicted",
   Encrypted = "Encrypted",
   Wiki = "Wiki",
+  Attachments = "Attachments",
 }
 
 export interface SelectedSection {
@@ -106,6 +107,9 @@ function useCrossnoteContainer(initialState: InitialState) {
   const [isAddingNotebook, setIsAddingNotebook] = useState<boolean>(false);
   const [isPushingNotebook, setIsPushingNotebook] = useState<boolean>(false);
   const [isPullingNotebook, setIsPullingNotebook] = useState<boolean>(false);
+  const [isLoadingAttachments, setIsLoadingAttachments] = useState<boolean>(
+    false,
+  );
   const [displayMobileEditor, setDisplayMobileEditor] = useState<boolean>(
     false,
   ); // For mobile device without any initial data, set to `true` will create empty white page.
@@ -744,6 +748,17 @@ function useCrossnoteContainer(initialState: InitialState) {
     [crossnote, notebookNotes, _setSelectedNote],
   );
 
+  const loadAttachments = useCallback(async () => {
+    setIsLoadingAttachments(true);
+    const attachments = crossnote.listAttachments({
+      notebook: selectedNotebook,
+      dir: "./",
+      includeSubdirectories: true,
+    });
+    setIsLoadingAttachments(false);
+    return attachments;
+  }, [crossnote, selectedNotebook]);
+
   useEffect(() => {
     if (!crossnote || initialized) {
       return;
@@ -1052,6 +1067,7 @@ Please also check the [Explore](https://crossnote.app/explore) section to discov
     isAddingNotebook,
     isPushingNotebook,
     isPullingNotebook,
+    isLoadingAttachments,
     updateNotebook,
     deleteNotebook,
     hardResetNotebook,
@@ -1064,6 +1080,7 @@ Please also check the [Explore](https://crossnote.app/explore) section to discov
     getNote,
     isLoadingNotebook,
     openNoteAtPath,
+    loadAttachments,
     orderBy,
     setOrderBy,
     orderDirection,

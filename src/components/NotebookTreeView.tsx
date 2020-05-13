@@ -257,10 +257,6 @@ export default function NotebookTreeView(props: Props) {
             }}
             className={clsx(classes.treeItemLabelRoot)}
           >
-            {/*
-            <span role="img" aria-label="notes">
-              📒
-          </span>*/}
             <Typography
               color={"inherit"}
               variant={"body1"}
@@ -293,7 +289,7 @@ export default function NotebookTreeView(props: Props) {
               className={clsx(classes.treeItemLabelRoot)}
             >
               <span role="img" aria-label="today-notes">
-                📅
+                {"📅"}
               </span>
               <Typography className={clsx(classes.treeItemLabelText)}>
                 {t("general/today")}
@@ -320,7 +316,7 @@ export default function NotebookTreeView(props: Props) {
               className={clsx(classes.treeItemLabelRoot)}
             >
               <span role="img" aria-label="todo-notes">
-                ☑️
+                {"☑️"}
               </span>
               <Typography className={clsx(classes.treeItemLabelText)}>
                 {t("general/todo")}
@@ -347,7 +343,7 @@ export default function NotebookTreeView(props: Props) {
               className={clsx(classes.treeItemLabelRoot)}
             >
               <span role="img" aria-label="directories">
-                📁
+                {"📁"}
               </span>
               <Typography className={clsx(classes.treeItemLabelText)}>
                 {t("general/notes")}
@@ -377,7 +373,7 @@ export default function NotebookTreeView(props: Props) {
                 className={clsx(classes.treeItemLabelRoot)}
               >
                 <span role="img" aria-label="wiki">
-                  📖
+                  {"📖"}
                 </span>
                 <Typography className={clsx(classes.treeItemLabelText)}>
                   {t("general/wiki")}
@@ -407,7 +403,7 @@ export default function NotebookTreeView(props: Props) {
               className={clsx(classes.treeItemLabelRoot)}
             >
               <span role="img" aria-label="tagged-notes">
-                🏷️
+                {"🏷️"}
               </span>
               <Typography className={clsx(classes.treeItemLabelText)}>
                 {t("general/tagged")}
@@ -436,7 +432,7 @@ export default function NotebookTreeView(props: Props) {
               className={clsx(classes.treeItemLabelRoot)}
             >
               <span role="img" aria-label="untagged-notes">
-                🈚
+                {"🈚"}
               </span>
               <Typography className={clsx(classes.treeItemLabelText)}>
                 {t("general/untagged")}
@@ -463,10 +459,37 @@ export default function NotebookTreeView(props: Props) {
               className={clsx(classes.treeItemLabelRoot)}
             >
               <span role="img" aria-label="encrypted-notes">
-                🔐
+                {"🔐"}
               </span>
               <Typography className={clsx(classes.treeItemLabelText)}>
                 {t("general/encrypted")}
+              </Typography>
+            </Box>
+          }
+        ></TreeItem>
+        <TreeItem
+          nodeId={"attachments"}
+          classes={{
+            root: classes.treeItemRoot,
+            content: classes.treeItemContent,
+            expanded: classes.treeItemExpanded,
+            group: classes.treeItemGroup,
+            label: classes.treeItemLabel,
+          }}
+          label={
+            <Box
+              onClick={() => {
+                crossnoteContainer.setSelectedSection({
+                  type: SelectedSectionType.Attachments,
+                });
+              }}
+              className={clsx(classes.treeItemLabelRoot)}
+            >
+              <span role="img" aria-label="attachments">
+                {"📎"}
+              </span>
+              <Typography className={clsx(classes.treeItemLabelText)}>
+                {t("general/attachments")}
               </Typography>
             </Box>
           }
@@ -490,7 +513,7 @@ export default function NotebookTreeView(props: Props) {
               className={clsx(classes.treeItemLabelRoot)}
             >
               <span role="img" aria-label="conflicted-notes">
-                ⚠️
+                {"⚠️"}
               </span>
               <Typography className={clsx(classes.treeItemLabelText)}>
                 {t("general/conflicted")}
