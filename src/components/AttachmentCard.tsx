@@ -5,7 +5,8 @@ import { CrossnoteContainer } from "../containers/crossnote";
 import { Attachment } from "../lib/crossnote";
 import { ButtonBase, Typography, Box } from "@material-ui/core";
 import { basename } from "path";
-import { loadImageAsBase64 } from "../utilities/image";
+import { loadImageAsBase64, isFileAnImage } from "../utilities/image";
+import { Image } from "mdi-material-ui";
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -43,6 +44,9 @@ const useStyles = makeStyles((theme: Theme) =>
       display: "block",
       borderRadius: "6px",
     },
+    filePath: {
+      wordBreak: "break-all",
+    },
   }),
 );
 
@@ -73,7 +77,7 @@ export default function AttachmentCard(props: Props) {
   }, [attachment, crossnoteContainer.crossnote]);
 
   useEffect(() => {
-    if (attachment && attachment.filePath.match(/\.(jpg|jpeg|png|gif|svg)$/i)) {
+    if (attachment && isFileAnImage(attachment.filePath)) {
       loadImageAsBase64(attachment.notebook, ".", attachment.filePath)
         .then((base64) => {
           setImage(base64);
@@ -88,12 +92,21 @@ export default function AttachmentCard(props: Props) {
     <ButtonBase
       className={clsx(
         classes.attachmentCard,
+        /*
         crossnoteContainer.selectedAttachment &&
           crossnoteContainer.selectedAttachment.filePath === attachment.filePath
           ? classes.selected
           : classes.unselected,
+          */
       )}
+      onClick={() => {
+        crossnoteContainer.setSelectedAttachment(attachment);
+        crossnoteContainer.setDisplayAttachmentEditor(true);
+      }}
     >
+      <Box className={clsx(classes.leftPanel)}>
+        {isFileAnImage(attachment.filePath) && <Image></Image>}
+      </Box>
       <Box className={clsx(classes.rightPanel)}>
         {image && (
           <div
@@ -104,7 +117,7 @@ export default function AttachmentCard(props: Props) {
             }}
           ></div>
         )}
-        <Typography variant={"caption"}>
+        <Typography variant={"caption"} className={clsx(classes.filePath)}>
           {basename(attachment.filePath).startsWith("unnamed_")
             ? gitStatus
             : attachment.filePath + " - " + gitStatus}

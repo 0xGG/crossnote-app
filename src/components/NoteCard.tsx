@@ -65,7 +65,9 @@ const useStyles = makeStyles((theme: Theme) =>
       "-webkit-box-orient": "vertical",
       "wordBreak": "break-all",
     },
-    filePath: {},
+    filePath: {
+      wordBreak: "break-all",
+    },
     images: {
       display: "flex",
       width: "100%",

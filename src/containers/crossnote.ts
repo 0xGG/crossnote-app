@@ -117,6 +117,9 @@ function useCrossnoteContainer(initialState: InitialState) {
   const [displayMobileEditor, setDisplayMobileEditor] = useState<boolean>(
     false,
   ); // For mobile device without any initial data, set to `true` will create empty white page.
+  const [displayAttachmentEditor, setDisplayAttachmentEditor] = useState<
+    boolean
+  >(false);
   const [needsToRefreshNotes, setNeedsToRefreshNotes] = useState<boolean>(
     false,
   );
@@ -1082,6 +1085,8 @@ Please also check the [Explore](https://crossnote.app/explore) section to discov
     checkoutNote,
     displayMobileEditor,
     setDisplayMobileEditor,
+    displayAttachmentEditor,
+    setDisplayAttachmentEditor,
     updateNotebookTagNode,
     getNote,
     isLoadingNotebook,

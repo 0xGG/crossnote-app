@@ -16,6 +16,7 @@ import {
   Tooltip,
   InputBase,
   CircularProgress,
+  Typography,
 } from "@material-ui/core";
 import { Menu as MenuIcon, Magnify, Plus } from "mdi-material-ui";
 import { Attachment } from "../lib/crossnote";
@@ -147,7 +148,7 @@ export default function AttachmentsPanel(props: Props) {
         <Box className={clsx(classes.row)}>
           <Hidden smUp implementation="css">
             <IconButton onClick={props.toggleDrawer}>
-              <MenuIcon></MenuIcon>
+              <MenuIcon className={clsx(classes.iconBtnSVG)}></MenuIcon>
             </IconButton>
           </Hidden>
           <div className={classes.search}>
@@ -167,11 +168,26 @@ export default function AttachmentsPanel(props: Props) {
               autoCorrect={"off"}
             />
           </div>
+          {/*
           <IconButton disabled={!crossnoteContainer.initialized}>
             <Tooltip title={t("general/new-attachment")}>
               <Plus className={clsx(classes.iconBtnSVG)}></Plus>
             </Tooltip>
           </IconButton>
+          */}
+        </Box>
+        <Box
+          className={clsx(classes.row)}
+          style={{ justifyContent: "space-between", padding: "8px 0 4px 0" }}
+        >
+          <Box className={clsx(classes.row)}>
+            <span role="img" aria-label="notes">
+              {"📎"}
+            </span>
+            <Typography className={clsx(classes.sectionName)}>
+              {t("general/attachments") + " (beta)"}
+            </Typography>
+          </Box>
         </Box>
       </Card>
 

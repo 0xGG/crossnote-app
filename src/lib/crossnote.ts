@@ -11,6 +11,7 @@ import AES from "crypto-js/aes";
 import { Stats } from "fs";
 import { getHeaderFromMarkdown } from "../utilities/note";
 import { pfs, fs } from "./fs";
+import { isFileAnImage } from "../utilities/image";
 
 export interface Notebook {
   _id: string;
@@ -1066,7 +1067,11 @@ ${markdown}`;
       const file = files[i];
       const absFilePath = path.resolve(notebook.dir, dir, file);
       const stats = await pfs.stats(absFilePath);
-      if (stats.isFile() && !absFilePath.endsWith(".md")) {
+      if (
+        stats.isFile() &&
+        !absFilePath.endsWith(".md") &&
+        isFileAnImage(file) // TODO: We only support images for now. Supports other types of files in the future
+      ) {
         const attachment: Attachment = {
           notebook,
           filePath: path.relative(notebook.dir, absFilePath),

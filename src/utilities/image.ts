@@ -81,3 +81,7 @@ export async function loadImageAsBase64(
     return "";
   }
 }
+
+export function isFileAnImage(fileName: string) {
+  return !!fileName.match(/\.(jpg|jpeg|png|gif|svg)$/i);
+}
