@@ -1593,7 +1593,7 @@ export default function Editor(props: Props) {
         setTimeout(() => {
           const newMarkdown = editor.getValue();
           if (markdown === newMarkdown) {
-            renderPreview(previewElement, editor.getValue());
+            renderPreview(previewElement, newMarkdown);
             postprocessPreview(previewElement);
           }
         }, 300);
