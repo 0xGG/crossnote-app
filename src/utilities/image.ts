@@ -1,4 +1,4 @@
-import { Note } from "../lib/crossnote";
+import { Note, Notebook } from "../lib/crossnote";
 import * as path from "path";
 import { pfs } from "../lib/fs";
 import { NotebookFieldsFragment } from "../generated/graphql";
@@ -12,7 +12,7 @@ export async function resolveNoteImageSrc(note: Note, imageSrc: string) {
   } else if (imageSrc.startsWith("http://")) {
     return "";
   } else {
-    return await loadImageAsBase64(note, imageSrc);
+    return await loadImageAsBase64(note.notebook, note.filePath, imageSrc);
   }
 }
 
@@ -50,16 +50,17 @@ export function resolveNotebookFilePath(
 }
 
 export async function loadImageAsBase64(
-  note: Note,
+  notebook: Notebook,
+  noteFilePath: string,
   imageSrc: string,
 ): Promise<string> {
   let imageFilePath;
   if (imageSrc.startsWith("/")) {
-    imageFilePath = path.resolve(note.notebook.dir, "." + imageSrc);
+    imageFilePath = path.resolve(notebook.dir, "." + imageSrc);
   } else {
     imageFilePath = path.join(
-      note.notebook.dir,
-      path.dirname(note.filePath),
+      notebook.dir,
+      path.dirname(noteFilePath),
       imageSrc,
     );
   }

@@ -135,6 +135,7 @@ export const jaJP = {
     "general/Notebooks": "ノートブック",
     "general/add-a-notebook": "ノートブックを追加する",
     "general/add-a-note": "ノートを追加する",
+    "general/add-an-attachment": "添付を追加する",
     "general/configure-the-notebook": "ノートブックを構成する",
     "general/publish-your-notebook": "ノートブックを発行する",
     "general/notebook-name": "ノートブック名",

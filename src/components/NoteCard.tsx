@@ -154,9 +154,11 @@ export default function NoteCard(props: Props) {
   ]);
 
   useEffect(() => {
-    crossnoteContainer.crossnote.getStatus(note).then((status) => {
-      setGitStatus(status);
-    });
+    crossnoteContainer.crossnote
+      .getStatus(note.notebook, note.filePath)
+      .then((status) => {
+        setGitStatus(status);
+      });
   }, [
     note.markdown,
     note.config.modifiedAt,

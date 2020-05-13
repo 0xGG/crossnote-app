@@ -135,6 +135,7 @@ export const zhCN = {
     "general/Notebooks": "笔记本",
     "general/add-a-notebook": "添加一个笔记本",
     "general/add-a-note": "添加一个笔记",
+    "general/add-an-attachment": "添加一个附件",
     "general/configure-the-notebook": "设置笔记本",
     "general/publish-your-notebook": "发布你的笔记本",
     "general/notebook-name": "笔记本名称",

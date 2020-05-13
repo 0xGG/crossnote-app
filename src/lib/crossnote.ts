@@ -1287,11 +1287,11 @@ ${markdown}`;
     return gitURL.slice(i + 1).replace(/\.git/, "");
   }
 
-  public async getStatus(note: Note) {
+  public async getStatus(notebook: Notebook, filePath: string) {
     return await git.status({
       fs: fs,
-      dir: note.notebook.dir,
-      filepath: note.filePath,
+      dir: notebook.dir,
+      filepath: filePath,
     });
   }
 }

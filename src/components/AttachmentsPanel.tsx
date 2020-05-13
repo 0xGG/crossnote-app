@@ -19,6 +19,7 @@ import {
 } from "@material-ui/core";
 import { Menu as MenuIcon, Magnify, Plus } from "mdi-material-ui";
 import { Attachment } from "../lib/crossnote";
+import Attachments from "./Attachments";
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -132,8 +133,8 @@ export default function AttachmentsPanel(props: Props) {
     crossnoteContainer
       .loadAttachments()
       .then((attachments) => {
-        console.log(attachments);
         setAttachments(attachments);
+        crossnoteContainer.setSelectedAttachment(attachments[0] || null);
       })
       .catch((error) => {
         setAttachments([]);
@@ -177,6 +178,11 @@ export default function AttachmentsPanel(props: Props) {
       {crossnoteContainer.isLoadingAttachments && (
         <CircularProgress className={clsx(classes.loading)}></CircularProgress>
       )}
+
+      <Attachments
+        searchValue={finalSearchValue}
+        attachments={attachments}
+      ></Attachments>
     </Box>
   );
 }

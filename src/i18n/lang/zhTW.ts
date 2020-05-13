@@ -135,6 +135,7 @@ export const zhTW = {
     "general/Notebooks": "筆記本",
     "general/add-a-notebook": "添加一個筆記本",
     "general/add-a-note": "添加一个筆記",
+    "general/add-an-attachment": "添加一个附件",
     "general/configure-the-notebook": "設置筆記本",
     "general/publish-your-notebook": "發佈你的筆記本",
     "general/notebook-name": "筆記本名稱",

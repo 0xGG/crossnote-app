@@ -135,6 +135,7 @@ export const enUS = {
     "general/Notebooks": "Notebooks",
     "general/add-a-notebook": "Add a notebook",
     "general/add-a-note": "Add a note",
+    "general/add-an-attachment": "Add an attachment",
     "general/configure-the-notebook": "Configure the notebook",
     "general/publish-your-notebook": "Publish your notebook",
     "general/notebook-name": "Notebook name",

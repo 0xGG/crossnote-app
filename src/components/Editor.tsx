@@ -629,9 +629,11 @@ export default function Editor(props: Props) {
 
   useEffect(() => {
     if (note) {
-      crossnoteContainer.crossnote.getStatus(note).then((status) => {
-        setGitStatus(status);
-      });
+      crossnoteContainer.crossnote
+        .getStatus(note.notebook, note.filePath)
+        .then((status) => {
+          setGitStatus(status);
+        });
     }
   }, [note, crossnoteContainer.crossnote]);
 

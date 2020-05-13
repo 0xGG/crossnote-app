@@ -13,6 +13,7 @@ import Crossnote, {
   PushNotebookArgs,
   PullNotebookArgs,
   TagNode,
+  Attachment,
 } from "../lib/crossnote";
 import { getHeaderFromMarkdown } from "../utilities/note";
 import { browserHistory } from "../utilities/history";
@@ -98,6 +99,9 @@ function useCrossnoteContainer(initialState: InitialState) {
   });
   const [notes, setNotes] = useState<Note[]>([]);
   const [selectedNote, setSelectedNote] = useState<Note>(null);
+  const [selectedAttachment, setSelectedAttachment] = useState<Attachment>(
+    null,
+  );
   const [includeSubdirectories, setIncludeSubdirectories] = useState<boolean>(
     true,
   );
@@ -174,7 +178,7 @@ function useCrossnoteContainer(initialState: InitialState) {
           note.config = noteConfig;
           note.markdown = markdown;
           if (callback) {
-            crossnote.getStatus(note).then((status) => {
+            crossnote.getStatus(note.notebook, note.filePath).then((status) => {
               callback(status);
             });
           }
@@ -1048,6 +1052,8 @@ Please also check the [Explore](https://crossnote.app/explore) section to discov
     notes,
     selectedNote,
     setSelectedNote: _setSelectedNote,
+    selectedAttachment,
+    setSelectedAttachment,
     updateNoteMarkdown,
     createNewNote,
     selectedSection,
