@@ -375,6 +375,7 @@ export const zhTW = {
     "editor/note-control/editor-mode": "編輯器模式",
     "editor/note-control/source-code": "源代碼",
     "editor/note-control/preview": "預覽",
+    "editor/note-control/split-view": "分欄",
     "editor/note-control/pin-preview": "固定預覽到右側",
     "editor/note-control/display-modification-records": "顯示修改記錄",
     "editor/note-control/note-visibility": "筆記可見度",
