@@ -1589,8 +1589,14 @@ export default function Editor(props: Props) {
 
     onChangeCallback = () => {
       try {
-        renderPreview(previewElement, editor.getValue());
-        postprocessPreview(previewElement);
+        const markdown = editor.getValue();
+        setTimeout(() => {
+          const newMarkdown = editor.getValue();
+          if (markdown === newMarkdown) {
+            renderPreview(previewElement, editor.getValue());
+            postprocessPreview(previewElement);
+          }
+        }, 300);
       } catch (error) {
         previewElement.innerText = error;
       }
