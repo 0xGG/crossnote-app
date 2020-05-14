@@ -729,6 +729,12 @@ export default function Editor(props: Props) {
       setDecryptionPassword("");
       editor.setOption("readOnly", false);
       editor.setValue(note.markdown);
+
+      if (note.markdown.length === 0) {
+        setTimeout(() => {
+          editor.refresh();
+        }, 50);
+      }
     }
   }, [editor, note]);
 
