@@ -94,11 +94,13 @@ export default function Notes(props: Props) {
             searchValue
               .trim()
               .split(/\s+/g)
-              // .map(s => "\\" + s.split("").join("\\"))
+              .map((s) => s.replace(/[.!@#$%^&*()_+-=[\]]/g, (x) => `\\${x}`))
               .join("|") +
             ")",
           "i",
         );
+
+        console.log(regexp);
 
         if (note.markdown.match(regexp) || note.filePath.match(regexp)) {
           if (note.config.pinned) {
