@@ -94,7 +94,7 @@ export default function Notes(props: Props) {
             searchValue
               .trim()
               .split(/\s+/g)
-              // .map(s => "\\" + s.split("").join("\\"))
+              .map((s) => s.replace(/[.!@#$%^&*()_+\-=[\]]/g, (x) => `\\${x}`)) // escape special regexp characters
               .join("|") +
             ")",
           "i",
