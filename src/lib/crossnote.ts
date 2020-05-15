@@ -12,6 +12,7 @@ import { Stats } from "fs";
 import { getHeaderFromMarkdown } from "../utilities/note";
 import { pfs, fs } from "./fs";
 import { isFileAnImage } from "../utilities/image";
+import { matter, matterStringify } from "../utilities/markdown";
 
 export interface Notebook {
   _id: string;
@@ -99,11 +100,6 @@ interface ListNotesArgs {
 }
 
 type ListAttachmentsArgs = ListNotesArgs;
-
-interface MatterOutput {
-  data: any;
-  content: string;
-}
 
 export interface PushNotebookArgs {
   notebook: Notebook;
@@ -916,41 +912,6 @@ export default class Crossnote {
       .sort((x, y) => x.name.localeCompare(y.name));
   }
 
-  private matter(markdown: string): MatterOutput {
-    let endFrontMatterOffset = 0;
-    let frontMatter = {};
-    if (
-      markdown.startsWith("---") &&
-      /* tslint:disable-next-line:no-conditional-assignment */
-      (endFrontMatterOffset = markdown.indexOf("\n---")) > 0
-    ) {
-      const frontMatterString = markdown.slice(3, endFrontMatterOffset);
-      try {
-        frontMatter = (window as any)["YAML"].parse(frontMatterString);
-      } catch (error) {}
-      markdown = markdown
-        .slice(endFrontMatterOffset + 4)
-        .replace(/^[ \t]*\n/, "");
-    }
-    return {
-      data: frontMatter,
-      content: markdown,
-    };
-  }
-
-  private matterStringify(markdown: string, frontMatter: any) {
-    frontMatter = frontMatter || {};
-    const yamlStr = (window as any)["YAML"].stringify(frontMatter).trim();
-    if (yamlStr === "{}" || !yamlStr) {
-      return markdown;
-    } else {
-      return `---
-${yamlStr}
----
-${markdown}`;
-    }
-  }
-
   public async getNote(
     notebook: Notebook,
     filePath: string,
@@ -979,12 +940,12 @@ ${markdown}`;
       };
 
       try {
-        const data = this.matter(markdown);
+        const data = matter(markdown);
         noteConfig = Object.assign(noteConfig, data.data["note"] || {});
         const frontMatter: any = Object.assign({}, data.data);
         delete frontMatter["note"];
         // markdown = matter.stringify(data.content, frontMatter); // <= NOTE: I think gray-matter has bug. Although I delete "note" section from front-matter, it still includes it.
-        markdown = this.matterStringify(data.content, frontMatter);
+        markdown = matterStringify(data.content, frontMatter);
       } catch (error) {
         // Do nothing
         markdown =
@@ -1118,7 +1079,7 @@ ${markdown}`;
     noteConfig.modifiedAt = new Date();
 
     try {
-      const data = this.matter(markdown);
+      const data = matter(markdown);
       if (data.data["note"] && data.data["note"] instanceof Object) {
         noteConfig = Object.assign({}, noteConfig, data.data["note"] || {});
       }
@@ -1132,7 +1093,7 @@ ${markdown}`;
           password || "",
         ).toString();
       }
-      markdown = this.matterStringify(markdown, frontMatter);
+      markdown = matterStringify(markdown, frontMatter);
     } catch (error) {
       if (noteConfig.encryption) {
         // TODO: Refactor
@@ -1142,7 +1103,7 @@ ${markdown}`;
           password || "",
         ).toString();
       }
-      markdown = this.matterStringify(markdown, { note: noteConfig });
+      markdown = matterStringify(markdown, { note: noteConfig });
     }
 
     await pfs.writeFile(path.resolve(notebook.dir, filePath), markdown);
@@ -1166,9 +1127,9 @@ ${markdown}`;
     noteConfig: NoteConfig,
   ) {
     const note = await this.getNote(notebook, filePath);
-    const data = this.matter(note.markdown);
+    const data = matter(note.markdown);
     const frontMatter = Object.assign(data.data || {}, { note: noteConfig });
-    const markdown = this.matterStringify(data.content, frontMatter);
+    const markdown = matterStringify(data.content, frontMatter);
     await pfs.writeFile(path.resolve(notebook.dir, filePath), markdown);
     await git.add({
       fs: fs,
