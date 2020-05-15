@@ -232,6 +232,7 @@ export function Home(props: Props) {
   // HACK: Register globalContainers for widgets use
   globalContainers.cloudContainer = cloudContainer;
   globalContainers.settingsContainer = settingsContainer;
+  globalContainers.crossnoteContainer = crossnoteContainer;
 
   const toggleDrawer = useCallback(() => {
     setDrawerOpen(!drawerOpen);

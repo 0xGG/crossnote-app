@@ -32,10 +32,13 @@ import { useTranslation } from "react-i18next";
 
 // @ts-ignore
 import Board from "@lourenci/react-kanban";
-import { Editor as CodeMirrorEditor } from "codemirror";
+import { Editor as CodeMirrorEditor, TextMarker } from "codemirror";
 import { renderPreview } from "vickymd/preview";
 import { globalContainers } from "../../../containers/global";
 import { setTheme } from "../../../themes/manager";
+import { openURL, postprocessPreview } from "../../../utilities/preview";
+import { resolveNoteImageSrc } from "../../../utilities/image";
+import EditImageDialog from "../../../components/EditImageDialog";
 const VickyMD = require("vickymd/core");
 
 const useStyles = makeStyles((theme: Theme) =>
@@ -195,6 +198,7 @@ function KanbanCardDisplay(props: KanbanCardProps) {
   const board = props.board;
   const card = props.card;
   const isPreview = props.isPreview;
+  const note = globalContainers.crossnoteContainer.selectedNote;
   const [textAreaElement, setTextAreaElement] = useState<HTMLTextAreaElement>(
     null,
   );
@@ -203,6 +207,16 @@ function KanbanCardDisplay(props: KanbanCardProps) {
   const [editor, setEditor] = useState<CodeMirrorEditor>(null);
   const [description, setDescription] = useState<string>(card.description);
   const [editorDialogOpen, setEditDialogOpen] = useState<boolean>(false);
+  const [editImageElement, setEditImageElement] = useState<HTMLImageElement>(
+    null,
+  );
+  const [editImageTextMarker, setEditImageTextMarker] = useState<TextMarker>(
+    null,
+  );
+  const [editImageDialogOpen, setEditImageDialogOpen] = useState<boolean>(
+    false,
+  );
+
   const { t } = useTranslation();
 
   useEffect(() => {
@@ -257,8 +271,51 @@ function KanbanCardDisplay(props: KanbanCardProps) {
   useEffect(() => {
     if (previewElement) {
       renderPreview(previewElement, card.description);
+      postprocessPreview(
+        previewElement,
+        globalContainers.crossnoteContainer.selectedNote,
+      );
     }
-  }, [previewElement]);
+  }, [previewElement, card.description]);
+
+  useEffect(() => {
+    if (!editor) {
+      return;
+    }
+
+    const linkIconClickedHandler = (args: any) => {
+      // TODO:
+      const url = args.element.getAttribute("data-url");
+      openURL(url || "", note);
+    };
+    editor.on("linkIconClicked", linkIconClickedHandler);
+
+    const imageClickedHandler = (args: any) => {
+      const marker: TextMarker = args.marker;
+      const imageElement: HTMLImageElement = args.element;
+      imageElement.setAttribute(
+        "data-marker-position",
+        JSON.stringify(marker.find()),
+      );
+      setEditImageElement(imageElement);
+      setEditImageTextMarker(marker);
+      setEditImageDialogOpen(true);
+    };
+    editor.on("imageClicked", imageClickedHandler);
+
+    const loadImage = async (args: any) => {
+      const element = args.element;
+      const imageSrc = element.getAttribute("data-src");
+      element.setAttribute("src", await resolveNoteImageSrc(note, imageSrc));
+    };
+    editor.on("imageReadyToLoad", loadImage);
+
+    return () => {
+      editor.off("linkIconClicked", linkIconClickedHandler);
+      editor.off("imageClicked", imageClickedHandler);
+      editor.off("imageReadyToLoad", loadImage);
+    };
+  }, [editor, note]);
 
   return (
     <Card className={clsx(classes.kanbanCard)}>
@@ -326,6 +383,15 @@ function KanbanCardDisplay(props: KanbanCardProps) {
           </IconButton>
         </DialogActions>
       </Dialog>
+
+      <EditImageDialog
+        open={editImageDialogOpen}
+        onClose={() => setEditImageDialogOpen(false)}
+        editor={editor}
+        imageElement={editImageElement}
+        marker={editImageTextMarker}
+        note={note}
+      ></EditImageDialog>
     </Card>
   );
 }

@@ -473,7 +473,7 @@ export default function NotesPanel(props: Props) {
             }}
           >
             <ListItemIcon>
-              <Pencil></Pencil>
+              <Pencil className={clsx(classes.iconBtnSVG)}></Pencil>
             </ListItemIcon>
             <ListItemText>{t("general/rename-directory")}</ListItemText>
           </ListItem>
@@ -485,7 +485,7 @@ export default function NotesPanel(props: Props) {
             }}
           >
             <ListItemIcon>
-              <TrashCan></TrashCan>
+              <TrashCan className={clsx(classes.iconBtnSVG)}></TrashCan>
             </ListItemIcon>
             <ListItemText>{t("general/delete-directory")}</ListItemText>
           </ListItem>
@@ -507,7 +507,7 @@ export default function NotesPanel(props: Props) {
             }}
           >
             <ListItemIcon>
-              <Pencil></Pencil>
+              <Pencil className={clsx(classes.iconBtnSVG)}></Pencil>
             </ListItemIcon>
             <ListItemText>{t("general/rename-tag")}</ListItemText>
           </ListItem>
@@ -519,7 +519,7 @@ export default function NotesPanel(props: Props) {
             }}
           >
             <ListItemIcon>
-              <TrashCan></TrashCan>
+              <TrashCan className={clsx(classes.iconBtnSVG)}></TrashCan>
             </ListItemIcon>
             <ListItemText>{t("general/delete-tag")}</ListItemText>
           </ListItem>
