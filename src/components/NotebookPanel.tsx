@@ -35,6 +35,7 @@ import AddNotebookDialog from "./AddNotebookDialog";
 import ConfigurePublishedNotebookDialog from "./ConfigurePublishedNotebookDialog";
 import { resolveNotebookFilePath } from "../utilities/image";
 import { browserHistory } from "../utilities/history";
+import { matter } from "../utilities/markdown";
 
 const previewZIndex = 99;
 const useStyles = makeStyles((theme: Theme) =>
@@ -446,6 +447,7 @@ export function NotebookPanel(props: Props) {
         onClose={() => setAddNotebookDialogOpen(false)}
         gitURL={notebook.gitURL}
         gitBranch={notebook.gitBranch}
+        notebookName={matter(notebook.markdown).data?.notebook?.name || ""}
         canCancel={true}
       ></AddNotebookDialog>
       <ConfigurePublishedNotebookDialog

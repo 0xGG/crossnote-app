@@ -95,6 +95,7 @@ notebook:
       ? cloudContainer.viewer.username
       : t("general/Username")
   }
+  name: ${t("general/notebook-name") + ` (${t("general/optional")})`}
 ---
 
 # ${t("general/notebook-name")}
