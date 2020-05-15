@@ -72,7 +72,11 @@ import EditImageDialog from "./EditImageDialog";
 import Noty from "noty";
 import { formatDistance } from "date-fns";
 import { getHeaderFromMarkdown } from "../utilities/note";
-import { printPreview } from "../utilities/preview";
+import {
+  printPreview,
+  openURL,
+  postprocessPreview as previewPostprocessPreview,
+} from "../utilities/preview";
 import ChangeFilePathDialog from "./ChangeFilePathDialog";
 import { SettingsContainer } from "../containers/settings";
 import { initMathPreview } from "../editor/views/math-preview";
@@ -584,96 +588,13 @@ export default function Editor(props: Props) {
     }
   }, [note, editor, decryptionPassword, isDecrypted]);
 
-  const openURL = useCallback(
-    (url: string = "") => {
-      if (!note || !editor || !url) {
-        return;
-      }
-      if (url.match(/https?:\/\//)) {
-        window.open(url, "_blank"); // TODO: opener bug, check zhihu
-      } else if (url.startsWith("/")) {
-        let filePath = path.relative(
-          note.notebook.dir,
-          path.resolve(note.notebook.dir, url.replace(/^\//, "")),
-        );
-        crossnoteContainer.openNoteAtPath(filePath);
-      } else {
-        let filePath = path.relative(
-          note.notebook.dir,
-          path.resolve(
-            path.dirname(path.resolve(note.notebook.dir, note.filePath)),
-            url,
-          ),
-        );
-        crossnoteContainer.openNoteAtPath(filePath);
-      }
-    },
-    [note, editor],
-  );
-
   const postprocessPreview = useCallback(
     (previewElement: HTMLElement) => {
-      if (!previewElement) {
-        return;
-      }
-      const handleLinksClickEvent = (preview: HTMLElement) => {
-        // Handle link click event
-        const links = preview.getElementsByTagName("A");
-        for (let i = 0; i < links.length; i++) {
-          const link = links[i] as HTMLAnchorElement;
-          link.onclick = (event) => {
-            event.preventDefault();
-            if (link.hasAttribute("data-topic")) {
-              const tag = link.getAttribute("data-topic");
-              if (tag.length) {
-                crossnoteContainer.setSelectedSection({
-                  type: SelectedSectionType.Tag,
-                  path: tag,
-                });
-              }
-            } else {
-              openURL(link.getAttribute("href"));
-            }
-          };
-        }
-      };
-      const resolveImages = async (preview: HTMLElement) => {
-        const images = preview.getElementsByTagName("IMG");
-        for (let i = 0; i < images.length; i++) {
-          const image = images[i] as HTMLImageElement;
-          const imageSrc = image.getAttribute("src");
-          image.setAttribute("src", await resolveNoteImageSrc(note, imageSrc));
-        }
-      };
-
-      if (
-        previewElement.childElementCount &&
-        previewElement.children[0].tagName.toUpperCase() === "IFRAME"
-      ) {
-        // presentation
-        previewElement.style.maxWidth = "100%";
-        previewElement.style.height = "100%";
-        previewElement.style.overflow = "hidden !important";
-        handleLinksClickEvent(
-          (previewElement.children[0] as HTMLIFrameElement).contentDocument
-            .body as HTMLElement,
-        );
-        resolveImages(
-          (previewElement.children[0] as HTMLIFrameElement).contentDocument
-            .body as HTMLElement,
-        );
-        setPreviewIsPresentation(true);
-      } else {
-        // normal
-        // previewElement.style.maxWidth = `${EditorPreviewMaxWidth}px`;
-        previewElement.style.height = "100%";
-        previewElement.style.overflow = "hidden !important";
-        handleLinksClickEvent(previewElement);
-        resolveImages(previewElement);
-        setPreviewIsPresentation(false);
-      }
+      previewPostprocessPreview(previewElement, note, (flag) => {
+        setPreviewIsPresentation(flag);
+      });
     },
-    [note, openURL],
+    [note],
   );
 
   useEffect(() => {
@@ -813,7 +734,7 @@ export default function Editor(props: Props) {
 
       const linkIconClickedHandler = (args: any) => {
         const url = args.element.getAttribute("data-url");
-        openURL(url || "");
+        openURL(url || "", note);
       };
       editor.on("linkIconClicked", linkIconClickedHandler);
 

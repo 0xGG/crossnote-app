@@ -29,6 +29,7 @@ import {
   CommentWidgetMessageFieldsFragment,
 } from "../../../generated/graphql";
 import { globalContainers } from "../../../containers/global";
+import { postprocessPreview } from "../../../utilities/preview";
 
 const messageMarginLeft = 48;
 const useStyles = makeStyles((theme: Theme) =>
@@ -161,6 +162,10 @@ export function CommentMessage(props: Props) {
   useEffect(() => {
     if (previewElement) {
       renderPreview(previewElement, message.markdown);
+      postprocessPreview(
+        previewElement,
+        globalContainers.crossnoteContainer.selectedNote,
+      );
     }
   }, [previewElement, message.markdown]);
 
