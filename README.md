@@ -1,8 +1,8 @@
 ---
 note:
-    createdAt: 2020-04-12T13:19:52.701Z
-    modifiedAt: 2020-05-11T11:14:44.140Z
-    tags: []
+  createdAt: 2020-04-12T13:19:52.701Z
+  modifiedAt: 2020-05-11T11:14:44.140Z
+  tags: []
 ---
 
 ![](./public/logo192.png)
@@ -20,9 +20,9 @@ https://crossnote.app
 
 We also offer an extension for VSCode (Still under development): [0xGG/vscode-crossnote](https://github.com/0xGG/vscode-crossnote) | [VSCode Marketplace](https://marketplace.visualstudio.com/items?itemName=shd101wyy.crossnote)
 
-Let's open the [Welcome Notebook](https://crossnote.app/?repo=https%3A%2F%2Fgithub.com%2F0xGG%2Fwelcome-notebook&branch=master&filePath=README.md) in crossnote for more information! (Just click the `ADD` button once the webpage is open to add this notebook)
+Let's open the [Welcome Notebook](https://crossnote.app/?repo=https%3A%2F%2Fgithub.com%2F0xGG%2Fwelcome-notebook.git&branch=master&filePath=README.md) in crossnote for more information! (Just click the `ADD` button once the webpage is open to add this notebook)
 
-让我们在交叉笔记中打开 [欢迎笔记本](https://crossnote.app/?repo=https%3A%2F%2Fgithub.com%2F0xGG%2Fwelcome-notebook&branch=master&filePath=README.md) 以查看更详尽的介绍！（在网页打开后点击 `ADD` 按钮直接添加该笔记本）
+让我们在交叉笔记中打开 [欢迎笔记本](https://crossnote.app/?repo=https%3A%2F%2Fgithub.com%2F0xGG%2Fwelcome-notebook.git&branch=master&filePath=README.md) 以查看更详尽的介绍！（在网页打开后点击 `ADD` 按钮直接添加该笔记本）
 
 ![Screenshot from 2020-03-26 23-44-08](https://user-images.githubusercontent.com/1908863/77666346-cd2bf900-6fbb-11ea-9aee-395262c7e169.png)
 
