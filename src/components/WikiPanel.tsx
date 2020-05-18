@@ -1,4 +1,4 @@
-import React, { useEffect, useCallback } from "react";
+import React, { useEffect } from "react";
 import { createStyles, makeStyles, Theme } from "@material-ui/core/styles";
 import clsx from "clsx";
 import { CrossnoteContainer } from "../containers/crossnote";
@@ -6,7 +6,6 @@ import { Box, Card, IconButton, Typography, Hidden } from "@material-ui/core";
 import { Menu as MenuIcon } from "mdi-material-ui";
 import { useTranslation } from "react-i18next";
 import { renderPreview } from "vickymd/preview";
-import * as path from "path";
 import { postprocessPreview } from "../utilities/preview";
 
 const previewZIndex = 99;
@@ -60,33 +59,8 @@ interface Props {
 
 export default function WikiPanel(props: Props) {
   const classes = useStyles(props);
-  const { t } = useTranslation();
   const crossnoteContainer = CrossnoteContainer.useContainer();
-
-  const openURL = useCallback(
-    (url: string = "") => {
-      if (!url || !crossnoteContainer.selectedNotebook) {
-        return;
-      }
-      const notebook = crossnoteContainer.selectedNotebook;
-      if (url.match(/https?:\/\//)) {
-        window.open(url, "_blank");
-      } else if (url.startsWith("/")) {
-        let filePath = path.relative(
-          notebook.dir,
-          path.resolve(notebook.dir, url.replace(/^\//, "")),
-        );
-        crossnoteContainer.openNoteAtPath(filePath);
-      } else {
-        let filePath = path.relative(
-          notebook.dir,
-          path.resolve(notebook.dir, url),
-        );
-        crossnoteContainer.openNoteAtPath(filePath);
-      }
-    },
-    [crossnoteContainer.selectedNotebook],
-  );
+  const { t } = useTranslation();
 
   useEffect(() => {
     return () => {
@@ -120,7 +94,7 @@ export default function WikiPanel(props: Props) {
               {"📖"}
             </span>
             <Typography className={clsx(classes.sectionName)}>
-              {"wiki"}
+              {t("general/wiki")}
             </Typography>
           </Box>
         </Box>

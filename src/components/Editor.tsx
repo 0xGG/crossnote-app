@@ -806,6 +806,7 @@ export default function Editor(props: Props) {
         try {
           renderPreview(previewElement, editor.getValue());
           postprocessPreview(previewElement);
+          previewElement.scrollTop = 0;
         } catch (error) {
           previewElement.innerText = error;
         }
@@ -827,7 +828,6 @@ export default function Editor(props: Props) {
     note,
     isDecrypted,
     postprocessPreview,
-    openURL,
     t,
   ]);
 
