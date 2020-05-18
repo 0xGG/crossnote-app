@@ -58,6 +58,7 @@ import ExplorePanel from "../components/ExplorePanel";
 import { NotebookPanel } from "../components/NotebookPanel";
 import { PrivacyPolicy } from "./Privacy";
 import AttachmentsPanel from "../components/AttachmentsPanel";
+import LanguageSelectorDialog from "../components/LanguageSelectorDialog";
 const is = require("is_js");
 
 const drawerWidth = 200;
@@ -559,6 +560,7 @@ export function Home(props: Props) {
         open={cloudContainer.authDialogOpen}
         onClose={() => cloudContainer.setAuthDialogOpen(false)}
       ></AuthDialog>
+      <LanguageSelectorDialog></LanguageSelectorDialog>
     </Box>
   );
 }

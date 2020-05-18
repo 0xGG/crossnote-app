@@ -584,6 +584,7 @@ export const jaJP = {
     "edit-image-dialog/image-url": "画像の URL",
     "edit-image-dialog/image-title": "画像のタイトル",
     "edit-image-dialog/image-alt-text": "画像代替テキスト",
+    "language-selector-dialog/subtitle": "希望する言語を選択してください",
 
     // react-ios-pwa-prompt
     "react-ios-pwa-prompt/copy-title": "ホーム画面に追加",

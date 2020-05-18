@@ -479,7 +479,7 @@ export const enUS = {
       "Error: Only supported https://www.bilibili.com/video/av79126732 like URL",
     "widget/crossnote.youtube/error_message":
       "Error: Only supported https://www.youtube.com/watch?v=MmB9b5njVbA like URL",
-    "widget/crossnote.auth/welcome": "Welcome to crossnote",
+    "widget/crossnote.auth/welcome": "Welcome to Crossnote",
     "widget/crossnote.auth/doesnt-have-account":
       "Doesn't have an account? Let's create one 😉!",
     "widget/crossnote.auth/forgot_password": "Forgot your password 😣?",
@@ -567,6 +567,7 @@ export const enUS = {
     "edit-image-dialog/image-url": "image URL",
     "edit-image-dialog/image-title": "image title",
     "edit-image-dialog/image-alt-text": "image alt text",
+    "language-selector-dialog/subtitle": "Please choose the preferred language",
 
     // react-ios-pwa-prompt
     "react-ios-pwa-prompt/copy-title": "Add to Home Screen",

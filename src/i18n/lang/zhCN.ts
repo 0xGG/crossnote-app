@@ -543,6 +543,7 @@ export const zhCN = {
     "edit-image-dialog/image-url": "图片 URL",
     "edit-image-dialog/image-title": "图片标题",
     "edit-image-dialog/image-alt-text": "图片替代文本",
+    "language-selector-dialog/subtitle": "请选择偏好语言",
 
     // react-ios-pwa-prompt
     "react-ios-pwa-prompt/copy-title": "添加到主屏幕",

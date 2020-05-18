@@ -543,6 +543,7 @@ export const zhTW = {
     "edit-image-dialog/image-url": "圖片 URL",
     "edit-image-dialog/image-title": "圖片標題",
     "edit-image-dialog/image-alt-text": "圖片替代文本",
+    "language-selector-dialog/subtitle": "請選擇偏好語言",
 
     "react-ios-pwa-prompt/copy-title": "新增到主畫面",
     "react-ios-pwa-prompt/copy-body":
