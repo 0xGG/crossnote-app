@@ -766,7 +766,7 @@ export default function Editor(props: Props) {
         editor.off("imageReadyToLoad", loadImage);
       };
     }
-  }, [editor, note, decryptionPassword, isDecrypted, openURL]);
+  }, [editor, note, decryptionPassword, isDecrypted]);
 
   useEffect(() => {
     // Hack: for update after crossnoteContainer.renameTag
