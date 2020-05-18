@@ -7,6 +7,7 @@ import { Menu as MenuIcon } from "mdi-material-ui";
 import { useTranslation } from "react-i18next";
 import { renderPreview } from "vickymd/preview";
 import * as path from "path";
+import { postprocessPreview } from "../utilities/preview";
 
 const previewZIndex = 99;
 const useStyles = makeStyles((theme: Theme) =>
@@ -98,19 +99,8 @@ export default function WikiPanel(props: Props) {
       crossnoteContainer
         .getNote(crossnoteContainer.selectedNotebook, "SUMMARY.md")
         .then((note) => {
-          const handleLinksClickEvent = (preview: HTMLElement) => {
-            // Handle link click event
-            const links = preview.getElementsByTagName("A");
-            for (let i = 0; i < links.length; i++) {
-              const link = links[i] as HTMLAnchorElement;
-              link.onclick = (event) => {
-                event.preventDefault();
-                openURL(link.getAttribute("href"));
-              };
-            }
-          };
           renderPreview(crossnoteContainer.wikiTOCElement, note.markdown);
-          handleLinksClickEvent(crossnoteContainer.wikiTOCElement);
+          postprocessPreview(crossnoteContainer.wikiTOCElement, note);
         })
         .catch(() => {});
     }
