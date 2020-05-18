@@ -192,6 +192,8 @@ export const enUS = {
     "general/Default": "Default",
     "general/Vim": "Vim",
     "general/Emacs": "Emacs",
+    "general/Desc": "Desc",
+    "general/Asc": "Asc",
 
     // Error
     "error/authentication-failed": "Authentication failed",
@@ -296,6 +298,8 @@ export const enUS = {
     "editor/saved": "Saved",
     "editor/update-note-failure": "Failed to update note",
     "editor/placeholder": "#  Hi 😀 Type '/' for commands",
+    "editor/ln": "Ln",
+    "editor/col": "Col",
 
     // * NoteControl
     "editor/note-control/allow-readers-to-suggest-note-tags":
@@ -578,5 +582,20 @@ export const enUS = {
       "We currently only support publishing the notebook from a public repository on GitHub, GitLab, Gitea, or Gitea. We only collect README.md file data.",
     "publish-notebook/disclaimer-2":
       "Please declare the ownership of your notebook by adding the following front-matter to README.md in remote repository:",
+
+    // git
+    "git/status/ignored": "ignored",
+    "git/status/unmodified": "unmodified",
+    "git/status/*modified": "*modified",
+    "git/status/*deleted": "*deleted",
+    "git/status/*added": "*added",
+    "git/status/absent": "absent",
+    "git/status/modified": "modified",
+    "git/status/deleted": "deleted",
+    "git/status/added": "added",
+    "git/status/*unmodified": "*unmodified",
+    "git/status/*absent": "*absent",
+    "git/status/*undeleted": "*undeleted",
+    "git/status/*undeletemodified": "*undeletemodified",
   },
 };

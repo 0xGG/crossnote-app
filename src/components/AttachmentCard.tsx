@@ -7,6 +7,7 @@ import { ButtonBase, Typography, Box } from "@material-ui/core";
 import { basename } from "path";
 import { loadImageAsBase64, isFileAnImage } from "../utilities/image";
 import { Image } from "mdi-material-ui";
+import { useTranslation } from "react-i18next";
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -57,6 +58,7 @@ interface Props {
 export default function AttachmentCard(props: Props) {
   const classes = useStyles(props);
   const attachment = props.attachment;
+  const { t } = useTranslation();
   const crossnoteContainer = CrossnoteContainer.useContainer();
   const [image, setImage] = useState<string>("");
   const [gitStatus, setGitStatus] = useState<string>("");
@@ -119,8 +121,8 @@ export default function AttachmentCard(props: Props) {
         )}
         <Typography variant={"caption"} className={clsx(classes.filePath)}>
           {basename(attachment.filePath).startsWith("unnamed_")
-            ? gitStatus
-            : attachment.filePath + " - " + gitStatus}
+            ? t(`git/status/${gitStatus}`)
+            : attachment.filePath + " - " + t(`git/status/${gitStatus}`)}
         </Typography>
       </Box>
     </ButtonBase>

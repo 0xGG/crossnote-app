@@ -245,8 +245,8 @@ export default function NoteCard(props: Props) {
         )}
         <Typography variant={"caption"} className={clsx(classes.filePath)}>
           {basename(note.filePath).startsWith("unnamed_")
-            ? gitStatus
-            : note.filePath + " - " + gitStatus}
+            ? t(`git/status/${gitStatus}`)
+            : note.filePath + " - " + t(`git/status/${gitStatus}`)}
         </Typography>
       </Box>
     </ButtonBase>
