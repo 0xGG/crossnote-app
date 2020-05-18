@@ -46,7 +46,9 @@ export function openURL(url: string = "", note: Note) {
       note.notebook.dir,
       path.resolve(note.notebook.dir, url.replace(/^\//, "")),
     );
-    globalContainers.crossnoteContainer.openNoteAtPath(filePath);
+    globalContainers.crossnoteContainer.openNoteAtPath(
+      decodeURIComponent(filePath),
+    );
   } else {
     let filePath = path.relative(
       note.notebook.dir,
@@ -55,7 +57,9 @@ export function openURL(url: string = "", note: Note) {
         url,
       ),
     );
-    globalContainers.crossnoteContainer.openNoteAtPath(filePath);
+    globalContainers.crossnoteContainer.openNoteAtPath(
+      decodeURIComponent(filePath),
+    );
   }
 }
 
@@ -93,7 +97,10 @@ export function postprocessPreview(
     for (let i = 0; i < images.length; i++) {
       const image = images[i] as HTMLImageElement;
       const imageSrc = image.getAttribute("src");
-      image.setAttribute("src", await resolveNoteImageSrc(note, imageSrc));
+      image.setAttribute(
+        "src",
+        await resolveNoteImageSrc(note, decodeURIComponent(imageSrc)),
+      );
     }
   };
 
