@@ -46,9 +46,14 @@ export default function LanguageSelectorDialog(props: Props) {
   }, 5000);
 
   return (
-    <Dialog open={open} fullWidth={true} style={{ zIndex: 2000 }}>
+    <Dialog
+      open={open}
+      fullWidth={true}
+      style={{ zIndex: 2000 }}
+      onClose={() => chooseLanguage("en-US")}
+    >
       <DialogTitle style={{ textAlign: "center" }}>
-        {t("widget/crossnote.auth/welcome", { lng: titleLanguage })}
+        {"📝 " + t("widget/crossnote.auth/welcome", { lng: titleLanguage })}
       </DialogTitle>
       <DialogContent>
         <Typography
