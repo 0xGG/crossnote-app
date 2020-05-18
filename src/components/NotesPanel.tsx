@@ -422,7 +422,7 @@ export default function NotesPanel(props: Props) {
                       classes.sortSelected,
                   )}
                 >
-                  <ListItemText primary={"Desc"}></ListItemText>
+                  <ListItemText primary={t("general/Desc")}></ListItemText>
                   <ListItemIcon style={{ marginLeft: "8px" }}>
                     <SortDescending
                       className={clsx(classes.iconBtnSVG)}
@@ -439,7 +439,7 @@ export default function NotesPanel(props: Props) {
                       classes.sortSelected,
                   )}
                 >
-                  <ListItemText primary={"Asc"}></ListItemText>
+                  <ListItemText primary={t("general/Asc")}></ListItemText>
                   <ListItemIcon style={{ marginLeft: "8px" }}>
                     <SortAscending
                       className={clsx(classes.iconBtnSVG)}

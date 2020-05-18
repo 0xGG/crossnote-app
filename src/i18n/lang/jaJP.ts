@@ -192,6 +192,8 @@ export const jaJP = {
     "general/Default": "既定",
     "general/Vim": "Vim",
     "general/Emacs": "Emacs",
+    "general/Desc": "降順",
+    "general/Asc": "昇順",
 
     // Error
     "error/authentication-failed": "認証に失敗しました",
@@ -302,6 +304,8 @@ export const jaJP = {
     "editor/saved": "保存しました",
     "editor/update-note-failure": "ノートの更新に失敗しました",
     "editor/placeholder": "#  こんにちは 😀 コマンドに 「/」 と入力します。",
+    "editor/ln": "行",
+    "editor/col": "列",
 
     // * NoteControl
     "editor/note-control/allow-readers-to-suggest-note-tags":
@@ -580,6 +584,7 @@ export const jaJP = {
     "edit-image-dialog/image-url": "画像の URL",
     "edit-image-dialog/image-title": "画像のタイトル",
     "edit-image-dialog/image-alt-text": "画像代替テキスト",
+    "language-selector-dialog/subtitle": "希望する言語を選択してください",
 
     // react-ios-pwa-prompt
     "react-ios-pwa-prompt/copy-title": "ホーム画面に追加",
@@ -595,5 +600,19 @@ export const jaJP = {
       "現在、GitHub、GitLab、Gitea、またはコードクラウドのパブリックウェアハウスからノートブックをリリースする場合のみサポートしています。 README.md ファイル データのみを収集します。",
     "publish-notebook/disclaimer-2":
       "リモート ウェアハウスで次の front-matter を README.md に追加して、ノートブックの所有権を主張します。",
+
+    // git
+    "git/status/ignored": "無視",
+    "git/status/unmodified": "未変更",
+    "git/status/*modified": "*変更済み",
+    "git/status/*deleted": "*削除済み",
+    "git/status/*added": "*追加",
+    "git/status/absent": "欠落",
+    "git/status/modified": "変更済み",
+    "git/status/deleted": "削除済み",
+    "git/status/added": "追加",
+    "git/status/*unmodified": "*未変更",
+    "git/status/*absent": "*欠落",
+    "git/status/*undeleted": "*削除されませんでした",
   },
 };

@@ -2189,12 +2189,14 @@ export default function Editor(props: Props) {
             style={{ marginLeft: "4px", marginTop: "3px" }}
             color={"textPrimary"}
           >
-            {"- " + gitStatus}
+            {"- " + t(`git/status/${gitStatus}`)}
           </Typography>
         </Box>
         <Box className={clsx(classes.cursorPositionInfo)}>
           <Typography variant={"caption"} color={"textPrimary"}>
-            {`Ln ${cursorPosition.line + 1}, Col ${cursorPosition.ch}`}
+            {`${t("editor/ln")} ${cursorPosition.line + 1}, ${t(
+              "editor/col",
+            )} ${cursorPosition.ch}`}
           </Typography>
         </Box>
       </Box>

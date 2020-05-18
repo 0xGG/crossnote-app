@@ -189,6 +189,8 @@ export const zhCN = {
     "general/Default": "默认",
     "general/Vim": "Vim",
     "general/Emacs": "Emacs",
+    "general/Desc": "降序",
+    "general/Asc": "升序",
 
     // Error
     "error/authentication-failed": "认证失败",
@@ -290,6 +292,8 @@ export const zhCN = {
     "editor/saved": "已保存",
     "editor/update-note-failure": "更新笔记失败",
     "editor/placeholder": "#  你好 😀 输入 '/' 打开命令",
+    "editor/ln": "行",
+    "editor/col": "列",
 
     // * NoteControl
     "editor/note-control/allow-readers-to-suggest-note-tags":
@@ -539,6 +543,7 @@ export const zhCN = {
     "edit-image-dialog/image-url": "图片 URL",
     "edit-image-dialog/image-title": "图片标题",
     "edit-image-dialog/image-alt-text": "图片替代文本",
+    "language-selector-dialog/subtitle": "请选择偏好语言",
 
     // react-ios-pwa-prompt
     "react-ios-pwa-prompt/copy-title": "添加到主屏幕",
@@ -552,5 +557,19 @@ export const zhCN = {
       "我们目前仅支持从 GitHub、GitLab、Gitea 或码云的公共仓库发布笔记本。我们只收集 README.md 文件数据。",
     "publish-notebook/disclaimer-2":
       "请通过在远程仓库中向 README.md 添加以下 front-matter 来声明笔记本的所有权：",
+
+    // git
+    "git/status/ignored": "已忽略",
+    "git/status/unmodified": "未修改",
+    "git/status/*modified": "*已修改",
+    "git/status/*deleted": "*已删除",
+    "git/status/*added": "*新增",
+    "git/status/absent": "缺失",
+    "git/status/modified": "已修改",
+    "git/status/deleted": "已删除",
+    "git/status/added": "新增",
+    "git/status/*unmodified": "*未修改",
+    "git/status/*absent": "*缺失",
+    "git/status/*undeleted": "*未删除",
   },
 };

@@ -192,6 +192,8 @@ export const enUS = {
     "general/Default": "Default",
     "general/Vim": "Vim",
     "general/Emacs": "Emacs",
+    "general/Desc": "Desc",
+    "general/Asc": "Asc",
 
     // Error
     "error/authentication-failed": "Authentication failed",
@@ -296,6 +298,8 @@ export const enUS = {
     "editor/saved": "Saved",
     "editor/update-note-failure": "Failed to update note",
     "editor/placeholder": "#  Hi 😀 Type '/' for commands",
+    "editor/ln": "Ln",
+    "editor/col": "Col",
 
     // * NoteControl
     "editor/note-control/allow-readers-to-suggest-note-tags":
@@ -475,7 +479,7 @@ export const enUS = {
       "Error: Only supported https://www.bilibili.com/video/av79126732 like URL",
     "widget/crossnote.youtube/error_message":
       "Error: Only supported https://www.youtube.com/watch?v=MmB9b5njVbA like URL",
-    "widget/crossnote.auth/welcome": "Welcome to crossnote",
+    "widget/crossnote.auth/welcome": "Welcome to Crossnote",
     "widget/crossnote.auth/doesnt-have-account":
       "Doesn't have an account? Let's create one 😉!",
     "widget/crossnote.auth/forgot_password": "Forgot your password 😣?",
@@ -563,6 +567,7 @@ export const enUS = {
     "edit-image-dialog/image-url": "image URL",
     "edit-image-dialog/image-title": "image title",
     "edit-image-dialog/image-alt-text": "image alt text",
+    "language-selector-dialog/subtitle": "Please choose the preferred language",
 
     // react-ios-pwa-prompt
     "react-ios-pwa-prompt/copy-title": "Add to Home Screen",
@@ -578,5 +583,20 @@ export const enUS = {
       "We currently only support publishing the notebook from a public repository on GitHub, GitLab, Gitea, or Gitea. We only collect README.md file data.",
     "publish-notebook/disclaimer-2":
       "Please declare the ownership of your notebook by adding the following front-matter to README.md in remote repository:",
+
+    // git
+    "git/status/ignored": "ignored",
+    "git/status/unmodified": "unmodified",
+    "git/status/*modified": "*modified",
+    "git/status/*deleted": "*deleted",
+    "git/status/*added": "*added",
+    "git/status/absent": "absent",
+    "git/status/modified": "modified",
+    "git/status/deleted": "deleted",
+    "git/status/added": "added",
+    "git/status/*unmodified": "*unmodified",
+    "git/status/*absent": "*absent",
+    "git/status/*undeleted": "*undeleted",
+    "git/status/*undeletemodified": "*undeletemodified",
   },
 };

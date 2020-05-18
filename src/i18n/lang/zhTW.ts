@@ -189,6 +189,8 @@ export const zhTW = {
     "general/Default": "預設",
     "general/Vim": "Vim",
     "general/Emacs": "Emacs",
+    "general/Desc": "遞減",
+    "general/Asc": "遞增",
 
     // Error
     "error/authentication-failed": "認証失敗",
@@ -290,6 +292,8 @@ export const zhTW = {
     "editor/saved": "已保存",
     "editor/update-note-failure": "更新筆記失敗",
     "editor/placeholder": "#  你好 😀 輸入 '/' 打開命令",
+    "editor/ln": "行",
+    "editor/col": "列",
 
     // * NoteControl
     "editor/note-control/allow-readers-to-suggest-note-tags":
@@ -539,6 +543,7 @@ export const zhTW = {
     "edit-image-dialog/image-url": "圖片 URL",
     "edit-image-dialog/image-title": "圖片標題",
     "edit-image-dialog/image-alt-text": "圖片替代文本",
+    "language-selector-dialog/subtitle": "請選擇偏好語言",
 
     "react-ios-pwa-prompt/copy-title": "新增到主畫面",
     "react-ios-pwa-prompt/copy-body":
@@ -552,5 +557,19 @@ export const zhTW = {
       "我們目前僅支援從 GitHub、GitLab、Gitea 或碼雲的公共倉庫發佈筆記本。 我們只收集 README.md 文件數據。",
     "publish-notebook/disclaimer-2":
       "請通過在遠端倉庫中向 README.md 添加以下 front-matter 來聲明筆記本的擁有權:",
+
+    // git
+    "git/status/ignored": "已忽略",
+    "git/status/unmodified": "未變更",
+    "git/status/*modified": "*已變更",
+    "git/status/*deleted": "*已刪除",
+    "git/status/*added": "*新增",
+    "git/status/absent": "缺失",
+    "git/status/modified": "已變更",
+    "git/status/deleted": "已刪除",
+    "git/status/added": "新增",
+    "git/status/*unmodified": "*未變更",
+    "git/status/*absent": "*缺失",
+    "git/status/*undeleted": "*未刪除",
   },
 };
