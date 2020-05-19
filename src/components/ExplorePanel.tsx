@@ -67,7 +67,6 @@ const useStyles = makeStyles((theme: Theme) =>
     },
     searchIcon: {
       width: theme.spacing(7),
-      // color: "rgba(0, 0, 0, 0.54)",
       height: "100%",
       position: "absolute",
       pointerEvents: "none",

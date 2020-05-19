@@ -59,9 +59,7 @@ const useStyles = makeStyles((theme: Theme) =>
       alignItems: "center",
       padding: theme.spacing(1, 0),
     },
-    treeItemLabelIcon: {
-      // color: "rgba(0, 0, 0, 0.54)",
-    },
+    treeItemLabelIcon: {},
     treeItemLabelText: {
       paddingLeft: "12px",
       flexGrow: 1,

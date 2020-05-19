@@ -14,7 +14,6 @@ import {
 } from "../containers/crossnote";
 import { useTranslation } from "react-i18next";
 import * as CryptoJS from "crypto-js";
-import * as path from "path";
 import {
   Box,
   Typography,
@@ -28,8 +27,6 @@ import {
   ButtonGroup,
   IconButton,
   Popover,
-  List,
-  ListItem,
   Hidden,
   Breadcrumbs,
   Card,
@@ -87,6 +84,7 @@ import { DeleteNoteDialog } from "./DeleteNoteDialog";
 import { ThemeName } from "vickymd/theme";
 import { copyToClipboard } from "../utilities/utils";
 import { setTheme } from "../themes/manager";
+import { TagsMenuPopover } from "./TagsMenuPopover";
 
 const VickyMD = require("vickymd/core");
 const is = require("is_js");
@@ -242,16 +240,6 @@ const useStyles = makeStyles((theme: Theme) =>
         display: "none",
       },
     },
-    menuItemOverride: {
-      "cursor": "default",
-      "padding": `0 0 0 ${theme.spacing(2)}px`,
-      "&:hover": {
-        backgroundColor: "inherit",
-      },
-    },
-    menuItemTextField: {
-      paddingRight: theme.spacing(2),
-    },
     // math
     floatWin: {
       position: "fixed",
@@ -321,7 +309,6 @@ export default function Editor(props: Props) {
   const [gitStatus, setGitStatus] = useState<string>("");
   const [fullScreenMode, setFullScreenMode] = useState<boolean>(false);
   const [tagsMenuAnchorEl, setTagsMenuAnchorEl] = useState<HTMLElement>(null);
-  const [tagName, setTagName] = useState<string>("");
   const [tagNames, setTagNames] = useState<string[]>([]);
   const [shareAnchorEl, setShareAnchorEl] = useState<HTMLElement>(null);
   const [toggleEncryptionDialogOpen, setToggleEncryptionDialogOpen] = useState<
@@ -439,7 +426,6 @@ export default function Editor(props: Props) {
         crossnoteContainer.updateNotebookTagNode();
         return newTagNames;
       });
-      setTagName("");
     },
     [note, editor, decryptionPassword, isDecrypted],
   );
@@ -1991,67 +1977,13 @@ export default function Editor(props: Props) {
               </Tooltip>
             </ButtonGroup>
           )}
-          <Popover
-            open={Boolean(tagsMenuAnchorEl)}
-            anchorEl={tagsMenuAnchorEl}
-            keepMounted
+          <TagsMenuPopover
+            anchorElement={tagsMenuAnchorEl}
             onClose={() => setTagsMenuAnchorEl(null)}
-          >
-            <List>
-              <ListItem
-                className={clsx(
-                  classes.menuItemOverride,
-                  classes.menuItemTextField,
-                )}
-              >
-                <TextField
-                  placeholder={t("general/add-a-tag")}
-                  autoFocus={true}
-                  value={tagName}
-                  onChange={(event) => {
-                    event.stopPropagation();
-                    setTagName(event.target.value);
-                  }}
-                  onKeyUp={(event) => {
-                    if (event.which === 13) {
-                      addTag(tagName);
-                    }
-                  }}
-                ></TextField>
-              </ListItem>
-              {tagNames.length > 0 ? (
-                tagNames.map((tagName) => {
-                  return (
-                    <ListItem
-                      key={tagName}
-                      className={clsx(classes.menuItemOverride)}
-                    >
-                      <Box
-                        style={{
-                          display: "flex",
-                          flexDirection: "row",
-                          alignItems: "center",
-                          justifyContent: "space-between",
-                          width: "100%",
-                        }}
-                      >
-                        <Typography>{tagName}</Typography>
-                        <IconButton onClick={() => deleteTag(tagName)}>
-                          <Close className={clsx(classes.iconBtnSVG)}></Close>
-                        </IconButton>
-                      </Box>
-                    </ListItem>
-                  );
-                })
-              ) : (
-                <ListItem className={clsx(classes.menuItemOverride)}>
-                  <Typography style={{ margin: "8px 0" }}>
-                    {t("general/no-tags")}
-                  </Typography>
-                </ListItem>
-              )}
-            </List>
-          </Popover>
+            addTag={addTag}
+            deleteTag={deleteTag}
+            tagNames={tagNames}
+          ></TagsMenuPopover>
           <Popover
             open={Boolean(shareAnchorEl)}
             anchorEl={shareAnchorEl}

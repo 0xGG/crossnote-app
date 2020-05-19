@@ -54,9 +54,7 @@ const useStyles = makeStyles((theme: Theme) =>
       flexDirection: "row",
       alignItems: "center",
     },
-    button: {
-      // color: "rgba(0, 0, 0, 0.54)",
-    },
+    button: {},
     reactionChip: {
       "marginBottom": "2px",
       "&:hover": {

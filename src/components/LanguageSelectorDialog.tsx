@@ -59,7 +59,6 @@ export default function LanguageSelectorDialog(props: Props) {
         <Typography
           variant={"body2"}
           style={{
-            // color: "rgba(0, 0, 0, 0.54)",
             fontSize: "0.75rem",
             marginBottom: "6px",
             textAlign: "center",
@@ -71,7 +70,6 @@ export default function LanguageSelectorDialog(props: Props) {
         <Typography
           variant={"body2"}
           style={{
-            // color: "rgba(0, 0, 0, 0.54)",
             fontSize: "0.75rem",
             marginBottom: "6px",
             textAlign: "center",
