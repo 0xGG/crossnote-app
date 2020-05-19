@@ -48,9 +48,6 @@ const useStyles = makeStyles((theme: Theme) =>
       flexDirection: "row",
       alignItems: "center",
     },
-    iconBtnSVG: {
-      color: theme.palette.text.secondary,
-    },
   }),
 );
 
@@ -96,7 +93,7 @@ export function Notifications(props: Props) {
         <Box className={clsx(classes.row)}>
           <Hidden smUp implementation="css">
             <IconButton onClick={props.toggleDrawer}>
-              <MenuIcon className={clsx(classes.iconBtnSVG)}></MenuIcon>
+              <MenuIcon></MenuIcon>
             </IconButton>
           </Hidden>
           <Typography variant={"h6"}>{t("general/Notifications")}</Typography>
@@ -159,7 +156,7 @@ export function Notifications(props: Props) {
                             cloudContainer.reduceNotificationsCountByOne();
                           }}
                         >
-                          <Close className={clsx(classes.iconBtnSVG)}></Close>
+                          <Close></Close>
                         </IconButton>
                       </ListItemIcon>
                       {notificationComponent}

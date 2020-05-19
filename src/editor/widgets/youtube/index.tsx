@@ -54,9 +54,6 @@ const useStyles = makeStyles((theme: Theme) =>
       color: "#f44336",
       marginTop: theme.spacing(2),
     },
-    iconBtnSVG: {
-      color: theme.palette.text.secondary,
-    },
   }),
 );
 
@@ -115,7 +112,7 @@ function YoutubeWidget(props: WidgetArgs) {
       <Box className={clsx(classes.actionButtons)}>
         <Tooltip title={t("general/Delete")}>
           <IconButton onClick={() => props.removeSelf()}>
-            <TrashCan className={clsx(classes.iconBtnSVG)}></TrashCan>
+            <TrashCan></TrashCan>
           </IconButton>
         </Tooltip>
       </Box>

@@ -35,9 +35,6 @@ const useStyles = makeStyles((theme: Theme) =>
       display: "flex",
       alignItems: "center",
     },
-    iconBtnSVG: {
-      color: theme.palette.text.secondary,
-    },
   }),
 );
 
@@ -69,9 +66,7 @@ function GitHubGistWidget(props: WidgetArgs) {
         {!props.isPreview && (
           <Box className={clsx(classes.actionButtonsGroup)}>
             <IconButton onClick={() => props.removeSelf()}>
-              <TrashCanOutline
-                className={clsx(classes.iconBtnSVG)}
-              ></TrashCanOutline>
+              <TrashCanOutline></TrashCanOutline>
             </IconButton>
           </Box>
         )}
@@ -103,7 +98,7 @@ function GitHubGistWidget(props: WidgetArgs) {
       <Box className={clsx(classes.actionButtonsGroup)}>
         <Tooltip title={t("general/Delete")}>
           <IconButton onClick={() => props.removeSelf()}>
-            <TrashCan className={clsx(classes.iconBtnSVG)}></TrashCan>
+            <TrashCan></TrashCan>
           </IconButton>
         </Tooltip>
       </Box>

@@ -99,9 +99,6 @@ const useStyles = makeStyles((theme: Theme) =>
         cursor: "pointer",
       },
     },
-    iconBtnSVG: {
-      color: theme.palette.text.secondary,
-    },
   }),
 );
 
@@ -345,20 +342,14 @@ export function CommentMessage(props: Props) {
         <Card>
           <Tooltip title={t("widget/crossnote.comment/reply-to-this-user")}>
             <IconButton onClick={handleReply}>
-              <Reply
-                className={clsx(classes.iconBtnSVG)}
-                style={actionBtnClass}
-              ></Reply>
+              <Reply style={actionBtnClass}></Reply>
             </IconButton>
           </Tooltip>
           <Tooltip
             title={t("widget/crossnote.comment/add-reaction-to-this-comment")}
           >
             <IconButton onClick={() => setEmojiPickerOpen(true)}>
-              <StickerEmoji
-                className={clsx(classes.iconBtnSVG)}
-                style={actionBtnClass}
-              ></StickerEmoji>
+              <StickerEmoji style={actionBtnClass}></StickerEmoji>
             </IconButton>
           </Tooltip>
           {globalContainers.cloudContainer.loggedIn &&
@@ -367,10 +358,7 @@ export function CommentMessage(props: Props) {
                 <IconButton
                   onClick={() => props.onModifyChatMessage(message.id)}
                 >
-                  <FileEditOutline
-                    className={clsx(classes.iconBtnSVG)}
-                    style={actionBtnClass}
-                  ></FileEditOutline>
+                  <FileEditOutline style={actionBtnClass}></FileEditOutline>
                 </IconButton>
               </Tooltip>
             )}

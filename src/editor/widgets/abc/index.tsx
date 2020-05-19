@@ -47,9 +47,6 @@ const useStyles = makeStyles((theme: Theme) =>
       display: "flex",
       alignItems: "center",
     },
-    iconBtnSVG: {
-      color: theme.palette.text.secondary,
-    },
   }),
 );
 
@@ -144,13 +141,13 @@ K: Emin
                 props.setAttributes(Object.assign(props.attributes, { abc }));
               }}
             >
-              <ContentSave className={clsx(classes.iconBtnSVG)}></ContentSave>
+              <ContentSave></ContentSave>
             </IconButton>
           )}
 
           <Tooltip title={t("general/Delete")}>
             <IconButton onClick={() => props.removeSelf()}>
-              <TrashCan className={clsx(classes.iconBtnSVG)}></TrashCan>
+              <TrashCan></TrashCan>
             </IconButton>
           </Tooltip>
         </Box>
