@@ -88,9 +88,6 @@ const useStyles = makeStyles((theme: Theme) =>
         // width: 200
       },
     },
-    iconBtnSVG: {
-      color: theme.palette.text.secondary,
-    },
   }),
 );
 
@@ -135,7 +132,7 @@ export default function ExplorePanel(props: Props) {
         <Box className={clsx(classes.row)}>
           <Hidden smUp implementation="css">
             <IconButton onClick={props.toggleDrawer}>
-              <MenuIcon className={clsx(classes.iconBtnSVG)}></MenuIcon>
+              <MenuIcon></MenuIcon>
             </IconButton>
           </Hidden>
           <div className={classes.search}>

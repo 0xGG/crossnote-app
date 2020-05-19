@@ -267,9 +267,6 @@ const useStyles = makeStyles((theme: Theme) =>
     floatWinClose: {
       color: "#eee",
     },
-    iconBtnSVG: {
-      color: theme.palette.text.secondary,
-    },
   }),
 );
 
@@ -2012,9 +2009,7 @@ export default function Editor(props: Props) {
                   }}
                 >
                   <IconButton>
-                    <ContentCopy
-                      className={clsx(classes.iconBtnSVG)}
-                    ></ContentCopy>
+                    <ContentCopy></ContentCopy>
                   </IconButton>
                 </Tooltip>
                 <TextField
@@ -2084,9 +2079,7 @@ export default function Editor(props: Props) {
             }}
             onClick={() => setFullScreenMode(false)}
           >
-            <FullscreenExit
-              className={clsx(classes.iconBtnSVG)}
-            ></FullscreenExit>
+            <FullscreenExit></FullscreenExit>
           </IconButton>
         )}
       </Box>

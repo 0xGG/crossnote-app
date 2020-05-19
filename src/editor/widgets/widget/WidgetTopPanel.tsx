@@ -88,9 +88,6 @@ const useStyles = makeStyles((theme: Theme) =>
         // display: "none"
       },
     },
-    iconBtnSVG: {
-      color: theme.palette.text.secondary,
-    },
   }),
 );
 
@@ -261,7 +258,7 @@ export function WidgetTopPanel(props: Props) {
               }}
             >
               <IconButton>
-                <LinkVariant className={clsx(classes.iconBtnSVG)}></LinkVariant>
+                <LinkVariant></LinkVariant>
               </IconButton>
             </Link>
           </Tooltip>
@@ -282,16 +279,14 @@ export function WidgetTopPanel(props: Props) {
         {!props.isPreview && widget.canConfigure && (
           <Tooltip title={t("general/Edit")}>
             <IconButton onClick={() => setEditDialogOpen(true)}>
-              <Pencil className={clsx(classes.iconBtnSVG)}></Pencil>
+              <Pencil></Pencil>
             </IconButton>
           </Tooltip>
         )}
         {!props.isPreview && widget.canConfigure && (
           <Tooltip title={t("general/Delete")}>
             <IconButton onClick={deleteWidget}>
-              <TrashCanOutline
-                className={clsx(classes.iconBtnSVG)}
-              ></TrashCanOutline>
+              <TrashCanOutline></TrashCanOutline>
             </IconButton>
           </Tooltip>
         )}
@@ -321,10 +316,10 @@ export function WidgetTopPanel(props: Props) {
         </DialogContent>
         <DialogActions>
           <IconButton onClick={updateWidget}>
-            <ContentSave className={clsx(classes.iconBtnSVG)}></ContentSave>
+            <ContentSave></ContentSave>
           </IconButton>
           <IconButton onClick={closeEditDialog}>
-            <Cancel className={clsx(classes.iconBtnSVG)}></Cancel>
+            <Cancel></Cancel>
           </IconButton>
         </DialogActions>
       </Dialog>

@@ -64,9 +64,6 @@ const useStyles = makeStyles((theme: Theme) =>
       paddingLeft: "12px",
       flexGrow: 1,
     },
-    iconBtnSVG: {
-      color: theme.palette.text.secondary,
-    },
   }),
 );
 
@@ -219,7 +216,7 @@ export default function NotebookTreeView(props: Props) {
           disableRipple={true}
           size={"medium"}
         >
-          <ChevronRight className={clsx(classes.iconBtnSVG)}></ChevronRight>
+          <ChevronRight></ChevronRight>
         </IconButton>
       }
       defaultCollapseIcon={
@@ -228,7 +225,7 @@ export default function NotebookTreeView(props: Props) {
           disableRipple={true}
           size={"medium"}
         >
-          <ChevronDown className={clsx(classes.iconBtnSVG)}></ChevronDown>
+          <ChevronDown></ChevronDown>
         </IconButton>
       }
       defaultEndIcon={<div style={{ width: 24 }} />}

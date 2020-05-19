@@ -1,24 +1,12 @@
 import React from "react";
 import { Box, Hidden, IconButton, Typography } from "@material-ui/core";
-import { createStyles, makeStyles, Theme } from "@material-ui/core/styles";
 import { Menu as MenuIcon } from "mdi-material-ui";
-import clsx from "clsx";
-
-const useStyles = makeStyles((theme: Theme) =>
-  createStyles({
-    iconBtnSVG: {
-      color: theme.palette.text.secondary,
-    },
-  }),
-);
 
 interface Props {
   toggleDrawer: () => void;
 }
 
 export function PrivacyPolicy(props: Props) {
-  const classes = useStyles(props);
-
   return (
     <Box style={{ padding: "16px" }} className={"preview"}>
       <Box
@@ -26,7 +14,7 @@ export function PrivacyPolicy(props: Props) {
       >
         <Hidden smUp implementation="css">
           <IconButton onClick={props.toggleDrawer}>
-            <MenuIcon className={clsx(classes.iconBtnSVG)}></MenuIcon>
+            <MenuIcon></MenuIcon>
           </IconButton>
         </Hidden>
         <Typography variant={"h2"}>Privacy Policy</Typography>

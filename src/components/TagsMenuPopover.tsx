@@ -8,7 +8,7 @@ import {
   Typography,
   IconButton,
 } from "@material-ui/core";
-import { Close } from "mdi-material-ui";
+import { TrashCan } from "mdi-material-ui";
 import { createStyles, makeStyles, Theme } from "@material-ui/core/styles";
 import clsx from "clsx";
 import { useTranslation } from "react-i18next";
@@ -94,11 +94,17 @@ export function TagsMenuPopover(props: Props) {
             onInputChange={(event, newInputValue) => {
               setTagName(newInputValue);
             }}
-            options={options}
+            options={(tagName.trim().length > 0 &&
+            options.findIndex((x) => x === tagName.trim()) < 0
+              ? [tagName, ...options]
+              : options
+            ).map((opt) => "＋  " + opt)}
             style={{ width: 300, maxWidth: "100%" }}
             value={""}
-            onChange={(event: any, newValue: string) => {
-              addTag(newValue);
+            onChange={(event: any, newValue: string = "") => {
+              if (newValue) {
+                addTag(newValue.replace(/^＋/, "").trim());
+              }
             }}
             renderInput={(params) => (
               <TextField
@@ -113,6 +119,11 @@ export function TagsMenuPopover(props: Props) {
                 {...params}
               ></TextField>
             )}
+            noOptionsText={t("general/no-tags")}
+            openText={t("general/Open")}
+            closeText={t("general/close")}
+            loadingText={t("general/loading")}
+            clearText={t("general/clear-all")}
           ></Autocomplete>
         </ListItem>
         {props.tagNames.length > 0 ? (
@@ -133,7 +144,7 @@ export function TagsMenuPopover(props: Props) {
                 >
                   <Typography>{tagName}</Typography>
                   <IconButton onClick={() => props.deleteTag(tagName)}>
-                    <Close></Close>
+                    <TrashCan></TrashCan>
                   </IconButton>
                 </Box>
               </ListItem>

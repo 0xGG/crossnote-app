@@ -123,9 +123,6 @@ const useStyles = makeStyles((theme: Theme) =>
       padding: "0",
       position: "relative",
     },
-    iconBtnSVG: {
-      color: theme.palette.text.secondary,
-    },
   }),
 );
 
@@ -247,7 +244,7 @@ export function Settings(props: Props) {
       >
         <Hidden smUp implementation="css">
           <IconButton onClick={props.toggleDrawer}>
-            <MenuIcon className={clsx(classes.iconBtnSVG)}></MenuIcon>
+            <MenuIcon></MenuIcon>
           </IconButton>
         </Hidden>
         <Typography variant={"h6"}>{t("general/Settings")}</Typography>
@@ -302,7 +299,7 @@ export function Settings(props: Props) {
               />
               <Tooltip title={t("settings/upload-image")}>
                 <IconButton disabled={uploadingAvatar} onClick={uploadAvatar}>
-                  <ImagePlus className={clsx(classes.iconBtnSVG)}></ImagePlus>
+                  <ImagePlus></ImagePlus>
                 </IconButton>
               </Tooltip>
             </Box>

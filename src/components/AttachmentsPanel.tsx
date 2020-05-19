@@ -91,9 +91,6 @@ const useStyles = makeStyles((theme: Theme) =>
         color: theme.palette.primary.main,
       },
     },
-    iconBtnSVG: {
-      color: theme.palette.text.secondary,
-    },
   }),
 );
 
@@ -147,7 +144,7 @@ export default function AttachmentsPanel(props: Props) {
         <Box className={clsx(classes.row)}>
           <Hidden smUp implementation="css">
             <IconButton onClick={props.toggleDrawer}>
-              <MenuIcon className={clsx(classes.iconBtnSVG)}></MenuIcon>
+              <MenuIcon></MenuIcon>
             </IconButton>
           </Hidden>
           <div className={classes.search}>
@@ -170,7 +167,7 @@ export default function AttachmentsPanel(props: Props) {
           {/*
           <IconButton disabled={!crossnoteContainer.initialized}>
             <Tooltip title={t("general/new-attachment")}>
-              <Plus className={clsx(classes.iconBtnSVG)}></Plus>
+              <Plus></Plus>
             </Tooltip>
           </IconButton>
           */}

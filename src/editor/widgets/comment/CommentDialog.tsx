@@ -57,9 +57,6 @@ const useStyles = makeStyles((theme: Theme) =>
       padding: "0",
     },
     messages: {},
-    iconBtnSVG: {
-      color: theme.palette.text.secondary,
-    },
   }),
 );
 
@@ -304,7 +301,7 @@ export function CommentDialog(props: Props) {
           <Box className={classes.row}>
             {fullScreen && (
               <IconButton onClick={() => props.onClose()}>
-                <Close className={clsx(classes.iconBtnSVG)}></Close>
+                <Close></Close>
               </IconButton>
             )}
             <Typography>{t("general/Comments")}</Typography>

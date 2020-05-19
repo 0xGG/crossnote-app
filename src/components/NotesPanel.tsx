@@ -119,9 +119,6 @@ const useStyles = makeStyles((theme: Theme) =>
         color: theme.palette.primary.main,
       },
     },
-    iconBtnSVG: {
-      color: theme.palette.text.secondary,
-    },
   }),
 );
 
@@ -205,7 +202,7 @@ export default function NotesPanel(props: Props) {
         <Box className={clsx(classes.row)}>
           <Hidden smUp implementation="css">
             <IconButton onClick={props.toggleDrawer}>
-              <MenuIcon className={clsx(classes.iconBtnSVG)}></MenuIcon>
+              <MenuIcon></MenuIcon>
             </IconButton>
           </Hidden>
           <div className={classes.search}>
@@ -230,9 +227,7 @@ export default function NotesPanel(props: Props) {
             disabled={!crossnoteContainer.initialized || isCreatingNote}
           >
             <Tooltip title={t("general/new-note")}>
-              <FileEditOutline
-                className={clsx(classes.iconBtnSVG)}
-              ></FileEditOutline>
+              <FileEditOutline></FileEditOutline>
             </Tooltip>
           </IconButton>
         </Box>
@@ -304,7 +299,7 @@ export default function NotesPanel(props: Props) {
               <Typography className={clsx(classes.sectionName)}>
                 {crossnoteContainer.selectedSection.path}
               </Typography>
-              <ChevronDown className={clsx(classes.iconBtnSVG)}></ChevronDown>
+              <ChevronDown></ChevronDown>
             </Box>
           ) : crossnoteContainer.selectedSection.type ===
             SelectedSectionType.Encrypted ? (
@@ -342,7 +337,7 @@ export default function NotesPanel(props: Props) {
                 <Typography className={clsx(classes.sectionName)}>
                   {crossnoteContainer.selectedSection.path}
                 </Typography>
-                <ChevronDown className={clsx(classes.iconBtnSVG)}></ChevronDown>
+                <ChevronDown></ChevronDown>
               </Box>
             )
           )}
@@ -355,7 +350,7 @@ export default function NotesPanel(props: Props) {
                 onClick={() => setNotebookConfigurationDialogOpen(true)}
               >
                 <Tooltip title={t("general/configure-the-notebook")}>
-                  <Cog className={clsx(classes.iconBtnSVG)}></Cog>
+                  <Cog></Cog>
                 </Tooltip>
               </IconButton>
               /*)*/
@@ -363,7 +358,7 @@ export default function NotesPanel(props: Props) {
             <IconButton
               onClick={(event) => setSortMenuAnchorEl(event.currentTarget)}
             >
-              <SortVariant className={clsx(classes.iconBtnSVG)}></SortVariant>
+              <SortVariant></SortVariant>
             </IconButton>
             <Popover
               anchorEl={sortMenuAnchorEl}
@@ -423,9 +418,7 @@ export default function NotesPanel(props: Props) {
                 >
                   <ListItemText primary={t("general/Desc")}></ListItemText>
                   <ListItemIcon style={{ marginLeft: "8px" }}>
-                    <SortDescending
-                      className={clsx(classes.iconBtnSVG)}
-                    ></SortDescending>
+                    <SortDescending></SortDescending>
                   </ListItemIcon>
                 </ListItem>
                 <ListItem
@@ -440,9 +433,7 @@ export default function NotesPanel(props: Props) {
                 >
                   <ListItemText primary={t("general/Asc")}></ListItemText>
                   <ListItemIcon style={{ marginLeft: "8px" }}>
-                    <SortAscending
-                      className={clsx(classes.iconBtnSVG)}
-                    ></SortAscending>
+                    <SortAscending></SortAscending>
                   </ListItemIcon>
                 </ListItem>
               </List>
@@ -472,7 +463,7 @@ export default function NotesPanel(props: Props) {
             }}
           >
             <ListItemIcon>
-              <Pencil className={clsx(classes.iconBtnSVG)}></Pencil>
+              <Pencil></Pencil>
             </ListItemIcon>
             <ListItemText>{t("general/rename-directory")}</ListItemText>
           </ListItem>
@@ -484,7 +475,7 @@ export default function NotesPanel(props: Props) {
             }}
           >
             <ListItemIcon>
-              <TrashCan className={clsx(classes.iconBtnSVG)}></TrashCan>
+              <TrashCan></TrashCan>
             </ListItemIcon>
             <ListItemText>{t("general/delete-directory")}</ListItemText>
           </ListItem>
@@ -506,7 +497,7 @@ export default function NotesPanel(props: Props) {
             }}
           >
             <ListItemIcon>
-              <Pencil className={clsx(classes.iconBtnSVG)}></Pencil>
+              <Pencil></Pencil>
             </ListItemIcon>
             <ListItemText>{t("general/rename-tag")}</ListItemText>
           </ListItem>
@@ -518,7 +509,7 @@ export default function NotesPanel(props: Props) {
             }}
           >
             <ListItemIcon>
-              <TrashCan className={clsx(classes.iconBtnSVG)}></TrashCan>
+              <TrashCan></TrashCan>
             </ListItemIcon>
             <ListItemText>{t("general/delete-tag")}</ListItemText>
           </ListItem>

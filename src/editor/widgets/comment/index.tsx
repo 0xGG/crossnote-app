@@ -61,9 +61,6 @@ const useStyles = makeStyles((theme: Theme) =>
         cursor: "pointer",
       },
     },
-    iconBtnSVG: {
-      color: theme.palette.text.secondary,
-    },
   }),
 );
 
@@ -257,9 +254,7 @@ function CommentWidget(props: WidgetArgs) {
               setCommentDialogOpen(true);
             }}
           >
-            <CommentOutline
-              className={clsx(classes.iconBtnSVG)}
-            ></CommentOutline>
+            <CommentOutline></CommentOutline>
             {commentWidget.instance.commentWidget.messagesCount > 0 ? (
               <Typography style={{ marginLeft: "4px", marginBottom: "0" }}>
                 {commentWidget.instance.commentWidget.messagesCount}
@@ -274,7 +269,7 @@ function CommentWidget(props: WidgetArgs) {
           >
             <Badge style={{ zIndex: 0 }} color={"secondary"}>
               {/* badgeContent={(note.reactions || "+").toString()} */}
-              <StickerEmoji className={clsx(classes.iconBtnSVG)} />
+              <StickerEmoji />
               {commentWidget.instance.commentWidget.reactionsCount > 0 ? (
                 <Typography style={{ marginLeft: "4px", marginBottom: "0" }}>
                   {commentWidget.instance.commentWidget.reactionsCount}
