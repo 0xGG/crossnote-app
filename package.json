@@ -20,7 +20,7 @@
     "automerge": "^0.14.0",
     "chinese-conv": "^1.0.1",
     "clsx": "^1.1.0",
-    "codemirror": "^5.53.2",
+    "codemirror": "^5.54.0",
     "crypto-js": "^4.0.0",
     "date-fns": "^2.12.0",
     "diff3": "^0.0.3",
@@ -69,7 +69,7 @@
     "unstated-next": "^1.1.0",
     "urql": "^1.9.7",
     "uuid": "^7.0.3",
-    "vickymd": "^0.2.0"
+    "vickymd": "^0.2.1"
   },
   "scripts": {
     "git-info": "echo export default \"{\\\"logMessage\\\": \\\"$(git log -1 --oneline)\\\",\\\"hash\\\":\\\"$(git rev-parse HEAD)\\\"}\"  > src/_git_commit.js",
