@@ -598,5 +598,6 @@ export const enUS = {
     "git/status/*absent": "*absent",
     "git/status/*undeleted": "*undeleted",
     "git/status/*undeletemodified": "*undeletemodified",
+    "git/status/": "",
   },
 };
