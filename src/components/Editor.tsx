@@ -1083,7 +1083,6 @@ export default function Editor(props: Props) {
         }
       }
 
-      console.log(changeObject);
       // Check emoji
       if (
         changeObject.text.length === 1 &&
