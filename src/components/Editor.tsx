@@ -1084,7 +1084,14 @@ export default function Editor(props: Props) {
       }
 
       // Check emoji
-      if (changeObject.text.length === 1 && changeObject.text[0] === ":") {
+      if (
+        changeObject.text.length === 1 &&
+        changeObject.text[0].length > 0 &&
+        changeObject.text[0] !== " " &&
+        changeObject.text[0] !== ":" &&
+        changeObject.from.ch > 0 &&
+        editor.getLine(changeObject.from.line)[changeObject.from.ch - 1] === ":"
+      ) {
         editor.showHint({
           closeOnUnfocus: true,
           completeSingle: false,
@@ -1095,18 +1102,23 @@ export default function Editor(props: Props) {
             const lineStr = editor.getLine(line);
             const end: number = cursor.ch;
             let start = token.start;
+            let doubleSemiColon = false;
             if (lineStr[start] !== ":") {
               start = start - 1;
             }
+            if (start > 0 && lineStr[start - 1] === ":") {
+              start = start - 1;
+              doubleSemiColon = true;
+            }
             const currentWord: string = lineStr
               .slice(start, end)
-              .replace(/^:/, "");
+              .replace(/^:+/, "");
 
             const commands: { text: string; displayText: string }[] = [];
             for (const def in EmojiDefinitions) {
               const emoji = EmojiDefinitions[def];
               commands.push({
-                text: `:${def}: `,
+                text: doubleSemiColon ? `:${def}: ` : `${emoji} `,
                 displayText: `:${def}: ${emoji}`,
               });
             }
