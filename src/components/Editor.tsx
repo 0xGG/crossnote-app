@@ -715,12 +715,6 @@ export default function Editor(props: Props) {
       };
       editor.on("keyup", keyupHandler);
 
-      const linkIconClickedHandler = (args: any) => {
-        const url = args.element.getAttribute("data-url");
-        openURL(url || "", note);
-      };
-      editor.on("linkIconClicked", linkIconClickedHandler);
-
       const imageClickedHandler = (args: any) => {
         const marker: TextMarker = args.marker;
         const imageElement: HTMLImageElement = args.element;
@@ -744,7 +738,6 @@ export default function Editor(props: Props) {
       return () => {
         editor.off("changes", changesHandler);
         editor.off("keyup", keyupHandler);
-        editor.off("linkIconClicked", linkIconClickedHandler);
         editor.off("imageClicked", imageClickedHandler);
         editor.off("imageReadyToLoad", loadImage);
       };
