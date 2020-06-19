@@ -606,6 +606,9 @@ export default function Editor(props: Props) {
 .cm-fat-cursor-mark.cm-fat-cursor-mark {
   background-color: ${settingsContainer.editorCursorColor || "#333"};
 }
+.CodeMirror.CodeMirror {
+  caret-color: ${settingsContainer.editorCursorColor || "#333"} !important;
+}
   `;
   }, [settingsContainer.editorCursorColor]);
 
