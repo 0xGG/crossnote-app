@@ -438,7 +438,6 @@ function useCrossnoteContainer(initialState: InitialState) {
       }
 
       const noteConfig: NoteConfig = {
-        id: "",
         tags: tags,
         modifiedAt: new Date(),
         createdAt: new Date(),
@@ -447,7 +446,7 @@ function useCrossnoteContainer(initialState: InitialState) {
       const note: Note = {
         notebook: notebook,
         filePath: filePath,
-        markdown: "",
+        markdown,
         config: noteConfig,
       };
       setNotebookNotes((notes) => [note, ...notes]);
@@ -748,12 +747,29 @@ function useCrossnoteContainer(initialState: InitialState) {
   const openNoteAtPath = useCallback(
     (filePath: string) => {
       if (!crossnote) return;
+
+      if (!filePath.endsWith(".md")) {
+        filePath += ".md";
+      }
+
       const note = notebookNotes.find((n) => n.filePath === filePath);
       if (note) {
         _setSelectedNote(note);
+      } else {
+        createNewNote(
+          selectedNotebook,
+          filePath,
+          "# " + path.basename(filePath).replace(/\.md$/, ""),
+        );
       }
     },
-    [crossnote, notebookNotes, _setSelectedNote],
+    [
+      crossnote,
+      notebookNotes,
+      selectedNotebook,
+      _setSelectedNote,
+      createNewNote,
+    ],
   );
 
   const loadAttachments = useCallback(async () => {

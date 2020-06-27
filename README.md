@@ -11,6 +11,8 @@ note:
 
 > You can still check the deprecated alpha version README.md [here](./README.alpha.md).
 
+**Attention: Breaking updates coming soon. Please check [this GitHub issue](https://github.com/0xGG/crossnote/issues/129) for more information.**
+
 https://crossnote.app
 
 <a href="https://www.producthunt.com/posts/crossnote?utm_source=badge-featured&utm_medium=badge&utm_souce=badge-crossnote" target="_blank"><img src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=197331&theme=dark" alt="Crossnote - An interesting markdown note taking progressive web app | Product Hunt Embed" style="width: 250px; height: 54px;" width="250px" height="54px" /></a>  
