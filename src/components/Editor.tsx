@@ -71,8 +71,8 @@ import { formatDistance } from "date-fns";
 import { getHeaderFromMarkdown } from "../utilities/note";
 import {
   printPreview,
-  openURL,
   postprocessPreview as previewPostprocessPreview,
+  openURL,
 } from "../utilities/preview";
 import ChangeFilePathDialog from "./ChangeFilePathDialog";
 import { SettingsContainer } from "../containers/settings";
@@ -644,7 +644,6 @@ export default function Editor(props: Props) {
 
   useEffect(() => {
     if (textAreaElement && !editor && note) {
-      // console.log("textarea element mounted");
       const editor: CodeMirrorEditor = VickyMD.fromTextArea(textAreaElement, {
         mode: {
           name: "hypermd",
@@ -655,6 +654,17 @@ export default function Editor(props: Props) {
         keyMap: settingsContainer.keyMap,
         showCursorWhenSelecting: true,
         inputStyle: "contenteditable",
+        hmdClick: (info: any, cm: CodeMirrorEditor) => {
+          let { text, url } = info;
+          if (info.type === "link" || info.type === "url") {
+            const footnoteRef = text.match(/\[[^[\]]+\](?:\[\])?$/); // bare link, footref or [foot][] . assume no escaping char inside
+            if (!footnoteRef && (info.ctrlKey || info.altKey) && url) {
+              // just open URL
+              openURL(url, note);
+              return false; // Prevent default click event
+            }
+          }
+        },
       });
       editor.setOption("lineNumbers", false);
       editor.setOption("foldGutter", false);

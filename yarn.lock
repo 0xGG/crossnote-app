@@ -4485,10 +4485,10 @@ code-point-at@^1.0.0:
   resolved "https://registry.npm.taobao.org/code-point-at/download/code-point-at-1.1.0.tgz#0d070b4d043a5bea33a2f1a40e2edb3d9a4ccf77"
   integrity sha1-DQcLTQQ6W+ozovGkDi7bPZpMz3c=
 
-codemirror@^5.54.0:
-  version "5.54.0"
-  resolved "https://registry.npm.taobao.org/codemirror/download/codemirror-5.54.0.tgz?cache=0&sync_timestamp=1589962970992&other_urls=https%3A%2F%2Fregistry.npm.taobao.org%2Fcodemirror%2Fdownload%2Fcodemirror-5.54.0.tgz#82b6adf662b29eeb7b867fe7839d49e25e4a0b38"
-  integrity sha1-grat9mKynut7hn/ng51J4l5KCzg=
+codemirror@^5.55.0:
+  version "5.55.0"
+  resolved "https://registry.npm.taobao.org/codemirror/download/codemirror-5.55.0.tgz?cache=0&sync_timestamp=1592745461049&other_urls=https%3A%2F%2Fregistry.npm.taobao.org%2Fcodemirror%2Fdownload%2Fcodemirror-5.55.0.tgz#23731f641288f202a6858fdc878f3149e0e04363"
+  integrity sha1-I3MfZBKI8gKmhY/ch48xSeDgQ2M=
 
 collection-map@^1.0.0:
   version "1.0.0"
@@ -16531,10 +16531,10 @@ verror@1.10.0:
     core-util-is "1.0.2"
     extsprintf "^1.2.0"
 
-vickymd@^0.2.3:
-  version "0.2.3"
-  resolved "https://registry.npm.taobao.org/vickymd/download/vickymd-0.2.3.tgz#91deaa0632c190309f521a68570cf506bacdc7fc"
-  integrity sha1-kd6qBjLBkDCfUhpoVwz1BrrNx/w=
+vickymd@^0.2.4:
+  version "0.2.4"
+  resolved "https://registry.npm.taobao.org/vickymd/download/vickymd-0.2.4.tgz#c011e0c2f74e0f7906b52834460b6f7f68fb7427"
+  integrity sha1-wBHgwvdOD3kGtSg0Rgtvf2j7dCc=
   optionalDependencies:
     echarts "^4.7.0"
     emojione "^4.5.0"
