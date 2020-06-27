@@ -748,7 +748,6 @@ function useCrossnoteContainer(initialState: InitialState) {
     (filePath: string) => {
       if (!crossnote) return;
 
-      console.log("openNoteAtPath: ", filePath);
       if (!filePath.endsWith(".md")) {
         filePath += ".md";
       }
