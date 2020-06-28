@@ -67,7 +67,6 @@ export interface NoteConfigEncryption {
 }
 
 export interface NoteConfig {
-  id?: string;
   createdAt: Date;
   modifiedAt: Date;
   tags?: string[];
@@ -135,6 +134,22 @@ type Cache = {
     markdown: string;
   };
 };
+
+/**
+ * Change "createdAt" to "created", and "modifiedAt" to "modified"
+ * @param noteConfig
+ */
+function formatNoteConfig(noteConfig: NoteConfig) {
+  const newObject: any = Object.assign({}, noteConfig);
+
+  newObject["created"] = noteConfig.createdAt;
+  delete newObject["createdAt"];
+
+  newObject["modified"] = noteConfig.modifiedAt;
+  delete newObject["modifiedAt"];
+
+  return newObject;
+}
 
 export default class Crossnote {
   private notebookDB: PouchDB.Database<Notebook>;
@@ -941,9 +956,36 @@ export default class Crossnote {
 
       try {
         const data = matter(markdown);
-        noteConfig = Object.assign(noteConfig, data.data["note"] || {});
         const frontMatter: any = Object.assign({}, data.data);
-        delete frontMatter["note"];
+        if (data.data["note"]) {
+          // Legacy note config
+          noteConfig = Object.assign(noteConfig, data.data["note"] || {});
+          delete frontMatter["note"];
+        } else {
+          // New note config design in beta 3
+          if (data.data["created"]) {
+            noteConfig.createdAt = new Date(data.data["created"]);
+            delete frontMatter["created"];
+          }
+          if (data.data["modified"]) {
+            noteConfig.modifiedAt = new Date(data.data["modified"]);
+            delete frontMatter["modified"];
+          }
+          if (data.data["tags"]) {
+            // TODO: Remove this tags support
+            noteConfig.tags = data.data["tags"];
+            delete frontMatter["tags"];
+          }
+          if (data.data["encryption"]) {
+            // TODO: Remove the encryption support
+            noteConfig.encryption = data.data["encryption"];
+            delete frontMatter["encryption"];
+          }
+          if (data.data["pinned"]) {
+            noteConfig.pinned = data.data["pinned"];
+            delete frontMatter["pinned"];
+          }
+        }
         // markdown = matter.stringify(data.content, frontMatter); // <= NOTE: I think gray-matter has bug. Although I delete "note" section from front-matter, it still includes it.
         markdown = matterStringify(data.content, frontMatter);
       } catch (error) {
@@ -1083,7 +1125,11 @@ export default class Crossnote {
       if (data.data["note"] && data.data["note"] instanceof Object) {
         noteConfig = Object.assign({}, noteConfig, data.data["note"] || {});
       }
-      const frontMatter = Object.assign(data.data || {}, { note: noteConfig });
+      const frontMatter = Object.assign(
+        data.data || {},
+        formatNoteConfig(noteConfig),
+      );
+      delete frontMatter["note"];
       markdown = data.content;
       if (noteConfig.encryption) {
         // TODO: Refactor
@@ -1103,7 +1149,7 @@ export default class Crossnote {
           password || "",
         ).toString();
       }
-      markdown = matterStringify(markdown, { note: noteConfig });
+      markdown = matterStringify(markdown, formatNoteConfig(noteConfig));
     }
 
     await pfs.writeFile(path.resolve(notebook.dir, filePath), markdown);
@@ -1128,7 +1174,11 @@ export default class Crossnote {
   ) {
     const note = await this.getNote(notebook, filePath);
     const data = matter(note.markdown);
-    const frontMatter = Object.assign(data.data || {}, { note: noteConfig });
+    const frontMatter = Object.assign(
+      data.data || {},
+      formatNoteConfig(noteConfig),
+    );
+    delete frontMatter["note"]; // TODO: Remove this in beta 3
     const markdown = matterStringify(data.content, frontMatter);
     await pfs.writeFile(path.resolve(notebook.dir, filePath), markdown);
     await git.add({
