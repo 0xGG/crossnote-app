@@ -958,9 +958,23 @@ export default class Crossnote {
         const data = matter(markdown);
         const frontMatter: any = Object.assign({}, data.data);
         if (data.data["note"]) {
-          // Legacy note config
+          // TODO: Remove this check for legacy note config in the future.
           noteConfig = Object.assign(noteConfig, data.data["note"] || {});
           delete frontMatter["note"];
+
+          // Migration
+          const newFrontMatter = Object.assign(
+            {},
+            frontMatter,
+            formatNoteConfig(noteConfig),
+          );
+          const newMarkdown = matterStringify(data.content, newFrontMatter);
+          await pfs.writeFile(absFilePath, newMarkdown);
+          await git.add({
+            fs: fs,
+            dir: notebook.dir,
+            filepath: filePath,
+          });
         } else {
           // New note config design in beta 3
           if (data.data["created"]) {
