@@ -30,6 +30,8 @@ import {
   Hidden,
   Breadcrumbs,
   Card,
+  InputBase,
+  Divider,
 } from "@material-ui/core";
 import {
   Editor as CodeMirrorEditor,
@@ -64,10 +66,11 @@ import {
   ViewSplitVertical,
 } from "mdi-material-ui";
 import { renderPreview } from "vickymd/preview";
+import { ThemeName } from "vickymd/theme";
 import PushNotebookDialog from "./PushNotebookDialog";
 import EditImageDialog from "./EditImageDialog";
 import Noty from "noty";
-import { formatDistance } from "date-fns";
+import { formatDistance, formatRelative } from "date-fns";
 import { getHeaderFromMarkdown } from "../utilities/note";
 import {
   printPreview,
@@ -81,10 +84,10 @@ import EmojiDefinitions from "vickymd/addon/emoji";
 import { TagStopRegExp, sanitizeTag } from "../utilities/markdown";
 import { resolveNoteImageSrc } from "../utilities/image";
 import { DeleteNoteDialog } from "./DeleteNoteDialog";
-import { ThemeName } from "vickymd/theme";
 import { copyToClipboard } from "../utilities/utils";
 import { setTheme } from "../themes/manager";
 import { TagsMenuPopover } from "./TagsMenuPopover";
+import { languageCodeToDateFNSLocale } from "../i18n/i18n";
 
 const VickyMD = require("vickymd/core");
 const is = require("is_js");
@@ -114,8 +117,21 @@ const useStyles = makeStyles((theme: Theme) =>
       width: "100%",
       height: "100%",
       display: "flex",
-      flexDirection: "column",
+      flexDirection: "row",
       borderRadius: 0,
+    },
+    editorLeftPanel: {
+      flex: 1,
+      display: "flex",
+      flexDirection: "column",
+      width: "calc(100% - 40px)",
+    },
+    editorRightPanel: {
+      display: "flex",
+      flexDirection: "column",
+      padding: "4px 0",
+      backgroundColor: "inherit",
+      width: "40px",
     },
     topPanel: {
       position: "relative",
@@ -125,7 +141,7 @@ const useStyles = makeStyles((theme: Theme) =>
       justifyContent: "space-between",
       // borderBottom: "1px solid #eee",
       overflow: "auto",
-      backgroundColor: theme.palette.background.paper,
+      backgroundColor: "inherit",
     },
     bottomPanel: {
       position: "relative",
@@ -133,7 +149,7 @@ const useStyles = makeStyles((theme: Theme) =>
       display: "flex",
       alignItems: "center",
       justifyContent: "space-between",
-      backgroundColor: theme.palette.background.paper,
+      backgroundColor: "inherit",
       // borderTop: "1px solid #eee",
       // color: theme.palette.primary.contrastText,
       // backgroundColor: theme.palette.primary.main
@@ -171,7 +187,7 @@ const useStyles = makeStyles((theme: Theme) =>
       },
       "& .CodeMirror": {
         height: "100%",
-        padding: theme.spacing(0, 2),
+        padding: theme.spacing(0, 1),
         [theme.breakpoints.down("sm")]: {
           padding: theme.spacing(1),
         },
@@ -205,7 +221,7 @@ const useStyles = makeStyles((theme: Theme) =>
     editor: {
       width: "100%",
       height: "100%",
-      backgroundColor: theme.palette.background.default,
+      backgroundColor: "inherit",
       border: "none",
     },
     preview: {
@@ -1710,11 +1726,24 @@ export default function Editor(props: Props) {
 
   if (!note) {
     return (
-      <Box className={clsx(classes.editorPanel, "editor-panel")}>
+      <Box
+        className={clsx(classes.editorPanel, "editor-panel")}
+        style={{ flexDirection: "column" }}
+      >
         <Hidden smUp>
-          <Box className={clsx(classes.topPanel)}>
+          <Box
+            className={clsx(classes.topPanel)}
+            style={{
+              backgroundColor:
+                settingsContainer.theme.name === "light" ? "#fff" : "inherit",
+            }}
+          >
             <Box className={clsx(classes.row)}>
-              <ButtonGroup className={clsx(classes.backBtn)}>
+              <ButtonGroup
+                className={clsx(classes.backBtn)}
+                variant="text"
+                size={"small"}
+              >
                 <Button
                   className={clsx(classes.controlBtn)}
                   onClick={() => {
@@ -1753,283 +1782,429 @@ export default function Editor(props: Props) {
 
   return (
     <Box className={clsx(classes.editorPanel, "editor-panel")}>
-      <Box className={clsx(classes.topPanel, "editor-toolbar")}>
-        <Box className={clsx(classes.row)}>
-          <ButtonGroup className={clsx(classes.backBtn)}>
+      <Box className={clsx(classes.editorLeftPanel)}>
+        <Box
+          className={clsx(classes.topPanel, "editor-toolbar")}
+          style={{
+            backgroundColor:
+              settingsContainer.theme.name === "light" ? "#fff" : "inherit",
+          }}
+        >
+          <Box className={clsx(classes.row)} style={{ width: "100%" }}>
+            <ButtonGroup
+              variant="text"
+              className={clsx(classes.backBtn)}
+              orientation="vertical"
+              size="small"
+            >
+              <Button
+                className={clsx(classes.controlBtn)}
+                onClick={() => {
+                  crossnoteContainer.setDisplayMobileEditor(false);
+                  crossnoteContainer.setEditorMode(EditorMode.Preview);
+                }}
+              >
+                <ChevronLeft></ChevronLeft>
+              </Button>
+            </ButtonGroup>
+            <InputBase
+              defaultValue={"Untitled"}
+              style={{
+                fontSize: "1.4rem",
+                fontWeight: 600,
+                marginLeft: "6px",
+              }}
+              placeholder={t("general/title")}
+              fullWidth={true}
+            ></InputBase>
+            {/*
+            <Box style={{ display: "flex", flexDirection: "column" }}>
+              <p>
+                {t("general/created-at") +
+                  " " +
+                  formatRelative(new Date(note.config.createdAt), new Date(), {
+                    locale: languageCodeToDateFNSLocale(
+                      settingsContainer.language,
+                    ),
+                  })}
+              </p>
+              <p>
+                {t("general/modified-at") +
+                  " " +
+                  formatRelative(new Date(note.config.modifiedAt), new Date(), {
+                    locale: languageCodeToDateFNSLocale(
+                      settingsContainer.language,
+                    ),
+                  })}
+              </p>
+            </Box>
+                */}
+          </Box>
+        </Box>
+        <Divider></Divider>
+        <Box
+          className={clsx(
+            classes.editorWrapper,
+            fullScreenMode ? classes.fullScreen : null,
+            crossnoteContainer.editorMode === EditorMode.SplitView
+              ? classes.splitView
+              : null,
+          )}
+        >
+          <textarea
+            className={clsx(classes.editor, "editor-textarea")}
+            placeholder={t("editor/placeholder")}
+            ref={(element: HTMLTextAreaElement) => {
+              setTextAreaElement(element);
+            }}
+          ></textarea>
+          {(crossnoteContainer.editorMode === EditorMode.Preview ||
+            crossnoteContainer.editorMode === EditorMode.SplitView) &&
+          editor ? (
+            <div
+              className={clsx(
+                classes.preview,
+                "preview",
+                previewIsPresentation ? classes.presentation : null,
+              )}
+              ref={(element: HTMLElement) => {
+                setPreviewElement(element);
+              }}
+            ></div>
+          ) : null}
+          {fullScreenMode && (
+            <IconButton
+              style={{
+                position: "fixed",
+                right: "0",
+                top: "0",
+                zIndex: 2001,
+              }}
+              onClick={() => setFullScreenMode(false)}
+            >
+              <FullscreenExit></FullscreenExit>
+            </IconButton>
+          )}
+        </Box>
+        <Box
+          className={clsx(classes.bottomPanel, "editor-bottom-panel")}
+          style={{
+            backgroundColor:
+              settingsContainer.theme.name === "light" ? "#fff" : "inherit",
+          }}
+        >
+          <Box className={clsx(classes.row)}>
+            <Breadcrumbs aria-label={"File path"} maxItems={4}>
+              {note.filePath.split("/").map((path, offset, arr) => {
+                return (
+                  <Typography
+                    variant={"caption"}
+                    style={{ cursor: "pointer" }}
+                    color={"textPrimary"}
+                    key={`${offset}-${path}`}
+                    onClick={() => {
+                      if (offset === arr.length - 1) {
+                        setFilePathDialogOpen(true);
+                      } else {
+                        crossnoteContainer.setSelectedSection({
+                          type: SelectedSectionType.Directory,
+                          path: arr.slice(0, offset + 1).join("/"),
+                        });
+                      }
+                    }}
+                  >
+                    {path}
+                  </Typography>
+                );
+              })}
+            </Breadcrumbs>
+            <Typography
+              variant={"caption"}
+              style={{ marginLeft: "4px", marginTop: "3px" }}
+              color={"textPrimary"}
+            >
+              {"- " + t(`git/status/${gitStatus}`)}
+            </Typography>
+          </Box>
+          <Box className={clsx(classes.cursorPositionInfo)}>
+            <Typography variant={"caption"} color={"textPrimary"}>
+              {`${t("editor/ln")} ${cursorPosition.line + 1}, ${t(
+                "editor/col",
+              )} ${cursorPosition.ch}`}
+            </Typography>
+          </Box>
+        </Box>
+      </Box>
+      <Box
+        className={clsx(classes.editorRightPanel)}
+        style={{
+          backgroundColor:
+            settingsContainer.theme.name === "light" ? "#fff" : "inherit",
+        }}
+      >
+        <ButtonGroup orientation="vertical" size="small" variant="text">
+          <Tooltip title={t("general/Fullscreen")}>
             <Button
               className={clsx(classes.controlBtn)}
-              onClick={() => {
-                crossnoteContainer.setDisplayMobileEditor(false);
-                crossnoteContainer.setEditorMode(EditorMode.Preview);
-              }}
+              onClick={() => setFullScreenMode(true)}
             >
-              <ChevronLeft></ChevronLeft>
+              <Fullscreen></Fullscreen>
             </Button>
-          </ButtonGroup>
-          <ButtonGroup
-            variant={"outlined"}
-            color="default"
-            aria-label="editor mode"
-          >
-            <Tooltip title={t("general/vickymd")}>
+          </Tooltip>
+        </ButtonGroup>
+        <ButtonGroup
+          variant="text"
+          color="default"
+          aria-label="editor mode"
+          orientation="vertical"
+          size="small"
+          style={{ marginTop: "24px" }}
+        >
+          <Tooltip title={t("editor/note-control/preview")}>
+            <Button
+              className={clsx(
+                classes.controlBtn,
+                crossnoteContainer.editorMode === EditorMode.Preview &&
+                  classes.controlBtnSelected,
+              )}
+              color={
+                crossnoteContainer.editorMode === EditorMode.Preview
+                  ? "primary"
+                  : "default"
+              }
+              onClick={() =>
+                crossnoteContainer.setEditorMode(EditorMode.Preview)
+              }
+            >
+              <FilePresentationBox></FilePresentationBox>
+            </Button>
+          </Tooltip>
+          <Tooltip title={t("general/vickymd")}>
+            <Button
+              className={clsx(
+                classes.controlBtn,
+                crossnoteContainer.editorMode === EditorMode.VickyMD &&
+                  classes.controlBtnSelected,
+              )}
+              color={
+                crossnoteContainer.editorMode === EditorMode.VickyMD
+                  ? "primary"
+                  : "default"
+              }
+              onClick={() =>
+                crossnoteContainer.setEditorMode(EditorMode.VickyMD)
+              }
+            >
+              <Pencil></Pencil>
+            </Button>
+          </Tooltip>
+          <Tooltip title={t("editor/note-control/source-code")}>
+            <Button
+              className={clsx(
+                classes.controlBtn,
+                crossnoteContainer.editorMode === EditorMode.SourceCode &&
+                  classes.controlBtnSelected,
+              )}
+              color={
+                crossnoteContainer.editorMode === EditorMode.SourceCode
+                  ? "primary"
+                  : "default"
+              }
+              onClick={() =>
+                crossnoteContainer.setEditorMode(EditorMode.SourceCode)
+              }
+            >
+              <CodeTags></CodeTags>
+            </Button>
+          </Tooltip>
+          <Tooltip title={t("editor/note-control/split-view")}>
+            <Button
+              className={clsx(
+                classes.controlBtn,
+                crossnoteContainer.editorMode === EditorMode.SplitView &&
+                  classes.controlBtnSelected,
+              )}
+              color={
+                crossnoteContainer.editorMode === EditorMode.SplitView
+                  ? "primary"
+                  : "default"
+              }
+              onClick={() =>
+                crossnoteContainer.setEditorMode(EditorMode.SplitView)
+              }
+            >
+              <ViewSplitVertical></ViewSplitVertical>
+            </Button>
+          </Tooltip>
+        </ButtonGroup>
+        <ButtonGroup
+          style={{ marginTop: "24px" }}
+          variant="text"
+          orientation="vertical"
+          size="small"
+        >
+          {isDecrypted && (
+            <Tooltip title={t("general/tags")}>
               <Button
                 className={clsx(
                   classes.controlBtn,
-                  crossnoteContainer.editorMode === EditorMode.VickyMD &&
-                    classes.controlBtnSelected,
+                  note.config.tags &&
+                    note.config.tags.length > 0 &&
+                    classes.controlBtnSelectedSecondary,
                 )}
-                color={
-                  crossnoteContainer.editorMode === EditorMode.VickyMD
-                    ? "primary"
-                    : "default"
-                }
-                onClick={() =>
-                  crossnoteContainer.setEditorMode(EditorMode.VickyMD)
-                }
+                onClick={(event) => setTagsMenuAnchorEl(event.currentTarget)}
               >
-                <Pencil></Pencil>
-              </Button>
-            </Tooltip>
-            <Tooltip title={t("editor/note-control/source-code")}>
-              <Button
-                className={clsx(
-                  classes.controlBtn,
-                  crossnoteContainer.editorMode === EditorMode.SourceCode &&
-                    classes.controlBtnSelected,
-                )}
-                color={
-                  crossnoteContainer.editorMode === EditorMode.SourceCode
-                    ? "primary"
-                    : "default"
-                }
-                onClick={() =>
-                  crossnoteContainer.setEditorMode(EditorMode.SourceCode)
-                }
-              >
-                <CodeTags></CodeTags>
-              </Button>
-            </Tooltip>
-            <Tooltip title={t("editor/note-control/split-view")}>
-              <Button
-                className={clsx(
-                  classes.controlBtn,
-                  crossnoteContainer.editorMode === EditorMode.SplitView &&
-                    classes.controlBtnSelected,
-                )}
-                color={
-                  crossnoteContainer.editorMode === EditorMode.SplitView
-                    ? "primary"
-                    : "default"
-                }
-                onClick={() =>
-                  crossnoteContainer.setEditorMode(EditorMode.SplitView)
-                }
-              >
-                <ViewSplitVertical></ViewSplitVertical>
-              </Button>
-            </Tooltip>
-            <Tooltip title={t("editor/note-control/preview")}>
-              <Button
-                className={clsx(
-                  classes.controlBtn,
-                  crossnoteContainer.editorMode === EditorMode.Preview &&
-                    classes.controlBtnSelected,
-                )}
-                color={
-                  crossnoteContainer.editorMode === EditorMode.Preview
-                    ? "primary"
-                    : "default"
-                }
-                onClick={() =>
-                  crossnoteContainer.setEditorMode(EditorMode.Preview)
-                }
-              >
-                <FilePresentationBox></FilePresentationBox>
-              </Button>
-            </Tooltip>
-          </ButtonGroup>
-          <ButtonGroup style={{ marginLeft: "8px" }}>
-            <Tooltip title={t("general/Fullscreen")}>
-              <Button
-                className={clsx(classes.controlBtn)}
-                onClick={() => setFullScreenMode(true)}
-              >
-                <Fullscreen></Fullscreen>
-              </Button>
-            </Tooltip>
-          </ButtonGroup>
-          <ButtonGroup style={{ marginLeft: "8px" }}>
-            {isDecrypted && (
-              <Tooltip title={t("general/tags")}>
-                <Button
-                  className={clsx(
-                    classes.controlBtn,
-                    note.config.tags &&
-                      note.config.tags.length > 0 &&
-                      classes.controlBtnSelectedSecondary,
-                  )}
-                  onClick={(event) => setTagsMenuAnchorEl(event.currentTarget)}
-                >
-                  {note.config.tags && note.config.tags.length > 0 ? (
-                    <Tag></Tag>
-                  ) : (
-                    <TagOutline></TagOutline>
-                  )}
-                </Button>
-              </Tooltip>
-            )}
-            {isDecrypted && (
-              <Tooltip title={t("general/Pin")}>
-                <Button
-                  className={clsx(
-                    classes.controlBtn,
-                    note.config.pinned && classes.controlBtnSelectedSecondary,
-                  )}
-                  onClick={togglePin}
-                >
-                  {note.config.pinned ? <Pin></Pin> : <PinOutline></PinOutline>}
-                </Button>
-              </Tooltip>
-            )}
-            <Tooltip title={t("general/Encryption")}>
-              <Button
-                className={clsx(
-                  classes.controlBtn,
-                  note.config.encryption && classes.controlBtnSelectedSecondary,
-                )}
-                onClick={() => setToggleEncryptionDialogOpen(true)}
-              >
-                {note.config.encryption ? (
-                  <Lock></Lock>
+                {note.config.tags && note.config.tags.length > 0 ? (
+                  <Tag></Tag>
                 ) : (
-                  <LockOpenOutline></LockOpenOutline>
+                  <TagOutline></TagOutline>
                 )}
               </Button>
             </Tooltip>
-          </ButtonGroup>
-          <ButtonGroup style={{ marginLeft: "8px" }}>
-            <Tooltip title={t("general/change-file-path")}>
-              <Button
-                className={clsx(classes.controlBtn)}
-                onClick={() => setFilePathDialogOpen(true)}
-              >
-                <RenameBox></RenameBox>
-              </Button>
-            </Tooltip>
-            <Tooltip title={t("general/Delete")}>
-              <Button
-                className={clsx(classes.controlBtn)}
-                onClick={() => setDeleteNoteDialogOpen(true)}
-              >
-                <Delete></Delete>
-              </Button>
-            </Tooltip>
-            {!note.config.encryption && (
-              <Tooltip title={t("general/create-a-copy")}>
-                <Button
-                  className={clsx(classes.controlBtn)}
-                  onClick={() => crossnoteContainer.duplicateNote(note)}
-                >
-                  <ContentDuplicate></ContentDuplicate>
-                </Button>
-              </Tooltip>
-            )}
-            {is.desktop() && (
-              <Tooltip title={t("general/Print")}>
-                <Button
-                  className={clsx(classes.controlBtn)}
-                  onClick={() => setNeedsToPrint(true)}
-                >
-                  <Printer></Printer>
-                </Button>
-              </Tooltip>
-            )}
-            <Tooltip title={t("general/Share")}>
-              <Button
-                className={clsx(classes.controlBtn)}
-                onClick={(event) => setShareAnchorEl(event.currentTarget)}
-              >
-                <ShareVariant></ShareVariant>
-              </Button>
-            </Tooltip>
-          </ButtonGroup>
-          {note.notebook.gitURL && ( // If no git url set, then don't allow push/pull
-            <ButtonGroup style={{ marginLeft: "8px" }}>
-              <Tooltip title={t("general/restore-checkout")}>
-                <Button
-                  className={clsx(classes.controlBtn)}
-                  onClick={checkoutNote}
-                >
-                  <Restore></Restore>
-                </Button>
-              </Tooltip>
-              <Tooltip title={t("general/upload-push")}>
-                <Button
-                  className={clsx(classes.controlBtn)}
-                  onClick={() => setPushDialogOpen(true)}
-                  disabled={
-                    crossnoteContainer.isPullingNotebook ||
-                    crossnoteContainer.isPushingNotebook
-                  }
-                >
-                  <CloudUploadOutline></CloudUploadOutline>
-                </Button>
-              </Tooltip>
-              <Tooltip title={t("general/download-pull")}>
-                <Button
-                  className={clsx(classes.controlBtn)}
-                  onClick={pullNotebook}
-                  disabled={
-                    crossnoteContainer.isPullingNotebook ||
-                    crossnoteContainer.isPushingNotebook
-                  }
-                >
-                  <CloudDownloadOutline></CloudDownloadOutline>
-                </Button>
-              </Tooltip>
-            </ButtonGroup>
           )}
-          <TagsMenuPopover
-            anchorElement={tagsMenuAnchorEl}
-            onClose={() => setTagsMenuAnchorEl(null)}
-            addTag={addTag}
-            deleteTag={deleteTag}
-            tagNames={tagNames}
-          ></TagsMenuPopover>
-          <Popover
-            open={Boolean(shareAnchorEl)}
-            anchorEl={shareAnchorEl}
-            keepMounted
-            onClose={() => setShareAnchorEl(null)}
+          {isDecrypted && (
+            <Tooltip title={t("general/Pin")}>
+              <Button
+                className={clsx(
+                  classes.controlBtn,
+                  note.config.pinned && classes.controlBtnSelectedSecondary,
+                )}
+                onClick={togglePin}
+              >
+                {note.config.pinned ? <Pin></Pin> : <PinOutline></PinOutline>}
+              </Button>
+            </Tooltip>
+          )}
+          <Tooltip title={t("general/Encryption")}>
+            <Button
+              className={clsx(
+                classes.controlBtn,
+                note.config.encryption && classes.controlBtnSelectedSecondary,
+              )}
+              onClick={() => setToggleEncryptionDialogOpen(true)}
+            >
+              {note.config.encryption ? (
+                <Lock></Lock>
+              ) : (
+                <LockOpenOutline></LockOpenOutline>
+              )}
+            </Button>
+          </Tooltip>
+        </ButtonGroup>
+        <ButtonGroup
+          style={{ marginTop: "24px" }}
+          variant="text"
+          orientation="vertical"
+          size="small"
+        >
+          <Tooltip title={t("general/change-file-path")}>
+            <Button
+              className={clsx(classes.controlBtn)}
+              onClick={() => setFilePathDialogOpen(true)}
+            >
+              <RenameBox></RenameBox>
+            </Button>
+          </Tooltip>
+          <Tooltip title={t("general/Delete")}>
+            <Button
+              className={clsx(classes.controlBtn)}
+              onClick={() => setDeleteNoteDialogOpen(true)}
+            >
+              <Delete></Delete>
+            </Button>
+          </Tooltip>
+          {!note.config.encryption && (
+            <Tooltip title={t("general/create-a-copy")}>
+              <Button
+                className={clsx(classes.controlBtn)}
+                onClick={() => crossnoteContainer.duplicateNote(note)}
+              >
+                <ContentDuplicate></ContentDuplicate>
+              </Button>
+            </Tooltip>
+          )}
+          {is.desktop() && (
+            <Tooltip title={t("general/Print")}>
+              <Button
+                className={clsx(classes.controlBtn)}
+                onClick={() => setNeedsToPrint(true)}
+              >
+                <Printer></Printer>
+              </Button>
+            </Tooltip>
+          )}
+          <Tooltip title={t("general/Share")}>
+            <Button
+              className={clsx(classes.controlBtn)}
+              onClick={(event) => setShareAnchorEl(event.currentTarget)}
+            >
+              <ShareVariant></ShareVariant>
+            </Button>
+          </Tooltip>
+        </ButtonGroup>
+        {note.notebook.gitURL && ( // If no git url set, then don't allow push/pull
+          <ButtonGroup
+            style={{ marginTop: "24px" }}
+            variant="text"
+            orientation="vertical"
+            size="small"
           >
-            <Box style={{ padding: theme.spacing(1) }}>
-              <Typography variant={"subtitle2"}>
-                {t("editor/note-control/shareable-link")}
-              </Typography>
-              <Box className={clsx(classes.row)}>
-                <Tooltip
-                  title={t("editor/note-control/copy-to-clipboard")}
-                  onClick={() => {
-                    copyToClipboard(
-                      note.notebook.gitURL
-                        ? `${window.location.origin}/?repo=${encodeURIComponent(
-                            note.notebook.gitURL,
-                          )}&branch=${encodeURIComponent(
-                            note.notebook.gitBranch || "master",
-                          )}&filePath=${encodeURIComponent(note.filePath)}`
-                        : `${window.location.origin}/?notebookID=${
-                            note.notebook._id
-                          }&filePath=${encodeURIComponent(note.filePath)}`,
-                    );
-                  }}
-                >
-                  <IconButton>
-                    <ContentCopy></ContentCopy>
-                  </IconButton>
-                </Tooltip>
-                <TextField
-                  onChange={(event) => event.preventDefault()}
-                  value={
+            <Tooltip title={t("general/restore-checkout")}>
+              <Button
+                className={clsx(classes.controlBtn)}
+                onClick={checkoutNote}
+              >
+                <Restore></Restore>
+              </Button>
+            </Tooltip>
+            <Tooltip title={t("general/upload-push")}>
+              <Button
+                className={clsx(classes.controlBtn)}
+                onClick={() => setPushDialogOpen(true)}
+                disabled={
+                  crossnoteContainer.isPullingNotebook ||
+                  crossnoteContainer.isPushingNotebook
+                }
+              >
+                <CloudUploadOutline></CloudUploadOutline>
+              </Button>
+            </Tooltip>
+            <Tooltip title={t("general/download-pull")}>
+              <Button
+                className={clsx(classes.controlBtn)}
+                onClick={pullNotebook}
+                disabled={
+                  crossnoteContainer.isPullingNotebook ||
+                  crossnoteContainer.isPushingNotebook
+                }
+              >
+                <CloudDownloadOutline></CloudDownloadOutline>
+              </Button>
+            </Tooltip>
+          </ButtonGroup>
+        )}
+        <TagsMenuPopover
+          anchorElement={tagsMenuAnchorEl}
+          onClose={() => setTagsMenuAnchorEl(null)}
+          addTag={addTag}
+          deleteTag={deleteTag}
+          tagNames={tagNames}
+        ></TagsMenuPopover>
+        <Popover
+          open={Boolean(shareAnchorEl)}
+          anchorEl={shareAnchorEl}
+          keepMounted
+          onClose={() => setShareAnchorEl(null)}
+        >
+          <Box style={{ padding: theme.spacing(1) }}>
+            <Typography variant={"subtitle2"}>
+              {t("editor/note-control/shareable-link")}
+            </Typography>
+            <Box className={clsx(classes.row)}>
+              <Tooltip
+                title={t("editor/note-control/copy-to-clipboard")}
+                onClick={() => {
+                  copyToClipboard(
                     note.notebook.gitURL
                       ? `${window.location.origin}/?repo=${encodeURIComponent(
                           note.notebook.gitURL,
@@ -2038,108 +2213,41 @@ export default function Editor(props: Props) {
                         )}&filePath=${encodeURIComponent(note.filePath)}`
                       : `${window.location.origin}/?notebookID=${
                           note.notebook._id
-                        }&filePath=${encodeURIComponent(note.filePath)}`
+                        }&filePath=${encodeURIComponent(note.filePath)}`,
+                  );
+                }}
+              >
+                <IconButton>
+                  <ContentCopy></ContentCopy>
+                </IconButton>
+              </Tooltip>
+              <TextField
+                onChange={(event) => event.preventDefault()}
+                value={
+                  note.notebook.gitURL
+                    ? `${window.location.origin}/?repo=${encodeURIComponent(
+                        note.notebook.gitURL,
+                      )}&branch=${encodeURIComponent(
+                        note.notebook.gitBranch || "master",
+                      )}&filePath=${encodeURIComponent(note.filePath)}`
+                    : `${window.location.origin}/?notebookID=${
+                        note.notebook._id
+                      }&filePath=${encodeURIComponent(note.filePath)}`
+                }
+                inputRef={(input: HTMLInputElement) => {
+                  if (input) {
+                    input.focus();
+                    if (input.setSelectionRange) {
+                      input.setSelectionRange(0, input.value.length);
+                    }
                   }
-                  inputRef={(input: HTMLInputElement) => {
-                    if (input) {
-                      input.focus();
-                      if (input.setSelectionRange) {
-                        input.setSelectionRange(0, input.value.length);
-                      }
-                    }
-                  }}
-                ></TextField>
-              </Box>
+                }}
+              ></TextField>
             </Box>
-          </Popover>
-        </Box>
+          </Box>
+        </Popover>
       </Box>
-      <Box
-        className={clsx(
-          classes.editorWrapper,
-          fullScreenMode ? classes.fullScreen : null,
-          crossnoteContainer.editorMode === EditorMode.SplitView
-            ? classes.splitView
-            : null,
-        )}
-      >
-        <textarea
-          className={clsx(classes.editor, "editor-textarea")}
-          placeholder={t("editor/placeholder")}
-          ref={(element: HTMLTextAreaElement) => {
-            setTextAreaElement(element);
-          }}
-        ></textarea>
-        {(crossnoteContainer.editorMode === EditorMode.Preview ||
-          crossnoteContainer.editorMode === EditorMode.SplitView) &&
-        editor ? (
-          <div
-            className={clsx(
-              classes.preview,
-              "preview",
-              previewIsPresentation ? classes.presentation : null,
-            )}
-            ref={(element: HTMLElement) => {
-              setPreviewElement(element);
-            }}
-          ></div>
-        ) : null}
-        {fullScreenMode && (
-          <IconButton
-            style={{
-              position: "fixed",
-              right: "0",
-              top: "0",
-              zIndex: 2001,
-            }}
-            onClick={() => setFullScreenMode(false)}
-          >
-            <FullscreenExit></FullscreenExit>
-          </IconButton>
-        )}
-      </Box>
-      <Box className={clsx(classes.bottomPanel, "editor-bottom-panel")}>
-        <Box className={clsx(classes.row)}>
-          <Breadcrumbs aria-label={"File path"} maxItems={4}>
-            {note.filePath.split("/").map((path, offset, arr) => {
-              return (
-                <Typography
-                  variant={"caption"}
-                  style={{ cursor: "pointer" }}
-                  color={"textPrimary"}
-                  key={`${offset}-${path}`}
-                  onClick={() => {
-                    if (offset === arr.length - 1) {
-                      setFilePathDialogOpen(true);
-                    } else {
-                      crossnoteContainer.setSelectedSection({
-                        type: SelectedSectionType.Directory,
-                        path: arr.slice(0, offset + 1).join("/"),
-                      });
-                    }
-                  }}
-                >
-                  {path}
-                </Typography>
-              );
-            })}
-          </Breadcrumbs>
-          <Typography
-            variant={"caption"}
-            style={{ marginLeft: "4px", marginTop: "3px" }}
-            color={"textPrimary"}
-          >
-            {"- " + t(`git/status/${gitStatus}`)}
-          </Typography>
-        </Box>
-        <Box className={clsx(classes.cursorPositionInfo)}>
-          <Typography variant={"caption"} color={"textPrimary"}>
-            {`${t("editor/ln")} ${cursorPosition.line + 1}, ${t(
-              "editor/col",
-            )} ${cursorPosition.ch}`}
-          </Typography>
-        </Box>
-      </Box>
+
       <DeleteNoteDialog
         open={deleteNoteDialogOpen}
         onClose={() => setDeleteNoteDialogOpen(false)}
