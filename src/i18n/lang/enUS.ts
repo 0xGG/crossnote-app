@@ -48,7 +48,7 @@ export const enUS = {
     "general/confirm-password": "Confirm password",
     "general/Continue": "Continue",
     "general/enter-username": "Enter username",
-    "general/vickymd": "VickyMD",
+    "general/vickymd": "Edit",
     "general/tags": "Tags",
     "general/add-a-tag": "Add a tag",
     "general/private": "Private",

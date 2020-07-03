@@ -1,4 +1,5 @@
 import React, { useState, useCallback, useEffect } from "react";
+import * as path from "path";
 import {
   createStyles,
   makeStyles,
@@ -70,7 +71,7 @@ import { ThemeName } from "vickymd/theme";
 import PushNotebookDialog from "./PushNotebookDialog";
 import EditImageDialog from "./EditImageDialog";
 import Noty from "noty";
-import { formatDistance, formatRelative } from "date-fns";
+import { formatDistance } from "date-fns";
 import { getHeaderFromMarkdown } from "../utilities/note";
 import {
   printPreview,
@@ -87,7 +88,6 @@ import { DeleteNoteDialog } from "./DeleteNoteDialog";
 import { copyToClipboard } from "../utilities/utils";
 import { setTheme } from "../themes/manager";
 import { TagsMenuPopover } from "./TagsMenuPopover";
-import { languageCodeToDateFNSLocale } from "../i18n/i18n";
 
 const VickyMD = require("vickymd/core");
 const is = require("is_js");
@@ -302,6 +302,7 @@ export default function Editor(props: Props) {
   const note = props.note;
   const classes = useStyles(props);
   const theme = useTheme();
+  const [noteTitle, setNoteTitle] = useState<string>("");
   const [textAreaElement, setTextAreaElement] = useState<HTMLTextAreaElement>(
     null,
   );
@@ -596,6 +597,27 @@ export default function Editor(props: Props) {
     [note],
   );
 
+  const confirmNoteTitle = useCallback(() => {
+    if (!note || note.title === noteTitle) {
+      return;
+    }
+
+    crossnoteContainer
+      .changeNoteFilePath(
+        note,
+        path.join(path.dirname(note.filePath), `${noteTitle}.md`),
+      )
+      .catch((error) => {
+        new Noty({
+          type: "error",
+          text: t("error/failed-to-change-file-path"),
+          layout: "topRight",
+          theme: "relax",
+          timeout: 5000,
+        }).show();
+      });
+  }, [noteTitle, note]);
+
   useEffect(() => {
     if (!note) {
       return () => {
@@ -603,6 +625,13 @@ export default function Editor(props: Props) {
         setTextAreaElement(null);
         setPreviewElement(null);
       };
+    }
+  }, [note]);
+
+  // set note title
+  useEffect(() => {
+    if (note) {
+      setNoteTitle(note.title);
     }
   }, [note]);
 
@@ -1808,7 +1837,7 @@ export default function Editor(props: Props) {
               </Button>
             </ButtonGroup>
             <InputBase
-              defaultValue={"Untitled"}
+              value={noteTitle}
               style={{
                 fontSize: "1.4rem",
                 fontWeight: 600,
@@ -1816,6 +1845,13 @@ export default function Editor(props: Props) {
               }}
               placeholder={t("general/title")}
               fullWidth={true}
+              onChange={(event) => setNoteTitle(event.currentTarget.value)}
+              onBlur={confirmNoteTitle}
+              onKeyUp={(event) => {
+                if (event.which === 13) {
+                  confirmNoteTitle();
+                }
+              }}
             ></InputBase>
             {/*
             <Box style={{ display: "flex", flexDirection: "column" }}>
@@ -1894,6 +1930,7 @@ export default function Editor(props: Props) {
           }}
         >
           <Box className={clsx(classes.row)}>
+            {/*
             <Breadcrumbs aria-label={"File path"} maxItems={4}>
               {note.filePath.split("/").map((path, offset, arr) => {
                 return (
@@ -1918,12 +1955,13 @@ export default function Editor(props: Props) {
                 );
               })}
             </Breadcrumbs>
+            */}
             <Typography
               variant={"caption"}
               style={{ marginLeft: "4px", marginTop: "3px" }}
               color={"textPrimary"}
             >
-              {"- " + t(`git/status/${gitStatus}`)}
+              {t(`git/status/${gitStatus}`)}
             </Typography>
           </Box>
           <Box className={clsx(classes.cursorPositionInfo)}>

@@ -35,6 +35,7 @@ export interface Notebook {
 export interface Note {
   notebook: Notebook;
   filePath: string;
+  title: string;
   markdown: string;
   config: NoteConfig;
   // createdAt: Date; // <- Can't get modifiedAt time
@@ -1013,6 +1014,7 @@ export default class Crossnote {
       const note: Note = {
         notebook: notebook,
         filePath: path.relative(notebook.dir, absFilePath),
+        title: path.basename(absFilePath).replace(/\.md$/, ""),
         markdown,
         config: noteConfig,
       };

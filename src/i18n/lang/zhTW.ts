@@ -48,7 +48,7 @@ export const zhTW = {
     "general/confirm-password": "再次確認密碼",
     "general/Continue": "下一步",
     "general/enter-username": "輸入用戶名",
-    "general/vickymd": "VickyMD(微記)",
+    "general/vickymd": "編輯",
     "general/tags": "標籤",
     "general/add-a-tag": "添加一個標籤",
     "general/private": "私有",

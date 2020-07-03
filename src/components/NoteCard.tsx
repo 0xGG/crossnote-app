@@ -4,11 +4,7 @@ import clsx from "clsx";
 import { CrossnoteContainer } from "../containers/crossnote";
 import { Box, Typography, ButtonBase, Tooltip } from "@material-ui/core";
 import { Note } from "../lib/crossnote";
-import {
-  getHeaderFromMarkdown,
-  generateSummaryFromMarkdown,
-  Summary,
-} from "../utilities/note";
+import { generateSummaryFromMarkdown, Summary } from "../utilities/note";
 import { formatDistanceStrict } from "date-fns/esm";
 import { useTranslation } from "react-i18next";
 import { Pin } from "mdi-material-ui";
@@ -121,10 +117,7 @@ export default function NoteCard(props: Props) {
     .replace(/\syears?/, "y");
 
   useEffect(() => {
-    setHeader(
-      (note.config.encryption && note.config.encryption.title) ||
-        getHeaderFromMarkdown(note.markdown),
-    );
+    setHeader(note.title);
     generateSummaryFromMarkdown(
       note.config.encryption
         ? `🔐 ${t("general/encrypted")}`
@@ -244,9 +237,7 @@ export default function NoteCard(props: Props) {
           </Box>
         )}
         <Typography variant={"caption"} className={clsx(classes.filePath)}>
-          {basename(note.filePath).startsWith("unnamed_")
-            ? t(`git/status/${gitStatus}`)
-            : note.filePath + " - " + t(`git/status/${gitStatus}`)}
+          {t(`git/status/${gitStatus}`)}
         </Typography>
       </Box>
     </ButtonBase>

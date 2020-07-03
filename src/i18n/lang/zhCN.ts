@@ -48,7 +48,7 @@ export const zhCN = {
     "general/confirm-password": "再次确认密码",
     "general/Continue": "下一步",
     "general/enter-username": "输入用户名",
-    "general/vickymd": "VickyMD(微记)",
+    "general/vickymd": "编辑",
     "general/tags": "标签",
     "general/add-a-tag": "添加一个标签",
     "general/private": "私有",

@@ -223,39 +223,24 @@ function useCrossnoteContainer(initialState: InitialState) {
   );
 
   const changeNoteFilePath = useCallback(
-    (note: Note, newFilePath: string) => {
-      (async () => {
-        try {
-          await crossnote.changeNoteFilePath(
-            selectedNotebook,
-            note,
-            newFilePath,
-          );
-          const newNotes = notebookNotes.map((n) => {
-            if (n.filePath === note.filePath) {
-              n.filePath = newFilePath;
-              n.config.modifiedAt = new Date();
-              return n;
-            } else {
-              return n;
-            }
-          });
-          setNotebookNotes(newNotes);
-          setNotebookDirectories(
-            await crossnote.getNotebookDirectoriesFromNotes(newNotes),
-          );
-          setHasSummaryMD(await crossnote.hasSummaryMD(selectedNotebook));
-          setNotebookTagNode(crossnote.getNotebookTagNodeFromNotes(newNotes));
-        } catch (error) {
-          new Noty({
-            type: "error",
-            text: t("error/failed-to-change-file-path"),
-            layout: "topRight",
-            theme: "relax",
-            timeout: 5000,
-          }).show();
+    async (note: Note, newFilePath: string) => {
+      await crossnote.changeNoteFilePath(selectedNotebook, note, newFilePath);
+      const newNotes = notebookNotes.map((n) => {
+        if (n.filePath === note.filePath) {
+          n.filePath = newFilePath;
+          n.config.modifiedAt = new Date(); // TODO: Should we update this?
+          n.title = path.basename(n.filePath).replace(/\.md$/, "");
+          return n;
+        } else {
+          return n;
         }
-      })();
+      });
+      setNotebookNotes(newNotes);
+      setNotebookDirectories(
+        await crossnote.getNotebookDirectoriesFromNotes(newNotes),
+      );
+      setHasSummaryMD(await crossnote.hasSummaryMD(selectedNotebook));
+      setNotebookTagNode(crossnote.getNotebookTagNodeFromNotes(newNotes));
     },
     [selectedNotebook, notebookNotes, crossnote],
   );
@@ -412,7 +397,7 @@ function useCrossnoteContainer(initialState: InitialState) {
         return null;
       }
       if (!fileName) {
-        fileName = "unnamed_" + randomID();
+        fileName = t("general/Untitled") + " " + randomID();
       }
       if (!fileName.endsWith(".md")) {
         fileName = fileName + ".md";
@@ -446,6 +431,7 @@ function useCrossnoteContainer(initialState: InitialState) {
       const note: Note = {
         notebook: notebook,
         filePath: filePath,
+        title: fileName.replace(/\.md$/, ""),
         markdown,
         config: noteConfig,
       };
@@ -455,7 +441,7 @@ function useCrossnoteContainer(initialState: InitialState) {
       setEditorMode(EditorMode.VickyMD);
       return note;
     },
-    [crossnote, selectedSection],
+    [crossnote, selectedSection, t],
   );
 
   const duplicateNote = useCallback(
@@ -954,25 +940,9 @@ Please also check the [Explore](https://crossnote.app/explore) section to discov
         }
       } else if (orderBy === OrderBy.Title) {
         if (orderDirection === OrderDirection.DESC) {
-          notes.sort((a, b) =>
-            (
-              (b.config.encryption && b.config.encryption.title) ||
-              getHeaderFromMarkdown(b.markdown)
-            ).localeCompare(
-              (a.config.encryption && a.config.encryption.title) ||
-                getHeaderFromMarkdown(a.markdown),
-            ),
-          );
+          notes.sort((a, b) => b.title.localeCompare(a.title));
         } else {
-          notes.sort((a, b) =>
-            (
-              (a.config.encryption && a.config.encryption.title) ||
-              getHeaderFromMarkdown(a.markdown)
-            ).localeCompare(
-              (b.config.encryption && b.config.encryption.title) ||
-                getHeaderFromMarkdown(b.markdown),
-            ),
-          );
+          notes.sort((a, b) => a.title.localeCompare(b.title));
         }
       }
 

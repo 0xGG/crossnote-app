@@ -35,7 +35,17 @@ export default function ChangeFilePathDialog(props: Props) {
           newFilePath = newFilePath + ".md";
         }
         if (note.filePath !== newFilePath) {
-          await crossnoteContainer.changeNoteFilePath(note, newFilePath);
+          try {
+            await crossnoteContainer.changeNoteFilePath(note, newFilePath);
+          } catch (error) {
+            new Noty({
+              type: "error",
+              text: t("error/failed-to-change-file-path"),
+              layout: "topRight",
+              theme: "relax",
+              timeout: 5000,
+            }).show();
+          }
         }
         props.onClose();
       })();
