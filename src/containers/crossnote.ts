@@ -3,7 +3,7 @@ import { createContainer } from "unstated-next";
 import * as path from "path";
 import Noty from "noty";
 import useInterval from "@use-it/interval";
-import { randomID, OneDay } from "../utilities/utils";
+import { OneDay } from "../utilities/utils";
 import { useTranslation } from "react-i18next";
 import Crossnote, {
   Notebook,
@@ -15,9 +15,9 @@ import Crossnote, {
   TagNode,
   Attachment,
 } from "../lib/crossnote";
-import { getHeaderFromMarkdown } from "../utilities/note";
 import { browserHistory } from "../utilities/history";
 import * as qs from "qs";
+import moment from "moment";
 import { pfs } from "../lib/fs";
 import { sanitizeTag } from "../utilities/markdown";
 
@@ -397,7 +397,28 @@ function useCrossnoteContainer(initialState: InitialState) {
         return null;
       }
       if (!fileName) {
-        fileName = t("general/Untitled") + " " + randomID();
+        let today = moment().format("YYYY-MM-DD"); // TODO: Allow user to customize this
+        let untitled = t("general/Untitled");
+
+        let foundToday = false;
+        let count = 0;
+        for (let i = 0; i < notebookNotes.length; i++) {
+          if (notebookNotes[i].title === today) {
+            foundToday = true;
+          }
+          if (notebookNotes[i].title.startsWith(untitled)) {
+            count++;
+          }
+        }
+        if (foundToday) {
+          if (count === 0) {
+            fileName = `${untitled}.md`;
+          } else {
+            fileName = `${untitled} ${count}.md`;
+          }
+        } else {
+          fileName = `${today}.md`;
+        }
       }
       if (!fileName.endsWith(".md")) {
         fileName = fileName + ".md";
@@ -441,7 +462,7 @@ function useCrossnoteContainer(initialState: InitialState) {
       setEditorMode(EditorMode.VickyMD);
       return note;
     },
-    [crossnote, selectedSection, t],
+    [crossnote, selectedSection, notebookNotes, t],
   );
 
   const duplicateNote = useCallback(
@@ -742,11 +763,7 @@ function useCrossnoteContainer(initialState: InitialState) {
       if (note) {
         _setSelectedNote(note);
       } else {
-        createNewNote(
-          selectedNotebook,
-          filePath,
-          "# " + path.basename(filePath).replace(/\.md$/, ""),
-        );
+        createNewNote(selectedNotebook, filePath, "");
       }
     },
     [

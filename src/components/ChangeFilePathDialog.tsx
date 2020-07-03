@@ -14,6 +14,7 @@ import { useTranslation } from "react-i18next";
 interface Props {
   open: boolean;
   onClose: () => void;
+  onDidChangeFilePath: (filePath: string) => void;
   note: Note;
 }
 
@@ -37,6 +38,7 @@ export default function ChangeFilePathDialog(props: Props) {
         if (note.filePath !== newFilePath) {
           try {
             await crossnoteContainer.changeNoteFilePath(note, newFilePath);
+            props.onDidChangeFilePath(newFilePath);
           } catch (error) {
             new Noty({
               type: "error",
@@ -50,7 +52,7 @@ export default function ChangeFilePathDialog(props: Props) {
         props.onClose();
       })();
     },
-    [note, props.onClose, props],
+    [note, props, t],
   );
 
   useEffect(() => {

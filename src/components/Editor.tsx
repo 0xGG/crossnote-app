@@ -142,6 +142,9 @@ const useStyles = makeStyles((theme: Theme) =>
       // borderBottom: "1px solid #eee",
       overflow: "auto",
       backgroundColor: "inherit",
+      [theme.breakpoints.down("sm")]: {
+        padding: "0",
+      },
     },
     bottomPanel: {
       position: "relative",
@@ -251,7 +254,6 @@ const useStyles = makeStyles((theme: Theme) =>
       },
     },
     backBtn: {
-      marginRight: "8px",
       [theme.breakpoints.up("sm")]: {
         display: "none",
       },
@@ -598,15 +600,23 @@ export default function Editor(props: Props) {
   );
 
   const confirmNoteTitle = useCallback(() => {
-    if (!note || note.title === noteTitle) {
+    const finalNoteTitle = noteTitle.trim().replace(/\//g, "-");
+    if (
+      !note ||
+      !finalNoteTitle.length ||
+      note.title.trim() === finalNoteTitle
+    ) {
       return;
     }
 
     crossnoteContainer
       .changeNoteFilePath(
         note,
-        path.join(path.dirname(note.filePath), `${noteTitle}.md`),
+        path.join(path.dirname(note.filePath), `${finalNoteTitle}.md`),
       )
+      .then(() => {
+        setNoteTitle(note.title);
+      })
       .catch((error) => {
         new Noty({
           type: "error",
@@ -615,8 +625,9 @@ export default function Editor(props: Props) {
           theme: "relax",
           timeout: 5000,
         }).show();
+        setNoteTitle(note.title);
       });
-  }, [noteTitle, note]);
+  }, [noteTitle, note, t]);
 
   useEffect(() => {
     if (!note) {
@@ -2295,6 +2306,9 @@ export default function Editor(props: Props) {
         note={note}
         open={filePathDialogOpen}
         onClose={closeFilePathDialog}
+        onDidChangeFilePath={(filePath) => {
+          setNoteTitle(path.basename(filePath).replace(/\.md$/, ""));
+        }}
       ></ChangeFilePathDialog>
       <Dialog open={toggleEncryptionDialogOpen} onClose={closeEncryptionDialog}>
         <DialogTitle>
