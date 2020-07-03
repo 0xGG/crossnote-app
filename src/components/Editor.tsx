@@ -762,15 +762,19 @@ export default function Editor(props: Props) {
         if (!note.config.encryption && markdown === note.markdown) {
           return;
         }
-        crossnoteContainer.updateNoteMarkdown(
-          note,
-          markdown,
-          note.config.encryption ? decryptionPassword : "",
-          (status) => {
-            setGitStatus(status);
-            setTagNames(note.config.tags || []); // After resolve conflicts
-          },
-        );
+        setTimeout(() => {
+          if (markdown === editor.getValue()) {
+            crossnoteContainer.updateNoteMarkdown(
+              note,
+              markdown,
+              note.config.encryption ? decryptionPassword : "",
+              (status) => {
+                setGitStatus(status);
+                setTagNames(note.config.tags || []); // After resolve conflicts
+              },
+            );
+          }
+        }, 300);
       };
       editor.on("changes", changesHandler);
 

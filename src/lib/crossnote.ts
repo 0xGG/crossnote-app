@@ -38,7 +38,6 @@ export interface Note {
   title: string;
   markdown: string;
   config: NoteConfig;
-  // createdAt: Date; // <- Can't get modifiedAt time
 }
 
 export interface Attachment {
