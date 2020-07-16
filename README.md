@@ -36,6 +36,10 @@ Let's open the [Welcome Notebook](https://crossnote.app/?repo=https%3A%2F%2Fgith
 
 Please check [this documentation](https://github.com/0xGG/welcome-notebook/tree/master/development).
 
+## 微信讨论群
+
+![webwxgetmsgimg](https://i.loli.net/2020/07/16/uk7MFJVp8O2DwEL.jpg)
+
 ## License
 
 AGPL3
