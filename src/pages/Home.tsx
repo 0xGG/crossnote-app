@@ -46,7 +46,6 @@ import Editor from "../components/Editor";
 import AddNotebookDialog from "../components/AddNotebookDialog";
 import NotebookTreeView from "../components/NotebookTreeView";
 import NotesPanel from "../components/NotesPanel";
-import WikiPanel from "../components/WikiPanel";
 import { browserHistory } from "../utilities/history";
 import { Settings } from "../components/Settings";
 import { CloudContainer } from "../containers/cloud";
@@ -429,12 +428,8 @@ export function Home(props: Props) {
 
   const notesPanel =
     props.section === HomeSection.Notebooks &&
-    (crossnoteContainer.selectedSection.type === SelectedSectionType.Wiki ? (
-      <Box className={clsx(classes.notesPanel)} id={"notes-panel"}>
-        <WikiPanel toggleDrawer={toggleDrawer}></WikiPanel>
-      </Box>
-    ) : crossnoteContainer.selectedSection.type ===
-      SelectedSectionType.Attachments ? (
+    (crossnoteContainer.selectedSection.type ===
+    SelectedSectionType.Attachments ? (
       <Box className={clsx(classes.notesPanel)} id={"notes-panel"}>
         <AttachmentsPanel toggleDrawer={toggleDrawer}></AttachmentsPanel>
       </Box>

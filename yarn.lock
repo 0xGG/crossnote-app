@@ -16558,7 +16558,7 @@ verror@1.10.0:
 
 vickymd@^0.2.5:
   version "0.2.5"
-  resolved "https://registry.npm.taobao.org/vickymd/download/vickymd-0.2.5.tgz?cache=0&sync_timestamp=1593769204864&other_urls=https%3A%2F%2Fregistry.npm.taobao.org%2Fvickymd%2Fdownload%2Fvickymd-0.2.5.tgz#7cfe73ed03a4f74a6c14bcc2c9e7e7b740a15551"
+  resolved "https://registry.npm.taobao.org/vickymd/download/vickymd-0.2.5.tgz#7cfe73ed03a4f74a6c14bcc2c9e7e7b740a15551"
   integrity sha1-fP5z7QOk90psFLzCyefnt0ChVVE=
   optionalDependencies:
     echarts "^4.7.0"

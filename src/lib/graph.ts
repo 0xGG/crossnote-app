@@ -4,6 +4,8 @@ export interface GraphNode {
   note: Note;
   sanitiedTitle: string;
   sanitizedFilePath: string;
+  outCount: number;
+  inCount: number;
 }
 
 export interface GraphEdge {

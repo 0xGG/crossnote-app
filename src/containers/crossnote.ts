@@ -6,14 +6,8 @@ import useInterval from "@use-it/interval";
 import { OneDay } from "../utilities/utils";
 import { useTranslation } from "react-i18next";
 import Crossnote, {
-  Notebook,
-  Note,
-  Directory,
-  NoteConfig,
   PushNotebookArgs,
   PullNotebookArgs,
-  TagNode,
-  Attachment,
 } from "../lib/crossnote";
 import { browserHistory } from "../utilities/history";
 import * as qs from "qs";
@@ -87,18 +81,8 @@ function useCrossnoteContainer(initialState: InitialState) {
   const [initialized, setInitialized] = useState<boolean>(false);
   const [notebooks, setNotebooks] = useState<Notebook[]>([]);
   const [selectedNotebook, setSelectedNotebook] = useState<Notebook>(null);
-  const [notebookNotes, setNotebookNotes] = useState<Note[]>([]);
-  const [notebookDirectories, setNotebookDirectories] = useState<Directory>({
-    name: ".",
-    path: ".",
-    children: [],
-  });
-  const [notebookTagNode, setNotebookTagNode] = useState<TagNode>({
-    name: ".",
-    path: ".",
-    children: [],
-  });
-  const [notes, setNotes] = useState<Note[]>([]);
+  const [notebookNotes, setNotebookNotes] = useState<Notes>(null);
+  const [notes, setNotes] = useState<Notes>(null);
   const [selectedNote, setSelectedNote] = useState<Note>(null);
   const [selectedAttachment, setSelectedAttachment] = useState<Attachment>(
     null,
@@ -197,29 +181,13 @@ function useCrossnoteContainer(initialState: InitialState) {
   const deleteNote = useCallback(
     async (note: Note) => {
       await crossnote.deleteNote(selectedNotebook, note.filePath);
-      setNotebookNotes((notes) => {
-        const newNotes = notes.filter((n) => n.filePath !== note.filePath);
-        if (newNotes.length !== notes.length) {
-          setSelectedNote(null);
-        }
-
-        crossnote
-          .getNotebookDirectoriesFromNotes(newNotes)
-          .then((directories) => {
-            setNotebookDirectories(directories);
-          });
-
-        crossnote
-          .hasSummaryMD(selectedNotebook)
-          .then((exists) => setHasSummaryMD(exists));
-
-        setNotebookTagNode(crossnote.getNotebookTagNodeFromNotes(newNotes));
-        return newNotes;
-      });
+      if (notebookNotes) {
+        notebookNotes.deleteNote(note);
+      }
       setSelectedNote(null);
       setDisplayMobileEditor(false);
     },
-    [crossnote, selectedNotebook],
+    [crossnote, selectedNotebook, notebookNotes],
   );
 
   const changeNoteFilePath = useCallback(
@@ -236,11 +204,6 @@ function useCrossnoteContainer(initialState: InitialState) {
         }
       });
       setNotebookNotes(newNotes);
-      setNotebookDirectories(
-        await crossnote.getNotebookDirectoriesFromNotes(newNotes),
-      );
-      setHasSummaryMD(await crossnote.hasSummaryMD(selectedNotebook));
-      setNotebookTagNode(crossnote.getNotebookTagNodeFromNotes(newNotes));
     },
     [selectedNotebook, notebookNotes, crossnote],
   );
@@ -455,6 +418,8 @@ function useCrossnoteContainer(initialState: InitialState) {
         title: fileName.replace(/\.md$/, ""),
         markdown,
         config: noteConfig,
+        mentions: {},
+        mentionedBy: {}, // TODO: set this
       };
       setNotebookNotes((notes) => [note, ...notes]);
       setSelectedNote(note);

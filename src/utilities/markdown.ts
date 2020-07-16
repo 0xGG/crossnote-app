@@ -24,6 +24,10 @@ export function sanitizeTag(tagName: string): string {
     .join("/");
 }
 
+export function sanitizeNoteTitle(noteTitle: string): string {
+  return sanitizeTag(noteTitle);
+}
+
 export interface MatterOutput {
   data: any;
   content: string;
