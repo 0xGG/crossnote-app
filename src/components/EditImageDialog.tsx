@@ -13,7 +13,7 @@ import clsx from "clsx";
 import { Editor as CodeMirrorEditor, TextMarker } from "codemirror";
 import { useTranslation } from "react-i18next";
 import { resolveNoteImageSrc } from "../utilities/image";
-import { Note } from "../lib/crossnote";
+import { Note } from "../lib/notebook";
 
 interface Props {
   open: boolean;

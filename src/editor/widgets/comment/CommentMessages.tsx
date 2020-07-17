@@ -161,7 +161,7 @@ export function CommentMessage(props: Props) {
       renderPreview(previewElement, message.markdown);
       postprocessPreview(
         previewElement,
-        globalContainers.crossnoteContainer.selectedNote,
+        null, // globalContainers.crossnoteContainer.selectedNote,
       );
     }
   }, [previewElement, message.markdown]);

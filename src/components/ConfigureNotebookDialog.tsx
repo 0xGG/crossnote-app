@@ -17,8 +17,8 @@ import {
 } from "@material-ui/core";
 import { ChevronDown } from "mdi-material-ui";
 import { CrossnoteContainer } from "../containers/crossnote";
-import { Notebook } from "../lib/crossnote";
 import { useTranslation } from "react-i18next";
+import { Notebook } from "../lib/notebook";
 
 interface Props {
   open: boolean;

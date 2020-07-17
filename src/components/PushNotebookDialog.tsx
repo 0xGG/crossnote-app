@@ -17,10 +17,10 @@ import {
 } from "@material-ui/core/styles";
 import clsx from "clsx";
 import { CrossnoteContainer } from "../containers/crossnote";
-import { Notebook } from "../lib/crossnote";
 import Noty from "noty";
 import { useTranslation } from "react-i18next";
 import { SettingsContainer } from "../containers/settings";
+import { Notebook } from "../lib/notebook";
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({

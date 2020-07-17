@@ -16,7 +16,7 @@ import {
   HomeSection,
 } from "../containers/crossnote";
 import { useTranslation } from "react-i18next";
-import { Directory, Notebook, TagNode } from "../lib/crossnote";
+import { Notebook } from "../lib/notebook";
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -98,110 +98,6 @@ export default function NotebookTreeView(props: Props) {
     [props.notebook],
   );
 
-  const constructDirectoryTreeItems: (directory: Directory) => any = (
-    directory: Directory,
-  ) => {
-    if (directory.name === ".") {
-      if (directory.children.length === 0) {
-        return null;
-      }
-      return (
-        <>{directory.children.map((dir) => constructDirectoryTreeItems(dir))}</>
-      );
-    } else {
-      return (
-        <TreeItem
-          nodeId={directory.name}
-          classes={{
-            root: classes.treeItemRoot,
-            content: classes.treeItemContent,
-            expanded: classes.treeItemExpanded,
-            group: classes.treeItemGroup,
-            label: classes.treeItemLabel,
-          }}
-          endIcon={<div style={{ width: 24 }}></div>}
-          key={directory.name}
-          label={
-            <Box
-              onClick={() => {
-                crossnoteContainer.setSelectedSection({
-                  type: SelectedSectionType.Directory,
-                  path: directory.path,
-                });
-              }}
-              className={clsx(classes.treeItemLabelRoot)}
-            >
-              <span role="img" aria-label="folder">
-                {"📁"}
-              </span>
-              <Typography
-                color={"inherit"}
-                variant={"body1"}
-                className={clsx(classes.treeItemLabelText)}
-              >
-                {directory.name}
-              </Typography>
-            </Box>
-          }
-        >
-          {directory.children.map((dir) => constructDirectoryTreeItems(dir))}
-        </TreeItem>
-      );
-    }
-  };
-
-  const constructTagNodeTreeItems: (tagNode: TagNode) => any = (
-    tagNode: TagNode,
-  ) => {
-    if (tagNode.name === ".") {
-      if (tagNode.children.length === 0) {
-        return null;
-      }
-      return (
-        <>{tagNode.children.map((node) => constructTagNodeTreeItems(node))}</>
-      );
-    } else {
-      return (
-        <TreeItem
-          nodeId={tagNode.path}
-          classes={{
-            root: classes.treeItemRoot,
-            content: classes.treeItemContent,
-            expanded: classes.treeItemExpanded,
-            group: classes.treeItemGroup,
-            label: classes.treeItemLabel,
-          }}
-          endIcon={<div style={{ width: 24 }}></div>}
-          key={tagNode.path}
-          label={
-            <Box
-              onClick={() => {
-                crossnoteContainer.setSelectedSection({
-                  type: SelectedSectionType.Tag,
-                  path: tagNode.path,
-                });
-              }}
-              className={clsx(classes.treeItemLabelRoot)}
-            >
-              <span role="img" aria-label="folder">
-                {"🏷️"}
-              </span>
-              <Typography
-                color={"inherit"}
-                variant={"body1"}
-                className={clsx(classes.treeItemLabelText)}
-              >
-                {tagNode.name}
-              </Typography>
-            </Box>
-          }
-        >
-          {tagNode.children.map((dir) => constructTagNodeTreeItems(dir))}
-        </TreeItem>
-      );
-    }
-  };
-
   useEffect(() => {
     if (crossnoteContainer.selectedNotebook !== props.notebook) {
       setExpanded([]);
@@ -245,10 +141,12 @@ export default function NotebookTreeView(props: Props) {
         label={
           <Box
             onClick={() => {
+              /*
               crossnoteContainer.setSelectedNotebook(props.notebook);
               crossnoteContainer.setSelectedSection({
                 type: SelectedSectionType.Notes,
               });
+              */
             }}
             className={clsx(classes.treeItemLabelRoot)}
           >
@@ -277,9 +175,11 @@ export default function NotebookTreeView(props: Props) {
           label={
             <Box
               onClick={() => {
+                /*
                 crossnoteContainer.setSelectedSection({
                   type: SelectedSectionType.Today,
                 });
+                */
               }}
               className={clsx(classes.treeItemLabelRoot)}
             >
@@ -304,9 +204,11 @@ export default function NotebookTreeView(props: Props) {
           label={
             <Box
               onClick={() => {
+                /*
                 crossnoteContainer.setSelectedSection({
                   type: SelectedSectionType.Todo,
                 });
+                */
               }}
               className={clsx(classes.treeItemLabelRoot)}
             >
@@ -331,9 +233,11 @@ export default function NotebookTreeView(props: Props) {
           label={
             <Box
               onClick={() => {
+                /*
                 crossnoteContainer.setSelectedSection({
                   type: SelectedSectionType.Notes,
                 });
+                */
               }}
               className={clsx(classes.treeItemLabelRoot)}
             >
@@ -342,149 +246,6 @@ export default function NotebookTreeView(props: Props) {
               </span>
               <Typography className={clsx(classes.treeItemLabelText)}>
                 {t("general/notes")}
-              </Typography>
-            </Box>
-          }
-        >
-          {constructDirectoryTreeItems(crossnoteContainer.notebookDirectories)}
-        </TreeItem>
-        {crossnoteContainer.hasSummaryMD ? (
-          <TreeItem
-            nodeId={"wiki"}
-            classes={{
-              root: classes.treeItemRoot,
-              content: classes.treeItemContent,
-              expanded: classes.treeItemExpanded,
-              group: classes.treeItemGroup,
-              label: classes.treeItemLabel,
-            }}
-            label={
-              <Box
-                onClick={() => {
-                  crossnoteContainer.setSelectedSection({
-                    type: SelectedSectionType.Wiki,
-                  });
-                }}
-                className={clsx(classes.treeItemLabelRoot)}
-              >
-                <span role="img" aria-label="wiki">
-                  {"📖"}
-                </span>
-                <Typography className={clsx(classes.treeItemLabelText)}>
-                  {t("general/wiki")}
-                </Typography>
-              </Box>
-            }
-          ></TreeItem>
-        ) : (
-          <TreeItem nodeId={"wiki"}></TreeItem>
-        )}
-        <TreeItem
-          nodeId={"tagged-notes"}
-          classes={{
-            root: classes.treeItemRoot,
-            content: classes.treeItemContent,
-            expanded: classes.treeItemExpanded,
-            group: classes.treeItemGroup,
-            label: classes.treeItemLabel,
-          }}
-          label={
-            <Box
-              onClick={() => {
-                crossnoteContainer.setSelectedSection({
-                  type: SelectedSectionType.Tagged,
-                });
-              }}
-              className={clsx(classes.treeItemLabelRoot)}
-            >
-              <span role="img" aria-label="tagged-notes">
-                {"🏷️"}
-              </span>
-              <Typography className={clsx(classes.treeItemLabelText)}>
-                {t("general/tagged")}
-              </Typography>
-            </Box>
-          }
-        >
-          {constructTagNodeTreeItems(crossnoteContainer.notebookTagNode)}
-        </TreeItem>
-        <TreeItem
-          nodeId={"untagged-notes"}
-          classes={{
-            root: classes.treeItemRoot,
-            content: classes.treeItemContent,
-            expanded: classes.treeItemExpanded,
-            group: classes.treeItemGroup,
-            label: classes.treeItemLabel,
-          }}
-          label={
-            <Box
-              onClick={() => {
-                crossnoteContainer.setSelectedSection({
-                  type: SelectedSectionType.Untagged,
-                });
-              }}
-              className={clsx(classes.treeItemLabelRoot)}
-            >
-              <span role="img" aria-label="untagged-notes">
-                {"🈚"}
-              </span>
-              <Typography className={clsx(classes.treeItemLabelText)}>
-                {t("general/untagged")}
-              </Typography>
-            </Box>
-          }
-        ></TreeItem>
-        <TreeItem
-          nodeId={"encrypted-notes"}
-          classes={{
-            root: classes.treeItemRoot,
-            content: classes.treeItemContent,
-            expanded: classes.treeItemExpanded,
-            group: classes.treeItemGroup,
-            label: classes.treeItemLabel,
-          }}
-          label={
-            <Box
-              onClick={() => {
-                crossnoteContainer.setSelectedSection({
-                  type: SelectedSectionType.Encrypted,
-                });
-              }}
-              className={clsx(classes.treeItemLabelRoot)}
-            >
-              <span role="img" aria-label="encrypted-notes">
-                {"🔐"}
-              </span>
-              <Typography className={clsx(classes.treeItemLabelText)}>
-                {t("general/encrypted")}
-              </Typography>
-            </Box>
-          }
-        ></TreeItem>
-        <TreeItem
-          nodeId={"attachments"}
-          classes={{
-            root: classes.treeItemRoot,
-            content: classes.treeItemContent,
-            expanded: classes.treeItemExpanded,
-            group: classes.treeItemGroup,
-            label: classes.treeItemLabel,
-          }}
-          label={
-            <Box
-              onClick={() => {
-                crossnoteContainer.setSelectedSection({
-                  type: SelectedSectionType.Attachments,
-                });
-              }}
-              className={clsx(classes.treeItemLabelRoot)}
-            >
-              <span role="img" aria-label="attachments">
-                {"📎"}
-              </span>
-              <Typography className={clsx(classes.treeItemLabelText)}>
-                {t("general/attachments")}
               </Typography>
             </Box>
           }
@@ -501,9 +262,11 @@ export default function NotebookTreeView(props: Props) {
           label={
             <Box
               onClick={() => {
+                /*
                 crossnoteContainer.setSelectedSection({
                   type: SelectedSectionType.Conflicted,
                 });
+                */
               }}
               className={clsx(classes.treeItemLabelRoot)}
             >

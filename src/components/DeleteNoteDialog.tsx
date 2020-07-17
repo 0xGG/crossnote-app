@@ -1,5 +1,4 @@
 import React from "react";
-import { Note } from "../lib/crossnote";
 import { useTranslation } from "react-i18next";
 import { CrossnoteContainer } from "../containers/crossnote";
 import {
@@ -10,6 +9,7 @@ import {
   DialogActions,
   Button,
 } from "@material-ui/core";
+import { Note } from "../lib/notebook";
 
 interface Props {
   open: boolean;

@@ -1,8 +1,7 @@
 ---
-note:
-  createdAt: 2020-04-12T13:19:52.701Z
-  modifiedAt: 2020-05-11T11:14:44.140Z
-  tags: []
+tags: []
+created: 2020-04-12T13:19:52.701Z
+modified: 2020-05-11T11:14:44.140Z
 ---
 
 ![](./public/logo192.png)

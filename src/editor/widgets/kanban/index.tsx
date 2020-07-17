@@ -39,6 +39,7 @@ import { setTheme } from "../../../themes/manager";
 import { openURL, postprocessPreview } from "../../../utilities/preview";
 import { resolveNoteImageSrc } from "../../../utilities/image";
 import EditImageDialog from "../../../components/EditImageDialog";
+import { Note } from "../../../lib/notebook";
 const VickyMD = require("vickymd/core");
 
 const useStyles = makeStyles((theme: Theme) =>
@@ -195,7 +196,7 @@ function KanbanCardDisplay(props: KanbanCardProps) {
   const board = props.board;
   const card = props.card;
   const isPreview = props.isPreview;
-  const note = globalContainers.crossnoteContainer.selectedNote;
+  const note: Note = null; // = globalContainers.crossnoteContainer.selectedNote;
   const [textAreaElement, setTextAreaElement] = useState<HTMLTextAreaElement>(
     null,
   );
@@ -270,7 +271,7 @@ function KanbanCardDisplay(props: KanbanCardProps) {
       renderPreview(previewElement, card.description);
       postprocessPreview(
         previewElement,
-        globalContainers.crossnoteContainer.selectedNote,
+        null, // globalContainers.crossnoteContainer.selectedNote,
       );
     }
   }, [previewElement, card.description]);

@@ -1,10 +1,10 @@
 import { printPreview as VickyMDPrintPreview } from "vickymd/preview";
 import * as path from "path";
-import { Note } from "../lib/crossnote";
 import { resolveNoteImageSrc } from "./image";
 import { SelectedSection, SelectedSectionType } from "../containers/crossnote";
 import { globalContainers } from "../containers/global";
 import { browserHistory } from "./history";
+import { Note } from "../lib/notebook";
 
 export function printPreview(
   previewElement: HTMLElement,
@@ -43,17 +43,17 @@ export function openURL(url: string = "", note: Note) {
     }
   } else if (url.startsWith("/")) {
     let filePath = path.relative(
-      note.notebook.dir,
-      path.resolve(note.notebook.dir, url.replace(/^\//, "")),
+      note.notebookPath,
+      path.resolve(note.notebookPath, url.replace(/^\//, "")),
     );
     globalContainers.crossnoteContainer.openNoteAtPath(
       decodeURIComponent(filePath),
     );
   } else {
     let filePath = path.relative(
-      note.notebook.dir,
+      note.notebookPath,
       path.resolve(
-        path.dirname(path.resolve(note.notebook.dir, note.filePath)),
+        path.dirname(path.resolve(note.notebookPath, note.filePath)),
         url,
       ),
     );
@@ -81,10 +81,12 @@ export function postprocessPreview(
         if (link.hasAttribute("data-topic")) {
           const tag = link.getAttribute("data-topic");
           if (tag.length) {
+            /*
             globalContainers.crossnoteContainer.setSelectedSection({
               type: SelectedSectionType.Tag,
               path: tag,
             });
+            */
           }
         } else {
           openURL(link.getAttribute("href"), note);

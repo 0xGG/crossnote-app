@@ -17,6 +17,7 @@ import { setTheme } from "../../../themes/manager";
 import { resolveNoteImageSrc } from "../../../utilities/image";
 import EditImageDialog from "../../../components/EditImageDialog";
 import { openURL } from "../../../utilities/preview";
+import { Note } from "../../../lib/notebook";
 const VickyMD = require("vickymd/core");
 
 export const ChatMessageEditorHeight = "150";
@@ -72,7 +73,7 @@ interface Props {
 
 export function CommentEditor(props: Props) {
   const classes = useStyles(props);
-  const note = globalContainers.crossnoteContainer.selectedNote;
+  const note: Note = null; // globalContainers.crossnoteContainer.selectedNote;
   const [textAreaElement, setTextAreaElement] = useState<HTMLTextAreaElement>(
     null,
   );

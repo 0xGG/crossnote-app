@@ -43,10 +43,6 @@ import {
 import { useTranslation } from "react-i18next";
 import ConfigureNotebookDialog from "./ConfigureNotebookDialog";
 import Notes from "./Notes";
-import { RenameDirectoryDialog } from "./RenameDirectoryDialog";
-import { RenameTagDialog } from "./RenameTagDialog";
-import { DeleteDirectoryDialog } from "./DeleteDirectoryDialog";
-import { DeleteTagDialog } from "./DeleteTagDialog";
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -196,6 +192,8 @@ export default function NotesPanel(props: Props) {
     setFinalSearchValue("");
   }, [crossnoteContainer.selectedNotebook]);
 
+  return <Box className={clsx(classes.notesPanel)}></Box>;
+  /*
   return (
     <Box className={clsx(classes.notesPanel)}>
       <Card className={clsx(classes.topPanel)}>
@@ -343,18 +341,6 @@ export default function NotesPanel(props: Props) {
           )}
 
           <Box>
-            {
-              /*crossnoteContainer.selectedSection.type ===
-              SelectedSectionType.Notes && (*/
-              <IconButton
-                onClick={() => setNotebookConfigurationDialogOpen(true)}
-              >
-                <Tooltip title={t("general/configure-the-notebook")}>
-                  <Cog></Cog>
-                </Tooltip>
-              </IconButton>
-              /*)*/
-            }
             <IconButton
               onClick={(event) => setSortMenuAnchorEl(event.currentTarget)}
             >
@@ -546,5 +532,5 @@ export default function NotesPanel(props: Props) {
 
       <Notes searchValue={finalSearchValue}></Notes>
     </Box>
-  );
+  );*/
 }

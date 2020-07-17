@@ -6,11 +6,11 @@ import { CrossnoteContainer } from "../containers/crossnote";
 import { Box, Typography, Button } from "@material-ui/core";
 import NoteCard from "./NoteCard";
 import { useTranslation } from "react-i18next";
-import { Note } from "../lib/crossnote";
 import useInterval from "@use-it/interval";
 import { CloudDownloadOutline } from "mdi-material-ui";
 import Noty from "noty";
 import { Skeleton } from "@material-ui/lab";
+import { Note } from "../lib/notebook";
 
 const lazyLoadPlaceholderHeight = 92;
 
@@ -45,6 +45,7 @@ export default function Notes(props: Props) {
   const [forceUpdate, setForceUpdate] = useState<number>(Date.now());
   const searchValue = props.searchValue;
 
+  /*
   const pullNotebook = useCallback(() => {
     const notebook = crossnoteContainer.selectedNotebook;
     if (!notebook) {
@@ -83,7 +84,9 @@ export default function Notes(props: Props) {
         }).show();
       });
   }, [crossnoteContainer.selectedNotebook, t]);
+  */
 
+  /*
   useEffect(() => {
     const pinned: Note[] = [];
     const unpinned: Note[] = [];
@@ -118,7 +121,9 @@ export default function Notes(props: Props) {
 
     setNotes([...pinned, ...unpinned]);
   }, [crossnoteContainer.notes, searchValue]);
+  */
 
+  /*
   useEffect(() => {
     if (notesListElement) {
       const keyDownHandler = (event: KeyboardEvent) => {
@@ -149,6 +154,7 @@ export default function Notes(props: Props) {
       };
     }
   }, [notesListElement, notes, crossnoteContainer.selectedNote]);
+  */
 
   useEffect(() => {
     if (notesListElement) {
@@ -195,7 +201,7 @@ export default function Notes(props: Props) {
             <Button
               color={"primary"}
               variant={"outlined"}
-              onClick={pullNotebook}
+              // onClick={pullNotebook}
               disabled={
                 crossnoteContainer.isPullingNotebook ||
                 crossnoteContainer.isPushingNotebook

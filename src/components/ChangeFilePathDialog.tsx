@@ -8,8 +8,8 @@ import {
   Button,
 } from "@material-ui/core";
 import { CrossnoteContainer } from "../containers/crossnote";
-import { Note } from "../lib/crossnote";
 import { useTranslation } from "react-i18next";
+import { Note } from "../lib/notebook";
 
 interface Props {
   open: boolean;

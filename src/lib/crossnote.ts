@@ -472,7 +472,7 @@ export default class Crossnote {
     // console.log("same");
     for (const filePath in cache) {
       if (cache[filePath].status === "deleted") {
-        await notebook.deleteNote(notebook, filePath);
+        await notebook.deleteNote(filePath);
         continue;
       }
       const markdown = cache[filePath].markdown;

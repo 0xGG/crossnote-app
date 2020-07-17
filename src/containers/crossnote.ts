@@ -14,6 +14,7 @@ import * as qs from "qs";
 import moment from "moment";
 import { pfs } from "../lib/fs";
 import { sanitizeTag } from "../utilities/markdown";
+import { Notebook, Note } from "../lib/notebook";
 
 export enum EditorMode {
   VickyMD = "VickyMD",
@@ -81,70 +82,18 @@ function useCrossnoteContainer(initialState: InitialState) {
   const [initialized, setInitialized] = useState<boolean>(false);
   const [notebooks, setNotebooks] = useState<Notebook[]>([]);
   const [selectedNotebook, setSelectedNotebook] = useState<Notebook>(null);
-  const [notebookNotes, setNotebookNotes] = useState<Notes>(null);
-  const [notes, setNotes] = useState<Notes>(null);
-  const [selectedNote, setSelectedNote] = useState<Note>(null);
-  const [selectedAttachment, setSelectedAttachment] = useState<Attachment>(
-    null,
-  );
-  const [includeSubdirectories, setIncludeSubdirectories] = useState<boolean>(
-    true,
-  );
-  const [selectedSection, setSelectedSection] = useState<SelectedSection>({
-    type: SelectedSectionType.Notes,
-  }); // $notes | $todau | $todo | real directory
   const [isAddingNotebook, setIsAddingNotebook] = useState<boolean>(false);
   const [isPushingNotebook, setIsPushingNotebook] = useState<boolean>(false);
   const [isPullingNotebook, setIsPullingNotebook] = useState<boolean>(false);
-  const [isLoadingAttachments, setIsLoadingAttachments] = useState<boolean>(
-    false,
-  );
-  const [displayMobileEditor, setDisplayMobileEditor] = useState<boolean>(
-    false,
-  ); // For mobile device without any initial data, set to `true` will create empty white page.
-  const [displayAttachmentEditor, setDisplayAttachmentEditor] = useState<
-    boolean
-  >(false);
   const [needsToRefreshNotes, setNeedsToRefreshNotes] = useState<boolean>(
     false,
   );
-  const [wikiTOCElement, setWikiTOCElement] = useState<HTMLElement>(null);
   const [isLoadingNotebook, setIsLoadingNotebook] = useState<boolean>(false);
-  const [hasSummaryMD, setHasSummaryMD] = useState<boolean>(false);
-  const [orderBy, setOrderBy] = useState<OrderBy>(OrderBy.ModifiedAt);
-  const [orderDirection, setOrderDirection] = useState<OrderDirection>(
-    OrderDirection.DESC,
-  );
-  const [editorMode, setEditorMode] = useState<EditorMode>(EditorMode.Preview);
-  const [pendingNote, setPendingNote] = useState<PendingNote>(null);
   const [isPerformingAutoFetch, setIsPerformingAutoFetch] = useState<boolean>(
     false,
   );
   const [homeSection, setHomeSection] = useState<HomeSection>(
     HomeSection.Unknown,
-  );
-
-  const _setSelectedNote = useCallback(
-    (note: Note) => {
-      setSelectedNote(note);
-      const notebook = note.notebook;
-      if (notebook.gitURL) {
-        browserHistory.push(
-          `/?repo=${encodeURIComponent(
-            notebook.gitURL,
-          )}&branch=${encodeURIComponent(
-            notebook.gitBranch || "master",
-          )}&filePath=${encodeURIComponent(note.filePath)}`,
-        );
-      } else {
-        browserHistory.push(
-          `/?notebookID=${notebook._id}&filePath=${encodeURIComponent(
-            note.filePath,
-          )}`,
-        );
-      }
-    },
-    [setSelectedNote],
   );
 
   const updateNoteMarkdown = useCallback(
@@ -154,6 +103,7 @@ function useCrossnoteContainer(initialState: InitialState) {
       password?: string,
       callback?: (status: string) => void,
     ) => {
+      /*
       crossnote
         .writeNote(
           note.notebook,
@@ -174,24 +124,28 @@ function useCrossnoteContainer(initialState: InitialState) {
           // QUESTION: Don't disable it actually if cloudContainer has no token set and no viewer were fetched.
           setNeedsToRefreshNotes(true);
         });
+        */
     },
     [crossnote],
   );
 
   const deleteNote = useCallback(
     async (note: Note) => {
+      /*
       await crossnote.deleteNote(selectedNotebook, note.filePath);
       if (notebookNotes) {
         notebookNotes.deleteNote(note);
       }
       setSelectedNote(null);
       setDisplayMobileEditor(false);
+      */
     },
-    [crossnote, selectedNotebook, notebookNotes],
+    [crossnote, selectedNotebook],
   );
 
   const changeNoteFilePath = useCallback(
     async (note: Note, newFilePath: string) => {
+      /*
       await crossnote.changeNoteFilePath(selectedNotebook, note, newFilePath);
       const newNotes = notebookNotes.map((n) => {
         if (n.filePath === note.filePath) {
@@ -204,150 +158,9 @@ function useCrossnoteContainer(initialState: InitialState) {
         }
       });
       setNotebookNotes(newNotes);
+      */
     },
-    [selectedNotebook, notebookNotes, crossnote],
-  );
-
-  const renameDirectory = useCallback(
-    async (oldDirName: string, newDirName: string) => {
-      newDirName = newDirName
-        .replace(/^\/+/, "")
-        .replace(/^\.+\/+/, "")
-        .replace(/\/+$/, "");
-      if (oldDirName === newDirName) {
-        return;
-      }
-      await crossnote.renameDirectory(selectedNotebook, oldDirName, newDirName);
-      const newNotes = notebookNotes.map((n) => {
-        if (n.filePath.startsWith(oldDirName + "/")) {
-          if (newDirName.length > 0) {
-            n.filePath = n.filePath.replace(oldDirName, newDirName);
-          } else {
-            n.filePath = path.basename(n.filePath);
-          }
-        }
-        return n;
-      });
-      setNotebookNotes(newNotes);
-      setNotebookDirectories(
-        await crossnote.getNotebookDirectoriesFromNotes(newNotes),
-      );
-      if (newDirName.length) {
-        setSelectedSection({
-          type: SelectedSectionType.Directory,
-          path: newDirName,
-        });
-      } else {
-        setSelectedSection({
-          type: SelectedSectionType.Notes,
-        });
-      }
-    },
-    [selectedNotebook, notebookNotes, crossnote],
-  );
-
-  const deleteDirectory = useCallback(
-    async (dirName: string) => {
-      await crossnote.deleteDirectory(selectedNotebook, dirName);
-      const newNotes = notebookNotes.filter((n) => {
-        return !n.filePath.startsWith(dirName + "/");
-      });
-      setNotebookNotes(newNotes);
-      setNotebookDirectories(
-        await crossnote.getNotebookDirectoriesFromNotes(newNotes),
-      );
-      setSelectedSection({
-        type: SelectedSectionType.Notes,
-      });
-      _setSelectedNote(newNotes[0]);
-    },
-    [selectedNotebook, notebookNotes, _setSelectedNote, crossnote],
-  );
-
-  const renameTag = useCallback(
-    async (oldTagName: string, newTagName: string) => {
-      newTagName = sanitizeTag(newTagName);
-      const newNotes: Note[] = [];
-      const promises = [];
-      for (let i = 0; i < notebookNotes.length; i++) {
-        const note = notebookNotes[i];
-        let modified = false;
-        const tags = (note.config.tags || [])
-          .map((tag) => {
-            if ((tag + "/").startsWith(oldTagName + "/")) {
-              tag =
-                newTagName +
-                "/" +
-                tag.slice(oldTagName.length).replace(/^\/+/, "");
-              modified = true;
-            }
-            return tag.replace(/^\/+/, "").replace(/\/+$/, "");
-          })
-          .filter((tag) => tag.length)
-          .filter(
-            (tag, index, self) => self.findIndex((x) => x === tag) === index,
-          );
-        if (modified) {
-          note.config.tags = tags;
-          promises.push(
-            crossnote.updateNoteConfig(
-              selectedNotebook,
-              note.filePath,
-              note.config,
-            ),
-          );
-        }
-        newNotes.push(note);
-      }
-      await Promise.all(promises);
-      setNotebookNotes(newNotes);
-      setNotebookTagNode(crossnote.getNotebookTagNodeFromNotes(newNotes));
-      if (newTagName.length) {
-        setSelectedSection({
-          type: SelectedSectionType.Tag,
-          path: newTagName,
-        });
-      } else {
-        setSelectedSection({
-          type: SelectedSectionType.Notes,
-        });
-      }
-    },
-    [selectedNotebook, notebookNotes, crossnote],
-  );
-
-  const deleteTag = useCallback(
-    async (tagName: string) => {
-      const newNotes: Note[] = [];
-      const promises = [];
-      for (let i = 0; i < notebookNotes.length; i++) {
-        const note = notebookNotes[i];
-        let modified = false;
-        const tags = (note.config.tags || []).filter((tag) => {
-          const hasPrefix = (tag + "/").startsWith(tagName + "/");
-          modified = modified || hasPrefix;
-          return !hasPrefix;
-        });
-        if (modified) {
-          note.config.tags = tags;
-          promises.push(
-            crossnote.updateNoteConfig(
-              selectedNotebook,
-              note.filePath,
-              note.config,
-            ),
-          );
-        }
-        newNotes.push(note);
-      }
-      await Promise.all(promises);
-      setNotebookNotes(newNotes);
-      setNotebookTagNode(crossnote.getNotebookTagNodeFromNotes(newNotes));
-      setSelectedSection({
-        type: SelectedSectionType.Notes,
-      });
-    },
-    [selectedNotebook, notebookNotes, crossnote],
+    [selectedNotebook, crossnote],
   );
 
   const createNewNote = useCallback(
@@ -356,6 +169,7 @@ function useCrossnoteContainer(initialState: InitialState) {
       fileName: string = "",
       markdown: string = "",
     ) => {
+      /*
       if (!notebook) {
         return null;
       }
@@ -426,12 +240,14 @@ function useCrossnoteContainer(initialState: InitialState) {
       setDisplayMobileEditor(true);
       setEditorMode(EditorMode.VickyMD);
       return note;
+      */
     },
-    [crossnote, selectedSection, notebookNotes, t],
+    [crossnote, t],
   );
 
   const duplicateNote = useCallback(
     async (note: Note) => {
+      /*
       if (!crossnote) return;
       const duplicatedNote = await crossnote.duplicateNote(
         note.notebook,
@@ -439,12 +255,14 @@ function useCrossnoteContainer(initialState: InitialState) {
       );
       setNotebookNotes((notes) => [duplicatedNote, ...notes]);
       setSelectedNote(duplicatedNote);
+      */
     },
     [crossnote],
   );
 
   const _setSelectedNotebook = useCallback(
     (notebook: Notebook) => {
+      /*
       localStorage.setItem("selectedNotebookID", notebook._id);
       setSelectedNotebook(notebook);
       if (notebook.gitURL) {
@@ -456,6 +274,7 @@ function useCrossnoteContainer(initialState: InitialState) {
       } else {
         browserHistory.push(`/?notebookID=${notebook._id}`);
       }
+      */
     },
     [setSelectedNotebook],
   );
@@ -538,6 +357,7 @@ function useCrossnoteContainer(initialState: InitialState) {
 
   const hardResetNotebook = useCallback(
     async (notebook: Notebook) => {
+      /*
       if (!crossnote) {
         return;
       }
@@ -560,12 +380,14 @@ function useCrossnoteContainer(initialState: InitialState) {
         setNotebookTagNode(crossnote.getNotebookTagNodeFromNotes(notes));
         setIsLoadingNotebook(false);
       } catch (error) {}
+      */
     },
     [crossnote],
   );
 
   const pushNotebook = useCallback(
     async (args: PushNotebookArgs) => {
+      /*
       if (!crossnote) {
         return;
       }
@@ -603,12 +425,14 @@ function useCrossnoteContainer(initialState: InitialState) {
         setIsPushingNotebook(false);
         throw error;
       }
+      */
     },
-    [crossnote, selectedNote],
+    [crossnote],
   );
 
   const pullNotebook = useCallback(
     async (args: PullNotebookArgs) => {
+      /*
       if (!crossnote) {
         return;
       }
@@ -646,12 +470,14 @@ function useCrossnoteContainer(initialState: InitialState) {
         setIsPullingNotebook(false);
         throw error;
       }
+      */
     },
-    [crossnote, selectedNote],
+    [crossnote],
   );
 
   const checkoutNote = useCallback(
     async (note: Note) => {
+      /*
       if (!crossnote) {
         return;
       }
@@ -697,27 +523,26 @@ function useCrossnoteContainer(initialState: InitialState) {
           return newNotes;
         });
       }
+      */
     },
     [crossnote, selectedNotebook],
   );
 
-  const updateNotebookTagNode = useCallback(() => {
-    if (!crossnote) return;
-    setNotebookTagNode(crossnote.getNotebookTagNodeFromNotes(notebookNotes));
-  }, [notebookNotes, crossnote]);
-
   const getNote = useCallback(
     async (notebook: Notebook, filePath: string) => {
+      /*
       if (!crossnote) {
         return;
       }
       return await crossnote.getNote(notebook, filePath);
+      */
     },
     [crossnote],
   );
 
   const openNoteAtPath = useCallback(
     (filePath: string) => {
+      /*
       if (!crossnote) return;
 
       if (!filePath.endsWith(".md")) {
@@ -730,26 +555,10 @@ function useCrossnoteContainer(initialState: InitialState) {
       } else {
         createNewNote(selectedNotebook, filePath, "");
       }
+      */
     },
-    [
-      crossnote,
-      notebookNotes,
-      selectedNotebook,
-      _setSelectedNote,
-      createNewNote,
-    ],
+    [crossnote, selectedNotebook, createNewNote],
   );
-
-  const loadAttachments = useCallback(async () => {
-    setIsLoadingAttachments(true);
-    const attachments = crossnote.listAttachments({
-      notebook: selectedNotebook,
-      dir: "./",
-      includeSubdirectories: true,
-    });
-    setIsLoadingAttachments(false);
-    return attachments;
-  }, [crossnote, selectedNotebook]);
 
   useEffect(() => {
     if (!crossnote || initialized) {
@@ -798,6 +607,7 @@ Please also check the [Explore](https://crossnote.app/explore) section to discov
     })();
   }, [crossnote, initialized]);
 
+  /*
   useEffect(() => {
     if (!crossnote) {
       return;
@@ -986,6 +796,7 @@ Please also check the [Explore](https://crossnote.app/explore) section to discov
     selectedNote,
     notebookNotes,
   ]);
+  */
 
   // TODO: This script should be moved to background (serviceWorker?)
   useInterval(async () => {
@@ -1021,56 +832,24 @@ Please also check the [Explore](https://crossnote.app/explore) section to discov
     notebooks,
     selectedNotebook,
     setSelectedNotebook: _setSelectedNotebook,
-    notes,
-    selectedNote,
-    setSelectedNote: _setSelectedNote,
-    selectedAttachment,
-    setSelectedAttachment,
     updateNoteMarkdown,
     createNewNote,
-    selectedSection,
-    setSelectedSection,
-    includeSubdirectories,
-    setIncludeSubdirectories,
     deleteNote,
     changeNoteFilePath,
-    renameDirectory,
-    deleteDirectory,
-    renameTag,
-    deleteTag,
     duplicateNote,
-    notebookDirectories,
-    notebookTagNode,
     addNotebook,
     isAddingNotebook,
     isPushingNotebook,
     isPullingNotebook,
-    isLoadingAttachments,
     updateNotebook,
     deleteNotebook,
     hardResetNotebook,
     pushNotebook,
     pullNotebook,
     checkoutNote,
-    displayMobileEditor,
-    setDisplayMobileEditor,
-    displayAttachmentEditor,
-    setDisplayAttachmentEditor,
-    updateNotebookTagNode,
     getNote,
     isLoadingNotebook,
     openNoteAtPath,
-    loadAttachments,
-    orderBy,
-    setOrderBy,
-    orderDirection,
-    setOrderDirection,
-    hasSummaryMD,
-    wikiTOCElement,
-    setWikiTOCElement,
-    editorMode,
-    setEditorMode,
-    setPendingNote,
     needsToRefreshNotes,
     setNeedsToRefreshNotes,
     homeSection,

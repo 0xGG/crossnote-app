@@ -1,9 +1,8 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, FC } from "react";
 import { createStyles, makeStyles, Theme } from "@material-ui/core/styles";
 import clsx from "clsx";
 import { CrossnoteContainer } from "../containers/crossnote";
 import { Box, Typography, ButtonBase, Tooltip } from "@material-ui/core";
-import { Note } from "../lib/crossnote";
 import { generateSummaryFromMarkdown, Summary } from "../utilities/note";
 import { formatDistanceStrict } from "date-fns/esm";
 import { useTranslation } from "react-i18next";
@@ -13,6 +12,7 @@ import { basename } from "path";
 import { SettingsContainer } from "../containers/settings";
 import { languageCodeToDateFNSLocale } from "../i18n/i18n";
 import { resolveNoteImageSrc } from "../utilities/image";
+import { Note } from "../lib/notebook";
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -148,6 +148,7 @@ export default function NoteCard(props: Props) {
     t,
   ]);
 
+  /*
   useEffect(() => {
     crossnoteContainer.crossnote
       .getStatus(note.notebook, note.filePath)
@@ -159,9 +160,11 @@ export default function NoteCard(props: Props) {
     note.config.modifiedAt,
     note,
     crossnoteContainer.crossnote,
-  ]);
+  ]);*/
 
   return (
+    <ButtonBase></ButtonBase>
+  ); /*(
     <ButtonBase
       className={clsx(
         classes.noteCard,
@@ -241,5 +244,5 @@ export default function NoteCard(props: Props) {
         </Typography>
       </Box>
     </ButtonBase>
-  );
+  );*/
 }

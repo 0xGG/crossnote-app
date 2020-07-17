@@ -44,7 +44,6 @@ import {
 } from "../containers/crossnote";
 import Editor from "../components/Editor";
 import AddNotebookDialog from "../components/AddNotebookDialog";
-import NotebookTreeView from "../components/NotebookTreeView";
 import NotesPanel from "../components/NotesPanel";
 import { browserHistory } from "../utilities/history";
 import { Settings } from "../components/Settings";
@@ -56,8 +55,8 @@ import { Notifications } from "../components/Notifications";
 import ExplorePanel from "../components/ExplorePanel";
 import { NotebookPanel } from "../components/NotebookPanel";
 import { PrivacyPolicy } from "./Privacy";
-import AttachmentsPanel from "../components/AttachmentsPanel";
 import LanguageSelectorDialog from "../components/LanguageSelectorDialog";
+import NotebookTreeView from "../components/NotebookTreeView";
 const is = require("is_js");
 
 const drawerWidth = 200;
@@ -238,6 +237,7 @@ export function Home(props: Props) {
     setDrawerOpen(!drawerOpen);
   }, [drawerOpen]);
 
+  /*
   useEffect(() => {
     if (!crossnoteContainer.initialized) {
       return;
@@ -291,6 +291,7 @@ export function Home(props: Props) {
       }
     }
   }, [props.section, props.queryParams, crossnoteContainer.initialized]);
+  */
 
   useEffect(() => {
     crossnoteContainer.setHomeSection(props.section);
@@ -426,6 +427,7 @@ export function Home(props: Props) {
     </React.Fragment>
   );
 
+  /*
   const notesPanel =
     props.section === HomeSection.Notebooks &&
     (crossnoteContainer.selectedSection.type ===
@@ -466,6 +468,7 @@ export function Home(props: Props) {
       <NotebookPanel notebook={cloudContainer.selectedNotebook}></NotebookPanel>
     </Card>
   );
+  */
 
   return (
     <Box className={clsx(classes.page)}>
@@ -500,7 +503,7 @@ export function Home(props: Props) {
         </Hidden>
       </nav>
       <Box className={clsx(classes.mainPanel)} id="main-panel">
-        {props.section === HomeSection.Notebooks &&
+        {/*props.section === HomeSection.Notebooks &&
           (isMobile ? (
             <React.Fragment>
               {notesPanel}
@@ -533,7 +536,7 @@ export function Home(props: Props) {
               {explorePanel}
               {notebookPanel}
             </SplitPane>
-          ))}
+          ))*/}
         {props.section === HomeSection.Settings && (
           <Settings toggleDrawer={toggleDrawer}></Settings>
         )}
