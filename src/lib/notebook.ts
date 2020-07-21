@@ -27,8 +27,7 @@ function formatNoteConfig(noteConfig: NoteConfig) {
   return newObject;
 }
 
-interface ListNotesArgs {
-  notebook: Notebook;
+interface RefreshNotesArgs {
   dir: string;
   includeSubdirectories?: Boolean;
 }
@@ -319,22 +318,21 @@ export class Notebook {
   }
 
   public async refreshNotes({
-    notebook,
     dir = "./",
     includeSubdirectories = false,
-  }: ListNotesArgs): Promise<Notes> {
+  }: RefreshNotesArgs): Promise<Notes> {
     this.notes = {};
     let files: string[] = [];
     try {
-      files = await pfs.readdir(path.resolve(notebook.dir, dir));
+      files = await pfs.readdir(path.resolve(this.dir, dir));
     } catch (error) {
       files = [];
     }
-    const listNotesPromises = [];
+    const refreshNotesPromises = [];
 
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
-      const absFilePath = path.resolve(notebook.dir, dir, file);
+      const absFilePath = path.resolve(this.dir, dir, file);
       const note = await this.getNote(path.relative(this.dir, absFilePath));
       if (note) {
         this.notes[note.filePath] = note;
@@ -350,16 +348,15 @@ export class Notebook {
         file !== ".git" &&
         includeSubdirectories
       ) {
-        listNotesPromises.push(
+        refreshNotesPromises.push(
           this.refreshNotes({
-            notebook,
-            dir: path.relative(notebook.dir, absFilePath),
+            dir: path.relative(this.dir, absFilePath),
             includeSubdirectories,
           }),
         );
       }
     }
-    await Promise.all(listNotesPromises);
+    await Promise.all(refreshNotesPromises);
 
     for (let filePath in this.notes) {
       await this.processNoteMentionsAndMentionedBy(filePath);

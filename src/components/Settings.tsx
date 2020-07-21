@@ -163,9 +163,7 @@ function getRGBA(inputStr: string = ""): RGBA {
   }
 }
 
-interface Props {
-  toggleDrawer: () => void;
-}
+interface Props {}
 export function Settings(props: Props) {
   const classes = useStyles(props);
   const { t } = useTranslation();
@@ -242,11 +240,6 @@ export function Settings(props: Props) {
       <Box
         style={{ display: "flex", flexDirection: "row", alignItems: "center" }}
       >
-        <Hidden smUp implementation="css">
-          <IconButton onClick={props.toggleDrawer}>
-            <MenuIcon></MenuIcon>
-          </IconButton>
-        </Hidden>
         <Typography variant={"h6"}>{t("general/Settings")}</Typography>
       </Box>
       {cloudContainer.loggedIn ? (

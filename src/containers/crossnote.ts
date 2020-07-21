@@ -3,6 +3,7 @@ import { createContainer } from "unstated-next";
 import * as path from "path";
 import Noty from "noty";
 import useInterval from "@use-it/interval";
+import FlexLayout, { Model } from "flexlayout-react";
 import { OneDay } from "../utilities/utils";
 import { useTranslation } from "react-i18next";
 import Crossnote, {
@@ -94,6 +95,48 @@ function useCrossnoteContainer(initialState: InitialState) {
   );
   const [homeSection, setHomeSection] = useState<HomeSection>(
     HomeSection.Unknown,
+  );
+  const [layoutModel, setLayoutModel] = useState<Model>(
+    FlexLayout.Model.fromJson({
+      global: {
+        tabSetEnableMaximize: false,
+      },
+      borders: [],
+      layout: {
+        type: "row",
+        weight: 100,
+        children: [
+          {
+            type: "tabset",
+            weight: 50,
+            selected: 0,
+            children: [
+              {
+                type: "tab",
+                name: "Tab 1",
+                component: "testComponent",
+              },
+              {
+                type: "tab",
+                name: "Tab 2",
+                component: "testComponent",
+              },
+              {
+                type: "tab",
+                name: "Tab 3",
+                component: "testComponent",
+              },
+            ],
+          },
+          {
+            type: "tabset",
+            weight: 50,
+            selected: 0,
+            children: [],
+          },
+        ],
+      },
+    }),
   );
 
   const updateNoteMarkdown = useCallback(
@@ -262,7 +305,6 @@ function useCrossnoteContainer(initialState: InitialState) {
 
   const _setSelectedNotebook = useCallback(
     (notebook: Notebook) => {
-      /*
       localStorage.setItem("selectedNotebookID", notebook._id);
       setSelectedNotebook(notebook);
       if (notebook.gitURL) {
@@ -274,7 +316,6 @@ function useCrossnoteContainer(initialState: InitialState) {
       } else {
         browserHistory.push(`/?notebookID=${notebook._id}`);
       }
-      */
     },
     [setSelectedNotebook],
   );
@@ -566,7 +607,9 @@ function useCrossnoteContainer(initialState: InitialState) {
     }
 
     (async () => {
+      console.log("start listNotebooks");
       const notebooks = await crossnote.listNotebooks();
+      console.log("end listNotebooks");
       let notebook: Notebook = null;
       if (notebooks.length) {
         setNotebooks(notebooks);
@@ -577,6 +620,7 @@ function useCrossnoteContainer(initialState: InitialState) {
         }
         setSelectedNotebook(notebook); // TODO: <= default selected
         setInitialized(true);
+        console.log("selectedNotebook: ", notebook);
       } else {
         /*
         notebook = await crossnote.cloneNotebook({
@@ -607,42 +651,22 @@ Please also check the [Explore](https://crossnote.app/explore) section to discov
     })();
   }, [crossnote, initialized]);
 
-  /*
   useEffect(() => {
-    if (!crossnote) {
+    if (!crossnote || !selectedNotebook) {
       return;
     }
     (async () => {
       setIsLoadingNotebook(true);
-      setNotebookNotes([]);
-      setNotebookDirectories({
-        name: ".",
-        path: ".",
-        children: [],
-      });
-      setHasSummaryMD(false);
-      setNotebookTagNode({
-        name: ".",
-        path: ".",
-        children: [],
-      });
-
-      const notes = await crossnote.listNotes({
-        notebook: selectedNotebook,
+      await selectedNotebook.refreshNotes({
         dir: "./",
         includeSubdirectories: true,
       });
-      setSelectedNote(null);
-      setNotebookNotes(notes);
-      setNotebookDirectories(
-        await crossnote.getNotebookDirectoriesFromNotes(notes),
-      );
-      setHasSummaryMD(await crossnote.hasSummaryMD(selectedNotebook));
-      setNotebookTagNode(crossnote.getNotebookTagNodeFromNotes(notes));
+      console.log("end loading notes: ", selectedNotebook);
       setIsLoadingNotebook(false);
     })();
   }, [crossnote, selectedNotebook]);
 
+  /*
   useEffect(() => {
     if (crossnote && selectedNotebook) {
       setSelectedSection({ type: SelectedSectionType.Notes });
@@ -854,6 +878,8 @@ Please also check the [Explore](https://crossnote.app/explore) section to discov
     setNeedsToRefreshNotes,
     homeSection,
     setHomeSection,
+    layoutModel,
+    setLayoutModel,
   };
 }
 

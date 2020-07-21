@@ -2142,6 +2142,13 @@
     jest-diff "^25.2.1"
     pretty-format "^25.2.1"
 
+"@types/jquery@^3.5.0":
+  version "3.5.0"
+  resolved "https://registry.npm.taobao.org/@types/jquery/download/@types/jquery-3.5.0.tgz#ccb7dfd317d02d4227dd3803c75297d0c10dad68"
+  integrity sha1-zLff0xfQLUIn3TgDx1KX0MENrWg=
+  dependencies:
+    "@types/sizzle" "*"
+
 "@types/json-schema@^7.0.3":
   version "7.0.4"
   resolved "https://registry.npm.taobao.org/@types/json-schema/download/@types/json-schema-7.0.4.tgz#38fd73ddfd9b55abb1e1b2ed578cb55bd7b7d339"
@@ -2451,6 +2458,11 @@
   integrity sha1-8mB00jjgJlnjI84aE9BB7uKA4ZQ=
   dependencies:
     "@types/node" "*"
+
+"@types/sizzle@*":
+  version "2.3.2"
+  resolved "https://registry.npm.taobao.org/@types/sizzle/download/@types/sizzle-2.3.2.tgz#a811b8c18e2babab7d542b3365887ae2e4d9de47"
+  integrity sha1-qBG4wY4rq6t9VCszZYh64uTZ3kc=
 
 "@types/stack-utils@^1.0.1":
   version "1.0.1"
@@ -7161,6 +7173,11 @@ flatten@^1.0.2:
   version "1.0.3"
   resolved "https://registry.npm.taobao.org/flatten/download/flatten-1.0.3.tgz#c1283ac9f27b368abc1e36d1ff7b04501a30356b"
   integrity sha1-wSg6yfJ7Noq8HjbR/3sEUBowNWs=
+
+flexlayout-react@^0.4.3:
+  version "0.4.3"
+  resolved "https://registry.npm.taobao.org/flexlayout-react/download/flexlayout-react-0.4.3.tgz#49d7bd5ecf863d2264612b304c030ec43a36c1aa"
+  integrity sha1-Sde9Xs+GPSJkYSswTAMOxDo2wao=
 
 flowchart.js@^1.13.0:
   version "1.13.0"

@@ -57,6 +57,8 @@ import { NotebookPanel } from "../components/NotebookPanel";
 import { PrivacyPolicy } from "./Privacy";
 import LanguageSelectorDialog from "../components/LanguageSelectorDialog";
 import NotebookTreeView from "../components/NotebookTreeView";
+import { MainPanel } from "../components/MainPanel";
+import { Actions, DockLocation } from "flexlayout-react";
 const is = require("is_js");
 
 const drawerWidth = 200;
@@ -160,14 +162,6 @@ const useStyles = makeStyles((theme: Theme) =>
         display: "none"
       }
       */
-    },
-    mainPanel: {
-      position: "relative",
-      display: "flex",
-      flexDirection: "row",
-      flexGrow: 1,
-      overflow: "auto",
-      backgroundColor: theme.palette.background.default,
     },
     notesPanel: {
       maxWidth: "100%",
@@ -368,8 +362,28 @@ export function Home(props: Props) {
           <ListItem
             button
             onClick={() => {
-              browserHistory.push(`/settings`);
-              setDrawerOpen(false);
+              // browserHistory.push(`/settings`);
+              // setDrawerOpen(false);
+              if (
+                crossnoteContainer.layoutModel &&
+                crossnoteContainer.layoutModel.getActiveTabset()
+              ) {
+                crossnoteContainer.layoutModel.doAction(
+                  Actions.addNode(
+                    {
+                      type: "tab",
+                      name: t("general/Settings"),
+                      component: "Settings",
+                      config: {
+                        data: "This is test data",
+                      },
+                    },
+                    crossnoteContainer.layoutModel.getActiveTabset().getId(),
+                    DockLocation.CENTER,
+                    0,
+                  ),
+                );
+              }
             }}
           >
             {cloudContainer.viewer ? (
@@ -451,6 +465,7 @@ export function Home(props: Props) {
       <Editor note={crossnoteContainer.selectedNote}></Editor>
     </Card>
   );
+  */
 
   const explorePanel = props.section === HomeSection.Explore && (
     <Box className={clsx(classes.notesPanel)}>
@@ -468,7 +483,6 @@ export function Home(props: Props) {
       <NotebookPanel notebook={cloudContainer.selectedNotebook}></NotebookPanel>
     </Card>
   );
-  */
 
   return (
     <Box className={clsx(classes.page)}>
@@ -502,8 +516,11 @@ export function Home(props: Props) {
           </Drawer>
         </Hidden>
       </nav>
-      <Box className={clsx(classes.mainPanel)} id="main-panel">
-        {/*props.section === HomeSection.Notebooks &&
+      {/* <Box className={clsx(classes.mainPanel)} id="main-panel"> */}
+      {/*<Box className={clsx(classes.notesPanel)} id={"notes-panel"}>
+          <NotesPanel toggleDrawer={toggleDrawer}></NotesPanel>
+          </Box>*/}
+      {/*props.section === HomeSection.Notebooks &&
           (isMobile ? (
             <React.Fragment>
               {notesPanel}
@@ -519,7 +536,8 @@ export function Home(props: Props) {
               {notesPanel}
               {editorPanel}
             </SplitPane>
-          ))}
+          ))}*/}
+      {/*
         {props.section === HomeSection.Explore &&
           (isMobile ? (
             <React.Fragment>
@@ -536,7 +554,7 @@ export function Home(props: Props) {
               {explorePanel}
               {notebookPanel}
             </SplitPane>
-          ))*/}
+          ))}
         {props.section === HomeSection.Settings && (
           <Settings toggleDrawer={toggleDrawer}></Settings>
         )}
@@ -546,7 +564,9 @@ export function Home(props: Props) {
         {props.section === HomeSection.Privacy && (
           <PrivacyPolicy toggleDrawer={toggleDrawer}></PrivacyPolicy>
         )}
-      </Box>
+        */}
+      {/* </Box> */}
+      <MainPanel></MainPanel>
       <AddNotebookDialog
         open={addNotebookDialogOpen}
         onClose={() => setAddNotebookDialogOpen(false)}

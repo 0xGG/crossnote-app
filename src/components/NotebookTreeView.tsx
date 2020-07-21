@@ -91,6 +91,7 @@ export default function NotebookTreeView(props: Props) {
         element.tagName &&
         element.tagName.toUpperCase().match(/^(SVG|PATH|BUTTON)$/)
       ) {
+        console.log("set selected notebook");
         crossnoteContainer.setSelectedNotebook(props.notebook);
         setExpanded(nodes);
       }
@@ -141,12 +142,7 @@ export default function NotebookTreeView(props: Props) {
         label={
           <Box
             onClick={() => {
-              /*
               crossnoteContainer.setSelectedNotebook(props.notebook);
-              crossnoteContainer.setSelectedSection({
-                type: SelectedSectionType.Notes,
-              });
-              */
             }}
             className={clsx(classes.treeItemLabelRoot)}
           >
@@ -242,7 +238,7 @@ export default function NotebookTreeView(props: Props) {
               className={clsx(classes.treeItemLabelRoot)}
             >
               <span role="img" aria-label="directories">
-                {"📁"}
+                {"📔"}
               </span>
               <Typography className={clsx(classes.treeItemLabelText)}>
                 {t("general/notes")}

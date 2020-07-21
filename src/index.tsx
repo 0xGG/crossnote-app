@@ -20,6 +20,10 @@ import { NotificationsContainer } from "./containers/notifications";
 import { Provider } from "urql";
 import { GraphQLClient } from "./utilities/client";
 
+// Hack for GoldenLayout
+window["React"] = React;
+window["ReactDOM"] = ReactDOM;
+
 try {
   const crossnote = new Crossnote();
   ReactDOM.render(
