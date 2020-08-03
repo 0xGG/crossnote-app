@@ -3,7 +3,12 @@ import { createContainer } from "unstated-next";
 import * as path from "path";
 import Noty from "noty";
 import useInterval from "@use-it/interval";
-import FlexLayout, { Model } from "flexlayout-react";
+import FlexLayout, {
+  Model,
+  Actions,
+  DockLocation,
+  TabSetNode,
+} from "flexlayout-react";
 import { OneDay } from "../utilities/utils";
 import { useTranslation } from "react-i18next";
 import Crossnote, {
@@ -16,6 +21,7 @@ import moment from "moment";
 import { pfs } from "../lib/fs";
 import { sanitizeTag } from "../utilities/markdown";
 import { Notebook, Note } from "../lib/notebook";
+import { TabNode } from "../lib/tabNode";
 
 export enum EditorMode {
   VickyMD = "VickyMD",
@@ -41,17 +47,6 @@ export enum SelectedSectionType {
 export interface SelectedSection {
   type: SelectedSectionType;
   path?: string;
-}
-
-export enum OrderBy {
-  CreatedAt = "CreatedAt",
-  ModifiedAt = "ModifiedAt",
-  Title = "Title",
-}
-
-export enum OrderDirection {
-  ASC = "ASC",
-  DESC = "DESC",
 }
 
 export enum HomeSection {
@@ -99,7 +94,10 @@ function useCrossnoteContainer(initialState: InitialState) {
   const [layoutModel, setLayoutModel] = useState<Model>(
     FlexLayout.Model.fromJson({
       global: {
+        splitterSize: 4,
         tabSetEnableMaximize: false,
+        tabSetHeaderHeight: 24,
+        tabSetTabStripHeight: 24,
       },
       borders: [],
       layout: {
@@ -110,33 +108,49 @@ function useCrossnoteContainer(initialState: InitialState) {
             type: "tabset",
             weight: 50,
             selected: 0,
-            children: [
-              {
-                type: "tab",
-                name: "Tab 1",
-                component: "testComponent",
-              },
-              {
-                type: "tab",
-                name: "Tab 2",
-                component: "testComponent",
-              },
-              {
-                type: "tab",
-                name: "Tab 3",
-                component: "testComponent",
-              },
-            ],
-          },
-          {
-            type: "tabset",
-            weight: 50,
-            selected: 0,
             children: [],
           },
         ],
       },
     }),
+  );
+
+  const addTabNode = useCallback(
+    (tabNode: TabNode) => {
+      if (!layoutModel) {
+        return;
+      }
+      let activeTabset: TabSetNode = layoutModel.getActiveTabset();
+      if (!activeTabset) {
+        const modelChildren = layoutModel.getRoot().getChildren();
+        let needsToCreateNewTabSet = true;
+        if (modelChildren.length) {
+          modelChildren.forEach((child) => {
+            if (child.getType() === "tabset") {
+              needsToCreateNewTabSet = false;
+              layoutModel.doAction(Actions.setActiveTabset(child.getId()));
+            }
+          });
+        }
+
+        if (needsToCreateNewTabSet) {
+          activeTabset = new FlexLayout.TabSetNode();
+          (layoutModel.getRoot() as any)._addChild(activeTabset);
+          layoutModel.doAction(Actions.setActiveTabset(activeTabset.getId()));
+        }
+      }
+
+      if (tabNode.config.singleton) {
+        const node = layoutModel.getNodeById(tabNode.id);
+        if (node) {
+          return layoutModel.doAction(Actions.selectTab(node.getId()));
+        }
+      }
+      layoutModel.doAction(
+        Actions.addNode(tabNode, activeTabset.getId(), DockLocation.CENTER, 0),
+      );
+    },
+    [layoutModel],
   );
 
   const updateNoteMarkdown = useCallback(
@@ -880,6 +894,7 @@ Please also check the [Explore](https://crossnote.app/explore) section to discov
     setHomeSection,
     layoutModel,
     setLayoutModel,
+    addTabNode,
   };
 }
 

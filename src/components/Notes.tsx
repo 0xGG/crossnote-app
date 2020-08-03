@@ -33,6 +33,7 @@ const useStyles = makeStyles((theme: Theme) =>
 );
 
 interface Props {
+  notes: Note[];
   searchValue: string;
 }
 
@@ -40,10 +41,9 @@ export default function Notes(props: Props) {
   const classes = useStyles(props);
   const { t } = useTranslation();
   const crossnoteContainer = CrossnoteContainer.useContainer();
-  const [notes, setNotes] = useState<Note[]>([]);
   const [notesListElement, setNotesListElement] = useState<HTMLElement>(null);
   const [forceUpdate, setForceUpdate] = useState<number>(Date.now());
-  const searchValue = props.searchValue;
+  const [notes, setNotes] = useState<Note[]>([]);
 
   /*
   const pullNotebook = useCallback(() => {
@@ -86,11 +86,12 @@ export default function Notes(props: Props) {
   }, [crossnoteContainer.selectedNotebook, t]);
   */
 
-  /*
   useEffect(() => {
+    const notes = props.notes;
+    const searchValue = props.searchValue;
     const pinned: Note[] = [];
     const unpinned: Note[] = [];
-    crossnoteContainer.notes.forEach((note) => {
+    notes.forEach((note) => {
       if (searchValue.trim().length) {
         const regexp = new RegExp(
           "(" +
@@ -120,8 +121,7 @@ export default function Notes(props: Props) {
     });
 
     setNotes([...pinned, ...unpinned]);
-  }, [crossnoteContainer.notes, searchValue]);
-  */
+  }, [props.notes, props.searchValue]);
 
   /*
   useEffect(() => {

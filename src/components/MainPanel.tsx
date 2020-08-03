@@ -13,6 +13,9 @@ import FlexLayout, { Model, TabNode, Actions } from "flexlayout-react";
 import "flexlayout-react/style/light.css";
 import { CrossnoteContainer } from "../containers/crossnote";
 import { Settings } from "./Settings";
+import { TabNodeComponent, TabNodeConfig } from "../lib/tabNode";
+import NotesPanel from "./NotesPanel";
+import { PrivacyPolicy } from "../pages/Privacy";
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -27,43 +30,35 @@ const useStyles = makeStyles((theme: Theme) =>
   }),
 );
 
-interface TProps {
-  label: string;
+interface Props {
+  toggleDrawer: () => void;
 }
-function TestComponent(props: TProps) {
-  return <h1>{props.label}</h1>;
-}
-export function MainPanel() {
+
+export function MainPanel(props: Props) {
   const classes = useStyles();
   const container = useRef<HTMLDivElement>(null);
   const crossnoteContainer = CrossnoteContainer.useContainer();
 
   const factory = useCallback((node: TabNode) => {
+    const config: TabNodeConfig = node.getConfig();
     console.log("render component: ", node.getName(), node.getConfig());
-    const component = node.getComponent();
-    if (component === "testComponent") {
-      return <TestComponent label={node.getName()}></TestComponent>;
-    } else if (component === "Settings") {
+    const component: TabNodeComponent = node.getComponent() as TabNodeComponent;
+    if (component === "Settings") {
       return <Settings></Settings>;
+    } else if (component === "Notes") {
+      return (
+        <NotesPanel
+          toggleDrawer={props.toggleDrawer}
+          notebook={config.notebook}
+        ></NotesPanel>
+      );
+    } else if (component === "Privacy") {
+      return <PrivacyPolicy toggleDrawer={props.toggleDrawer}></PrivacyPolicy>;
     }
   }, []);
 
   useEffect(() => {
     console.log("render MainPanel");
-    if (container && crossnoteContainer.layoutModel) {
-      console.log(
-        "activeTabset: ",
-        crossnoteContainer.layoutModel.getActiveTabset(),
-      );
-      let nodeId = "";
-      crossnoteContainer.layoutModel.visitNodes((node, level) => {
-        nodeId = node.getId();
-      });
-      if (nodeId) {
-        crossnoteContainer.layoutModel.doAction(Actions.selectTab(nodeId));
-      } else {
-      }
-    }
   }, [container, crossnoteContainer.layoutModel]);
 
   return (

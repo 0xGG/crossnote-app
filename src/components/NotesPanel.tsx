@@ -9,8 +9,6 @@ import clsx from "clsx";
 import {
   CrossnoteContainer,
   SelectedSectionType,
-  OrderBy,
-  OrderDirection,
 } from "../containers/crossnote";
 import {
   Box,
@@ -43,6 +41,8 @@ import {
 import { useTranslation } from "react-i18next";
 import ConfigureNotebookDialog from "./ConfigureNotebookDialog";
 import Notes from "./Notes";
+import { OrderBy, OrderDirection } from "../lib/order";
+import { Notebook, Note } from "../lib/notebook";
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -120,6 +120,9 @@ const useStyles = makeStyles((theme: Theme) =>
 
 interface Props {
   toggleDrawer: () => void;
+  notebook: Notebook;
+  referredNote?: Note;
+  initialSearchValue?: string;
 }
 
 export default function NotesPanel(props: Props) {
@@ -127,29 +130,19 @@ export default function NotesPanel(props: Props) {
   const { t } = useTranslation();
   const [sortMenuAnchorEl, setSortMenuAnchorEl] = useState<HTMLElement>(null);
   const [isCreatingNote, setIsCreatingNote] = useState<boolean>(false);
-  const [directoryActionsAnchorEl, setDirectoryActionsAnchorEl] = useState<
-    HTMLElement
-  >(null);
-  const [tagActionsAnchorEl, setTagActionsAnchorEl] = useState<HTMLElement>(
-    null,
+  const [orderBy, setOrderBy] = useState<OrderBy>(OrderBy.ModifiedAt);
+  const [orderDirection, setOrderDirection] = useState<OrderDirection>(
+    OrderDirection.DESC,
   );
-  const [renameDirectoryDialogOpen, setRenameDirectoryDialogOpen] = useState<
-    boolean
-  >(false);
-  const [deleteDirectoryDialogOpen, setDeleteDirectoryDialogOpen] = useState<
-    boolean
-  >(false);
-  const [renameTagDialogOpen, setRenameTagDialogOpen] = useState<boolean>(
-    false,
-  );
-  const [deleteTagDialogOpen, setDeleteTagDialogOpen] = useState<boolean>(
-    false,
-  );
+  const [rawNotes, setRawNotes] = useState<Note[]>([]);
+  const [notes, setNotes] = useState<Note[]>([]);
 
   const crossnoteContainer = CrossnoteContainer.useContainer();
 
   // Search
-  const [searchValue, setSearchValue] = useState<string>("");
+  const [searchValue, setSearchValue] = useState<string>(
+    props.initialSearchValue || "",
+  );
   const [searchValueInputTimeout, setSearchValueInputTimeout] = useState<
     NodeJS.Timeout
   >(null);
@@ -192,8 +185,52 @@ export default function NotesPanel(props: Props) {
     setFinalSearchValue("");
   }, [crossnoteContainer.selectedNotebook]);
 
-  return <Box className={clsx(classes.notesPanel)}></Box>;
-  /*
+  useEffect(() => {
+    const notes = [];
+    const notesMap = props.referredNote
+      ? props.referredNote.mentionedBy
+      : props.notebook.notes;
+
+    for (let key in notesMap) {
+      notes.push(notesMap[key]);
+    }
+    setRawNotes(notes);
+  }, [props.notebook, props.referredNote]);
+
+  useEffect(() => {
+    const notes = rawNotes;
+    if (orderBy === OrderBy.ModifiedAt) {
+      if (orderDirection === OrderDirection.DESC) {
+        notes.sort(
+          (a, b) =>
+            b.config.modifiedAt.getTime() - a.config.modifiedAt.getTime(),
+        );
+      } else {
+        notes.sort(
+          (a, b) =>
+            a.config.modifiedAt.getTime() - b.config.modifiedAt.getTime(),
+        );
+      }
+    } else if (orderBy === OrderBy.CreatedAt) {
+      if (orderDirection === OrderDirection.DESC) {
+        notes.sort(
+          (a, b) => b.config.createdAt.getTime() - a.config.createdAt.getTime(),
+        );
+      } else {
+        notes.sort(
+          (a, b) => a.config.createdAt.getTime() - b.config.createdAt.getTime(),
+        );
+      }
+    } else if (orderBy === OrderBy.Title) {
+      if (orderDirection === OrderDirection.DESC) {
+        notes.sort((a, b) => b.title.localeCompare(a.title));
+      } else {
+        notes.sort((a, b) => a.title.localeCompare(b.title));
+      }
+    }
+    setNotes([...notes]);
+  }, [rawNotes, orderBy, orderDirection]);
+
   return (
     <Box className={clsx(classes.notesPanel)}>
       <Card className={clsx(classes.topPanel)}>
@@ -233,7 +270,7 @@ export default function NotesPanel(props: Props) {
           className={clsx(classes.row)}
           style={{ justifyContent: "space-between" }}
         >
-          {crossnoteContainer.selectedSection.type ===
+          {/*crossnoteContainer.selectedSection.type ===
           SelectedSectionType.Notes ? (
             <Box className={clsx(classes.row)}>
               <span role="img" aria-label="notes">
@@ -338,7 +375,7 @@ export default function NotesPanel(props: Props) {
                 <ChevronDown></ChevronDown>
               </Box>
             )
-          )}
+              )*/}
 
           <Box>
             <IconButton
@@ -355,12 +392,9 @@ export default function NotesPanel(props: Props) {
               <List>
                 <ListItem
                   button
-                  onClick={() =>
-                    crossnoteContainer.setOrderBy(OrderBy.ModifiedAt)
-                  }
+                  onClick={() => setOrderBy(OrderBy.ModifiedAt)}
                   className={clsx(
-                    crossnoteContainer.orderBy === OrderBy.ModifiedAt &&
-                      classes.sortSelected,
+                    orderBy === OrderBy.ModifiedAt && classes.sortSelected,
                   )}
                 >
                   <ListItemText
@@ -369,12 +403,9 @@ export default function NotesPanel(props: Props) {
                 </ListItem>
                 <ListItem
                   button
-                  onClick={() =>
-                    crossnoteContainer.setOrderBy(OrderBy.CreatedAt)
-                  }
+                  onClick={() => setOrderBy(OrderBy.CreatedAt)}
                   className={clsx(
-                    crossnoteContainer.orderBy === OrderBy.CreatedAt &&
-                      classes.sortSelected,
+                    orderBy === OrderBy.CreatedAt && classes.sortSelected,
                   )}
                 >
                   <ListItemText
@@ -383,10 +414,9 @@ export default function NotesPanel(props: Props) {
                 </ListItem>
                 <ListItem
                   button
-                  onClick={() => crossnoteContainer.setOrderBy(OrderBy.Title)}
+                  onClick={() => setOrderBy(OrderBy.Title)}
                   className={clsx(
-                    crossnoteContainer.orderBy === OrderBy.Title &&
-                      classes.sortSelected,
+                    orderBy === OrderBy.Title && classes.sortSelected,
                   )}
                 >
                   <ListItemText primary={t("general/title")}></ListItemText>
@@ -394,11 +424,9 @@ export default function NotesPanel(props: Props) {
                 <Divider></Divider>
                 <ListItem
                   button
-                  onClick={() =>
-                    crossnoteContainer.setOrderDirection(OrderDirection.DESC)
-                  }
+                  onClick={() => setOrderDirection(OrderDirection.DESC)}
                   className={clsx(
-                    crossnoteContainer.orderDirection === OrderDirection.DESC &&
+                    orderDirection === OrderDirection.DESC &&
                       classes.sortSelected,
                   )}
                 >
@@ -409,11 +437,9 @@ export default function NotesPanel(props: Props) {
                 </ListItem>
                 <ListItem
                   button
-                  onClick={() =>
-                    crossnoteContainer.setOrderDirection(OrderDirection.ASC)
-                  }
+                  onClick={() => setOrderDirection(OrderDirection.ASC)}
                   className={clsx(
-                    crossnoteContainer.orderDirection === OrderDirection.ASC &&
+                    orderDirection === OrderDirection.ASC &&
                       classes.sortSelected,
                   )}
                 >
@@ -434,103 +460,11 @@ export default function NotesPanel(props: Props) {
         notebook={crossnoteContainer.selectedNotebook}
       ></ConfigureNotebookDialog>
 
-      <Popover
-        open={Boolean(directoryActionsAnchorEl)}
-        anchorEl={directoryActionsAnchorEl}
-        keepMounted
-        onClose={() => setDirectoryActionsAnchorEl(null)}
-      >
-        <List>
-          <ListItem
-            button={true}
-            onClick={() => {
-              setDirectoryActionsAnchorEl(null);
-              setRenameDirectoryDialogOpen(true);
-            }}
-          >
-            <ListItemIcon>
-              <Pencil></Pencil>
-            </ListItemIcon>
-            <ListItemText>{t("general/rename-directory")}</ListItemText>
-          </ListItem>
-          <ListItem
-            button={true}
-            onClick={() => {
-              setDirectoryActionsAnchorEl(null);
-              setDeleteDirectoryDialogOpen(true);
-            }}
-          >
-            <ListItemIcon>
-              <TrashCan></TrashCan>
-            </ListItemIcon>
-            <ListItemText>{t("general/delete-directory")}</ListItemText>
-          </ListItem>
-        </List>
-      </Popover>
-
-      <Popover
-        open={Boolean(tagActionsAnchorEl)}
-        anchorEl={tagActionsAnchorEl}
-        keepMounted
-        onClose={() => setTagActionsAnchorEl(null)}
-      >
-        <List>
-          <ListItem
-            button={true}
-            onClick={() => {
-              setTagActionsAnchorEl(null);
-              setRenameTagDialogOpen(true);
-            }}
-          >
-            <ListItemIcon>
-              <Pencil></Pencil>
-            </ListItemIcon>
-            <ListItemText>{t("general/rename-tag")}</ListItemText>
-          </ListItem>
-          <ListItem
-            button={true}
-            onClick={() => {
-              setTagActionsAnchorEl(null);
-              setDeleteTagDialogOpen(true);
-            }}
-          >
-            <ListItemIcon>
-              <TrashCan></TrashCan>
-            </ListItemIcon>
-            <ListItemText>{t("general/delete-tag")}</ListItemText>
-          </ListItem>
-        </List>
-      </Popover>
-
-      <RenameDirectoryDialog
-        open={renameDirectoryDialogOpen}
-        onClose={() => setRenameDirectoryDialogOpen(false)}
-        directory={crossnoteContainer.selectedSection.path}
-      ></RenameDirectoryDialog>
-
-      <DeleteDirectoryDialog
-        open={deleteDirectoryDialogOpen}
-        onClose={() => setDeleteDirectoryDialogOpen(false)}
-        directory={crossnoteContainer.selectedSection.path}
-      ></DeleteDirectoryDialog>
-
-      <RenameTagDialog
-        open={renameTagDialogOpen}
-        onClose={() => setRenameTagDialogOpen(false)}
-        tag={crossnoteContainer.selectedSection.path}
-      ></RenameTagDialog>
-
-      <DeleteTagDialog
-        open={deleteTagDialogOpen}
-        onClose={() => setDeleteTagDialogOpen(false)}
-        tag={crossnoteContainer.selectedSection.path}
-      ></DeleteTagDialog>
-
       {crossnoteContainer.isLoadingNotebook && (
         <CircularProgress className={clsx(classes.loading)}></CircularProgress>
       )}
 
-      <Notes searchValue={finalSearchValue}></Notes>
+      <Notes notes={notes} searchValue={finalSearchValue}></Notes>
     </Box>
-  );*/
+  );
 }

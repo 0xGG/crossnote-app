@@ -342,6 +342,7 @@ export function Home(props: Props) {
       <Box className={clsx(classes.controllersSection)}>
         <Divider></Divider>
         <List disablePadding={true}>
+          {/*
           <ListItem
             button
             onClick={() => {
@@ -359,31 +360,21 @@ export function Home(props: Props) {
             </ListItemIcon>
             <ListItemText primary={t("general/Explore")}></ListItemText>
           </ListItem>
+          */}
           <ListItem
             button
             onClick={() => {
               // browserHistory.push(`/settings`);
               // setDrawerOpen(false);
-              if (
-                crossnoteContainer.layoutModel &&
-                crossnoteContainer.layoutModel.getActiveTabset()
-              ) {
-                crossnoteContainer.layoutModel.doAction(
-                  Actions.addNode(
-                    {
-                      type: "tab",
-                      name: t("general/Settings"),
-                      component: "Settings",
-                      config: {
-                        data: "This is test data",
-                      },
-                    },
-                    crossnoteContainer.layoutModel.getActiveTabset().getId(),
-                    DockLocation.CENTER,
-                    0,
-                  ),
-                );
-              }
+              crossnoteContainer.addTabNode({
+                type: "tab",
+                component: "Settings",
+                name: t("general/Settings"),
+                id: "Settings",
+                config: {
+                  singleton: true,
+                },
+              });
             }}
           >
             {cloudContainer.viewer ? (
@@ -566,7 +557,7 @@ export function Home(props: Props) {
         )}
         */}
       {/* </Box> */}
-      <MainPanel></MainPanel>
+      <MainPanel toggleDrawer={toggleDrawer}></MainPanel>
       <AddNotebookDialog
         open={addNotebookDialogOpen}
         onClose={() => setAddNotebookDialogOpen(false)}

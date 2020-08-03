@@ -7174,10 +7174,10 @@ flatten@^1.0.2:
   resolved "https://registry.npm.taobao.org/flatten/download/flatten-1.0.3.tgz#c1283ac9f27b368abc1e36d1ff7b04501a30356b"
   integrity sha1-wSg6yfJ7Noq8HjbR/3sEUBowNWs=
 
-flexlayout-react@^0.4.3:
-  version "0.4.3"
-  resolved "https://registry.npm.taobao.org/flexlayout-react/download/flexlayout-react-0.4.3.tgz#49d7bd5ecf863d2264612b304c030ec43a36c1aa"
-  integrity sha1-Sde9Xs+GPSJkYSswTAMOxDo2wao=
+flexlayout-react@^0.4.4:
+  version "0.4.4"
+  resolved "https://registry.npm.taobao.org/flexlayout-react/download/flexlayout-react-0.4.4.tgz#090e5720efb62e324910df92b0b7e22352e85407"
+  integrity sha1-CQ5XIO+2LjJJEN+SsLfiI1LoVAc=
 
 flowchart.js@^1.13.0:
   version "1.13.0"

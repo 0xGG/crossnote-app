@@ -41,6 +41,7 @@ import GitCommit from "../_git_commit";
 import { themeManager } from "../themes/manager";
 import { KeyMap } from "../lib/keymap";
 import { browserHistory } from "../utilities/history";
+import { CrossnoteContainer } from "../containers/crossnote";
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -176,6 +177,7 @@ export function Settings(props: Props) {
   const displayColorPicker = Boolean(colorPickerAnchorElement);
   const settingsContainer = SettingsContainer.useContainer();
   const cloudContainer = CloudContainer.useContainer();
+  const crossnoteContainer = CrossnoteContainer.useContainer();
   const [avatar, setAvatar] = useState<string>(
     (cloudContainer.viewer && cloudContainer.viewer.avatar) || "",
   );
@@ -569,11 +571,19 @@ export function Settings(props: Props) {
         </Link>
         <br></br>
         <Link
-          href={`/privacy`}
           onClick={(event: any) => {
             event.preventDefault();
-            browserHistory.push(`/privacy`);
+            crossnoteContainer.addTabNode({
+              type: "tab",
+              name: "🔏 Privacy policy",
+              component: "Privacy",
+              id: "Privacy",
+              config: {
+                singleton: true,
+              },
+            });
           }}
+          href=""
         >
           <Typography variant={"caption"}>{"🔏 Privacy policy"}</Typography>
         </Link>

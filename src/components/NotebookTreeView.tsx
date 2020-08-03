@@ -171,11 +171,16 @@ export default function NotebookTreeView(props: Props) {
           label={
             <Box
               onClick={() => {
-                /*
-                crossnoteContainer.setSelectedSection({
-                  type: SelectedSectionType.Today,
+                crossnoteContainer.addTabNode({
+                  type: "tab",
+                  component: "Today",
+                  id: "Today",
+                  name: t("general/today"),
+                  config: {
+                    singleton: true,
+                    notebook: props.notebook,
+                  },
                 });
-                */
               }}
               className={clsx(classes.treeItemLabelRoot)}
             >
@@ -200,11 +205,16 @@ export default function NotebookTreeView(props: Props) {
           label={
             <Box
               onClick={() => {
-                /*
-                crossnoteContainer.setSelectedSection({
-                  type: SelectedSectionType.Todo,
+                crossnoteContainer.addTabNode({
+                  type: "tab",
+                  component: "Todo",
+                  id: "Todo",
+                  name: t("general/todo"),
+                  config: {
+                    singleton: true,
+                    notebook: props.notebook,
+                  },
                 });
-                */
               }}
               className={clsx(classes.treeItemLabelRoot)}
             >
@@ -229,11 +239,16 @@ export default function NotebookTreeView(props: Props) {
           label={
             <Box
               onClick={() => {
-                /*
-                crossnoteContainer.setSelectedSection({
-                  type: SelectedSectionType.Notes,
+                crossnoteContainer.addTabNode({
+                  type: "tab",
+                  component: "Notes",
+                  id: "Notes",
+                  name: "📔 " + props.notebook.name,
+                  config: {
+                    singleton: true,
+                    notebook: props.notebook,
+                  },
                 });
-                */
               }}
               className={clsx(classes.treeItemLabelRoot)}
             >
@@ -258,11 +273,16 @@ export default function NotebookTreeView(props: Props) {
           label={
             <Box
               onClick={() => {
-                /*
-                crossnoteContainer.setSelectedSection({
-                  type: SelectedSectionType.Conflicted,
+                crossnoteContainer.addTabNode({
+                  type: "tab",
+                  component: "Conflicted",
+                  id: "Conflicted",
+                  name: t("general/conflicted"),
+                  config: {
+                    singleton: true,
+                    notebook: props.notebook,
+                  },
                 });
-                */
               }}
               className={clsx(classes.treeItemLabelRoot)}
             >

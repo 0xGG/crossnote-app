@@ -163,19 +163,10 @@ export default function NoteCard(props: Props) {
   ]);*/
 
   return (
-    <ButtonBase></ButtonBase>
-  ); /*(
     <ButtonBase
-      className={clsx(
-        classes.noteCard,
-        crossnoteContainer.selectedNote &&
-          crossnoteContainer.selectedNote.filePath === note.filePath
-          ? classes.selected
-          : classes.unselected,
-      )}
+      className={clsx(classes.noteCard)}
       onClick={() => {
-        crossnoteContainer.setSelectedNote(note);
-        crossnoteContainer.setDisplayMobileEditor(true);
+        // crossnoteContainer.setDisplayMobileEditor(true);
       }}
     >
       <Box className={clsx(classes.leftPanel)}>
@@ -244,5 +235,5 @@ export default function NoteCard(props: Props) {
         </Typography>
       </Box>
     </ButtonBase>
-  );*/
+  );
 }
