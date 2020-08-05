@@ -23,13 +23,6 @@ import { sanitizeTag } from "../utilities/markdown";
 import { Notebook, Note } from "../lib/notebook";
 import { TabNode } from "../lib/tabNode";
 
-export enum EditorMode {
-  VickyMD = "VickyMD",
-  SourceCode = "SourceCode",
-  Preview = "Preview",
-  SplitView = "SplitView",
-}
-
 export enum SelectedSectionType {
   Notes = "Notes",
   Today = "Today",
@@ -115,6 +108,13 @@ function useCrossnoteContainer(initialState: InitialState) {
     }),
   );
 
+  const getNotebookAtPath = useCallback(
+    (notebookPath: string) => {
+      return notebooks.find((x) => x.dir === notebookPath);
+    },
+    [notebooks],
+  );
+
   const addTabNode = useCallback(
     (tabNode: TabNode) => {
       if (!layoutModel) {
@@ -154,36 +154,13 @@ function useCrossnoteContainer(initialState: InitialState) {
   );
 
   const updateNoteMarkdown = useCallback(
-    (
-      note: Note,
-      markdown: string,
-      password?: string,
-      callback?: (status: string) => void,
-    ) => {
-      /*
-      crossnote
-        .writeNote(
-          note.notebook,
-          note.filePath,
-          markdown,
-          note.config,
-          password,
-        )
-        .then((noteConfig) => {
-          note.config = noteConfig;
-          note.markdown = markdown;
-          if (callback) {
-            crossnote.getStatus(note.notebook, note.filePath).then((status) => {
-              callback(status);
-            });
-          }
-          // QUESTION: Seems like every time cloudContainer refetches the viewer, the note card that got modified will be refreshed. I don't know why
-          // QUESTION: Don't disable it actually if cloudContainer has no token set and no viewer were fetched.
-          setNeedsToRefreshNotes(true);
-        });
-        */
+    async (note: Note, markdown: string) => {
+      const notebook = getNotebookAtPath(note.notebookPath);
+      if (notebook) {
+        await notebook.writeNote(note.filePath, markdown, note.config);
+      }
     },
-    [crossnote],
+    [getNotebookAtPath],
   );
 
   const deleteNote = useCallback(
@@ -202,22 +179,14 @@ function useCrossnoteContainer(initialState: InitialState) {
 
   const changeNoteFilePath = useCallback(
     async (note: Note, newFilePath: string) => {
-      /*
-      await crossnote.changeNoteFilePath(selectedNotebook, note, newFilePath);
-      const newNotes = notebookNotes.map((n) => {
-        if (n.filePath === note.filePath) {
-          n.filePath = newFilePath;
-          n.config.modifiedAt = new Date(); // TODO: Should we update this?
-          n.title = path.basename(n.filePath).replace(/\.md$/, "");
-          return n;
-        } else {
-          return n;
-        }
-      });
-      setNotebookNotes(newNotes);
-      */
+      const notebook = notebooks.find((x) => x.dir === note.notebookPath);
+      if (notebook) {
+        return await notebook.changeNoteFilePath(note.filePath, newFilePath);
+      } else {
+        throw new Error("Notebook " + note.notebookPath + " not found");
+      }
     },
-    [selectedNotebook, crossnote],
+    [notebooks],
   );
 
   const createNewNote = useCallback(
@@ -895,6 +864,7 @@ Please also check the [Explore](https://crossnote.app/explore) section to discov
     layoutModel,
     setLayoutModel,
     addTabNode,
+    getNotebookAtPath,
   };
 }
 

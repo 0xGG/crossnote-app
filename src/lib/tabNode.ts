@@ -7,7 +7,8 @@ export type TabNodeComponent =
   | "Today"
   | "Todo"
   | "Conflicted"
-  | "Privacy";
+  | "Privacy"
+  | "Graph";
 
 export interface TabNodeConfig {
   singleton: boolean;

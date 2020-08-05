@@ -6,10 +6,7 @@ import {
   Theme,
 } from "@material-ui/core/styles";
 import clsx from "clsx";
-import {
-  CrossnoteContainer,
-  SelectedSectionType,
-} from "../containers/crossnote";
+import { CrossnoteContainer } from "../containers/crossnote";
 import {
   Box,
   InputBase,
@@ -119,7 +116,6 @@ const useStyles = makeStyles((theme: Theme) =>
 );
 
 interface Props {
-  toggleDrawer: () => void;
   notebook: Notebook;
   referredNote?: Note;
   initialSearchValue?: string;
@@ -235,11 +231,17 @@ export default function NotesPanel(props: Props) {
     <Box className={clsx(classes.notesPanel)}>
       <Card className={clsx(classes.topPanel)}>
         <Box className={clsx(classes.row)}>
+          {/*
           <Hidden smUp implementation="css">
-            <IconButton onClick={props.toggleDrawer}>
+            <IconButton
+              onClick={() => {
+                console.log("Toggle drawer");
+              }}
+            >
               <MenuIcon></MenuIcon>
             </IconButton>
           </Hidden>
+            */}
           <div className={classes.search}>
             <div className={classes.searchIcon}>
               <Magnify />
@@ -265,194 +267,73 @@ export default function NotesPanel(props: Props) {
               <FileEditOutline></FileEditOutline>
             </Tooltip>
           </IconButton>
-        </Box>
-        <Box
-          className={clsx(classes.row)}
-          style={{ justifyContent: "space-between" }}
-        >
-          {/*crossnoteContainer.selectedSection.type ===
-          SelectedSectionType.Notes ? (
-            <Box className={clsx(classes.row)}>
-              <span role="img" aria-label="notes">
-                {"📒"}
-              </span>
-              <Typography className={clsx(classes.sectionName)}>
-                {crossnoteContainer.selectedNotebook &&
-                  crossnoteContainer.selectedNotebook.name}
-              </Typography>
-            </Box>
-          ) : crossnoteContainer.selectedSection.type ===
-            SelectedSectionType.Today ? (
-            <Box className={clsx(classes.row)}>
-              <span role="img" aria-label="today-notes">
-                {"📅"}
-              </span>
-              <Typography className={clsx(classes.sectionName)}>
-                {t("general/today")}
-              </Typography>
-            </Box>
-          ) : crossnoteContainer.selectedSection.type ===
-            SelectedSectionType.Todo ? (
-            <Box className={clsx(classes.row)}>
-              <span role="img" aria-label="todo-notes">
-                {"☑️"}
-              </span>
-              <Typography className={clsx(classes.sectionName)}>
-                {t("general/todo")}
-              </Typography>
-            </Box>
-          ) : crossnoteContainer.selectedSection.type ===
-            SelectedSectionType.Tagged ? (
-            <Box className={clsx(classes.row)}>
-              <span role="img" aria-label="tagged-notes">
-                {"🏷️"}
-              </span>
-              <Typography className={clsx(classes.sectionName)}>
-                {t("general/tagged")}
-              </Typography>
-            </Box>
-          ) : crossnoteContainer.selectedSection.type ===
-            SelectedSectionType.Untagged ? (
-            <Box className={clsx(classes.row)}>
-              <span role="img" aria-label="untagged-notes">
-                {"🈚"}
-              </span>
-              <Typography className={clsx(classes.sectionName)}>
-                {t("general/untagged")}
-              </Typography>
-            </Box>
-          ) : crossnoteContainer.selectedSection.type ===
-            SelectedSectionType.Tag ? (
-            <Box
-              className={clsx(classes.row)}
-              style={{ cursor: "pointer" }}
-              onClick={(event) => setTagActionsAnchorEl(event.currentTarget)}
-            >
-              <span role="img" aria-label="tag">
-                {"🏷️"}
-              </span>
-              <Typography className={clsx(classes.sectionName)}>
-                {crossnoteContainer.selectedSection.path}
-              </Typography>
-              <ChevronDown></ChevronDown>
-            </Box>
-          ) : crossnoteContainer.selectedSection.type ===
-            SelectedSectionType.Encrypted ? (
-            <Box className={clsx(classes.row)}>
-              <span role="img" aria-label="encrypted-notes">
-                {"🔐"}
-              </span>
-              <Typography className={clsx(classes.sectionName)}>
-                {t("general/encrypted")}
-              </Typography>
-            </Box>
-          ) : crossnoteContainer.selectedSection.type ===
-            SelectedSectionType.Conflicted ? (
-            <Box className={clsx(classes.row)}>
-              <span role="img" aria-label="conflicted-notes">
-                ⚠️
-              </span>
-              <Typography className={clsx(classes.sectionName)}>
-                {t("general/conflicted")}
-              </Typography>
-            </Box>
-          ) : (
-            crossnoteContainer.selectedSection.type ===
-              SelectedSectionType.Directory && (
-              <Box
-                className={clsx(classes.row)}
-                style={{ cursor: "pointer" }}
-                onClick={(event) =>
-                  setDirectoryActionsAnchorEl(event.currentTarget)
-                }
-              >
-                <span role="img" aria-label="folder">
-                  {"📁"}
-                </span>
-                <Typography className={clsx(classes.sectionName)}>
-                  {crossnoteContainer.selectedSection.path}
-                </Typography>
-                <ChevronDown></ChevronDown>
-              </Box>
-            )
-              )*/}
-
-          <Box>
-            <IconButton
-              onClick={(event) => setSortMenuAnchorEl(event.currentTarget)}
-            >
-              <SortVariant></SortVariant>
-            </IconButton>
-            <Popover
-              anchorEl={sortMenuAnchorEl}
-              keepMounted
-              open={Boolean(sortMenuAnchorEl)}
-              onClose={() => setSortMenuAnchorEl(null)}
-            >
-              <List>
-                <ListItem
-                  button
-                  onClick={() => setOrderBy(OrderBy.ModifiedAt)}
-                  className={clsx(
-                    orderBy === OrderBy.ModifiedAt && classes.sortSelected,
-                  )}
-                >
-                  <ListItemText
-                    primary={t("general/date-modified")}
-                  ></ListItemText>
-                </ListItem>
-                <ListItem
-                  button
-                  onClick={() => setOrderBy(OrderBy.CreatedAt)}
-                  className={clsx(
-                    orderBy === OrderBy.CreatedAt && classes.sortSelected,
-                  )}
-                >
-                  <ListItemText
-                    primary={t("general/date-created")}
-                  ></ListItemText>
-                </ListItem>
-                <ListItem
-                  button
-                  onClick={() => setOrderBy(OrderBy.Title)}
-                  className={clsx(
-                    orderBy === OrderBy.Title && classes.sortSelected,
-                  )}
-                >
-                  <ListItemText primary={t("general/title")}></ListItemText>
-                </ListItem>
-                <Divider></Divider>
-                <ListItem
-                  button
-                  onClick={() => setOrderDirection(OrderDirection.DESC)}
-                  className={clsx(
-                    orderDirection === OrderDirection.DESC &&
-                      classes.sortSelected,
-                  )}
-                >
-                  <ListItemText primary={t("general/Desc")}></ListItemText>
-                  <ListItemIcon style={{ marginLeft: "8px" }}>
-                    <SortDescending></SortDescending>
-                  </ListItemIcon>
-                </ListItem>
-                <ListItem
-                  button
-                  onClick={() => setOrderDirection(OrderDirection.ASC)}
-                  className={clsx(
-                    orderDirection === OrderDirection.ASC &&
-                      classes.sortSelected,
-                  )}
-                >
-                  <ListItemText primary={t("general/Asc")}></ListItemText>
-                  <ListItemIcon style={{ marginLeft: "8px" }}>
-                    <SortAscending></SortAscending>
-                  </ListItemIcon>
-                </ListItem>
-              </List>
-            </Popover>
-          </Box>
+          <IconButton
+            onClick={(event) => setSortMenuAnchorEl(event.currentTarget)}
+          >
+            <SortVariant></SortVariant>
+          </IconButton>
         </Box>
       </Card>
+
+      <Popover
+        anchorEl={sortMenuAnchorEl}
+        keepMounted
+        open={Boolean(sortMenuAnchorEl)}
+        onClose={() => setSortMenuAnchorEl(null)}
+      >
+        <List>
+          <ListItem
+            button
+            onClick={() => setOrderBy(OrderBy.ModifiedAt)}
+            className={clsx(
+              orderBy === OrderBy.ModifiedAt && classes.sortSelected,
+            )}
+          >
+            <ListItemText primary={t("general/date-modified")}></ListItemText>
+          </ListItem>
+          <ListItem
+            button
+            onClick={() => setOrderBy(OrderBy.CreatedAt)}
+            className={clsx(
+              orderBy === OrderBy.CreatedAt && classes.sortSelected,
+            )}
+          >
+            <ListItemText primary={t("general/date-created")}></ListItemText>
+          </ListItem>
+          <ListItem
+            button
+            onClick={() => setOrderBy(OrderBy.Title)}
+            className={clsx(orderBy === OrderBy.Title && classes.sortSelected)}
+          >
+            <ListItemText primary={t("general/title")}></ListItemText>
+          </ListItem>
+          <Divider></Divider>
+          <ListItem
+            button
+            onClick={() => setOrderDirection(OrderDirection.DESC)}
+            className={clsx(
+              orderDirection === OrderDirection.DESC && classes.sortSelected,
+            )}
+          >
+            <ListItemText primary={t("general/Desc")}></ListItemText>
+            <ListItemIcon style={{ marginLeft: "8px" }}>
+              <SortDescending></SortDescending>
+            </ListItemIcon>
+          </ListItem>
+          <ListItem
+            button
+            onClick={() => setOrderDirection(OrderDirection.ASC)}
+            className={clsx(
+              orderDirection === OrderDirection.ASC && classes.sortSelected,
+            )}
+          >
+            <ListItemText primary={t("general/Asc")}></ListItemText>
+            <ListItemIcon style={{ marginLeft: "8px" }}>
+              <SortAscending></SortAscending>
+            </ListItemIcon>
+          </ListItem>
+        </List>
+      </Popover>
 
       <ConfigureNotebookDialog
         open={notebookConfigurationDialogOpen}

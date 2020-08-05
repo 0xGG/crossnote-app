@@ -1,8 +1,11 @@
 import { FloatWin } from "./float-win";
 
-export function initMathPreview(cm: CodeMirror.Editor) {
+export function initMathPreview(
+  cm: CodeMirror.Editor,
+  winElement: HTMLElement,
+) {
   let mathRenderer: any = null;
-  const win = new FloatWin("math-preview");
+  const win = new FloatWin(winElement);
   var supressed = false;
 
   win.closeBtn.addEventListener(

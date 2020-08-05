@@ -68,9 +68,12 @@ export class Notebook {
     }
     // Get mentions
     const tokens = md.parse(note.markdown, {});
+    console.log(tokens);
     type TraverseResult = {
       link: string;
       text: string;
+      // start: number;
+      // end: number;
     };
     const resolveLink = (link: string) => {
       if (!link.endsWith(".md")) {
@@ -88,6 +91,7 @@ export class Notebook {
     const traverse = function (
       tokens: Token[],
       results: TraverseResult[],
+      level: number,
     ): TraverseResult[] {
       for (let i = 0; i < tokens.length; i++) {
         const token = tokens[i];
@@ -112,13 +116,13 @@ export class Notebook {
             link: resolveLink(link),
           });
         } else if (token.children && token.children.length) {
-          traverse(token.children, results);
+          traverse(token.children, results, level + 1);
         }
       }
       return results;
     };
 
-    const traverseResults = traverse(tokens, []);
+    const traverseResults = traverse(tokens, [], 0);
     const mentions: Notes = {};
     const oldMentions: Notes = note.mentions;
 
@@ -149,7 +153,6 @@ export class Notebook {
   }
 
   public async changeNoteFilePath(
-    notebook: Notebook,
     oldFilePath: string,
     newFilePath: string,
   ): Promise<Note> {
@@ -161,27 +164,27 @@ export class Notebook {
     await this.removeNoteRelations(oldFilePath);
 
     // git related works
-    const newDirPath = path.dirname(path.resolve(notebook.dir, newFilePath));
+    const newDirPath = path.dirname(path.resolve(this.dir, newFilePath));
     await pfs.mkdirp(newDirPath);
 
     // TODO: Check if newFilePath already exists. If so don't overwrite
-    const exists = await pfs.exists(path.resolve(notebook.dir, newFilePath));
+    const exists = await pfs.exists(path.resolve(this.dir, newFilePath));
     if (exists) {
       throw new Error("error/target-file-already-exists");
     }
 
     await pfs.rename(
-      path.resolve(notebook.dir, oldFilePath),
-      path.resolve(notebook.dir, newFilePath),
+      path.resolve(this.dir, oldFilePath),
+      path.resolve(this.dir, newFilePath),
     );
     await git.remove({
       fs: fs,
-      dir: notebook.dir,
+      dir: this.dir,
       filepath: oldFilePath,
     });
     await git.add({
       fs: fs,
-      dir: notebook.dir,
+      dir: this.dir,
       filepath: newFilePath,
     });
 

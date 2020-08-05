@@ -3,8 +3,7 @@ export class FloatWin {
   public closeBtn: HTMLElement;
   public visible: boolean;
 
-  constructor(id: string) {
-    const win = document.getElementById(id);
+  constructor(win: HTMLElement) {
     if (!win) {
       return;
     }

@@ -167,6 +167,15 @@ export default function NoteCard(props: Props) {
       className={clsx(classes.noteCard)}
       onClick={() => {
         // crossnoteContainer.setDisplayMobileEditor(true);
+        crossnoteContainer.addTabNode({
+          type: "tab",
+          component: "Note",
+          config: {
+            singleton: false,
+            note,
+          },
+          name: `📝 ` + note.title,
+        });
       }}
     >
       <Box className={clsx(classes.leftPanel)}>

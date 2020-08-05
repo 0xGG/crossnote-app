@@ -16,6 +16,7 @@ import { Settings } from "./Settings";
 import { TabNodeComponent, TabNodeConfig } from "../lib/tabNode";
 import NotesPanel from "./NotesPanel";
 import { PrivacyPolicy } from "../pages/Privacy";
+import NotePanel from "./NotePanel";
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -41,19 +42,23 @@ export function MainPanel(props: Props) {
 
   const factory = useCallback((node: TabNode) => {
     const config: TabNodeConfig = node.getConfig();
-    console.log("render component: ", node.getName(), node.getConfig());
+    console.log(
+      "render component: \n",
+      `* id: ${node.getId()}\n`,
+      `* name: ${node.getName()}\n`,
+      `* config: `,
+      node.getConfig(),
+    );
+
     const component: TabNodeComponent = node.getComponent() as TabNodeComponent;
     if (component === "Settings") {
       return <Settings></Settings>;
     } else if (component === "Notes") {
-      return (
-        <NotesPanel
-          toggleDrawer={props.toggleDrawer}
-          notebook={config.notebook}
-        ></NotesPanel>
-      );
+      return <NotesPanel notebook={config.notebook}></NotesPanel>;
     } else if (component === "Privacy") {
       return <PrivacyPolicy toggleDrawer={props.toggleDrawer}></PrivacyPolicy>;
+    } else if (component === "Note") {
+      return <NotePanel note={config.note} tabNode={node}></NotePanel>;
     }
   }, []);
 

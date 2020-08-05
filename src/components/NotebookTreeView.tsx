@@ -174,7 +174,7 @@ export default function NotebookTreeView(props: Props) {
                 crossnoteContainer.addTabNode({
                   type: "tab",
                   component: "Today",
-                  id: "Today",
+                  id: "Today:" + props.notebook.dir,
                   name: t("general/today"),
                   config: {
                     singleton: true,
@@ -208,7 +208,7 @@ export default function NotebookTreeView(props: Props) {
                 crossnoteContainer.addTabNode({
                   type: "tab",
                   component: "Todo",
-                  id: "Todo",
+                  id: "Todo: " + props.notebook.dir,
                   name: t("general/todo"),
                   config: {
                     singleton: true,
@@ -242,7 +242,7 @@ export default function NotebookTreeView(props: Props) {
                 crossnoteContainer.addTabNode({
                   type: "tab",
                   component: "Notes",
-                  id: "Notes",
+                  id: "Notes: " + props.notebook.dir,
                   name: "📔 " + props.notebook.name,
                   config: {
                     singleton: true,
@@ -276,7 +276,7 @@ export default function NotebookTreeView(props: Props) {
                 crossnoteContainer.addTabNode({
                   type: "tab",
                   component: "Conflicted",
-                  id: "Conflicted",
+                  id: "Conflicted: " + props.notebook.dir,
                   name: t("general/conflicted"),
                   config: {
                     singleton: true,

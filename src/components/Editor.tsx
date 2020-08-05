@@ -7,7 +7,7 @@ import {
   useTheme,
 } from "@material-ui/core/styles";
 import clsx from "clsx";
-import { CrossnoteContainer, EditorMode } from "../containers/crossnote";
+import { CrossnoteContainer } from "../containers/crossnote";
 import { useTranslation } from "react-i18next";
 import * as CryptoJS from "crypto-js";
 import {
