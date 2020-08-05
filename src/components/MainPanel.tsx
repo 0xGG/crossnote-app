@@ -17,6 +17,7 @@ import { TabNodeComponent, TabNodeConfig } from "../lib/tabNode";
 import NotesPanel from "./NotesPanel";
 import { PrivacyPolicy } from "../pages/Privacy";
 import NotePanel from "./NotePanel";
+import { useTranslation } from "react-i18next";
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -39,6 +40,7 @@ export function MainPanel(props: Props) {
   const classes = useStyles();
   const container = useRef<HTMLDivElement>(null);
   const crossnoteContainer = CrossnoteContainer.useContainer();
+  const { t } = useTranslation();
 
   const factory = useCallback((node: TabNode) => {
     const config: TabNodeConfig = node.getConfig();
@@ -54,7 +56,12 @@ export function MainPanel(props: Props) {
     if (component === "Settings") {
       return <Settings></Settings>;
     } else if (component === "Notes") {
-      return <NotesPanel notebook={config.notebook}></NotesPanel>;
+      return (
+        <NotesPanel
+          notebook={config.notebook}
+          title={t("general/notes")}
+        ></NotesPanel>
+      );
     } else if (component === "Privacy") {
       return <PrivacyPolicy toggleDrawer={props.toggleDrawer}></PrivacyPolicy>;
     } else if (component === "Note") {

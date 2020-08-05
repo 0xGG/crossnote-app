@@ -438,8 +438,8 @@ export default function NotePanel(props: Props) {
           <InputBase
             value={noteTitle}
             style={{
-              fontSize: "1.4rem",
-              fontWeight: 600,
+              fontSize: "1.5rem",
+              fontWeight: 400,
               marginLeft: "6px",
             }}
             placeholder={t("general/title")}
@@ -533,6 +533,7 @@ export default function NotePanel(props: Props) {
         </Box>
         <Divider style={{ marginTop: 48 }}></Divider>
         <NotesPanel
+          title={"Linked mentions"}
           notebook={crossnoteContainer.getNotebookAtPath(note.notebookPath)}
           referredNote={note}
         ></NotesPanel>

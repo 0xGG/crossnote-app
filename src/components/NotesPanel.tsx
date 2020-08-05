@@ -54,6 +54,7 @@ const useStyles = makeStyles((theme: Theme) =>
       padding: theme.spacing(0, 1),
       borderRadius: 0,
       backgroundColor: theme.palette.background.paper,
+      zIndex: 9,
     },
     row: {
       display: "flex",
@@ -119,6 +120,7 @@ interface Props {
   notebook: Notebook;
   referredNote?: Note;
   initialSearchValue?: string;
+  title?: string;
 }
 
 export default function NotesPanel(props: Props) {
@@ -230,6 +232,11 @@ export default function NotesPanel(props: Props) {
   return (
     <Box className={clsx(classes.notesPanel)}>
       <Card className={clsx(classes.topPanel)}>
+        {props.title && (
+          <Typography variant={"h5"} style={{ padding: "6px 0 7px" }}>
+            {props.title}
+          </Typography>
+        )}
         <Box className={clsx(classes.row)}>
           {/*
           <Hidden smUp implementation="css">

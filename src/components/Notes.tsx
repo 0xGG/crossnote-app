@@ -1,27 +1,49 @@
 import React, { useState, useEffect, useCallback } from "react";
 import LazyLoad from "react-lazyload";
-import { createStyles, makeStyles, Theme } from "@material-ui/core/styles";
+import {
+  createStyles,
+  makeStyles,
+  Theme,
+  useTheme,
+} from "@material-ui/core/styles";
 import clsx from "clsx";
 import { CrossnoteContainer } from "../containers/crossnote";
-import { Box, Typography, Button } from "@material-ui/core";
-import NoteCard from "./NoteCard";
+import { Box, Typography, Button, Card } from "@material-ui/core";
+import NoteCard, { NoteCardWidth, NoteCardMargin } from "./NoteCard";
 import { useTranslation } from "react-i18next";
 import useInterval from "@use-it/interval";
 import { CloudDownloadOutline } from "mdi-material-ui";
 import Noty from "noty";
 import { Skeleton } from "@material-ui/lab";
 import { Note } from "../lib/notebook";
+const is = require("is_js");
 
-const lazyLoadPlaceholderHeight = 92;
+const lazyLoadPlaceholderHeight = 92 + 2 * NoteCardMargin;
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
     notesList: {
-      position: "relative",
-      flex: "1",
-      overflowY: "auto",
-      paddingBottom: theme.spacing(12),
-      marginTop: theme.spacing(0.5),
+      "position": "relative",
+      "flex": "1",
+      "overflowY": "auto",
+      "paddingTop": theme.spacing(2),
+      "paddingLeft": theme.spacing(2),
+      "paddingRight": theme.spacing(2),
+      "paddingBottom": theme.spacing(12),
+      [theme.breakpoints.down("sm")]: {
+        paddingLeft: theme.spacing(0.5),
+        paddingRight: theme.spacing(0.5),
+      },
+
+      "& .note-card-sizer": {
+        width: `${NoteCardWidth + 2 * NoteCardMargin}px`,
+        maxWidth: "100%",
+        /*
+        [theme.breakpoints.down("xs")]: {
+          width: "100%",
+        },
+        */
+      },
     },
     updatePanel: {
       padding: theme.spacing(2),
@@ -40,10 +62,12 @@ interface Props {
 export default function Notes(props: Props) {
   const classes = useStyles(props);
   const { t } = useTranslation();
+  const theme = useTheme();
   const crossnoteContainer = CrossnoteContainer.useContainer();
   const [notesListElement, setNotesListElement] = useState<HTMLElement>(null);
   const [forceUpdate, setForceUpdate] = useState<number>(Date.now());
   const [notes, setNotes] = useState<Note[]>([]);
+  const [masonryInstance, setMasonryInstance] = useState<any>(null);
 
   /*
   const pullNotebook = useCallback(() => {
@@ -175,7 +199,7 @@ export default function Notes(props: Props) {
         window.removeEventListener("resize", hack);
       };
     }
-  }, [notes, notesListElement]);
+  }, [notes, notesListElement, masonryInstance]);
 
   useInterval(() => {
     if (crossnoteContainer.needsToRefreshNotes) {
@@ -191,7 +215,7 @@ export default function Notes(props: Props) {
         setNotesListElement(element);
       }}
     >
-      {crossnoteContainer.selectedNotebook &&
+      {/*crossnoteContainer.selectedNotebook &&
         crossnoteContainer.selectedNotebook.localSha !==
           crossnoteContainer.selectedNotebook.remoteSha && (
           <Box className={clsx(classes.updatePanel)}>
@@ -213,25 +237,26 @@ export default function Notes(props: Props) {
               {t("general/update-the-notebook")}
             </Button>
           </Box>
-        )}
+        )*/}
       {(notes || []).map((note) => {
         return (
           <LazyLoad
             key={"lazy-load-note-card-" + note.filePath}
             placeholder={
-              <Box
+              <Card
                 style={{
-                  textAlign: "center",
+                  width: `${NoteCardWidth}px`,
+                  maxWidth: "100%",
+                  margin: `${NoteCardMargin}px auto`,
+                  padding: theme.spacing(2, 0.5, 0),
                   height: `${lazyLoadPlaceholderHeight}px`,
-                  paddingTop: "16px",
-                  paddingBottom: "16px",
-                  boxSizing: "border-box",
                 }}
+                className={"note-card lazyload-placeholder"}
               >
                 <Skeleton />
                 <Skeleton animation={false} />
                 <Skeleton animation="wave" />
-              </Box>
+              </Card>
             }
             height={lazyLoadPlaceholderHeight}
             overflow={true}
@@ -241,6 +266,8 @@ export default function Notes(props: Props) {
           >
             <NoteCard key={"note-card-" + note.filePath} note={note}></NoteCard>
           </LazyLoad>
+
+          //   <NoteCard key={"note-card-" + note.filePath} note={note}></NoteCard>
         );
       })}
       {crossnoteContainer.initialized &&

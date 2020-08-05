@@ -2,7 +2,7 @@ import React, { useState, useEffect, FC } from "react";
 import { createStyles, makeStyles, Theme } from "@material-ui/core/styles";
 import clsx from "clsx";
 import { CrossnoteContainer } from "../containers/crossnote";
-import { Box, Typography, ButtonBase, Tooltip } from "@material-ui/core";
+import { Box, Typography, ButtonBase, Tooltip, Card } from "@material-ui/core";
 import { generateSummaryFromMarkdown, Summary } from "../utilities/note";
 import { formatDistanceStrict } from "date-fns/esm";
 import { useTranslation } from "react-i18next";
@@ -14,17 +14,26 @@ import { languageCodeToDateFNSLocale } from "../i18n/i18n";
 import { resolveNoteImageSrc } from "../utilities/image";
 import { Note } from "../lib/notebook";
 
+export const NoteCardWidth = 550;
+export const NoteCardMargin = 4;
+
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
     noteCard: {
-      width: "100%",
+      width: `${NoteCardWidth}px`,
+      maxWidth: "100%",
       display: "flex",
       flexDirection: "row",
       alignItems: "flex-start",
       padding: theme.spacing(2, 0.5, 0),
       textAlign: "left",
-      cursor: "default",
+      cursor: "pointer",
       backgroundColor: theme.palette.background.paper,
+      margin: `${NoteCardMargin}px auto`,
+      [theme.breakpoints.down("sm")]: {
+        marginLeft: 0,
+        marginRight: 0,
+      },
     },
     selected: {
       borderLeft: `4px solid ${theme.palette.primary.main}`,
@@ -163,8 +172,8 @@ export default function NoteCard(props: Props) {
   ]);*/
 
   return (
-    <ButtonBase
-      className={clsx(classes.noteCard)}
+    <Card
+      className={clsx(classes.noteCard, "note-card")}
       onClick={() => {
         // crossnoteContainer.setDisplayMobileEditor(true);
         crossnoteContainer.addTabNode({
@@ -243,6 +252,6 @@ export default function NoteCard(props: Props) {
           {t(`git/status/${gitStatus}`)}
         </Typography>
       </Box>
-    </ButtonBase>
+    </Card>
   );
 }
