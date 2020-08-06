@@ -85,6 +85,7 @@ const useStyles = makeStyles((theme: Theme) =>
     contentPanel: {
       height: "calc(100% - 48px)",
       overflow: "auto",
+      backgroundColor: theme.palette.background.default,
     },
     editorWrapper: {
       "flex": 1,
@@ -535,7 +536,7 @@ export default function NotePanel(props: Props) {
             ></div>
           ) : null}
         </Box>
-        <Divider style={{ marginTop: 48 }}></Divider>
+        <Divider></Divider>
         <NotesPanel
           title={"Linked references"}
           notebook={crossnoteContainer.getNotebookAtPath(note.notebookPath)}

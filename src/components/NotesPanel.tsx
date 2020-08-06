@@ -41,14 +41,15 @@ import Notes from "./Notes";
 import { OrderBy, OrderDirection } from "../lib/order";
 import { Notebook, Note } from "../lib/notebook";
 import Headroom from "react-headroom";
+import { TabHeight } from "../lib/tabNode";
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
     notesPanel: {
-      position: "relative",
-      display: "flex",
-      flexDirection: "column",
-      height: "100%",
+      // position: "relative",
+      // display: "flex",
+      // flexDirection: "column",
+      // height: "100%",
       backgroundColor: theme.palette.background.default,
     },
     topPanel: {
@@ -56,6 +57,11 @@ const useStyles = makeStyles((theme: Theme) =>
       borderRadius: 0,
       backgroundColor: theme.palette.background.paper,
       zIndex: 9,
+    },
+    fixedTopPanel: {
+      position: "fixed",
+      top: `${TabHeight}px`,
+      width: "100%",
     },
     row: {
       display: "flex",
@@ -146,7 +152,9 @@ export default function NotesPanel(props: Props) {
     NodeJS.Timeout
   >(null);
   const [finalSearchValue, setFinalSearchValue] = useState<string>("");
+  const [fixedTopPanel, setFixedTopPanel] = useState<boolean>(false);
   const container = useRef<HTMLDivElement>(null);
+  const topPanel = useRef<HTMLElement>(null);
 
   const [
     notebookConfigurationDialogOpen,
@@ -243,11 +251,44 @@ export default function NotesPanel(props: Props) {
     setNotes([...notes]);
   }, [rawNotes, orderBy, orderDirection]);
 
+  useEffect(() => {
+    if (!container || !topPanel || !container.current || !topPanel.current) {
+      return;
+    }
+    const containerElement = container.current;
+    const scrollElement = containerElement.parentElement;
+    const scrollEvent = function () {
+      // console.log( "onscroll: ", scrollElement.scrollTop, containerElement.offsetTop,);
+      if (scrollElement.scrollTop >= containerElement.offsetTop) {
+        setFixedTopPanel(true);
+      } else {
+        setFixedTopPanel(false);
+      }
+    };
+    scrollEvent();
+    scrollElement.addEventListener("scroll", scrollEvent);
+    return () => {
+      scrollElement.removeEventListener("scroll", scrollEvent);
+    };
+  }, [container, topPanel]);
+
   return (
-    <div className={clsx(classes.notesPanel)} ref={container}>
-      <Card className={clsx(classes.topPanel)}>
+    <div
+      className={clsx(classes.notesPanel)}
+      ref={container}
+      style={{
+        paddingTop: fixedTopPanel ? topPanel.current.offsetHeight : 0,
+      }}
+    >
+      <Card
+        className={clsx(
+          classes.topPanel,
+          fixedTopPanel ? classes.fixedTopPanel : "",
+        )}
+        ref={topPanel}
+      >
         {props.title && (
-          <Typography variant={"h5"} style={{ padding: "6px 0 7px" }}>
+          <Typography variant={"h6"} style={{ padding: "6px 0 7px" }}>
             {props.title}
           </Typography>
         )}
@@ -355,7 +396,13 @@ export default function NotesPanel(props: Props) {
         <CircularProgress className={clsx(classes.loading)}></CircularProgress>
       )}
 
-      <Notes notes={notes} searchValue={finalSearchValue}></Notes>
+      <Notes
+        notes={notes}
+        searchValue={finalSearchValue}
+        scrollElement={
+          container && container.current && container.current.parentElement
+        }
+      ></Notes>
     </div>
   );
 }

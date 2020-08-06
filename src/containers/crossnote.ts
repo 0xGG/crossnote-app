@@ -21,7 +21,7 @@ import moment from "moment";
 import { pfs } from "../lib/fs";
 import { sanitizeTag } from "../utilities/markdown";
 import { Notebook, Note, NoteConfig } from "../lib/notebook";
-import { TabNode } from "../lib/tabNode";
+import { TabNode, TabHeight } from "../lib/tabNode";
 
 export enum SelectedSectionType {
   Notes = "Notes",
@@ -88,8 +88,8 @@ function useCrossnoteContainer(initialState: InitialState) {
       global: {
         splitterSize: 4,
         tabSetEnableMaximize: false,
-        tabSetHeaderHeight: 24,
-        tabSetTabStripHeight: 24,
+        tabSetHeaderHeight: TabHeight,
+        tabSetTabStripHeight: TabHeight,
       },
       borders: [],
       layout: {

@@ -24,8 +24,8 @@ const useStyles = makeStyles((theme: Theme) =>
   createStyles({
     notesList: {
       "position": "relative",
-      "flex": "1",
-      "overflowY": "auto",
+      // "flex": "1",
+      // "overflowY": "auto",
       "paddingTop": theme.spacing(2),
       "paddingLeft": theme.spacing(2),
       "paddingRight": theme.spacing(2),
@@ -57,6 +57,7 @@ const useStyles = makeStyles((theme: Theme) =>
 interface Props {
   notes: Note[];
   searchValue: string;
+  scrollElement: HTMLElement;
 }
 
 export default function Notes(props: Props) {
@@ -64,7 +65,6 @@ export default function Notes(props: Props) {
   const { t } = useTranslation();
   const theme = useTheme();
   const crossnoteContainer = CrossnoteContainer.useContainer();
-  const [notesListElement, setNotesListElement] = useState<HTMLElement>(null);
   const [forceUpdate, setForceUpdate] = useState<number>(Date.now());
   const [notes, setNotes] = useState<Note[]>([]);
   const [masonryInstance, setMasonryInstance] = useState<any>(null);
@@ -181,17 +181,18 @@ export default function Notes(props: Props) {
   */
 
   useEffect(() => {
-    if (notesListElement) {
+    if (props.scrollElement) {
+      const scrollElement = props.scrollElement;
       // Hack: fix note cards not displaying bug when searchValue is not empty
       const hack = () => {
-        const initialHeight = notesListElement.style.height;
-        const initialFlex = notesListElement.style.flex;
-        notesListElement.style.flex = "initial";
-        notesListElement.style.height = "10px";
-        notesListElement.scrollTop += 1;
-        notesListElement.scrollTop -= 1;
-        notesListElement.style.height = initialHeight;
-        notesListElement.style.flex = initialFlex;
+        const initialHeight = scrollElement.style.height;
+        const initialFlex = scrollElement.style.flex;
+        scrollElement.style.flex = "initial";
+        scrollElement.style.height = "10px";
+        scrollElement.scrollTop += 1;
+        scrollElement.scrollTop -= 1;
+        scrollElement.style.height = initialHeight;
+        scrollElement.style.flex = initialFlex;
       };
       window.addEventListener("resize", hack);
       hack();
@@ -199,7 +200,7 @@ export default function Notes(props: Props) {
         window.removeEventListener("resize", hack);
       };
     }
-  }, [notes, notesListElement, masonryInstance]);
+  }, [notes, props.scrollElement, masonryInstance]);
 
   useInterval(() => {
     if (crossnoteContainer.needsToRefreshNotes) {
@@ -209,12 +210,7 @@ export default function Notes(props: Props) {
   }, 15000);
 
   return (
-    <div
-      className={clsx(classes.notesList)}
-      ref={(element: HTMLElement) => {
-        setNotesListElement(element);
-      }}
-    >
+    <div className={clsx(classes.notesList)}>
       {/*crossnoteContainer.selectedNotebook &&
         crossnoteContainer.selectedNotebook.localSha !==
           crossnoteContainer.selectedNotebook.remoteSha && (
@@ -261,7 +257,7 @@ export default function Notes(props: Props) {
             height={lazyLoadPlaceholderHeight}
             overflow={true}
             once={true}
-            scrollContainer={notesListElement}
+            scrollContainer={props.scrollElement}
             resize={true}
           >
             <NoteCard key={"note-card-" + note.filePath} note={note}></NoteCard>

@@ -259,7 +259,7 @@ export default function NotebookTreeView(props: Props) {
             </Box>
           }
         ></TreeItem>
-        <TreeItem
+        {/*<TreeItem
           nodeId={"conflicted-notes"}
           classes={{
             root: classes.treeItemRoot,
@@ -293,6 +293,7 @@ export default function NotebookTreeView(props: Props) {
             </Box>
           }
         ></TreeItem>
+        */}
       </TreeItem>
     </TreeView>
   );
