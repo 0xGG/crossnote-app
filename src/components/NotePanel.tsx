@@ -139,11 +139,6 @@ const useStyles = makeStyles((theme: Theme) =>
     presentation: {
       padding: "0 !important",
     },
-    backBtn: {
-      [theme.breakpoints.up("sm")]: {
-        display: "none",
-      },
-    },
     controlBtn: {
       padding: theme.spacing(0.5, 0),
       color: theme.palette.text.secondary,
@@ -424,22 +419,6 @@ export default function NotePanel(props: Props) {
         }}
       >
         <Box className={clsx(classes.row)} style={{ width: "100%" }}>
-          <ButtonGroup
-            variant="text"
-            className={clsx(classes.backBtn)}
-            orientation="vertical"
-            size="small"
-          >
-            <Button
-              className={clsx(classes.controlBtn)}
-              onClick={() => {
-                // crossnoteContainer.setDisplayMobileEditor(false);
-                // crossnoteContainer.setEditorMode(EditorMode.Preview);
-              }}
-            >
-              <ChevronLeft></ChevronLeft>
-            </Button>
-          </ButtonGroup>
           <InputBase
             value={noteTitle}
             style={{

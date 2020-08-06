@@ -59,8 +59,8 @@ const useStyles = makeStyles((theme: Theme) =>
       zIndex: 9,
     },
     fixedTopPanel: {
-      position: "fixed",
-      top: `${TabHeight}px`,
+      position: "sticky",
+      top: `0`,
       width: "100%",
     },
     row: {
@@ -273,13 +273,7 @@ export default function NotesPanel(props: Props) {
   }, [container, topPanel]);
 
   return (
-    <div
-      className={clsx(classes.notesPanel)}
-      ref={container}
-      style={{
-        paddingTop: fixedTopPanel ? topPanel.current.offsetHeight : 0,
-      }}
-    >
+    <div className={clsx(classes.notesPanel)} ref={container}>
       <Card
         className={clsx(
           classes.topPanel,
