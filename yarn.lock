@@ -2412,6 +2412,13 @@
   dependencies:
     "@types/react" "*"
 
+"@types/react-headroom@^2.2.1":
+  version "2.2.1"
+  resolved "https://registry.npm.taobao.org/@types/react-headroom/download/@types/react-headroom-2.2.1.tgz#54f2cf222aa4411c9948bc6078658de23269d90f"
+  integrity sha1-VPLPIiqkQRyZSLxgeGWN4jJp2Q8=
+  dependencies:
+    "@types/react" "*"
+
 "@types/react-i18next@^8.1.0":
   version "8.1.0"
   resolved "https://registry.npm.taobao.org/@types/react-i18next/download/@types/react-i18next-8.1.0.tgz#5faacbfe7dc0f24729c1df6914610bfe861a50de"
@@ -13329,7 +13336,7 @@ raf-schd@^4.0.2:
   resolved "https://registry.npm.taobao.org/raf-schd/download/raf-schd-4.0.2.tgz#bd44c708188f2e84c810bf55fcea9231bcaed8a0"
   integrity sha1-vUTHCBiPLoTIEL9V/OqSMbyu2KA=
 
-raf@^3.4.1:
+raf@^3.3.0, raf@^3.4.1:
   version "3.4.1"
   resolved "https://registry.npm.taobao.org/raf/download/raf-3.4.1.tgz?cache=0&other_urls=https%3A%2F%2Fregistry.npm.taobao.org%2Fraf%2Fdownload%2Fraf-3.4.1.tgz#0742e99a4a6552f445d73e3ee0328af0ff1ede39"
   integrity sha1-B0LpmkplUvRF1z4+4DKK8P8e3jk=
@@ -13477,6 +13484,15 @@ react-error-overlay@^6.0.7:
   version "6.0.7"
   resolved "https://registry.npm.taobao.org/react-error-overlay/download/react-error-overlay-6.0.7.tgz#1dcfb459ab671d53f660a991513cb2f0a0553108"
   integrity sha1-Hc+0WatnHVP2YKmRUTyy8KBVMQg=
+
+react-headroom@^3.0.0:
+  version "3.0.0"
+  resolved "https://registry.npm.taobao.org/react-headroom/download/react-headroom-3.0.0.tgz#6d74102ccc04b060269ddee6e5b788f476e0eca6"
+  integrity sha1-bXQQLMwEsGAmnd7m5beI9Hbg7KY=
+  dependencies:
+    prop-types "^15.5.8"
+    raf "^3.3.0"
+    shallowequal "^1.1.0"
 
 react-i18next@*:
   version "11.3.4"

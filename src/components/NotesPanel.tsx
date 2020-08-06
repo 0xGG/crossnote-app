@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from "react";
+import React, { useState, useCallback, useEffect, useRef } from "react";
 import {
   fade,
   createStyles,
@@ -40,6 +40,7 @@ import ConfigureNotebookDialog from "./ConfigureNotebookDialog";
 import Notes from "./Notes";
 import { OrderBy, OrderDirection } from "../lib/order";
 import { Notebook, Note } from "../lib/notebook";
+import Headroom from "react-headroom";
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -145,6 +146,7 @@ export default function NotesPanel(props: Props) {
     NodeJS.Timeout
   >(null);
   const [finalSearchValue, setFinalSearchValue] = useState<string>("");
+  const container = useRef<HTMLDivElement>(null);
 
   const [
     notebookConfigurationDialogOpen,
@@ -153,15 +155,27 @@ export default function NotesPanel(props: Props) {
 
   const createNewNote = useCallback(() => {
     setIsCreatingNote(true);
+    let markdown = "";
+    if (props.referredNote) {
+      if (
+        props.referredNote.title ===
+        props.referredNote.filePath.replace(/\.md$/, "")
+      ) {
+        markdown = `[[${props.referredNote.title}]]`;
+      } else {
+        markdown = `[[${props.referredNote.title}|${props.referredNote.filePath}]]`;
+      }
+    }
     crossnoteContainer
-      .createNewNote(crossnoteContainer.selectedNotebook)
-      .then(() => {
+      .createNewNote(props.notebook, "", markdown)
+      .then((note) => {
+        crossnoteContainer.openNoteAtPath(props.notebook, note.filePath);
         setIsCreatingNote(false);
       })
       .catch(() => {
         setIsCreatingNote(false);
       });
-  }, [crossnoteContainer]);
+  }, [crossnoteContainer, props.notebook, props.referredNote]);
 
   const onChangeSearchValue = useCallback(
     (event: React.ChangeEvent<HTMLTextAreaElement | HTMLInputElement>) => {
@@ -181,7 +195,7 @@ export default function NotesPanel(props: Props) {
   useEffect(() => {
     setSearchValue("");
     setFinalSearchValue("");
-  }, [crossnoteContainer.selectedNotebook]);
+  }, [props.notebook]);
 
   useEffect(() => {
     const notes = [];
@@ -230,7 +244,7 @@ export default function NotesPanel(props: Props) {
   }, [rawNotes, orderBy, orderDirection]);
 
   return (
-    <Box className={clsx(classes.notesPanel)}>
+    <div className={clsx(classes.notesPanel)} ref={container}>
       <Card className={clsx(classes.topPanel)}>
         {props.title && (
           <Typography variant={"h5"} style={{ padding: "6px 0 7px" }}>
@@ -238,17 +252,6 @@ export default function NotesPanel(props: Props) {
           </Typography>
         )}
         <Box className={clsx(classes.row)}>
-          {/*
-          <Hidden smUp implementation="css">
-            <IconButton
-              onClick={() => {
-                console.log("Toggle drawer");
-              }}
-            >
-              <MenuIcon></MenuIcon>
-            </IconButton>
-          </Hidden>
-            */}
           <div className={classes.search}>
             <div className={classes.searchIcon}>
               <Magnify />
@@ -345,7 +348,7 @@ export default function NotesPanel(props: Props) {
       <ConfigureNotebookDialog
         open={notebookConfigurationDialogOpen}
         onClose={() => setNotebookConfigurationDialogOpen(false)}
-        notebook={crossnoteContainer.selectedNotebook}
+        notebook={props.notebook}
       ></ConfigureNotebookDialog>
 
       {crossnoteContainer.isLoadingNotebook && (
@@ -353,6 +356,6 @@ export default function NotesPanel(props: Props) {
       )}
 
       <Notes notes={notes} searchValue={finalSearchValue}></Notes>
-    </Box>
+    </div>
   );
 }

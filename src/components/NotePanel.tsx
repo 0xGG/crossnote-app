@@ -265,6 +265,10 @@ export default function NotePanel(props: Props) {
         setTextAreaElement(null);
         setPreviewElement(null);
       };
+    } else {
+      if (note.markdown.length === 0) {
+        setEditorMode(EditorMode.VickyMD);
+      }
     }
   }, [note]);
 
@@ -533,7 +537,7 @@ export default function NotePanel(props: Props) {
         </Box>
         <Divider style={{ marginTop: 48 }}></Divider>
         <NotesPanel
-          title={"Linked mentions"}
+          title={"Linked references"}
           notebook={crossnoteContainer.getNotebookAtPath(note.notebookPath)}
           referredNote={note}
         ></NotesPanel>

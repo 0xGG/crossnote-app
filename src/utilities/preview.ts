@@ -47,6 +47,7 @@ export function openURL(url: string = "", note: Note) {
       path.resolve(note.notebookPath, url.replace(/^\//, "")),
     );
     globalContainers.crossnoteContainer.openNoteAtPath(
+      globalContainers.crossnoteContainer.getNotebookAtPath(note.notebookPath),
       decodeURIComponent(filePath),
     );
   } else {
@@ -58,6 +59,7 @@ export function openURL(url: string = "", note: Note) {
       ),
     );
     globalContainers.crossnoteContainer.openNoteAtPath(
+      globalContainers.crossnoteContainer.getNotebookAtPath(note.notebookPath),
       decodeURIComponent(filePath),
     );
   }

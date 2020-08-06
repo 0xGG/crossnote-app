@@ -91,19 +91,23 @@ export default function NotebookTreeView(props: Props) {
         element.tagName &&
         element.tagName.toUpperCase().match(/^(SVG|PATH|BUTTON)$/)
       ) {
-        console.log("set selected notebook");
-        crossnoteContainer.setSelectedNotebook(props.notebook);
+        props.notebook.refreshNotesInNotLoaded({
+          dir: "./",
+          includeSubdirectories: true,
+        });
         setExpanded(nodes);
       }
     },
     [props.notebook],
   );
 
+  /*
   useEffect(() => {
     if (crossnoteContainer.selectedNotebook !== props.notebook) {
       setExpanded([]);
     }
   }, [crossnoteContainer.selectedNotebook, props.notebook]);
+  */
 
   return (
     <TreeView
@@ -142,7 +146,10 @@ export default function NotebookTreeView(props: Props) {
         label={
           <Box
             onClick={() => {
-              crossnoteContainer.setSelectedNotebook(props.notebook);
+              props.notebook.refreshNotesInNotLoaded({
+                dir: "./",
+                includeSubdirectories: true,
+              });
             }}
             className={clsx(classes.treeItemLabelRoot)}
           >
@@ -171,16 +178,7 @@ export default function NotebookTreeView(props: Props) {
           label={
             <Box
               onClick={() => {
-                crossnoteContainer.addTabNode({
-                  type: "tab",
-                  component: "Today",
-                  id: "Today:" + props.notebook.dir,
-                  name: t("general/today"),
-                  config: {
-                    singleton: true,
-                    notebook: props.notebook,
-                  },
-                });
+                crossnoteContainer.openTodayNote(props.notebook);
               }}
               className={clsx(classes.treeItemLabelRoot)}
             >

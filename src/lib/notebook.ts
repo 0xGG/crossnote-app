@@ -56,9 +56,12 @@ export class Notebook {
 
   public isLocal: boolean;
 
+  private loadedNotes: boolean;
+
   constructor() {
     this.notes = {};
     this.isLocal = false;
+    this.loadedNotes = false;
   }
 
   async processNoteMentionsAndMentionedBy(filePath: string) {
@@ -320,6 +323,17 @@ export class Notebook {
     }
   }
 
+  public async refreshNotesInNotLoaded({
+    dir = "./",
+    includeSubdirectories = false,
+  }: RefreshNotesArgs): Promise<Notes> {
+    if (!this.loadedNotes) {
+      await this.refreshNotes({ dir, includeSubdirectories });
+      this.loadedNotes = true;
+    }
+    return this.notes;
+  }
+
   public async refreshNotes({
     dir = "./",
     includeSubdirectories = false,
@@ -373,7 +387,7 @@ export class Notebook {
     markdown: string,
     noteConfig: NoteConfig,
     password?: string,
-  ): Promise<NoteConfig> {
+  ): Promise<Note> {
     noteConfig.modifiedAt = new Date();
 
     try {
@@ -415,8 +429,7 @@ export class Notebook {
       filepath: filePath,
     });
 
-    await this.processNoteMentionsAndMentionedBy(filePath);
-    return noteConfig;
+    return await this.getNote(filePath, true);
   }
 
   /**

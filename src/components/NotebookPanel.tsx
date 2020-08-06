@@ -215,7 +215,8 @@ export function NotebookPanel(props: Props) {
       (n) => n.gitURL === notebook.gitURL && n.gitBranch === notebook.gitBranch,
     );
     if (nb) {
-      crossnoteContainer.setSelectedNotebook(nb);
+      // TODO: Fix this
+      // crossnoteContainer.setSelectedNotebook(nb);
     }
   }, [notebook, crossnoteContainer.notebooks]);
 

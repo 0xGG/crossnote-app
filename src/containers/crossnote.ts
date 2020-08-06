@@ -9,7 +9,7 @@ import FlexLayout, {
   DockLocation,
   TabSetNode,
 } from "flexlayout-react";
-import { OneDay } from "../utilities/utils";
+import { OneDay, getTodayName } from "../utilities/utils";
 import { useTranslation } from "react-i18next";
 import Crossnote, {
   PushNotebookArgs,
@@ -20,7 +20,7 @@ import * as qs from "qs";
 import moment from "moment";
 import { pfs } from "../lib/fs";
 import { sanitizeTag } from "../utilities/markdown";
-import { Notebook, Note } from "../lib/notebook";
+import { Notebook, Note, NoteConfig } from "../lib/notebook";
 import { TabNode } from "../lib/tabNode";
 
 export enum SelectedSectionType {
@@ -70,7 +70,6 @@ function useCrossnoteContainer(initialState: InitialState) {
   const crossnote = initialState.crossnote;
   const [initialized, setInitialized] = useState<boolean>(false);
   const [notebooks, setNotebooks] = useState<Notebook[]>([]);
-  const [selectedNotebook, setSelectedNotebook] = useState<Notebook>(null);
   const [isAddingNotebook, setIsAddingNotebook] = useState<boolean>(false);
   const [isPushingNotebook, setIsPushingNotebook] = useState<boolean>(false);
   const [isPullingNotebook, setIsPullingNotebook] = useState<boolean>(false);
@@ -146,6 +145,22 @@ function useCrossnoteContainer(initialState: InitialState) {
           return layoutModel.doAction(Actions.selectTab(node.getId()));
         }
       }
+      if (tabNode.component === "Note") {
+        const note = tabNode.config.note;
+        const tabs = activeTabset.getChildren();
+        for (let i = 0; i < tabs.length; i++) {
+          const eTabNode: any = tabs[i];
+          const eNote: Note = eTabNode._attributes.config.note;
+          if (
+            eNote &&
+            note &&
+            eNote.notebookPath === note.notebookPath &&
+            eNote.filePath === note.filePath
+          ) {
+            return layoutModel.doAction(Actions.selectTab(eTabNode.getId()));
+          }
+        }
+      }
       layoutModel.doAction(
         Actions.addNode(tabNode, activeTabset.getId(), DockLocation.CENTER, 0),
       );
@@ -163,9 +178,8 @@ function useCrossnoteContainer(initialState: InitialState) {
     [getNotebookAtPath],
   );
 
-  const deleteNote = useCallback(
-    async (note: Note) => {
-      /*
+  const deleteNote = useCallback(async (note: Note) => {
+    /*
       await crossnote.deleteNote(selectedNotebook, note.filePath);
       if (notebookNotes) {
         notebookNotes.deleteNote(note);
@@ -173,9 +187,7 @@ function useCrossnoteContainer(initialState: InitialState) {
       setSelectedNote(null);
       setDisplayMobileEditor(false);
       */
-    },
-    [crossnote, selectedNotebook],
-  );
+  }, []);
 
   const changeNoteFilePath = useCallback(
     async (note: Note, newFilePath: string) => {
@@ -195,7 +207,6 @@ function useCrossnoteContainer(initialState: InitialState) {
       fileName: string = "",
       markdown: string = "",
     ) => {
-      /*
       if (!notebook) {
         return null;
       }
@@ -205,11 +216,12 @@ function useCrossnoteContainer(initialState: InitialState) {
 
         let foundToday = false;
         let count = 0;
-        for (let i = 0; i < notebookNotes.length; i++) {
-          if (notebookNotes[i].title === today) {
+        for (let key in notebook.notes) {
+          const note = notebook.notes[key];
+          if (note.title === today) {
             foundToday = true;
           }
-          if (notebookNotes[i].title.startsWith(untitled)) {
+          if (note.title.startsWith(untitled)) {
             count++;
           }
         }
@@ -226,49 +238,50 @@ function useCrossnoteContainer(initialState: InitialState) {
       if (!fileName.endsWith(".md")) {
         fileName = fileName + ".md";
       }
-      let filePath;
-      let tags: string[] = [];
-      if (
-        selectedSection.type === SelectedSectionType.Notes ||
-        selectedSection.type === SelectedSectionType.Today ||
-        selectedSection.type === SelectedSectionType.Todo ||
-        selectedSection.type === SelectedSectionType.Tagged ||
-        selectedSection.type === SelectedSectionType.Untagged
-      ) {
-        filePath = fileName;
-      } else if (selectedSection.type === SelectedSectionType.Tag) {
-        filePath = fileName;
-        tags = [selectedSection.path];
-      } else {
-        filePath = path.relative(
-          notebook.dir,
-          path.resolve(notebook.dir, selectedSection.path, fileName),
-        );
-      }
+      let filePath = path.relative(
+        notebook.dir,
+        path.resolve(notebook.dir, fileName),
+      );
 
       const noteConfig: NoteConfig = {
-        tags: tags,
         modifiedAt: new Date(),
         createdAt: new Date(),
       };
-      await crossnote.writeNote(notebook, filePath, markdown, noteConfig);
-      const note: Note = {
-        notebook: notebook,
-        filePath: filePath,
-        title: fileName.replace(/\.md$/, ""),
-        markdown,
-        config: noteConfig,
-        mentions: {},
-        mentionedBy: {}, // TODO: set this
-      };
-      setNotebookNotes((notes) => [note, ...notes]);
-      setSelectedNote(note);
-      setDisplayMobileEditor(true);
-      setEditorMode(EditorMode.VickyMD);
-      return note;
-      */
+      return await notebook.writeNote(filePath, markdown, noteConfig);
     },
-    [crossnote, t],
+    [t],
+  );
+
+  const openNoteAtPath = useCallback(
+    async (notebook: Notebook, filePath: string) => {
+      if (!filePath.endsWith(".md")) {
+        filePath += ".md";
+      }
+      let note: Note;
+      if (filePath in notebook.notes) {
+        note = notebook.notes[filePath];
+      } else {
+        note = await createNewNote(notebook, filePath, "");
+      }
+      addTabNode({
+        type: "tab",
+        component: "Note",
+        name: `📝 ` + note.title,
+        config: {
+          singleton: false,
+          note,
+        },
+      });
+    },
+    [createNewNote, addTabNode],
+  );
+
+  const openTodayNote = useCallback(
+    (notebook: Notebook) => {
+      const today = getTodayName();
+      return openNoteAtPath(notebook, `${today}.md`);
+    },
+    [openNoteAtPath],
   );
 
   const duplicateNote = useCallback(
@@ -284,23 +297,6 @@ function useCrossnoteContainer(initialState: InitialState) {
       */
     },
     [crossnote],
-  );
-
-  const _setSelectedNotebook = useCallback(
-    (notebook: Notebook) => {
-      localStorage.setItem("selectedNotebookID", notebook._id);
-      setSelectedNotebook(notebook);
-      if (notebook.gitURL) {
-        browserHistory.push(
-          `/?repo=${encodeURIComponent(
-            notebook.gitURL,
-          )}&branch=${encodeURIComponent(notebook.gitBranch || "master")}`,
-        );
-      } else {
-        browserHistory.push(`/?notebookID=${notebook._id}`);
-      }
-    },
-    [setSelectedNotebook],
   );
 
   const addNotebook = useCallback(
@@ -334,14 +330,13 @@ function useCrossnoteContainer(initialState: InitialState) {
           rememberCredentials: gitRememberCredentials,
         });
         setNotebooks((notebooks) => [notebook, ...notebooks]);
-        _setSelectedNotebook(notebook);
         setIsAddingNotebook(false);
       } catch (error) {
         setIsAddingNotebook(false);
         throw error;
       }
     },
-    [crossnote, notebooks, _setSelectedNotebook],
+    [crossnote, notebooks],
   );
 
   const updateNotebook = useCallback(
@@ -374,9 +369,8 @@ function useCrossnoteContainer(initialState: InitialState) {
           return n._id !== notebook._id;
         }),
       );
-      _setSelectedNotebook(selectedNotebook);
     },
-    [crossnote, _setSelectedNotebook],
+    [crossnote],
   );
 
   const hardResetNotebook = useCallback(
@@ -549,7 +543,7 @@ function useCrossnoteContainer(initialState: InitialState) {
       }
       */
     },
-    [crossnote, selectedNotebook],
+    [crossnote],
   );
 
   const getNote = useCallback(
@@ -562,26 +556,6 @@ function useCrossnoteContainer(initialState: InitialState) {
       */
     },
     [crossnote],
-  );
-
-  const openNoteAtPath = useCallback(
-    (filePath: string) => {
-      /*
-      if (!crossnote) return;
-
-      if (!filePath.endsWith(".md")) {
-        filePath += ".md";
-      }
-
-      const note = notebookNotes.find((n) => n.filePath === filePath);
-      if (note) {
-        _setSelectedNote(note);
-      } else {
-        createNewNote(selectedNotebook, filePath, "");
-      }
-      */
-    },
-    [crossnote, selectedNotebook, createNewNote],
   );
 
   useEffect(() => {
@@ -601,7 +575,6 @@ function useCrossnoteContainer(initialState: InitialState) {
         if (!notebook) {
           notebook = notebooks[0];
         }
-        setSelectedNotebook(notebook); // TODO: <= default selected
         setInitialized(true);
         console.log("selectedNotebook: ", notebook);
       } else {
@@ -627,7 +600,6 @@ Please also check the [Explore](https://crossnote.app/explore) section to discov
 `,
         );
         setNotebooks([notebook]);
-        setSelectedNotebook(notebook);
         setInitialized(true);
         // TODO: create empty note and add `We suggest you to add [Welcome to crossnote]() notebook ;)`
       }
@@ -635,19 +607,21 @@ Please also check the [Explore](https://crossnote.app/explore) section to discov
   }, [crossnote, initialized]);
 
   useEffect(() => {
-    if (!crossnote || !selectedNotebook) {
+    if (!crossnote) {
       return;
     }
     (async () => {
       setIsLoadingNotebook(true);
+      /*
       await selectedNotebook.refreshNotes({
         dir: "./",
         includeSubdirectories: true,
       });
       console.log("end loading notes: ", selectedNotebook);
+      */
       setIsLoadingNotebook(false);
     })();
-  }, [crossnote, selectedNotebook]);
+  }, [crossnote]);
 
   /*
   useEffect(() => {
@@ -837,8 +811,6 @@ Please also check the [Explore](https://crossnote.app/explore) section to discov
     crossnote,
     initialized,
     notebooks,
-    selectedNotebook,
-    setSelectedNotebook: _setSelectedNotebook,
     updateNoteMarkdown,
     createNewNote,
     deleteNote,
@@ -857,6 +829,7 @@ Please also check the [Explore](https://crossnote.app/explore) section to discov
     getNote,
     isLoadingNotebook,
     openNoteAtPath,
+    openTodayNote,
     needsToRefreshNotes,
     setNeedsToRefreshNotes,
     homeSection,
