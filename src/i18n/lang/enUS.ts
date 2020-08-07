@@ -149,6 +149,7 @@ export const enUS = {
     "general/why-cors-proxy": "Why do we need CORS proxy？",
     "general/today": "Today",
     "general/todo": "Todo",
+    "general/graph-view": "Graph view",
     "general/wiki": "Wiki",
     "general/tagged": "Tagged",
     "general/untagged": "Untagged",

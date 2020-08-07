@@ -98,6 +98,9 @@ const useStyles = makeStyles((theme: Theme) =>
         width: "100%",
       },
       "& .CodeMirror": {
+        width: "800px",
+        maxWidth: "100%",
+        margin: "0 auto",
         height: "100%",
         padding: theme.spacing(0, 1),
         [theme.breakpoints.down("sm")]: {
@@ -126,7 +129,9 @@ const useStyles = makeStyles((theme: Theme) =>
       position: "relative",
       left: "0",
       top: "0",
-      width: "100%",
+      width: "800px",
+      maxWidth: "100%",
+      margin: "0 auto",
       height: "100%",
       border: "none",
       overflow: "auto !important",

@@ -369,7 +369,7 @@ export function Home(props: Props) {
               crossnoteContainer.addTabNode({
                 type: "tab",
                 component: "Settings",
-                name: t("general/Settings"),
+                name: "⚙️ " + t("general/Settings"),
                 id: "Settings",
                 config: {
                   singleton: true,

@@ -36,7 +36,6 @@ import {
   TrashCan,
 } from "mdi-material-ui";
 import { useTranslation } from "react-i18next";
-import ConfigureNotebookDialog from "./ConfigureNotebookDialog";
 import Notes from "./Notes";
 import { OrderBy, OrderDirection } from "../lib/order";
 import { Notebook, Note } from "../lib/notebook";
@@ -155,11 +154,6 @@ export default function NotesPanel(props: Props) {
   const [fixedTopPanel, setFixedTopPanel] = useState<boolean>(false);
   const container = useRef<HTMLDivElement>(null);
   const topPanel = useRef<HTMLElement>(null);
-
-  const [
-    notebookConfigurationDialogOpen,
-    setNotebookConfigurationDialogOpen,
-  ] = useState<boolean>(false);
 
   const createNewNote = useCallback(() => {
     setIsCreatingNote(true);
@@ -379,12 +373,6 @@ export default function NotesPanel(props: Props) {
           </ListItem>
         </List>
       </Popover>
-
-      <ConfigureNotebookDialog
-        open={notebookConfigurationDialogOpen}
-        onClose={() => setNotebookConfigurationDialogOpen(false)}
-        notebook={props.notebook}
-      ></ConfigureNotebookDialog>
 
       {crossnoteContainer.isLoadingNotebook && (
         <CircularProgress className={clsx(classes.loading)}></CircularProgress>

@@ -8,14 +8,23 @@ import {
 } from "@material-ui/core/styles";
 import clsx from "clsx";
 import React, { useState, useCallback, useEffect } from "react";
-import { IconButton, Box, Typography } from "@material-ui/core";
-import { ChevronRight, ChevronDown } from "mdi-material-ui";
+import { IconButton, Box, Typography, Tooltip } from "@material-ui/core";
+import {
+  ChevronRight,
+  ChevronDown,
+  Cog,
+  Upload,
+  Download,
+} from "mdi-material-ui";
 import {
   CrossnoteContainer,
   SelectedSectionType,
   HomeSection,
 } from "../containers/crossnote";
 import { useTranslation } from "react-i18next";
+import ConfigureNotebookDialog from "./ConfigureNotebookDialog";
+import PushNotebookDialog from "./PushNotebookDialog";
+
 import { Notebook } from "../lib/notebook";
 
 const useStyles = makeStyles((theme: Theme) =>
@@ -73,6 +82,13 @@ interface Props {
 export default function NotebookTreeView(props: Props) {
   const classes = useStyles();
   const [expanded, setExpanded] = useState<string[]>([]);
+  const [
+    notebookConfigurationDialogOpen,
+    setNotebookConfigurationDialogOpen,
+  ] = useState<boolean>(false);
+  const [pushNotebookDialogOpen, setPushNotebookDialogOpen] = useState<boolean>(
+    false,
+  );
   const crossnoteContainer = CrossnoteContainer.useContainer();
   const { t } = useTranslation();
 
@@ -110,64 +126,33 @@ export default function NotebookTreeView(props: Props) {
   */
 
   return (
-    <TreeView
-      defaultExpandIcon={
-        <IconButton
-          disableFocusRipple={true}
-          disableRipple={true}
-          size={"medium"}
-        >
-          <ChevronRight></ChevronRight>
-        </IconButton>
-      }
-      defaultCollapseIcon={
-        <IconButton
-          disableFocusRipple={true}
-          disableRipple={true}
-          size={"medium"}
-        >
-          <ChevronDown></ChevronDown>
-        </IconButton>
-      }
-      defaultEndIcon={<div style={{ width: 24 }} />}
-      expanded={expanded}
-      onNodeToggle={handleChange}
-      style={{ width: "100%" }}
-    >
-      <TreeItem
-        nodeId={"notes"}
-        classes={{
-          root: classes.treeItemRoot,
-          content: classes.treeItemContent,
-          expanded: classes.treeItemExpanded,
-          group: classes.treeItemGroup,
-          label: classes.treeItemLabel,
-        }}
-        label={
-          <Box
-            onClick={() => {
-              props.notebook.refreshNotesInNotLoaded({
-                dir: "./",
-                includeSubdirectories: true,
-              });
-            }}
-            className={clsx(classes.treeItemLabelRoot)}
+    <React.Fragment>
+      <TreeView
+        defaultExpandIcon={
+          <IconButton
+            disableFocusRipple={true}
+            disableRipple={true}
+            size={"medium"}
           >
-            <Typography
-              color={"inherit"}
-              variant={"body1"}
-              className={clsx(classes.treeItemLabelText)}
-            >
-              {props.notebook.name +
-                (props.notebook.localSha === props.notebook.remoteSha
-                  ? ""
-                  : " 🔔")}
-            </Typography>
-          </Box>
+            <ChevronRight></ChevronRight>
+          </IconButton>
         }
+        defaultCollapseIcon={
+          <IconButton
+            disableFocusRipple={true}
+            disableRipple={true}
+            size={"medium"}
+          >
+            <ChevronDown></ChevronDown>
+          </IconButton>
+        }
+        defaultEndIcon={<div style={{ width: 24 }} />}
+        expanded={expanded}
+        onNodeToggle={handleChange}
+        style={{ width: "100%" }}
       >
         <TreeItem
-          nodeId={"today-notes"}
+          nodeId={"notes"}
           classes={{
             root: classes.treeItemRoot,
             content: classes.treeItemContent,
@@ -178,19 +163,86 @@ export default function NotebookTreeView(props: Props) {
           label={
             <Box
               onClick={() => {
-                crossnoteContainer.openTodayNote(props.notebook);
+                props.notebook.refreshNotesInNotLoaded({
+                  dir: "./",
+                  includeSubdirectories: true,
+                });
               }}
               className={clsx(classes.treeItemLabelRoot)}
             >
-              <span role="img" aria-label="today-notes">
-                {"📅"}
-              </span>
-              <Typography className={clsx(classes.treeItemLabelText)}>
-                {t("general/today")}
+              <Typography
+                color={"inherit"}
+                variant={"body1"}
+                className={clsx(classes.treeItemLabelText)}
+              >
+                {props.notebook.name +
+                  (props.notebook.localSha === props.notebook.remoteSha
+                    ? ""
+                    : " 🔔")}
               </Typography>
             </Box>
           }
-        ></TreeItem>
+        >
+          <TreeItem
+            nodeId={"today-notes"}
+            classes={{
+              root: classes.treeItemRoot,
+              content: classes.treeItemContent,
+              expanded: classes.treeItemExpanded,
+              group: classes.treeItemGroup,
+              label: classes.treeItemLabel,
+            }}
+            label={
+              <Box
+                onClick={() => {
+                  crossnoteContainer.openTodayNote(props.notebook);
+                }}
+                className={clsx(classes.treeItemLabelRoot)}
+              >
+                <span role="img" aria-label="today-notes">
+                  {"📅"}
+                </span>
+                <Typography className={clsx(classes.treeItemLabelText)}>
+                  {t("general/today")}
+                </Typography>
+              </Box>
+            }
+          ></TreeItem>
+          <TreeItem
+            nodeId={"graph-view"}
+            classes={{
+              root: classes.treeItemRoot,
+              content: classes.treeItemContent,
+              expanded: classes.treeItemExpanded,
+              group: classes.treeItemGroup,
+              label: classes.treeItemLabel,
+            }}
+            label={
+              <Box
+                onClick={() => {
+                  crossnoteContainer.addTabNode({
+                    type: "tab",
+                    component: "Graph",
+                    id: "Graph: " + props.notebook.dir,
+                    name: t("general/graph-view"),
+                    config: {
+                      singleton: true,
+                      notebook: props.notebook,
+                    },
+                  });
+                }}
+                className={clsx(classes.treeItemLabelRoot)}
+              >
+                <span role="img" aria-label="todo-notes">
+                  {"🕸"}
+                </span>
+                <Typography className={clsx(classes.treeItemLabelText)}>
+                  {t("general/graph-view")}
+                </Typography>
+              </Box>
+            }
+          ></TreeItem>
+          {/*
         <TreeItem
           nodeId={"todo-notes"}
           classes={{
@@ -224,42 +276,119 @@ export default function NotebookTreeView(props: Props) {
               </Typography>
             </Box>
           }
-        ></TreeItem>
-        <TreeItem
-          nodeId={"directories"}
-          classes={{
-            root: classes.treeItemRoot,
-            content: classes.treeItemContent,
-            expanded: classes.treeItemExpanded,
-            group: classes.treeItemGroup,
-            label: classes.treeItemLabel,
-          }}
-          label={
-            <Box
-              onClick={() => {
-                crossnoteContainer.addTabNode({
-                  type: "tab",
-                  component: "Notes",
-                  id: "Notes: " + props.notebook.dir,
-                  name: "📔 " + props.notebook.name,
-                  config: {
-                    singleton: true,
-                    notebook: props.notebook,
-                  },
-                });
+        ></TreeItem>*/}
+          <TreeItem
+            nodeId={"all-notes"}
+            classes={{
+              root: classes.treeItemRoot,
+              content: classes.treeItemContent,
+              expanded: classes.treeItemExpanded,
+              group: classes.treeItemGroup,
+              label: classes.treeItemLabel,
+            }}
+            label={
+              <Box
+                onClick={() => {
+                  crossnoteContainer.addTabNode({
+                    type: "tab",
+                    component: "Notes",
+                    id: "Notes: " + props.notebook.dir,
+                    name: "📔 " + props.notebook.name,
+                    config: {
+                      singleton: true,
+                      notebook: props.notebook,
+                    },
+                  });
+                }}
+                className={clsx(classes.treeItemLabelRoot)}
+              >
+                <span role="img" aria-label="Notes">
+                  {"📔"}
+                </span>
+                <Typography className={clsx(classes.treeItemLabelText)}>
+                  {t("general/notes")}
+                </Typography>
+              </Box>
+            }
+          ></TreeItem>
+          <TreeItem
+            nodeId={"settings"}
+            classes={{
+              root: classes.treeItemRoot,
+              content: classes.treeItemContent,
+              expanded: classes.treeItemExpanded,
+              group: classes.treeItemGroup,
+              label: classes.treeItemLabel,
+            }}
+            label={
+              <Box
+                onClick={() => setNotebookConfigurationDialogOpen(true)}
+                className={clsx(classes.treeItemLabelRoot)}
+              >
+                <span role="img" aria-label={t("general/Settings")}>
+                  {"⚙️"}
+                </span>
+                <Typography className={clsx(classes.treeItemLabelText)}>
+                  {t("general/Settings")}
+                </Typography>
+              </Box>
+            }
+          ></TreeItem>
+          {props.notebook.gitURL && (
+            <TreeItem
+              nodeId={"upload"}
+              classes={{
+                root: classes.treeItemRoot,
+                content: classes.treeItemContent,
+                expanded: classes.treeItemExpanded,
+                group: classes.treeItemGroup,
+                label: classes.treeItemLabel,
               }}
-              className={clsx(classes.treeItemLabelRoot)}
-            >
-              <span role="img" aria-label="directories">
-                {"📔"}
-              </span>
-              <Typography className={clsx(classes.treeItemLabelText)}>
-                {t("general/notes")}
-              </Typography>
-            </Box>
-          }
-        ></TreeItem>
-        {/*<TreeItem
+              label={
+                <Box
+                  onClick={() => setNotebookConfigurationDialogOpen(true)}
+                  className={clsx(classes.treeItemLabelRoot)}
+                >
+                  <span role="img" aria-label={t("general/Upload")}>
+                    {"📤"}
+                  </span>
+                  <Tooltip title={t("general/upload-push")}>
+                    <Typography className={clsx(classes.treeItemLabelText)}>
+                      {t("general/Upload")}
+                    </Typography>
+                  </Tooltip>
+                </Box>
+              }
+            ></TreeItem>
+          )}
+          {props.notebook.gitURL && (
+            <TreeItem
+              nodeId={"download"}
+              classes={{
+                root: classes.treeItemRoot,
+                content: classes.treeItemContent,
+                expanded: classes.treeItemExpanded,
+                group: classes.treeItemGroup,
+                label: classes.treeItemLabel,
+              }}
+              label={
+                <Box
+                  onClick={() => setPushNotebookDialogOpen(true)}
+                  className={clsx(classes.treeItemLabelRoot)}
+                >
+                  <span role="img" aria-label={t("general/Download")}>
+                    {"📥"}
+                  </span>
+                  <Tooltip title={t("general/download-pull")}>
+                    <Typography className={clsx(classes.treeItemLabelText)}>
+                      {t("general/Download")}
+                    </Typography>
+                  </Tooltip>
+                </Box>
+              }
+            ></TreeItem>
+          )}
+          {/*<TreeItem
           nodeId={"conflicted-notes"}
           classes={{
             root: classes.treeItemRoot,
@@ -294,7 +423,18 @@ export default function NotebookTreeView(props: Props) {
           }
         ></TreeItem>
         */}
-      </TreeItem>
-    </TreeView>
+        </TreeItem>
+      </TreeView>
+      <ConfigureNotebookDialog
+        open={notebookConfigurationDialogOpen}
+        onClose={() => setNotebookConfigurationDialogOpen(false)}
+        notebook={props.notebook}
+      ></ConfigureNotebookDialog>
+      <PushNotebookDialog
+        notebook={props.notebook}
+        open={pushNotebookDialogOpen}
+        onClose={() => setPushNotebookDialogOpen(false)}
+      ></PushNotebookDialog>
+    </React.Fragment>
   );
 }

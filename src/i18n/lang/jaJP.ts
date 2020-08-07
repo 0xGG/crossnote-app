@@ -149,6 +149,7 @@ export const jaJP = {
     "general/why-cors-proxy": "なぜ CORS プロキシが必要なのですか?",
     "general/today": "今日",
     "general/todo": "Todo",
+    "general/graph-view": "グラフビュー",
     "general/wiki": "Wiki",
     "general/tagged": "タグ",
     "general/untagged": "タグない",
