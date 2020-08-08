@@ -18,6 +18,7 @@ import NotesPanel from "./NotesPanel";
 import { PrivacyPolicy } from "../pages/Privacy";
 import NotePanel from "./NotePanel";
 import { useTranslation } from "react-i18next";
+import GraphView from "./GraphView";
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -66,6 +67,8 @@ export function MainPanel(props: Props) {
       return <PrivacyPolicy toggleDrawer={props.toggleDrawer}></PrivacyPolicy>;
     } else if (component === "Note") {
       return <NotePanel note={config.note} tabNode={node}></NotePanel>;
+    } else if (component === "Graph") {
+      return <GraphView notebook={config.notebook}></GraphView>;
     }
   }, []);
 
