@@ -192,6 +192,10 @@ export const zhCN = {
     "general/Emacs": "Emacs",
     "general/Desc": "降序",
     "general/Asc": "升序",
+    "general/pin-the-note": "置顶这个笔记",
+    "general/unpin-the-note": "取消置顶这个笔记",
+    "general/add-to-quick-access": "添加到快速访问",
+    "general/remove-from-quick-access": "从快速访问中移除",
 
     // Error
     "error/authentication-failed": "认证失败",
@@ -276,9 +280,6 @@ export const zhCN = {
     "profile-card/followed-user": "关注了这个用户",
     "profile-card/unfollow-user-failure": "无法取消关注这个用户",
     "profile-card/unfollowed-user": "取消关注了这个用户",
-
-    // TagCard
-    "tag-card/pin-to-my-notes-page": "置顶到我的笔记页",
 
     // Interaction panel
     "interaction-panel/show-attached-notes": "显示附加的笔记",

@@ -192,6 +192,10 @@ export const zhTW = {
     "general/Emacs": "Emacs",
     "general/Desc": "遞減",
     "general/Asc": "遞增",
+    "general/pin-the-note": "置頂這個筆記",
+    "general/unpin-the-note": "取消置頂這個筆記",
+    "general/add-to-quick-access": "添加到快速訪問",
+    "general/remove-from-quick-access": "從快速訪問中移除",
 
     // Error
     "error/authentication-failed": "認証失敗",
@@ -276,9 +280,6 @@ export const zhTW = {
     "profile-card/followed-user": "關注了這個用戶",
     "profile-card/unfollow-user-failure": "無法取消關注這個用戶",
     "profile-card/unfollowed-user": "取消關注了這個用戶",
-
-    // TagCard
-    "tag-card/pin-to-my-notes-page": "置頂到我的筆記頁",
 
     // Interaction panel
     "interaction-panel/show-attached-notes": "顯示附加的筆記",

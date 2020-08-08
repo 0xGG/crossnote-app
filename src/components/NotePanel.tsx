@@ -27,6 +27,7 @@ import {
   FilePresentationBox,
   Pencil,
   CodeTags,
+  DotsVertical,
 } from "mdi-material-ui";
 import * as path from "path";
 import { useTranslation } from "react-i18next";
@@ -47,6 +48,7 @@ import { renderPreview } from "vickymd/preview";
 import NotesPanel from "./NotesPanel";
 import { resolveNoteImageSrc } from "../utilities/image";
 import EditImageDialog from "./EditImageDialog";
+import NotePopover from "./NotePopover";
 const VickyMD = require("vickymd/core");
 
 const previewZIndex = 99;
@@ -75,7 +77,7 @@ const useStyles = makeStyles((theme: Theme) =>
     topPanel: {
       display: "flex",
       flexDirection: "column",
-      padding: "4px 0",
+      padding: "4px 0 0",
       position: "relative",
       backgroundColor: "inherit",
       [theme.breakpoints.down("sm")]: {
@@ -85,7 +87,6 @@ const useStyles = makeStyles((theme: Theme) =>
     contentPanel: {
       height: "calc(100% - 48px)",
       overflow: "auto",
-      backgroundColor: theme.palette.background.default,
     },
     editorWrapper: {
       "flex": 1,
@@ -219,6 +220,7 @@ export default function NotePanel(props: Props) {
   const [editImageDialogOpen, setEditImageDialogOpen] = useState<boolean>(
     false,
   );
+  const [notePopoverElement, setNotePopoverElement] = useState<Element>(null);
 
   const confirmNoteTitle = useCallback(() => {
     const finalNoteTitle = noteTitle.trim().replace(/\//g, "-");
@@ -493,6 +495,19 @@ export default function NotePanel(props: Props) {
               </Button>
             </Tooltip>
           </ButtonGroup>
+          <ButtonGroup
+            variant="text"
+            color="default"
+            aria-label="editor mode"
+            size="small"
+          >
+            <Button
+              className={clsx(classes.controlBtn)}
+              onClick={(event) => setNotePopoverElement(event.currentTarget)}
+            >
+              <DotsVertical></DotsVertical>
+            </Button>
+          </ButtonGroup>
         </Box>
         <Divider></Divider>
       </Box>
@@ -520,12 +535,16 @@ export default function NotePanel(props: Props) {
             ></div>
           ) : null}
         </Box>
-        <Divider></Divider>
-        <NotesPanel
-          title={"Linked references"}
-          notebook={crossnoteContainer.getNotebookAtPath(note.notebookPath)}
-          referredNote={note}
-        ></NotesPanel>
+        {Object.keys(note.mentionedBy).length > 0 && (
+          <React.Fragment>
+            <Divider></Divider>
+            <NotesPanel
+              title={"Linked references"}
+              notebook={crossnoteContainer.getNotebookAtPath(note.notebookPath)}
+              referredNote={note}
+            ></NotesPanel>
+          </React.Fragment>
+        )}
       </Box>
 
       <EditImageDialog
@@ -536,6 +555,11 @@ export default function NotePanel(props: Props) {
         marker={editImageTextMarker}
         note={note}
       ></EditImageDialog>
+
+      <NotePopover
+        anchorElement={notePopoverElement}
+        onClose={() => setNotePopoverElement(null)}
+      ></NotePopover>
 
       <Card
         id="math-preview"

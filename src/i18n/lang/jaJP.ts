@@ -195,6 +195,10 @@ export const jaJP = {
     "general/Emacs": "Emacs",
     "general/Desc": "降順",
     "general/Asc": "昇順",
+    "general/pin-the-note": "ノートをピン留めする",
+    "general/unpin-the-note": "ノートの固定を解除する",
+    "general/add-to-quick-access": "クイック アクセスに追加",
+    "general/remove-from-quick-access": "クイック アクセスから削除",
 
     // Error
     "error/authentication-failed": "認証に失敗しました",
@@ -287,9 +291,6 @@ export const jaJP = {
     "profile-card/unfollow-user-failure":
       "このユーザーのフォローを解除できません",
     "profile-card/unfollowed-user": "このユーザーのフォローを解除しました",
-
-    // TagCard
-    "tag-card/pin-to-my-notes-page": "ノートページにピン留めする",
 
     // Interaction panel
     "interaction-panel/show-attached-notes": "添付されたノートを表示",

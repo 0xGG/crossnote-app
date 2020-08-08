@@ -195,6 +195,10 @@ export const enUS = {
     "general/Emacs": "Emacs",
     "general/Desc": "Desc",
     "general/Asc": "Asc",
+    "general/pin-the-note": "Pin the note",
+    "general/unpin-the-note": "Unpin the note",
+    "general/add-to-quick-access": "Add to quick access",
+    "general/remove-from-quick-access": "Remove from quick access",
 
     // Error
     "error/authentication-failed": "Authentication failed",
@@ -282,9 +286,6 @@ export const enUS = {
     "profile-card/followed-user": "Followed user",
     "profile-card/unfollow-user-failure": "Failed to unfollow user",
     "profile-card/unfollowed-user": "Unfollowed user",
-
-    // TagCard
-    "tag-card/pin-to-my-notes-page": "Pin to my notes page",
 
     // Interaction panel
     "interaction-panel/show-attached-notes": "Show attached notes",

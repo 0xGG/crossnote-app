@@ -1,18 +1,23 @@
-import React, { useState, useEffect, FC } from "react";
-import { createStyles, makeStyles, Theme } from "@material-ui/core/styles";
+import React, { useState, useEffect } from "react";
+import {
+  createStyles,
+  makeStyles,
+  Theme,
+  useTheme,
+} from "@material-ui/core/styles";
 import clsx from "clsx";
 import { CrossnoteContainer } from "../containers/crossnote";
-import { Box, Typography, ButtonBase, Tooltip, Card } from "@material-ui/core";
+import { Box, Typography, Tooltip, Card, IconButton } from "@material-ui/core";
 import { generateSummaryFromMarkdown, Summary } from "../utilities/note";
 import { formatDistanceStrict } from "date-fns/esm";
 import { useTranslation } from "react-i18next";
-import { Pin } from "mdi-material-ui";
+import { Pin, DotsVertical } from "mdi-material-ui";
 import { formatRelative } from "date-fns";
-import { basename } from "path";
 import { SettingsContainer } from "../containers/settings";
 import { languageCodeToDateFNSLocale } from "../i18n/i18n";
 import { resolveNoteImageSrc } from "../utilities/image";
 import { Note } from "../lib/notebook";
+import NotePopover from "./NotePopover";
 
 export const NoteCardWidth = 550;
 export const NoteCardMargin = 4;
@@ -109,12 +114,14 @@ interface Props {
 export default function NoteCard(props: Props) {
   const classes = useStyles(props);
   const note = props.note;
+  const theme = useTheme();
   const crossnoteContainer = CrossnoteContainer.useContainer();
   const settingsContainer = SettingsContainer.useContainer();
   const [header, setHeader] = useState<string>("");
   const [summary, setSummary] = useState<Summary>(null);
   const [images, setImages] = useState<string[]>([]);
   const [gitStatus, setGitStatus] = useState<string>("");
+  const [popoverElement, setPopoverElement] = useState<Element>(null);
   const { t } = useTranslation();
   const duration = formatDistanceStrict(note.config.modifiedAt, Date.now())
     .replace(/\sseconds?/, "s")
@@ -172,86 +179,125 @@ export default function NoteCard(props: Props) {
   ]);*/
 
   return (
-    <Card
-      className={clsx(classes.noteCard, "note-card")}
-      onClick={() => {
-        // crossnoteContainer.setDisplayMobileEditor(true);
-        crossnoteContainer.addTabNode({
-          type: "tab",
-          component: "Note",
-          config: {
-            singleton: false,
-            note,
-          },
-          name: `📝 ` + note.title,
-        });
-      }}
-    >
-      <Box className={clsx(classes.leftPanel)}>
-        <Tooltip
-          title={
-            <>
-              <p>
-                {t("general/created-at") +
-                  " " +
-                  formatRelative(new Date(note.config.createdAt), new Date(), {
-                    locale: languageCodeToDateFNSLocale(
-                      settingsContainer.language,
-                    ),
-                  })}
-              </p>
-              <p>
-                {t("general/modified-at") +
-                  " " +
-                  formatRelative(new Date(note.config.modifiedAt), new Date(), {
-                    locale: languageCodeToDateFNSLocale(
-                      settingsContainer.language,
-                    ),
-                  })}
-              </p>
-            </>
-          }
-          arrow
-        >
-          <Typography className={clsx(classes.duration)}>{duration}</Typography>
-        </Tooltip>
-
-        {note.config.pinned && <Pin className={clsx(classes.pin)}></Pin>}
-      </Box>
-      <Box className={clsx(classes.rightPanel)}>
-        {header && (
-          <Typography
-            style={{ fontWeight: "bold" }}
-            variant={"body1"}
-            className={clsx(classes.header)}
+    <React.Fragment>
+      <Card
+        className={clsx(classes.noteCard, "note-card")}
+        onClick={() => {
+          // crossnoteContainer.setDisplayMobileEditor(true);
+          crossnoteContainer.addTabNode({
+            type: "tab",
+            component: "Note",
+            config: {
+              singleton: false,
+              note,
+            },
+            name: `📝 ` + note.title,
+          });
+        }}
+      >
+        <Box className={clsx(classes.leftPanel)}>
+          <Tooltip
+            title={
+              <>
+                <p>
+                  {t("general/created-at") +
+                    " " +
+                    formatRelative(
+                      new Date(note.config.createdAt),
+                      new Date(),
+                      {
+                        locale: languageCodeToDateFNSLocale(
+                          settingsContainer.language,
+                        ),
+                      },
+                    )}
+                </p>
+                <p>
+                  {t("general/modified-at") +
+                    " " +
+                    formatRelative(
+                      new Date(note.config.modifiedAt),
+                      new Date(),
+                      {
+                        locale: languageCodeToDateFNSLocale(
+                          settingsContainer.language,
+                        ),
+                      },
+                    )}
+                </p>
+              </>
+            }
+            arrow
           >
-            {header}
-          </Typography>
-        )}
-        {summary && summary.summary.trim().length > 0 && (
-          <Typography className={clsx(classes.summary)}>
-            {summary && summary.summary.slice(0, 200)}
-          </Typography>
-        )}
-        {images.length > 0 && (
-          <Box className={clsx(classes.images)}>
-            <Box className={clsx(classes.imagesWrapper)}>
-              {images.map((image, offset) => (
-                <div
-                  key={`${image}-${offset}`}
-                  className={clsx(classes.image)}
-                  style={{
-                    backgroundImage: `url(${image})`,
-                  }}
-                ></div>
-              ))}
-            </Box>
+            <Typography className={clsx(classes.duration)}>
+              {duration}
+            </Typography>
+          </Tooltip>
+
+          {note.config.pinned && <Pin className={clsx(classes.pin)}></Pin>}
+        </Box>
+        <Box className={clsx(classes.rightPanel)}>
+          <Box
+            style={{
+              display: "flex",
+              flexDirection: "row",
+              alignItems: "flex-start",
+              justifyContent: "space-between",
+            }}
+          >
+            <Typography
+              style={{ fontWeight: "bold" }}
+              variant={"body1"}
+              className={clsx(classes.header)}
+            >
+              {header}
+            </Typography>
+            <IconButton
+              size={"small"}
+              style={{
+                marginBottom: theme.spacing(1),
+                marginLeft: theme.spacing(1),
+                marginRight: theme.spacing(1),
+              }}
+              onClick={(event) => {
+                event.preventDefault();
+                event.stopPropagation();
+                setPopoverElement(event.currentTarget);
+              }}
+            >
+              <DotsVertical></DotsVertical>
+            </IconButton>
           </Box>
-        )}
-        <Typography variant={"caption"} className={clsx(classes.filePath)}>
-          {t(`git/status/${gitStatus}`)}
-        </Typography>
-      </Box>
-    </Card>
+
+          {summary && summary.summary.trim().length > 0 && (
+            <Typography className={clsx(classes.summary)}>
+              {summary && summary.summary.slice(0, 200)}
+            </Typography>
+          )}
+          {images.length > 0 && (
+            <Box className={clsx(classes.images)}>
+              <Box className={clsx(classes.imagesWrapper)}>
+                {images.map((image, offset) => (
+                  <div
+                    key={`${image}-${offset}`}
+                    className={clsx(classes.image)}
+                    style={{
+                      backgroundImage: `url(${image})`,
+                    }}
+                  ></div>
+                ))}
+              </Box>
+            </Box>
+          )}
+          <Typography variant={"caption"} className={clsx(classes.filePath)}>
+            {t(`git/status/${gitStatus}`)}
+          </Typography>
+        </Box>
+      </Card>
+      <NotePopover
+        anchorElement={popoverElement}
+        onClose={() => setPopoverElement(null)}
+      ></NotePopover>
+    </React.Fragment>
   );
 }
