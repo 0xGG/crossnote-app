@@ -16,7 +16,7 @@ export interface TabNodeConfig {
   notebook?: Notebook;
 }
 
-export interface TabNode {
+export interface CrossnoteTabNode {
   type: "tab";
   name: string;
   component: TabNodeComponent;

@@ -8,8 +8,9 @@ import FlexLayout, {
   Actions,
   DockLocation,
   TabSetNode,
+  TabNode,
 } from "flexlayout-react";
-import { OneDay, getTodayName } from "../utilities/utils";
+import { getTodayName } from "../utilities/utils";
 import { useTranslation } from "react-i18next";
 import Crossnote, {
   PushNotebookArgs,
@@ -21,7 +22,8 @@ import moment from "moment";
 import { pfs } from "../lib/fs";
 import { sanitizeTag } from "../utilities/markdown";
 import { Notebook, Note, NoteConfig } from "../lib/notebook";
-import { TabNode, TabHeight } from "../lib/tabNode";
+import { TabHeight, CrossnoteTabNode } from "../lib/tabNode";
+import { Emitter, globalEmitter, EventType } from "../lib/event";
 
 export enum SelectedSectionType {
   Notes = "Notes",
@@ -115,7 +117,7 @@ function useCrossnoteContainer(initialState: InitialState) {
   );
 
   const addTabNode = useCallback(
-    (tabNode: TabNode) => {
+    (tabNode: CrossnoteTabNode) => {
       if (!layoutModel) {
         return;
       }
@@ -169,10 +171,33 @@ function useCrossnoteContainer(initialState: InitialState) {
   );
 
   const updateNoteMarkdown = useCallback(
-    async (note: Note, markdown: string) => {
-      const notebook = getNotebookAtPath(note.notebookPath);
+    async (
+      tabNode: TabNode,
+      notebookPath: string,
+      filePath: string,
+      markdown: string,
+    ) => {
+      const notebook = getNotebookAtPath(notebookPath);
+      const note = await notebook.getNote(filePath);
       if (notebook) {
-        await notebook.writeNote(note.filePath, markdown, note.config);
+        if (note.markdown !== markdown) {
+          console.log("not equal: ", tabNode.getId(), note.markdown, markdown);
+          const newNote = await notebook.writeNote(
+            note.filePath,
+            markdown,
+            note.config,
+          );
+          globalEmitter.emit(EventType.ModifiedMarkdown, {
+            tabId: tabNode.getId(),
+            markdown: markdown,
+            noteFilePath: note.filePath,
+          });
+          /*
+          if (newNote !== note) {
+            console.log("new note created");
+          }
+          */
+        }
       }
     },
     [getNotebookAtPath],
@@ -580,13 +605,13 @@ function useCrossnoteContainer(initialState: InitialState) {
       } else {
         /*
         notebook = await crossnote.cloneNotebook({
-          corsProxy: "https://cors.isomorphic-git.org",
+          corsProxy: "https://crossnote.app/cors/",
           gitURL: "https://github.com/0xGG/crossnote-doc.git"
         });
         */
         notebook = await crossnote.addNotebook({
           name: "Drafts",
-          corsProxy: "https://cors.isomorphic-git.org",
+          corsProxy: "https://crossnote.app/cors/",
           gitURL: "",
         });
         await pfs.writeFile(

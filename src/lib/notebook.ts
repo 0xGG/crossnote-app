@@ -389,7 +389,7 @@ export class Notebook {
     password?: string,
   ): Promise<Note> {
     noteConfig.modifiedAt = new Date();
-
+    const oMarkdown = markdown;
     try {
       const data = matter(markdown);
       if (data.data["note"] && data.data["note"] instanceof Object) {
@@ -429,7 +429,9 @@ export class Notebook {
       filepath: filePath,
     });
 
-    return await this.getNote(filePath, true);
+    const note = await this.getNote(filePath, true);
+    note.markdown = oMarkdown;
+    return note;
   }
 
   /**

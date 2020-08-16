@@ -41,6 +41,11 @@ import { OrderBy, OrderDirection } from "../lib/order";
 import { Notebook, Note } from "../lib/notebook";
 import Headroom from "react-headroom";
 import { TabHeight } from "../lib/tabNode";
+import {
+  globalEmitter,
+  EventType,
+  ModifiedMarkdownEventData,
+} from "../lib/event";
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -194,12 +199,7 @@ export default function NotesPanel(props: Props) {
     [searchValueInputTimeout],
   );
 
-  useEffect(() => {
-    setSearchValue("");
-    setFinalSearchValue("");
-  }, [props.notebook]);
-
-  useEffect(() => {
+  const refreshRawNotes = useCallback(() => {
     const notes = [];
     const notesMap = props.referredNote
       ? props.referredNote.mentionedBy
@@ -209,7 +209,33 @@ export default function NotesPanel(props: Props) {
       notes.push(notesMap[key]);
     }
     setRawNotes(notes);
-  }, [props.notebook, props.referredNote]);
+  }, [props.notebook.notes, props.referredNote]);
+
+  useEffect(() => {
+    setSearchValue("");
+    setFinalSearchValue("");
+  }, [props.notebook]);
+
+  // Emitter
+  useEffect(() => {
+    if (globalEmitter) {
+      const modifiedMarkdownCallback = (data: ModifiedMarkdownEventData) => {
+        if (!rawNotes.find((n) => n.filePath === data.noteFilePath)) {
+          return;
+        }
+        refreshRawNotes();
+      };
+      // TODO: Delay the modifiedMarkdownCallback
+      globalEmitter.on(EventType.ModifiedMarkdown, modifiedMarkdownCallback);
+      return () => {
+        globalEmitter.off(EventType.ModifiedMarkdown, modifiedMarkdownCallback);
+      };
+    }
+  }, [refreshRawNotes, rawNotes]);
+
+  useEffect(() => {
+    refreshRawNotes();
+  }, [refreshRawNotes]);
 
   useEffect(() => {
     const notes = rawNotes;

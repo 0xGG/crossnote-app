@@ -49,6 +49,11 @@ import NotesPanel from "./NotesPanel";
 import { resolveNoteImageSrc } from "../utilities/image";
 import EditImageDialog from "./EditImageDialog";
 import NotePopover from "./NotePopover";
+import {
+  EventType,
+  globalEmitter,
+  ModifiedMarkdownEventData,
+} from "../lib/event";
 const VickyMD = require("vickymd/core");
 
 const previewZIndex = 99;
@@ -285,6 +290,30 @@ export default function NotePanel(props: Props) {
     );
   }, [note, crossnoteContainer.layoutModel, tabNode]);
 
+  // Emitter
+  useEffect(() => {
+    if (!globalEmitter || !tabNode || !editor || !note) {
+      return;
+    }
+
+    const modifiedMarkdownCallback = (data: ModifiedMarkdownEventData) => {
+      if (data.tabId === tabNode.getId()) {
+        return;
+      }
+      console.log(data);
+      if (data.noteFilePath === note.filePath) {
+        if (editor.getValue() !== data.markdown) {
+          editor.setValue(data.markdown);
+        }
+      }
+    };
+    globalEmitter.on(EventType.ModifiedMarkdown, modifiedMarkdownCallback);
+
+    return () => {
+      globalEmitter.off(EventType.ModifiedMarkdown, modifiedMarkdownCallback);
+    };
+  }, [tabNode, editor, note]);
+
   // Set editor
   useEffect(() => {
     if (textAreaElement && !editor && note) {
@@ -369,7 +398,7 @@ export default function NotePanel(props: Props) {
 
   // Change markdown
   useEffect(() => {
-    if (editor && note) {
+    if (editor && note && tabNode) {
       const changesHandler = () => {
         if (editor.getOption("readOnly")) {
           // This line is necessary for decryption...
@@ -377,12 +406,28 @@ export default function NotePanel(props: Props) {
         }
         const markdown = editor.getValue();
 
+        console.log("changed markdown: ", tabNode.getId(), markdown);
+
         if (!note.config.encryption && markdown === note.markdown) {
           return;
         }
         setTimeout(() => {
           if (markdown === editor.getValue()) {
-            crossnoteContainer.updateNoteMarkdown(note, markdown);
+            crossnoteContainer.updateNoteMarkdown(
+              tabNode,
+              note.notebookPath,
+              note.filePath,
+              markdown,
+            );
+          }
+          if (editorMode === EditorMode.Preview && previewElement) {
+            try {
+              renderPreview(previewElement, editor.getValue());
+              postprocessPreview(previewElement);
+              previewElement.scrollTop = 0;
+            } catch (error) {
+              previewElement.innerText = error;
+            }
           }
         }, 300);
       };
@@ -414,7 +459,7 @@ export default function NotePanel(props: Props) {
         editor.off("imageReadyToLoad", loadImage);
       };
     }
-  }, [editor, note]);
+  }, [editor, note, tabNode, editorMode, previewElement]);
 
   return (
     <Box className={clsx(classes.notePanel)}>
