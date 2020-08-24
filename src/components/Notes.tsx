@@ -16,6 +16,7 @@ import { CloudDownloadOutline } from "mdi-material-ui";
 import Noty from "noty";
 import { Skeleton } from "@material-ui/lab";
 import { Note } from "../lib/notebook";
+import { TabNode } from "flexlayout-react";
 const is = require("is_js");
 
 const lazyLoadPlaceholderHeight = 92 + 2 * NoteCardMargin;
@@ -55,6 +56,7 @@ const useStyles = makeStyles((theme: Theme) =>
 );
 
 interface Props {
+  tabNode: TabNode;
   notes: Note[];
   searchValue: string;
   scrollElement: HTMLElement;
@@ -260,7 +262,11 @@ export default function Notes(props: Props) {
             scrollContainer={props.scrollElement}
             resize={true}
           >
-            <NoteCard key={"note-card-" + note.filePath} note={note}></NoteCard>
+            <NoteCard
+              key={"note-card-" + note.filePath}
+              tabNode={props.tabNode}
+              note={note}
+            ></NoteCard>
           </LazyLoad>
 
           //   <NoteCard key={"note-card-" + note.filePath} note={note}></NoteCard>

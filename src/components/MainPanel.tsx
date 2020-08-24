@@ -59,6 +59,7 @@ export function MainPanel(props: Props) {
     } else if (component === "Notes") {
       return (
         <NotesPanel
+          tabNode={node}
           notebook={config.notebook}
           title={t("general/notes")}
         ></NotesPanel>

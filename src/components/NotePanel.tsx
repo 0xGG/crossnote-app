@@ -300,12 +300,12 @@ export default function NotePanel(props: Props) {
       if (data.tabId === tabNode.getId()) {
         return;
       }
-      console.log(data);
       if (data.noteFilePath === note.filePath) {
         if (editor.getValue() !== data.markdown) {
           editor.setValue(data.markdown);
         }
       }
+      note.config = data.noteConfig;
     };
     globalEmitter.on(EventType.ModifiedMarkdown, modifiedMarkdownCallback);
 
@@ -406,9 +406,7 @@ export default function NotePanel(props: Props) {
         }
         const markdown = editor.getValue();
 
-        console.log("changed markdown: ", tabNode.getId(), markdown);
-
-        if (!note.config.encryption && markdown === note.markdown) {
+        if (markdown === note.markdown) {
           return;
         }
         setTimeout(() => {
@@ -585,6 +583,7 @@ export default function NotePanel(props: Props) {
             <Divider></Divider>
             <NotesPanel
               title={"Linked references"}
+              tabNode={props.tabNode}
               notebook={crossnoteContainer.getNotebookAtPath(note.notebookPath)}
               referredNote={note}
             ></NotesPanel>
@@ -602,6 +601,8 @@ export default function NotePanel(props: Props) {
       ></EditImageDialog>
 
       <NotePopover
+        tabNode={props.tabNode}
+        note={note}
         anchorElement={notePopoverElement}
         onClose={() => setNotePopoverElement(null)}
       ></NotePopover>

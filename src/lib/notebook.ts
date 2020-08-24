@@ -243,54 +243,24 @@ export class Notebook {
         // id: "",
         createdAt: new Date(stats.ctimeMs),
         modifiedAt: new Date(stats.mtimeMs),
-        tags: [],
       };
 
       try {
         const data = matter(markdown);
         const frontMatter: any = Object.assign({}, data.data);
-        if (data.data["note"]) {
-          // TODO: Remove this check for legacy note config in the future.
-          noteConfig = Object.assign(noteConfig, data.data["note"] || {});
-          delete frontMatter["note"];
 
-          // Migration
-          const newFrontMatter = Object.assign(
-            {},
-            frontMatter,
-            formatNoteConfig(noteConfig),
-          );
-          const newMarkdown = matterStringify(data.content, newFrontMatter);
-          await pfs.writeFile(absFilePath, newMarkdown);
-          await git.add({
-            fs: fs,
-            dir: this.dir,
-            filepath: filePath,
-          });
-        } else {
-          // New note config design in beta 3
-          if (data.data["created"]) {
-            noteConfig.createdAt = new Date(data.data["created"]);
-            delete frontMatter["created"];
-          }
-          if (data.data["modified"]) {
-            noteConfig.modifiedAt = new Date(data.data["modified"]);
-            delete frontMatter["modified"];
-          }
-          if (data.data["tags"]) {
-            // TODO: Remove this tags support
-            noteConfig.tags = data.data["tags"];
-            delete frontMatter["tags"];
-          }
-          if (data.data["encryption"]) {
-            // TODO: Remove the encryption support
-            noteConfig.encryption = data.data["encryption"];
-            delete frontMatter["encryption"];
-          }
-          if (data.data["pinned"]) {
-            noteConfig.pinned = data.data["pinned"];
-            delete frontMatter["pinned"];
-          }
+        // New note config design in beta 3
+        if (data.data["created"]) {
+          noteConfig.createdAt = new Date(data.data["created"]);
+          delete frontMatter["created"];
+        }
+        if (data.data["modified"]) {
+          noteConfig.modifiedAt = new Date(data.data["modified"]);
+          delete frontMatter["modified"];
+        }
+        if (data.data["pinned"]) {
+          noteConfig.pinned = data.data["pinned"];
+          delete frontMatter["pinned"];
         }
         // markdown = matter.stringify(data.content, frontMatter); // <= NOTE: I think gray-matter has bug. Although I delete "note" section from front-matter, it still includes it.
         markdown = matterStringify(data.content, frontMatter);
@@ -386,7 +356,6 @@ export class Notebook {
     filePath: string,
     markdown: string,
     noteConfig: NoteConfig,
-    password?: string,
   ): Promise<Note> {
     noteConfig.modifiedAt = new Date();
     const oMarkdown = markdown;
@@ -401,24 +370,8 @@ export class Notebook {
       );
       delete frontMatter["note"];
       markdown = data.content;
-      if (noteConfig.encryption) {
-        // TODO: Refactor
-        noteConfig.encryption.title = getHeaderFromMarkdown(markdown);
-        markdown = AES.encrypt(
-          JSON.stringify({ markdown }),
-          password || "",
-        ).toString();
-      }
       markdown = matterStringify(markdown, frontMatter);
     } catch (error) {
-      if (noteConfig.encryption) {
-        // TODO: Refactor
-        noteConfig.encryption.title = getHeaderFromMarkdown(markdown);
-        markdown = AES.encrypt(
-          JSON.stringify({ markdown }),
-          password || "",
-        ).toString();
-      }
       markdown = matterStringify(markdown, formatNoteConfig(noteConfig));
     }
 
@@ -519,10 +472,8 @@ export interface NoteConfigEncryption {
 export interface NoteConfig {
   createdAt: Date;
   modifiedAt: Date;
-  tags?: string[];
   pinned?: boolean;
   favorited?: boolean;
-  encryption?: NoteConfigEncryption;
 }
 
 export interface NotebookConfig {

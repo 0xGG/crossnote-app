@@ -1,3 +1,5 @@
+import { NoteConfig } from "./notebook";
+
 export enum EventType {
   ModifiedMarkdown = "ModifiedMarkdown",
 }
@@ -6,6 +8,7 @@ export interface ModifiedMarkdownEventData {
   tabId: string;
   noteFilePath: string;
   markdown: string;
+  noteConfig: NoteConfig;
 }
 
 export type EventData = ModifiedMarkdownEventData;

@@ -23,19 +23,33 @@ import {
   Restore,
   ShareVariant,
   Printer,
+  Pin,
 } from "mdi-material-ui";
 import { useTranslation } from "react-i18next";
+import { Note } from "../lib/notebook";
+import { TabNode } from "flexlayout-react";
+import { CrossnoteContainer } from "../containers/crossnote";
 
-const useStyles = makeStyles((theme: Theme) => createStyles({}));
+const useStyles = makeStyles((theme: Theme) =>
+  createStyles({
+    secondaryColor: {
+      color: theme.palette.secondary.main,
+    },
+  }),
+);
 
 interface Props {
+  tabNode: TabNode;
+  note: Note;
   anchorElement: Element;
   onClose: () => void;
 }
 
 export default function NotePopover(props: Props) {
   const classes = useStyles(props);
+  const note = props.note;
   const { t } = useTranslation();
+  const crossnoteContainer = CrossnoteContainer.useContainer();
 
   return (
     <Popover
@@ -45,11 +59,29 @@ export default function NotePopover(props: Props) {
       onClose={props.onClose}
     >
       <List>
-        <ListItem button>
-          <ListItemIcon>
-            <PinOutline></PinOutline>
+        <ListItem
+          button
+          onClick={() => {
+            crossnoteContainer.togglePin(
+              props.tabNode,
+              note.notebookPath,
+              note.filePath,
+            );
+            props.onClose();
+          }}
+        >
+          <ListItemIcon
+            className={clsx(note.config.pinned && classes.secondaryColor)}
+          >
+            {note.config.pinned ? <Pin></Pin> : <PinOutline></PinOutline>}
           </ListItemIcon>
-          <ListItemText primary={t("general/pin-the-note")}></ListItemText>
+          <ListItemText
+            primary={
+              note.config.pinned
+                ? t("general/unpin-the-note")
+                : t("general/pin-the-note")
+            }
+          ></ListItemText>
         </ListItem>
         <ListItem button>
           <ListItemIcon>

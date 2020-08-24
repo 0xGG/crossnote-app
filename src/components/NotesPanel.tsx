@@ -46,6 +46,7 @@ import {
   EventType,
   ModifiedMarkdownEventData,
 } from "../lib/event";
+import { TabNode } from "flexlayout-react";
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -128,6 +129,7 @@ const useStyles = makeStyles((theme: Theme) =>
 );
 
 interface Props {
+  tabNode: TabNode;
   notebook: Notebook;
   referredNote?: Note;
   initialSearchValue?: string;
@@ -405,6 +407,7 @@ export default function NotesPanel(props: Props) {
       )}
 
       <Notes
+        tabNode={props.tabNode}
         notes={notes}
         searchValue={finalSearchValue}
         scrollElement={

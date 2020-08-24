@@ -179,25 +179,61 @@ function useCrossnoteContainer(initialState: InitialState) {
     ) => {
       const notebook = getNotebookAtPath(notebookPath);
       const note = await notebook.getNote(filePath);
-      if (notebook) {
-        if (note.markdown !== markdown) {
-          console.log("not equal: ", tabNode.getId(), note.markdown, markdown);
-          const newNote = await notebook.writeNote(
-            note.filePath,
-            markdown,
-            note.config,
-          );
-          globalEmitter.emit(EventType.ModifiedMarkdown, {
-            tabId: tabNode.getId(),
-            markdown: markdown,
-            noteFilePath: note.filePath,
-          });
-          /*
+      if (!notebook) {
+        return;
+      }
+      if (note.markdown !== markdown) {
+        const newNote = await notebook.writeNote(
+          note.filePath,
+          markdown,
+          note.config,
+        );
+        globalEmitter.emit(EventType.ModifiedMarkdown, {
+          tabId: tabNode.getId(),
+          markdown: newNote.markdown,
+          noteFilePath: note.filePath,
+          noteConfig: newNote.config,
+        });
+        /*
           if (newNote !== note) {
             console.log("new note created");
           }
           */
-        }
+      }
+    },
+    [getNotebookAtPath],
+  );
+
+  const updateNoteConfig = useCallback(
+    async (
+      tabNode: TabNode,
+      notebookPath: string,
+      filePath: string,
+      noteConfig: NoteConfig,
+    ) => {
+      const notebook = getNotebookAtPath(notebookPath);
+      if (!notebook) {
+        return;
+      }
+      const note = await notebook.getNote(filePath);
+      if (JSON.stringify(note.config) !== JSON.stringify(noteConfig)) {
+        console.log("updateNoteConfig 2: ", noteConfig);
+        const newNote = await notebook.writeNote(
+          note.filePath,
+          note.markdown,
+          noteConfig,
+        );
+        globalEmitter.emit(EventType.ModifiedMarkdown, {
+          tabId: tabNode.getId(),
+          markdown: newNote.markdown,
+          noteFilePath: note.filePath,
+          noteConfig: newNote.config,
+        });
+        /*
+          globalEmitter.emit(EventType.ModifiedMarkdown, {
+            tabId: tabNode.getId(),
+          })
+          */
       }
     },
     [getNotebookAtPath],
@@ -583,6 +619,24 @@ function useCrossnoteContainer(initialState: InitialState) {
     [crossnote],
   );
 
+  const togglePin = useCallback(
+    async (tabNode: TabNode, notebookPath: string, noteFilePath: string) => {
+      const notebook = getNotebookAtPath(notebookPath);
+      if (!notebook) {
+        return;
+      }
+      const note = await notebook.getNote(noteFilePath);
+      const newConfig = Object.assign({}, note.config, {
+        pinned: !note.config.pinned,
+      });
+      if (!newConfig.pinned) {
+        delete newConfig.pinned;
+      }
+      await updateNoteConfig(tabNode, notebookPath, noteFilePath, newConfig);
+    },
+    [getNotebookAtPath, updateNoteConfig],
+  );
+
   useEffect(() => {
     if (!crossnote || initialized) {
       return;
@@ -837,11 +891,13 @@ Please also check the [Explore](https://crossnote.app/explore) section to discov
     initialized,
     notebooks,
     updateNoteMarkdown,
+    updateNoteConfig,
     createNewNote,
     deleteNote,
     changeNoteFilePath,
     duplicateNote,
     addNotebook,
+    togglePin,
     isAddingNotebook,
     isPushingNotebook,
     isPullingNotebook,

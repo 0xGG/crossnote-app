@@ -18,6 +18,7 @@ import { languageCodeToDateFNSLocale } from "../i18n/i18n";
 import { resolveNoteImageSrc } from "../utilities/image";
 import { Note } from "../lib/notebook";
 import NotePopover from "./NotePopover";
+import { TabNode } from "flexlayout-react";
 
 export const NoteCardWidth = 550;
 export const NoteCardMargin = 4;
@@ -108,6 +109,7 @@ const useStyles = makeStyles((theme: Theme) =>
 );
 
 interface Props {
+  tabNode: TabNode;
   note: Note;
 }
 
@@ -135,9 +137,7 @@ export default function NoteCard(props: Props) {
   useEffect(() => {
     setHeader(note.title);
     generateSummaryFromMarkdown(
-      note.config.encryption
-        ? `🔐 ${t("general/encrypted")}`
-        : note.markdown.trim() || t("general/this-note-is-empty"),
+      note.markdown.trim() || t("general/this-note-is-empty"),
     )
       .then((summary) => {
         setSummary(summary);
@@ -156,13 +156,7 @@ export default function NoteCard(props: Props) {
           });
       })
       .catch((error) => {});
-  }, [
-    note.markdown,
-    note.config.encryption,
-    note,
-    crossnoteContainer.crossnote,
-    t,
-  ]);
+  }, [note.markdown, note, crossnoteContainer.crossnote, t]);
 
   /*
   useEffect(() => {
@@ -295,6 +289,8 @@ export default function NoteCard(props: Props) {
         </Box>
       </Card>
       <NotePopover
+        tabNode={props.tabNode}
+        note={note}
         anchorElement={popoverElement}
         onClose={() => setPopoverElement(null)}
       ></NotePopover>
