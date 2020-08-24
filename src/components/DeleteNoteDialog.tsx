@@ -10,10 +10,12 @@ import {
   Button,
 } from "@material-ui/core";
 import { Note } from "../lib/notebook";
+import { TabNode } from "flexlayout-react";
 
 interface Props {
   open: boolean;
   onClose: () => void;
+  tabNode: TabNode;
   note: Note;
 }
 
@@ -34,7 +36,11 @@ export function DeleteNoteDialog(props: Props) {
         <Button
           style={{ color: "red" }}
           onClick={() => {
-            crossnoteContainer.deleteNote(note);
+            crossnoteContainer.deleteNote(
+              props.tabNode,
+              note.notebookPath,
+              note.filePath,
+            );
             props.onClose();
           }}
         >

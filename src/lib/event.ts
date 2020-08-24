@@ -3,6 +3,7 @@ import { NoteConfig } from "./notebook";
 export enum EventType {
   ModifiedMarkdown = "ModifiedMarkdown",
   RefreshNotes = "RefreshNotes",
+  DeleteNote = "DeleteNote",
 }
 
 export interface ModifiedMarkdownEventData {
@@ -16,7 +17,16 @@ export interface RefreshNotesEventData {
   notebookPath: string;
 }
 
-export type EventData = ModifiedMarkdownEventData | RefreshNotesEventData;
+export interface DeleteNoteEventData {
+  tabId: string;
+  notebookPath: string;
+  noteFilePath: string;
+}
+
+export type EventData =
+  | ModifiedMarkdownEventData
+  | RefreshNotesEventData
+  | DeleteNoteEventData;
 
 export type EventCallback = (data: any) => void;
 
@@ -43,11 +53,14 @@ export class Emitter {
   }
 
   public emit(eventName: EventType, data: EventData) {
-    const eventCallbacks = this.subscriptions[eventName] || [];
-    eventCallbacks.forEach((callback) => {
+    const eventCallbacks = this.subscriptions[eventName].slice() || [];
+    eventCallbacks.forEach((callback, offset) => {
+      console.log("emit callback: ", offset);
       callback(data);
     });
   }
 }
 
 export const globalEmitter = new Emitter();
+
+(window as any)["globalEmitter"] = globalEmitter;

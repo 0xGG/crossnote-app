@@ -170,6 +170,16 @@ function useCrossnoteContainer(initialState: InitialState) {
     [layoutModel],
   );
 
+  const closeTabNode = useCallback(
+    (id: string) => {
+      if (!layoutModel) {
+        return;
+      }
+      layoutModel.doAction(Actions.deleteTab(id));
+    },
+    [layoutModel],
+  );
+
   const updateNoteMarkdown = useCallback(
     async (
       tabNode: TabNode,
@@ -239,16 +249,21 @@ function useCrossnoteContainer(initialState: InitialState) {
     [getNotebookAtPath],
   );
 
-  const deleteNote = useCallback(async (note: Note) => {
-    /*
-      await crossnote.deleteNote(selectedNotebook, note.filePath);
-      if (notebookNotes) {
-        notebookNotes.deleteNote(note);
+  const deleteNote = useCallback(
+    async (tabNode: TabNode, notebookPath: string, noteFilePath: string) => {
+      const notebook = getNotebookAtPath(notebookPath);
+      if (!notebook) {
+        return;
       }
-      setSelectedNote(null);
-      setDisplayMobileEditor(false);
-      */
-  }, []);
+      await notebook.deleteNote(noteFilePath);
+      globalEmitter.emit(EventType.DeleteNote, {
+        tabId: tabNode.getId(),
+        notebookPath: notebookPath,
+        noteFilePath: noteFilePath,
+      });
+    },
+    [getNotebookAtPath],
+  );
 
   const changeNoteFilePath = useCallback(
     async (note: Note, newFilePath: string) => {
@@ -937,6 +952,7 @@ Please also check the [Explore](https://crossnote.app/explore) section to discov
     layoutModel,
     setLayoutModel,
     addTabNode,
+    closeTabNode,
     getNotebookAtPath,
   };
 }

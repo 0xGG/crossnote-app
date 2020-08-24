@@ -53,6 +53,7 @@ import {
   EventType,
   globalEmitter,
   ModifiedMarkdownEventData,
+  DeleteNoteEventData,
 } from "../lib/event";
 const VickyMD = require("vickymd/core");
 
@@ -307,10 +308,21 @@ export default function NotePanel(props: Props) {
         }
       }
     };
-    globalEmitter.on(EventType.ModifiedMarkdown, modifiedMarkdownCallback);
 
+    const deleteNoteCallback = (data: DeleteNoteEventData) => {
+      if (
+        data.notebookPath === note.notebookPath &&
+        data.noteFilePath === note.filePath
+      ) {
+        crossnoteContainer.closeTabNode(tabNode.getId());
+      }
+    };
+
+    globalEmitter.on(EventType.ModifiedMarkdown, modifiedMarkdownCallback);
+    globalEmitter.on(EventType.DeleteNote, deleteNoteCallback);
     return () => {
       globalEmitter.off(EventType.ModifiedMarkdown, modifiedMarkdownCallback);
+      globalEmitter.off(EventType.DeleteNote, deleteNoteCallback);
     };
   }, [tabNode, editor, note]);
 

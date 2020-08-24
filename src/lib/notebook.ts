@@ -417,7 +417,7 @@ export class Notebook {
 
   public async removeNoteRelations(filePath: string) {
     const note = await this.getNote(filePath);
-    if (note) {
+    if (!note) {
       return;
     }
     const mentions = note.mentions;

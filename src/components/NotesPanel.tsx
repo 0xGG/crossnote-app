@@ -46,6 +46,7 @@ import {
   EventType,
   ModifiedMarkdownEventData,
   RefreshNotesEventData,
+  DeleteNoteEventData,
 } from "../lib/event";
 import { TabNode } from "flexlayout-react";
 
@@ -224,26 +225,34 @@ export default function NotesPanel(props: Props) {
 
   // Emitter
   useEffect(() => {
-    if (globalEmitter) {
-      const modifiedMarkdownCallback = (data: ModifiedMarkdownEventData) => {
-        if (!rawNotes.find((n) => n.filePath === data.noteFilePath)) {
-          return;
-        }
-        refreshRawNotes();
-      };
-      const refreshNotesCallback = (data: RefreshNotesEventData) => {
-        if (props.notebook.dir === data.notebookPath) {
-          refreshRawNotes();
-        }
-      };
-      // TODO: Delay the modifiedMarkdownCallback
-      globalEmitter.on(EventType.ModifiedMarkdown, modifiedMarkdownCallback);
-      globalEmitter.on(EventType.RefreshNotes, refreshNotesCallback);
-      return () => {
-        globalEmitter.off(EventType.ModifiedMarkdown, modifiedMarkdownCallback);
-        globalEmitter.off(EventType.RefreshNotes, refreshNotesCallback);
-      };
+    if (!globalEmitter) {
+      return;
     }
+    const modifiedMarkdownCallback = (data: ModifiedMarkdownEventData) => {
+      if (!rawNotes.find((n) => n.filePath === data.noteFilePath)) {
+        return;
+      }
+      refreshRawNotes();
+    };
+    const refreshNotesCallback = (data: RefreshNotesEventData) => {
+      if (props.notebook.dir === data.notebookPath) {
+        refreshRawNotes();
+      }
+    };
+    const deleteNoteCallback = (data: DeleteNoteEventData) => {
+      if (props.notebook.dir === data.notebookPath) {
+        refreshRawNotes();
+      }
+    };
+    // TODO: Delay the modifiedMarkdownCallback
+    globalEmitter.on(EventType.ModifiedMarkdown, modifiedMarkdownCallback);
+    globalEmitter.on(EventType.RefreshNotes, refreshNotesCallback);
+    globalEmitter.on(EventType.DeleteNote, deleteNoteCallback);
+    return () => {
+      globalEmitter.off(EventType.ModifiedMarkdown, modifiedMarkdownCallback);
+      globalEmitter.off(EventType.RefreshNotes, refreshNotesCallback);
+      globalEmitter.off(EventType.DeleteNote, deleteNoteCallback);
+    };
   }, [refreshRawNotes, rawNotes, props.notebook]);
 
   useEffect(() => {
