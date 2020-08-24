@@ -25,7 +25,12 @@ import { useTranslation } from "react-i18next";
 import ConfigureNotebookDialog from "./ConfigureNotebookDialog";
 import PushNotebookDialog from "./PushNotebookDialog";
 
-import { Notebook } from "../lib/notebook";
+import { Notebook, Note, Notes } from "../lib/notebook";
+import {
+  globalEmitter,
+  EventType,
+  ModifiedMarkdownEventData,
+} from "../lib/event";
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -89,14 +94,20 @@ export default function NotebookTreeView(props: Props) {
   const [pushNotebookDialogOpen, setPushNotebookDialogOpen] = useState<boolean>(
     false,
   );
+  const [favoritedNotes, setFavoritedNotes] = useState<Note[]>([]);
   const crossnoteContainer = CrossnoteContainer.useContainer();
   const { t } = useTranslation();
 
-  useEffect(() => {
-    if (crossnoteContainer.homeSection !== HomeSection.Notebooks) {
-      setExpanded([]);
+  const refreshQuickAccessNotes = useCallback((notes: Notes) => {
+    const favoritedNotes = [];
+    for (let filePath in notes) {
+      const note = notes[filePath];
+      if (note.config.favorited) {
+        favoritedNotes.push(note);
+      }
     }
-  }, [crossnoteContainer.homeSection]);
+    setFavoritedNotes(favoritedNotes);
+  }, []);
 
   const handleChange = useCallback(
     (event: React.ChangeEvent<{}>, nodes: string[]) => {
@@ -107,15 +118,45 @@ export default function NotebookTreeView(props: Props) {
         element.tagName &&
         element.tagName.toUpperCase().match(/^(SVG|PATH|BUTTON)$/)
       ) {
-        props.notebook.refreshNotesInNotLoaded({
-          dir: "./",
-          includeSubdirectories: true,
-        });
+        props.notebook
+          .refreshNotesInNotLoaded({
+            dir: "./",
+            includeSubdirectories: true,
+          })
+          .then((notes) => {
+            refreshQuickAccessNotes(notes);
+          });
         setExpanded(nodes);
       }
     },
-    [props.notebook],
+    [props.notebook, refreshQuickAccessNotes],
   );
+
+  // Emitter
+  useEffect(() => {
+    if (globalEmitter) {
+      const modifiedMarkdownCallback = (data: ModifiedMarkdownEventData) => {
+        if (!(data.noteFilePath in props.notebook.notes)) {
+          return;
+        }
+        refreshQuickAccessNotes(props.notebook.notes);
+      };
+      globalEmitter.on(EventType.ModifiedMarkdown, modifiedMarkdownCallback);
+      return () => {
+        globalEmitter.off(EventType.ModifiedMarkdown, modifiedMarkdownCallback);
+      };
+    }
+  }, [props.notebook, refreshQuickAccessNotes]);
+
+  useEffect(() => {
+    if (crossnoteContainer.homeSection !== HomeSection.Notebooks) {
+      setExpanded([]);
+    }
+  }, [crossnoteContainer.homeSection]);
+
+  useEffect(() => {
+    refreshQuickAccessNotes(props.notebook.notes);
+  }, [props.notebook, refreshQuickAccessNotes]);
 
   /*
   useEffect(() => {
@@ -163,10 +204,14 @@ export default function NotebookTreeView(props: Props) {
           label={
             <Box
               onClick={() => {
-                props.notebook.refreshNotesInNotLoaded({
-                  dir: "./",
-                  includeSubdirectories: true,
-                });
+                props.notebook
+                  .refreshNotesInNotLoaded({
+                    dir: "./",
+                    includeSubdirectories: true,
+                  })
+                  .then((notes) => {
+                    refreshQuickAccessNotes(notes);
+                  });
               }}
               className={clsx(classes.treeItemLabelRoot)}
             >
@@ -311,6 +356,44 @@ export default function NotebookTreeView(props: Props) {
               </Box>
             }
           ></TreeItem>
+          {favoritedNotes.map((note) => {
+            return (
+              <TreeItem
+                key={`${note.notebookPath}/${note.filePath}`}
+                nodeId={`${note.notebookPath}/${note.filePath}`}
+                classes={{
+                  root: classes.treeItemRoot,
+                  content: classes.treeItemContent,
+                  expanded: classes.treeItemExpanded,
+                  group: classes.treeItemGroup,
+                  label: classes.treeItemLabel,
+                }}
+                label={
+                  <Box
+                    onClick={() => {
+                      crossnoteContainer.addTabNode({
+                        type: "tab",
+                        component: "Note",
+                        config: {
+                          singleton: false,
+                          note,
+                        },
+                        name: `📝 ` + note.title,
+                      });
+                    }}
+                    className={clsx(classes.treeItemLabelRoot)}
+                  >
+                    <span role="img" aria-label="quick-access">
+                      {"⭐️"}
+                    </span>
+                    <Typography className={clsx(classes.treeItemLabelText)}>
+                      {note.title}
+                    </Typography>
+                  </Box>
+                }
+              ></TreeItem>
+            );
+          })}
           <TreeItem
             nodeId={"settings"}
             classes={{

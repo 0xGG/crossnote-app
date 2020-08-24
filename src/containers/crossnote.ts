@@ -637,6 +637,24 @@ function useCrossnoteContainer(initialState: InitialState) {
     [getNotebookAtPath, updateNoteConfig],
   );
 
+  const toggleFavorite = useCallback(
+    async (tabNode: TabNode, notebookPath: string, noteFilePath: string) => {
+      const notebook = getNotebookAtPath(notebookPath);
+      if (!notebook) {
+        return;
+      }
+      const note = await notebook.getNote(noteFilePath);
+      const newConfig = Object.assign({}, note.config, {
+        favorited: !note.config.favorited,
+      });
+      if (!newConfig.favorited) {
+        delete newConfig.favorited;
+      }
+      await updateNoteConfig(tabNode, notebookPath, noteFilePath, newConfig);
+    },
+    [getNotebookAtPath, updateNoteConfig],
+  );
+
   useEffect(() => {
     if (!crossnote || initialized) {
       return;
@@ -898,6 +916,7 @@ Please also check the [Explore](https://crossnote.app/explore) section to discov
     duplicateNote,
     addNotebook,
     togglePin,
+    toggleFavorite,
     isAddingNotebook,
     isPushingNotebook,
     isPullingNotebook,

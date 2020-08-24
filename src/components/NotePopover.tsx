@@ -24,6 +24,7 @@ import {
   ShareVariant,
   Printer,
   Pin,
+  Star,
 } from "mdi-material-ui";
 import { useTranslation } from "react-i18next";
 import { Note } from "../lib/notebook";
@@ -83,12 +84,32 @@ export default function NotePopover(props: Props) {
             }
           ></ListItemText>
         </ListItem>
-        <ListItem button>
-          <ListItemIcon>
-            <StarOutline></StarOutline>
+        <ListItem
+          button
+          onClick={() => {
+            crossnoteContainer.toggleFavorite(
+              props.tabNode,
+              note.notebookPath,
+              note.filePath,
+            );
+            props.onClose();
+          }}
+        >
+          <ListItemIcon
+            className={clsx(note.config.favorited && classes.secondaryColor)}
+          >
+            {note.config.favorited ? (
+              <Star></Star>
+            ) : (
+              <StarOutline></StarOutline>
+            )}
           </ListItemIcon>
           <ListItemText
-            primary={t("general/add-to-quick-access")}
+            primary={
+              note.config.favorited
+                ? t("general/remove-from-quick-access")
+                : t("general/add-to-quick-access")
+            }
           ></ListItemText>
         </ListItem>
         <ListItem></ListItem>

@@ -262,6 +262,11 @@ export class Notebook {
           noteConfig.pinned = data.data["pinned"];
           delete frontMatter["pinned"];
         }
+        if (data.data["favorited"]) {
+          noteConfig.favorited = data.data["favorited"];
+          delete frontMatter["favorited"];
+        }
+
         // markdown = matter.stringify(data.content, frontMatter); // <= NOTE: I think gray-matter has bug. Although I delete "note" section from front-matter, it still includes it.
         markdown = matterStringify(data.content, frontMatter);
       } catch (error) {

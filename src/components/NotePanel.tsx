@@ -297,6 +297,7 @@ export default function NotePanel(props: Props) {
     }
 
     const modifiedMarkdownCallback = (data: ModifiedMarkdownEventData) => {
+      note.config = data.noteConfig;
       if (data.tabId === tabNode.getId()) {
         return;
       }
@@ -305,7 +306,6 @@ export default function NotePanel(props: Props) {
           editor.setValue(data.markdown);
         }
       }
-      note.config = data.noteConfig;
     };
     globalEmitter.on(EventType.ModifiedMarkdown, modifiedMarkdownCallback);
 
