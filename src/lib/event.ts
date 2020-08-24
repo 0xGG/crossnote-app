@@ -2,6 +2,7 @@ import { NoteConfig } from "./notebook";
 
 export enum EventType {
   ModifiedMarkdown = "ModifiedMarkdown",
+  RefreshNotes = "RefreshNotes",
 }
 
 export interface ModifiedMarkdownEventData {
@@ -11,9 +12,13 @@ export interface ModifiedMarkdownEventData {
   noteConfig: NoteConfig;
 }
 
-export type EventData = ModifiedMarkdownEventData;
+export interface RefreshNotesEventData {
+  notebookPath: string;
+}
 
-export type EventCallback = (data: EventData) => void;
+export type EventData = ModifiedMarkdownEventData | RefreshNotesEventData;
+
+export type EventCallback = (data: any) => void;
 
 export class Emitter {
   private subscriptions: { [key: string]: EventCallback[] } = {};

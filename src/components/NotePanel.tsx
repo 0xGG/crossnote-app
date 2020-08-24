@@ -580,7 +580,7 @@ export default function NotePanel(props: Props) {
         </Box>
         {Object.keys(note.mentionedBy).length > 0 && (
           <React.Fragment>
-            <Divider></Divider>
+            <Divider style={{ marginTop: "32px" }}></Divider>
             <NotesPanel
               title={"Linked references"}
               tabNode={props.tabNode}

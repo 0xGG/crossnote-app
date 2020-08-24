@@ -45,6 +45,7 @@ import {
   globalEmitter,
   EventType,
   ModifiedMarkdownEventData,
+  RefreshNotesEventData,
 } from "../lib/event";
 import { TabNode } from "flexlayout-react";
 
@@ -179,6 +180,9 @@ export default function NotesPanel(props: Props) {
       .createNewNote(props.notebook, "", markdown)
       .then((note) => {
         crossnoteContainer.openNoteAtPath(props.notebook, note.filePath);
+        globalEmitter.emit(EventType.RefreshNotes, {
+          notebookPath: props.notebook.dir,
+        });
         setIsCreatingNote(false);
       })
       .catch(() => {
@@ -227,13 +231,20 @@ export default function NotesPanel(props: Props) {
         }
         refreshRawNotes();
       };
+      const refreshNotesCallback = (data: RefreshNotesEventData) => {
+        if (props.notebook.dir === data.notebookPath) {
+          refreshRawNotes();
+        }
+      };
       // TODO: Delay the modifiedMarkdownCallback
       globalEmitter.on(EventType.ModifiedMarkdown, modifiedMarkdownCallback);
+      globalEmitter.on(EventType.RefreshNotes, refreshNotesCallback);
       return () => {
         globalEmitter.off(EventType.ModifiedMarkdown, modifiedMarkdownCallback);
+        globalEmitter.off(EventType.RefreshNotes, refreshNotesCallback);
       };
     }
-  }, [refreshRawNotes, rawNotes]);
+  }, [refreshRawNotes, rawNotes, props.notebook]);
 
   useEffect(() => {
     refreshRawNotes();
