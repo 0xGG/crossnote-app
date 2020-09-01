@@ -18,7 +18,7 @@ export function setTheme({
     editor,
     themeName,
     baseUri: `${
-      process.env["GH_PAGES_BASE"] || ""
+      window.location.origin.match(/0xgg\./i) ? "/crossnote" : ""
     }/styles/vickymd@${VickyMDVersion}/`,
   });
 }
