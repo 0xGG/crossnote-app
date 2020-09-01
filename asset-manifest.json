@@ -1,26 +1,26 @@
 {
   "files": {
-    "main.css": "/static/css/main.5b9df75b.chunk.css",
-    "main.js": "/static/js/main.05fdce44.chunk.js",
-    "main.js.map": "/static/js/main.05fdce44.chunk.js.map",
-    "runtime-main.js": "/static/js/runtime-main.2945ff6c.js",
-    "runtime-main.js.map": "/static/js/runtime-main.2945ff6c.js.map",
-    "static/css/2.7fb2026c.chunk.css": "/static/css/2.7fb2026c.chunk.css",
-    "static/js/2.5b907368.chunk.js": "/static/js/2.5b907368.chunk.js",
-    "static/js/2.5b907368.chunk.js.map": "/static/js/2.5b907368.chunk.js.map",
-    "index.html": "/index.html",
-    "static/css/2.7fb2026c.chunk.css.map": "/static/css/2.7fb2026c.chunk.css.map",
-    "static/css/main.5b9df75b.chunk.css.map": "/static/css/main.5b9df75b.chunk.css.map",
-    "static/js/2.5b907368.chunk.js.LICENSE.txt": "/static/js/2.5b907368.chunk.js.LICENSE.txt",
-    "static/media/katex.min.css": "/static/media/KaTeX_Typewriter-Regular.6cc31ea5.woff2",
-    "static/media/materialdesignicons.min.css": "/static/media/materialdesignicons-webfont.e7dec9c5.ttf",
-    "static/media/index.css": "/static/media/roboto-latin-900italic.ebf6d164.woff2"
+    "main.css": "/crossnote/static/css/main.5b9df75b.chunk.css",
+    "main.js": "/crossnote/static/js/main.c250b6bf.chunk.js",
+    "main.js.map": "/crossnote/static/js/main.c250b6bf.chunk.js.map",
+    "runtime-main.js": "/crossnote/static/js/runtime-main.a4a4f171.js",
+    "runtime-main.js.map": "/crossnote/static/js/runtime-main.a4a4f171.js.map",
+    "static/css/2.4e25a9a6.chunk.css": "/crossnote/static/css/2.4e25a9a6.chunk.css",
+    "static/js/2.dfb477e0.chunk.js": "/crossnote/static/js/2.dfb477e0.chunk.js",
+    "static/js/2.dfb477e0.chunk.js.map": "/crossnote/static/js/2.dfb477e0.chunk.js.map",
+    "index.html": "/crossnote/index.html",
+    "static/css/2.4e25a9a6.chunk.css.map": "/crossnote/static/css/2.4e25a9a6.chunk.css.map",
+    "static/css/main.5b9df75b.chunk.css.map": "/crossnote/static/css/main.5b9df75b.chunk.css.map",
+    "static/js/2.dfb477e0.chunk.js.LICENSE.txt": "/crossnote/static/js/2.dfb477e0.chunk.js.LICENSE.txt",
+    "static/media/katex.min.css": "/crossnote/static/media/KaTeX_Typewriter-Regular.6cc31ea5.woff2",
+    "static/media/materialdesignicons.min.css": "/crossnote/static/media/materialdesignicons-webfont.e7dec9c5.ttf",
+    "static/media/index.css": "/crossnote/static/media/roboto-latin-900italic.ebf6d164.woff2"
   },
   "entrypoints": [
-    "static/js/runtime-main.2945ff6c.js",
-    "static/css/2.7fb2026c.chunk.css",
-    "static/js/2.5b907368.chunk.js",
+    "static/js/runtime-main.a4a4f171.js",
+    "static/css/2.4e25a9a6.chunk.css",
+    "static/js/2.dfb477e0.chunk.js",
     "static/css/main.5b9df75b.chunk.css",
-    "static/js/main.05fdce44.chunk.js"
+    "static/js/main.c250b6bf.chunk.js"
   ]
 }
