@@ -12,7 +12,7 @@ if ("function" === typeof importScripts) {
     /* custom cache rules*/
     const handler = workbox.precaching.createHandlerBoundToURL(
       `${
-        window.location.origin.match(/0xgg\./i) ? "/crossnote" : "" // Check GitHub Pages
+        self.location.hostname.match(/0xgg\./i) ? "/crossnote" : "" // Check GitHub Pages
       }/index.html`,
     );
     const navigationRoute = new workbox.routing.NavigationRoute(handler, {
