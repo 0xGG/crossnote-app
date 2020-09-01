@@ -17,7 +17,9 @@ export function setTheme({
   return VickyMDSetTheme({
     editor,
     themeName,
-    baseUri: `/styles/vickymd@${VickyMDVersion}/`,
+    baseUri: `${
+      window.location.origin.match(/0xgg\./i) ? "/crossnote" : ""
+    }/styles/vickymd@${VickyMDVersion}/`,
   });
 }
 

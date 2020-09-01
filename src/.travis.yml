@@ -1,0 +1,17 @@
+dist: bionic
+language: node_js
+node_js:
+  - "lts/erbium"
+install:
+  - yarn
+jobs:
+  include:
+    - stage: deploy
+      if: branch = develop
+      script:
+        - yarn install
+        - yarn deploy-gh-pages
+notifications:
+  email:
+    on_success: never
+    on_failure: change
