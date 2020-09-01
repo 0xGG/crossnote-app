@@ -91,7 +91,7 @@
     "eject": "react-scripts eject",
     "dev:graphql-codegen": "graphql-codegen -c codegen.dev.yml",
     "predeploy": "yarn build",
-    "deploy": "gh-pages -d build",
+    "deploy-gh-pages": "node before-gh-pages-deploy.js && GH_PAGES_BASE='/crossnote' npm run build && node after-gh-pages-deploy.js && gh-pages-clean && node gh-pages-deploy.js",
     "fix:prettier": "prettier --write \"**/*.*\"",
     "postinstall": "patch-package"
   },
@@ -139,7 +139,7 @@
     "@types/react-lazyload": "^2.6.0",
     "@types/react-router-dom": "^5.1.4",
     "del": "^5.1.0",
-    "gh-pages": "^2.2.0",
+    "gh-pages": "^3.1.0",
     "gulp": "^4.0.2",
     "gulp-plumber": "^1.2.1",
     "gulp-sass": "^4.1.0",
