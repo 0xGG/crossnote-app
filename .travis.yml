@@ -10,7 +10,8 @@ jobs:
       if: branch = develop
       script:
         - yarn install
-        - yarn deploy-gh-pages
+        - git remote set-url origin https://$GITHUB_TOKEN@github.com/0xGG/crossnote.git
+        - CI= yarn deploy-gh-pages
 notifications:
   email:
     on_success: never
