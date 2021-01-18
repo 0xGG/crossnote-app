@@ -1,6 +1,6 @@
-import React from "react";
 import { Box, Hidden, IconButton, Typography } from "@material-ui/core";
 import { Menu as MenuIcon } from "mdi-material-ui";
+import React from "react";
 
 interface Props {
   toggleDrawer: () => void;

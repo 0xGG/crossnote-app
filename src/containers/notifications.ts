@@ -1,14 +1,14 @@
-import { useState, useEffect, useCallback } from "react";
+import Noty from "noty";
+import { useCallback, useEffect, useState } from "react";
 import { createContainer } from "unstated-next";
 import {
-  PageInfo,
-  useNotificationsQuery,
   Notification,
-  useDeleteNotificationMutation,
+  PageInfo,
   useDeleteAllNotificationsMutation,
+  useDeleteNotificationMutation,
+  useNotificationsQuery,
 } from "../generated/graphql";
 import { EmptyPageInfo } from "../utilities/note";
-import Noty from "noty";
 
 interface InitialState {}
 

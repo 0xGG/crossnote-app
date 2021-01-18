@@ -1,16 +1,14 @@
-import React, { useState, useEffect, useRef } from "react";
 import { createStyles, makeStyles, Theme } from "@material-ui/core/styles";
 import clsx from "clsx";
 import * as d3 from "d3";
-import { Notebook } from "../lib/notebook";
+import React, { useEffect, useRef, useState } from "react";
+import { CrossnoteContainer } from "../containers/crossnote";
 import {
-  GraphViewData,
   constructGraphView,
-  GraphViewLink,
+  GraphViewData,
   GraphViewNode,
 } from "../lib/graphView";
-import { Box } from "@material-ui/core";
-import { CrossnoteContainer } from "../containers/crossnote";
+import { Notebook } from "../lib/notebook";
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({

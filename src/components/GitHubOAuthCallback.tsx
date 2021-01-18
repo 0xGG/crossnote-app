@@ -1,15 +1,17 @@
-import React, { useEffect, useState } from "react";
-import { useTranslation } from "react-i18next";
 import {
   Box,
-  Typography,
+  Button,
+  Card,
   IconButton,
   TextField,
-  Card,
-  Button,
+  Typography,
 } from "@material-ui/core";
 import { createStyles, makeStyles, Theme } from "@material-ui/core/styles";
 import clsx from "clsx";
+import { ChevronLeft } from "mdi-material-ui";
+import Noty from "noty";
+import React, { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   useLinkWithGitHubAccountMutation,
   useSignInWithGitHubAccountMutation,
@@ -17,8 +19,6 @@ import {
 } from "../generated/graphql";
 import { browserHistory } from "../utilities/history";
 import { UUIDNil } from "../utilities/utils";
-import { ChevronLeft } from "mdi-material-ui";
-import Noty from "noty";
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({

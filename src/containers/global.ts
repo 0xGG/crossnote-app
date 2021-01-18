@@ -1,6 +1,6 @@
 import { CloudContainer } from "./cloud";
-import { SettingsContainer } from "./settings";
 import { CrossnoteContainer } from "./crossnote";
+import { SettingsContainer } from "./settings";
 
 interface GlobalContainers {
   cloudContainer: ReturnType<typeof CloudContainer.useContainer>;

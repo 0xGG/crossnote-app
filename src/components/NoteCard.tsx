@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { Box, Card, IconButton, Tooltip, Typography } from "@material-ui/core";
 import {
   createStyles,
   makeStyles,
@@ -6,19 +6,19 @@ import {
   useTheme,
 } from "@material-ui/core/styles";
 import clsx from "clsx";
-import { CrossnoteContainer } from "../containers/crossnote";
-import { Box, Typography, Tooltip, Card, IconButton } from "@material-ui/core";
-import { generateSummaryFromMarkdown, Summary } from "../utilities/note";
-import { formatDistanceStrict } from "date-fns/esm";
-import { useTranslation } from "react-i18next";
-import { Pin, DotsVertical } from "mdi-material-ui";
 import { formatRelative } from "date-fns";
+import { formatDistanceStrict } from "date-fns/esm";
+import { TabNode } from "flexlayout-react";
+import { DotsVertical, Pin } from "mdi-material-ui";
+import React, { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
+import { CrossnoteContainer } from "../containers/crossnote";
 import { SettingsContainer } from "../containers/settings";
 import { languageCodeToDateFNSLocale } from "../i18n/i18n";
-import { resolveNoteImageSrc } from "../utilities/image";
 import { Note } from "../lib/notebook";
+import { resolveNoteImageSrc } from "../utilities/image";
+import { generateSummaryFromMarkdown, Summary } from "../utilities/note";
 import NotePopover from "./NotePopover";
-import { TabNode } from "flexlayout-react";
 
 export const NoteCardWidth = 550;
 export const NoteCardMargin = 4;

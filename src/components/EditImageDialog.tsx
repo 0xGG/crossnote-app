@@ -1,19 +1,19 @@
-import React, { useState, useEffect, useCallback } from "react";
 import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Button,
   Box,
+  Button,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
   TextField,
 } from "@material-ui/core";
 import { createStyles, makeStyles, Theme } from "@material-ui/core/styles";
 import clsx from "clsx";
 import { Editor as CodeMirrorEditor, TextMarker } from "codemirror";
+import React, { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { resolveNoteImageSrc } from "../utilities/image";
 import { Note } from "../lib/notebook";
+import { resolveNoteImageSrc } from "../utilities/image";
 
 interface Props {
   open: boolean;

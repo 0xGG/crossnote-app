@@ -1,47 +1,44 @@
 import {
-  Box,
-  Card,
-  Typography,
-  Popover,
-  Hidden,
-  IconButton,
-  TextField,
-  Select,
-  MenuItem,
-  Button,
   Avatar,
-  Tooltip,
+  Box,
+  Button,
+  Card,
   Chip,
+  IconButton,
   Link,
+  MenuItem,
+  Popover,
+  Select,
+  TextField,
+  Tooltip,
+  Typography,
 } from "@material-ui/core";
 import { createStyles, makeStyles, Theme } from "@material-ui/core/styles";
 import clsx from "clsx";
-import React, { useState, useEffect } from "react";
-import { SketchPicker } from "react-color";
-import { useTranslation } from "react-i18next";
 import Identicon from "identicon.js";
 import { sha256 } from "js-sha256";
-import { SettingsContainer } from "../containers/settings";
 import {
-  Menu as MenuIcon,
-  Translate,
-  ImagePlus,
   Github,
-  ThemeLightDark,
+  ImagePlus,
   Keyboard,
+  ThemeLightDark,
+  Translate,
 } from "mdi-material-ui";
+import React, { useEffect, useState } from "react";
+import { SketchPicker } from "react-color";
+import { useTranslation } from "react-i18next";
 import { CloudContainer } from "../containers/cloud";
-import { smmsUploadImages } from "../utilities/image_uploader";
+import { CrossnoteContainer } from "../containers/crossnote";
+import { SettingsContainer } from "../containers/settings";
 import {
   useGitHubUserQuery,
   useUnlinkGitHubAccountMutation,
 } from "../generated/graphql";
+import { KeyMap } from "../lib/keymap";
+import { themeManager } from "../themes/manager";
+import { smmsUploadImages } from "../utilities/image_uploader";
 import { startGitHubOAuth } from "../utilities/utils";
 import GitCommit from "../_git_commit";
-import { themeManager } from "../themes/manager";
-import { KeyMap } from "../lib/keymap";
-import { browserHistory } from "../utilities/history";
-import { CrossnoteContainer } from "../containers/crossnote";
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({

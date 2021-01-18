@@ -1,24 +1,19 @@
-import React, { useState, useEffect, useCallback } from "react";
 import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
+  Box,
   Button,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
   TextField,
   Typography,
-  Box,
 } from "@material-ui/core";
-import {
-  fade,
-  createStyles,
-  makeStyles,
-  Theme,
-} from "@material-ui/core/styles";
+import { createStyles, makeStyles, Theme } from "@material-ui/core/styles";
 import clsx from "clsx";
-import { CrossnoteContainer } from "../containers/crossnote";
 import Noty from "noty";
+import React, { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { CrossnoteContainer } from "../containers/crossnote";
 import { SettingsContainer } from "../containers/settings";
 import { Notebook } from "../lib/notebook";
 

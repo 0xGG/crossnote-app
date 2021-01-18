@@ -1,19 +1,19 @@
-import React, { useState, useEffect, useCallback } from "react";
 import {
-  NotebookFieldsFragment,
-  useUpdateNotebookMutation,
-  useUnpublishNotebookMutation,
-} from "../generated/graphql";
-import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
   Button,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
   TextField,
 } from "@material-ui/core";
 import Noty from "noty";
+import React, { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
+import {
+  NotebookFieldsFragment,
+  useUnpublishNotebookMutation,
+  useUpdateNotebookMutation,
+} from "../generated/graphql";
 
 interface Props {
   notebook: NotebookFieldsFragment;

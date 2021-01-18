@@ -1,24 +1,16 @@
-import React, { useState, useCallback, useEffect, useRef } from "react";
-import {
-  fade,
-  createStyles,
-  makeStyles,
-  Theme,
-  useTheme,
-  lighten,
-} from "@material-ui/core/styles";
+import { createStyles, makeStyles, Theme } from "@material-ui/core/styles";
 import clsx from "clsx";
-import { Box } from "@material-ui/core";
-import FlexLayout, { Model, TabNode, Actions } from "flexlayout-react";
+import FlexLayout, { TabNode } from "flexlayout-react";
 import "flexlayout-react/style/light.css";
-import { CrossnoteContainer } from "../containers/crossnote";
-import { Settings } from "./Settings";
-import { TabNodeComponent, TabNodeConfig } from "../lib/tabNode";
-import NotesPanel from "./NotesPanel";
-import { PrivacyPolicy } from "../pages/Privacy";
-import NotePanel from "./NotePanel";
+import React, { useCallback, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
+import { CrossnoteContainer } from "../containers/crossnote";
+import { TabNodeComponent, TabNodeConfig } from "../lib/tabNode";
+import { PrivacyPolicy } from "../pages/Privacy";
 import GraphView from "./GraphView";
+import NotePanel from "./NotePanel";
+import NotesPanel from "./NotesPanel";
+import { Settings } from "./Settings";
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({

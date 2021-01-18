@@ -1,54 +1,46 @@
-import React, { useState, useCallback, useEffect, useRef } from "react";
 import {
-  fade,
+  Box,
+  Card,
+  CircularProgress,
+  Divider,
+  IconButton,
+  InputBase,
+  List,
+  ListItem,
+  ListItemIcon,
+  ListItemText,
+  Popover,
+  Tooltip,
+  Typography,
+} from "@material-ui/core";
+import {
   createStyles,
+  fade,
   makeStyles,
   Theme,
 } from "@material-ui/core/styles";
 import clsx from "clsx";
+import { TabNode } from "flexlayout-react";
+import {
+  FileEditOutline,
+  Magnify,
+  SortAscending,
+  SortDescending,
+  SortVariant,
+} from "mdi-material-ui";
+import React, { useCallback, useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { CrossnoteContainer } from "../containers/crossnote";
 import {
-  Box,
-  InputBase,
-  Card,
-  IconButton,
-  Typography,
-  Hidden,
-  CircularProgress,
-  Popover,
-  List,
-  ListItem,
-  ListItemText,
-  ListItemIcon,
-  Divider,
-  Tooltip,
-} from "@material-ui/core";
-import {
-  Magnify,
-  FileEditOutline,
-  Cog,
-  Menu as MenuIcon,
-  SortVariant,
-  SortDescending,
-  SortAscending,
-  Pencil,
-  ChevronDown,
-  TrashCan,
-} from "mdi-material-ui";
-import { useTranslation } from "react-i18next";
-import Notes from "./Notes";
-import { OrderBy, OrderDirection } from "../lib/order";
-import { Notebook, Note } from "../lib/notebook";
-import Headroom from "react-headroom";
-import { TabHeight } from "../lib/tabNode";
-import {
-  globalEmitter,
+  DeleteNoteEventData,
   EventType,
+  globalEmitter,
   ModifiedMarkdownEventData,
   RefreshNotesEventData,
-  DeleteNoteEventData,
 } from "../lib/event";
-import { TabNode } from "flexlayout-react";
+import { Note, Notebook } from "../lib/notebook";
+import { OrderBy, OrderDirection } from "../lib/order";
+import Notes from "./Notes";
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({

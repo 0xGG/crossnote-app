@@ -1,29 +1,25 @@
-import { useState, useEffect, useCallback } from "react";
-import { createContainer } from "unstated-next";
-import * as path from "path";
-import Noty from "noty";
 import useInterval from "@use-it/interval";
 import FlexLayout, {
-  Model,
   Actions,
   DockLocation,
-  TabSetNode,
+  Model,
   TabNode,
+  TabSetNode,
 } from "flexlayout-react";
-import { getTodayName } from "../utilities/utils";
-import { useTranslation } from "react-i18next";
-import Crossnote, {
-  PushNotebookArgs,
-  PullNotebookArgs,
-} from "../lib/crossnote";
-import { browserHistory } from "../utilities/history";
-import * as qs from "qs";
 import moment from "moment";
+import * as path from "path";
+import { useCallback, useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
+import { createContainer } from "unstated-next";
+import Crossnote, {
+  PullNotebookArgs,
+  PushNotebookArgs,
+} from "../lib/crossnote";
+import { EventType, globalEmitter } from "../lib/event";
 import { pfs } from "../lib/fs";
-import { sanitizeTag } from "../utilities/markdown";
-import { Notebook, Note, NoteConfig } from "../lib/notebook";
-import { TabHeight, CrossnoteTabNode } from "../lib/tabNode";
-import { Emitter, globalEmitter, EventType } from "../lib/event";
+import { Note, Notebook, NoteConfig } from "../lib/notebook";
+import { CrossnoteTabNode, TabHeight } from "../lib/tabNode";
+import { getTodayName } from "../utilities/utils";
 
 export enum SelectedSectionType {
   Notes = "Notes",

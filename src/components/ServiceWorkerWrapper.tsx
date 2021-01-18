@@ -1,7 +1,7 @@
-import React, { FC, useEffect, useCallback } from "react";
-import { Snackbar, Button } from "@material-ui/core";
-import * as serviceWorker from "../serviceWorker";
+import { Button, Snackbar } from "@material-ui/core";
+import React, { FC, useCallback, useEffect } from "react";
 import { useTranslation } from "react-i18next";
+import * as serviceWorker from "../serviceWorker";
 
 const ServiceWorkerWrapper: FC = () => {
   const { t } = useTranslation();
