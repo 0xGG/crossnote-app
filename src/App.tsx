@@ -72,7 +72,7 @@ const App: FC = () => {
                   code={
                     qs.parse(props.location.search.replace(/^\?/, ""))[
                       "code"
-                    ] || ""
+                    ] as string || ""
                   }
                 ></GitHubOAuthCallback>
               )}
