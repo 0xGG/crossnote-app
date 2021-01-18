@@ -6,6 +6,10 @@ install:
   - yarn
 jobs:
   include:
+    - stage: build
+      script:
+        - yarn install
+        - yarn build
     - stage: deploy
       if: branch = develop
       script:
