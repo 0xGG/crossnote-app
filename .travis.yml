@@ -21,7 +21,7 @@ notifications:
     on_success: never
     on_failure: change
 
-stages
-  - build
+stages:
+  - name: build
   - name: deploy
     if: (branch = develop)
