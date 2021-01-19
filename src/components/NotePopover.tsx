@@ -1,35 +1,30 @@
-import React, { useState, useCallback, useEffect, useRef } from "react";
 import {
-  fade,
-  createStyles,
-  makeStyles,
-  Theme,
-} from "@material-ui/core/styles";
-import clsx from "clsx";
-import {
-  Popover,
+  Divider,
   List,
   ListItem,
-  ListItemText,
   ListItemIcon,
-  Divider,
+  ListItemText,
+  Popover,
 } from "@material-ui/core";
+import { createStyles, makeStyles, Theme } from "@material-ui/core/styles";
+import clsx from "clsx";
+import { TabNode } from "flexlayout-react";
 import {
-  PinOutline,
-  StarOutline,
-  RenameBox,
-  Delete,
   ContentDuplicate,
+  Delete,
+  Pin,
+  PinOutline,
+  Printer,
+  RenameBox,
   Restore,
   ShareVariant,
-  Printer,
-  Pin,
   Star,
+  StarOutline,
 } from "mdi-material-ui";
+import React, { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Note } from "../lib/notebook";
-import { TabNode } from "flexlayout-react";
 import { CrossnoteContainer } from "../containers/crossnote";
+import { Note } from "../lib/notebook";
 import { DeleteNoteDialog } from "./DeleteNoteDialog";
 
 const useStyles = makeStyles((theme: Theme) =>

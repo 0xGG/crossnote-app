@@ -1,20 +1,18 @@
-import React, { useState, useCallback } from "react";
 import {
   Dialog,
-  DialogTitle,
   DialogContent,
-  Typography,
+  DialogTitle,
   List,
   ListItem,
   ListItemText,
-  // useMediaQuery,
-  // useTheme,
+  Typography,
 } from "@material-ui/core";
+import useInterval from "@use-it/interval";
+import { ChevronDown, Translate } from "mdi-material-ui";
+import React, { useCallback, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { CrossnoteContainer } from "../containers/crossnote";
 import { SettingsContainer } from "../containers/settings";
-import useInterval from "@use-it/interval";
-import { Translate, ChevronDown } from "mdi-material-ui";
 
 interface Props {}
 export default function LanguageSelectorDialog(props: Props) {

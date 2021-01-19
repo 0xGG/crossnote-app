@@ -100,7 +100,7 @@ class FileSystem {
         });
       });
     };
-    const rename = async (oldPath: string, newPath: string) => {
+    const rename = async (oldPath: string, newPath: string): Promise<void> => {
       const stats = await this.stats(oldPath);
       if (stats.isDirectory()) {
         await this.mkdirp(newPath);
@@ -148,7 +148,7 @@ class FileSystem {
         await rename(oldPath, newPath);
       }
     };
-    const rmdir = (path: string) => {
+    const rmdir = (path: string): Promise<void> => {
       return new Promise((resolve, reject) => {
         this.fs.rmdir(path, (error: Error) => {
           if (error) {

@@ -1,64 +1,53 @@
 import {
+  Avatar,
+  Badge,
   Box,
+  Card,
+  CircularProgress,
   CssBaseline,
+  Divider,
   Drawer,
   Hidden,
+  IconButton,
   List,
   ListItem,
-  IconButton,
-  Divider,
   ListItemIcon,
-  ListItemText,
-  Avatar,
-  CircularProgress,
-  Badge,
-  useMediaQuery,
   ListItemSecondaryAction,
+  ListItemText,
   Tooltip,
-  Card,
+  useMediaQuery,
 } from "@material-ui/core";
 import {
-  fade,
   createStyles,
+  fade,
+  lighten,
   makeStyles,
   Theme,
   useTheme,
-  lighten,
 } from "@material-ui/core/styles";
 import clsx from "clsx";
-import React, { useState, useCallback, useEffect } from "react";
-import { useTranslation } from "react-i18next";
 import Identicon from "identicon.js";
 import { sha256 } from "js-sha256";
 import {
-  PlusCircleOutline,
-  Cog as SettingsIcon,
   Bell,
+  Cog as SettingsIcon,
   Notebook,
+  PlusCircleOutline,
 } from "mdi-material-ui";
-import SplitPane from "react-split-pane";
-import {
-  CrossnoteContainer,
-  SelectedSectionType,
-  HomeSection,
-} from "../containers/crossnote";
-import Editor from "../components/Editor";
+import React, { useCallback, useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import AddNotebookDialog from "../components/AddNotebookDialog";
-import NotesPanel from "../components/NotesPanel";
-import { browserHistory } from "../utilities/history";
-import { Settings } from "../components/Settings";
+import { AuthDialog } from "../components/AuthDialog";
+import ExplorePanel from "../components/ExplorePanel";
+import LanguageSelectorDialog from "../components/LanguageSelectorDialog";
+import { MainPanel } from "../components/MainPanel";
+import { NotebookPanel } from "../components/NotebookPanel";
+import NotebookTreeView from "../components/NotebookTreeView";
 import { CloudContainer } from "../containers/cloud";
+import { CrossnoteContainer, HomeSection } from "../containers/crossnote";
 import { globalContainers } from "../containers/global";
 import { SettingsContainer } from "../containers/settings";
-import { AuthDialog } from "../components/AuthDialog";
-import { Notifications } from "../components/Notifications";
-import ExplorePanel from "../components/ExplorePanel";
-import { NotebookPanel } from "../components/NotebookPanel";
-import { PrivacyPolicy } from "./Privacy";
-import LanguageSelectorDialog from "../components/LanguageSelectorDialog";
-import NotebookTreeView from "../components/NotebookTreeView";
-import { MainPanel } from "../components/MainPanel";
-import { Actions, DockLocation } from "flexlayout-react";
+import { browserHistory } from "../utilities/history";
 const is = require("is_js");
 
 const drawerWidth = 200;

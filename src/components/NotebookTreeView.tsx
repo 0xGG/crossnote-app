@@ -1,36 +1,24 @@
-import { TreeView, TreeItem } from "@material-ui/lab";
+import { Box, IconButton, Tooltip, Typography } from "@material-ui/core";
 import {
   createStyles,
+  darken,
   makeStyles,
   Theme,
-  darken,
-  fade,
 } from "@material-ui/core/styles";
+import { TreeItem, TreeView } from "@material-ui/lab";
 import clsx from "clsx";
-import React, { useState, useCallback, useEffect } from "react";
-import { IconButton, Box, Typography, Tooltip } from "@material-ui/core";
-import {
-  ChevronRight,
-  ChevronDown,
-  Cog,
-  Upload,
-  Download,
-} from "mdi-material-ui";
-import {
-  CrossnoteContainer,
-  SelectedSectionType,
-  HomeSection,
-} from "../containers/crossnote";
+import { ChevronDown, ChevronRight } from "mdi-material-ui";
+import React, { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import ConfigureNotebookDialog from "./ConfigureNotebookDialog";
-import PushNotebookDialog from "./PushNotebookDialog";
-
-import { Notebook, Note, Notes } from "../lib/notebook";
+import { CrossnoteContainer, HomeSection } from "../containers/crossnote";
 import {
-  globalEmitter,
   EventType,
+  globalEmitter,
   ModifiedMarkdownEventData,
 } from "../lib/event";
+import { Note, Notebook, Notes } from "../lib/notebook";
+import ConfigureNotebookDialog from "./ConfigureNotebookDialog";
+import PushNotebookDialog from "./PushNotebookDialog";
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({

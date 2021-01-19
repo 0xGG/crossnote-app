@@ -1,16 +1,14 @@
-import React, { useState, useEffect, useRef } from "react";
 import { createStyles, makeStyles, Theme } from "@material-ui/core/styles";
 import clsx from "clsx";
 import * as d3 from "d3";
-import { Notebook } from "../lib/notebook";
+import React, { useEffect, useRef, useState } from "react";
+import { CrossnoteContainer } from "../containers/crossnote";
 import {
-  GraphViewData,
   constructGraphView,
-  GraphViewLink,
+  GraphViewData,
   GraphViewNode,
 } from "../lib/graphView";
-import { Box } from "@material-ui/core";
-import { CrossnoteContainer } from "../containers/crossnote";
+import { Notebook } from "../lib/notebook";
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -79,8 +77,10 @@ export default function GraphView(props: Props) {
     const zoomHandler = d3
       .zoom()
       .scaleExtent([0.1, 4])
-      .on("zoom", function () {
-        container.attr("transform", d3.event.transform);
+      .on("zoom", function (event: any) {
+        console.log("zoomed");
+        (window as any)["event_"] = event;
+        container.attr("transform", event.transform);
       });
     zoomHandler(svg as any);
 
@@ -135,7 +135,7 @@ export default function GraphView(props: Props) {
       );
     };
 
-    const focus = (d: GraphViewNode) => {
+    const focus = (event: any, d: GraphViewNode) => {
       node.style("opacity", function (o) {
         return neigh(d, o) ? 1 : 0.1;
       });
@@ -156,22 +156,31 @@ export default function GraphView(props: Props) {
       link.style("opacity", 1);
     };
 
-    const dragstarted = (d: any) => {
-      d3.event.sourceEvent.stopPropagation();
-      if (!d3.event.active) graphLayout.alphaTarget(0.3).restart();
-      d.fx = d.x;
-      d.fy = d.y;
+    const dragstarted = function (event: any, d: any) {
+      console.log("dragstarted: ", d.active);
+      event.sourceEvent.stopPropagation();
+      if (!d.active) graphLayout.alphaTarget(0.3).restart();
+
+      // @ts-ignore
+      d3.select(this).attr("stroke", "black");
     };
 
-    const dragged = (d: any) => {
-      d.fx = d3.event.x;
-      d.fy = d3.event.y;
+    const dragged = function (event: any, d: any) {
+      console.log("dragged");
+      d.x = event.x;
+      d.y = event.y;
+      // @ts-ignore
+      d3.select(this as SVGCircleElement)
+        .raise()
+        .attr("transform", (d: any) => "translate(" + [d.x, d.y] + ")");
     };
 
-    const dragended = (d: any) => {
-      if (!d3.event.active) graphLayout.alphaTarget(0);
-      d.fx = null;
-      d.fy = null;
+    const dragended = function (event: any, d: any) {
+      console.log("dragended");
+      if (!d.active) graphLayout.alphaTarget(0);
+
+      // @ts-ignore
+      d3.select(this).attr("stroke", null);
     };
 
     const updateLink = (link: any) => {
@@ -196,7 +205,7 @@ export default function GraphView(props: Props) {
       });
     };
     const ticked = () => {
-      console.log("ticked");
+      // console.log("ticked");
       node.call(updateNode);
       link.call(updateLink);
       text.call(updateNode);
@@ -228,11 +237,16 @@ export default function GraphView(props: Props) {
       .on("end", dragended);
     drag(node as any);
 
-    node.on("click", (d) => {
+    node.on("click", (event: any, d: GraphViewNode) => {
       crossnoteContainer.openNoteAtPath(props.notebook, d.id);
     });
 
     console.log("simulated");
+
+    return () => {
+      console.log("destroyed");
+      svg.remove();
+    };
   }, [graphViewData, graphViewPanel, width, height, props.notebook]);
 
   return (

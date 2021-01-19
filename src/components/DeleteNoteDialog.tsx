@@ -1,16 +1,16 @@
+import {
+  Button,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
+} from "@material-ui/core";
+import { TabNode } from "flexlayout-react";
 import React from "react";
 import { useTranslation } from "react-i18next";
 import { CrossnoteContainer } from "../containers/crossnote";
-import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogContentText,
-  DialogActions,
-  Button,
-} from "@material-ui/core";
 import { Note } from "../lib/notebook";
-import { TabNode } from "flexlayout-react";
 
 interface Props {
   open: boolean;

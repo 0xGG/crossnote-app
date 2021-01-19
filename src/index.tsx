@@ -1,23 +1,21 @@
+import "@mdi/font/css/materialdesignicons.min.css";
+import "noty/lib/noty.css";
+import "noty/lib/themes/relax.css";
 import React from "react";
 import ReactDOM from "react-dom";
 import "typeface-noto-sans-sc";
 import "typeface-roboto";
-import "noty/lib/noty.css";
-import "noty/lib/themes/relax.css";
-import "@mdi/font/css/materialdesignicons.min.css";
-
+import { Provider } from "urql";
+import App from "./App";
+import { CloudContainer } from "./containers/cloud";
+import { CrossnoteContainer } from "./containers/crossnote";
+import { NotificationsContainer } from "./containers/notifications";
+import { SettingsContainer } from "./containers/settings";
 import "./i18n/i18n";
 import "./index.css";
-import "./themes/manager";
-import App from "./App";
 import Crossnote from "./lib/crossnote";
 import "./lib/fs";
-import { CrossnoteContainer } from "./containers/crossnote";
-import { SettingsContainer } from "./containers/settings";
-import { CloudContainer } from "./containers/cloud";
-import { NotificationsContainer } from "./containers/notifications";
-
-import { Provider } from "urql";
+import "./themes/manager";
 import { GraphQLClient } from "./utilities/client";
 
 // Hack for GoldenLayout

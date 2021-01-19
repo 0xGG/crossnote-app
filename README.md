@@ -38,7 +38,7 @@ Please check [this documentation](https://github.com/0xGG/welcome-notebook/tree/
 ## Crossnote V3
 
 Crossnote V3 is currently under development on the `develop` branch of this repository.  
-Please note that V3 is far from complete.      
+Please note that V3 is far from complete.  
 The Crossnote V3 website is currently hosted on GitHub Pages: https://0xgg.io/crossnote/
 
 ## License

@@ -1,10 +1,10 @@
-import { createContainer } from "unstated-next";
-import { useState, useCallback, useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { CrossnoteTheme } from "../themes/theme";
-import { themeManager } from "../themes/manager";
+import { createContainer } from "unstated-next";
 import { ThemeName } from "vickymd/theme";
-import { KeyMap, getKeyMap } from "../lib/keymap";
+import { getKeyMap, KeyMap } from "../lib/keymap";
+import { themeManager } from "../themes/manager";
+import { CrossnoteTheme } from "../themes/theme";
 
 interface InitialState {}
 

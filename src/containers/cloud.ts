@@ -1,14 +1,14 @@
-import { createContainer } from "unstated-next";
-import { useState, useEffect, useCallback } from "react";
-import {
-  User,
-  useViewerQuery,
-  useSetUserInfoMutation,
-  NotebookFieldsFragment,
-} from "../generated/graphql";
 import Noty from "noty";
-import { SettingsContainer } from "./settings";
+import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { createContainer } from "unstated-next";
+import {
+  NotebookFieldsFragment,
+  User,
+  useSetUserInfoMutation,
+  useViewerQuery,
+} from "../generated/graphql";
+import { SettingsContainer } from "./settings";
 
 interface InitialState {}
 

@@ -1,14 +1,14 @@
-import React, { useState, useEffect, useCallback } from "react";
 import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  TextField,
-  DialogActions,
   Button,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  TextField,
 } from "@material-ui/core";
-import { CrossnoteContainer } from "../containers/crossnote";
+import React, { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { CrossnoteContainer } from "../containers/crossnote";
 import { Note } from "../lib/notebook";
 
 interface Props {

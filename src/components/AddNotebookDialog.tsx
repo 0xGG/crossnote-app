@@ -1,24 +1,24 @@
-import React, { useState, useCallback, useEffect } from "react";
 import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  TextField,
   Box,
-  Typography,
-  DialogActions,
   Button,
-  Link,
-  FormControlLabel,
   Checkbox,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
   ExpansionPanel,
   ExpansionPanelDetails,
   ExpansionPanelSummary,
+  FormControlLabel,
+  Link,
+  TextField,
+  Typography,
 } from "@material-ui/core";
 import { ChevronDown } from "mdi-material-ui";
-import { CrossnoteContainer } from "../containers/crossnote";
 import Noty from "noty";
+import React, { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { CrossnoteContainer } from "../containers/crossnote";
 
 interface Props {
   open: boolean;

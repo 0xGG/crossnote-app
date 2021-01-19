@@ -1,7 +1,7 @@
 import { PeerJSOption } from "peerjs";
 import moment from "moment";
 
-export function waitForTimeout(timeout: number) {
+export function waitForTimeout(timeout: number): Promise<void> {
   return new Promise((resolve, reject) => {
     return setTimeout(() => {
       return resolve();

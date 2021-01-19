@@ -1,20 +1,20 @@
-import React, { useState, useEffect } from "react";
 import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  TextField,
-  DialogActions,
-  Button,
-  Typography,
   Box,
-  useTheme,
+  Button,
   darken,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  TextField,
+  Typography,
+  useTheme,
 } from "@material-ui/core";
-import { useTranslation } from "react-i18next";
-import { usePublishNotebookMutation } from "../generated/graphql";
-import { CloudContainer } from "../containers/cloud";
 import Noty from "noty";
+import React, { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
+import { CloudContainer } from "../containers/cloud";
+import { usePublishNotebookMutation } from "../generated/graphql";
 
 interface Props {
   open: boolean;

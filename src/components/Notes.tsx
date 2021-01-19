@@ -1,22 +1,20 @@
-import React, { useState, useEffect, useCallback } from "react";
-import LazyLoad from "react-lazyload";
+import { Card, Typography } from "@material-ui/core";
 import {
   createStyles,
   makeStyles,
   Theme,
   useTheme,
 } from "@material-ui/core/styles";
-import clsx from "clsx";
-import { CrossnoteContainer } from "../containers/crossnote";
-import { Box, Typography, Button, Card } from "@material-ui/core";
-import NoteCard, { NoteCardWidth, NoteCardMargin } from "./NoteCard";
-import { useTranslation } from "react-i18next";
-import useInterval from "@use-it/interval";
-import { CloudDownloadOutline } from "mdi-material-ui";
-import Noty from "noty";
 import { Skeleton } from "@material-ui/lab";
-import { Note } from "../lib/notebook";
+import useInterval from "@use-it/interval";
+import clsx from "clsx";
 import { TabNode } from "flexlayout-react";
+import React, { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
+import LazyLoad from "react-lazyload";
+import { CrossnoteContainer } from "../containers/crossnote";
+import { Note } from "../lib/notebook";
+import NoteCard, { NoteCardMargin, NoteCardWidth } from "./NoteCard";
 const is = require("is_js");
 
 const lazyLoadPlaceholderHeight = 92 + 2 * NoteCardMargin;

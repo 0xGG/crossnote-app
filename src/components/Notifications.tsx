@@ -1,23 +1,23 @@
 import {
   Box,
   Button,
-  Typography,
-  List,
-  ListItem,
-  ListItemIcon,
-  IconButton,
   Card,
   Divider,
   Hidden,
+  IconButton,
+  List,
+  ListItem,
+  ListItemIcon,
+  Typography,
 } from "@material-ui/core";
 import { createStyles, makeStyles, Theme } from "@material-ui/core/styles";
 import clsx from "clsx";
-import React, { useEffect, useState } from "react";
+import { Close, Menu as MenuIcon } from "mdi-material-ui";
+import React, { useEffect } from "react";
+import { useTranslation } from "react-i18next";
+import { CloudContainer } from "../containers/cloud";
 import { NotificationsContainer } from "../containers/notifications";
 import { NotificationEventType } from "../generated/graphql";
-import { useTranslation } from "react-i18next";
-import { Close, Menu as MenuIcon } from "mdi-material-ui";
-import { CloudContainer } from "../containers/cloud";
 import { CommentWidgetMessagePostingNotification } from "./notifications/CommentWidgetMessagePostingNotification";
 
 const useStyles = makeStyles((theme: Theme) =>

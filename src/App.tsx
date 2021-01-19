@@ -70,9 +70,9 @@ const App: FC = () => {
               render={(props) => (
                 <GitHubOAuthCallback
                   code={
-                    qs.parse(props.location.search.replace(/^\?/, ""))[
+                    (qs.parse(props.location.search.replace(/^\?/, ""))[
                       "code"
-                    ] || ""
+                    ] as string) || ""
                   }
                 ></GitHubOAuthCallback>
               )}

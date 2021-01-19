@@ -1,33 +1,33 @@
-import React, { useEffect, useState, useCallback } from "react";
 import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  TextField,
+  Avatar,
   Box,
   Button,
-  Typography,
   Chip,
+  Dialog,
+  DialogContent,
+  DialogTitle,
   Divider,
   Link,
-  Avatar,
+  TextField,
+  Typography,
 } from "@material-ui/core";
 import { createStyles, makeStyles, Theme } from "@material-ui/core/styles";
 import clsx from "clsx";
-import { browserHistory } from "../utilities/history";
-import { CloudContainer } from "../containers/cloud";
-import { useTranslation } from "react-i18next";
-import { Github } from "mdi-material-ui";
 import Identicon from "identicon.js";
 import { sha256 } from "js-sha256";
+import { Github } from "mdi-material-ui";
+import Noty from "noty";
+import React, { useCallback, useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
+import { CloudContainer } from "../containers/cloud";
 import {
+  useResetPasswordMutation,
+  useSendEmailVerificationCodeMutation,
   useSignInMutation,
   useSignUpMutation,
-  useSendEmailVerificationCodeMutation,
-  useResetPasswordMutation,
 } from "../generated/graphql";
+import { browserHistory } from "../utilities/history";
 import { startGitHubOAuth } from "../utilities/utils";
-import Noty from "noty";
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({

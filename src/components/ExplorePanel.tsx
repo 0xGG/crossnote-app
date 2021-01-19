@@ -1,20 +1,3 @@
-import React, { useState, useCallback } from "react";
-import {
-  fade,
-  createStyles,
-  makeStyles,
-  Theme,
-} from "@material-ui/core/styles";
-import clsx from "clsx";
-import {
-  Magnify,
-  Cog,
-  Menu as MenuIcon,
-  SortVariant,
-  SortDescending,
-  SortAscending,
-  Publish,
-} from "mdi-material-ui";
 import {
   Box,
   Button,
@@ -24,10 +7,19 @@ import {
   InputBase,
   Typography,
 } from "@material-ui/core";
+import {
+  createStyles,
+  fade,
+  makeStyles,
+  Theme,
+} from "@material-ui/core/styles";
+import clsx from "clsx";
+import { Magnify, Menu as MenuIcon, Publish } from "mdi-material-ui";
+import React, { useCallback, useState } from "react";
 import { useTranslation } from "react-i18next";
-import PublishNotebookDialog from "./PublishNotebookDialog";
 import { CloudContainer } from "../containers/cloud";
 import { Notebooks } from "./Notebooks";
+import PublishNotebookDialog from "./PublishNotebookDialog";
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({

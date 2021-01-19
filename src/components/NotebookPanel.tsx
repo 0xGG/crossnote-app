@@ -1,9 +1,8 @@
-import React, { useState, useEffect, useCallback } from "react";
 import {
   Box,
-  Hidden,
-  ButtonGroup,
   Button,
+  ButtonGroup,
+  Hidden,
   Typography,
 } from "@material-ui/core";
 import {
@@ -14,28 +13,29 @@ import {
 } from "@material-ui/core/styles";
 import clsx from "clsx";
 import {
+  BookOpenPageVariant,
+  ChevronLeft,
+  CloudDownloadOutline,
+  Cog,
+  Git,
+  Star,
+  StarOutline,
+} from "mdi-material-ui";
+import React, { useCallback, useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
+import { renderPreview } from "vickymd/preview";
+import { CloudContainer } from "../containers/cloud";
+import { CrossnoteContainer } from "../containers/crossnote";
+import {
   NotebookFieldsFragment,
   useStarNotebookMutation,
   useUnstarNotebookMutation,
 } from "../generated/graphql";
-import { CloudContainer } from "../containers/cloud";
-import {
-  ChevronLeft,
-  Git,
-  Star,
-  StarOutline,
-  CloudDownloadOutline,
-  Cog,
-  BookOpenPageVariant,
-} from "mdi-material-ui";
-import { useTranslation } from "react-i18next";
-import { renderPreview } from "vickymd/preview";
-import { CrossnoteContainer } from "../containers/crossnote";
+import { browserHistory } from "../utilities/history";
+import { resolveNotebookFilePath } from "../utilities/image";
+import { matter } from "../utilities/markdown";
 import AddNotebookDialog from "./AddNotebookDialog";
 import ConfigurePublishedNotebookDialog from "./ConfigurePublishedNotebookDialog";
-import { resolveNotebookFilePath } from "../utilities/image";
-import { browserHistory } from "../utilities/history";
-import { matter } from "../utilities/markdown";
 
 const previewZIndex = 99;
 const useStyles = makeStyles((theme: Theme) =>

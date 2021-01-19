@@ -1,60 +1,54 @@
-import React, { useState, useCallback, useEffect, useRef } from "react";
-import {
-  fade,
-  createStyles,
-  makeStyles,
-  Theme,
-} from "@material-ui/core/styles";
-import clsx from "clsx";
-import { CrossnoteContainer } from "../containers/crossnote";
-import { Note } from "../lib/notebook";
 import {
   Box,
-  ButtonGroup,
   Button,
-  InputBase,
-  Divider,
+  ButtonGroup,
   Card,
+  Divider,
   IconButton,
-  Typography,
+  InputBase,
   Tooltip,
+  Typography,
 } from "@material-ui/core";
-import { TabNode, Actions } from "flexlayout-react";
-import { SettingsContainer } from "../containers/settings";
-import {
-  ChevronLeft,
-  Close,
-  FilePresentationBox,
-  Pencil,
-  CodeTags,
-  DotsVertical,
-} from "mdi-material-ui";
-import * as path from "path";
-import { useTranslation } from "react-i18next";
+import { createStyles, makeStyles, Theme } from "@material-ui/core/styles";
+import clsx from "clsx";
 import {
   Editor as CodeMirrorEditor,
   EditorChangeLinkedList,
-  TextMarker,
   Position as CursorPosition,
+  TextMarker,
 } from "codemirror";
+import { Actions, TabNode } from "flexlayout-react";
+import {
+  Close,
+  CodeTags,
+  DotsVertical,
+  FilePresentationBox,
+  Pencil,
+} from "mdi-material-ui";
+import * as path from "path";
+import React, { useCallback, useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
+import EmojiDefinitions from "vickymd/addon/emoji";
+import { renderPreview } from "vickymd/preview";
+import { CrossnoteContainer } from "../containers/crossnote";
+import { SettingsContainer } from "../containers/settings";
+import { initMathPreview } from "../editor/views/math-preview";
 import { EditorMode } from "../lib/editorMode";
 import {
-  printPreview,
-  postprocessPreview as previewPostprocessPreview,
-  openURL,
-} from "../utilities/preview";
-import { initMathPreview } from "../editor/views/math-preview";
-import { renderPreview } from "vickymd/preview";
-import NotesPanel from "./NotesPanel";
-import { resolveNoteImageSrc } from "../utilities/image";
-import EditImageDialog from "./EditImageDialog";
-import NotePopover from "./NotePopover";
-import {
+  DeleteNoteEventData,
   EventType,
   globalEmitter,
   ModifiedMarkdownEventData,
-  DeleteNoteEventData,
 } from "../lib/event";
+import { Note } from "../lib/notebook";
+import { resolveNoteImageSrc } from "../utilities/image";
+import {
+  openURL,
+  postprocessPreview as previewPostprocessPreview,
+} from "../utilities/preview";
+import EditImageDialog from "./EditImageDialog";
+import NotePopover from "./NotePopover";
+import NotesPanel from "./NotesPanel";
 const VickyMD = require("vickymd/core");
 
 const previewZIndex = 99;
@@ -68,6 +62,14 @@ const HMDFold = {
   widget: true,
   code: true,
 };
+
+interface CommandHint {
+  text: string;
+  command: string;
+  description: string;
+  icon?: string;
+  render: (element: HTMLElement, data: any, current: CommandHint) => void;
+}
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -470,6 +472,344 @@ export default function NotePanel(props: Props) {
       };
     }
   }, [editor, note, tabNode, editorMode, previewElement]);
+
+  // Command
+  useEffect(() => {
+    if (!editor || !note) return;
+    const onChangeHandler = (
+      instance: CodeMirrorEditor,
+      changeObject: EditorChangeLinkedList,
+    ) => {
+      // Check commands
+      if (changeObject.text.length === 1 && changeObject.text[0] === "/") {
+        const aheadStr = editor
+          .getLine(changeObject.from.line)
+          .slice(0, changeObject.from.ch + 1);
+        if (!aheadStr.match(/#[^\s]+?\/$/)) {
+          // Not `/` inside a tag
+          editor.showHint({
+            closeOnUnfocus: false,
+            completeSingle: false,
+            hint: () => {
+              const cursor = editor.getCursor();
+              const token = editor.getTokenAt(cursor);
+              const line = cursor.line;
+              const lineStr = editor.getLine(line);
+              const end: number = cursor.ch;
+              let start = token.start;
+              if (lineStr[start] !== "/") {
+                start = start - 1;
+              }
+              const currentWord: string = lineStr
+                .slice(start, end)
+                .replace(/^\//, "");
+
+              const render = (
+                element: HTMLElement,
+                data: CommandHint[],
+                cur: CommandHint,
+              ) => {
+                const wrapper = document.createElement("div");
+                wrapper.style.padding = "6px 0";
+                wrapper.style.display = "flex";
+                wrapper.style.flexDirection = "row";
+                wrapper.style.alignItems = "flex-start";
+                wrapper.style.maxWidth = "100%";
+                wrapper.style.minWidth = "200px";
+
+                const leftPanel = document.createElement("div");
+                const iconWrapper = document.createElement("div");
+                iconWrapper.style.padding = "0 6px";
+                iconWrapper.style.marginRight = "6px";
+                iconWrapper.style.fontSize = "1rem";
+
+                const iconElement = document.createElement("span");
+                iconElement.classList.add("mdi");
+                iconElement.classList.add(
+                  cur.icon || "mdi-help-circle-outline",
+                );
+                iconWrapper.appendChild(iconElement);
+                leftPanel.appendChild(iconWrapper);
+
+                const rightPanel = document.createElement("div");
+
+                const descriptionElement = document.createElement("p");
+                descriptionElement.innerText = cur.description;
+                descriptionElement.style.margin = "2px 0";
+                descriptionElement.style.padding = "0";
+
+                const commandElement = document.createElement("p");
+                commandElement.innerText = cur.command;
+                commandElement.style.margin = "0";
+                commandElement.style.padding = "0";
+                commandElement.style.fontSize = "0.7rem";
+
+                rightPanel.appendChild(descriptionElement);
+                rightPanel.appendChild(commandElement);
+
+                wrapper.appendChild(leftPanel);
+                wrapper.appendChild(rightPanel);
+                element.appendChild(wrapper);
+              };
+
+              const commands: CommandHint[] = [
+                {
+                  text: "# ",
+                  command: "/h1",
+                  description: t("editor/toolbar/insert-header-1"),
+                  icon: "mdi-format-header-1",
+                  render,
+                },
+                {
+                  text: "## ",
+                  command: "/h2",
+                  description: t("editor/toolbar/insert-header-2"),
+                  icon: "mdi-format-header-2",
+                  render,
+                },
+                {
+                  text: "### ",
+                  command: "/h3",
+                  description: t("editor/toolbar/insert-header-3"),
+                  icon: "mdi-format-header-3",
+                  render,
+                },
+                {
+                  text: "#### ",
+                  command: "/h4",
+                  description: t("editor/toolbar/insert-header-4"),
+                  icon: "mdi-format-header-4",
+                  render,
+                },
+                {
+                  text: "##### ",
+                  command: "/h5",
+                  description: t("editor/toolbar/insert-header-5"),
+                  icon: "mdi-format-header-5",
+                  render,
+                },
+                {
+                  text: "###### ",
+                  command: "/h6",
+                  description: t("editor/toolbar/insert-header-6"),
+                  icon: "mdi-format-header-6",
+                  render,
+                },
+                {
+                  text: "> ",
+                  command: "/blockquote",
+                  description: t("editor/toolbar/insert-blockquote"),
+                  icon: "mdi-format-quote-open",
+                  render,
+                },
+                {
+                  text: "* ",
+                  command: "/ul",
+                  description: t("editor/toolbar/insert-unordered-list"),
+                  icon: "mdi-format-list-bulleted",
+                  render,
+                },
+                {
+                  text: "1. ",
+                  command: "/ol",
+                  description: t("editor/toolbar/insert-ordered-list"),
+                  icon: "mdi-format-list-numbered",
+                  render,
+                },
+                {
+                  text: "<!-- @crossnote.image -->\n",
+                  command: "/image",
+                  description: t("editor/toolbar/insert-image"),
+                  icon: "mdi-image",
+                  render,
+                },
+                {
+                  text: `|   |   |
+|---|---|
+|   |   |
+`,
+                  command: "/table",
+                  description: t("editor/toolbar/insert-table"),
+                  icon: "mdi-table",
+                  render,
+                },
+                {
+                  text:
+                    "<!-- @timer " +
+                    JSON.stringify({ date: new Date().toString() })
+                      .replace(/^{/, "")
+                      .replace(/}$/, "") +
+                    " -->\n",
+                  command: "/timer",
+                  description: t("editor/toolbar/insert-clock"),
+                  icon: "mdi-timer",
+                  render,
+                },
+                {
+                  text: "<!-- @crossnote.audio -->  \n",
+                  command: "/audio",
+                  description: t("editor/toolbar/insert-audio"),
+                  icon: "mdi-music",
+                  render,
+                },
+                /*
+                {
+                  text: "<!-- @crossnote.netease_music -->  \n",
+                  displayText: `/netease - ${t(
+                    "editor/toolbar/netease-music",
+                  )}`,
+                },
+                */
+                {
+                  text: "<!-- @crossnote.video -->  \n",
+                  command: "/video",
+                  description: t("editor/toolbar/insert-video"),
+                  icon: "mdi-video",
+                  render,
+                },
+                {
+                  text: "<!-- @crossnote.youtube -->  \n",
+                  command: "/youtube",
+                  description: t("editor/toolbar/insert-youtube"),
+                  icon: "mdi-youtube",
+                  render,
+                },
+                {
+                  text: "<!-- @crossnote.bilibili -->  \n",
+                  command: "/bilibili",
+                  description: t("editor/toolbar/insert-bilibili"),
+                  icon: "mdi-television-classic",
+                  render,
+                },
+                {
+                  text: "<!-- slide -->  \n",
+                  command: "/slide",
+                  description: t("editor/toolbar/insert-slide"),
+                  icon: "mdi-presentation",
+                  render,
+                },
+                {
+                  text: "<!-- @crossnote.ocr -->  \n",
+                  command: "/ocr",
+                  description: t("editor/toolbar/insert-ocr"),
+                  icon: "mdi-ocr",
+                  render,
+                },
+                {
+                  text:
+                    '<!-- @crossnote.kanban "v":2,"board":{"columns":[]} -->  \n',
+                  command: "/kanban",
+                  description: `${t("editor/toolbar/insert-kanban")} (beta)`,
+                  icon: "mdi-developer-board",
+                  render,
+                },
+                /*
+                {
+                  text: "<!-- @crossnote.abc -->  \n",
+                  displayText: `/abc - ${t(
+                    "editor/toolbar/insert-abc-notation",
+                  )}`,
+                },
+                */
+                {
+                  text: "<!-- @crossnote.github_gist -->  \n",
+                  command: "/github_gist",
+                  description: t("editor/toolbar/insert-github-gist"),
+                  icon: "mdi-github",
+                  render,
+                },
+                {
+                  text: "<!-- @crossnote.comment -->  \n",
+                  command: "/crossnote.comment",
+                  description: t("editor/toolbar/insert-comment"),
+                  icon: "mdi-comment-multiple",
+                  render,
+                },
+              ];
+              const filtered = commands.filter(
+                (item) =>
+                  (item.command + item.description)
+                    .toLocaleLowerCase()
+                    .indexOf(currentWord.toLowerCase()) >= 0,
+              );
+              return {
+                list: filtered.length ? filtered : commands,
+                from: { line, ch: start },
+                to: { line, ch: end },
+              };
+            },
+          });
+        }
+      }
+
+      // Check emoji
+      if (
+        changeObject.text.length === 1 &&
+        changeObject.text[0].length > 0 &&
+        changeObject.text[0] !== " " &&
+        changeObject.text[0] !== ":" &&
+        changeObject.from.ch > 0 &&
+        editor.getLine(changeObject.from.line)[changeObject.from.ch - 1] === ":"
+      ) {
+        editor.showHint({
+          closeOnUnfocus: true,
+          completeSingle: false,
+          hint: () => {
+            const cursor = editor.getCursor();
+            const token = editor.getTokenAt(cursor);
+            const line = cursor.line;
+            const lineStr = editor.getLine(line);
+            const end: number = cursor.ch;
+            let start = token.start;
+            let doubleSemiColon = false;
+            if (lineStr[start] !== ":") {
+              start = start - 1;
+            }
+            if (start > 0 && lineStr[start - 1] === ":") {
+              start = start - 1;
+              doubleSemiColon = true;
+            }
+            const currentWord: string = lineStr
+              .slice(start, end)
+              .replace(/^:+/, "");
+
+            const commands: { text: string; displayText: string }[] = [];
+            for (const def in EmojiDefinitions) {
+              const emoji = EmojiDefinitions[def];
+              commands.push({
+                text: doubleSemiColon ? `:${def}: ` : `${emoji} `,
+                displayText: `:${def}: ${emoji}`,
+              });
+            }
+            const filtered = commands.filter(
+              (item) =>
+                item.displayText
+                  .toLocaleLowerCase()
+                  .indexOf(currentWord.toLowerCase()) >= 0,
+            );
+            return {
+              list: filtered.length ? filtered : commands,
+              from: { line, ch: start },
+              to: { line, ch: end },
+            };
+          },
+        });
+      }
+    };
+    editor.on("change", onChangeHandler);
+
+    const onCursorActivityHandler = (instance: CodeMirrorEditor) => {
+      // console.log("cursorActivity", editor.getCursor());
+      // console.log("selection: ", editor.getSelection());
+      return;
+    };
+    editor.on("cursorActivity", onCursorActivityHandler);
+
+    return () => {
+      editor.off("change", onChangeHandler);
+      editor.off("cursorActivity", onCursorActivityHandler);
+    };
+  }, [editor, note]);
 
   return (
     <Box className={clsx(classes.notePanel)}>

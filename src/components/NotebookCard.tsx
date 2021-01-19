@@ -1,26 +1,26 @@
-import React, { useState, useEffect } from "react";
-import { createStyles, makeStyles, Theme } from "@material-ui/core/styles";
-import clsx from "clsx";
-import { NotebookFieldsFragment } from "../generated/graphql";
 import {
+  Avatar,
   Box,
   ButtonBase,
+  Tooltip,
   Typography,
   useTheme,
-  Avatar,
-  Tooltip,
 } from "@material-ui/core";
-import { useTranslation } from "react-i18next";
-import {
-  Summary,
-  getHeaderFromMarkdown,
-  generateSummaryFromMarkdown,
-} from "../utilities/note";
+import { createStyles, makeStyles, Theme } from "@material-ui/core/styles";
+import clsx from "clsx";
 import Identicon from "identicon.js";
 import { sha256 } from "js-sha256";
 import { Star, StarOutline } from "mdi-material-ui";
+import React, { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { CloudContainer } from "../containers/cloud";
+import { NotebookFieldsFragment } from "../generated/graphql";
 import { resolveNotebookFilePath } from "../utilities/image";
+import {
+  generateSummaryFromMarkdown,
+  getHeaderFromMarkdown,
+  Summary,
+} from "../utilities/note";
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
