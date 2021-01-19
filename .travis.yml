@@ -9,7 +9,7 @@ jobs:
     - stage: build
       script:
         - yarn install
-        - yarn build
+        - CI= yarn build
     - stage: deploy
       if: (branch = develop) AND (type = push)
       script:
