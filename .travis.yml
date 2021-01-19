@@ -20,3 +20,8 @@ notifications:
   email:
     on_success: never
     on_failure: change
+
+stages
+  - build
+  - name: deploy
+    if: (branch = develop)
