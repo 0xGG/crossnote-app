@@ -2,9 +2,9 @@ import { NoteConfig } from "./notebook";
 
 export enum EventType {
   ModifiedMarkdown = "ModifiedMarkdown",
-  RefreshNotes = "RefreshNotes",
-  DeleteNote = "DeleteNote",
-  ChangeNoteFilePath = "ChangeNoteFilePath",
+  RefreshedNotes = "RefreshedNotes",
+  DeletedNote = "DeletedNote",
+  ChangedNoteFilePath = "ChangedNoteFilePath",
 }
 
 export interface ModifiedMarkdownEventData {

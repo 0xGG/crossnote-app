@@ -338,13 +338,13 @@ export default function NotePanel(props: Props) {
     };
 
     globalEmitter.on(EventType.ModifiedMarkdown, modifiedMarkdownCallback);
-    globalEmitter.on(EventType.DeleteNote, deleteNoteCallback);
-    globalEmitter.on(EventType.ChangeNoteFilePath, changeNoteFilePathCallback);
+    globalEmitter.on(EventType.DeletedNote, deleteNoteCallback);
+    globalEmitter.on(EventType.ChangedNoteFilePath, changeNoteFilePathCallback);
     return () => {
       globalEmitter.off(EventType.ModifiedMarkdown, modifiedMarkdownCallback);
-      globalEmitter.off(EventType.DeleteNote, deleteNoteCallback);
+      globalEmitter.off(EventType.DeletedNote, deleteNoteCallback);
       globalEmitter.off(
-        EventType.ChangeNoteFilePath,
+        EventType.ChangedNoteFilePath,
         changeNoteFilePathCallback,
       );
     };

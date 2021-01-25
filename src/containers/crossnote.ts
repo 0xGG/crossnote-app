@@ -235,11 +235,6 @@ function useCrossnoteContainer(initialState: InitialState) {
           noteFilePath: note.filePath,
           noteConfig: newNote.config,
         });
-        /*
-          globalEmitter.emit(EventType.ModifiedMarkdown, {
-            tabId: tabNode.getId(),
-          })
-          */
       }
     },
     [getNotebookAtPath],
@@ -252,7 +247,7 @@ function useCrossnoteContainer(initialState: InitialState) {
         return;
       }
       await notebook.deleteNote(noteFilePath);
-      globalEmitter.emit(EventType.DeleteNote, {
+      globalEmitter.emit(EventType.DeletedNote, {
         tabId: tabNode.getId(),
         notebookPath: notebookPath,
         noteFilePath: noteFilePath,
@@ -270,7 +265,7 @@ function useCrossnoteContainer(initialState: InitialState) {
           oldNoteFilePath,
           newFilePath,
         );
-        globalEmitter.emit(EventType.ChangeNoteFilePath, {
+        globalEmitter.emit(EventType.ChangedNoteFilePath, {
           tabId: tabNode.getId(),
           notebookPath: note.notebookPath,
           oldNoteFilePath: oldNoteFilePath,

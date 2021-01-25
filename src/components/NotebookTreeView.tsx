@@ -12,6 +12,8 @@ import React, { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { CrossnoteContainer, HomeSection } from "../containers/crossnote";
 import {
+  ChangeNoteFilePathEventData,
+  DeleteNoteEventData,
   EventType,
   globalEmitter,
   ModifiedMarkdownEventData,
@@ -129,9 +131,32 @@ export default function NotebookTreeView(props: Props) {
         }
         refreshQuickAccessNotes(props.notebook.notes);
       };
+      const deleteNoteCallback = (data: DeleteNoteEventData) => {
+        if (props.notebook.dir === data.notebookPath) {
+          refreshQuickAccessNotes(props.notebook.notes);
+        }
+      };
+      const changeNoteFilePathCallback = (
+        data: ChangeNoteFilePathEventData,
+      ) => {
+        if (props.notebook.dir === data.notebookPath) {
+          refreshQuickAccessNotes(props.notebook.notes);
+        }
+      };
+
       globalEmitter.on(EventType.ModifiedMarkdown, modifiedMarkdownCallback);
+      globalEmitter.on(EventType.DeletedNote, deleteNoteCallback);
+      globalEmitter.on(
+        EventType.ChangedNoteFilePath,
+        changeNoteFilePathCallback,
+      );
       return () => {
         globalEmitter.off(EventType.ModifiedMarkdown, modifiedMarkdownCallback);
+        globalEmitter.off(EventType.DeletedNote, deleteNoteCallback);
+        globalEmitter.off(
+          EventType.ChangedNoteFilePath,
+          changeNoteFilePathCallback,
+        );
       };
     }
   }, [props.notebook, refreshQuickAccessNotes]);

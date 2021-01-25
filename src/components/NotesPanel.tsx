@@ -174,7 +174,7 @@ export default function NotesPanel(props: Props) {
       .createNewNote(props.notebook, "", markdown)
       .then((note) => {
         crossnoteContainer.openNoteAtPath(props.notebook, note.filePath);
-        globalEmitter.emit(EventType.RefreshNotes, {
+        globalEmitter.emit(EventType.RefreshedNotes, {
           notebookPath: props.notebook.dir,
         });
         setIsCreatingNote(false);
@@ -245,15 +245,15 @@ export default function NotesPanel(props: Props) {
 
     // TODO: Delay the modifiedMarkdownCallback
     globalEmitter.on(EventType.ModifiedMarkdown, modifiedMarkdownCallback);
-    globalEmitter.on(EventType.RefreshNotes, refreshNotesCallback);
-    globalEmitter.on(EventType.DeleteNote, deleteNoteCallback);
-    globalEmitter.on(EventType.ChangeNoteFilePath, changeNoteFilePathCallback);
+    globalEmitter.on(EventType.RefreshedNotes, refreshNotesCallback);
+    globalEmitter.on(EventType.DeletedNote, deleteNoteCallback);
+    globalEmitter.on(EventType.ChangedNoteFilePath, changeNoteFilePathCallback);
     return () => {
       globalEmitter.off(EventType.ModifiedMarkdown, modifiedMarkdownCallback);
-      globalEmitter.off(EventType.RefreshNotes, refreshNotesCallback);
-      globalEmitter.off(EventType.DeleteNote, deleteNoteCallback);
+      globalEmitter.off(EventType.RefreshedNotes, refreshNotesCallback);
+      globalEmitter.off(EventType.DeletedNote, deleteNoteCallback);
       globalEmitter.off(
-        EventType.ChangeNoteFilePath,
+        EventType.ChangedNoteFilePath,
         changeNoteFilePathCallback,
       );
     };
