@@ -10,7 +10,6 @@ import { createStyles, makeStyles, Theme } from "@material-ui/core/styles";
 import clsx from "clsx";
 import { TabNode } from "flexlayout-react";
 import {
-  ContentDuplicate,
   Delete,
   Pin,
   PinOutline,
@@ -145,12 +144,14 @@ export default function NotePopover(props: Props) {
             </ListItemIcon>
             <ListItemText primary={t("general/Delete")}></ListItemText>
           </ListItem>
+          {/*
           <ListItem button>
             <ListItemIcon>
               <ContentDuplicate></ContentDuplicate>
             </ListItemIcon>
             <ListItemText primary={t("general/create-a-copy")}></ListItemText>
           </ListItem>
+          */}
           <ListItem button>
             <ListItemIcon>
               <Restore></Restore>
