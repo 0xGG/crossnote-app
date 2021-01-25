@@ -35,6 +35,7 @@ import { SettingsContainer } from "../containers/settings";
 import { initMathPreview } from "../editor/views/math-preview";
 import { EditorMode } from "../lib/editorMode";
 import {
+  ChangeNoteFilePathEventData,
   DeleteNoteEventData,
   EventType,
   globalEmitter,
@@ -242,6 +243,7 @@ export default function NotePanel(props: Props) {
 
     crossnoteContainer
       .changeNoteFilePath(
+        tabNode,
         note,
         path.join(path.dirname(note.filePath), `${finalNoteTitle}.md`),
       )
@@ -320,11 +322,31 @@ export default function NotePanel(props: Props) {
       }
     };
 
+    const changeNoteFilePathCallback = async (
+      data: ChangeNoteFilePathEventData,
+    ) => {
+      if (
+        data.notebookPath === note.notebookPath &&
+        data.oldNoteFilePath === note.filePath
+      ) {
+        const newNote = await crossnoteContainer.getNote(
+          data.notebookPath,
+          data.newNoteFilePath,
+        );
+        setNote(newNote);
+      }
+    };
+
     globalEmitter.on(EventType.ModifiedMarkdown, modifiedMarkdownCallback);
     globalEmitter.on(EventType.DeleteNote, deleteNoteCallback);
+    globalEmitter.on(EventType.ChangeNoteFilePath, changeNoteFilePathCallback);
     return () => {
       globalEmitter.off(EventType.ModifiedMarkdown, modifiedMarkdownCallback);
       globalEmitter.off(EventType.DeleteNote, deleteNoteCallback);
+      globalEmitter.off(
+        EventType.ChangeNoteFilePath,
+        changeNoteFilePathCallback,
+      );
     };
   }, [tabNode, editor, note]);
 

@@ -1,18 +1,18 @@
-import React, { useEffect, FC } from "react";
-import "./App.css";
 import { ThemeProvider } from "@material-ui/styles";
 import * as qs from "qs";
-import { Router, Route, Switch } from "react-router-dom";
-import { browserHistory } from "./utilities/history";
-import { Home } from "./pages/Home";
-import { GitHubOAuthCallback } from "./components/GitHubOAuthCallback";
-import "./editor";
-import { HomeSection } from "./containers/crossnote";
-import { SettingsContainer } from "./containers/settings";
-import ServiceWorkerWrapper from "./components/ServiceWorkerWrapper";
+import React, { FC, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 // @ts-ignore
 import PWAPrompt from "react-ios-pwa-prompt";
-import { useTranslation } from "react-i18next";
+import { Route, Router, Switch } from "react-router-dom";
+import "./App.css";
+import { GitHubOAuthCallback } from "./components/GitHubOAuthCallback";
+import ServiceWorkerWrapper from "./components/ServiceWorkerWrapper";
+import { HomeSection } from "./containers/crossnote";
+import { SettingsContainer } from "./containers/settings";
+import "./editor";
+import { Home } from "./pages/Home";
+import { browserHistory } from "./utilities/history";
 const is = require("is_js");
 
 const App: FC = () => {

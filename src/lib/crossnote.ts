@@ -1,12 +1,12 @@
+// @ts-ignore
+import diff3Merge from "diff3";
 import * as git from "isomorphic-git";
 import http from "isomorphic-git/http/web";
 import * as path from "path";
 import PouchDB from "pouchdb";
 import PouchdbFind from "pouchdb-find";
-// @ts-ignore
-import diff3Merge from "diff3";
 import { randomID } from "../utilities/utils";
-import { pfs, fs } from "./fs";
+import { fs, pfs } from "./fs";
 import { Notebook } from "./notebook";
 
 /*
@@ -862,10 +862,10 @@ export default class Crossnote {
     return gitURL.slice(i + 1).replace(/\.git/, "");
   }
 
-  public async getStatus(notebook: Notebook, filePath: string) {
+  public async getStatus(notebookPath: string, filePath: string) {
     return await git.status({
       fs: fs,
-      dir: notebook.dir,
+      dir: notebookPath,
       filepath: filePath,
     });
   }

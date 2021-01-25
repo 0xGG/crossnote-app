@@ -25,6 +25,7 @@ import React, { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { CrossnoteContainer } from "../containers/crossnote";
 import { Note } from "../lib/notebook";
+import ChangeFilePathDialog from "./ChangeFilePathDialog";
 import { DeleteNoteDialog } from "./DeleteNoteDialog";
 
 const useStyles = makeStyles((theme: Theme) =>
@@ -48,6 +49,10 @@ export default function NotePopover(props: Props) {
   const [deleteNoteDialogOpen, setDeleteNoteDialogOpen] = useState<boolean>(
     false,
   );
+  const [
+    changeNoteFilePathDialogOpen,
+    setChangeNoteFilePathDialogOpen,
+  ] = useState<boolean>(false);
   const { t } = useTranslation();
   const crossnoteContainer = CrossnoteContainer.useContainer();
 
@@ -114,7 +119,13 @@ export default function NotePopover(props: Props) {
           </ListItem>
           <ListItem></ListItem>
           <Divider></Divider>
-          <ListItem button>
+          <ListItem
+            button
+            onClick={() => {
+              setChangeNoteFilePathDialogOpen(true);
+              props.onClose();
+            }}
+          >
             <ListItemIcon>
               <RenameBox></RenameBox>
             </ListItemIcon>
@@ -171,6 +182,14 @@ export default function NotePopover(props: Props) {
         tabNode={props.tabNode}
         note={note}
       ></DeleteNoteDialog>
+      <ChangeFilePathDialog
+        open={changeNoteFilePathDialogOpen}
+        onClose={() => {
+          setChangeNoteFilePathDialogOpen(false);
+        }}
+        tabNode={props.tabNode}
+        note={note}
+      ></ChangeFilePathDialog>
     </React.Fragment>
   );
 }
