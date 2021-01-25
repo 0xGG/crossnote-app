@@ -6,6 +6,7 @@ import {
   DialogTitle,
   TextField,
 } from "@material-ui/core";
+import { TabNode } from "flexlayout-react";
 import React, { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { CrossnoteContainer } from "../containers/crossnote";
@@ -14,13 +15,14 @@ import { Note } from "../lib/notebook";
 interface Props {
   open: boolean;
   onClose: () => void;
-  onDidChangeFilePath: (filePath: string) => void;
+  tabNode: TabNode;
   note: Note;
 }
 
 export default function ChangeFilePathDialog(props: Props) {
   const crossnoteContainer = CrossnoteContainer.useContainer();
   const note = props.note;
+  const tabNode = props.tabNode;
   const [inputEl, setInputEl] = useState<HTMLInputElement>(null);
   const [newFilePath, setNewFilePath] = useState<string>(
     (note && note.filePath) || "",
@@ -37,8 +39,11 @@ export default function ChangeFilePathDialog(props: Props) {
         }
         if (note.filePath !== newFilePath) {
           try {
-            await crossnoteContainer.changeNoteFilePath(note, newFilePath);
-            props.onDidChangeFilePath(newFilePath);
+            await crossnoteContainer.changeNoteFilePath(
+              tabNode,
+              note,
+              newFilePath,
+            );
           } catch (error) {
             new Noty({
               type: "error",
@@ -52,7 +57,7 @@ export default function ChangeFilePathDialog(props: Props) {
         props.onClose();
       })();
     },
-    [note, props, t],
+    [note, tabNode, props, t],
   );
 
   useEffect(() => {

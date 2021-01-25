@@ -4,6 +4,7 @@ export enum EventType {
   ModifiedMarkdown = "ModifiedMarkdown",
   RefreshNotes = "RefreshNotes",
   DeleteNote = "DeleteNote",
+  ChangeNoteFilePath = "ChangeNoteFilePath",
 }
 
 export interface ModifiedMarkdownEventData {
@@ -23,10 +24,18 @@ export interface DeleteNoteEventData {
   noteFilePath: string;
 }
 
+export interface ChangeNoteFilePathEventData {
+  tabId: string;
+  notebookPath: string;
+  oldNoteFilePath: string;
+  newNoteFilePath: string;
+}
+
 export type EventData =
   | ModifiedMarkdownEventData
   | RefreshNotesEventData
-  | DeleteNoteEventData;
+  | DeleteNoteEventData
+  | ChangeNoteFilePathEventData;
 
 export type EventCallback = (data: any) => void;
 

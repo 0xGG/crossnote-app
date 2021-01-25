@@ -32,6 +32,7 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { CrossnoteContainer } from "../containers/crossnote";
 import {
+  ChangeNoteFilePathEventData,
   DeleteNoteEventData,
   EventType,
   globalEmitter,
@@ -236,14 +237,25 @@ export default function NotesPanel(props: Props) {
         refreshRawNotes();
       }
     };
+    const changeNoteFilePathCallback = (data: ChangeNoteFilePathEventData) => {
+      if (props.notebook.dir === data.notebookPath) {
+        refreshRawNotes();
+      }
+    };
+
     // TODO: Delay the modifiedMarkdownCallback
     globalEmitter.on(EventType.ModifiedMarkdown, modifiedMarkdownCallback);
     globalEmitter.on(EventType.RefreshNotes, refreshNotesCallback);
     globalEmitter.on(EventType.DeleteNote, deleteNoteCallback);
+    globalEmitter.on(EventType.ChangeNoteFilePath, changeNoteFilePathCallback);
     return () => {
       globalEmitter.off(EventType.ModifiedMarkdown, modifiedMarkdownCallback);
       globalEmitter.off(EventType.RefreshNotes, refreshNotesCallback);
       globalEmitter.off(EventType.DeleteNote, deleteNoteCallback);
+      globalEmitter.off(
+        EventType.ChangeNoteFilePath,
+        changeNoteFilePathCallback,
+      );
     };
   }, [refreshRawNotes, rawNotes, props.notebook]);
 

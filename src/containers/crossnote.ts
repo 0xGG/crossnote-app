@@ -262,10 +262,21 @@ function useCrossnoteContainer(initialState: InitialState) {
   );
 
   const changeNoteFilePath = useCallback(
-    async (note: Note, newFilePath: string) => {
+    async (tabNode: TabNode, note: Note, newFilePath: string) => {
       const notebook = notebooks.find((x) => x.dir === note.notebookPath);
       if (notebook) {
-        return await notebook.changeNoteFilePath(note.filePath, newFilePath);
+        const oldNoteFilePath = note.filePath;
+        const newNote = await notebook.changeNoteFilePath(
+          oldNoteFilePath,
+          newFilePath,
+        );
+        globalEmitter.emit(EventType.ChangeNoteFilePath, {
+          tabId: tabNode.getId(),
+          notebookPath: note.notebookPath,
+          oldNoteFilePath: oldNoteFilePath,
+          newNoteFilePath: newFilePath,
+        });
+        return newNote;
       } else {
         throw new Error("Notebook " + note.notebookPath + " not found");
       }
@@ -619,15 +630,14 @@ function useCrossnoteContainer(initialState: InitialState) {
   );
 
   const getNote = useCallback(
-    async (notebook: Notebook, filePath: string) => {
-      /*
-      if (!crossnote) {
+    async (notebookPath: string, filePath: string) => {
+      const notebook = getNotebookAtPath(notebookPath);
+      if (!notebook) {
         return;
       }
-      return await crossnote.getNote(notebook, filePath);
-      */
+      return await notebook.getNote(filePath);
     },
-    [crossnote],
+    [getNotebookAtPath],
   );
 
   const togglePin = useCallback(

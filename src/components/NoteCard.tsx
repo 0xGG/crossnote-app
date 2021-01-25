@@ -158,10 +158,9 @@ export default function NoteCard(props: Props) {
       .catch((error) => {});
   }, [note.markdown, note, crossnoteContainer.crossnote, t]);
 
-  /*
   useEffect(() => {
     crossnoteContainer.crossnote
-      .getStatus(note.notebook, note.filePath)
+      .getStatus(note.notebookPath, note.filePath)
       .then((status) => {
         setGitStatus(status);
       });
@@ -170,7 +169,7 @@ export default function NoteCard(props: Props) {
     note.config.modifiedAt,
     note,
     crossnoteContainer.crossnote,
-  ]);*/
+  ]);
 
   return (
     <React.Fragment>
@@ -284,7 +283,7 @@ export default function NoteCard(props: Props) {
             </Box>
           )}
           <Typography variant={"caption"} className={clsx(classes.filePath)}>
-            {t(`git/status/${gitStatus}`)}
+            {note.filePath + " - " + t(`git/status/${gitStatus}`)}
           </Typography>
         </Box>
       </Card>

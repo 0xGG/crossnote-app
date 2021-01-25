@@ -1,13 +1,10 @@
-import { md } from "vickymd/preview";
+import * as git from "isomorphic-git";
 import Token from "markdown-it/lib/token";
 import * as path from "path";
-import { pfs, fs } from "./fs";
-import * as git from "isomorphic-git";
-// import { isBinarySync } from "istextorbinary";
-import AES from "crypto-js/aes";
-import { getHeaderFromMarkdown } from "../utilities/note";
+import { md } from "vickymd/preview";
 // import { isFileAnImage } from "../utilities/image";
 import { matter, matterStringify } from "../utilities/markdown";
+import { fs, pfs } from "./fs";
 
 export type FilePath = string;
 
