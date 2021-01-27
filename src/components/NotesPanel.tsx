@@ -32,12 +32,13 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { CrossnoteContainer } from "../containers/crossnote";
 import {
-  ChangeNoteFilePathEventData,
-  DeleteNoteEventData,
+  ChangedNoteFilePathEventData,
+  DeletedNoteEventData,
   EventType,
   globalEmitter,
   ModifiedMarkdownEventData,
-  RefreshNotesEventData,
+  PerformedGitOperationEventData,
+  RefreshedNotesEventData,
 } from "../lib/event";
 import { Note, Notebook } from "../lib/notebook";
 import { OrderBy, OrderDirection } from "../lib/order";
@@ -227,17 +228,26 @@ export default function NotesPanel(props: Props) {
       }
       refreshRawNotes();
     };
-    const refreshNotesCallback = (data: RefreshNotesEventData) => {
+    const refreshedNotesCallback = (data: RefreshedNotesEventData) => {
       if (props.notebook.dir === data.notebookPath) {
         refreshRawNotes();
       }
     };
-    const deleteNoteCallback = (data: DeleteNoteEventData) => {
+    const deletedNoteCallback = (data: DeletedNoteEventData) => {
       if (props.notebook.dir === data.notebookPath) {
         refreshRawNotes();
       }
     };
-    const changeNoteFilePathCallback = (data: ChangeNoteFilePathEventData) => {
+    const changedNoteFilePathCallback = (
+      data: ChangedNoteFilePathEventData,
+    ) => {
+      if (props.notebook.dir === data.notebookPath) {
+        refreshRawNotes();
+      }
+    };
+    const performedGitOperationCallback = (
+      data: PerformedGitOperationEventData,
+    ) => {
       if (props.notebook.dir === data.notebookPath) {
         refreshRawNotes();
       }
@@ -245,16 +255,27 @@ export default function NotesPanel(props: Props) {
 
     // TODO: Delay the modifiedMarkdownCallback
     globalEmitter.on(EventType.ModifiedMarkdown, modifiedMarkdownCallback);
-    globalEmitter.on(EventType.RefreshedNotes, refreshNotesCallback);
-    globalEmitter.on(EventType.DeletedNote, deleteNoteCallback);
-    globalEmitter.on(EventType.ChangedNoteFilePath, changeNoteFilePathCallback);
+    globalEmitter.on(EventType.RefreshedNotes, refreshedNotesCallback);
+    globalEmitter.on(EventType.DeletedNote, deletedNoteCallback);
+    globalEmitter.on(
+      EventType.ChangedNoteFilePath,
+      changedNoteFilePathCallback,
+    );
+    globalEmitter.on(
+      EventType.PerformedGitOperation,
+      performedGitOperationCallback,
+    );
     return () => {
       globalEmitter.off(EventType.ModifiedMarkdown, modifiedMarkdownCallback);
-      globalEmitter.off(EventType.RefreshedNotes, refreshNotesCallback);
-      globalEmitter.off(EventType.DeletedNote, deleteNoteCallback);
+      globalEmitter.off(EventType.RefreshedNotes, refreshedNotesCallback);
+      globalEmitter.off(EventType.DeletedNote, deletedNoteCallback);
       globalEmitter.off(
         EventType.ChangedNoteFilePath,
-        changeNoteFilePathCallback,
+        changedNoteFilePathCallback,
+      );
+      globalEmitter.off(
+        EventType.PerformedGitOperation,
+        performedGitOperationCallback,
       );
     };
   }, [refreshRawNotes, rawNotes, props.notebook]);

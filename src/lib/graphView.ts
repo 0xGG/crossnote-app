@@ -1,5 +1,5 @@
-import { Notebook, Note } from "./notebook";
-
+import hash from "object-hash";
+import { Notebook } from "./notebook";
 export interface GraphViewNode {
   id: string;
   label: string;
@@ -11,6 +11,7 @@ export interface GraphViewLink {
 }
 
 export interface GraphViewData {
+  hash: string;
   nodes: GraphViewNode[];
   links: GraphViewLink[];
 }
@@ -35,6 +36,7 @@ export function constructGraphView(notebook: Notebook): GraphViewData {
     }
   }
   return {
+    hash: hash({ nodes, links }),
     nodes,
     links,
   };

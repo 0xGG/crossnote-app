@@ -197,6 +197,7 @@ function useCrossnoteContainer(initialState: InitialState) {
         globalEmitter.emit(EventType.ModifiedMarkdown, {
           tabId: tabNode.getId(),
           markdown: newNote.markdown,
+          notebookPath: note.notebookPath,
           noteFilePath: note.filePath,
           noteConfig: newNote.config,
         });
@@ -232,6 +233,7 @@ function useCrossnoteContainer(initialState: InitialState) {
         globalEmitter.emit(EventType.ModifiedMarkdown, {
           tabId: tabNode.getId(),
           markdown: newNote.markdown,
+          notebookPath: note.notebookPath,
           noteFilePath: note.filePath,
           noteConfig: newNote.config,
         });
@@ -396,7 +398,7 @@ function useCrossnoteContainer(initialState: InitialState) {
           )
         ) {
           setIsAddingNotebook(false);
-          throw new Error("error/notebook-already-exists");
+          throw new Error(t("error/notebook-already-exists"));
         }
         const notebook = await crossnote.addNotebook({
           name,
@@ -414,7 +416,7 @@ function useCrossnoteContainer(initialState: InitialState) {
         throw error;
       }
     },
-    [crossnote, notebooks],
+    [crossnote, notebooks, t],
   );
 
   const updateNotebook = useCallback(
@@ -453,82 +455,49 @@ function useCrossnoteContainer(initialState: InitialState) {
 
   const hardResetNotebook = useCallback(
     async (notebook: Notebook) => {
-      /*
       if (!crossnote) {
         return;
       }
       try {
         await crossnote.hardResetNotebook(notebook, notebook.localSha);
-
-        // TODO: Refactor
         setIsLoadingNotebook(true);
-        const notes = await crossnote.listNotes({
-          notebook: notebook,
-          dir: "./",
-          includeSubdirectories: true,
+        await notebook.refreshNotes({ dir: "./", includeSubdirectories: true });
+        globalEmitter.emit(EventType.PerformedGitOperation, {
+          notebookPath: notebook.dir,
         });
-        setSelectedNote(null);
-        setNotebookNotes(notes);
-        setNotebookDirectories(
-          await crossnote.getNotebookDirectoriesFromNotes(notes),
-        );
-        setHasSummaryMD(await crossnote.hasSummaryMD(notebook));
-        setNotebookTagNode(crossnote.getNotebookTagNodeFromNotes(notes));
         setIsLoadingNotebook(false);
       } catch (error) {}
-      */
     },
     [crossnote],
   );
 
   const pushNotebook = useCallback(
     async (args: PushNotebookArgs) => {
-      /*
       if (!crossnote) {
         return;
       }
       setIsPushingNotebook(true);
       try {
         await crossnote.pushNotebook(args);
-        setIsPushingNotebook(false);
-        // TODO: Refactor. The code below is the same as pullNotebook
-        const notes = await crossnote.listNotes({
-          notebook: args.notebook,
+        await args.notebook.refreshNotes({
           dir: "./",
           includeSubdirectories: true,
         });
-        setNotebookNotes(notes);
-        setNotebookDirectories(
-          await crossnote.getNotebookDirectoriesFromNotes(notes),
-        );
-        setHasSummaryMD(await crossnote.hasSummaryMD(args.notebook));
-        setNotebookTagNode(crossnote.getNotebookTagNodeFromNotes(notes));
-
-        if (selectedNote) {
-          const newNote = notes.find(
-            (n) => n.filePath === selectedNote.filePath,
-          );
-          if (!newNote) {
-            setSelectedNote(notes[0]); // TODO: pull might remove currently selectedNote
-          } else {
-            setSelectedNote(newNote);
-          }
-        } else {
-          setSelectedNote(notes[0]);
-        }
+        globalEmitter.emit(EventType.PerformedGitOperation, {
+          notebookPath: args.notebook.dir,
+        });
+        setIsPushingNotebook(false);
         setNeedsToRefreshNotes(true);
       } catch (error) {
         setIsPushingNotebook(false);
         throw error;
       }
-      */
     },
     [crossnote],
   );
 
   const pullNotebook = useCallback(
     async (args: PullNotebookArgs) => {
-      /*
       if (!crossnote) {
         return;
       }
@@ -536,92 +505,36 @@ function useCrossnoteContainer(initialState: InitialState) {
       try {
         // NOTE: Code here might have bug
         await crossnote.pullNotebook(args);
-        setIsPullingNotebook(false);
-        const notes = await crossnote.listNotes({
-          notebook: args.notebook,
+        await args.notebook.refreshNotes({
           dir: "./",
           includeSubdirectories: true,
         });
-        setNotebookNotes(notes);
-        setNotebookDirectories(
-          await crossnote.getNotebookDirectoriesFromNotes(notes),
-        );
-        setHasSummaryMD(await crossnote.hasSummaryMD(args.notebook));
-        setNotebookTagNode(crossnote.getNotebookTagNodeFromNotes(notes));
-
-        if (selectedNote) {
-          const newNote = notes.find(
-            (n) => n.filePath === selectedNote.filePath,
-          );
-          if (!newNote) {
-            setSelectedNote(notes[0]); // TODO: pull might remove currently selectedNote
-          } else {
-            setSelectedNote(newNote);
-          }
-        } else {
-          setSelectedNote(notes[0]);
-        }
+        globalEmitter.emit(EventType.PerformedGitOperation, {
+          notebookPath: args.notebook.dir,
+        });
+        setIsPullingNotebook(false);
         setNeedsToRefreshNotes(true);
       } catch (error) {
         setIsPullingNotebook(false);
         throw error;
       }
-      */
     },
     [crossnote],
   );
 
   const checkoutNote = useCallback(
     async (note: Note) => {
-      /*
-      if (!crossnote) {
+      const notebook = getNotebookAtPath(note.notebookPath);
+      if (!notebook) {
         return;
       }
-      const newNote = await crossnote.checkoutNote(note);
-      if (newNote) {
-        setNotebookNotes((notes) =>
-          notes.map((n) => {
-            if (n.filePath === newNote.filePath) {
-              return newNote;
-            } else {
-              return n;
-            }
-          }),
-        );
-        setNotes((notes) =>
-          notes.map((n) => {
-            if (n.filePath === newNote.filePath) {
-              return newNote;
-            } else {
-              return n;
-            }
-          }),
-        );
-        setSelectedNote(newNote);
-      } else {
-        // The note is deleted after checkout
-        setNotebookNotes((notes) => {
-          const newNotes = notes.filter((n) => n.filePath !== note.filePath);
-          crossnote
-            .getNotebookDirectoriesFromNotes(newNotes)
-            .then((directories) => {
-              setNotebookDirectories(directories);
-            });
-          crossnote
-            .hasSummaryMD(selectedNotebook)
-            .then((exists) => setHasSummaryMD(exists));
-          setNotebookTagNode(crossnote.getNotebookTagNodeFromNotes(newNotes));
-          return newNotes;
-        });
-        setNotes((notes) => {
-          const newNotes = notes.filter((n) => n.filePath !== note.filePath);
-          setSelectedNote(newNotes[0]);
-          return newNotes;
-        });
-      }
-      */
+      const newNote = await notebook.checkoutNote(note);
+      globalEmitter.emit(EventType.PerformedGitOperation, {
+        notebookPath: note.notebookPath,
+      });
+      return newNote;
     },
-    [crossnote],
+    [getNotebookAtPath],
   );
 
   const getNote = useCallback(

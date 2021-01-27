@@ -152,7 +152,13 @@ export default function NotePopover(props: Props) {
             <ListItemText primary={t("general/create-a-copy")}></ListItemText>
           </ListItem>
           */}
-          <ListItem button>
+          <ListItem
+            button
+            onClick={() => {
+              crossnoteContainer.checkoutNote(note);
+              props.onClose();
+            }}
+          >
             <ListItemIcon>
               <Restore></Restore>
             </ListItemIcon>

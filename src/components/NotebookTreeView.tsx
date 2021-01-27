@@ -8,15 +8,17 @@ import {
 import { TreeItem, TreeView } from "@material-ui/lab";
 import clsx from "clsx";
 import { ChevronDown, ChevronRight } from "mdi-material-ui";
+import Noty from "noty";
 import React, { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { CrossnoteContainer, HomeSection } from "../containers/crossnote";
 import {
-  ChangeNoteFilePathEventData,
-  DeleteNoteEventData,
+  ChangedNoteFilePathEventData,
+  DeletedNoteEventData,
   EventType,
   globalEmitter,
   ModifiedMarkdownEventData,
+  PerformedGitOperationEventData,
 } from "../lib/event";
 import { Note, Notebook, Notes } from "../lib/notebook";
 import ConfigureNotebookDialog from "./ConfigureNotebookDialog";
@@ -131,13 +133,20 @@ export default function NotebookTreeView(props: Props) {
         }
         refreshQuickAccessNotes(props.notebook.notes);
       };
-      const deleteNoteCallback = (data: DeleteNoteEventData) => {
+      const deletedNoteCallback = (data: DeletedNoteEventData) => {
         if (props.notebook.dir === data.notebookPath) {
           refreshQuickAccessNotes(props.notebook.notes);
         }
       };
-      const changeNoteFilePathCallback = (
-        data: ChangeNoteFilePathEventData,
+      const changedNoteFilePathCallback = (
+        data: ChangedNoteFilePathEventData,
+      ) => {
+        if (props.notebook.dir === data.notebookPath) {
+          refreshQuickAccessNotes(props.notebook.notes);
+        }
+      };
+      const performedGitOperationCallback = (
+        data: PerformedGitOperationEventData,
       ) => {
         if (props.notebook.dir === data.notebookPath) {
           refreshQuickAccessNotes(props.notebook.notes);
@@ -145,17 +154,25 @@ export default function NotebookTreeView(props: Props) {
       };
 
       globalEmitter.on(EventType.ModifiedMarkdown, modifiedMarkdownCallback);
-      globalEmitter.on(EventType.DeletedNote, deleteNoteCallback);
+      globalEmitter.on(EventType.DeletedNote, deletedNoteCallback);
       globalEmitter.on(
         EventType.ChangedNoteFilePath,
-        changeNoteFilePathCallback,
+        changedNoteFilePathCallback,
+      );
+      globalEmitter.on(
+        EventType.PerformedGitOperation,
+        performedGitOperationCallback,
       );
       return () => {
         globalEmitter.off(EventType.ModifiedMarkdown, modifiedMarkdownCallback);
-        globalEmitter.off(EventType.DeletedNote, deleteNoteCallback);
+        globalEmitter.off(EventType.DeletedNote, deletedNoteCallback);
         globalEmitter.off(
           EventType.ChangedNoteFilePath,
-          changeNoteFilePathCallback,
+          changedNoteFilePathCallback,
+        );
+        globalEmitter.off(
+          EventType.PerformedGitOperation,
+          performedGitOperationCallback,
         );
       };
     }
@@ -442,7 +459,7 @@ export default function NotebookTreeView(props: Props) {
               }}
               label={
                 <Box
-                  onClick={() => setNotebookConfigurationDialogOpen(true)}
+                  onClick={() => setPushNotebookDialogOpen(true)}
                   className={clsx(classes.treeItemLabelRoot)}
                 >
                   <span role="img" aria-label={t("general/Upload")}>
@@ -469,7 +486,40 @@ export default function NotebookTreeView(props: Props) {
               }}
               label={
                 <Box
-                  onClick={() => setPushNotebookDialogOpen(true)}
+                  onClick={() => {
+                    crossnoteContainer
+                      .pullNotebook({
+                        notebook: props.notebook,
+                        onAuthFailure: () => {
+                          new Noty({
+                            type: "error",
+                            text: t("error/authentication-failed"),
+                            layout: "topRight",
+                            theme: "relax",
+                            timeout: 5000,
+                          }).show();
+                        },
+                      })
+                      .then(() => {
+                        new Noty({
+                          type: "success",
+                          text: t("success/notebook-downloaded"),
+                          layout: "topRight",
+                          theme: "relax",
+                          timeout: 2000,
+                        }).show();
+                      })
+                      .catch((error) => {
+                        console.log(error);
+                        new Noty({
+                          type: "error",
+                          text: t("error/failed-to-download-notebook"),
+                          layout: "topRight",
+                          theme: "relax",
+                          timeout: 2000,
+                        }).show();
+                      });
+                  }}
                   className={clsx(classes.treeItemLabelRoot)}
                 >
                   <span role="img" aria-label={t("general/Download")}>

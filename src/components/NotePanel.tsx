@@ -35,11 +35,12 @@ import { SettingsContainer } from "../containers/settings";
 import { initMathPreview } from "../editor/views/math-preview";
 import { EditorMode } from "../lib/editorMode";
 import {
-  ChangeNoteFilePathEventData,
-  DeleteNoteEventData,
+  ChangedNoteFilePathEventData,
+  DeletedNoteEventData,
   EventType,
   globalEmitter,
   ModifiedMarkdownEventData,
+  PerformedGitOperationEventData,
 } from "../lib/event";
 import { Note } from "../lib/notebook";
 import { resolveNoteImageSrc } from "../utilities/image";
@@ -313,7 +314,7 @@ export default function NotePanel(props: Props) {
       }
     };
 
-    const deleteNoteCallback = (data: DeleteNoteEventData) => {
+    const deletedNoteCallback = (data: DeletedNoteEventData) => {
       if (
         data.notebookPath === note.notebookPath &&
         data.noteFilePath === note.filePath
@@ -322,8 +323,8 @@ export default function NotePanel(props: Props) {
       }
     };
 
-    const changeNoteFilePathCallback = async (
-      data: ChangeNoteFilePathEventData,
+    const changedNoteFilePathCallback = async (
+      data: ChangedNoteFilePathEventData,
     ) => {
       if (
         data.notebookPath === note.notebookPath &&
@@ -337,15 +338,45 @@ export default function NotePanel(props: Props) {
       }
     };
 
+    const performedGitOperationCallback = async (
+      data: PerformedGitOperationEventData,
+    ) => {
+      if (data.notebookPath === note.notebookPath) {
+        const newNote = await crossnoteContainer.getNote(
+          data.notebookPath,
+          note.filePath,
+        );
+        if (newNote) {
+          setNote(newNote);
+          if (editor.getValue() !== newNote.markdown) {
+            editor.setValue(newNote.markdown);
+          }
+        } else {
+          crossnoteContainer.closeTabNode(tabNode.getId());
+        }
+      }
+    };
+
     globalEmitter.on(EventType.ModifiedMarkdown, modifiedMarkdownCallback);
-    globalEmitter.on(EventType.DeletedNote, deleteNoteCallback);
-    globalEmitter.on(EventType.ChangedNoteFilePath, changeNoteFilePathCallback);
+    globalEmitter.on(EventType.DeletedNote, deletedNoteCallback);
+    globalEmitter.on(
+      EventType.ChangedNoteFilePath,
+      changedNoteFilePathCallback,
+    );
+    globalEmitter.on(
+      EventType.PerformedGitOperation,
+      performedGitOperationCallback,
+    );
     return () => {
       globalEmitter.off(EventType.ModifiedMarkdown, modifiedMarkdownCallback);
-      globalEmitter.off(EventType.DeletedNote, deleteNoteCallback);
+      globalEmitter.off(EventType.DeletedNote, deletedNoteCallback);
       globalEmitter.off(
         EventType.ChangedNoteFilePath,
-        changeNoteFilePathCallback,
+        changedNoteFilePathCallback,
+      );
+      globalEmitter.off(
+        EventType.PerformedGitOperation,
+        performedGitOperationCallback,
       );
     };
   }, [tabNode, editor, note]);
