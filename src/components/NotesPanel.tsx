@@ -249,6 +249,7 @@ export default function NotesPanel(props: Props) {
       data: PerformedGitOperationEventData,
     ) => {
       if (props.notebook.dir === data.notebookPath) {
+        console.log("refreshRawNotes");
         refreshRawNotes();
       }
     };

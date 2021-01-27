@@ -70,11 +70,15 @@ const useStyles = makeStyles((theme: Theme) =>
       paddingLeft: "12px",
       flexGrow: 1,
     },
+    disabled: {
+      color: theme.palette.text.disabled,
+    },
   }),
 );
 
 interface Props {
   notebook: Notebook;
+  onCloseDrawer: () => void;
 }
 export default function NotebookTreeView(props: Props) {
   const classes = useStyles();
@@ -271,6 +275,7 @@ export default function NotebookTreeView(props: Props) {
               <Box
                 onClick={() => {
                   crossnoteContainer.openTodayNote(props.notebook);
+                  props.onCloseDrawer();
                 }}
                 className={clsx(classes.treeItemLabelRoot)}
               >
@@ -305,6 +310,7 @@ export default function NotebookTreeView(props: Props) {
                       notebook: props.notebook,
                     },
                   });
+                  props.onCloseDrawer();
                 }}
                 className={clsx(classes.treeItemLabelRoot)}
               >
@@ -374,6 +380,7 @@ export default function NotebookTreeView(props: Props) {
                       notebook: props.notebook,
                     },
                   });
+                  props.onCloseDrawer();
                 }}
                 className={clsx(classes.treeItemLabelRoot)}
               >
@@ -410,6 +417,7 @@ export default function NotebookTreeView(props: Props) {
                         },
                         name: `📝 ` + note.title,
                       });
+                      props.onCloseDrawer();
                     }}
                     className={clsx(classes.treeItemLabelRoot)}
                   >
@@ -487,6 +495,12 @@ export default function NotebookTreeView(props: Props) {
               label={
                 <Box
                   onClick={() => {
+                    if (
+                      crossnoteContainer.isPullingNotebook ||
+                      crossnoteContainer.isPushingNotebook
+                    ) {
+                      return;
+                    }
                     crossnoteContainer
                       .pullNotebook({
                         notebook: props.notebook,
@@ -520,7 +534,13 @@ export default function NotebookTreeView(props: Props) {
                         }).show();
                       });
                   }}
-                  className={clsx(classes.treeItemLabelRoot)}
+                  className={clsx(
+                    classes.treeItemLabelRoot,
+                    crossnoteContainer.isPullingNotebook ||
+                      crossnoteContainer.isPushingNotebook
+                      ? classes.disabled
+                      : null,
+                  )}
                 >
                   <span role="img" aria-label={t("general/Download")}>
                     {"📥"}

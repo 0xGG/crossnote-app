@@ -529,6 +529,10 @@ function useCrossnoteContainer(initialState: InitialState) {
         return;
       }
       const newNote = await notebook.checkoutNote(note);
+      await notebook.refreshNotes({
+        dir: "./",
+        includeSubdirectories: true,
+      });
       globalEmitter.emit(EventType.PerformedGitOperation, {
         notebookPath: note.notebookPath,
       });

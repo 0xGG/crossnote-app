@@ -7,6 +7,7 @@ import {
   CssBaseline,
   Divider,
   Drawer,
+  Fab,
   Hidden,
   IconButton,
   List,
@@ -31,6 +32,7 @@ import { sha256 } from "js-sha256";
 import {
   Bell,
   Cog as SettingsIcon,
+  Menu,
   Notebook,
   PlusCircleOutline,
 } from "mdi-material-ui";
@@ -180,6 +182,12 @@ const useStyles = makeStyles((theme: Theme) =>
       },
     },
     toolBarSpace: theme.mixins.toolbar,
+    fab: {
+      position: "fixed",
+      bottom: theme.spacing(2),
+      right: theme.spacing(2),
+      zIndex: 999,
+    },
   }),
 );
 
@@ -205,7 +213,7 @@ export function Home(props: Props) {
   const [addNotebookRepo, setAddNotebookRepo] = useState<string>("");
   const [addNotebookBranch, setAddNotebookBranch] = useState<string>("");
 
-  const [drawerOpen, setDrawerOpen] = useState<boolean>(false);
+  const [drawerOpen, setDrawerOpen] = useState<boolean>(true);
   const { t } = useTranslation();
   const crossnoteContainer = CrossnoteContainer.useContainer();
   const cloudContainer = CloudContainer.useContainer();
@@ -316,7 +324,10 @@ export function Home(props: Props) {
                 style={{ padding: "0" }}
                 key={notebook._id}
               >
-                <NotebookTreeView notebook={notebook}></NotebookTreeView>
+                <NotebookTreeView
+                  notebook={notebook}
+                  onCloseDrawer={() => setDrawerOpen(false)}
+                ></NotebookTreeView>
               </ListItem>
             );
           })}
@@ -494,6 +505,16 @@ export function Home(props: Props) {
           >
             {drawer}
           </Drawer>
+        </Hidden>
+        <Hidden smUp implementation="css">
+          <Fab
+            color="primary"
+            size="small"
+            onClick={toggleDrawer}
+            className={clsx(classes.fab)}
+          >
+            <Menu></Menu>
+          </Fab>
         </Hidden>
       </nav>
       {/* <Box className={clsx(classes.mainPanel)} id="main-panel"> */}
