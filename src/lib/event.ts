@@ -2,40 +2,47 @@ import { NoteConfig } from "./notebook";
 
 export enum EventType {
   ModifiedMarkdown = "ModifiedMarkdown",
-  RefreshNotes = "RefreshNotes",
-  DeleteNote = "DeleteNote",
-  ChangeNoteFilePath = "ChangeNoteFilePath",
+  RefreshedNotes = "RefreshedNotes",
+  DeletedNote = "DeletedNote",
+  ChangedNoteFilePath = "ChangedNoteFilePath",
+  PerformedGitOperation = "PerformedGitOperation",
 }
 
 export interface ModifiedMarkdownEventData {
   tabId: string;
+  notebookPath: string;
   noteFilePath: string;
   markdown: string;
   noteConfig: NoteConfig;
 }
 
-export interface RefreshNotesEventData {
+export interface RefreshedNotesEventData {
   notebookPath: string;
 }
 
-export interface DeleteNoteEventData {
+export interface DeletedNoteEventData {
   tabId: string;
   notebookPath: string;
   noteFilePath: string;
 }
 
-export interface ChangeNoteFilePathEventData {
+export interface ChangedNoteFilePathEventData {
   tabId: string;
   notebookPath: string;
   oldNoteFilePath: string;
   newNoteFilePath: string;
 }
 
+export interface PerformedGitOperationEventData {
+  notebookPath: string;
+}
+
 export type EventData =
   | ModifiedMarkdownEventData
-  | RefreshNotesEventData
-  | DeleteNoteEventData
-  | ChangeNoteFilePathEventData;
+  | RefreshedNotesEventData
+  | DeletedNoteEventData
+  | ChangedNoteFilePathEventData
+  | PerformedGitOperationEventData;
 
 export type EventCallback = (data: any) => void;
 
@@ -64,7 +71,6 @@ export class Emitter {
   public emit(eventName: EventType, data: EventData) {
     const eventCallbacks = this.subscriptions[eventName].slice() || [];
     eventCallbacks.forEach((callback, offset) => {
-      console.log("emit callback: ", offset);
       callback(data);
     });
   }

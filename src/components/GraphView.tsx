@@ -4,6 +4,15 @@ import * as d3 from "d3";
 import React, { useEffect, useRef, useState } from "react";
 import { CrossnoteContainer } from "../containers/crossnote";
 import {
+  ChangedNoteFilePathEventData,
+  DeletedNoteEventData,
+  EventType,
+  globalEmitter,
+  ModifiedMarkdownEventData,
+  PerformedGitOperationEventData,
+  RefreshedNotesEventData,
+} from "../lib/event";
+import {
   constructGraphView,
   GraphViewData,
   GraphViewNode,
@@ -26,6 +35,7 @@ interface Props {
 export default function GraphView(props: Props) {
   const classes = useStyles();
   const [graphViewData, setGraphViewData] = useState<GraphViewData>({
+    hash: "",
     nodes: [],
     links: [],
   });
@@ -39,8 +49,6 @@ export default function GraphView(props: Props) {
       return;
     }
     const resize = () => {
-      console.log("width: ", graphViewPanel.current.offsetWidth);
-      console.log("height: ", graphViewPanel.current.offsetHeight);
       setWidth(graphViewPanel.current.offsetWidth);
       setHeight(graphViewPanel.current.offsetHeight);
     };
@@ -50,6 +58,75 @@ export default function GraphView(props: Props) {
       window.removeEventListener("resize", resize);
     };
   }, [graphViewPanel]);
+
+  useEffect(() => {
+    if (!graphViewPanel || !props.notebook) {
+      return;
+    }
+
+    const refreshGraphViewData = () => {
+      // TODO: Improve the diff
+      const newGraphViewData = constructGraphView(props.notebook);
+      if (newGraphViewData.hash !== graphViewData.hash) {
+        setGraphViewData(newGraphViewData);
+      }
+    };
+
+    const modifiedMarkdownCallback = (data: ModifiedMarkdownEventData) => {
+      if (data.notebookPath === props.notebook.dir) {
+        refreshGraphViewData();
+      }
+    };
+    const refreshedNotesCallback = (data: RefreshedNotesEventData) => {
+      if (data.notebookPath === props.notebook.dir) {
+        refreshGraphViewData();
+      }
+    };
+    const deletedNoteCallback = (data: DeletedNoteEventData) => {
+      if (data.notebookPath === props.notebook.dir) {
+        refreshGraphViewData();
+      }
+    };
+    const changedNoteFilePathCallback = (
+      data: ChangedNoteFilePathEventData,
+    ) => {
+      if (data.notebookPath === props.notebook.dir) {
+        refreshGraphViewData();
+      }
+    };
+    const performedGitOperationCallback = (
+      data: PerformedGitOperationEventData,
+    ) => {
+      if (data.notebookPath === props.notebook.dir) {
+        refreshGraphViewData();
+      }
+    };
+
+    globalEmitter.on(EventType.ModifiedMarkdown, modifiedMarkdownCallback);
+    globalEmitter.on(EventType.RefreshedNotes, refreshedNotesCallback);
+    globalEmitter.on(EventType.DeletedNote, deletedNoteCallback);
+    globalEmitter.on(
+      EventType.ChangedNoteFilePath,
+      changedNoteFilePathCallback,
+    );
+    globalEmitter.on(
+      EventType.PerformedGitOperation,
+      performedGitOperationCallback,
+    );
+    return () => {
+      globalEmitter.off(EventType.ModifiedMarkdown, modifiedMarkdownCallback);
+      globalEmitter.off(EventType.RefreshedNotes, refreshedNotesCallback);
+      globalEmitter.off(EventType.DeletedNote, deletedNoteCallback);
+      globalEmitter.off(
+        EventType.ChangedNoteFilePath,
+        changedNoteFilePathCallback,
+      );
+      globalEmitter.off(
+        EventType.PerformedGitOperation,
+        performedGitOperationCallback,
+      );
+    };
+  }, [graphViewPanel, props.notebook, graphViewData]);
 
   useEffect(() => {
     const data = constructGraphView(props.notebook);
