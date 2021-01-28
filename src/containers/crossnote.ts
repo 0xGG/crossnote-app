@@ -194,7 +194,6 @@ function useCrossnoteContainer(initialState: InitialState) {
           markdown,
           note.config,
         );
-        console.log("emit ModifiedMarkdown");
         globalEmitter.emit(EventType.ModifiedMarkdown, {
           tabId: tabNode.getId(),
           markdown: newNote.markdown,
@@ -225,7 +224,6 @@ function useCrossnoteContainer(initialState: InitialState) {
       }
       const note = await notebook.getNote(filePath);
       if (JSON.stringify(note.config) !== JSON.stringify(noteConfig)) {
-        console.log("updateNoteConfig 2: ", noteConfig);
         const newNote = await notebook.writeNote(
           note.filePath,
           note.markdown,
@@ -250,6 +248,10 @@ function useCrossnoteContainer(initialState: InitialState) {
         return;
       }
       await notebook.deleteNote(noteFilePath);
+      await notebook.refreshNotes({
+        dir: "./",
+        includeSubdirectories: true,
+      });
       globalEmitter.emit(EventType.DeletedNote, {
         tabId: tabNode.getId(),
         notebookPath: notebookPath,
@@ -328,7 +330,16 @@ function useCrossnoteContainer(initialState: InitialState) {
         modifiedAt: new Date(),
         createdAt: new Date(),
       };
-      return await notebook.writeNote(filePath, markdown, noteConfig);
+      await notebook.writeNote(filePath, markdown, noteConfig);
+      await notebook.refreshNotes({
+        dir: "./",
+        includeSubdirectories: true,
+      });
+      const note = await notebook.getNote(filePath);
+      globalEmitter.emit(EventType.CreatedNote, {
+        notebookPath: notebook.dir,
+      });
+      return note;
     },
     [t],
   );
@@ -595,9 +606,7 @@ function useCrossnoteContainer(initialState: InitialState) {
     }
 
     (async () => {
-      console.log("start listNotebooks");
       const notebooks = await crossnote.listNotebooks();
-      console.log("end listNotebooks");
       let notebook: Notebook = null;
       if (notebooks.length) {
         setNotebooks(notebooks);
@@ -607,7 +616,6 @@ function useCrossnoteContainer(initialState: InitialState) {
           notebook = notebooks[0];
         }
         setInitialized(true);
-        console.log("selectedNotebook: ", notebook);
       } else {
         /*
         notebook = await crossnote.cloneNotebook({

@@ -1,10 +1,9 @@
-import { printPreview as VickyMDPrintPreview } from "vickymd/preview";
 import * as path from "path";
-import { resolveNoteImageSrc } from "./image";
-import { SelectedSection, SelectedSectionType } from "../containers/crossnote";
+import { printPreview as VickyMDPrintPreview } from "vickymd/preview";
 import { globalContainers } from "../containers/global";
-import { browserHistory } from "./history";
 import { Note } from "../lib/notebook";
+import { browserHistory } from "./history";
+import { resolveNoteImageSrc } from "./image";
 
 export function printPreview(
   previewElement: HTMLElement,
@@ -83,12 +82,12 @@ export function postprocessPreview(
         if (link.hasAttribute("data-topic")) {
           const tag = link.getAttribute("data-topic");
           if (tag.length) {
-            /*
-            globalContainers.crossnoteContainer.setSelectedSection({
-              type: SelectedSectionType.Tag,
-              path: tag,
-            });
-            */
+            globalContainers.crossnoteContainer.openNoteAtPath(
+              globalContainers.crossnoteContainer.getNotebookAtPath(
+                note.notebookPath,
+              ),
+              tag,
+            );
           }
         } else {
           openURL(link.getAttribute("href"), note);

@@ -175,9 +175,6 @@ export default function NotesPanel(props: Props) {
       .createNewNote(props.notebook, "", markdown)
       .then((note) => {
         crossnoteContainer.openNoteAtPath(props.notebook, note.filePath);
-        globalEmitter.emit(EventType.CreatedNote, {
-          notebookPath: props.notebook.dir,
-        });
         setIsCreatingNote(false);
       })
       .catch(() => {
