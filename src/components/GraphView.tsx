@@ -5,12 +5,12 @@ import React, { useEffect, useRef, useState } from "react";
 import { CrossnoteContainer } from "../containers/crossnote";
 import {
   ChangedNoteFilePathEventData,
+  CreatedNoteEventData,
   DeletedNoteEventData,
   EventType,
   globalEmitter,
   ModifiedMarkdownEventData,
   PerformedGitOperationEventData,
-  RefreshedNotesEventData,
 } from "../lib/event";
 import {
   constructGraphView,
@@ -77,7 +77,7 @@ export default function GraphView(props: Props) {
         refreshGraphViewData();
       }
     };
-    const refreshedNotesCallback = (data: RefreshedNotesEventData) => {
+    const createdNoteCallback = (data: CreatedNoteEventData) => {
       if (data.notebookPath === props.notebook.dir) {
         refreshGraphViewData();
       }
@@ -103,7 +103,7 @@ export default function GraphView(props: Props) {
     };
 
     globalEmitter.on(EventType.ModifiedMarkdown, modifiedMarkdownCallback);
-    globalEmitter.on(EventType.RefreshedNotes, refreshedNotesCallback);
+    globalEmitter.on(EventType.CreatedNote, createdNoteCallback);
     globalEmitter.on(EventType.DeletedNote, deletedNoteCallback);
     globalEmitter.on(
       EventType.ChangedNoteFilePath,
@@ -115,7 +115,7 @@ export default function GraphView(props: Props) {
     );
     return () => {
       globalEmitter.off(EventType.ModifiedMarkdown, modifiedMarkdownCallback);
-      globalEmitter.off(EventType.RefreshedNotes, refreshedNotesCallback);
+      globalEmitter.off(EventType.CreatedNote, createdNoteCallback);
       globalEmitter.off(EventType.DeletedNote, deletedNoteCallback);
       globalEmitter.off(
         EventType.ChangedNoteFilePath,

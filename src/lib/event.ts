@@ -2,7 +2,7 @@ import { NoteConfig } from "./notebook";
 
 export enum EventType {
   ModifiedMarkdown = "ModifiedMarkdown",
-  RefreshedNotes = "RefreshedNotes",
+  CreatedNote = "CreatedNote",
   DeletedNote = "DeletedNote",
   ChangedNoteFilePath = "ChangedNoteFilePath",
   PerformedGitOperation = "PerformedGitOperation",
@@ -16,7 +16,7 @@ export interface ModifiedMarkdownEventData {
   noteConfig: NoteConfig;
 }
 
-export interface RefreshedNotesEventData {
+export interface CreatedNoteEventData {
   notebookPath: string;
 }
 
@@ -39,7 +39,7 @@ export interface PerformedGitOperationEventData {
 
 export type EventData =
   | ModifiedMarkdownEventData
-  | RefreshedNotesEventData
+  | CreatedNoteEventData
   | DeletedNoteEventData
   | ChangedNoteFilePathEventData
   | PerformedGitOperationEventData;

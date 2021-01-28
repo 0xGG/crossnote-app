@@ -33,12 +33,12 @@ import { useTranslation } from "react-i18next";
 import { CrossnoteContainer } from "../containers/crossnote";
 import {
   ChangedNoteFilePathEventData,
+  CreatedNoteEventData,
   DeletedNoteEventData,
   EventType,
   globalEmitter,
   ModifiedMarkdownEventData,
   PerformedGitOperationEventData,
-  RefreshedNotesEventData,
 } from "../lib/event";
 import { Note, Notebook } from "../lib/notebook";
 import { OrderBy, OrderDirection } from "../lib/order";
@@ -175,7 +175,7 @@ export default function NotesPanel(props: Props) {
       .createNewNote(props.notebook, "", markdown)
       .then((note) => {
         crossnoteContainer.openNoteAtPath(props.notebook, note.filePath);
-        globalEmitter.emit(EventType.RefreshedNotes, {
+        globalEmitter.emit(EventType.CreatedNote, {
           notebookPath: props.notebook.dir,
         });
         setIsCreatingNote(false);
@@ -228,7 +228,7 @@ export default function NotesPanel(props: Props) {
       }
       refreshRawNotes();
     };
-    const refreshedNotesCallback = (data: RefreshedNotesEventData) => {
+    const createdNoteCallback = (data: CreatedNoteEventData) => {
       if (props.notebook.dir === data.notebookPath) {
         refreshRawNotes();
       }
@@ -256,7 +256,7 @@ export default function NotesPanel(props: Props) {
 
     // TODO: Delay the modifiedMarkdownCallback
     globalEmitter.on(EventType.ModifiedMarkdown, modifiedMarkdownCallback);
-    globalEmitter.on(EventType.RefreshedNotes, refreshedNotesCallback);
+    globalEmitter.on(EventType.CreatedNote, createdNoteCallback);
     globalEmitter.on(EventType.DeletedNote, deletedNoteCallback);
     globalEmitter.on(
       EventType.ChangedNoteFilePath,
@@ -268,7 +268,7 @@ export default function NotesPanel(props: Props) {
     );
     return () => {
       globalEmitter.off(EventType.ModifiedMarkdown, modifiedMarkdownCallback);
-      globalEmitter.off(EventType.RefreshedNotes, refreshedNotesCallback);
+      globalEmitter.off(EventType.CreatedNote, createdNoteCallback);
       globalEmitter.off(EventType.DeletedNote, deletedNoteCallback);
       globalEmitter.off(
         EventType.ChangedNoteFilePath,

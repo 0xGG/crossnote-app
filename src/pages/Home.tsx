@@ -213,7 +213,7 @@ export function Home(props: Props) {
   const [addNotebookRepo, setAddNotebookRepo] = useState<string>("");
   const [addNotebookBranch, setAddNotebookBranch] = useState<string>("");
 
-  const [drawerOpen, setDrawerOpen] = useState<boolean>(true);
+  const [drawerOpen, setDrawerOpen] = useState<boolean>(false);
   const { t } = useTranslation();
   const crossnoteContainer = CrossnoteContainer.useContainer();
   const cloudContainer = CloudContainer.useContainer();
