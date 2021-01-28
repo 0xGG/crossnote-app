@@ -20,7 +20,7 @@ import {
   ModifiedMarkdownEventData,
   PerformedGitOperationEventData,
 } from "../lib/event";
-import { Note, Notebook, Notes } from "../lib/notebook";
+import { Notebook, Notes } from "../lib/notebook";
 import ConfigureNotebookDialog from "./ConfigureNotebookDialog";
 import PushNotebookDialog from "./PushNotebookDialog";
 
@@ -90,16 +90,16 @@ export default function NotebookTreeView(props: Props) {
   const [pushNotebookDialogOpen, setPushNotebookDialogOpen] = useState<boolean>(
     false,
   );
-  const [favoritedNotes, setFavoritedNotes] = useState<Note[]>([]);
+  const [favoritedNotes, setFavoritedNotes] = useState<Notes>({});
   const crossnoteContainer = CrossnoteContainer.useContainer();
   const { t } = useTranslation();
 
   const refreshQuickAccessNotes = useCallback((notes: Notes) => {
-    const favoritedNotes = [];
+    const favoritedNotes: Notes = {};
     for (let filePath in notes) {
       const note = notes[filePath];
       if (note.config.favorited) {
-        favoritedNotes.push(note);
+        favoritedNotes[note.filePath] = note;
       }
     }
     setFavoritedNotes(favoritedNotes);
@@ -130,33 +130,37 @@ export default function NotebookTreeView(props: Props) {
 
   // Emitter
   useEffect(() => {
-    if (globalEmitter) {
-      const modifiedMarkdownCallback = (data: ModifiedMarkdownEventData) => {
-        if (!(data.noteFilePath in props.notebook.notes)) {
-          return;
-        }
+    const modifiedMarkdownCallback = (data: ModifiedMarkdownEventData) => {
+      if (!(data.noteFilePath in props.notebook.notes)) {
+        return;
+      }
+      const isFavorited = data.noteFilePath in favoritedNotes;
+      if (data.noteConfig.favorited !== isFavorited) {
         refreshQuickAccessNotes(props.notebook.notes);
-      };
-      const deletedNoteCallback = (data: DeletedNoteEventData) => {
-        if (props.notebook.dir === data.notebookPath) {
-          refreshQuickAccessNotes(props.notebook.notes);
-        }
-      };
-      const changedNoteFilePathCallback = (
-        data: ChangedNoteFilePathEventData,
-      ) => {
-        if (props.notebook.dir === data.notebookPath) {
-          refreshQuickAccessNotes(props.notebook.notes);
-        }
-      };
-      const performedGitOperationCallback = (
-        data: PerformedGitOperationEventData,
-      ) => {
-        if (props.notebook.dir === data.notebookPath) {
-          refreshQuickAccessNotes(props.notebook.notes);
-        }
-      };
+      }
+      // refreshQuickAccessNotes(props.notebook.notes);
+    };
+    const deletedNoteCallback = (data: DeletedNoteEventData) => {
+      if (props.notebook.dir === data.notebookPath) {
+        refreshQuickAccessNotes(props.notebook.notes);
+      }
+    };
+    const changedNoteFilePathCallback = (
+      data: ChangedNoteFilePathEventData,
+    ) => {
+      if (props.notebook.dir === data.notebookPath) {
+        refreshQuickAccessNotes(props.notebook.notes);
+      }
+    };
+    const performedGitOperationCallback = (
+      data: PerformedGitOperationEventData,
+    ) => {
+      if (props.notebook.dir === data.notebookPath) {
+        refreshQuickAccessNotes(props.notebook.notes);
+      }
+    };
 
+    if (globalEmitter) {
       globalEmitter.on(EventType.ModifiedMarkdown, modifiedMarkdownCallback);
       globalEmitter.on(EventType.DeletedNote, deletedNoteCallback);
       globalEmitter.on(
@@ -167,7 +171,10 @@ export default function NotebookTreeView(props: Props) {
         EventType.PerformedGitOperation,
         performedGitOperationCallback,
       );
-      return () => {
+    }
+
+    return () => {
+      if (globalEmitter) {
         globalEmitter.off(EventType.ModifiedMarkdown, modifiedMarkdownCallback);
         globalEmitter.off(EventType.DeletedNote, deletedNoteCallback);
         globalEmitter.off(
@@ -178,9 +185,9 @@ export default function NotebookTreeView(props: Props) {
           EventType.PerformedGitOperation,
           performedGitOperationCallback,
         );
-      };
-    }
-  }, [props.notebook, refreshQuickAccessNotes]);
+      }
+    };
+  }, [props.notebook, refreshQuickAccessNotes, favoritedNotes]);
 
   useEffect(() => {
     if (crossnoteContainer.homeSection !== HomeSection.Notebooks) {
@@ -393,7 +400,7 @@ export default function NotebookTreeView(props: Props) {
               </Box>
             }
           ></TreeItem>
-          {favoritedNotes.map((note) => {
+          {Object.values(favoritedNotes).map((note) => {
             return (
               <TreeItem
                 key={`${note.notebookPath}/${note.filePath}`}
