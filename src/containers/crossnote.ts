@@ -194,6 +194,7 @@ function useCrossnoteContainer(initialState: InitialState) {
           markdown,
           note.config,
         );
+        console.log("emit ModifiedMarkdown");
         globalEmitter.emit(EventType.ModifiedMarkdown, {
           tabId: tabNode.getId(),
           markdown: newNote.markdown,

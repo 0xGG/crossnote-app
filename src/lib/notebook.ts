@@ -68,7 +68,7 @@ export class Notebook {
     }
     // Get mentions
     const tokens = md.parse(note.markdown, {});
-    console.log(tokens);
+    // console.log(tokens);
     type TraverseResult = {
       link: string;
       text: string;
