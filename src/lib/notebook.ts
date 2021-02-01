@@ -273,6 +273,12 @@ export class Notebook {
           markdown;
       }
 
+      let oldMentions = {};
+      const oldNote = this.notes[filePath];
+      if (oldNote) {
+        oldMentions = oldNote.mentions;
+      }
+
       // Create note
       const note: Note = {
         notebookPath: this.dir,
@@ -280,7 +286,7 @@ export class Notebook {
         title: path.basename(absFilePath).replace(/\.md$/, ""),
         markdown,
         config: noteConfig,
-        mentions: {},
+        mentions: oldMentions,
         mentionedBy: {},
       };
 

@@ -220,10 +220,15 @@ export default function NotesPanel(props: Props) {
       return;
     }
     const modifiedMarkdownCallback = (data: ModifiedMarkdownEventData) => {
+      /*
       if (!rawNotes.find((n) => n.filePath === data.noteFilePath)) {
         return;
       }
       refreshRawNotes();
+      */
+      if (props.notebook.dir === data.notebookPath) {
+        refreshRawNotes();
+      }
     };
     const createdNoteCallback = (data: CreatedNoteEventData) => {
       if (props.notebook.dir === data.notebookPath) {
