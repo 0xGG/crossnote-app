@@ -40,7 +40,7 @@ import {
   ModifiedMarkdownEventData,
   PerformedGitOperationEventData,
 } from "../lib/event";
-import { Note, Notebook } from "../lib/notebook";
+import { Note, Notebook, Notes as NotesValue } from "../lib/notebook";
 import { OrderBy, OrderDirection } from "../lib/order";
 import Notes from "./Notes";
 
@@ -141,7 +141,7 @@ export default function NotesPanel(props: Props) {
   const [orderDirection, setOrderDirection] = useState<OrderDirection>(
     OrderDirection.DESC,
   );
-  const [rawNotes, setRawNotes] = useState<Note[]>([]);
+  const [rawNotesMap, setRawNotesMap] = useState<NotesValue>({});
   const [notes, setNotes] = useState<Note[]>([]);
 
   const crossnoteContainer = CrossnoteContainer.useContainer();
@@ -198,15 +198,14 @@ export default function NotesPanel(props: Props) {
   );
 
   const refreshRawNotes = useCallback(() => {
-    const notes = [];
-    const notesMap = props.referredNote
-      ? props.referredNote.mentionedBy
-      : props.notebook.notes;
-
-    for (let key in notesMap) {
-      notes.push(notesMap[key]);
-    }
-    setRawNotes(notes);
+    setRawNotesMap(
+      Object.assign(
+        {},
+        props.referredNote
+          ? props.referredNote.mentionedBy
+          : props.notebook.notes,
+      ) as any,
+    );
   }, [props.notebook.notes, props.referredNote]);
 
   useEffect(() => {
@@ -219,13 +218,9 @@ export default function NotesPanel(props: Props) {
     if (!globalEmitter) {
       return;
     }
-    const modifiedMarkdownCallback = (data: ModifiedMarkdownEventData) => {
-      /*
-      if (!rawNotes.find((n) => n.filePath === data.noteFilePath)) {
-        return;
-      }
-      refreshRawNotes();
-      */
+    const modifiedMarkdownCallback = async (
+      data: ModifiedMarkdownEventData,
+    ) => {
       if (props.notebook.dir === data.notebookPath) {
         refreshRawNotes();
       }
@@ -281,14 +276,14 @@ export default function NotesPanel(props: Props) {
         performedGitOperationCallback,
       );
     };
-  }, [refreshRawNotes, rawNotes, props.notebook]);
+  }, [refreshRawNotes, props.notebook, props.referredNote]);
 
   useEffect(() => {
     refreshRawNotes();
   }, [refreshRawNotes]);
 
   useEffect(() => {
-    const notes = rawNotes;
+    const notes = Object.values(rawNotesMap);
     if (orderBy === OrderBy.ModifiedAt) {
       if (orderDirection === OrderDirection.DESC) {
         notes.sort(
@@ -318,8 +313,8 @@ export default function NotesPanel(props: Props) {
         notes.sort((a, b) => a.title.localeCompare(b.title));
       }
     }
-    setNotes([...notes]);
-  }, [rawNotes, orderBy, orderDirection]);
+    setNotes(notes);
+  }, [rawNotesMap, orderBy, orderDirection]);
 
   useEffect(() => {
     if (!container || !topPanel || !container.current || !topPanel.current) {
