@@ -1,6 +1,6 @@
 import * as git from "isomorphic-git";
 import Token from "markdown-it/lib/token";
-import MiniSearch from "minisearch";
+// import MiniSearch from "minisearch";
 import * as path from "path";
 import { md } from "vickymd/preview";
 // import { isFileAnImage } from "../utilities/image";
@@ -55,12 +55,13 @@ export class Notebook {
 
   private loadedNotes: boolean;
 
-  public miniSearch: MiniSearch;
+  // public miniSearch: MiniSearch;
 
   constructor() {
     this.notes = {};
     this.isLocal = false;
     this.loadedNotes = false;
+    /*
     this.miniSearch = new MiniSearch({
       fields: ["title"],
       storeFields: ["title"],
@@ -72,6 +73,7 @@ export class Notebook {
         );
       },
     });
+    */
   }
 
   async processNoteMentionsAndMentionedBy(filePath: string) {
