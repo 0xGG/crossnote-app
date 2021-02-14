@@ -1,7 +1,7 @@
 import * as path from "path";
 import { printPreview as VickyMDPrintPreview } from "vickymd/preview";
 import { globalContainers } from "../containers/global";
-import { Note } from "../lib/notebook";
+import { Note } from "../lib/note";
 import { browserHistory } from "./history";
 import { resolveNoteImageSrc } from "./image";
 

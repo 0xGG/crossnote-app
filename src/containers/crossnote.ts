@@ -17,7 +17,8 @@ import Crossnote, {
 } from "../lib/crossnote";
 import { EventType, globalEmitter } from "../lib/event";
 import { pfs } from "../lib/fs";
-import { Note, Notebook, NoteConfig } from "../lib/notebook";
+import { Note, NoteConfig } from "../lib/note";
+import { Notebook } from "../lib/notebook";
 import { CrossnoteTabNode, TabHeight } from "../lib/tabNode";
 import { getTodayName } from "../utilities/utils";
 
@@ -350,6 +351,7 @@ function useCrossnoteContainer(initialState: InitialState) {
         filePath += ".md";
       }
       let note: Note;
+      console.log(notebook.notes);
       if (filePath in notebook.notes) {
         note = notebook.notes[filePath];
       } else {
@@ -430,6 +432,17 @@ function useCrossnoteContainer(initialState: InitialState) {
     },
     [crossnote, notebooks, t],
   );
+
+  const openLocalNotebook = useCallback(async () => {
+    const directoryHandle = await window.showDirectoryPicker();
+    (window as any)["directoryHandle"] = directoryHandle;
+    const notebook = await crossnote.addNotebook({
+      name: directoryHandle.name,
+      gitURL: "",
+      directoryHandle,
+    });
+    setNotebooks((notebooks) => [notebook, ...notebooks]);
+  }, [crossnote]);
 
   const updateNotebook = useCallback(
     async (notebook: Notebook) => {
@@ -537,7 +550,7 @@ function useCrossnoteContainer(initialState: InitialState) {
   const checkoutNote = useCallback(
     async (note: Note) => {
       const notebook = getNotebookAtPath(note.notebookPath);
-      if (!notebook) {
+      if (!notebook || notebook.isLocal) {
         return;
       }
       const newNote = await notebook.checkoutNote(note);
@@ -598,6 +611,18 @@ function useCrossnoteContainer(initialState: InitialState) {
       await updateNoteConfig(tabNode, notebookPath, noteFilePath, newConfig);
     },
     [getNotebookAtPath, updateNoteConfig],
+  );
+
+  const getStatus = useCallback(
+    async (notebookPath: string, filePath: string) => {
+      const notebook = getNotebookAtPath(notebookPath);
+      if (!notebook || !crossnote || notebook.isLocal) {
+        return "";
+      } else {
+        return await crossnote.getStatus(notebookPath, filePath);
+      }
+    },
+    [crossnote, getNotebookAtPath],
   );
 
   useEffect(() => {
@@ -857,6 +882,7 @@ Please also check the [Explore](https://crossnote.app/explore) section to discov
     changeNoteFilePath,
     duplicateNote,
     addNotebook,
+    openLocalNotebook,
     togglePin,
     toggleFavorite,
     isAddingNotebook,
@@ -881,6 +907,7 @@ Please also check the [Explore](https://crossnote.app/explore) section to discov
     addTabNode,
     closeTabNode,
     getNotebookAtPath,
+    getStatus,
   };
 }
 

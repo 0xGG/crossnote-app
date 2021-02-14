@@ -1,23 +1,23 @@
-import React, { useState, useEffect, useCallback } from "react";
 import {
-  makeStyles,
-  createStyles,
-  Theme,
-  Button,
   Box,
+  Button,
   Card,
-  Typography,
+  createStyles,
   darken,
+  makeStyles,
+  Theme,
+  Typography,
 } from "@material-ui/core";
 import clsx from "clsx";
-import { useTranslation } from "react-i18next";
 import { Editor as CodeMirrorEditor, TextMarker } from "codemirror";
+import React, { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
+import EditImageDialog from "../../../components/EditImageDialog";
 import { globalContainers } from "../../../containers/global";
+import { Note } from "../../../lib/note";
 import { setTheme } from "../../../themes/manager";
 import { resolveNoteImageSrc } from "../../../utilities/image";
-import EditImageDialog from "../../../components/EditImageDialog";
 import { openURL } from "../../../utilities/preview";
-import { Note } from "../../../lib/notebook";
 const VickyMD = require("vickymd/core");
 
 export const ChatMessageEditorHeight = "150";

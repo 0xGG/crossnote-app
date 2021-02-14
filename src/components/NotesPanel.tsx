@@ -40,7 +40,8 @@ import {
   ModifiedMarkdownEventData,
   PerformedGitOperationEventData,
 } from "../lib/event";
-import { Note, Notebook, Notes as NotesValue } from "../lib/notebook";
+import { Note, Notes as NotesValue } from "../lib/note";
+import { Notebook } from "../lib/notebook";
 import { OrderBy, OrderDirection } from "../lib/order";
 import Notes from "./Notes";
 

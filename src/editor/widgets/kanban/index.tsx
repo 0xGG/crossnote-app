@@ -1,16 +1,15 @@
-import { WidgetCreator, WidgetArgs } from "vickymd/widget";
-import React, { useState, useEffect } from "react";
-import ReactDOM from "react-dom";
+// @ts-ignore
+import Board from "@lourenci/react-kanban";
 import {
-  Card,
-  Typography,
-  IconButton,
   Box,
-  TextField,
   Button,
+  Card,
   Dialog,
-  DialogContent,
   DialogActions,
+  DialogContent,
+  IconButton,
+  TextField,
+  Typography,
 } from "@material-ui/core";
 import {
   createStyles,
@@ -19,27 +18,28 @@ import {
   ThemeProvider,
 } from "@material-ui/core/styles";
 import clsx from "clsx";
+import { Editor as CodeMirrorEditor, TextMarker } from "codemirror";
 import {
+  Cancel,
   CardPlus,
   Close,
   ContentSave,
-  Cancel,
+  Pencil,
   Plus,
   TrashCan,
-  Pencil,
 } from "mdi-material-ui";
+import React, { useEffect, useState } from "react";
+import ReactDOM from "react-dom";
 import { useTranslation } from "react-i18next";
-
-// @ts-ignore
-import Board from "@lourenci/react-kanban";
-import { Editor as CodeMirrorEditor, TextMarker } from "codemirror";
 import { renderPreview } from "vickymd/preview";
-import { globalContainers } from "../../../containers/global";
-import { setTheme } from "../../../themes/manager";
-import { openURL, postprocessPreview } from "../../../utilities/preview";
-import { resolveNoteImageSrc } from "../../../utilities/image";
+import { WidgetArgs, WidgetCreator } from "vickymd/widget";
 import EditImageDialog from "../../../components/EditImageDialog";
-import { Note } from "../../../lib/notebook";
+import { globalContainers } from "../../../containers/global";
+import { Note } from "../../../lib/note";
+import { setTheme } from "../../../themes/manager";
+import { resolveNoteImageSrc } from "../../../utilities/image";
+import { openURL, postprocessPreview } from "../../../utilities/preview";
+
 const VickyMD = require("vickymd/core");
 
 const useStyles = makeStyles((theme: Theme) =>

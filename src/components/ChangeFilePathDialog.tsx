@@ -7,10 +7,11 @@ import {
   TextField,
 } from "@material-ui/core";
 import { TabNode } from "flexlayout-react";
+import Noty from "noty";
 import React, { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { CrossnoteContainer } from "../containers/crossnote";
-import { Note } from "../lib/notebook";
+import { Note } from "../lib/note";
 
 interface Props {
   open: boolean;

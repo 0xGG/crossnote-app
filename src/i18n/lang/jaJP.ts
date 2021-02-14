@@ -199,6 +199,7 @@ export const jaJP = {
     "general/unpin-the-note": "ノートの固定を解除する",
     "general/add-to-quick-access": "クイック アクセスに追加",
     "general/remove-from-quick-access": "クイック アクセスから削除",
+    "general/open-folder": "フォルダを開く",
 
     // Error
     "error/authentication-failed": "認証に失敗しました",

@@ -1,12 +1,12 @@
 import * as git from "isomorphic-git";
 import Token from "markdown-it/lib/token";
+// import MiniSearch from "minisearch";
 import * as path from "path";
 import { md } from "vickymd/preview";
 // import { isFileAnImage } from "../utilities/image";
 import { matter, matterStringify } from "../utilities/markdown";
 import { fs, pfs } from "./fs";
-
-export type FilePath = string;
+import { Note, NoteConfig, Notes } from "./note";
 
 /**
  * Change "createdAt" to "created", and "modifiedAt" to "modified"
@@ -26,7 +26,8 @@ function formatNoteConfig(noteConfig: NoteConfig) {
 
 interface RefreshNotesArgs {
   dir: string;
-  includeSubdirectories?: Boolean;
+  includeSubdirectories?: boolean;
+  refreshRelations?: boolean;
 }
 
 export class Notebook {
@@ -55,10 +56,25 @@ export class Notebook {
 
   private loadedNotes: boolean;
 
+  // public miniSearch: MiniSearch;
+
   constructor() {
     this.notes = {};
     this.isLocal = false;
     this.loadedNotes = false;
+    /*
+    this.miniSearch = new MiniSearch({
+      fields: ["title"],
+      storeFields: ["title"],
+      tokenize: (string) => {
+        return (
+          string
+            .replace(/[!@#$%^&*()[\]{},.?/\\=+-_，。=（）【】]/g, "")
+            .match(/([^\x00-\x7F]|\w+)/g) || []
+        );
+      },
+    });
+    */
   }
 
   async processNoteMentionsAndMentionedBy(filePath: string) {
@@ -177,16 +193,18 @@ export class Notebook {
       path.resolve(this.dir, oldFilePath),
       path.resolve(this.dir, newFilePath),
     );
-    await git.remove({
-      fs: fs,
-      dir: this.dir,
-      filepath: oldFilePath,
-    });
-    await git.add({
-      fs: fs,
-      dir: this.dir,
-      filepath: newFilePath,
-    });
+    if (!this.isLocal) {
+      await git.remove({
+        fs: fs,
+        dir: this.dir,
+        filepath: oldFilePath,
+      });
+      await git.add({
+        fs: fs,
+        dir: this.dir,
+        filepath: newFilePath,
+      });
+    }
 
     return await this.getNote(newFilePath, true);
   }
@@ -233,7 +251,6 @@ export class Notebook {
       let markdown = (await pfs.readFile(absFilePath, {
         encoding: "utf8",
       })) as string;
-      // console.log("read: ", filePath, markdown);
 
       // Read the noteConfig, which is like <!-- note {...} --> at the end of the markdown file
       let noteConfig: NoteConfig = {
@@ -306,7 +323,11 @@ export class Notebook {
     includeSubdirectories = false,
   }: RefreshNotesArgs): Promise<Notes> {
     if (!this.loadedNotes) {
-      await this.refreshNotes({ dir, includeSubdirectories });
+      await this.refreshNotes({
+        dir,
+        includeSubdirectories,
+        refreshRelations: true,
+      });
       this.loadedNotes = true;
     }
     return this.notes;
@@ -315,6 +336,7 @@ export class Notebook {
   public async refreshNotes({
     dir = "./",
     includeSubdirectories = false,
+    refreshRelations = true,
   }: RefreshNotesArgs): Promise<Notes> {
     this.notes = {};
     let files: string[] = [];
@@ -327,6 +349,12 @@ export class Notebook {
 
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
+
+      // ignore several directories
+      if (file.match(/^(node_modules|\.git)$/)) {
+        continue;
+      }
+
       const absFilePath = path.resolve(this.dir, dir, file);
       const note = await this.getNote(path.relative(this.dir, absFilePath));
       if (note) {
@@ -337,24 +365,22 @@ export class Notebook {
       try {
         stats = await pfs.stats(absFilePath);
       } catch (error) {}
-      if (
-        stats &&
-        stats.isDirectory() &&
-        file !== ".git" &&
-        includeSubdirectories
-      ) {
+      if (stats && stats.isDirectory() && includeSubdirectories) {
         refreshNotesPromises.push(
           this.refreshNotes({
             dir: path.relative(this.dir, absFilePath),
             includeSubdirectories,
+            refreshRelations: false,
           }),
         );
       }
     }
     await Promise.all(refreshNotesPromises);
 
-    for (let filePath in this.notes) {
-      await this.processNoteMentionsAndMentionedBy(filePath);
+    if (refreshRelations) {
+      for (let filePath in this.notes) {
+        await this.processNoteMentionsAndMentionedBy(filePath);
+      }
     }
 
     return this.notes;
@@ -384,11 +410,13 @@ export class Notebook {
     }
 
     await pfs.writeFile(path.resolve(this.dir, filePath), markdown);
-    await git.add({
-      fs: fs,
-      dir: this.dir,
-      filepath: filePath,
-    });
+    if (!this.isLocal) {
+      await git.add({
+        fs: fs,
+        dir: this.dir,
+        filepath: filePath,
+      });
+    }
 
     const note = await this.getNote(filePath, true);
     note.markdown = oMarkdown;
@@ -411,11 +439,13 @@ export class Notebook {
     delete frontMatter["note"]; // TODO: Remove this in beta 3
     const markdown = matterStringify(data.content, frontMatter);
     await pfs.writeFile(path.resolve(this.dir, filePath), markdown);
-    await git.add({
-      fs: fs,
-      dir: this.dir,
-      filepath: filePath,
-    });
+    if (!this.isLocal) {
+      await git.add({
+        fs: fs,
+        dir: this.dir,
+        filepath: filePath,
+      });
+    }
   }
 
   public async removeNoteRelations(filePath: string) {
@@ -436,13 +466,14 @@ export class Notebook {
   public async deleteNote(filePath: string) {
     if (await pfs.exists(path.resolve(this.dir, filePath))) {
       await pfs.unlink(path.resolve(this.dir, filePath));
-      await git.remove({
-        fs: fs,
-        dir: this.dir,
-        filepath: filePath,
-      });
-
-      await this.removeNoteRelations(filePath);
+      if (!this.isLocal) {
+        await git.remove({
+          fs: fs,
+          dir: this.dir,
+          filepath: filePath,
+        });
+        await this.removeNoteRelations(filePath);
+      }
     }
   }
 
@@ -456,32 +487,6 @@ export class Notebook {
     await this.writeNote(newFilePath, oldNote.markdown, noteConfig);
     return await this.getNote(newFilePath, true);
   }
-}
-
-export interface Note {
-  notebookPath: string;
-  filePath: FilePath;
-  title: string;
-  markdown: string;
-  config: NoteConfig;
-  mentions: Notes;
-  mentionedBy: Notes;
-}
-
-export interface Notes {
-  [key: string]: Note;
-}
-
-export interface NoteConfigEncryption {
-  title: string;
-  // method: string;? // Default AES256
-}
-
-export interface NoteConfig {
-  createdAt: Date;
-  modifiedAt: Date;
-  pinned?: boolean;
-  favorited?: boolean;
 }
 
 export interface NotebookConfig {

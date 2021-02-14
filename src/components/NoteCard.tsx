@@ -15,7 +15,7 @@ import { useTranslation } from "react-i18next";
 import { CrossnoteContainer } from "../containers/crossnote";
 import { SettingsContainer } from "../containers/settings";
 import { languageCodeToDateFNSLocale } from "../i18n/i18n";
-import { Note } from "../lib/notebook";
+import { Note } from "../lib/note";
 import { resolveNoteImageSrc } from "../utilities/image";
 import { generateSummaryFromMarkdown, Summary } from "../utilities/note";
 import NotePopover from "./NotePopover";
@@ -159,17 +159,12 @@ export default function NoteCard(props: Props) {
   }, [note.markdown, note, crossnoteContainer.crossnote, t]);
 
   useEffect(() => {
-    crossnoteContainer.crossnote
+    crossnoteContainer
       .getStatus(note.notebookPath, note.filePath)
       .then((status) => {
         setGitStatus(status);
       });
-  }, [
-    note.markdown,
-    note.config.modifiedAt,
-    note,
-    crossnoteContainer.crossnote,
-  ]);
+  }, [note.markdown, note.config.modifiedAt, note]);
 
   return (
     <React.Fragment>
@@ -283,7 +278,8 @@ export default function NoteCard(props: Props) {
             </Box>
           )}
           <Typography variant={"caption"} className={clsx(classes.filePath)}>
-            {note.filePath + " - " + t(`git/status/${gitStatus}`)}
+            {note.filePath +
+              (gitStatus ? " - " + t(`git/status/${gitStatus}`) : "")}
           </Typography>
         </Box>
       </Card>

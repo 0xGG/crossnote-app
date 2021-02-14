@@ -196,6 +196,7 @@ export const zhCN = {
     "general/unpin-the-note": "取消置顶这个笔记",
     "general/add-to-quick-access": "添加到快速访问",
     "general/remove-from-quick-access": "从快速访问中移除",
+    "general/open-folder": "打开文件夹",
 
     // Error
     "error/authentication-failed": "认证失败",

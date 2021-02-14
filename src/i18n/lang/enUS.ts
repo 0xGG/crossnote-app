@@ -199,6 +199,7 @@ export const enUS = {
     "general/unpin-the-note": "Unpin the note",
     "general/add-to-quick-access": "Add to quick access",
     "general/remove-from-quick-access": "Remove from quick access",
+    "general/open-folder": "Open Folder",
 
     // Error
     "error/authentication-failed": "Authentication failed",

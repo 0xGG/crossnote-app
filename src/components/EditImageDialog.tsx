@@ -12,7 +12,7 @@ import clsx from "clsx";
 import { Editor as CodeMirrorEditor, TextMarker } from "codemirror";
 import React, { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Note } from "../lib/notebook";
+import { Note } from "../lib/note";
 import { resolveNoteImageSrc } from "../utilities/image";
 
 interface Props {

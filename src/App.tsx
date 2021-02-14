@@ -1,4 +1,5 @@
 import { ThemeProvider } from "@material-ui/styles";
+import MiniSearch from "minisearch";
 import * as qs from "qs";
 import React, { FC, useEffect } from "react";
 import { useTranslation } from "react-i18next";
@@ -14,6 +15,8 @@ import "./editor";
 import { Home } from "./pages/Home";
 import { browserHistory } from "./utilities/history";
 const is = require("is_js");
+
+(window as any)["MiniSearch"] = MiniSearch;
 
 const App: FC = () => {
   const { t } = useTranslation();
