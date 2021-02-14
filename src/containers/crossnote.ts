@@ -17,7 +17,8 @@ import Crossnote, {
 } from "../lib/crossnote";
 import { EventType, globalEmitter } from "../lib/event";
 import { pfs } from "../lib/fs";
-import { Note, Notebook, NoteConfig } from "../lib/notebook";
+import { Note, NoteConfig } from "../lib/note";
+import { Notebook } from "../lib/notebook";
 import { CrossnoteTabNode, TabHeight } from "../lib/tabNode";
 import { getTodayName } from "../utilities/utils";
 

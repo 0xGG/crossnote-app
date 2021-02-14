@@ -1,7 +1,7 @@
 import * as path from "path";
-import { pfs } from "../lib/fs";
 import { NotebookFieldsFragment } from "../generated/graphql";
-import { Notebook, Note } from "../lib/notebook";
+import { pfs } from "../lib/fs";
+import { Note } from "../lib/note";
 
 export async function resolveNoteImageSrc(note: Note, imageSrc: string) {
   if (!note) {

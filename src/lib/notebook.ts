@@ -1,12 +1,12 @@
 import * as git from "isomorphic-git";
 import Token from "markdown-it/lib/token";
+import MiniSearch from "minisearch";
 import * as path from "path";
 import { md } from "vickymd/preview";
 // import { isFileAnImage } from "../utilities/image";
 import { matter, matterStringify } from "../utilities/markdown";
 import { fs, pfs } from "./fs";
-
-export type FilePath = string;
+import { Note, NoteConfig, Notes } from "./note";
 
 /**
  * Change "createdAt" to "created", and "modifiedAt" to "modified"
@@ -55,10 +55,23 @@ export class Notebook {
 
   private loadedNotes: boolean;
 
+  public miniSearch: MiniSearch;
+
   constructor() {
     this.notes = {};
     this.isLocal = false;
     this.loadedNotes = false;
+    this.miniSearch = new MiniSearch({
+      fields: ["title"],
+      storeFields: ["title"],
+      tokenize: (string) => {
+        return (
+          string
+            .replace(/[!@#$%^&*()[\]{},.?/\\=+-_，。=（）【】]/g, "")
+            .match(/([^\x00-\x7F]|\w+)/g) || []
+        );
+      },
+    });
   }
 
   async processNoteMentionsAndMentionedBy(filePath: string) {
@@ -441,7 +454,6 @@ export class Notebook {
         dir: this.dir,
         filepath: filePath,
       });
-
       await this.removeNoteRelations(filePath);
     }
   }
@@ -456,32 +468,6 @@ export class Notebook {
     await this.writeNote(newFilePath, oldNote.markdown, noteConfig);
     return await this.getNote(newFilePath, true);
   }
-}
-
-export interface Note {
-  notebookPath: string;
-  filePath: FilePath;
-  title: string;
-  markdown: string;
-  config: NoteConfig;
-  mentions: Notes;
-  mentionedBy: Notes;
-}
-
-export interface Notes {
-  [key: string]: Note;
-}
-
-export interface NoteConfigEncryption {
-  title: string;
-  // method: string;? // Default AES256
-}
-
-export interface NoteConfig {
-  createdAt: Date;
-  modifiedAt: Date;
-  pinned?: boolean;
-  favorited?: boolean;
 }
 
 export interface NotebookConfig {

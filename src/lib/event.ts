@@ -1,4 +1,4 @@
-import { NoteConfig } from "./notebook";
+import { NoteConfig } from "./note";
 
 export enum EventType {
   ModifiedMarkdown = "ModifiedMarkdown",

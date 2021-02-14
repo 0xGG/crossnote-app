@@ -42,7 +42,7 @@ import {
   ModifiedMarkdownEventData,
   PerformedGitOperationEventData,
 } from "../lib/event";
-import { Note } from "../lib/notebook";
+import { Note } from "../lib/note";
 import { resolveNoteImageSrc } from "../utilities/image";
 import {
   openURL,

@@ -13,7 +13,7 @@ import React, { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import LazyLoad from "react-lazyload";
 import { CrossnoteContainer } from "../containers/crossnote";
-import { Note } from "../lib/notebook";
+import { Note } from "../lib/note";
 import NoteCard, { NoteCardMargin, NoteCardWidth } from "./NoteCard";
 const is = require("is_js");
 
@@ -116,6 +116,7 @@ export default function Notes(props: Props) {
     const pinned: Note[] = [];
     const unpinned: Note[] = [];
     notes.forEach((note) => {
+      // TODO: Convert to use MiniSearch for searching
       if (searchValue.trim().length) {
         const regexp = new RegExp(
           "(" +

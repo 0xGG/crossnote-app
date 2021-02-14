@@ -20,7 +20,8 @@ import {
   ModifiedMarkdownEventData,
   PerformedGitOperationEventData,
 } from "../lib/event";
-import { Notebook, Notes } from "../lib/notebook";
+import { Notes } from "../lib/note";
+import { Notebook } from "../lib/notebook";
 import ConfigureNotebookDialog from "./ConfigureNotebookDialog";
 import PushNotebookDialog from "./PushNotebookDialog";
 

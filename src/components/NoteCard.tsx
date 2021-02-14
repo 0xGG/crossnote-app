@@ -15,7 +15,7 @@ import { useTranslation } from "react-i18next";
 import { CrossnoteContainer } from "../containers/crossnote";
 import { SettingsContainer } from "../containers/settings";
 import { languageCodeToDateFNSLocale } from "../i18n/i18n";
-import { Note } from "../lib/notebook";
+import { Note } from "../lib/note";
 import { resolveNoteImageSrc } from "../utilities/image";
 import { generateSummaryFromMarkdown, Summary } from "../utilities/note";
 import NotePopover from "./NotePopover";

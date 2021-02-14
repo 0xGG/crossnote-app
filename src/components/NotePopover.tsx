@@ -23,7 +23,7 @@ import {
 import React, { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { CrossnoteContainer } from "../containers/crossnote";
-import { Note } from "../lib/notebook";
+import { Note } from "../lib/note";
 import ChangeFilePathDialog from "./ChangeFilePathDialog";
 import { DeleteNoteDialog } from "./DeleteNoteDialog";
 

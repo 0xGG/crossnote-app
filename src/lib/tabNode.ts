@@ -1,4 +1,5 @@
-import { Note, Notebook } from "./notebook";
+import { Note } from "./note";
+import { Notebook } from "./notebook";
 
 export type TabNodeComponent =
   | "Settings"
