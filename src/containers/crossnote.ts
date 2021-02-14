@@ -616,7 +616,7 @@ function useCrossnoteContainer(initialState: InitialState) {
   const getStatus = useCallback(
     async (notebookPath: string, filePath: string) => {
       const notebook = getNotebookAtPath(notebookPath);
-      if (!notebook || notebook.isLocal) {
+      if (!notebook || !crossnote || notebook.isLocal) {
         return "";
       } else {
         return await crossnote.getStatus(notebookPath, filePath);
