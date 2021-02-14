@@ -192,16 +192,18 @@ export class Notebook {
       path.resolve(this.dir, oldFilePath),
       path.resolve(this.dir, newFilePath),
     );
-    await git.remove({
-      fs: fs,
-      dir: this.dir,
-      filepath: oldFilePath,
-    });
-    await git.add({
-      fs: fs,
-      dir: this.dir,
-      filepath: newFilePath,
-    });
+    if (!this.isLocal) {
+      await git.remove({
+        fs: fs,
+        dir: this.dir,
+        filepath: oldFilePath,
+      });
+      await git.add({
+        fs: fs,
+        dir: this.dir,
+        filepath: newFilePath,
+      });
+    }
 
     return await this.getNote(newFilePath, true);
   }
@@ -399,11 +401,13 @@ export class Notebook {
     }
 
     await pfs.writeFile(path.resolve(this.dir, filePath), markdown);
-    await git.add({
-      fs: fs,
-      dir: this.dir,
-      filepath: filePath,
-    });
+    if (!this.isLocal) {
+      await git.add({
+        fs: fs,
+        dir: this.dir,
+        filepath: filePath,
+      });
+    }
 
     const note = await this.getNote(filePath, true);
     note.markdown = oMarkdown;
@@ -426,11 +430,13 @@ export class Notebook {
     delete frontMatter["note"]; // TODO: Remove this in beta 3
     const markdown = matterStringify(data.content, frontMatter);
     await pfs.writeFile(path.resolve(this.dir, filePath), markdown);
-    await git.add({
-      fs: fs,
-      dir: this.dir,
-      filepath: filePath,
-    });
+    if (!this.isLocal) {
+      await git.add({
+        fs: fs,
+        dir: this.dir,
+        filepath: filePath,
+      });
+    }
   }
 
   public async removeNoteRelations(filePath: string) {
@@ -451,12 +457,14 @@ export class Notebook {
   public async deleteNote(filePath: string) {
     if (await pfs.exists(path.resolve(this.dir, filePath))) {
       await pfs.unlink(path.resolve(this.dir, filePath));
-      await git.remove({
-        fs: fs,
-        dir: this.dir,
-        filepath: filePath,
-      });
-      await this.removeNoteRelations(filePath);
+      if (!this.isLocal) {
+        await git.remove({
+          fs: fs,
+          dir: this.dir,
+          filepath: filePath,
+        });
+        await this.removeNoteRelations(filePath);
+      }
     }
   }
 

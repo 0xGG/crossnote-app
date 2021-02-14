@@ -6,7 +6,7 @@ import * as path from "path";
 import PouchDB from "pouchdb";
 import PouchdbFind from "pouchdb-find";
 import { randomID } from "../utilities/utils";
-import { fs, LocalNotebookMap, pfs } from "./fs";
+import { fs, pfs } from "./fs";
 import { Notebook } from "./notebook";
 
 /*
@@ -130,7 +130,7 @@ export default class Crossnote {
       notebook.localSha = "";
 
       if (directoryHandle) {
-        LocalNotebookMap[dir] = notebook;
+        notebook.isLocal = true;
       }
 
       if (!(await pfs.exists("/notebooks"))) {

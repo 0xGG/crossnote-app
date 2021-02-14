@@ -5,7 +5,11 @@ import { randomID } from "../utilities/utils";
 
 export default class LocalFileSystem {
   private directoryHandleMap: { [key: string]: FileSystemDirectoryHandle } = {};
-  private _prefix = randomID();
+  private _prefix: string;
+
+  constructor() {
+    this._prefix = randomID();
+  }
 
   public async attachLocalDirectory(
     rootDir: string,
@@ -28,7 +32,7 @@ export default class LocalFileSystem {
   }
 
   public isPathOfLocalFileSystem(path: string) {
-    return path.startsWith(this._prefix);
+    return path.startsWith("/" + this._prefix);
   }
 
   private helper(path: string): [FileSystemDirectoryHandle, string[]] {
@@ -61,12 +65,10 @@ export default class LocalFileSystem {
 
   public async writeFile(path: string, data: string): Promise<void> {
     let [directoryHandle, pathArr] = this.helper(path);
-    console.log("writeFile", directoryHandle, pathArr);
     if (!directoryHandle) {
       throw new Error(`${path} is not valid`);
     } else {
       for (let i = 3; i < pathArr.length; i++) {
-        console.log(i);
         if (i === pathArr.length - 1) {
           // file
           const fileHandle = await directoryHandle.getFileHandle(pathArr[i], {
@@ -95,7 +97,6 @@ export default class LocalFileSystem {
       for await (const entry of directoryHandle.values()) {
         names.push(entry.name);
       }
-      console.log("readdir", names);
       return names;
     }
   }

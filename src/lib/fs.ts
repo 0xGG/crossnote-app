@@ -3,9 +3,6 @@ import LightningFS from "@isomorphic-git/lightning-fs";
 import { Stats } from "fs";
 import * as path from "path";
 import LocalFileSystem from "./lfs";
-import { Notebook } from "./notebook";
-
-export const LocalNotebookMap: { [key: string]: Notebook } = {};
 
 class FileSystem {
   private fs: any;
