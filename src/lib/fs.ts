@@ -2,7 +2,7 @@
 import LightningFS from "@isomorphic-git/lightning-fs";
 import { Stats } from "fs";
 import * as path from "path";
-import LocalFileSystem from "./lfs";
+import LocalFileSystem from "./localFileSystem";
 
 class FileSystem {
   private fs: any;
@@ -144,22 +144,29 @@ class FileSystem {
       }
     };
     const rename = async (oldPath: string, newPath: string): Promise<void> => {
+      console.log("rename: ", oldPath, newPath);
       const stats = await this.stats(oldPath);
+      console.log(stats, stats.isDirectory());
       if (stats.isDirectory()) {
         await this.mkdirp(newPath);
       } else {
         await this.mkdirp(path.dirname(newPath));
       }
 
-      return new Promise((resolve, reject) => {
-        this.fs.rename(oldPath, newPath, (error: Error) => {
-          if (error) {
-            return reject(error);
-          } else {
-            return resolve();
-          }
+      if (this.lfs.isPathOfLocalFileSystem(newPath)) {
+        return this.lfs.rename(oldPath, newPath);
+      } else {
+        return new Promise((resolve, reject) => {
+          this.fs.rename(oldPath, newPath, (error: Error) => {
+            if (error) {
+              console.log(error);
+              return reject(error);
+            } else {
+              return resolve();
+            }
+          });
         });
-      });
+      }
     };
     this.rename = async (oldPath: string, newPath: string) => {
       const oldPathStat = await this.stats(oldPath);

@@ -331,9 +331,7 @@ function useCrossnoteContainer(initialState: InitialState) {
         modifiedAt: new Date(),
         createdAt: new Date(),
       };
-      console.log("writeNote", filePath, markdown);
       await notebook.writeNote(filePath, markdown, noteConfig);
-      console.log("done writeNote");
       await notebook.refreshNotes({
         dir: "./",
         includeSubdirectories: true,

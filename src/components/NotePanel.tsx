@@ -25,6 +25,7 @@ import {
   FilePresentationBox,
   Pencil,
 } from "mdi-material-ui";
+import Noty from "noty";
 import * as path from "path";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -307,7 +308,10 @@ export default function NotePanel(props: Props) {
       if (data.tabId === tabNode.getId()) {
         return;
       }
-      if (data.noteFilePath === note.filePath) {
+      if (
+        data.notebookPath === note.notebookPath &&
+        data.noteFilePath === note.filePath
+      ) {
         if (editor.getValue() !== data.markdown) {
           editor.setValue(data.markdown);
         }

@@ -320,14 +320,16 @@ export function Home(props: Props) {
           {"showDirectoryPicker" in window && (
             <ListItem>
               <Button
+                style={{ margin: "0 auto", width: "100%" }}
                 color={"primary"}
                 variant={"contained"}
                 startIcon={<FolderOpen></FolderOpen>}
+                size={"small"}
                 onClick={() => {
                   crossnoteContainer.openLocalNotebook();
                 }}
               >
-                Open local
+                {t("general/open-folder")}
               </Button>
             </ListItem>
           )}

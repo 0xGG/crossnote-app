@@ -26,7 +26,8 @@ function formatNoteConfig(noteConfig: NoteConfig) {
 
 interface RefreshNotesArgs {
   dir: string;
-  includeSubdirectories?: Boolean;
+  includeSubdirectories?: boolean;
+  refreshRelations?: boolean;
 }
 
 export class Notebook {
@@ -250,7 +251,6 @@ export class Notebook {
       let markdown = (await pfs.readFile(absFilePath, {
         encoding: "utf8",
       })) as string;
-      // console.log("read: ", filePath, markdown);
 
       // Read the noteConfig, which is like <!-- note {...} --> at the end of the markdown file
       let noteConfig: NoteConfig = {
@@ -323,7 +323,11 @@ export class Notebook {
     includeSubdirectories = false,
   }: RefreshNotesArgs): Promise<Notes> {
     if (!this.loadedNotes) {
-      await this.refreshNotes({ dir, includeSubdirectories });
+      await this.refreshNotes({
+        dir,
+        includeSubdirectories,
+        refreshRelations: true,
+      });
       this.loadedNotes = true;
     }
     return this.notes;
@@ -332,6 +336,7 @@ export class Notebook {
   public async refreshNotes({
     dir = "./",
     includeSubdirectories = false,
+    refreshRelations = true,
   }: RefreshNotesArgs): Promise<Notes> {
     this.notes = {};
     let files: string[] = [];
@@ -344,6 +349,12 @@ export class Notebook {
 
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
+
+      // ignore several directories
+      if (file.match(/^(node_modules|\.git)$/)) {
+        continue;
+      }
+
       const absFilePath = path.resolve(this.dir, dir, file);
       const note = await this.getNote(path.relative(this.dir, absFilePath));
       if (note) {
@@ -354,24 +365,22 @@ export class Notebook {
       try {
         stats = await pfs.stats(absFilePath);
       } catch (error) {}
-      if (
-        stats &&
-        stats.isDirectory() &&
-        file !== ".git" &&
-        includeSubdirectories
-      ) {
+      if (stats && stats.isDirectory() && includeSubdirectories) {
         refreshNotesPromises.push(
           this.refreshNotes({
             dir: path.relative(this.dir, absFilePath),
             includeSubdirectories,
+            refreshRelations: false,
           }),
         );
       }
     }
     await Promise.all(refreshNotesPromises);
 
-    for (let filePath in this.notes) {
-      await this.processNoteMentionsAndMentionedBy(filePath);
+    if (refreshRelations) {
+      for (let filePath in this.notes) {
+        await this.processNoteMentionsAndMentionedBy(filePath);
+      }
     }
 
     return this.notes;
