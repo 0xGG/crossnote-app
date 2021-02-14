@@ -6,7 +6,7 @@ import * as path from "path";
 import PouchDB from "pouchdb";
 import PouchdbFind from "pouchdb-find";
 import { randomID } from "../utilities/utils";
-import { fs, pfs } from "./fs";
+import { fs, LocalNotebookMap, pfs } from "./fs";
 import { Notebook } from "./notebook";
 
 /*
@@ -28,6 +28,7 @@ interface CloneNotebookArgs {
   username?: string;
   password?: string;
   rememberCredentials?: boolean;
+  directoryHandle?: FileSystemDirectoryHandle;
 }
 
 // type ListAttachmentsArgs = ListNotesArgs;
@@ -82,13 +83,14 @@ export default class Crossnote {
 
   public async addNotebook({
     name = "",
-    corsProxy,
-    gitURL,
+    corsProxy = "",
+    gitURL = "",
     branch = "master",
     username = "",
     password = "",
     depth = 3,
     rememberCredentials = false,
+    directoryHandle,
   }: CloneNotebookArgs) {
     if (gitURL) {
       return await this.cloneNotebook({
@@ -103,12 +105,20 @@ export default class Crossnote {
       });
     } else {
       const _id = randomID();
-      const dir = `/notebooks/${_id}`;
+      let dir = `/notebooks/${_id}`;
+      if (directoryHandle) {
+        dir = (await pfs.attachLocalDirectory(_id, directoryHandle)).replace(
+          /\/+$/,
+          "",
+        );
+      }
 
       const notebook = new Notebook();
       notebook._id = _id;
       notebook.dir = dir;
-      notebook.name = name.trim() || "Unnamed";
+      notebook.name = directoryHandle
+        ? directoryHandle.name.trim()
+        : name.trim() || "Unnamed";
       notebook.gitURL = gitURL.trim();
       notebook.gitBranch = branch.trim() || "master";
       notebook.gitCorsProxy = corsProxy.trim();
@@ -119,23 +129,30 @@ export default class Crossnote {
       notebook.remoteSha = "";
       notebook.localSha = "";
 
+      if (directoryHandle) {
+        LocalNotebookMap[dir] = notebook;
+      }
+
       if (!(await pfs.exists("/notebooks"))) {
         await pfs.mkdir("/notebooks");
       }
-      if (!(await pfs.exists(dir))) {
+      if (!directoryHandle && !(await pfs.exists(dir))) {
         await pfs.mkdir(dir);
       }
-      await git.init({
-        fs: fs,
-        dir,
-      });
 
-      // Save to DB
-      try {
-        await this.notebookDB.put(notebook);
-      } catch (error) {
-        // Failed to save to DB
-        await pfs.rmdir(dir);
+      if (!directoryHandle) {
+        await git.init({
+          fs: fs,
+          dir,
+        });
+
+        // Save to DB
+        try {
+          await this.notebookDB.put(notebook);
+        } catch (error) {
+          // Failed to save to DB
+          await pfs.rmdir(dir);
+        }
       }
 
       return notebook;

@@ -432,6 +432,17 @@ function useCrossnoteContainer(initialState: InitialState) {
     [crossnote, notebooks, t],
   );
 
+  const openLocalNotebook = useCallback(async () => {
+    const directoryHandle = await window.showDirectoryPicker();
+    (window as any)["directoryHandle"] = directoryHandle;
+    const notebook = await crossnote.addNotebook({
+      name: directoryHandle.name,
+      gitURL: "",
+      directoryHandle,
+    });
+    setNotebooks((notebooks) => [notebook, ...notebooks]);
+  }, [crossnote]);
+
   const updateNotebook = useCallback(
     async (notebook: Notebook) => {
       if (!crossnote) {
@@ -858,6 +869,7 @@ Please also check the [Explore](https://crossnote.app/explore) section to discov
     changeNoteFilePath,
     duplicateNote,
     addNotebook,
+    openLocalNotebook,
     togglePin,
     toggleFavorite,
     isAddingNotebook,
