@@ -144,9 +144,7 @@ class FileSystem {
       }
     };
     const rename = async (oldPath: string, newPath: string): Promise<void> => {
-      console.log("rename: ", oldPath, newPath);
       const stats = await this.stats(oldPath);
-      console.log(stats, stats.isDirectory());
       if (stats.isDirectory()) {
         await this.mkdirp(newPath);
       } else {
@@ -159,7 +157,6 @@ class FileSystem {
         return new Promise((resolve, reject) => {
           this.fs.rename(oldPath, newPath, (error: Error) => {
             if (error) {
-              console.log(error);
               return reject(error);
             } else {
               return resolve();

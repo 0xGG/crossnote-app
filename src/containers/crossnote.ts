@@ -550,7 +550,7 @@ function useCrossnoteContainer(initialState: InitialState) {
   const checkoutNote = useCallback(
     async (note: Note) => {
       const notebook = getNotebookAtPath(note.notebookPath);
-      if (!notebook) {
+      if (!notebook || notebook.isLocal) {
         return;
       }
       const newNote = await notebook.checkoutNote(note);
@@ -611,6 +611,18 @@ function useCrossnoteContainer(initialState: InitialState) {
       await updateNoteConfig(tabNode, notebookPath, noteFilePath, newConfig);
     },
     [getNotebookAtPath, updateNoteConfig],
+  );
+
+  const getStatus = useCallback(
+    async (notebookPath: string, filePath: string) => {
+      const notebook = getNotebookAtPath(notebookPath);
+      if (!notebook || notebook.isLocal) {
+        return "";
+      } else {
+        return await crossnote.getStatus(notebookPath, filePath);
+      }
+    },
+    [crossnote, getNotebookAtPath],
   );
 
   useEffect(() => {
@@ -895,6 +907,7 @@ Please also check the [Explore](https://crossnote.app/explore) section to discov
     addTabNode,
     closeTabNode,
     getNotebookAtPath,
+    getStatus,
   };
 }
 
