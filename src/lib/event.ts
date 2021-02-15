@@ -69,7 +69,7 @@ export class Emitter {
   }
 
   public emit(eventName: EventType, data: EventData) {
-    const eventCallbacks = this.subscriptions[eventName].slice() || [];
+    const eventCallbacks = (this.subscriptions[eventName] || []).slice() || [];
     eventCallbacks.forEach((callback, offset) => {
       callback(data);
     });

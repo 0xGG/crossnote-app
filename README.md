@@ -39,7 +39,10 @@ Please check [this documentation](https://github.com/0xGG/welcome-notebook/tree/
 
 Crossnote V3 is currently under development on the `develop` branch of this repository.  
 Please note that V3 is far from complete.  
-The Crossnote V3 website is currently hosted on GitHub Pages: https://0xgg.io/crossnote/
+The Crossnote V3 website is currently hosted on GitHub Pages: https://0xgg.io/crossnote/  
+The Crossnote V3 supports modifying local files powered by the Chrome's [File System Access API](https://web.dev/file-system-access/):
+
+![Peek 2021-02-15 15-30](https://user-images.githubusercontent.com/1908863/107917394-db538100-6fa2-11eb-8ef1-ea37844cb799.gif)
 
 ## License
 
