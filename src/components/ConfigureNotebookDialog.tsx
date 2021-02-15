@@ -133,94 +133,96 @@ export default function ConfigureNotebookDialog(props: Props) {
           autoComplete={"off"}
           autoCorrect={"off"}
         ></TextField>
-        <ExpansionPanel
-          elevation={2}
-          expanded={expanded}
-          onChange={() => setExpanded(!expanded)}
-        >
-          <ExpansionPanelSummary expandIcon={<ChevronDown></ChevronDown>}>
-            <Typography>{`${t("general/git-repository")} (${t(
-              "general/optional",
-            )})`}</Typography>
-          </ExpansionPanelSummary>
-          <ExpansionPanelDetails>
-            <Box>
-              <TextField
-                label={t("general/url")}
-                placeholder={"https://abc/def.git"}
-                disabled={true}
-                fullWidth={true}
-                value={gitURL}
-                onChange={(event) => setGitURL(event.target.value)}
-              ></TextField>
-              <TextField
-                label={t("general/branch")}
-                placeholder={"master"}
-                disabled={true}
-                fullWidth={true}
-                value={gitBranch}
-                onChange={(event) => setGitBranch(event.target.value)}
-              ></TextField>
-              <TextField
-                label={`${t("general/Username")} (${t("general/optional")})`}
-                placeholder={`${t("general/Username")} (${t(
-                  "general/optional",
-                )})`}
-                fullWidth={true}
-                value={gitUsername}
-                onChange={(event) => setGitUsername(event.target.value)}
-              ></TextField>
-              <TextField
-                label={`${t("general/Password")} (${t("general/optional")})`}
-                placeholder={`${t("general/Password")} (${t(
-                  "general/optional",
-                )})`}
-                type={"password"}
-                fullWidth={true}
-                value={gitPassword}
-                onChange={(event) => setGitPassword(event.target.value)}
-              ></TextField>
-              <TextField
-                label={t("general/cors-proxy")}
-                placeholder={"https://crossnote.app/cors/"}
-                fullWidth={true}
-                value={gitCorsProxy}
-                onChange={(event) => setGitCorsProxy(event.target.value)}
-              ></TextField>
-              <Link
-                href={
-                  "https://github.com/isomorphic-git/isomorphic-git#cors-support"
-                }
-                target={"_blank"}
-              >
-                {t("general/why-cors-proxy")}
-              </Link>
-              {props.notebook && props.notebook.gitURL ? (
-                <Box style={{ marginTop: "16px" }}>
-                  <Typography>
-                    {t("general/check-notebook-updates-periodically")}
-                  </Typography>
-                  <Input
-                    value={autoFetchPeriod}
-                    onChange={(event) => {
-                      try {
-                        const value = parseFloat(event.target.value || "0");
-                        if (!isNaN(value)) {
-                          setAutoFetchPeriod(value);
-                        }
-                      } catch (error) {}
-                    }}
-                    endAdornment={
-                      <InputAdornment position="end">
-                        {t("general/minutes")}
-                      </InputAdornment>
-                    }
-                  ></Input>
-                </Box>
-              ) : null}
-            </Box>
-          </ExpansionPanelDetails>
-        </ExpansionPanel>
+        {!props.notebook.isLocal && (
+          <ExpansionPanel
+            elevation={2}
+            expanded={expanded}
+            onChange={() => setExpanded(!expanded)}
+          >
+            <ExpansionPanelSummary expandIcon={<ChevronDown></ChevronDown>}>
+              <Typography>{`${t("general/git-repository")} (${t(
+                "general/optional",
+              )})`}</Typography>
+            </ExpansionPanelSummary>
+            <ExpansionPanelDetails>
+              <Box>
+                <TextField
+                  label={t("general/url")}
+                  placeholder={"https://abc/def.git"}
+                  disabled={true}
+                  fullWidth={true}
+                  value={gitURL}
+                  onChange={(event) => setGitURL(event.target.value)}
+                ></TextField>
+                <TextField
+                  label={t("general/branch")}
+                  placeholder={"master"}
+                  disabled={true}
+                  fullWidth={true}
+                  value={gitBranch}
+                  onChange={(event) => setGitBranch(event.target.value)}
+                ></TextField>
+                <TextField
+                  label={`${t("general/Username")} (${t("general/optional")})`}
+                  placeholder={`${t("general/Username")} (${t(
+                    "general/optional",
+                  )})`}
+                  fullWidth={true}
+                  value={gitUsername}
+                  onChange={(event) => setGitUsername(event.target.value)}
+                ></TextField>
+                <TextField
+                  label={`${t("general/Password")} (${t("general/optional")})`}
+                  placeholder={`${t("general/Password")} (${t(
+                    "general/optional",
+                  )})`}
+                  type={"password"}
+                  fullWidth={true}
+                  value={gitPassword}
+                  onChange={(event) => setGitPassword(event.target.value)}
+                ></TextField>
+                <TextField
+                  label={t("general/cors-proxy")}
+                  placeholder={"https://crossnote.app/cors/"}
+                  fullWidth={true}
+                  value={gitCorsProxy}
+                  onChange={(event) => setGitCorsProxy(event.target.value)}
+                ></TextField>
+                <Link
+                  href={
+                    "https://github.com/isomorphic-git/isomorphic-git#cors-support"
+                  }
+                  target={"_blank"}
+                >
+                  {t("general/why-cors-proxy")}
+                </Link>
+                {props.notebook && props.notebook.gitURL ? (
+                  <Box style={{ marginTop: "16px" }}>
+                    <Typography>
+                      {t("general/check-notebook-updates-periodically")}
+                    </Typography>
+                    <Input
+                      value={autoFetchPeriod}
+                      onChange={(event) => {
+                        try {
+                          const value = parseFloat(event.target.value || "0");
+                          if (!isNaN(value)) {
+                            setAutoFetchPeriod(value);
+                          }
+                        } catch (error) {}
+                      }}
+                      endAdornment={
+                        <InputAdornment position="end">
+                          {t("general/minutes")}
+                        </InputAdornment>
+                      }
+                    ></Input>
+                  </Box>
+                ) : null}
+              </Box>
+            </ExpansionPanelDetails>
+          </ExpansionPanel>
+        )}
       </DialogContent>
       <DialogActions>
         {crossnoteContainer.notebooks.length > 1 && (
@@ -237,7 +239,9 @@ export default function ConfigureNotebookDialog(props: Props) {
               }
             }}
           >
-            {t("general/Delete") +
+            {(props.notebook.isLocal
+              ? t("general/close")
+              : t("general/Delete")) +
               (clickDeleteCount < MaxClickDeleteCount
                 ? ` ${clickDeleteCount}`
                 : "")}

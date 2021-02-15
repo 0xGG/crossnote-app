@@ -38,6 +38,7 @@ import { EditorMode } from "../lib/editorMode";
 import {
   ChangedNoteFilePathEventData,
   DeletedNoteEventData,
+  DeleteNotebookEventData,
   EventType,
   globalEmitter,
   ModifiedMarkdownEventData,
@@ -361,6 +362,13 @@ export default function NotePanel(props: Props) {
       }
     };
 
+    const deleteNotebookCallback = (data: DeleteNotebookEventData) => {
+      console.log("deleteNotebook: ", data, note.notebookPath);
+      if (data.notebookPath === note.notebookPath) {
+        crossnoteContainer.closeTabNode(tabNode.getId());
+      }
+    };
+
     globalEmitter.on(EventType.ModifiedMarkdown, modifiedMarkdownCallback);
     globalEmitter.on(EventType.DeletedNote, deletedNoteCallback);
     globalEmitter.on(
@@ -371,6 +379,7 @@ export default function NotePanel(props: Props) {
       EventType.PerformedGitOperation,
       performedGitOperationCallback,
     );
+    globalEmitter.on(EventType.DeleteNotebook, deleteNotebookCallback);
     return () => {
       globalEmitter.off(EventType.ModifiedMarkdown, modifiedMarkdownCallback);
       globalEmitter.off(EventType.DeletedNote, deletedNoteCallback);
@@ -382,6 +391,7 @@ export default function NotePanel(props: Props) {
         EventType.PerformedGitOperation,
         performedGitOperationCallback,
       );
+      globalEmitter.off(EventType.DeleteNotebook, deleteNotebookCallback);
     };
   }, [tabNode, editor, note]);
 

@@ -61,7 +61,7 @@ export function MainPanel(props: Props) {
     } else if (component === "Note") {
       return <NotePanel note={config.note} tabNode={node}></NotePanel>;
     } else if (component === "Graph") {
-      return <GraphView notebook={config.notebook}></GraphView>;
+      return <GraphView notebook={config.notebook} tabNode={node}></GraphView>;
     }
   }, []);
 

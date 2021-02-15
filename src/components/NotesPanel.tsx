@@ -35,6 +35,7 @@ import {
   ChangedNoteFilePathEventData,
   CreatedNoteEventData,
   DeletedNoteEventData,
+  DeleteNotebookEventData,
   EventType,
   globalEmitter,
   ModifiedMarkdownEventData,
@@ -247,8 +248,12 @@ export default function NotesPanel(props: Props) {
       data: PerformedGitOperationEventData,
     ) => {
       if (props.notebook.dir === data.notebookPath) {
-        console.log("refreshRawNotes");
         refreshRawNotes();
+      }
+    };
+    const deleteNotebookCallback = (data: DeleteNotebookEventData) => {
+      if (props.notebook.dir === data.notebookPath) {
+        crossnoteContainer.closeTabNode(props.tabNode.getId());
       }
     };
 
@@ -256,6 +261,7 @@ export default function NotesPanel(props: Props) {
     globalEmitter.on(EventType.ModifiedMarkdown, modifiedMarkdownCallback);
     globalEmitter.on(EventType.CreatedNote, createdNoteCallback);
     globalEmitter.on(EventType.DeletedNote, deletedNoteCallback);
+    globalEmitter.on(EventType.DeleteNotebook, deleteNotebookCallback);
     globalEmitter.on(
       EventType.ChangedNoteFilePath,
       changedNoteFilePathCallback,
@@ -276,8 +282,9 @@ export default function NotesPanel(props: Props) {
         EventType.PerformedGitOperation,
         performedGitOperationCallback,
       );
+      globalEmitter.off(EventType.DeleteNotebook, deleteNotebookCallback);
     };
-  }, [refreshRawNotes, props.notebook, props.referredNote]);
+  }, [refreshRawNotes, props.notebook, props.referredNote, props.tabNode]);
 
   useEffect(() => {
     refreshRawNotes();
