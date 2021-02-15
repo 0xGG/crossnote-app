@@ -2,13 +2,16 @@
 import LightningFS from "@isomorphic-git/lightning-fs";
 import { Stats } from "fs";
 import * as path from "path";
-import LocalFileSystem from "./localFileSystem";
+import LocalFileSystem, { ReadFileOptions } from "./localFileSystem";
 
 class FileSystem {
   private fs: any;
   private lfs: LocalFileSystem;
 
-  public readFile: (path: string, opts?: any) => Promise<string | Uint8Array>;
+  public readFile: (
+    path: string,
+    opts?: ReadFileOptions,
+  ) => Promise<string | Uint8Array>;
   public writeFile: (path: string, data: string) => Promise<void>;
   public readdir: (path: string) => Promise<string[]>;
   public unlink: (path: string) => Promise<void>;
@@ -35,14 +38,14 @@ class FileSystem {
   private setUpFSMethods() {
     this.readFile = (path: string, opts?: any) => {
       if (this.lfs.isPathOfLocalFileSystem(path)) {
-        return this.lfs.readFile(path);
+        return this.lfs.readFile(path, opts);
       } else {
         return new Promise((resolve, reject) => {
           this.fs.readFile(path, opts, (error: Error, data: string) => {
             if (error) {
               return reject(error);
             } else {
-              return resolve(data.toString());
+              return resolve(data);
             }
           });
         });
