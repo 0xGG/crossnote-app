@@ -338,7 +338,9 @@ export class Notebook {
     includeSubdirectories = false,
     refreshRelations = true,
   }: RefreshNotesArgs): Promise<Notes> {
-    this.notes = {};
+    if (refreshRelations) {
+      this.notes = {};
+    }
     let files: string[] = [];
     try {
       files = await pfs.readdir(path.resolve(this.dir, dir));

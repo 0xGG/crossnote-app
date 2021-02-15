@@ -65,10 +65,8 @@ export async function loadImageAsBase64(
     );
   }
   if (await pfs.exists(imageFilePath)) {
-    const data: Uint8Array = new Uint8Array(
-      // @ts-ignore
-      (await pfs.readFile(imageFilePath)).split(","),
-    );
+    // @ts-ignore
+    const data: Uint8Array = await pfs.readFile(imageFilePath);
     const base64 = Buffer.from(data.buffer).toString("base64");
     let imageType = path.extname(imageSrc).slice(1);
     if (imageType.match(/^svg$/i)) {

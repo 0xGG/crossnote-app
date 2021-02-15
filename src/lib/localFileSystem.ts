@@ -3,6 +3,10 @@
 import { Stats } from "fs";
 import { randomID } from "../utilities/utils";
 
+export interface ReadFileOptions {
+  encoding?: string;
+}
+
 export default class LocalFileSystem {
   private directoryHandleMap: { [key: string]: FileSystemDirectoryHandle } = {};
   private _prefix: string;
@@ -42,7 +46,10 @@ export default class LocalFileSystem {
     return [directoryHandle, pathArr.slice(3, pathArr.length)];
   }
 
-  public async readFile(path: string): Promise<string> {
+  public async readFile(
+    path: string,
+    opts: ReadFileOptions = { encoding: "" },
+  ): Promise<string | Uint8Array> {
     let [directoryHandle, pathArr] = this.helper(path);
     if (!directoryHandle) {
       throw new Error(`${path} is not valid`);
@@ -51,9 +58,14 @@ export default class LocalFileSystem {
       for (; i < pathArr.length - 1; i++) {
         directoryHandle = await directoryHandle.getDirectoryHandle(pathArr[i]);
       }
-      return (
-        await (await directoryHandle.getFileHandle(pathArr[i])).getFile()
-      ).text();
+      const file = await (
+        await directoryHandle.getFileHandle(pathArr[i])
+      ).getFile();
+      if (opts.encoding && opts.encoding.match(/^utf-?8$/i)) {
+        return file.text();
+      } else {
+        return new Uint8Array(await file.arrayBuffer());
+      }
     }
   }
 
@@ -204,8 +216,8 @@ export default class LocalFileSystem {
    * @param newPath
    */
   public async rename(oldPath: string, newPath: string): Promise<void> {
-    const data = await this.readFile(oldPath);
-    await this.writeFile(newPath, data);
+    const data = await this.readFile(oldPath, { encoding: "utf-8" }); // Could be buggy for binary file
+    await this.writeFile(newPath, data as any);
     await this.unlink(oldPath);
   }
 }
