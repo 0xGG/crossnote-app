@@ -463,6 +463,9 @@ function useCrossnoteContainer(initialState: InitialState) {
         return;
       }
       try {
+        globalEmitter.emit(EventType.DeleteNotebook, {
+          notebookPath: notebook.dir,
+        });
         await crossnote.deleteNotebook(notebook._id);
       } catch (error) {}
       let selectedNotebook: Notebook = null;

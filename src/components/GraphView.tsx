@@ -1,12 +1,14 @@
 import { createStyles, makeStyles, Theme } from "@material-ui/core/styles";
 import clsx from "clsx";
 import * as d3 from "d3";
+import { TabNode } from "flexlayout-react";
 import React, { useEffect, useRef, useState } from "react";
 import { CrossnoteContainer } from "../containers/crossnote";
 import {
   ChangedNoteFilePathEventData,
   CreatedNoteEventData,
   DeletedNoteEventData,
+  DeleteNotebookEventData,
   EventType,
   globalEmitter,
   ModifiedMarkdownEventData,
@@ -30,6 +32,7 @@ const useStyles = makeStyles((theme: Theme) =>
 
 interface Props {
   notebook: Notebook;
+  tabNode: TabNode;
 }
 
 export default function GraphView(props: Props) {
@@ -101,6 +104,11 @@ export default function GraphView(props: Props) {
         refreshGraphViewData();
       }
     };
+    const deleteNotebookCallback = (data: DeleteNotebookEventData) => {
+      if (data.notebookPath === props.notebook.dir) {
+        crossnoteContainer.closeTabNode(props.tabNode.getId());
+      }
+    };
 
     globalEmitter.on(EventType.ModifiedMarkdown, modifiedMarkdownCallback);
     globalEmitter.on(EventType.CreatedNote, createdNoteCallback);
@@ -113,6 +121,7 @@ export default function GraphView(props: Props) {
       EventType.PerformedGitOperation,
       performedGitOperationCallback,
     );
+    globalEmitter.on(EventType.DeleteNotebook, deleteNotebookCallback);
     return () => {
       globalEmitter.off(EventType.ModifiedMarkdown, modifiedMarkdownCallback);
       globalEmitter.off(EventType.CreatedNote, createdNoteCallback);
@@ -125,8 +134,9 @@ export default function GraphView(props: Props) {
         EventType.PerformedGitOperation,
         performedGitOperationCallback,
       );
+      globalEmitter.off(EventType.DeleteNotebook, deleteNotebookCallback);
     };
-  }, [graphViewPanel, props.notebook, graphViewData]);
+  }, [graphViewPanel, props.notebook, props.tabNode, graphViewData]);
 
   useEffect(() => {
     const data = constructGraphView(props.notebook);

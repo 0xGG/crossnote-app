@@ -6,6 +6,7 @@ export enum EventType {
   DeletedNote = "DeletedNote",
   ChangedNoteFilePath = "ChangedNoteFilePath",
   PerformedGitOperation = "PerformedGitOperation",
+  DeleteNotebook = "DeleteNotebook",
 }
 
 export interface ModifiedMarkdownEventData {
@@ -34,6 +35,10 @@ export interface ChangedNoteFilePathEventData {
 }
 
 export interface PerformedGitOperationEventData {
+  notebookPath: string;
+}
+
+export interface DeleteNotebookEventData {
   notebookPath: string;
 }
 
