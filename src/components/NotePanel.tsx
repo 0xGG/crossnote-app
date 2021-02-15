@@ -403,6 +403,15 @@ export default function NotePanel(props: Props) {
           if (info.type === "link" || info.type === "url") {
             const footnoteRef = text.match(/\[[^[\]]+\](?:\[\])?$/); // bare link, footref or [foot][] . assume no escaping char inside
             if (!footnoteRef && (info.ctrlKey || info.altKey) && url) {
+              // Hack: Fix a wikilink click bug when clicking text like "[[haha]]."
+              if (url.startsWith("[[")) {
+                url = url.slice(2, url.length);
+                const i = url.lastIndexOf("]]");
+                if (i > 0) {
+                  url = url.slice(0, i);
+                }
+              }
+
               // just open URL
               openURL(url, note);
               return false; // Prevent default click event
