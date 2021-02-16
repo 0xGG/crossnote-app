@@ -233,26 +233,25 @@ export default function NotesPanel(props: Props) {
     };
     const createdNoteCallback = (data: CreatedNoteEventData) => {
       if (props.notebook.dir === data.notebookPath) {
-        setNeedsToRefreshRawNotes(true);
+        refreshRawNotes();
       }
     };
     const deletedNoteCallback = (data: DeletedNoteEventData) => {
       if (props.notebook.dir === data.notebookPath) {
-        setNeedsToRefreshRawNotes(true);
+        refreshRawNotes();
       }
     };
     const changedNoteFilePathCallback = (
       data: ChangedNoteFilePathEventData,
     ) => {
       if (props.notebook.dir === data.notebookPath) {
-        setNeedsToRefreshRawNotes(true);
+        refreshRawNotes();
       }
     };
     const performedGitOperationCallback = (
       data: PerformedGitOperationEventData,
     ) => {
       if (props.notebook.dir === data.notebookPath) {
-        // setNeedsToRefreshRawNotes(true);
         refreshRawNotes();
       }
     };
