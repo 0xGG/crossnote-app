@@ -37,8 +37,8 @@ import { initMathPreview } from "../editor/views/math-preview";
 import { EditorMode } from "../lib/editorMode";
 import {
   ChangedNoteFilePathEventData,
+  DeletedNotebookEventData,
   DeletedNoteEventData,
-  DeleteNotebookEventData,
   EventType,
   globalEmitter,
   ModifiedMarkdownEventData,
@@ -362,8 +362,7 @@ export default function NotePanel(props: Props) {
       }
     };
 
-    const deleteNotebookCallback = (data: DeleteNotebookEventData) => {
-      console.log("deleteNotebook: ", data, note.notebookPath);
+    const deletedNotebookCallback = (data: DeletedNotebookEventData) => {
       if (data.notebookPath === note.notebookPath) {
         crossnoteContainer.closeTabNode(tabNode.getId());
       }
@@ -379,7 +378,7 @@ export default function NotePanel(props: Props) {
       EventType.PerformedGitOperation,
       performedGitOperationCallback,
     );
-    globalEmitter.on(EventType.DeleteNotebook, deleteNotebookCallback);
+    globalEmitter.on(EventType.DeletedNotebook, deletedNotebookCallback);
     return () => {
       globalEmitter.off(EventType.ModifiedMarkdown, modifiedMarkdownCallback);
       globalEmitter.off(EventType.DeletedNote, deletedNoteCallback);
@@ -391,7 +390,7 @@ export default function NotePanel(props: Props) {
         EventType.PerformedGitOperation,
         performedGitOperationCallback,
       );
-      globalEmitter.off(EventType.DeleteNotebook, deleteNotebookCallback);
+      globalEmitter.off(EventType.DeletedNotebook, deletedNotebookCallback);
     };
   }, [tabNode, editor, note]);
 

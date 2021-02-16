@@ -2,7 +2,13 @@
 import LightningFS from "@isomorphic-git/lightning-fs";
 import { Stats } from "fs";
 import * as path from "path";
+import { randomID } from "../utilities/utils";
 import LocalFileSystem, { ReadFileOptions } from "./localFileSystem";
+
+interface AttachLocalDirectory {
+  id: string;
+  directoryHandle: FileSystemDirectoryHandle;
+}
 
 class FileSystem {
   private fs: any;
@@ -28,11 +34,11 @@ class FileSystem {
     this.setUpFSMethods();
   }
 
-  public async attachLocalDirectory(
-    rootDir: string,
-    directoryHandle: FileSystemDirectoryHandle,
-  ) {
-    return await this.lfs.attachLocalDirectory(rootDir, directoryHandle);
+  public async attachLocalDirectory({
+    id = randomID(),
+    directoryHandle,
+  }: AttachLocalDirectory) {
+    return await this.lfs.attachLocalDirectory(id, directoryHandle);
   }
 
   private setUpFSMethods() {

@@ -72,9 +72,6 @@ function useCrossnoteContainer(initialState: InitialState) {
   const [isAddingNotebook, setIsAddingNotebook] = useState<boolean>(false);
   const [isPushingNotebook, setIsPushingNotebook] = useState<boolean>(false);
   const [isPullingNotebook, setIsPullingNotebook] = useState<boolean>(false);
-  const [needsToRefreshNotes, setNeedsToRefreshNotes] = useState<boolean>(
-    false,
-  );
   const [isLoadingNotebook, setIsLoadingNotebook] = useState<boolean>(false);
   const [isPerformingAutoFetch, setIsPerformingAutoFetch] = useState<boolean>(
     false,
@@ -463,7 +460,7 @@ function useCrossnoteContainer(initialState: InitialState) {
         return;
       }
       try {
-        globalEmitter.emit(EventType.DeleteNotebook, {
+        globalEmitter.emit(EventType.DeletedNotebook, {
           notebookPath: notebook.dir,
         });
         await crossnote.deleteNotebook(notebook._id);
@@ -515,7 +512,6 @@ function useCrossnoteContainer(initialState: InitialState) {
           notebookPath: args.notebook.dir,
         });
         setIsPushingNotebook(false);
-        setNeedsToRefreshNotes(true);
       } catch (error) {
         setIsPushingNotebook(false);
         throw error;
@@ -541,7 +537,6 @@ function useCrossnoteContainer(initialState: InitialState) {
           notebookPath: args.notebook.dir,
         });
         setIsPullingNotebook(false);
-        setNeedsToRefreshNotes(true);
       } catch (error) {
         setIsPullingNotebook(false);
         throw error;
@@ -864,7 +859,9 @@ Please also check the [Explore](https://crossnote.app/explore) section to discov
         try {
           const changed = await crossnote.fetchNotebook({ notebook });
           if (changed) {
-            setNeedsToRefreshNotes(true);
+            globalEmitter.emit(EventType.PerformedGitOperation, {
+              notebookPath: notebook.dir,
+            });
           }
         } catch (error) {
           console.log(error);
@@ -901,8 +898,6 @@ Please also check the [Explore](https://crossnote.app/explore) section to discov
     isLoadingNotebook,
     openNoteAtPath,
     openTodayNote,
-    needsToRefreshNotes,
-    setNeedsToRefreshNotes,
     homeSection,
     setHomeSection,
     layoutModel,
