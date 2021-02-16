@@ -503,7 +503,7 @@ function useCrossnoteContainer(initialState: InitialState) {
       }
       try {
         await crossnote.hardResetNotebook(notebook, notebook.localSha);
-        refreshNotebook(notebook);
+        await refreshNotebook(notebook);
       } catch (error) {}
     },
     [crossnote, refreshNotebook],
