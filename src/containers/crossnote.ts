@@ -478,6 +478,21 @@ function useCrossnoteContainer(initialState: InitialState) {
     [crossnote],
   );
 
+  const refreshNotebook = useCallback(
+    async (notebook: Notebook) => {
+      if (!crossnote) {
+        return;
+      }
+      setIsLoadingNotebook(true);
+      await notebook.refreshNotes({ dir: "./", includeSubdirectories: true });
+      globalEmitter.emit(EventType.PerformedGitOperation, {
+        notebookPath: notebook.dir,
+      });
+      setIsLoadingNotebook(false);
+    },
+    [crossnote],
+  );
+
   const hardResetNotebook = useCallback(
     async (notebook: Notebook) => {
       if (!crossnote) {
@@ -485,15 +500,10 @@ function useCrossnoteContainer(initialState: InitialState) {
       }
       try {
         await crossnote.hardResetNotebook(notebook, notebook.localSha);
-        setIsLoadingNotebook(true);
-        await notebook.refreshNotes({ dir: "./", includeSubdirectories: true });
-        globalEmitter.emit(EventType.PerformedGitOperation, {
-          notebookPath: notebook.dir,
-        });
-        setIsLoadingNotebook(false);
+        refreshNotebook(notebook);
       } catch (error) {}
     },
-    [crossnote],
+    [crossnote, refreshNotebook],
   );
 
   const pushNotebook = useCallback(
@@ -891,6 +901,7 @@ Please also check the [Explore](https://crossnote.app/explore) section to discov
     updateNotebook,
     deleteNotebook,
     hardResetNotebook,
+    refreshNotebook,
     pushNotebook,
     pullNotebook,
     checkoutNote,

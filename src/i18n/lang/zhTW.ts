@@ -197,6 +197,7 @@ export const zhTW = {
     "general/add-to-quick-access": "添加到快速訪問",
     "general/remove-from-quick-access": "從快速訪問中移除",
     "general/open-folder": "打開文件夾",
+    "general/refresh": "刷新",
 
     // Error
     "error/authentication-failed": "認証失敗",

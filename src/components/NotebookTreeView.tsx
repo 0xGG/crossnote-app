@@ -490,6 +490,35 @@ export default function NotebookTreeView(props: Props) {
               }
             ></TreeItem>
           )}
+          {props.notebook.isLocal && (
+            <TreeItem
+              nodeId={"reload"}
+              classes={{
+                root: classes.treeItemRoot,
+                content: classes.treeItemContent,
+                expanded: classes.treeItemExpanded,
+                group: classes.treeItemGroup,
+                label: classes.treeItemLabel,
+              }}
+              label={
+                <Box
+                  onClick={() =>
+                    crossnoteContainer.refreshNotebook(props.notebook)
+                  }
+                  className={clsx(classes.treeItemLabelRoot)}
+                >
+                  <span role="img" aria-label={t("general/refresh")}>
+                    {"🔄"}
+                  </span>
+                  <Tooltip title={t("general/refresh")}>
+                    <Typography className={clsx(classes.treeItemLabelText)}>
+                      {t("general/refresh")}
+                    </Typography>
+                  </Tooltip>
+                </Box>
+              }
+            ></TreeItem>
+          )}
           {props.notebook.gitURL && (
             <TreeItem
               nodeId={"download"}
