@@ -1,17 +1,17 @@
 {
   "files": {
     "main.css": "/crossnote/static/css/main.703e111a.chunk.css",
-    "main.js": "/crossnote/static/js/main.b4920034.chunk.js",
-    "main.js.map": "/crossnote/static/js/main.b4920034.chunk.js.map",
+    "main.js": "/crossnote/static/js/main.179c4d4b.chunk.js",
+    "main.js.map": "/crossnote/static/js/main.179c4d4b.chunk.js.map",
     "runtime-main.js": "/crossnote/static/js/runtime-main.eaad50b8.js",
     "runtime-main.js.map": "/crossnote/static/js/runtime-main.eaad50b8.js.map",
     "static/css/2.5c4e037d.chunk.css": "/crossnote/static/css/2.5c4e037d.chunk.css",
-    "static/js/2.dad401a3.chunk.js": "/crossnote/static/js/2.dad401a3.chunk.js",
-    "static/js/2.dad401a3.chunk.js.map": "/crossnote/static/js/2.dad401a3.chunk.js.map",
+    "static/js/2.92235b55.chunk.js": "/crossnote/static/js/2.92235b55.chunk.js",
+    "static/js/2.92235b55.chunk.js.map": "/crossnote/static/js/2.92235b55.chunk.js.map",
     "index.html": "/crossnote/index.html",
     "static/css/2.5c4e037d.chunk.css.map": "/crossnote/static/css/2.5c4e037d.chunk.css.map",
     "static/css/main.703e111a.chunk.css.map": "/crossnote/static/css/main.703e111a.chunk.css.map",
-    "static/js/2.dad401a3.chunk.js.LICENSE.txt": "/crossnote/static/js/2.dad401a3.chunk.js.LICENSE.txt",
+    "static/js/2.92235b55.chunk.js.LICENSE.txt": "/crossnote/static/js/2.92235b55.chunk.js.LICENSE.txt",
     "static/media/katex.min.css": "/crossnote/static/media/KaTeX_Typewriter-Regular.d3c8e68f.woff",
     "static/media/materialdesignicons.min.css": "/crossnote/static/media/materialdesignicons-webfont.e9db4005.woff2",
     "static/media/index.css": "/crossnote/static/media/roboto-latin-900italic.cb5ad999.woff2"
@@ -19,8 +19,8 @@
   "entrypoints": [
     "static/js/runtime-main.eaad50b8.js",
     "static/css/2.5c4e037d.chunk.css",
-    "static/js/2.dad401a3.chunk.js",
+    "static/js/2.92235b55.chunk.js",
     "static/css/main.703e111a.chunk.css",
-    "static/js/main.b4920034.chunk.js"
+    "static/js/main.179c4d4b.chunk.js"
   ]
 }
