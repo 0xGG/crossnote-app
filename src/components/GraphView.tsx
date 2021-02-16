@@ -7,8 +7,8 @@ import { CrossnoteContainer } from "../containers/crossnote";
 import {
   ChangedNoteFilePathEventData,
   CreatedNoteEventData,
+  DeletedNotebookEventData,
   DeletedNoteEventData,
-  DeleteNotebookEventData,
   EventType,
   globalEmitter,
   ModifiedMarkdownEventData,
@@ -104,7 +104,7 @@ export default function GraphView(props: Props) {
         refreshGraphViewData();
       }
     };
-    const deleteNotebookCallback = (data: DeleteNotebookEventData) => {
+    const deletedNotebookCallback = (data: DeletedNotebookEventData) => {
       if (data.notebookPath === props.notebook.dir) {
         crossnoteContainer.closeTabNode(props.tabNode.getId());
       }
@@ -121,7 +121,7 @@ export default function GraphView(props: Props) {
       EventType.PerformedGitOperation,
       performedGitOperationCallback,
     );
-    globalEmitter.on(EventType.DeleteNotebook, deleteNotebookCallback);
+    globalEmitter.on(EventType.DeletedNotebook, deletedNotebookCallback);
     return () => {
       globalEmitter.off(EventType.ModifiedMarkdown, modifiedMarkdownCallback);
       globalEmitter.off(EventType.CreatedNote, createdNoteCallback);
@@ -134,7 +134,7 @@ export default function GraphView(props: Props) {
         EventType.PerformedGitOperation,
         performedGitOperationCallback,
       );
-      globalEmitter.off(EventType.DeleteNotebook, deleteNotebookCallback);
+      globalEmitter.off(EventType.DeletedNotebook, deletedNotebookCallback);
     };
   }, [graphViewPanel, props.notebook, props.tabNode, graphViewData]);
 

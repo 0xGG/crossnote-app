@@ -19,6 +19,7 @@ import {
   makeStyles,
   Theme,
 } from "@material-ui/core/styles";
+import useInterval from "@use-it/interval";
 import clsx from "clsx";
 import { TabNode } from "flexlayout-react";
 import {
@@ -34,8 +35,8 @@ import { CrossnoteContainer } from "../containers/crossnote";
 import {
   ChangedNoteFilePathEventData,
   CreatedNoteEventData,
+  DeletedNotebookEventData,
   DeletedNoteEventData,
-  DeleteNotebookEventData,
   EventType,
   globalEmitter,
   ModifiedMarkdownEventData,
@@ -145,6 +146,9 @@ export default function NotesPanel(props: Props) {
   );
   const [rawNotesMap, setRawNotesMap] = useState<NotesValue>({});
   const [notes, setNotes] = useState<Note[]>([]);
+  const [needsToRefreshRawNotes, setNeedsToRefreshRawNotes] = useState<boolean>(
+    false,
+  );
 
   const crossnoteContainer = CrossnoteContainer.useContainer();
 
@@ -224,34 +228,35 @@ export default function NotesPanel(props: Props) {
       data: ModifiedMarkdownEventData,
     ) => {
       if (props.notebook.dir === data.notebookPath) {
-        refreshRawNotes();
+        setNeedsToRefreshRawNotes(true);
       }
     };
     const createdNoteCallback = (data: CreatedNoteEventData) => {
       if (props.notebook.dir === data.notebookPath) {
-        refreshRawNotes();
+        setNeedsToRefreshRawNotes(true);
       }
     };
     const deletedNoteCallback = (data: DeletedNoteEventData) => {
       if (props.notebook.dir === data.notebookPath) {
-        refreshRawNotes();
+        setNeedsToRefreshRawNotes(true);
       }
     };
     const changedNoteFilePathCallback = (
       data: ChangedNoteFilePathEventData,
     ) => {
       if (props.notebook.dir === data.notebookPath) {
-        refreshRawNotes();
+        setNeedsToRefreshRawNotes(true);
       }
     };
     const performedGitOperationCallback = (
       data: PerformedGitOperationEventData,
     ) => {
       if (props.notebook.dir === data.notebookPath) {
+        // setNeedsToRefreshRawNotes(true);
         refreshRawNotes();
       }
     };
-    const deleteNotebookCallback = (data: DeleteNotebookEventData) => {
+    const deletedNotebookCallback = (data: DeletedNotebookEventData) => {
       if (props.notebook.dir === data.notebookPath) {
         crossnoteContainer.closeTabNode(props.tabNode.getId());
       }
@@ -261,7 +266,7 @@ export default function NotesPanel(props: Props) {
     globalEmitter.on(EventType.ModifiedMarkdown, modifiedMarkdownCallback);
     globalEmitter.on(EventType.CreatedNote, createdNoteCallback);
     globalEmitter.on(EventType.DeletedNote, deletedNoteCallback);
-    globalEmitter.on(EventType.DeleteNotebook, deleteNotebookCallback);
+    globalEmitter.on(EventType.DeletedNotebook, deletedNotebookCallback);
     globalEmitter.on(
       EventType.ChangedNoteFilePath,
       changedNoteFilePathCallback,
@@ -282,12 +287,14 @@ export default function NotesPanel(props: Props) {
         EventType.PerformedGitOperation,
         performedGitOperationCallback,
       );
-      globalEmitter.off(EventType.DeleteNotebook, deleteNotebookCallback);
+      globalEmitter.off(EventType.DeletedNotebook, deletedNotebookCallback);
     };
   }, [refreshRawNotes, props.notebook, props.referredNote, props.tabNode]);
 
   useEffect(() => {
-    refreshRawNotes();
+    if (refreshRawNotes) {
+      refreshRawNotes();
+    }
   }, [refreshRawNotes]);
 
   useEffect(() => {
@@ -344,6 +351,13 @@ export default function NotesPanel(props: Props) {
       scrollElement.removeEventListener("scroll", scrollEvent);
     };
   }, [container, topPanel]);
+
+  useInterval(() => {
+    if (needsToRefreshRawNotes) {
+      refreshRawNotes();
+      setNeedsToRefreshRawNotes(false);
+    }
+  }, 15000);
 
   return (
     <div className={clsx(classes.notesPanel)} ref={container}>

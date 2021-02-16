@@ -6,7 +6,6 @@ import {
   useTheme,
 } from "@material-ui/core/styles";
 import { Skeleton } from "@material-ui/lab";
-import useInterval from "@use-it/interval";
 import clsx from "clsx";
 import { TabNode } from "flexlayout-react";
 import React, { useEffect, useState } from "react";
@@ -202,13 +201,6 @@ export default function Notes(props: Props) {
       };
     }
   }, [notes, props.scrollElement, masonryInstance]);
-
-  useInterval(() => {
-    if (crossnoteContainer.needsToRefreshNotes) {
-      crossnoteContainer.setNeedsToRefreshNotes(false);
-      setForceUpdate(Date.now());
-    }
-  }, 15000);
 
   return (
     <div className={clsx(classes.notesList)}>

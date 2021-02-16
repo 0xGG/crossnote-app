@@ -107,10 +107,9 @@ export default class Crossnote {
       const _id = randomID();
       let dir = `/notebooks/${_id}`;
       if (directoryHandle) {
-        dir = (await pfs.attachLocalDirectory(_id, directoryHandle)).replace(
-          /\/+$/,
-          "",
-        );
+        dir = (
+          await pfs.attachLocalDirectory({ id: _id, directoryHandle })
+        ).replace(/\/+$/, "");
       }
 
       const notebook = new Notebook();

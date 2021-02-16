@@ -200,6 +200,7 @@ export const enUS = {
     "general/add-to-quick-access": "Add to quick access",
     "general/remove-from-quick-access": "Remove from quick access",
     "general/open-folder": "Open Folder",
+    "general/refresh": "Refresh",
 
     // Error
     "error/authentication-failed": "Authentication failed",
