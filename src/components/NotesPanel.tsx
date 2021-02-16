@@ -252,7 +252,8 @@ export default function NotesPanel(props: Props) {
       data: PerformedGitOperationEventData,
     ) => {
       if (props.notebook.dir === data.notebookPath) {
-        setNeedsToRefreshRawNotes(true);
+        // setNeedsToRefreshRawNotes(true);
+        refreshRawNotes();
       }
     };
     const deletedNotebookCallback = (data: DeletedNotebookEventData) => {
@@ -291,7 +292,9 @@ export default function NotesPanel(props: Props) {
   }, [refreshRawNotes, props.notebook, props.referredNote, props.tabNode]);
 
   useEffect(() => {
-    refreshRawNotes();
+    if (refreshRawNotes) {
+      refreshRawNotes();
+    }
   }, [refreshRawNotes]);
 
   useEffect(() => {
@@ -352,6 +355,7 @@ export default function NotesPanel(props: Props) {
   useInterval(() => {
     if (needsToRefreshRawNotes) {
       refreshRawNotes();
+      setNeedsToRefreshRawNotes(false);
     }
   }, 15000);
 
