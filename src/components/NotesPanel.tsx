@@ -169,12 +169,12 @@ export default function NotesPanel(props: Props) {
     let markdown = "";
     if (props.referredNote) {
       if (
-        props.referredNote.title ===
+        props.referredNote.config.title ===
         props.referredNote.filePath.replace(/\.md$/, "")
       ) {
-        markdown = `[[${props.referredNote.title}]]`;
+        markdown = `[[${props.referredNote.config.title}]]`;
       } else {
-        markdown = `[[${props.referredNote.title}|${props.referredNote.filePath}]]`;
+        markdown = `[[${props.referredNote.config.title}|${props.referredNote.filePath}]]`;
       }
     }
     crossnoteContainer
@@ -322,9 +322,9 @@ export default function NotesPanel(props: Props) {
       }
     } else if (orderBy === OrderBy.Title) {
       if (orderDirection === OrderDirection.DESC) {
-        notes.sort((a, b) => b.title.localeCompare(a.title));
+        notes.sort((a, b) => b.config.title.localeCompare(a.config.title));
       } else {
-        notes.sort((a, b) => a.title.localeCompare(b.title));
+        notes.sort((a, b) => a.config.title.localeCompare(b.config.title));
       }
     }
     setNotes(notes);

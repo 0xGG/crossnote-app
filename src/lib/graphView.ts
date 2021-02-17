@@ -24,7 +24,7 @@ export function constructGraphView(notebook: Notebook): GraphViewData {
     const note = notebook.notes[filePath];
     nodes.push({
       id: note.filePath,
-      label: note.title,
+      label: note.config.title,
     });
 
     for (let mentionedFilePath in note.mentions) {

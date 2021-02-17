@@ -234,35 +234,34 @@ export default function NotePanel(props: Props) {
   );
   const [notePopoverElement, setNotePopoverElement] = useState<Element>(null);
 
-  const confirmNoteTitle = useCallback(() => {
+  const confirmNoteTitle = useCallback(async () => {
     const finalNoteTitle = noteTitle.trim().replace(/\//g, "-");
     if (
       !note ||
       !finalNoteTitle.length ||
-      note.title.trim() === finalNoteTitle
+      note.config.title.trim() === finalNoteTitle
     ) {
       return;
     }
 
-    crossnoteContainer
-      .changeNoteFilePath(
+    try {
+      await crossnoteContainer.updateNoteTitle(tabNode, note, finalNoteTitle);
+      const newNote = await crossnoteContainer.changeNoteFilePath(
         tabNode,
         note,
         path.join(path.dirname(note.filePath), `${finalNoteTitle}.md`),
-      )
-      .then((note) => {
-        setNote(note);
-      })
-      .catch((error) => {
-        new Noty({
-          type: "error",
-          text: t("error/failed-to-change-file-path"),
-          layout: "topRight",
-          theme: "relax",
-          timeout: 5000,
-        }).show();
-        setNoteTitle(note.title);
-      });
+      );
+      setNote(newNote);
+    } catch (error) {
+      new Noty({
+        type: "error",
+        text: t("error/failed-to-change-file-path"),
+        layout: "topRight",
+        theme: "relax",
+        timeout: 5000,
+      }).show();
+      setNoteTitle(note.config.title);
+    }
   }, [noteTitle, note, tabNode, t]);
 
   const postprocessPreview = useCallback(
@@ -292,9 +291,9 @@ export default function NotePanel(props: Props) {
     if (!note || !crossnoteContainer.layoutModel || !tabNode) {
       return;
     }
-    setNoteTitle(note.title);
+    setNoteTitle(note.config.title);
     crossnoteContainer.layoutModel.doAction(
-      Actions.renameTab(tabNode.getId(), `📝 ` + note.title),
+      Actions.renameTab(tabNode.getId(), `📝 ` + note.config.title),
     );
   }, [note, crossnoteContainer.layoutModel, tabNode]);
 

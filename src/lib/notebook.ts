@@ -255,6 +255,7 @@ export class Notebook {
       // Read the noteConfig, which is like <!-- note {...} --> at the end of the markdown file
       let noteConfig: NoteConfig = {
         // id: "",
+        title: "",
         createdAt: new Date(stats.ctimeMs),
         modifiedAt: new Date(stats.mtimeMs),
       };
@@ -280,6 +281,12 @@ export class Notebook {
           noteConfig.favorited = data.data["favorited"];
           delete frontMatter["favorited"];
         }
+        if (data.data["title"]) {
+          noteConfig.title = data.data["title"];
+          delete frontMatter["title"];
+        } else {
+          noteConfig.title = path.basename(absFilePath).replace(/\.md$/, "");
+        }
 
         // markdown = matter.stringify(data.content, frontMatter); // <= NOTE: I think gray-matter has bug. Although I delete "note" section from front-matter, it still includes it.
         markdown = matterStringify(data.content, frontMatter);
@@ -300,7 +307,6 @@ export class Notebook {
       const note: Note = {
         notebookPath: this.dir,
         filePath: path.relative(this.dir, absFilePath),
-        title: path.basename(absFilePath).replace(/\.md$/, ""),
         markdown,
         config: noteConfig,
         mentions: oldMentions,

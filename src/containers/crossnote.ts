@@ -259,6 +259,21 @@ function useCrossnoteContainer(initialState: InitialState) {
     [getNotebookAtPath],
   );
 
+  const updateNoteTitle = useCallback(
+    async (tabNode: TabNode, note: Note, title: string) => {
+      if (note.config.title !== title) {
+        const newConfig = Object.assign({ title }, note.config);
+        await updateNoteConfig(
+          tabNode,
+          note.notebookPath,
+          note.filePath,
+          newConfig,
+        );
+      }
+    },
+    [updateNoteConfig],
+  );
+
   const changeNoteFilePath = useCallback(
     async (tabNode: TabNode, note: Note, newFilePath: string) => {
       const notebook = notebooks.find((x) => x.dir === note.notebookPath);
@@ -301,10 +316,10 @@ function useCrossnoteContainer(initialState: InitialState) {
         let count = 0;
         for (let key in notebook.notes) {
           const note = notebook.notes[key];
-          if (note.title === today) {
+          if (note.config.title === today) {
             foundToday = true;
           }
-          if (note.title.startsWith(untitled)) {
+          if (note.config.title.startsWith(untitled)) {
             count++;
           }
         }
@@ -327,6 +342,7 @@ function useCrossnoteContainer(initialState: InitialState) {
       );
 
       const noteConfig: NoteConfig = {
+        title: fileName.replace(/\.md$/, ""),
         modifiedAt: new Date(),
         createdAt: new Date(),
       };
@@ -360,7 +376,7 @@ function useCrossnoteContainer(initialState: InitialState) {
       addTabNode({
         type: "tab",
         component: "Note",
-        name: `📝 ` + note.title,
+        name: `📝 ` + note.config.title,
         config: {
           singleton: false,
           note,
@@ -889,6 +905,7 @@ Please also check the [Explore](https://crossnote.app/explore) section to discov
     initialized,
     notebooks,
     updateNoteMarkdown,
+    updateNoteTitle,
     updateNoteConfig,
     createNewNote,
     deleteNote,

@@ -8,6 +8,7 @@ export interface NoteConfigEncryption {
 export interface NoteConfig {
   createdAt: Date;
   modifiedAt: Date;
+  title: string;
   pinned?: boolean;
   favorited?: boolean;
 }
@@ -15,7 +16,6 @@ export interface NoteConfig {
 export interface Note {
   notebookPath: string;
   filePath: FilePath;
-  title: string;
   markdown: string;
   config: NoteConfig;
   mentions: Notes;

@@ -135,7 +135,7 @@ export default function NoteCard(props: Props) {
     .replace(/\syears?/, "y");
 
   useEffect(() => {
-    setHeader(note.title);
+    setHeader(note.config.title);
     generateSummaryFromMarkdown(
       note.markdown.trim() || t("general/this-note-is-empty"),
     )
@@ -179,7 +179,7 @@ export default function NoteCard(props: Props) {
               singleton: false,
               note,
             },
-            name: `📝 ` + note.title,
+            name: `📝 ` + note.config.title,
           });
         }}
       >

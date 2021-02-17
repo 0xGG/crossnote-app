@@ -423,7 +423,7 @@ export default function NotebookTreeView(props: Props) {
                           singleton: false,
                           note,
                         },
-                        name: `📝 ` + note.title,
+                        name: `📝 ` + note.config.title,
                       });
                       props.onCloseDrawer();
                     }}
@@ -433,7 +433,7 @@ export default function NotebookTreeView(props: Props) {
                       {"⭐️"}
                     </span>
                     <Typography className={clsx(classes.treeItemLabelText)}>
-                      {note.title}
+                      {note.config.title}
                     </Typography>
                   </Box>
                 }

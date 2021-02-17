@@ -40,6 +40,11 @@ export default function ChangeFilePathDialog(props: Props) {
         }
         if (note.filePath !== newFilePath) {
           try {
+            await crossnoteContainer.updateNoteTitle(
+              tabNode,
+              note,
+              newFilePath.replace(/\.md$/, ""),
+            );
             await crossnoteContainer.changeNoteFilePath(
               tabNode,
               note,
