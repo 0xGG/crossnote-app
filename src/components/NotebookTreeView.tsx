@@ -268,12 +268,16 @@ export default function NotebookTreeView(props: Props) {
                 color={"inherit"}
                 variant={"body1"}
                 className={clsx(classes.treeItemLabelText)}
+                style={{ paddingLeft: "4px" }}
               >
-                {(props.notebook.isLocal
-                  ? "📁 "
-                  : props.notebook.localSha === props.notebook.remoteSha
-                  ? "☁️ "
-                  : "🔔 ") + props.notebook.name}
+                <span role="img" style={{ paddingRight: "8px" }}>
+                  {props.notebook.isLocal
+                    ? "🗂️ "
+                    : props.notebook.localSha === props.notebook.remoteSha
+                    ? "☁️ "
+                    : "🔔 "}
+                </span>
+                {props.notebook.name}
               </Typography>
             </Box>
           }

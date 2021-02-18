@@ -7,6 +7,25 @@ export interface ReadFileOptions {
   encoding?: string;
 }
 
+export async function verifyPermission(
+  fileHandle: FileSystemHandle,
+  mode?: FileSystemPermissionMode,
+) {
+  const options: FileSystemHandlePermissionDescriptor = {
+    mode,
+  };
+  // Check if permission was already granted. If so, return true.
+  if ((await fileHandle.queryPermission(options)) === "granted") {
+    return true;
+  }
+  // Request permission. If the user grants permission, return true.
+  if ((await fileHandle.requestPermission(options)) === "granted") {
+    return true;
+  }
+  // The user didn't grant permission, so return false.
+  return false;
+}
+
 export default class LocalFileSystem {
   private directoryHandleMap: { [key: string]: FileSystemDirectoryHandle } = {};
   private _prefix: string;
@@ -39,10 +58,14 @@ export default class LocalFileSystem {
     return path.startsWith("/" + this._prefix);
   }
 
-  private helper(path: string): [FileSystemDirectoryHandle, string[]] {
+  private async helper(
+    path: string,
+    mode: FileSystemPermissionMode = "readwrite",
+  ): Promise<[FileSystemDirectoryHandle, string[]]> {
     const pathArr = path.replace(/\/+$/, "").split("/");
     const rootDir = "/" + pathArr[1] + "/" + pathArr[2] + "/";
     const directoryHandle = this.directoryHandleMap[rootDir];
+    await verifyPermission(directoryHandle, mode);
     return [directoryHandle, pathArr.slice(3, pathArr.length)];
   }
 
@@ -50,7 +73,7 @@ export default class LocalFileSystem {
     path: string,
     opts: ReadFileOptions = { encoding: "" },
   ): Promise<string | Uint8Array> {
-    let [directoryHandle, pathArr] = this.helper(path);
+    let [directoryHandle, pathArr] = await this.helper(path, "read");
     if (!directoryHandle) {
       throw new Error(`${path} is not valid`);
     } else {
@@ -70,7 +93,7 @@ export default class LocalFileSystem {
   }
 
   public async writeFile(path: string, data: string): Promise<void> {
-    let [directoryHandle, pathArr] = this.helper(path);
+    let [directoryHandle, pathArr] = await this.helper(path, "readwrite");
     if (!directoryHandle) {
       throw new Error(`${path} is not valid`);
     } else {
@@ -90,7 +113,7 @@ export default class LocalFileSystem {
   }
 
   public async readdir(path: string): Promise<string[]> {
-    let [directoryHandle, pathArr] = this.helper(path);
+    let [directoryHandle, pathArr] = await this.helper(path, "read");
     if (!directoryHandle) {
       throw new Error(`${path} is not valid`);
     } else {
@@ -107,7 +130,7 @@ export default class LocalFileSystem {
   }
 
   public async unlink(path: string): Promise<void> {
-    let [directoryHandle, pathArr] = this.helper(path);
+    let [directoryHandle, pathArr] = await this.helper(path, "readwrite");
     if (!directoryHandle) {
       throw new Error(`${path} is not valid`);
     } else {
@@ -120,7 +143,7 @@ export default class LocalFileSystem {
   }
 
   public async stats(path: string): Promise<Stats> {
-    let [directoryHandle, pathArr] = this.helper(path);
+    let [directoryHandle, pathArr] = await this.helper(path, "read");
     if (!directoryHandle) {
       throw new Error(`${path} is not valid`);
     } else {
@@ -154,7 +177,7 @@ export default class LocalFileSystem {
   }
 
   public async mkdir(path: string): Promise<void> {
-    let [directoryHandle, pathArr] = this.helper(path);
+    let [directoryHandle, pathArr] = await this.helper(path, "readwrite");
     if (!directoryHandle) {
       throw new Error(`${path} is not valid`);
     } else {
@@ -167,7 +190,7 @@ export default class LocalFileSystem {
   }
 
   public async exists(path: string): Promise<boolean> {
-    let [directoryHandle, pathArr] = this.helper(path);
+    let [directoryHandle, pathArr] = await this.helper(path, "read");
     if (!directoryHandle) {
       throw new Error(`${path} is not valid`);
     } else {
@@ -196,7 +219,7 @@ export default class LocalFileSystem {
   }
 
   public async rmdir(path: string): Promise<void> {
-    let [directoryHandle, pathArr] = this.helper(path);
+    let [directoryHandle, pathArr] = await this.helper(path, "readwrite");
     if (!directoryHandle) {
       throw new Error(`${path} is not valid`);
     } else {

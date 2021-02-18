@@ -68,8 +68,27 @@ type Cache = {
   };
 };
 
+interface NotebookDBEntry {
+  // basic info
+  _id: string;
+  dir: string;
+  name: string;
+
+  // git
+  gitURL: string;
+  gitBranch: string;
+  gitCorsProxy?: string;
+  gitUsername?: string;
+  gitPassword?: string;
+  autoFetchPeriod: number; // in milliseconds
+  fetchedAt: Date;
+  remoteSha: string;
+  localSha: string;
+  directoryHandle?: FileSystemDirectoryHandle;
+}
+
 export default class Crossnote {
-  private notebookDB: PouchDB.Database<Notebook>;
+  private notebookDB: PouchDB.Database<NotebookDBEntry>;
 
   constructor() {
     PouchDB.plugin(PouchdbFind);
@@ -144,12 +163,15 @@ export default class Crossnote {
           fs: fs,
           dir,
         });
+      }
 
-        // Save to DB
-        try {
-          await this.notebookDB.put(notebook);
-        } catch (error) {
-          // Failed to save to DB
+      // Save to DB
+      try {
+        await this.notebookDB.put(Object.assign({ directoryHandle }, notebook));
+      } catch (error) {
+        console.log("failed to save to error");
+        // Failed to save to DB
+        if (!directoryHandle) {
           await pfs.rmdir(dir);
         }
       }
@@ -717,13 +739,16 @@ export default class Crossnote {
   }
 
   public async listNotebooks(): Promise<Notebook[]> {
-    const notebooks = (
+    const notebookEntries = (
       await this.notebookDB.find({
         selector: {
           gitURL: { $gt: null },
         },
       })
-    ).docs.map((n) => {
+    ).docs;
+    const notebooks: Notebook[] = [];
+    for (let i = 0; i < notebookEntries.length; i++) {
+      const n = notebookEntries[i];
       const notebook = new Notebook();
       notebook._id = n._id;
       notebook.dir = n.dir;
@@ -737,9 +762,21 @@ export default class Crossnote {
       notebook.fetchedAt = n.fetchedAt;
       notebook.remoteSha = n.remoteSha;
       notebook.localSha = n.localSha;
-      return notebook;
-    });
-    // console.log(notebooks);
+
+      if (n.directoryHandle) {
+        // local notebook
+        const dir = (
+          await pfs.attachLocalDirectory({
+            id: n._id,
+            directoryHandle: n.directoryHandle,
+          })
+        ).replace(/\/+$/, "");
+        notebook.dir = dir;
+        notebook.isLocal = true;
+      }
+
+      notebooks.push(notebook);
+    }
 
     const promises = notebooks.map((notebook, i) => {
       return (async (i: number) => {
