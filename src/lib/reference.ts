@@ -16,9 +16,15 @@ export class ReferenceMap {
   public addReference(
     noteFilePath: string,
     referredByNoteFilePath: string,
-    reference: Reference,
+    reference?: Reference,
   ) {
-    if (noteFilePath === referredByNoteFilePath) {
+    if (noteFilePath === referredByNoteFilePath && !reference) {
+      if (!(noteFilePath in this.map)) {
+        this.map[noteFilePath] = {};
+      }
+      return;
+    }
+    if (!reference) {
       return;
     }
     if (noteFilePath in this.map) {
@@ -40,6 +46,7 @@ export class ReferenceMap {
     referredByNoteFilePath: string,
   ) {
     if (noteFilePath === referredByNoteFilePath) {
+      delete this.map[noteFilePath];
       return;
     }
     if (noteFilePath in this.map) {

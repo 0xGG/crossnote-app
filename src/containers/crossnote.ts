@@ -132,6 +132,8 @@ function useCrossnoteContainer(initialState: InitialState) {
           activeTabset = new FlexLayout.TabSetNode();
           (layoutModel.getRoot() as any)._addChild(activeTabset);
           layoutModel.doAction(Actions.setActiveTabset(activeTabset.getId()));
+        } else {
+          activeTabset = layoutModel.getActiveTabset();
         }
       }
 
@@ -156,6 +158,9 @@ function useCrossnoteContainer(initialState: InitialState) {
             return layoutModel.doAction(Actions.selectTab(eTabNode.getId()));
           }
         }
+      }
+      if (!activeTabset) {
+        return;
       }
       layoutModel.doAction(
         Actions.addNode(tabNode, activeTabset.getId(), DockLocation.CENTER, 0),

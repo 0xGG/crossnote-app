@@ -122,7 +122,11 @@ export default function NotebookTreeView(props: Props) {
           })
           .then((notes) => {
             refreshQuickAccessNotes(notes);
+            globalEmitter.emit(EventType.PerformedGitOperation, {
+              notebookPath: props.notebook.dir,
+            });
           });
+
         setExpanded(nodes);
       }
     },
@@ -253,6 +257,9 @@ export default function NotebookTreeView(props: Props) {
                   })
                   .then((notes) => {
                     refreshQuickAccessNotes(notes);
+                    globalEmitter.emit(EventType.PerformedGitOperation, {
+                      notebookPath: props.notebook.dir,
+                    });
                   });
               }}
               className={clsx(classes.treeItemLabelRoot)}

@@ -184,13 +184,14 @@ export class Notebook {
     // Handle new references
     for (let i = 0; i < references.length; i++) {
       const { link } = references[i];
-      if (link in mentions) {
-        continue;
-      } else {
-        mentions[link] = true;
-        this.referenceMap.addReference(link, note.filePath, references[i]);
-      }
+      mentions[link] = true;
+      this.referenceMap.addReference(link, note.filePath, references[i]);
     }
+
+    // Add self to reference map
+    this.referenceMap.addReference(note.filePath, note.filePath, null);
+
+    // Update the mentions
     note.mentions = mentions;
   }
 
@@ -497,8 +498,8 @@ export class Notebook {
           dir: this.dir,
           filepath: filePath,
         });
-        await this.removeNoteRelations(filePath);
       }
+      await this.removeNoteRelations(filePath);
     }
   }
 
