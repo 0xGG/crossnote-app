@@ -2,7 +2,6 @@ import {
   Avatar,
   Badge,
   Box,
-  Button,
   Card,
   CircularProgress,
   CssBaseline,
@@ -33,7 +32,6 @@ import { sha256 } from "js-sha256";
 import {
   Bell,
   Cog as SettingsIcon,
-  FolderOpen,
   Menu,
   Notebook,
   PlusCircleOutline,
@@ -317,22 +315,6 @@ export function Home(props: Props) {
               )}
             </ListItemSecondaryAction>
           </ListItem>
-          {"showDirectoryPicker" in window && (
-            <ListItem>
-              <Button
-                style={{ margin: "0 auto", width: "100%" }}
-                color={"primary"}
-                variant={"contained"}
-                startIcon={<FolderOpen></FolderOpen>}
-                size={"small"}
-                onClick={() => {
-                  crossnoteContainer.openLocalNotebook();
-                }}
-              >
-                {t("general/open-folder")}
-              </Button>
-            </ListItem>
-          )}
         </List>
         <List disablePadding={true} style={{ marginBottom: theme.spacing(16) }}>
           {crossnoteContainer.notebooks.map((notebook) => {
@@ -393,6 +375,7 @@ export function Home(props: Props) {
                   singleton: true,
                 },
               });
+              setDrawerOpen(false);
             }}
           >
             {cloudContainer.viewer ? (

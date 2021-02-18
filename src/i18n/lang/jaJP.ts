@@ -200,6 +200,9 @@ export const jaJP = {
     "general/add-to-quick-access": "クイック アクセスに追加",
     "general/remove-from-quick-access": "クイック アクセスから削除",
     "general/open-folder": "フォルダを開く",
+    "general/open-a-local-folder": "ローカル フォルダを開く",
+    "general/your-browser-doesnt-support-to-open-local-folder":
+      "ブラウザがローカル フォルダを開くことをサポートしていません",
     "general/refresh": "更新",
 
     // Error

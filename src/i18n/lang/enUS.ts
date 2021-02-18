@@ -200,6 +200,9 @@ export const enUS = {
     "general/add-to-quick-access": "Add to quick access",
     "general/remove-from-quick-access": "Remove from quick access",
     "general/open-folder": "Open Folder",
+    "general/open-a-local-folder": "Open a Local Folder",
+    "general/your-browser-doesnt-support-to-open-local-folder":
+      "Your browser doesn't support to open local folder",
     "general/refresh": "Refresh",
 
     // Error

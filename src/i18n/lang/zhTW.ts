@@ -197,6 +197,9 @@ export const zhTW = {
     "general/add-to-quick-access": "添加到快速訪問",
     "general/remove-from-quick-access": "從快速訪問中移除",
     "general/open-folder": "打開文件夾",
+    "general/open-a-local-folder": "打開壹個本地文件夾",
+    "general/your-browser-doesnt-support-to-open-local-folder":
+      "妳的瀏覽器不支持打開本地文件夾",
     "general/refresh": "刷新",
 
     // Error
