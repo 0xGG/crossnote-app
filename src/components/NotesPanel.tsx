@@ -130,7 +130,7 @@ const useStyles = makeStyles((theme: Theme) =>
 interface Props {
   tabNode: TabNode;
   notebook: Notebook;
-  referredNote?: Note;
+  note?: Note;
   initialSearchValue?: string;
   title?: string;
 }
@@ -167,14 +167,11 @@ export default function NotesPanel(props: Props) {
   const createNewNote = useCallback(() => {
     setIsCreatingNote(true);
     let markdown = "";
-    if (props.referredNote) {
-      if (
-        props.referredNote.title ===
-        props.referredNote.filePath.replace(/\.md$/, "")
-      ) {
-        markdown = `[[${props.referredNote.title}]]`;
+    if (props.note) {
+      if (props.note.title === props.note.filePath.replace(/\.md$/, "")) {
+        markdown = `[[${props.note.title}]]`;
       } else {
-        markdown = `[[${props.referredNote.title}|${props.referredNote.filePath}]]`;
+        markdown = `[[${props.note.title}|${props.note.filePath}]]`;
       }
     }
     crossnoteContainer
@@ -186,7 +183,7 @@ export default function NotesPanel(props: Props) {
       .catch(() => {
         setIsCreatingNote(false);
       });
-  }, [crossnoteContainer, props.notebook, props.referredNote]);
+  }, [props.notebook, props.note]);
 
   const onChangeSearchValue = useCallback(
     (event: React.ChangeEvent<HTMLTextAreaElement | HTMLInputElement>) => {
@@ -203,16 +200,16 @@ export default function NotesPanel(props: Props) {
     [searchValueInputTimeout],
   );
 
-  const refreshRawNotes = useCallback(() => {
+  const refreshRawNotes = useCallback(async () => {
     setRawNotesMap(
       Object.assign(
         {},
-        props.referredNote
-          ? props.referredNote.mentionedBy
+        props.note
+          ? await props.notebook.getReferredByNotes(props.note.filePath)
           : props.notebook.notes,
       ) as any,
     );
-  }, [props.notebook.notes, props.referredNote]);
+  }, [props.notebook, props.note]);
 
   useEffect(() => {
     setSearchValue("");
@@ -288,13 +285,13 @@ export default function NotesPanel(props: Props) {
       );
       globalEmitter.off(EventType.DeletedNotebook, deletedNotebookCallback);
     };
-  }, [refreshRawNotes, props.notebook, props.referredNote, props.tabNode]);
+  }, [refreshRawNotes, props.notebook, props.note, props.tabNode]);
 
   useEffect(() => {
     if (refreshRawNotes) {
       refreshRawNotes();
     }
-  }, [refreshRawNotes]);
+  }, [refreshRawNotes, props.note]);
 
   useEffect(() => {
     const notes = Object.values(rawNotesMap);

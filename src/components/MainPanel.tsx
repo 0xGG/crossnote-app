@@ -35,35 +35,48 @@ export function MainPanel(props: Props) {
   const crossnoteContainer = CrossnoteContainer.useContainer();
   const { t } = useTranslation();
 
-  const factory = useCallback((node: TabNode) => {
-    const config: TabNodeConfig = node.getConfig();
-    console.log(
-      "render component: \n",
-      `* id: ${node.getId()}\n`,
-      `* name: ${node.getName()}\n`,
-      `* config: `,
-      node.getConfig(),
-    );
-
-    const component: TabNodeComponent = node.getComponent() as TabNodeComponent;
-    if (component === "Settings") {
-      return <Settings></Settings>;
-    } else if (component === "Notes") {
-      return (
-        <NotesPanel
-          tabNode={node}
-          notebook={config.notebook}
-          title={t("general/notes")}
-        ></NotesPanel>
+  const factory = useCallback(
+    (node: TabNode) => {
+      const config: TabNodeConfig = node.getConfig();
+      console.log(
+        "render component: \n",
+        `* id: ${node.getId()}\n`,
+        `* name: ${node.getName()}\n`,
+        `* config: `,
+        node.getConfig(),
       );
-    } else if (component === "Privacy") {
-      return <PrivacyPolicy toggleDrawer={props.toggleDrawer}></PrivacyPolicy>;
-    } else if (component === "Note") {
-      return <NotePanel note={config.note} tabNode={node}></NotePanel>;
-    } else if (component === "Graph") {
-      return <GraphView notebook={config.notebook} tabNode={node}></GraphView>;
-    }
-  }, []);
+
+      const component: TabNodeComponent = node.getComponent() as TabNodeComponent;
+      if (component === "Settings") {
+        return <Settings></Settings>;
+      } else if (component === "Notes") {
+        return (
+          <NotesPanel
+            tabNode={node}
+            notebook={config.notebook}
+            title={t("general/notes")}
+          ></NotesPanel>
+        );
+      } else if (component === "Privacy") {
+        return (
+          <PrivacyPolicy toggleDrawer={props.toggleDrawer}></PrivacyPolicy>
+        );
+      } else if (component === "Note") {
+        return (
+          <NotePanel
+            notebook={config.notebook}
+            note={config.note}
+            tabNode={node}
+          ></NotePanel>
+        );
+      } else if (component === "Graph") {
+        return (
+          <GraphView notebook={config.notebook} tabNode={node}></GraphView>
+        );
+      }
+    },
+    [props.toggleDrawer, t],
+  );
 
   useEffect(() => {
     console.log("render MainPanel");

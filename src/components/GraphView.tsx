@@ -198,7 +198,7 @@ export default function GraphView(props: Props) {
       .data(graphViewData.nodes)
       .enter()
       .append("text")
-      .text((d) => d.id)
+      .text((d) => d.label)
       .style("fill", "#555")
       .style("font-family", "Arial")
       .style("font-size", 12)
@@ -210,16 +210,7 @@ export default function GraphView(props: Props) {
     };
 
     const neigh = (n1: GraphViewNode, n2: GraphViewNode) => {
-      const note1 = props.notebook.notes[n1.id];
-      const note2 = props.notebook.notes[n2.id];
-      if (!note1 || !note2) {
-        return false;
-      }
-      return (
-        note1.filePath in note2.mentions ||
-        note2.filePath in note1.mentions ||
-        note1.filePath === note2.filePath
-      );
+      return props.notebook.referenceMap.hasRelation(n1.id, n2.id);
     };
 
     const focus = (event: any, d: GraphViewNode) => {

@@ -178,6 +178,7 @@ export default function NoteCard(props: Props) {
             config: {
               singleton: false,
               note,
+              notebook: crossnoteContainer.getNotebookAtPath(note.notebookPath),
             },
             name: `📝 ` + note.title,
           });

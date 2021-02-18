@@ -6,7 +6,8 @@ import { md } from "vickymd/preview";
 // import { isFileAnImage } from "../utilities/image";
 import { matter, matterStringify } from "../utilities/markdown";
 import { fs, pfs } from "./fs";
-import { Note, NoteConfig, Notes } from "./note";
+import { Mentions, Note, NoteConfig, Notes } from "./note";
+import { Reference, ReferenceMap } from "./reference";
 
 /**
  * Change "createdAt" to "created", and "modifiedAt" to "modified"
@@ -56,12 +57,15 @@ export class Notebook {
 
   private loadedNotes: boolean;
 
+  public referenceMap: ReferenceMap;
+
   // public miniSearch: MiniSearch;
 
   constructor() {
     this.notes = {};
     this.isLocal = false;
     this.loadedNotes = false;
+    this.referenceMap = new ReferenceMap();
     /*
     this.miniSearch = new MiniSearch({
       fields: ["title"],
@@ -77,6 +81,36 @@ export class Notebook {
     */
   }
 
+  public noteHasReferences(filePath: string): boolean {
+    return this.referenceMap.noteHasReferences(filePath);
+  }
+
+  public async getReferredByNotes(filePath: string): Promise<Notes> {
+    if (filePath in this.referenceMap.map) {
+      const map = this.referenceMap.map[filePath];
+      const notes: Notes = {};
+      for (let rFilePath in map) {
+        const note = await this.getNote(rFilePath);
+        if (note) {
+          notes[rFilePath] = note;
+        }
+      }
+      return notes;
+    } else {
+      return {};
+    }
+  }
+
+  public getReferences(
+    noteFilePath: string,
+    referredByNoteFilePath: string,
+  ): Reference[] {
+    return this.referenceMap.getReferences(
+      noteFilePath,
+      referredByNoteFilePath,
+    );
+  }
+
   async processNoteMentionsAndMentionedBy(filePath: string) {
     const note = await this.getNote(filePath);
     if (!note) {
@@ -84,13 +118,6 @@ export class Notebook {
     }
     // Get mentions
     const tokens = md.parse(note.markdown, {});
-    // console.log(tokens);
-    type TraverseResult = {
-      link: string;
-      text: string;
-      // start: number;
-      // end: number;
-    };
     const resolveLink = (link: string) => {
       if (!link.endsWith(".md")) {
         link = link + ".md";
@@ -106,9 +133,10 @@ export class Notebook {
     };
     const traverse = function (
       tokens: Token[],
-      results: TraverseResult[],
+      parentToken: Token,
+      results: Reference[],
       level: number,
-    ): TraverseResult[] {
+    ): Reference[] {
       for (let i = 0; i < tokens.length; i++) {
         const token = tokens[i];
         if (token.type === "wikilink") {
@@ -120,51 +148,50 @@ export class Notebook {
             // TODO: Ignore more protocols
             continue;
           }
+          // console.log("find link token: ", token, parentToken);
           results.push({
             text,
             link: resolveLink(link),
+            parentToken,
+            token,
           });
         } else if (token.type === "tag") {
           const text = token.content.trim();
           const link = token.content.trim();
+          // console.log("find link token: ", token, parentToken);
           results.push({
             text,
             link: resolveLink(link),
+            parentToken,
+            token,
           });
         } else if (token.children && token.children.length) {
-          traverse(token.children, results, level + 1);
+          traverse(token.children, token, results, level + 1);
         }
       }
       return results;
     };
 
-    const traverseResults = traverse(tokens, [], 0);
-    const mentions: Notes = {};
-    const oldMentions: Notes = note.mentions;
+    const references = traverse(tokens, null, [], 0);
+    const mentions: Mentions = {};
+    const oldMentions = note.mentions;
 
-    // Handle mentions and mentionedBy
-    for (let i = 0; i < traverseResults.length; i++) {
-      const { link } = traverseResults[i];
-      if (link in mentions) {
-        continue;
-      }
-      const mentionedNote = await this.getNote(link);
-      if (mentionedNote) {
-        mentions[mentionedNote.filePath] = mentionedNote;
-        mentionedNote.mentionedBy[note.filePath] = note;
-      }
-    }
-
-    // Remove old mentions
+    // Remove old references
     for (let filePath in oldMentions) {
-      if (!(filePath in mentions)) {
-        const mentionedNote = await this.getNote(filePath);
-        if (mentionedNote) {
-          delete mentionedNote.mentionedBy[note.filePath];
-        }
-      }
+      this.referenceMap.deleteReferences(filePath, note.filePath);
     }
 
+    // Handle new references
+    for (let i = 0; i < references.length; i++) {
+      const { link } = references[i];
+      mentions[link] = true;
+      this.referenceMap.addReference(link, note.filePath, references[i]);
+    }
+
+    // Add self to reference map
+    this.referenceMap.addReference(note.filePath, note.filePath, null);
+
+    // Update the mentions
     note.mentions = mentions;
   }
 
@@ -304,7 +331,6 @@ export class Notebook {
         markdown,
         config: noteConfig,
         mentions: oldMentions,
-        mentionedBy: {},
       };
 
       if (refreshNoteRelations) {
@@ -340,6 +366,7 @@ export class Notebook {
   }: RefreshNotesArgs): Promise<Notes> {
     if (refreshRelations) {
       this.notes = {};
+      this.referenceMap = new ReferenceMap();
     }
     let files: string[] = [];
     try {
@@ -457,10 +484,7 @@ export class Notebook {
     }
     const mentions = note.mentions;
     for (let filePath in mentions) {
-      const mentionedNote = await this.getNote(filePath);
-      if (mentionedNote) {
-        delete mentionedNote.mentionedBy[note.filePath];
-      }
+      this.referenceMap.deleteReferences(filePath, note.filePath);
     }
     delete this.notes[note.filePath];
   }
@@ -474,8 +498,8 @@ export class Notebook {
           dir: this.dir,
           filepath: filePath,
         });
-        await this.removeNoteRelations(filePath);
       }
+      await this.removeNoteRelations(filePath);
     }
   }
 

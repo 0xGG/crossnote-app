@@ -12,14 +12,18 @@ export interface NoteConfig {
   favorited?: boolean;
 }
 
+export type Mentions = { [key: string]: boolean };
+
 export interface Note {
   notebookPath: string;
   filePath: FilePath;
   title: string;
   markdown: string;
   config: NoteConfig;
-  mentions: Notes;
-  mentionedBy: Notes;
+  /**
+   * @param key: mentioned note file path
+   */
+  mentions: Mentions;
 }
 
 export interface Notes {

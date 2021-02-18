@@ -122,7 +122,11 @@ export default function NotebookTreeView(props: Props) {
           })
           .then((notes) => {
             refreshQuickAccessNotes(notes);
+            globalEmitter.emit(EventType.PerformedGitOperation, {
+              notebookPath: props.notebook.dir,
+            });
           });
+
         setExpanded(nodes);
       }
     },
@@ -253,6 +257,9 @@ export default function NotebookTreeView(props: Props) {
                   })
                   .then((notes) => {
                     refreshQuickAccessNotes(notes);
+                    globalEmitter.emit(EventType.PerformedGitOperation, {
+                      notebookPath: props.notebook.dir,
+                    });
                   });
               }}
               className={clsx(classes.treeItemLabelRoot)}
@@ -312,7 +319,7 @@ export default function NotebookTreeView(props: Props) {
                     type: "tab",
                     component: "Graph",
                     id: "Graph: " + props.notebook.dir,
-                    name: t("general/graph-view"),
+                    name: "🕸 " + t("general/graph-view"),
                     config: {
                       singleton: true,
                       notebook: props.notebook,
@@ -422,6 +429,7 @@ export default function NotebookTreeView(props: Props) {
                         config: {
                           singleton: false,
                           note,
+                          notebook: props.notebook,
                         },
                         name: `📝 ` + note.title,
                       });
