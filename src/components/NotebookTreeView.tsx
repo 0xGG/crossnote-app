@@ -269,10 +269,11 @@ export default function NotebookTreeView(props: Props) {
                 variant={"body1"}
                 className={clsx(classes.treeItemLabelText)}
               >
-                {props.notebook.name +
-                  (props.notebook.localSha === props.notebook.remoteSha
-                    ? ""
-                    : " 🔔")}
+                {(props.notebook.isLocal
+                  ? "📁 "
+                  : props.notebook.localSha === props.notebook.remoteSha
+                  ? "☁️ "
+                  : "🔔 ") + props.notebook.name}
               </Typography>
             </Box>
           }
