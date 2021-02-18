@@ -183,7 +183,7 @@ export default function NotesPanel(props: Props) {
       .catch(() => {
         setIsCreatingNote(false);
       });
-  }, [crossnoteContainer, props.notebook, props.note]);
+  }, [props.notebook, props.note]);
 
   const onChangeSearchValue = useCallback(
     (event: React.ChangeEvent<HTMLTextAreaElement | HTMLInputElement>) => {
@@ -205,7 +205,7 @@ export default function NotesPanel(props: Props) {
       Object.assign(
         {},
         props.note
-          ? await props.notebook.getReferredNotes(props.note.filePath)
+          ? await props.notebook.getReferredByNotes(props.note.filePath)
           : props.notebook.notes,
       ) as any,
     );
@@ -291,7 +291,7 @@ export default function NotesPanel(props: Props) {
     if (refreshRawNotes) {
       refreshRawNotes();
     }
-  }, [refreshRawNotes]);
+  }, [refreshRawNotes, props.note]);
 
   useEffect(() => {
     const notes = Object.values(rawNotesMap);

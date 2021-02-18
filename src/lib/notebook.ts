@@ -81,12 +81,12 @@ export class Notebook {
     */
   }
 
-  public noteHasReference(filePath: string): boolean {
-    return filePath in this.referenceMap;
+  public noteHasReferences(filePath: string): boolean {
+    return this.referenceMap.noteHasReferences(filePath);
   }
 
-  public async getReferredNotes(filePath: string): Promise<Notes> {
-    if (filePath in this.referenceMap) {
+  public async getReferredByNotes(filePath: string): Promise<Notes> {
+    if (filePath in this.referenceMap.map) {
       const map = this.referenceMap.map[filePath];
       const notes: Notes = {};
       for (let rFilePath in map) {
@@ -99,6 +99,16 @@ export class Notebook {
     } else {
       return {};
     }
+  }
+
+  public getReferences(
+    noteFilePath: string,
+    referredByNoteFilePath: string,
+  ): Reference[] {
+    return this.referenceMap.getReferences(
+      noteFilePath,
+      referredByNoteFilePath,
+    );
   }
 
   async processNoteMentionsAndMentionedBy(filePath: string) {
@@ -138,7 +148,7 @@ export class Notebook {
             // TODO: Ignore more protocols
             continue;
           }
-          console.log("find link token: ", token, parentToken);
+          // console.log("find link token: ", token, parentToken);
           results.push({
             text,
             link: resolveLink(link),
@@ -148,7 +158,7 @@ export class Notebook {
         } else if (token.type === "tag") {
           const text = token.content.trim();
           const link = token.content.trim();
-          console.log("find link token: ", token, parentToken);
+          // console.log("find link token: ", token, parentToken);
           results.push({
             text,
             link: resolveLink(link),
@@ -166,7 +176,12 @@ export class Notebook {
     const mentions: Mentions = {};
     const oldMentions = note.mentions;
 
-    // Handle references
+    // Remove old references
+    for (let filePath in oldMentions) {
+      this.referenceMap.deleteReferences(filePath, note.filePath);
+    }
+
+    // Handle new references
     for (let i = 0; i < references.length; i++) {
       const { link } = references[i];
       if (link in mentions) {
@@ -176,19 +191,6 @@ export class Notebook {
         this.referenceMap.addReference(link, note.filePath, references[i]);
       }
     }
-
-    // Remove old mentions
-    /* TODO: Fix this
-    for (let filePath in oldMentions) {
-      if (!(filePath in mentions)) {
-        const mentionedNote = await this.getNote(filePath);
-        if (mentionedNote) {
-          delete mentionedNote.mentionedBy[note.filePath];
-        }
-      }
-    }
-    */
-
     note.mentions = mentions;
   }
 
@@ -363,6 +365,7 @@ export class Notebook {
   }: RefreshNotesArgs): Promise<Notes> {
     if (refreshRelations) {
       this.notes = {};
+      this.referenceMap = new ReferenceMap();
     }
     let files: string[] = [];
     try {
@@ -479,14 +482,9 @@ export class Notebook {
       return;
     }
     const mentions = note.mentions;
-    /*
-    TODO: Fixed this
     for (let filePath in mentions) {
-      const mentionedNote = await this.getNote(filePath);
-      if (mentionedNote) {
-        delete mentionedNote.mentionedBy[note.filePath];
-      }
-    }*/
+      this.referenceMap.deleteReferences(filePath, note.filePath);
+    }
     delete this.notes[note.filePath];
   }
 

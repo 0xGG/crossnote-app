@@ -312,7 +312,7 @@ export default function NotebookTreeView(props: Props) {
                     type: "tab",
                     component: "Graph",
                     id: "Graph: " + props.notebook.dir,
-                    name: t("general/graph-view"),
+                    name: "🕸 " + t("general/graph-view"),
                     config: {
                       singleton: true,
                       notebook: props.notebook,

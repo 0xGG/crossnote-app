@@ -1007,7 +1007,7 @@ export default function NotePanel(props: Props) {
             ></div>
           ) : null}
         </Box>
-        {props.notebook.noteHasReference(note.filePath) && (
+        {props.notebook.noteHasReferences(note.filePath) && (
           <React.Fragment>
             <Divider style={{ marginTop: "32px" }}></Divider>
             <NotesPanel
