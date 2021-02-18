@@ -364,6 +364,7 @@ function useCrossnoteContainer(initialState: InitialState) {
         config: {
           singleton: false,
           note,
+          notebook,
         },
       });
     },

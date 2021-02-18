@@ -45,6 +45,7 @@ import {
   PerformedGitOperationEventData,
 } from "../lib/event";
 import { Note } from "../lib/note";
+import { Notebook } from "../lib/notebook";
 import { resolveNoteImageSrc } from "../utilities/image";
 import {
   openURL,
@@ -198,6 +199,7 @@ const useStyles = makeStyles((theme: Theme) =>
 );
 
 interface Props {
+  notebook: Notebook;
   note: Note;
   tabNode: TabNode;
 }
@@ -1005,14 +1007,14 @@ export default function NotePanel(props: Props) {
             ></div>
           ) : null}
         </Box>
-        {Object.keys(note.mentionedBy).length > 0 && (
+        {props.notebook.noteHasReference(note.filePath) && (
           <React.Fragment>
             <Divider style={{ marginTop: "32px" }}></Divider>
             <NotesPanel
               title={"Linked references"}
               tabNode={props.tabNode}
-              notebook={crossnoteContainer.getNotebookAtPath(note.notebookPath)}
-              referredNote={note}
+              notebook={props.notebook}
+              note={note}
             ></NotesPanel>
           </React.Fragment>
         )}

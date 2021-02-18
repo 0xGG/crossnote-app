@@ -422,6 +422,7 @@ export default function NotebookTreeView(props: Props) {
                         config: {
                           singleton: false,
                           note,
+                          notebook: props.notebook,
                         },
                         name: `📝 ` + note.title,
                       });
