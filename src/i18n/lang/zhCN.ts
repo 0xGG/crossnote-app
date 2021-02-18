@@ -197,6 +197,9 @@ export const zhCN = {
     "general/add-to-quick-access": "添加到快速访问",
     "general/remove-from-quick-access": "从快速访问中移除",
     "general/open-folder": "打开文件夹",
+    "general/open-a-local-folder": "打开一个本地文件夹",
+    "general/your-browser-doesnt-support-to-open-local-folder":
+      "你的浏览器不支持打开本地文件夹",
     "general/refresh": "刷新",
 
     // Error

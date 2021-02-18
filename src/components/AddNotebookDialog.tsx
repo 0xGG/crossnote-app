@@ -6,6 +6,7 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
+  Divider,
   ExpansionPanel,
   ExpansionPanelDetails,
   ExpansionPanelSummary,
@@ -14,7 +15,8 @@ import {
   TextField,
   Typography,
 } from "@material-ui/core";
-import { ChevronDown } from "mdi-material-ui";
+import { useTheme } from "@material-ui/core/styles";
+import { ChevronDown, FolderOpen } from "mdi-material-ui";
 import Noty from "noty";
 import React, { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -33,7 +35,7 @@ interface Props {
 export default function AddNotebookDialog(props: Props) {
   const crossnoteContainer = CrossnoteContainer.useContainer();
   const [notebookName, setNotebookName] = useState<string>("");
-  const [expanded, setExpanded] = useState<boolean>(false);
+  const [expanded, setExpanded] = useState<boolean>(true);
   const [gitURL, setGitURL] = useState<string>(props.gitURL || "");
   const [gitBranch, setGitBranch] = useState<string>(props.gitBranch || "");
   const [gitUsername, setGitUsername] = useState<string>("");
@@ -45,6 +47,7 @@ export default function AddNotebookDialog(props: Props) {
     boolean
   >(false);
   const { t } = useTranslation();
+  const theme = useTheme();
 
   const close = useCallback(() => {
     setNotebookName("");
@@ -96,6 +99,8 @@ export default function AddNotebookDialog(props: Props) {
     gitPassword,
     rememberCredentialsChecked,
     gitCorsProxy,
+    close,
+    t,
   ]);
 
   useEffect(() => {
@@ -119,9 +124,53 @@ export default function AddNotebookDialog(props: Props) {
     >
       <DialogTitle>{t("general/add-a-notebook")}</DialogTitle>
       <DialogContent>
+        <Box>
+          <Button
+            style={{
+              margin: `${theme.spacing(2)}px auto`,
+              padding: `${theme.spacing(2)}px 0`,
+              width: "100%",
+            }}
+            color={"primary"}
+            variant={"outlined"}
+            startIcon={<FolderOpen></FolderOpen>}
+            size={"small"}
+            onClick={() => {
+              crossnoteContainer.openLocalNotebook();
+              props.onClose();
+            }}
+            disabled={!("showDirectoryPicker" in window)}
+          >
+            {"showDirectoryPicker" in window
+              ? t("general/open-a-local-folder")
+              : t("general/your-browser-doesnt-support-to-open-local-folder")}
+          </Button>
+          <Box style={{ position: "relative" }}>
+            <Typography
+              variant={"subtitle1"}
+              style={{
+                position: "absolute",
+                top: "-14px",
+                left: "50%",
+                transform: "translateX(-50%)",
+              }}
+            >
+              {t("widget/crossnote.auth/Or")}
+            </Typography>
+            <Divider
+              style={{
+                margin: `${theme.spacing(3)}px auto`,
+                width: "100%",
+              }}
+            ></Divider>
+          </Box>
+        </Box>
         <Typography variant={"caption"}>
           {"* " + t("add-notebook-dialog/disclaimer")}
         </Typography>
+        <br></br>
+        <br></br>
+        {/*
         <TextField
           label={t("general/notebook-name")}
           value={notebookName}
@@ -133,15 +182,14 @@ export default function AddNotebookDialog(props: Props) {
           autoComplete={"off"}
           autoCorrect={"off"}
         ></TextField>
+        */}
         <ExpansionPanel
           elevation={2}
           expanded={expanded}
           onChange={() => setExpanded(!expanded)}
         >
           <ExpansionPanelSummary expandIcon={<ChevronDown></ChevronDown>}>
-            <Typography>{`${t("general/git-repository")} (${t(
-              "general/optional",
-            )})`}</Typography>
+            <Typography>{`${t("general/git-repository")}`}</Typography>
           </ExpansionPanelSummary>
           <ExpansionPanelDetails>
             <Box>
