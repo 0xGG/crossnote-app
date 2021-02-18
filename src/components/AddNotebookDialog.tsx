@@ -1,4 +1,7 @@
 import {
+  Accordion,
+  AccordionDetails,
+  AccordionSummary,
   Box,
   Button,
   Checkbox,
@@ -7,9 +10,6 @@ import {
   DialogContent,
   DialogTitle,
   Divider,
-  ExpansionPanel,
-  ExpansionPanelDetails,
-  ExpansionPanelSummary,
   FormControlLabel,
   Link,
   TextField,
@@ -183,15 +183,15 @@ export default function AddNotebookDialog(props: Props) {
           autoCorrect={"off"}
         ></TextField>
         */}
-        <ExpansionPanel
+        <Accordion
           elevation={2}
           expanded={expanded}
           onChange={() => setExpanded(!expanded)}
         >
-          <ExpansionPanelSummary expandIcon={<ChevronDown></ChevronDown>}>
+          <AccordionSummary expandIcon={<ChevronDown></ChevronDown>}>
             <Typography>{`${t("general/git-repository")}`}</Typography>
-          </ExpansionPanelSummary>
-          <ExpansionPanelDetails>
+          </AccordionSummary>
+          <AccordionDetails>
             <Box>
               <TextField
                 label={t("general/url")}
@@ -262,8 +262,8 @@ export default function AddNotebookDialog(props: Props) {
                 {t("general/why-cors-proxy")}
               </Link>
             </Box>
-          </ExpansionPanelDetails>
-        </ExpansionPanel>
+          </AccordionDetails>
+        </Accordion>
       </DialogContent>
       <DialogActions>
         <Button
