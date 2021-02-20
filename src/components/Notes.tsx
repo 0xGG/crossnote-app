@@ -1,4 +1,4 @@
-import { Card, Typography } from "@material-ui/core";
+import { Box, Typography } from "@material-ui/core";
 import {
   createStyles,
   makeStyles,
@@ -13,7 +13,7 @@ import { useTranslation } from "react-i18next";
 import LazyLoad from "react-lazyload";
 import { CrossnoteContainer } from "../containers/crossnote";
 import { Note } from "../lib/note";
-import NoteCard, { NoteCardMargin, NoteCardWidth } from "./NoteCard";
+import NoteCard, { NoteCardMargin } from "./NoteCard";
 const is = require("is_js");
 
 const lazyLoadPlaceholderHeight = 92 + 2 * NoteCardMargin;
@@ -34,7 +34,7 @@ const useStyles = makeStyles((theme: Theme) =>
       },
 
       "& .note-card-sizer": {
-        width: `${NoteCardWidth + 2 * NoteCardMargin}px`,
+        // width: `${NoteCardWidth + 2 * NoteCardMargin}px`,
         maxWidth: "100%",
         /*
         [theme.breakpoints.down("xs")]: {
@@ -210,9 +210,8 @@ export default function Notes(props: Props) {
           <LazyLoad
             key={"lazy-load-note-card-" + note.filePath}
             placeholder={
-              <Card
+              <Box
                 style={{
-                  width: `${NoteCardWidth}px`,
                   maxWidth: "100%",
                   margin: `${NoteCardMargin}px auto`,
                   padding: theme.spacing(2, 0.5, 0),
@@ -223,7 +222,7 @@ export default function Notes(props: Props) {
                 <Skeleton />
                 <Skeleton animation={false} />
                 <Skeleton animation="wave" />
-              </Card>
+              </Box>
             }
             height={lazyLoadPlaceholderHeight}
             overflow={true}

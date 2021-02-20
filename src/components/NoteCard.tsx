@@ -1,6 +1,7 @@
 import { Box, IconButton, Tooltip, Typography } from "@material-ui/core";
 import {
   createStyles,
+  darken,
   makeStyles,
   Theme,
   useTheme,
@@ -10,7 +11,7 @@ import { formatRelative } from "date-fns";
 import { formatDistanceStrict } from "date-fns/esm";
 import { TabNode } from "flexlayout-react";
 import { DotsVertical, Pin } from "mdi-material-ui";
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { CrossnoteContainer } from "../containers/crossnote";
 import { SettingsContainer } from "../containers/settings";
@@ -21,24 +22,22 @@ import {
   ModifiedMarkdownEventData,
 } from "../lib/event";
 import { Note } from "../lib/note";
+import { Reference } from "../lib/reference";
 import { resolveNoteImageSrc } from "../utilities/image";
 import { generateSummaryFromMarkdown, Summary } from "../utilities/note";
 import NotePopover from "./NotePopover";
 
-export const NoteCardWidth = 550;
 export const NoteCardMargin = 4;
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
     noteCard: {
-      width: `${NoteCardWidth}px`,
       maxWidth: "100%",
       display: "flex",
       flexDirection: "row",
       alignItems: "flex-start",
       padding: theme.spacing(2, 0.5, 0),
       textAlign: "left",
-      cursor: "pointer",
       // backgroundColor: theme.palette.background.paper,
       margin: `${NoteCardMargin}px auto`,
       [theme.breakpoints.down("sm")]: {
@@ -64,8 +63,13 @@ const useStyles = makeStyles((theme: Theme) =>
       borderBottom: `1px solid ${theme.palette.divider}`,
     },
     header: {
-      marginBottom: theme.spacing(1),
-      wordBreak: "break-all",
+      "marginBottom": theme.spacing(1),
+      "wordBreak": "break-all",
+      "&:hover": {
+        backgroundColor: darken(theme.palette.background.paper, 0.04),
+        cursor: "pointer",
+      },
+      "flex": 1,
     },
     summary: {
       "color": theme.palette.text.secondary,
@@ -80,6 +84,10 @@ const useStyles = makeStyles((theme: Theme) =>
       "-webkit-line-clamp": 2,
       "-webkit-box-orient": "vertical",
       "wordBreak": "break-all",
+      "&:hover": {
+        backgroundColor: darken(theme.palette.background.paper, 0.04),
+        cursor: "pointer",
+      },
     },
     filePath: {
       wordBreak: "break-all",
@@ -110,6 +118,13 @@ const useStyles = makeStyles((theme: Theme) =>
       color: theme.palette.secondary.main,
       marginTop: theme.spacing(1),
     },
+    markdownPreview: {
+      "width": "calc(100% - 32px)",
+      "&:hover": {
+        backgroundColor: darken(theme.palette.background.paper, 0.04),
+        cursor: "pointer",
+      },
+    },
   }),
 );
 
@@ -130,6 +145,7 @@ export default function NoteCard(props: Props) {
   const [gitStatus, setGitStatus] = useState<string>("");
   const [popoverElement, setPopoverElement] = useState<Element>(null);
   const [note, setNote] = useState<Note>(props.note);
+  const [references, setReferences] = useState<Reference[]>([]);
   const { t } = useTranslation();
   const duration = formatDistanceStrict(note.config.modifiedAt, Date.now())
     .replace(/\sseconds?/, "s")
@@ -139,6 +155,21 @@ export default function NoteCard(props: Props) {
     .replace(/\sweeks?/, "w")
     .replace(/\smonths?/, "mo")
     .replace(/\syears?/, "y");
+
+  const openNote = useCallback(() => {
+    if (note) {
+      crossnoteContainer.addTabNode({
+        type: "tab",
+        component: "Note",
+        config: {
+          singleton: false,
+          note,
+          notebook: crossnoteContainer.getNotebookAtPath(note.notebookPath),
+        },
+        name: `📝 ` + note.title,
+      });
+    }
+  }, [note]);
 
   useEffect(() => {
     setNote(props.note);
@@ -168,6 +199,19 @@ export default function NoteCard(props: Props) {
       globalEmitter.off(EventType.ModifiedMarkdown, modifiedMarkdownCallback);
     };
   }, [note]);
+
+  useEffect(() => {
+    if (props.referredNote && note) {
+      const notebook = crossnoteContainer.getNotebookAtPath(note.notebookPath);
+      if (!notebook) {
+        return;
+      }
+      setReferences(
+        notebook.getReferences(props.referredNote.filePath, note.filePath) ||
+          [],
+      );
+    }
+  }, [note, props.referredNote]);
 
   useEffect(() => {
     setHeader(note.title);
@@ -203,22 +247,7 @@ export default function NoteCard(props: Props) {
 
   return (
     <React.Fragment>
-      <Box
-        className={clsx(classes.noteCard, "note-card")}
-        onClick={() => {
-          // crossnoteContainer.setDisplayMobileEditor(true);
-          crossnoteContainer.addTabNode({
-            type: "tab",
-            component: "Note",
-            config: {
-              singleton: false,
-              note,
-              notebook: crossnoteContainer.getNotebookAtPath(note.notebookPath),
-            },
-            name: `📝 ` + note.title,
-          });
-        }}
-      >
+      <Box className={clsx(classes.noteCard, "note-card")}>
         <Box className={clsx(classes.leftPanel)}>
           <Tooltip
             title={
@@ -270,31 +299,43 @@ export default function NoteCard(props: Props) {
             }}
           >
             <Typography
-              style={{ fontWeight: "bold" }}
+              style={{ fontWeight: "bold", marginBottom: "0" }}
               variant={"body1"}
               className={clsx(classes.header)}
+              onClick={openNote}
             >
               {header}
             </Typography>
-            <IconButton
-              size={"small"}
-              style={{
-                marginBottom: theme.spacing(1),
-                marginLeft: theme.spacing(1),
-                marginRight: theme.spacing(1),
-              }}
-              onClick={(event) => {
-                event.preventDefault();
-                event.stopPropagation();
-                setPopoverElement(event.currentTarget);
-              }}
-            >
-              <DotsVertical></DotsVertical>
-            </IconButton>
+            <Box style={{ display: "flex", alignItems: "center" }}>
+              {props.referredNote && (
+                <Typography
+                  variant={"subtitle2"}
+                  style={{
+                    marginLeft: theme.spacing(1),
+                    marginRight: theme.spacing(1),
+                  }}
+                >
+                  {references.length} reference(s)
+                </Typography>
+              )}
+              <IconButton
+                size={"small"}
+                style={{
+                  marginLeft: theme.spacing(1),
+                  marginRight: theme.spacing(1),
+                }}
+                onClick={(event) => {
+                  event.preventDefault();
+                  event.stopPropagation();
+                  setPopoverElement(event.currentTarget);
+                }}
+              >
+                <DotsVertical></DotsVertical>
+              </IconButton>
+            </Box>
           </Box>
-
           {summary && summary.summary.trim().length > 0 && (
-            <Typography className={clsx(classes.summary)}>
+            <Typography className={clsx(classes.summary)} onClick={openNote}>
               {summary && summary.summary.slice(0, 200)}
             </Typography>
           )}
@@ -313,6 +354,38 @@ export default function NoteCard(props: Props) {
               </Box>
             </Box>
           )}
+          {references.map((reference, offset) => {
+            return (
+              <Box
+                style={{
+                  display: "flex",
+                  flexDirection: "row",
+                  // marginBottom: theme.spacing(1),
+                }}
+                key={note.filePath + offset}
+              >
+                <Box style={{ width: "32px" }}>
+                  <Typography style={{ fontWeight: "bold" }}>
+                    {reference.parentToken.map[0] + 1}:
+                  </Typography>
+                </Box>
+                <Box
+                  className={clsx(classes.markdownPreview)}
+                  onClick={openNote}
+                >
+                  {/*
+                  <MarkdownPreview
+                    note={note}
+                    markdown={reference.parentToken.content}
+                  ></MarkdownPreview>
+                  */}
+                  <Typography style={{ color: theme.palette.text.secondary }}>
+                    {reference.parentToken.content}
+                  </Typography>
+                </Box>
+              </Box>
+            );
+          })}
           <Typography variant={"caption"} className={clsx(classes.filePath)}>
             {note.filePath +
               (gitStatus ? " - " + t(`git/status/${gitStatus}`) : "")}
