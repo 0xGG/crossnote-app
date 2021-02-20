@@ -98,7 +98,8 @@ const useStyles = makeStyles((theme: Theme) =>
       },
     },
     contentPanel: {
-      height: "calc(100% - 48px)",
+      position: "relative",
+      height: "calc(100% - 48px - 30px)",
       overflow: "auto",
     },
     editorWrapper: {
@@ -195,6 +196,25 @@ const useStyles = makeStyles((theme: Theme) =>
     floatWinClose: {
       color: "#eee",
     },
+    bottomPanel: {
+      position: "absolute",
+      bottom: "0",
+      width: "100%",
+      padding: theme.spacing(0.5, 1),
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "space-between",
+      maxHeight: "30px",
+    },
+    filePath: {
+      wordBreak: "break-all",
+    },
+    cursorPositionInfo: {
+      // position: "absolute",
+      // right: "16px",
+      // bottom: "16px",
+      zIndex: 150,
+    },
   }),
 );
 
@@ -235,6 +255,7 @@ export default function NotePanel(props: Props) {
     false,
   );
   const [notePopoverElement, setNotePopoverElement] = useState<Element>(null);
+  const [gitStatus, setGitStatus] = useState<string>("");
 
   const confirmNoteTitle = useCallback(() => {
     const finalNoteTitle = noteTitle.trim().replace(/\//g, "-");
@@ -307,7 +328,6 @@ export default function NotePanel(props: Props) {
     }
 
     const modifiedMarkdownCallback = (data: ModifiedMarkdownEventData) => {
-      note.config = data.noteConfig;
       if (data.tabId === tabNode.getId()) {
         return;
       }
@@ -315,6 +335,7 @@ export default function NotePanel(props: Props) {
         data.notebookPath === note.notebookPath &&
         data.noteFilePath === note.filePath
       ) {
+        note.config = data.noteConfig;
         if (editor.getValue() !== data.markdown) {
           editor.setValue(data.markdown);
         }
@@ -888,6 +909,14 @@ export default function NotePanel(props: Props) {
     };
   }, [editor, note]);
 
+  useEffect(() => {
+    crossnoteContainer
+      .getStatus(note.notebookPath, note.filePath)
+      .then((status) => {
+        setGitStatus(status);
+      });
+  }, [note.markdown, note.config.modifiedAt, note]);
+
   return (
     <Box className={clsx(classes.notePanel)}>
       <Box
@@ -1007,17 +1036,30 @@ export default function NotePanel(props: Props) {
             ></div>
           ) : null}
         </Box>
-        {props.notebook.noteHasReferences(note.filePath) && (
-          <React.Fragment>
-            <Divider style={{ marginTop: "32px" }}></Divider>
-            <NotesPanel
-              title={"Linked references"}
-              tabNode={props.tabNode}
-              notebook={props.notebook}
-              note={note}
-            ></NotesPanel>
-          </React.Fragment>
-        )}
+        <React.Fragment>
+          <Box style={{ marginTop: "32px" }}></Box>
+          <NotesPanel
+            title={"Linked references"}
+            tabNode={props.tabNode}
+            notebook={props.notebook}
+            note={note}
+          ></NotesPanel>
+        </React.Fragment>
+      </Box>
+      <Box className={clsx(classes.bottomPanel, "editor-bottom-panel")}>
+        <Box className={clsx(classes.row)}>
+          <Typography variant={"caption"} className={clsx(classes.filePath)}>
+            {note.filePath +
+              (gitStatus ? " - " + t(`git/status/${gitStatus}`) : "")}
+          </Typography>
+        </Box>
+        <Box className={clsx(classes.cursorPositionInfo)}>
+          <Typography variant={"caption"} color={"textPrimary"}>
+            {`${t("editor/ln")} ${cursorPosition.line + 1}, ${t(
+              "editor/col",
+            )} ${cursorPosition.ch}`}
+          </Typography>
+        </Box>
       </Box>
 
       <EditImageDialog

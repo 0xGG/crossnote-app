@@ -189,7 +189,7 @@ export default function AddNotebookDialog(props: Props) {
           onChange={() => setExpanded(!expanded)}
         >
           <AccordionSummary expandIcon={<ChevronDown></ChevronDown>}>
-            <Typography>{`${t("general/git-repository")}`}</Typography>
+            <Typography>{`${t("general/clone-a-git-repository")}`}</Typography>
           </AccordionSummary>
           <AccordionDetails>
             <Box>

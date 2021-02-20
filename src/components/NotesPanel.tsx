@@ -1,6 +1,5 @@
 import {
   Box,
-  Card,
   CircularProgress,
   Divider,
   IconButton,
@@ -54,7 +53,10 @@ const useStyles = makeStyles((theme: Theme) =>
       // display: "flex",
       // flexDirection: "column",
       // height: "100%",
-      backgroundColor: theme.palette.background.default,
+      backgroundColor: theme.palette.background.paper,
+      width: "800px",
+      maxWidth: "100%",
+      margin: "0 auto",
     },
     topPanel: {
       padding: theme.spacing(0, 1),
@@ -209,6 +211,15 @@ export default function NotesPanel(props: Props) {
           : props.notebook.notes,
       ) as any,
     );
+    console.log(
+      "* refreshRawNotes: ",
+      Object.assign(
+        {},
+        props.note
+          ? await props.notebook.getReferredByNotes(props.note.filePath)
+          : props.notebook.notes,
+      ) as any,
+    );
   }, [props.notebook, props.note]);
 
   useEffect(() => {
@@ -295,6 +306,7 @@ export default function NotesPanel(props: Props) {
 
   useEffect(() => {
     const notes = Object.values(rawNotesMap);
+    console.log("rawNotesMap changes: ", notes, rawNotesMap);
     if (orderBy === OrderBy.ModifiedAt) {
       if (orderDirection === OrderDirection.DESC) {
         notes.sort(
@@ -355,14 +367,17 @@ export default function NotesPanel(props: Props) {
     }
   }, 15000);
 
+  if (!notes.length) {
+    return <Box></Box>;
+  }
+
   return (
     <div className={clsx(classes.notesPanel)} ref={container}>
-      <Card
+      <Box
         className={clsx(
           classes.topPanel,
           fixedTopPanel ? classes.fixedTopPanel : "",
         )}
-        ref={topPanel}
       >
         {props.title && (
           <Typography variant={"h6"} style={{ padding: "6px 0 7px" }}>
@@ -401,7 +416,7 @@ export default function NotesPanel(props: Props) {
             <SortVariant></SortVariant>
           </IconButton>
         </Box>
-      </Card>
+      </Box>
 
       <Popover
         anchorEl={sortMenuAnchorEl}
@@ -470,6 +485,7 @@ export default function NotesPanel(props: Props) {
       <Notes
         tabNode={props.tabNode}
         notes={notes}
+        referredNote={props.note}
         searchValue={finalSearchValue}
         scrollElement={
           container && container.current && container.current.parentElement

@@ -21,7 +21,6 @@ import {
 import {
   createStyles,
   fade,
-  lighten,
   makeStyles,
   Theme,
   useTheme,
@@ -118,7 +117,7 @@ const useStyles = makeStyles((theme: Theme) =>
     },
     drawerPaper: {
       width: drawerWidth,
-      backgroundColor: lighten(theme.palette.background.paper, 0.05),
+      backgroundColor: theme.palette.background.default,
       display: "flex",
       flexDirection: "column",
       justifyContent: "space-between",
