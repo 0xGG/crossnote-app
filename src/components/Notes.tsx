@@ -54,6 +54,7 @@ const useStyles = makeStyles((theme: Theme) =>
 
 interface Props {
   tabNode: TabNode;
+  referredNote?: Note;
   notes: Note[];
   searchValue: string;
   scrollElement: HTMLElement;
@@ -204,29 +205,6 @@ export default function Notes(props: Props) {
 
   return (
     <div className={clsx(classes.notesList)}>
-      {/*crossnoteContainer.selectedNotebook &&
-        crossnoteContainer.selectedNotebook.localSha !==
-          crossnoteContainer.selectedNotebook.remoteSha && (
-          <Box className={clsx(classes.updatePanel)}>
-            <Typography style={{ marginBottom: "8px" }}>
-              {"🔔  " + t("general/notebook-updates-found")}
-            </Typography>
-            <Button
-              color={"primary"}
-              variant={"outlined"}
-              // onClick={pullNotebook}
-              disabled={
-                crossnoteContainer.isPullingNotebook ||
-                crossnoteContainer.isPushingNotebook
-              }
-            >
-              <CloudDownloadOutline
-                style={{ marginRight: "8px" }}
-              ></CloudDownloadOutline>
-              {t("general/update-the-notebook")}
-            </Button>
-          </Box>
-        )*/}
       {(notes || []).map((note) => {
         return (
           <LazyLoad
@@ -257,6 +235,7 @@ export default function Notes(props: Props) {
               key={"note-card-" + note.filePath}
               tabNode={props.tabNode}
               note={note}
+              referredNote={props.referredNote}
             ></NoteCard>
           </LazyLoad>
 

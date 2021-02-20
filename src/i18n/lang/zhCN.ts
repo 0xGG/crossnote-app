@@ -140,6 +140,7 @@ export const zhCN = {
     "general/publish-your-notebook": "发布你的笔记本",
     "general/notebook-name": "笔记本名称",
     "general/git-repository": "git 仓库",
+    "general/clone-a-git-repository": "克隆一个 Git 仓库",
     "general/optional": "可选",
     "general/url": "Url",
     "general/branch": "分支",

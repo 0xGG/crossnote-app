@@ -1,4 +1,4 @@
-import { Box, Card, IconButton, Tooltip, Typography } from "@material-ui/core";
+import { Box, IconButton, Tooltip, Typography } from "@material-ui/core";
 import {
   createStyles,
   makeStyles,
@@ -15,6 +15,11 @@ import { useTranslation } from "react-i18next";
 import { CrossnoteContainer } from "../containers/crossnote";
 import { SettingsContainer } from "../containers/settings";
 import { languageCodeToDateFNSLocale } from "../i18n/i18n";
+import {
+  EventType,
+  globalEmitter,
+  ModifiedMarkdownEventData,
+} from "../lib/event";
 import { Note } from "../lib/note";
 import { resolveNoteImageSrc } from "../utilities/image";
 import { generateSummaryFromMarkdown, Summary } from "../utilities/note";
@@ -34,7 +39,7 @@ const useStyles = makeStyles((theme: Theme) =>
       padding: theme.spacing(2, 0.5, 0),
       textAlign: "left",
       cursor: "pointer",
-      backgroundColor: theme.palette.background.paper,
+      // backgroundColor: theme.palette.background.paper,
       margin: `${NoteCardMargin}px auto`,
       [theme.breakpoints.down("sm")]: {
         marginLeft: 0,
@@ -111,11 +116,11 @@ const useStyles = makeStyles((theme: Theme) =>
 interface Props {
   tabNode: TabNode;
   note: Note;
+  referredNote?: Note;
 }
 
 export default function NoteCard(props: Props) {
   const classes = useStyles(props);
-  const note = props.note;
   const theme = useTheme();
   const crossnoteContainer = CrossnoteContainer.useContainer();
   const settingsContainer = SettingsContainer.useContainer();
@@ -124,6 +129,7 @@ export default function NoteCard(props: Props) {
   const [images, setImages] = useState<string[]>([]);
   const [gitStatus, setGitStatus] = useState<string>("");
   const [popoverElement, setPopoverElement] = useState<Element>(null);
+  const [note, setNote] = useState<Note>(props.note);
   const { t } = useTranslation();
   const duration = formatDistanceStrict(note.config.modifiedAt, Date.now())
     .replace(/\sseconds?/, "s")
@@ -133,6 +139,35 @@ export default function NoteCard(props: Props) {
     .replace(/\sweeks?/, "w")
     .replace(/\smonths?/, "mo")
     .replace(/\syears?/, "y");
+
+  useEffect(() => {
+    setNote(props.note);
+  }, [props.note]);
+
+  useEffect(() => {
+    if (!note) {
+      return;
+    }
+    const modifiedMarkdownCallback = async (
+      data: ModifiedMarkdownEventData,
+    ) => {
+      if (
+        note.filePath === data.noteFilePath &&
+        note.notebookPath === data.notebookPath
+      ) {
+        const newNote = await crossnoteContainer.getNote(
+          data.notebookPath,
+          data.noteFilePath,
+        );
+        setNote(newNote);
+      }
+    };
+
+    globalEmitter.on(EventType.ModifiedMarkdown, modifiedMarkdownCallback);
+    return () => {
+      globalEmitter.off(EventType.ModifiedMarkdown, modifiedMarkdownCallback);
+    };
+  }, [note]);
 
   useEffect(() => {
     setHeader(note.title);
@@ -168,7 +203,7 @@ export default function NoteCard(props: Props) {
 
   return (
     <React.Fragment>
-      <Card
+      <Box
         className={clsx(classes.noteCard, "note-card")}
         onClick={() => {
           // crossnoteContainer.setDisplayMobileEditor(true);
@@ -283,7 +318,7 @@ export default function NoteCard(props: Props) {
               (gitStatus ? " - " + t(`git/status/${gitStatus}`) : "")}
           </Typography>
         </Box>
-      </Card>
+      </Box>
       <NotePopover
         tabNode={props.tabNode}
         note={note}

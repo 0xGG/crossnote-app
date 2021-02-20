@@ -307,7 +307,6 @@ export default function NotePanel(props: Props) {
     }
 
     const modifiedMarkdownCallback = (data: ModifiedMarkdownEventData) => {
-      note.config = data.noteConfig;
       if (data.tabId === tabNode.getId()) {
         return;
       }
@@ -315,6 +314,7 @@ export default function NotePanel(props: Props) {
         data.notebookPath === note.notebookPath &&
         data.noteFilePath === note.filePath
       ) {
+        note.config = data.noteConfig;
         if (editor.getValue() !== data.markdown) {
           editor.setValue(data.markdown);
         }
@@ -1007,17 +1007,15 @@ export default function NotePanel(props: Props) {
             ></div>
           ) : null}
         </Box>
-        {props.notebook.noteHasReferences(note.filePath) && (
-          <React.Fragment>
-            <Divider style={{ marginTop: "32px" }}></Divider>
-            <NotesPanel
-              title={"Linked references"}
-              tabNode={props.tabNode}
-              notebook={props.notebook}
-              note={note}
-            ></NotesPanel>
-          </React.Fragment>
-        )}
+        <React.Fragment>
+          <Box style={{ marginTop: "32px" }}></Box>
+          <NotesPanel
+            title={"Linked references"}
+            tabNode={props.tabNode}
+            notebook={props.notebook}
+            note={note}
+          ></NotesPanel>
+        </React.Fragment>
       </Box>
 
       <EditImageDialog

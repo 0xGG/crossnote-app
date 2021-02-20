@@ -452,31 +452,6 @@ export class Notebook {
     return note;
   }
 
-  /**
-   * Update noteConfig only without updating markdown (excluding the front-matter)
-   * @param notebook
-   * @param filePath
-   * @param noteConfig
-   */
-  public async updateNoteConfig(filePath: string, noteConfig: NoteConfig) {
-    const note = await this.getNote(filePath);
-    const data = matter(note.markdown);
-    const frontMatter = Object.assign(
-      data.data || {},
-      formatNoteConfig(noteConfig),
-    );
-    delete frontMatter["note"]; // TODO: Remove this in beta 3
-    const markdown = matterStringify(data.content, frontMatter);
-    await pfs.writeFile(path.resolve(this.dir, filePath), markdown);
-    if (!this.isLocal) {
-      await git.add({
-        fs: fs,
-        dir: this.dir,
-        filepath: filePath,
-      });
-    }
-  }
-
   public async removeNoteRelations(filePath: string) {
     const note = await this.getNote(filePath);
     if (!note) {

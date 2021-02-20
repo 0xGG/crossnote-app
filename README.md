@@ -14,6 +14,12 @@ modified: 2020-05-11T11:14:44.140Z
 
 https://crossnote.app
 
+Or checkout our latest development version V3 that comes with many fancy changes: 
+
+**V3**: https://0xgg.io/crossnote/  
+
+---
+
 <a href="https://www.producthunt.com/posts/crossnote?utm_source=badge-featured&utm_medium=badge&utm_souce=badge-crossnote" target="_blank"><img src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=197331&theme=dark" alt="Crossnote - An interesting markdown note taking progressive web app | Product Hunt Embed" style="width: 250px; height: 54px;" width="250px" height="54px" /></a>  
 <a href="https://play.google.com/store/apps/details?id=app.crossnote.twa" target="_blank"><img src="https://play.google.com/intl/en_us/badges/static/images/badges/en_badge_web_generic.png" alt="Get it on Google Play" style="height: 70px"  height="70px"></a>
 

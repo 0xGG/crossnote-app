@@ -140,6 +140,7 @@ export const zhTW = {
     "general/publish-your-notebook": "發佈你的筆記本",
     "general/notebook-name": "筆記本名稱",
     "general/git-repository": "git 倉庫",
+    "general/clone-a-git-repository": "克隆壹個 Git 倉庫",
     "general/optional": "可選",
     "general/url": "Url",
     "general/branch": "分支",
