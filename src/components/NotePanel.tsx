@@ -1047,7 +1047,6 @@ export default function NotePanel(props: Props) {
         </React.Fragment>
       </Box>
       <Box className={clsx(classes.bottomPanel, "editor-bottom-panel")}>
-        <Divider></Divider>
         <Box className={clsx(classes.row)}>
           <Typography variant={"caption"} className={clsx(classes.filePath)}>
             {note.filePath +
