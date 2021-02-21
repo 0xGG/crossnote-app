@@ -211,15 +211,6 @@ export default function NotesPanel(props: Props) {
           : props.notebook.notes,
       ) as any,
     );
-    console.log(
-      "* refreshRawNotes: ",
-      Object.assign(
-        {},
-        props.note
-          ? await props.notebook.getReferredByNotes(props.note.filePath)
-          : props.notebook.notes,
-      ) as any,
-    );
   }, [props.notebook, props.note]);
 
   useEffect(() => {
@@ -306,7 +297,6 @@ export default function NotesPanel(props: Props) {
 
   useEffect(() => {
     const notes = Object.values(rawNotesMap);
-    console.log("rawNotesMap changes: ", notes, rawNotesMap);
     if (orderBy === OrderBy.ModifiedAt) {
       if (orderDirection === OrderDirection.DESC) {
         notes.sort(

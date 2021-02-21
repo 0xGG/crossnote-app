@@ -893,6 +893,107 @@ export default function NotePanel(props: Props) {
           },
         });
       }
+
+      // Check tag
+      if (changeObject.text.length === 1 && changeObject.text[0] === "#") {
+        editor.showHint({
+          closeOnUnfocus: true,
+          completeSingle: false,
+          hint: () => {
+            const cursor = editor.getCursor();
+            const token = editor.getTokenAt(cursor);
+            const line = cursor.line;
+            const lineStr = editor.getLine(line);
+            const end: number = cursor.ch;
+            let start = token.start;
+            if (lineStr[start] !== "#") {
+              start = start - 1;
+            }
+            const currentWord: string = lineStr
+              .slice(start, end)
+              .replace(/^#/, "");
+            const searchResults = props.notebook.search.search(currentWord, {
+              fuzzy: true,
+              filter: (result: any) => {
+                const filePath = path.relative(
+                  path.dirname(path.join(note.notebookPath, note.filePath)),
+                  path.join(note.notebookPath, result["filePath"]),
+                );
+                return result["title"] + ".md" === filePath;
+              },
+            });
+            const commands: {
+              text: string;
+              displayText: string;
+            }[] = searchResults.map((searchResult: any) => {
+              const val =
+                "#" +
+                searchResult.title +
+                (searchResult.title.match(/\s/) ? "#" : "");
+              return {
+                text: val,
+                displayText: val,
+              };
+            });
+            return {
+              list: commands,
+              from: { line, ch: start },
+              to: { line, ch: end },
+            };
+          },
+        });
+      }
+
+      const withinWikiLink = function (line: number, ch: number) {
+        const aheadStr = editor.getLine(changeObject.from.line).slice(0, ch);
+        return aheadStr.lastIndexOf("[[") > aheadStr.lastIndexOf("]]");
+      };
+      // Check Wikilink
+      if (withinWikiLink(changeObject.from.line, changeObject.from.ch)) {
+        editor.showHint({
+          closeOnUnfocus: true,
+          completeSingle: false,
+          hint: () => {
+            const cursor = editor.getCursor();
+            const token = editor.getTokenAt(cursor);
+            const line = cursor.line;
+            const lineStr = editor.getLine(line);
+            const end: number = lineStr.indexOf("]]", cursor.ch);
+            let start = token.start;
+            while (lineStr[start] !== "[") {
+              start = start - 1;
+            }
+            const currentWord: string = lineStr
+              .slice(start, end)
+              .replace(/^\[+/, "");
+            const searchResults = props.notebook.search.search(currentWord, {
+              fuzzy: true,
+            });
+            const commands: {
+              text: string;
+              displayText: string;
+            }[] = searchResults.map((searchResult: any) => {
+              const filtPath = path.relative(
+                path.dirname(path.join(note.notebookPath, note.filePath)),
+                path.join(note.notebookPath, searchResult.filePath),
+              );
+              const val =
+                searchResult.title + ".md" === filtPath
+                  ? `[[${searchResult.title}]]`
+                  : `[[${filtPath}|${searchResult.title}]]`;
+              return {
+                text: val,
+                displayText: val,
+              };
+            });
+            return {
+              list: commands,
+              from: { line, ch: start - 1 },
+              to: { line, ch: end + 2 },
+            };
+          },
+        });
+      }
     };
     editor.on("change", onChangeHandler);
 
@@ -907,7 +1008,7 @@ export default function NotePanel(props: Props) {
       editor.off("change", onChangeHandler);
       editor.off("cursorActivity", onCursorActivityHandler);
     };
-  }, [editor, note]);
+  }, [editor, note, props.notebook]);
 
   useEffect(() => {
     crossnoteContainer
