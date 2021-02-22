@@ -360,12 +360,12 @@ export default function NotesPanel(props: Props) {
     }
   }, 15000);
 
-  if (!notes.length) {
+  if (props.note && !notes.length) {
     return <Box></Box>;
   }
 
   return (
-    <div className={clsx(classes.notesPanel)} ref={container}>
+    <div className={clsx(classes.notesPanel, "notes-panel")} ref={container}>
       <Box
         className={clsx(
           classes.topPanel,

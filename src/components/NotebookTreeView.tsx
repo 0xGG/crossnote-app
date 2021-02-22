@@ -125,18 +125,6 @@ export default function NotebookTreeView(props: Props) {
             globalEmitter.emit(EventType.PerformedGitOperation, {
               notebookPath: props.notebook.dir,
             });
-            /*
-            crossnoteContainer.addTabNode({
-              type: "tab",
-              component: "Notes",
-              id: "Notes: " + props.notebook.dir,
-              name: "📔 " + props.notebook.name,
-              config: {
-                singleton: true,
-                notebook: props.notebook,
-              },
-            });
-            */
           });
 
         setExpanded(nodes);

@@ -2,7 +2,6 @@ import {
   Avatar,
   Badge,
   Box,
-  Card,
   CircularProgress,
   CssBaseline,
   Divider,
@@ -16,7 +15,6 @@ import {
   ListItemSecondaryAction,
   ListItemText,
   Tooltip,
-  useMediaQuery,
 } from "@material-ui/core";
 import {
   createStyles,
@@ -39,10 +37,8 @@ import React, { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import AddNotebookDialog from "../components/AddNotebookDialog";
 import { AuthDialog } from "../components/AuthDialog";
-import ExplorePanel from "../components/ExplorePanel";
 import LanguageSelectorDialog from "../components/LanguageSelectorDialog";
 import { MainPanel } from "../components/MainPanel";
-import { NotebookPanel } from "../components/NotebookPanel";
 import NotebookTreeView from "../components/NotebookTreeView";
 import { CloudContainer } from "../containers/cloud";
 import { CrossnoteContainer, HomeSection } from "../containers/crossnote";
@@ -205,7 +201,7 @@ interface Props {
 export function Home(props: Props) {
   const classes = useStyles(props);
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down("xs"));
+  // const isMobile = useMediaQuery(theme.breakpoints.down("xs"));
   const [addNotebookDialogOpen, setAddNotebookDialogOpen] = useState<boolean>(
     false,
   );
@@ -227,31 +223,13 @@ export function Home(props: Props) {
     setDrawerOpen(!drawerOpen);
   }, [drawerOpen]);
 
-  /*
   useEffect(() => {
     if (!crossnoteContainer.initialized) {
       return;
     }
     if (props.section === HomeSection.Notebooks) {
       if (props.queryParams) {
-        const notebookID = props.queryParams["notebookID"];
-        if (notebookID) {
-          const filePath = decodeURIComponent(props.queryParams.filePath || "");
-          const notebook = crossnoteContainer.notebooks.find(
-            (nb) => nb._id === notebookID,
-          );
-          if (notebook && crossnoteContainer.selectedNotebook !== notebook) {
-            crossnoteContainer.setSelectedNotebook(notebook);
-          }
-          if (filePath) {
-            crossnoteContainer.setPendingNote({
-              notebookID: notebookID,
-              filePath,
-            });
-          } else {
-            crossnoteContainer.setPendingNote(null);
-          }
-        } else if (props.queryParams.repo && props.queryParams.branch) {
+        if (props.queryParams.repo && props.queryParams.branch) {
           const repo = decodeURIComponent(props.queryParams.repo || "");
           const branch = decodeURIComponent(props.queryParams.branch || "");
           const filePath = decodeURIComponent(props.queryParams.filePath || "");
@@ -259,18 +237,51 @@ export function Home(props: Props) {
             (nb) => nb.gitURL === repo && nb.gitBranch === branch,
           );
           if (notebook) {
-            if (crossnoteContainer.selectedNotebook !== notebook) {
-              crossnoteContainer.setSelectedNotebook(notebook);
-            }
-            if (filePath) {
-              crossnoteContainer.setPendingNote({
-                repo,
-                branch,
-                filePath,
+            notebook
+              .refreshNotesIfNotLoaded({
+                dir: "./",
+                includeSubdirectories: true,
+              })
+              .then((notes) => {
+                if (filePath) {
+                  const note = notes[filePath];
+                  if (note) {
+                    crossnoteContainer.addTabNode({
+                      type: "tab",
+                      component: "Note",
+                      config: {
+                        singleton: false,
+                        note,
+                        notebook: notebook,
+                      },
+                      name: `📝 ` + note.title,
+                    });
+                  } else {
+                    //note not found
+                    crossnoteContainer.addTabNode({
+                      type: "tab",
+                      component: "Notes",
+                      id: "Notes: " + notebook.dir,
+                      name: "📔 " + notebook.name,
+                      config: {
+                        singleton: true,
+                        notebook: notebook,
+                      },
+                    });
+                  }
+                } else {
+                  crossnoteContainer.addTabNode({
+                    type: "tab",
+                    component: "Notes",
+                    id: "Notes: " + notebook.dir,
+                    name: "📔 " + notebook.name,
+                    config: {
+                      singleton: true,
+                      notebook: notebook,
+                    },
+                  });
+                }
               });
-            } else {
-              crossnoteContainer.setPendingNote(null);
-            }
           } else {
             // Show dialog
             setAddNotebookRepo(repo);
@@ -281,7 +292,6 @@ export function Home(props: Props) {
       }
     }
   }, [props.section, props.queryParams, crossnoteContainer.initialized]);
-  */
 
   useEffect(() => {
     crossnoteContainer.setHomeSection(props.section);
@@ -430,49 +440,6 @@ export function Home(props: Props) {
         </List>
       </Box>
     </React.Fragment>
-  );
-
-  /*
-  const notesPanel =
-    props.section === HomeSection.Notebooks &&
-    (crossnoteContainer.selectedSection.type ===
-    SelectedSectionType.Attachments ? (
-      <Box className={clsx(classes.notesPanel)} id={"notes-panel"}>
-        <AttachmentsPanel toggleDrawer={toggleDrawer}></AttachmentsPanel>
-      </Box>
-    ) : (
-      <Box className={clsx(classes.notesPanel)} id={"notes-panel"}>
-        <NotesPanel toggleDrawer={toggleDrawer}></NotesPanel>
-      </Box>
-    ));
-
-  const editorPanel = props.section === HomeSection.Notebooks && (
-    <Card
-      className={clsx(classes.editorPanel, "editor-panel")}
-      style={{
-        display: crossnoteContainer.displayMobileEditor && "block",
-      }}
-    >
-      <Editor note={crossnoteContainer.selectedNote}></Editor>
-    </Card>
-  );
-  */
-
-  const explorePanel = props.section === HomeSection.Explore && (
-    <Box className={clsx(classes.notesPanel)}>
-      <ExplorePanel toggleDrawer={toggleDrawer}></ExplorePanel>
-    </Box>
-  );
-
-  const notebookPanel = props.section === HomeSection.Explore && (
-    <Card
-      className={clsx(classes.editorPanel)}
-      style={{
-        display: cloudContainer.displayNotebookPreview && "block",
-      }}
-    >
-      <NotebookPanel notebook={cloudContainer.selectedNotebook}></NotebookPanel>
-    </Card>
   );
 
   return (

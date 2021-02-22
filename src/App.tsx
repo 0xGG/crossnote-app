@@ -1,5 +1,4 @@
 import { ThemeProvider } from "@material-ui/styles";
-import MiniSearch from "minisearch";
 import * as qs from "qs";
 import React, { FC, useEffect } from "react";
 import { useTranslation } from "react-i18next";
@@ -16,8 +15,6 @@ import { Home } from "./pages/Home";
 import { browserHistory } from "./utilities/history";
 const is = require("is_js");
 
-(window as any)["MiniSearch"] = MiniSearch;
-
 const App: FC = () => {
   const { t } = useTranslation();
   const settingsContainer = SettingsContainer.useContainer();
@@ -30,7 +27,7 @@ const App: FC = () => {
           console.log(choiceResult);
         });
       } catch (error) {
-        console.log(error);
+        console.error(error);
       }
     };
     window.addEventListener("beforeinstallprompt", handler);
@@ -43,6 +40,7 @@ const App: FC = () => {
       <div className="App">
         <Router history={browserHistory}>
           <Switch>
+            {/*
             <Route
               path={`/settings`}
               exact={true}
@@ -68,6 +66,14 @@ const App: FC = () => {
               )}
             ></Route>
             <Route
+              path={`/privacy`}
+              exact={true}
+              render={(props) => (
+                <Home section={HomeSection.Privacy} queryParams={{}}></Home>
+              )}
+            ></Route>
+              */}
+            <Route
               exact={true}
               path={`/github_oauth_callback`}
               render={(props) => (
@@ -78,13 +84,6 @@ const App: FC = () => {
                     ] as string) || ""
                   }
                 ></GitHubOAuthCallback>
-              )}
-            ></Route>
-            <Route
-              path={`/privacy`}
-              exact={true}
-              render={(props) => (
-                <Home section={HomeSection.Privacy} queryParams={{}}></Home>
               )}
             ></Route>
             <Route

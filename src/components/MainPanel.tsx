@@ -28,7 +28,6 @@ const useStyles = makeStyles((theme: Theme) =>
       "flexDirection": "row",
       "flexGrow": 1,
       "overflow": "auto",
-      "backgroundColor": theme.palette.background.default,
       // overright the flexlayout style
       "& .flexlayout__tabset": {
         backgroundColor: theme.palette.background.paper,

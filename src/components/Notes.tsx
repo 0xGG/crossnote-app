@@ -250,6 +250,7 @@ export default function Notes(props: Props) {
               marginTop: "32px",
             }}
             variant={"body2"}
+            color={"textPrimary"}
           >
             {"🧐 " + t("general/no-notes-found")}
           </Typography>
