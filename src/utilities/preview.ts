@@ -15,13 +15,14 @@ export function printPreview(
     bannerElement,
     ["body"],
     `
-  #notes-panel,
+  .App,
   .editor-bottom-panel,
   .drawer,
   .CodeMirror,
   .editor-textarea,
   .editor-toolbar,
   .Pane.vertical.Pane1,
+  .notes-panel,
   .control-panel-wrapper {
     display: none;
   }

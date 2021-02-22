@@ -1,6 +1,5 @@
 import * as git from "isomorphic-git";
 import Token from "markdown-it/lib/token";
-// import MiniSearch from "minisearch";
 import * as path from "path";
 import { md } from "vickymd/preview";
 // import { isFileAnImage } from "../utilities/image";
@@ -8,6 +7,7 @@ import { matter, matterStringify } from "../utilities/markdown";
 import { fs, pfs } from "./fs";
 import { Mentions, Note, NoteConfig, Notes } from "./note";
 import { Reference, ReferenceMap } from "./reference";
+import Search from "./search";
 
 /**
  * Change "createdAt" to "created", and "modifiedAt" to "modified"
@@ -59,26 +59,17 @@ export class Notebook {
 
   public referenceMap: ReferenceMap;
 
-  // public miniSearch: MiniSearch;
+  public search: Search;
 
   constructor() {
     this.notes = {};
     this.isLocal = false;
     this.loadedNotes = false;
     this.referenceMap = new ReferenceMap();
-    /*
-    this.miniSearch = new MiniSearch({
-      fields: ["title"],
-      storeFields: ["title"],
-      tokenize: (string) => {
-        return (
-          string
-            .replace(/[!@#$%^&*()[\]{},.?/\\=+-_，。=（）【】]/g, "")
-            .match(/([^\x00-\x7F]|\w+)/g) || []
-        );
-      },
-    });
-    */
+  }
+
+  public initSearch() {
+    this.search = new Search();
   }
 
   public noteHasReferences(filePath: string): boolean {
@@ -205,6 +196,7 @@ export class Notebook {
     }
 
     await this.removeNoteRelations(oldFilePath);
+    this.search.removeAll(oldFilePath);
 
     // git related works
     const newDirPath = path.dirname(path.resolve(this.dir, newFilePath));
@@ -335,6 +327,7 @@ export class Notebook {
 
       if (refreshNoteRelations) {
         this.notes[note.filePath] = note;
+        this.search.add(note.filePath, note.title);
         await this.processNoteMentionsAndMentionedBy(note.filePath);
       }
 
@@ -344,7 +337,7 @@ export class Notebook {
     }
   }
 
-  public async refreshNotesInNotLoaded({
+  public async refreshNotesIfNotLoaded({
     dir = "./",
     includeSubdirectories = false,
   }: RefreshNotesArgs): Promise<Notes> {
@@ -367,6 +360,7 @@ export class Notebook {
     if (refreshRelations) {
       this.notes = {};
       this.referenceMap = new ReferenceMap();
+      this.initSearch();
     }
     let files: string[] = [];
     try {
@@ -388,6 +382,7 @@ export class Notebook {
       const note = await this.getNote(path.relative(this.dir, absFilePath));
       if (note) {
         this.notes[note.filePath] = note;
+        this.search.add(note.filePath, note.title);
       }
 
       let stats;
@@ -475,6 +470,7 @@ export class Notebook {
         });
       }
       await this.removeNoteRelations(filePath);
+      this.search.removeAll(filePath);
     }
   }
 

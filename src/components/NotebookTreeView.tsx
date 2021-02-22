@@ -116,7 +116,7 @@ export default function NotebookTreeView(props: Props) {
         element.tagName.toUpperCase().match(/^(SVG|PATH|BUTTON)$/)
       ) {
         props.notebook
-          .refreshNotesInNotLoaded({
+          .refreshNotesIfNotLoaded({
             dir: "./",
             includeSubdirectories: true,
           })
@@ -251,7 +251,7 @@ export default function NotebookTreeView(props: Props) {
             <Box
               onClick={() => {
                 props.notebook
-                  .refreshNotesInNotLoaded({
+                  .refreshNotesIfNotLoaded({
                     dir: "./",
                     includeSubdirectories: true,
                   })
@@ -260,6 +260,18 @@ export default function NotebookTreeView(props: Props) {
                     globalEmitter.emit(EventType.PerformedGitOperation, {
                       notebookPath: props.notebook.dir,
                     });
+                    /*
+                    crossnoteContainer.addTabNode({
+                      type: "tab",
+                      component: "Notes",
+                      id: "Notes: " + props.notebook.dir,
+                      name: "📔 " + props.notebook.name,
+                      config: {
+                        singleton: true,
+                        notebook: props.notebook,
+                      },
+                    });
+                    */
                   });
               }}
               className={clsx(classes.treeItemLabelRoot)}
@@ -343,41 +355,6 @@ export default function NotebookTreeView(props: Props) {
               </Box>
             }
           ></TreeItem>
-          {/*
-        <TreeItem
-          nodeId={"todo-notes"}
-          classes={{
-            root: classes.treeItemRoot,
-            content: classes.treeItemContent,
-            expanded: classes.treeItemExpanded,
-            group: classes.treeItemGroup,
-            label: classes.treeItemLabel,
-          }}
-          label={
-            <Box
-              onClick={() => {
-                crossnoteContainer.addTabNode({
-                  type: "tab",
-                  component: "Todo",
-                  id: "Todo: " + props.notebook.dir,
-                  name: t("general/todo"),
-                  config: {
-                    singleton: true,
-                    notebook: props.notebook,
-                  },
-                });
-              }}
-              className={clsx(classes.treeItemLabelRoot)}
-            >
-              <span role="img" aria-label="todo-notes">
-                {"☑️"}
-              </span>
-              <Typography className={clsx(classes.treeItemLabelText)}>
-                {t("general/todo")}
-              </Typography>
-            </Box>
-          }
-        ></TreeItem>*/}
           <TreeItem
             nodeId={"all-notes"}
             classes={{

@@ -17,6 +17,7 @@ import {
   fade,
   makeStyles,
   Theme,
+  useTheme,
 } from "@material-ui/core/styles";
 import useInterval from "@use-it/interval";
 import clsx from "clsx";
@@ -77,6 +78,7 @@ const useStyles = makeStyles((theme: Theme) =>
       marginLeft: theme.spacing(1),
     },
     search: {
+      "color": theme.palette.text.secondary,
       "position": "relative",
       "borderRadius": theme.shape.borderRadius,
       "backgroundColor": fade(theme.palette.common.white, 0.15),
@@ -99,6 +101,7 @@ const useStyles = makeStyles((theme: Theme) =>
       display: "flex",
       alignItems: "center",
       justifyContent: "center",
+      color: theme.palette.text.primary,
     },
     inputRoot: {
       color: "inherit",
@@ -151,7 +154,7 @@ export default function NotesPanel(props: Props) {
   const [needsToRefreshRawNotes, setNeedsToRefreshRawNotes] = useState<boolean>(
     false,
   );
-
+  const theme = useTheme();
   const crossnoteContainer = CrossnoteContainer.useContainer();
 
   // Search
@@ -204,15 +207,6 @@ export default function NotesPanel(props: Props) {
 
   const refreshRawNotes = useCallback(async () => {
     setRawNotesMap(
-      Object.assign(
-        {},
-        props.note
-          ? await props.notebook.getReferredByNotes(props.note.filePath)
-          : props.notebook.notes,
-      ) as any,
-    );
-    console.log(
-      "* refreshRawNotes: ",
       Object.assign(
         {},
         props.note
@@ -306,7 +300,6 @@ export default function NotesPanel(props: Props) {
 
   useEffect(() => {
     const notes = Object.values(rawNotesMap);
-    console.log("rawNotesMap changes: ", notes, rawNotesMap);
     if (orderBy === OrderBy.ModifiedAt) {
       if (orderDirection === OrderDirection.DESC) {
         notes.sort(
@@ -367,12 +360,12 @@ export default function NotesPanel(props: Props) {
     }
   }, 15000);
 
-  if (!notes.length) {
+  if (props.note && !notes.length) {
     return <Box></Box>;
   }
 
   return (
-    <div className={clsx(classes.notesPanel)} ref={container}>
+    <div className={clsx(classes.notesPanel, "notes-panel")} ref={container}>
       <Box
         className={clsx(
           classes.topPanel,
@@ -380,7 +373,10 @@ export default function NotesPanel(props: Props) {
         )}
       >
         {props.title && (
-          <Typography variant={"h6"} style={{ padding: "6px 0 7px" }}>
+          <Typography
+            variant={"h6"}
+            style={{ padding: "6px 0 7px", color: theme.palette.text.primary }}
+          >
             {props.title}
           </Typography>
         )}

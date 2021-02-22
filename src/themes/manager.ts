@@ -1,11 +1,11 @@
-import { CrossnoteTheme } from "./theme";
-import { LightTheme } from "./light";
+import { Editor } from "codemirror";
+import { setTheme as VickyMDSetTheme, ThemeName } from "vickymd/theme";
+import { VickyMDVersion } from "../editor";
 import { DarkTheme } from "./dark";
+import { LightTheme } from "./light";
 import { OneDarkTheme } from "./one-dark";
 import { SolarizedLight } from "./solarized-light";
-import { setTheme as VickyMDSetTheme, ThemeName } from "vickymd/theme";
-import { Editor } from "codemirror";
-import { VickyMDVersion } from "../editor";
+import { CrossnoteTheme } from "./theme";
 
 export function setTheme({
   editor,

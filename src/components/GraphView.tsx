@@ -1,4 +1,9 @@
-import { createStyles, makeStyles, Theme } from "@material-ui/core/styles";
+import {
+  createStyles,
+  makeStyles,
+  Theme,
+  useTheme,
+} from "@material-ui/core/styles";
 import clsx from "clsx";
 import * as d3 from "d3";
 import { TabNode } from "flexlayout-react";
@@ -46,6 +51,7 @@ export default function GraphView(props: Props) {
   const [width, setWidth] = useState<number>(0);
   const [height, setHeight] = useState<number>(0);
   const crossnoteContainer = CrossnoteContainer.useContainer();
+  const theme = useTheme();
 
   useEffect(() => {
     if (!graphViewPanel || !graphViewPanel.current) {
@@ -199,7 +205,7 @@ export default function GraphView(props: Props) {
       .enter()
       .append("text")
       .text((d) => d.label)
-      .style("fill", "#555")
+      .style("fill", theme.palette.text.primary)
       .style("font-family", "Arial")
       .style("font-size", 12)
       .style("pointer-events", "none");
@@ -325,7 +331,14 @@ export default function GraphView(props: Props) {
       console.log("destroyed");
       svg.remove();
     };
-  }, [graphViewData, graphViewPanel, width, height, props.notebook]);
+  }, [
+    graphViewData,
+    graphViewPanel,
+    width,
+    height,
+    props.notebook,
+    theme.palette.text.primary,
+  ]);
 
   return (
     <div className={clsx(classes.graphViewPanel)} ref={graphViewPanel}></div>
