@@ -129,7 +129,7 @@ const useStyles = makeStyles((theme: Theme) =>
         // display: "none !important",
       },
       "& .CodeMirror-placeholder": {
-        color: `${theme.palette.action.disabled} !important`,
+        color: theme.palette.text.hint,
       },
       /*
       [theme.breakpoints.down("sm")]: {
