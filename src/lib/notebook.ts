@@ -337,7 +337,7 @@ export class Notebook {
     }
   }
 
-  public async refreshNotesInNotLoaded({
+  public async refreshNotesIfNotLoaded({
     dir = "./",
     includeSubdirectories = false,
   }: RefreshNotesArgs): Promise<Notes> {

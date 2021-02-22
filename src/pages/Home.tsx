@@ -517,56 +517,6 @@ export function Home(props: Props) {
           </Fab>
         </Hidden>
       </nav>
-      {/* <Box className={clsx(classes.mainPanel)} id="main-panel"> */}
-      {/*<Box className={clsx(classes.notesPanel)} id={"notes-panel"}>
-          <NotesPanel toggleDrawer={toggleDrawer}></NotesPanel>
-          </Box>*/}
-      {/*props.section === HomeSection.Notebooks &&
-          (isMobile ? (
-            <React.Fragment>
-              {notesPanel}
-              {editorPanel}
-            </React.Fragment>
-          ) : (
-            <SplitPane
-              defaultSize={notesPanelWidth}
-              minSize={notesPanelMinWidth}
-              maxSize={notesPanelMaxWidth}
-              className={"main-panel-split-pane"}
-            >
-              {notesPanel}
-              {editorPanel}
-            </SplitPane>
-          ))}*/}
-      {/*
-        {props.section === HomeSection.Explore &&
-          (isMobile ? (
-            <React.Fragment>
-              {explorePanel}
-              {notebookPanel}
-            </React.Fragment>
-          ) : (
-            <SplitPane
-              defaultSize={notesPanelWidth}
-              minSize={notesPanelMinWidth}
-              maxSize={notesPanelMaxWidth}
-              className={"main-panel-split-pane"}
-            >
-              {explorePanel}
-              {notebookPanel}
-            </SplitPane>
-          ))}
-        {props.section === HomeSection.Settings && (
-          <Settings toggleDrawer={toggleDrawer}></Settings>
-        )}
-        {props.section === HomeSection.Notifications && (
-          <Notifications toggleDrawer={toggleDrawer}></Notifications>
-        )}
-        {props.section === HomeSection.Privacy && (
-          <PrivacyPolicy toggleDrawer={toggleDrawer}></PrivacyPolicy>
-        )}
-        */}
-      {/* </Box> */}
       <MainPanel toggleDrawer={toggleDrawer}></MainPanel>
       <AddNotebookDialog
         open={addNotebookDialogOpen}

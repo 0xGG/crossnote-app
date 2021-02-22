@@ -17,6 +17,7 @@ import {
   fade,
   makeStyles,
   Theme,
+  useTheme,
 } from "@material-ui/core/styles";
 import useInterval from "@use-it/interval";
 import clsx from "clsx";
@@ -77,6 +78,7 @@ const useStyles = makeStyles((theme: Theme) =>
       marginLeft: theme.spacing(1),
     },
     search: {
+      "color": theme.palette.text.secondary,
       "position": "relative",
       "borderRadius": theme.shape.borderRadius,
       "backgroundColor": fade(theme.palette.common.white, 0.15),
@@ -99,6 +101,7 @@ const useStyles = makeStyles((theme: Theme) =>
       display: "flex",
       alignItems: "center",
       justifyContent: "center",
+      color: theme.palette.text.primary,
     },
     inputRoot: {
       color: "inherit",
@@ -151,7 +154,7 @@ export default function NotesPanel(props: Props) {
   const [needsToRefreshRawNotes, setNeedsToRefreshRawNotes] = useState<boolean>(
     false,
   );
-
+  const theme = useTheme();
   const crossnoteContainer = CrossnoteContainer.useContainer();
 
   // Search
@@ -370,7 +373,10 @@ export default function NotesPanel(props: Props) {
         )}
       >
         {props.title && (
-          <Typography variant={"h6"} style={{ padding: "6px 0 7px" }}>
+          <Typography
+            variant={"h6"}
+            style={{ padding: "6px 0 7px", color: theme.palette.text.primary }}
+          >
             {props.title}
           </Typography>
         )}

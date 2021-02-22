@@ -63,6 +63,7 @@ const useStyles = makeStyles((theme: Theme) =>
       borderBottom: `1px solid ${theme.palette.divider}`,
     },
     header: {
+      "color": theme.palette.text.primary,
       "marginBottom": theme.spacing(1),
       "wordBreak": "break-all",
       "&:hover": {
@@ -91,6 +92,7 @@ const useStyles = makeStyles((theme: Theme) =>
     },
     filePath: {
       wordBreak: "break-all",
+      color: theme.palette.text.primary,
     },
     images: {
       display: "flex",
@@ -314,6 +316,7 @@ export default function NoteCard(props: Props) {
                     marginLeft: theme.spacing(1),
                     marginRight: theme.spacing(1),
                   }}
+                  color={"textPrimary"}
                 >
                   {references.length} reference(s)
                 </Typography>
@@ -365,7 +368,10 @@ export default function NoteCard(props: Props) {
                 key={note.filePath + offset}
               >
                 <Box style={{ width: "32px" }}>
-                  <Typography style={{ fontWeight: "bold" }}>
+                  <Typography
+                    style={{ fontWeight: "bold" }}
+                    color={"textPrimary"}
+                  >
                     {reference.parentToken.map[0] + 1}:
                   </Typography>
                 </Box>

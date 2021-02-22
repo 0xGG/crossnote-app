@@ -46,6 +46,7 @@ import {
 } from "../lib/event";
 import { Note } from "../lib/note";
 import { Notebook } from "../lib/notebook";
+import { setTheme } from "../themes/manager";
 import { resolveNoteImageSrc } from "../utilities/image";
 import {
   openURL,
@@ -86,6 +87,7 @@ const useStyles = makeStyles((theme: Theme) =>
     notePanel: {
       height: "100%",
       overflow: "hidden",
+      backgroundColor: theme.palette.background.paper,
     },
     topPanel: {
       display: "flex",
@@ -105,7 +107,7 @@ const useStyles = makeStyles((theme: Theme) =>
     editorWrapper: {
       "flex": 1,
       "overflow": "auto",
-      "backgroundColor": theme.palette.background.paper,
+      "backgroundColor": "inherit",
       "& .CodeMirror-gutters": {
         display: "none",
       },
@@ -118,6 +120,7 @@ const useStyles = makeStyles((theme: Theme) =>
         margin: "0 auto",
         height: "100%",
         padding: theme.spacing(0, 1),
+        backgroundColor: `${theme.palette.background.paper} !important`,
         [theme.breakpoints.down("sm")]: {
           padding: theme.spacing(1),
         },
@@ -152,6 +155,7 @@ const useStyles = makeStyles((theme: Theme) =>
       overflow: "auto !important",
       padding: theme.spacing(1, 2),
       zIndex: previewZIndex,
+      backgroundColor: `${theme.palette.background.paper} !important`,
       [theme.breakpoints.down("sm")]: {
         padding: theme.spacing(1),
       },
@@ -1010,6 +1014,7 @@ export default function NotePanel(props: Props) {
     };
   }, [editor, note, props.notebook]);
 
+  // Git Status
   useEffect(() => {
     crossnoteContainer
       .getStatus(note.notebookPath, note.filePath)
@@ -1017,6 +1022,16 @@ export default function NotePanel(props: Props) {
         setGitStatus(status);
       });
   }, [note.markdown, note.config.modifiedAt, note]);
+
+  // Set theme
+  useEffect(() => {
+    if (editor && settingsContainer.theme) {
+      setTheme({
+        editor,
+        themeName: settingsContainer.theme.name,
+      });
+    }
+  }, [settingsContainer.theme, editor]);
 
   return (
     <Box className={clsx(classes.notePanel)}>
@@ -1149,18 +1164,24 @@ export default function NotePanel(props: Props) {
       </Box>
       <Box className={clsx(classes.bottomPanel, "editor-bottom-panel")}>
         <Box className={clsx(classes.row)}>
-          <Typography variant={"caption"} className={clsx(classes.filePath)}>
+          <Typography
+            variant={"caption"}
+            className={clsx(classes.filePath)}
+            color={"textPrimary"}
+          >
             {note.filePath +
               (gitStatus ? " - " + t(`git/status/${gitStatus}`) : "")}
           </Typography>
         </Box>
-        <Box className={clsx(classes.cursorPositionInfo)}>
-          <Typography variant={"caption"} color={"textPrimary"}>
-            {`${t("editor/ln")} ${cursorPosition.line + 1}, ${t(
-              "editor/col",
-            )} ${cursorPosition.ch}`}
-          </Typography>
-        </Box>
+        {editorMode !== EditorMode.Preview && (
+          <Box className={clsx(classes.cursorPositionInfo)}>
+            <Typography variant={"caption"} color={"textPrimary"}>
+              {`${t("editor/ln")} ${cursorPosition.line + 1}, ${t(
+                "editor/col",
+              )} ${cursorPosition.ch}`}
+            </Typography>
+          </Box>
+        )}
       </Box>
 
       <EditImageDialog
