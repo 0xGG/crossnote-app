@@ -81,6 +81,10 @@ export class Notebook {
       const map = this.referenceMap.map[filePath];
       const notes: Notes = {};
       for (let rFilePath in map) {
+        if (rFilePath === filePath) {
+          // Don't include self
+          continue;
+        }
         const note = await this.getNote(rFilePath);
         if (note) {
           notes[rFilePath] = note;

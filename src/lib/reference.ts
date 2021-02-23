@@ -20,7 +20,9 @@ export class ReferenceMap {
   ) {
     if (noteFilePath === referredByNoteFilePath && !reference) {
       if (!(noteFilePath in this.map)) {
-        this.map[noteFilePath] = {};
+        this.map[noteFilePath] = {
+          [referredByNoteFilePath]: [],
+        };
       }
       return;
     }
@@ -52,6 +54,9 @@ export class ReferenceMap {
     if (noteFilePath in this.map) {
       if (referredByNoteFilePath in this.map[noteFilePath]) {
         delete this.map[noteFilePath][referredByNoteFilePath];
+        if (Object.keys(this.map[noteFilePath]).length === 0) {
+          delete this.map[noteFilePath];
+        }
       }
     }
   }
