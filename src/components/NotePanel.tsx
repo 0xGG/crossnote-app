@@ -1,3 +1,5 @@
+import EmojiDefinitions from "@0xgg/echomd/addon/emoji";
+import { renderPreview } from "@0xgg/echomd/preview";
 import {
   Box,
   Button,
@@ -29,8 +31,6 @@ import Noty from "noty";
 import * as path from "path";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import EmojiDefinitions from "vickymd/addon/emoji";
-import { renderPreview } from "vickymd/preview";
 import { CrossnoteContainer } from "../containers/crossnote";
 import { SettingsContainer } from "../containers/settings";
 import { initMathPreview } from "../editor/views/math-preview";
@@ -55,7 +55,7 @@ import {
 import EditImageDialog from "./EditImageDialog";
 import NotePopover from "./NotePopover";
 import NotesPanel from "./NotesPanel";
-const VickyMD = require("vickymd/core");
+const EchoMD = require("@0xgg/echomd/core");
 
 const previewZIndex = 99;
 
@@ -310,7 +310,7 @@ export default function NotePanel(props: Props) {
       };
     } else {
       if (note.markdown.length === 0) {
-        setEditorMode(EditorMode.VickyMD);
+        setEditorMode(EditorMode.EchoMD);
       }
     }
   }, [note]);
@@ -424,7 +424,7 @@ export default function NotePanel(props: Props) {
   // Set editor
   useEffect(() => {
     if (textAreaElement && !editor && note) {
-      const editor: CodeMirrorEditor = VickyMD.fromTextArea(textAreaElement, {
+      const editor: CodeMirrorEditor = EchoMD.fromTextArea(textAreaElement, {
         mode: {
           name: "hypermd",
           hashtag: true,
@@ -494,19 +494,19 @@ export default function NotePanel(props: Props) {
   // Toggle editor & preview
   useEffect(() => {
     if (!editor || !note) return;
-    if (editorMode === EditorMode.VickyMD) {
-      VickyMD.switchToHyperMD(editor);
+    if (editorMode === EditorMode.EchoMD) {
+      EchoMD.switchToHyperMD(editor);
       editor.setOption("hmdFold", HMDFold);
       editor.getWrapperElement().style.display = "block";
       editor.refresh();
     } else if (editorMode === EditorMode.SourceCode) {
-      VickyMD.switchToNormal(editor);
+      EchoMD.switchToNormal(editor);
       editor.getWrapperElement().style.display = "block";
       editor.refresh();
     } else if (editorMode === EditorMode.Preview) {
       editor.getWrapperElement().style.display = "none";
     } else if (editorMode === EditorMode.SplitView) {
-      VickyMD.switchToNormal(editor);
+      EchoMD.switchToNormal(editor);
       editor.getWrapperElement().style.display = "block";
       editor.refresh();
     }
@@ -1081,17 +1081,15 @@ export default function NotePanel(props: Props) {
                 <FilePresentationBox></FilePresentationBox>
               </Button>
             </Tooltip>
-            <Tooltip title={t("general/vickymd")}>
+            <Tooltip title={t("general/echomd")}>
               <Button
                 className={clsx(
                   classes.controlBtn,
-                  editorMode === EditorMode.VickyMD &&
+                  editorMode === EditorMode.EchoMD &&
                     classes.controlBtnSelected,
                 )}
-                color={
-                  editorMode === EditorMode.VickyMD ? "primary" : "default"
-                }
-                onClick={() => setEditorMode(EditorMode.VickyMD)}
+                color={editorMode === EditorMode.EchoMD ? "primary" : "default"}
+                onClick={() => setEditorMode(EditorMode.EchoMD)}
               >
                 <Pencil></Pencil>
               </Button>

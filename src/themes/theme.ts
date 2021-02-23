@@ -1,5 +1,5 @@
+import { ThemeName } from "@0xgg/echomd/theme";
 import { createMuiTheme, Theme, ThemeOptions } from "@material-ui/core";
-import { ThemeName } from "vickymd/theme";
 
 interface CrossnoteThemeProps {
   name: ThemeName;

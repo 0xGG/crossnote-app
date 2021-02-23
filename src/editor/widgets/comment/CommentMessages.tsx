@@ -1,34 +1,34 @@
+import { renderPreview } from "@0xgg/echomd/preview";
 import {
   Avatar,
   Box,
-  Typography,
   Card,
-  IconButton,
-  Popover,
   Chip,
   Dialog,
+  IconButton,
+  Popover,
   Tooltip,
+  Typography,
 } from "@material-ui/core";
 import { createStyles, makeStyles, Theme } from "@material-ui/core/styles";
 import clsx from "clsx";
 import { formatRelative } from "date-fns/esm";
-import Identicon from "identicon.js";
-import { sha256 } from "js-sha256";
-import React, { useState, useEffect } from "react";
 import { Emoji, Picker as EmojiPicker } from "emoji-mart";
 import "emoji-mart/css/emoji-mart.css";
-import { Reply, StickerEmoji, FileEditOutline } from "mdi-material-ui";
+import Identicon from "identicon.js";
+import { sha256 } from "js-sha256";
+import { FileEditOutline, Reply, StickerEmoji } from "mdi-material-ui";
 import Noty from "noty";
+import React, { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { renderPreview } from "vickymd/preview";
-import { languageCodeToDateFNSLocale } from "../../../i18n/i18n";
+import { globalContainers } from "../../../containers/global";
 import {
-  useAddReactionToCommentWidgetMessageMutation,
-  useRemoveReactionFromCommentWidgetMessageMutation,
   CommentWidgetFieldsFragment,
   CommentWidgetMessageFieldsFragment,
+  useAddReactionToCommentWidgetMessageMutation,
+  useRemoveReactionFromCommentWidgetMessageMutation,
 } from "../../../generated/graphql";
-import { globalContainers } from "../../../containers/global";
+import { languageCodeToDateFNSLocale } from "../../../i18n/i18n";
 import { postprocessPreview } from "../../../utilities/preview";
 
 const messageMarginLeft = 48;

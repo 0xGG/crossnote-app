@@ -1,4 +1,7 @@
 // @ts-ignore
+import { renderPreview } from "@0xgg/echomd/preview";
+import { WidgetArgs, WidgetCreator } from "@0xgg/echomd/widget";
+// @ts-ignore
 import Board from "@lourenci/react-kanban";
 import {
   Box,
@@ -31,8 +34,6 @@ import {
 import React, { useEffect, useState } from "react";
 import ReactDOM from "react-dom";
 import { useTranslation } from "react-i18next";
-import { renderPreview } from "vickymd/preview";
-import { WidgetArgs, WidgetCreator } from "vickymd/widget";
 import EditImageDialog from "../../../components/EditImageDialog";
 import { globalContainers } from "../../../containers/global";
 import { Note } from "../../../lib/note";
@@ -40,7 +41,7 @@ import { setTheme } from "../../../themes/manager";
 import { resolveNoteImageSrc } from "../../../utilities/image";
 import { openURL, postprocessPreview } from "../../../utilities/preview";
 
-const VickyMD = require("vickymd/core");
+const EchoMD = require("@0xgg/echomd/core");
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -223,7 +224,7 @@ function KanbanCardDisplay(props: KanbanCardProps) {
 
   useEffect(() => {
     if (textAreaElement) {
-      const editor: CodeMirrorEditor = VickyMD.fromTextArea(textAreaElement, {
+      const editor: CodeMirrorEditor = EchoMD.fromTextArea(textAreaElement, {
         mode: {
           name: "hypermd",
           hashtag: true,

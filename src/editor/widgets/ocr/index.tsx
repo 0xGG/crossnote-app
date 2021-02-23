@@ -1,33 +1,33 @@
-import { WidgetCreator, WidgetArgs } from "vickymd/widget";
-import React, { useState, useEffect } from "react";
-import ReactDOM from "react-dom";
+import { WidgetArgs, WidgetCreator } from "@0xgg/echomd/widget";
 import {
-  Card,
-  Typography,
-  IconButton,
   Box,
-  Input,
-  Tooltip,
-  Switch,
-  FormControlLabel,
-  ListItem,
-  ListItemText,
-  List,
-  ListItemSecondaryAction,
-  FormGroup,
-  Checkbox,
-  ButtonGroup,
   Button,
+  ButtonGroup,
+  Card,
+  Checkbox,
+  FormControlLabel,
+  FormGroup,
+  IconButton,
+  Input,
+  List,
+  ListItem,
+  ListItemSecondaryAction,
+  ListItemText,
+  Switch,
+  Tooltip,
+  Typography,
 } from "@material-ui/core";
 import {
   createStyles,
+  darken,
   makeStyles,
   Theme,
   ThemeProvider,
-  darken,
 } from "@material-ui/core/styles";
 import clsx from "clsx";
 import { TrashCan } from "mdi-material-ui";
+import React, { useEffect, useState } from "react";
+import ReactDOM from "react-dom";
 import { useTranslation } from "react-i18next";
 import { createWorker } from "tesseract.js";
 import { globalContainers } from "../../../containers/global";

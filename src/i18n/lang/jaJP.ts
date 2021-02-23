@@ -48,7 +48,7 @@ export const jaJP = {
     "general/confirm-password": "もう一度パスワードを確認してください",
     "general/Continue": "継続する",
     "general/enter-username": "ユーザー名を入力してください",
-    "general/vickymd": "編集",
+    "general/echomd": "編集",
     "general/tags": "タグ",
     "general/add-a-tag": "タグを追加する",
     "general/private": "民間",

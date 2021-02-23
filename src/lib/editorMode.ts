@@ -1,5 +1,5 @@
 export enum EditorMode {
-  VickyMD = "VickyMD",
+  EchoMD = "EchoMD",
   SourceCode = "SourceCode",
   Preview = "Preview",
   SplitView = "SplitView",

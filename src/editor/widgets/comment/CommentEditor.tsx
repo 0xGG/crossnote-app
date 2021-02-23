@@ -18,7 +18,7 @@ import { Note } from "../../../lib/note";
 import { setTheme } from "../../../themes/manager";
 import { resolveNoteImageSrc } from "../../../utilities/image";
 import { openURL } from "../../../utilities/preview";
-const VickyMD = require("vickymd/core");
+const EchoMD = require("@0xgg/echomd/core");
 
 export const ChatMessageEditorHeight = "150";
 const useStyles = makeStyles((theme: Theme) =>
@@ -91,7 +91,7 @@ export function CommentEditor(props: Props) {
 
   useEffect(() => {
     if (textAreaElement) {
-      const editor: CodeMirrorEditor = VickyMD.fromTextArea(textAreaElement, {
+      const editor: CodeMirrorEditor = EchoMD.fromTextArea(textAreaElement, {
         mode: {
           name: "hypermd",
           hashtag: true,

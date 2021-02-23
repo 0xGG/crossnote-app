@@ -1,12 +1,12 @@
+import { renderPreview } from "@0xgg/echomd/preview";
 import { Box } from "@material-ui/core";
 import { createStyles, makeStyles, Theme } from "@material-ui/core/styles";
 import clsx from "clsx";
 import React, { useEffect } from "react";
-import { Notification } from "../../generated/graphql";
 import { useTranslation } from "react-i18next";
-import { NotificationAvatarPanel } from "./NotificationAvatarPanel";
 import { WidgetTopPanel } from "../../editor/widgets/widget/WidgetTopPanel";
-import { renderPreview } from "vickymd/preview";
+import { Notification } from "../../generated/graphql";
+import { NotificationAvatarPanel } from "./NotificationAvatarPanel";
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
