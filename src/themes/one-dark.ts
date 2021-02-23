@@ -6,6 +6,7 @@ export const OneDarkTheme: CrossnoteTheme = new CrossnoteTheme({
   name: "one-dark",
   muiThemeOptions: {
     palette: {
+      type: "dark",
       common: { black: "#000", white: "#fff" },
       background: {
         paper: lighten("#282c34", 0.05),
@@ -19,7 +20,7 @@ export const OneDarkTheme: CrossnoteTheme = new CrossnoteTheme({
         dark: "#d32f2f",
         contrastText: "rgba(197, 197, 197, 1)",
       },
-      divider: "#21262d",
+      // divider: "#323944",
       text: {
         primary: "#ccc",
         secondary: "rgba(180, 180, 180, 1)",

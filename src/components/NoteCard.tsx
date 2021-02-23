@@ -67,7 +67,7 @@ const useStyles = makeStyles((theme: Theme) =>
       "marginBottom": theme.spacing(1),
       "wordBreak": "break-all",
       "&:hover": {
-        backgroundColor: darken(theme.palette.background.paper, 0.04),
+        backgroundColor: darken(theme.palette.background.paper, 0.08),
         cursor: "pointer",
       },
       "flex": 1,
@@ -86,7 +86,7 @@ const useStyles = makeStyles((theme: Theme) =>
       "-webkit-box-orient": "vertical",
       "wordBreak": "break-all",
       "&:hover": {
-        backgroundColor: darken(theme.palette.background.paper, 0.04),
+        backgroundColor: darken(theme.palette.background.paper, 0.08),
         cursor: "pointer",
       },
     },
@@ -123,7 +123,7 @@ const useStyles = makeStyles((theme: Theme) =>
     markdownPreview: {
       "width": "calc(100% - 32px)",
       "&:hover": {
-        backgroundColor: darken(theme.palette.background.paper, 0.04),
+        backgroundColor: darken(theme.palette.background.paper, 0.08),
         cursor: "pointer",
       },
     },
