@@ -86,6 +86,7 @@ function useCrossnoteContainer(initialState: InitialState) {
         tabSetEnableMaximize: false,
         tabSetHeaderHeight: TabHeight,
         tabSetTabStripHeight: TabHeight,
+        tabEnableRename: false,
       },
       borders: [],
       layout: {

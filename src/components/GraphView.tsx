@@ -54,7 +54,7 @@ export default function GraphView(props: Props) {
   const theme = useTheme();
 
   useEffect(() => {
-    if (!graphViewPanel || !graphViewPanel.current) {
+    if (!graphViewPanel || !graphViewPanel.current || !props.tabNode) {
       return;
     }
     const resize = () => {
@@ -62,11 +62,14 @@ export default function GraphView(props: Props) {
       setHeight(graphViewPanel.current.offsetHeight);
     };
     window.addEventListener("resize", resize);
+    props.tabNode.setEventListener("resize", resize);
     resize();
+
     return () => {
       window.removeEventListener("resize", resize);
+      props.tabNode.removeEventListener("resize");
     };
-  }, [graphViewPanel]);
+  }, [graphViewPanel, props.tabNode]);
 
   useEffect(() => {
     if (!graphViewPanel || !props.notebook) {

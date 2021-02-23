@@ -183,7 +183,7 @@ export class Notebook {
       this.referenceMap.addReference(link, note.filePath, references[i]);
     }
 
-    // Add self to reference map
+    // Add self to reference map to declare the existence of the file itself
     this.referenceMap.addReference(note.filePath, note.filePath, null);
 
     // Update the mentions
