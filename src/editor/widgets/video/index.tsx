@@ -1,15 +1,13 @@
-import { WidgetCreator, WidgetArgs } from "vickymd/widget";
-import React, { useState } from "react";
-import ReactDOM from "react-dom";
+import { WidgetArgs, WidgetCreator } from "@0xgg/echomd/widget";
 import {
-  Card,
-  Typography,
-  IconButton,
   Box,
-  Input,
-  Tooltip,
-  Switch,
+  Card,
   FormControlLabel,
+  IconButton,
+  Input,
+  Switch,
+  Tooltip,
+  Typography,
 } from "@material-ui/core";
 import {
   createStyles,
@@ -19,6 +17,8 @@ import {
 } from "@material-ui/core/styles";
 import clsx from "clsx";
 import { TrashCan } from "mdi-material-ui";
+import React, { useState } from "react";
+import ReactDOM from "react-dom";
 import { useTranslation } from "react-i18next";
 import { globalContainers } from "../../../containers/global";
 

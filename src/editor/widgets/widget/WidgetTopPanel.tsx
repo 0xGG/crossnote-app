@@ -1,40 +1,40 @@
-import React, { useState, useEffect, useCallback } from "react";
+import { renderPreview } from "@0xgg/echomd/preview";
+import {
+  Avatar,
+  Box,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  IconButton,
+  Link,
+  TextField,
+  Tooltip,
+  Typography,
+} from "@material-ui/core";
 import { createStyles, makeStyles, Theme } from "@material-ui/core/styles";
 import clsx from "clsx";
+import { Editor as CodeMirrorEditor } from "codemirror";
 import Identicon from "identicon.js";
 import { sha256 } from "js-sha256";
 import {
+  Cancel,
+  ContentSave,
+  LinkVariant,
+  Pencil,
+  TrashCanOutline,
+} from "mdi-material-ui";
+import Noty from "noty";
+import React, { useCallback, useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
+import { globalContainers } from "../../../containers/global";
+import {
   useDeleteWidgetMutation,
   useUpdateWidgetMutation,
+  Widget,
 } from "../../../generated/graphql";
-import Noty from "noty";
-import { useTranslation } from "react-i18next";
-import { Editor as CodeMirrorEditor } from "codemirror";
-import {
-  Box,
-  Avatar,
-  Tooltip,
-  IconButton,
-  Dialog,
-  DialogContent,
-  DialogActions,
-  Link,
-  TextField,
-  Typography,
-} from "@material-ui/core";
-import {
-  TrashCanOutline,
-  Pencil,
-  ContentSave,
-  Cancel,
-  LinkVariant,
-} from "mdi-material-ui";
-import { renderPreview } from "vickymd/preview";
-import { Widget } from "../../../generated/graphql";
-import { browserHistory } from "../../../utilities/history";
-import { globalContainers } from "../../../containers/global";
 import { setTheme } from "../../../themes/manager";
-const VickyMD = require("vickymd/core");
+import { browserHistory } from "../../../utilities/history";
+const EchoMD = require("@0xgg/echomd/core");
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -189,7 +189,7 @@ export function WidgetTopPanel(props: Props) {
     }
 
     if (textAreaElement) {
-      const editor: CodeMirrorEditor = VickyMD.fromTextArea(textAreaElement, {
+      const editor: CodeMirrorEditor = EchoMD.fromTextArea(textAreaElement, {
         mode: {
           name: "hypermd",
           hashtag: true,

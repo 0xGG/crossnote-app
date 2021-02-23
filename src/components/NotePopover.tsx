@@ -1,3 +1,4 @@
+import { renderPreview } from "@0xgg/echomd/preview";
 import {
   Box,
   Divider,
@@ -33,7 +34,6 @@ import {
 } from "mdi-material-ui";
 import React, { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { renderPreview } from "vickymd/preview";
 import { CrossnoteContainer } from "../containers/crossnote";
 import { SettingsContainer } from "../containers/settings";
 import { Note } from "../lib/note";

@@ -1,27 +1,27 @@
-import { WidgetCreator, WidgetArgs } from "vickymd/widget";
-import React, { useState } from "react";
-import ReactDOM from "react-dom";
+import { WidgetArgs, WidgetCreator } from "@0xgg/echomd/widget";
 import {
-  Card,
-  Typography,
-  IconButton,
   Box,
+  Card,
+  IconButton,
   Input,
   Tooltip,
+  Typography,
 } from "@material-ui/core";
 import {
   createStyles,
+  darken,
   makeStyles,
   Theme,
   ThemeProvider,
-  darken,
 } from "@material-ui/core/styles";
 import clsx from "clsx";
 import { TrashCan } from "mdi-material-ui";
-import { useTranslation } from "react-i18next";
-import { smmsUploadImages } from "../../../utilities/image_uploader";
 import Noty from "noty";
+import React, { useState } from "react";
+import ReactDOM from "react-dom";
+import { useTranslation } from "react-i18next";
 import { globalContainers } from "../../../containers/global";
+import { smmsUploadImages } from "../../../utilities/image_uploader";
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({

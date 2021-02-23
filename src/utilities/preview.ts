@@ -1,5 +1,5 @@
+import { printPreview as EchoMDPrintPreview } from "@0xgg/echomd/preview";
 import * as path from "path";
-import { printPreview as VickyMDPrintPreview } from "vickymd/preview";
 import { globalContainers } from "../containers/global";
 import { Note } from "../lib/note";
 import { browserHistory } from "./history";
@@ -10,7 +10,7 @@ export function printPreview(
   bannerElement?: HTMLElement,
   timeout = 2000,
 ) {
-  return VickyMDPrintPreview(
+  return EchoMDPrintPreview(
     previewElement,
     bannerElement,
     ["body"],

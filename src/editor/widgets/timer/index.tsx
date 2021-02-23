@@ -2,12 +2,11 @@
 // Distributed under AGPL3
 //
 // DESCRIPTION: This widget displays time related information
+import { WidgetArgs, WidgetCreator } from "@0xgg/echomd/widget";
+import { ErrorWidget } from "@0xgg/echomd/widget/error/error";
+import { ThemeProvider, useTheme } from "@material-ui/core";
 import React from "react";
 import ReactDOM from "react-dom";
-import { WidgetArgs, WidgetCreator } from "vickymd/widget";
-import { ErrorWidget } from "vickymd/widget/error/error";
-import { useTheme, ThemeProvider } from "@material-ui/core";
-import { themeManager } from "../../../themes/manager";
 import { globalContainers } from "../../../containers/global";
 
 function Timer(props: WidgetArgs) {

@@ -1,7 +1,7 @@
+import { md } from "@0xgg/echomd/preview";
 import * as git from "isomorphic-git";
 import Token from "markdown-it/lib/token";
 import * as path from "path";
-import { md } from "vickymd/preview";
 // import { isFileAnImage } from "../utilities/image";
 import { matter, matterStringify } from "../utilities/markdown";
 import { fs, pfs } from "./fs";
@@ -81,6 +81,10 @@ export class Notebook {
       const map = this.referenceMap.map[filePath];
       const notes: Notes = {};
       for (let rFilePath in map) {
+        if (rFilePath === filePath) {
+          // Don't include self
+          continue;
+        }
         const note = await this.getNote(rFilePath);
         if (note) {
           notes[rFilePath] = note;
@@ -179,7 +183,7 @@ export class Notebook {
       this.referenceMap.addReference(link, note.filePath, references[i]);
     }
 
-    // Add self to reference map
+    // Add self to reference map to declare the existence of the file itself
     this.referenceMap.addReference(note.filePath, note.filePath, null);
 
     // Update the mentions

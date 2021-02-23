@@ -1,7 +1,7 @@
+import { renderPreview } from "@0xgg/echomd/preview";
 import { createStyles, makeStyles, Theme } from "@material-ui/core/styles";
 import clsx from "clsx";
 import { useCallback, useEffect, useState } from "react";
-import { renderPreview } from "vickymd/preview";
 import { Note } from "../lib/note";
 import { postprocessPreview as previewPostprocessPreview } from "../utilities/preview";
 

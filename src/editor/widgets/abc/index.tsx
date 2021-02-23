@@ -1,22 +1,21 @@
-import { WidgetCreator, WidgetArgs } from "vickymd/widget";
-import React, { useState, useEffect } from "react";
-import ReactDOM from "react-dom";
-import clsx from "clsx";
+import { WidgetArgs, WidgetCreator } from "@0xgg/echomd/widget";
+import { Box, Card, IconButton, Tooltip } from "@material-ui/core";
 import {
   createStyles,
   makeStyles,
   Theme,
   ThemeProvider,
 } from "@material-ui/core/styles";
-import { Box, IconButton, Card, Tooltip } from "@material-ui/core";
-import { useTranslation } from "react-i18next";
-import { generateUUID } from "../../../utilities/utils";
-
 // @ts-ignore
 import abcjs from "abcjs";
 import "abcjs/abcjs-audio.css";
+import clsx from "clsx";
 import { ContentSave, TrashCan } from "mdi-material-ui";
+import React, { useEffect, useState } from "react";
+import ReactDOM from "react-dom";
+import { useTranslation } from "react-i18next";
 import { globalContainers } from "../../../containers/global";
+import { generateUUID } from "../../../utilities/utils";
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({

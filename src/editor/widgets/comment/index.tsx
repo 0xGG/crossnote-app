@@ -1,42 +1,42 @@
-import { WidgetCreator, WidgetArgs } from "vickymd/widget";
-import React, { useState, useEffect, useCallback } from "react";
-import ReactDOM from "react-dom";
+import { WidgetArgs, WidgetCreator } from "@0xgg/echomd/widget";
+import {
+  Avatar,
+  Badge,
+  Box,
+  Button,
+  Chip,
+  Dialog,
+  Tooltip,
+  Typography,
+} from "@material-ui/core";
 import {
   createStyles,
+  darken,
   makeStyles,
   Theme,
   ThemeProvider,
-  darken,
 } from "@material-ui/core/styles";
 import clsx from "clsx";
-import {
-  useCreateCommentWidgetMutation,
-  useCommentWidgetQuery,
-  CommentWidgetFieldsFragment,
-  useAddReactionToCommentWidgetMutation,
-  useRemoveReactionFromCommentWidgetMutation,
-} from "../../../generated/graphql";
-import Noty from "noty";
-import { useTranslation } from "react-i18next";
-import { getHeaderFromMarkdown } from "../../../utilities/note";
-import { Provider } from "urql";
-import { GraphQLClient } from "../../../utilities/client";
-import {
-  Button,
-  Box,
-  Typography,
-  Avatar,
-  Tooltip,
-  Badge,
-  Dialog,
-  Chip,
-} from "@material-ui/core";
-import { CommentOutline, StickerEmoji } from "mdi-material-ui";
 import { Emoji, Picker as EmojiPicker } from "emoji-mart";
 import "emoji-mart/css/emoji-mart.css";
+import { CommentOutline, StickerEmoji } from "mdi-material-ui";
+import Noty from "noty";
+import React, { useCallback, useEffect, useState } from "react";
+import ReactDOM from "react-dom";
+import { useTranslation } from "react-i18next";
+import { Provider } from "urql";
 import { globalContainers } from "../../../containers/global";
-import { CommentDialog } from "./CommentDialog";
+import {
+  CommentWidgetFieldsFragment,
+  useAddReactionToCommentWidgetMutation,
+  useCommentWidgetQuery,
+  useCreateCommentWidgetMutation,
+  useRemoveReactionFromCommentWidgetMutation,
+} from "../../../generated/graphql";
+import { GraphQLClient } from "../../../utilities/client";
+import { getHeaderFromMarkdown } from "../../../utilities/note";
 import { WidgetTopPanel } from "../widget/WidgetTopPanel";
+import { CommentDialog } from "./CommentDialog";
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({

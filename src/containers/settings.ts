@@ -1,7 +1,7 @@
+import { ThemeName } from "@0xgg/echomd/theme";
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { createContainer } from "unstated-next";
-import { ThemeName } from "vickymd/theme";
 import { getKeyMap, KeyMap } from "../lib/keymap";
 import { themeManager } from "../themes/manager";
 import { CrossnoteTheme } from "../themes/theme";

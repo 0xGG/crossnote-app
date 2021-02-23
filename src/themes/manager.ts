@@ -1,6 +1,6 @@
+import { setTheme as EchoMDSetTheme, ThemeName } from "@0xgg/echomd/theme";
 import { Editor } from "codemirror";
-import { setTheme as VickyMDSetTheme, ThemeName } from "vickymd/theme";
-import { VickyMDVersion } from "../editor";
+import { EchoMDVersion } from "../editor";
 import { DarkTheme } from "./dark";
 import { LightTheme } from "./light";
 import { OneDarkTheme } from "./one-dark";
@@ -14,12 +14,12 @@ export function setTheme({
   editor?: Editor;
   themeName: ThemeName;
 }) {
-  return VickyMDSetTheme({
+  return EchoMDSetTheme({
     editor,
     themeName,
     baseUri: `${
       window.location.origin.match(/0xgg\./i) ? "/crossnote" : ""
-    }/styles/vickymd@${VickyMDVersion}/`,
+    }/styles/echomd@${EchoMDVersion}/`,
   });
 }
 
