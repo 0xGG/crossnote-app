@@ -44,7 +44,6 @@ import { CloudContainer } from "../containers/cloud";
 import { CrossnoteContainer, HomeSection } from "../containers/crossnote";
 import { globalContainers } from "../containers/global";
 import { SettingsContainer } from "../containers/settings";
-import { browserHistory } from "../utilities/history";
 const is = require("is_js");
 
 const drawerWidth = 200;
@@ -373,8 +372,6 @@ export function Home(props: Props) {
           <ListItem
             button
             onClick={() => {
-              // browserHistory.push(`/settings`);
-              // setDrawerOpen(false);
               crossnoteContainer.addTabNode({
                 type: "tab",
                 component: "Settings",
@@ -416,7 +413,15 @@ export function Home(props: Props) {
             <ListItem
               button
               onClick={() => {
-                browserHistory.push(`/notifications`);
+                crossnoteContainer.addTabNode({
+                  type: "tab",
+                  component: "Notifications",
+                  name: "🔔 " + t("general/Notifications"),
+                  id: "Notifications",
+                  config: {
+                    singleton: true,
+                  },
+                });
                 setDrawerOpen(false);
               }}
             >

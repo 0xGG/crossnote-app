@@ -471,6 +471,13 @@ export default function NotePanel(props: Props) {
     }
   }, [textAreaElement, note, editor]);
 
+  // Save note info to editor
+  useEffect(() => {
+    if (note && editor) {
+      (editor.setOption as any)("note", note);
+    }
+  }, [note, editor]);
+
   // Math preview
   useEffect(() => {
     if (editor && mathPreviewElement) {
