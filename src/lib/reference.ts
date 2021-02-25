@@ -1,6 +1,10 @@
 import Token from "markdown-it/lib/token";
 
 export interface Reference {
+  /**
+   * The id of the referenced element
+   */
+  elementId: string;
   parentToken: Token;
   token: Token;
   text: string;

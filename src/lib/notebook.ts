@@ -145,6 +145,7 @@ export class Notebook {
           }
           // console.log("find link token: ", token, parentToken);
           results.push({
+            elementId: token.meta,
             text,
             link: resolveLink(link),
             parentToken,
@@ -155,6 +156,7 @@ export class Notebook {
           const link = token.content.trim();
           // console.log("find link token: ", token, parentToken);
           results.push({
+            elementId: token.meta,
             text,
             link: resolveLink(link),
             parentToken,
