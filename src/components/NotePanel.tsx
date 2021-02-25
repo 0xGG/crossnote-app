@@ -46,6 +46,7 @@ import {
 } from "../lib/event";
 import { Note } from "../lib/note";
 import { Notebook } from "../lib/notebook";
+import { Reference } from "../lib/reference";
 import { setTheme } from "../themes/manager";
 import { resolveNoteImageSrc } from "../utilities/image";
 import {
@@ -85,9 +86,12 @@ const useStyles = makeStyles((theme: Theme) =>
       alignItems: "center",
     },
     notePanel: {
-      height: "100%",
-      overflow: "hidden",
-      backgroundColor: theme.palette.background.paper,
+      "height": "100%",
+      "overflow": "hidden",
+      "backgroundColor": theme.palette.background.paper,
+      "& .reference-highlight": {
+        backgroundColor: `${theme.palette.warning.light} !important`,
+      },
     },
     topPanel: {
       display: "flex",
@@ -226,6 +230,7 @@ interface Props {
   notebook: Notebook;
   note: Note;
   tabNode: TabNode;
+  reference?: Reference;
 }
 export default function NotePanel(props: Props) {
   const classes = useStyles(props);
@@ -498,6 +503,42 @@ export default function NotePanel(props: Props) {
     }
   }, [editorMode, editor, previewElement, note, postprocessPreview, t]);
 
+  // Check need to highlight reference
+  useEffect(() => {
+    if (props.reference) {
+      if (editorMode === EditorMode.Preview && previewElement) {
+        const element = previewElement.querySelector(
+          `#` + props.reference.elementId,
+        );
+        if (element) {
+          element.classList.add("reference-highlight");
+          const removeHighlightClass = () => {
+            element.classList.remove("reference-highlight");
+          };
+          previewElement.addEventListener("click", removeHighlightClass);
+          return () => {
+            previewElement.removeEventListener("click", removeHighlightClass);
+          };
+        }
+      } /* else if (editor) { // <= Doesn't work very well
+        const line = (props.reference.parentToken.map || [])[0];
+        console.log("refer line: ", line);
+        if (typeof line === "number") {
+          const lineText = editor.getLine(line);
+          editor.markText(
+            { line, ch: 0 },
+            { line, ch: lineText.length },
+            {
+              className: "reference-highlight",
+              clearOnEnter: true,
+              atomic: true,
+            },
+          );
+        }
+      }*/
+    }
+  }, [props.reference, editorMode, editor, previewElement]);
+
   // Toggle editor & preview
   useEffect(() => {
     if (!editor || !note) return;
@@ -512,10 +553,6 @@ export default function NotePanel(props: Props) {
       editor.refresh();
     } else if (editorMode === EditorMode.Preview) {
       editor.getWrapperElement().style.display = "none";
-    } else if (editorMode === EditorMode.SplitView) {
-      EchoMD.switchToNormal(editor);
-      editor.getWrapperElement().style.display = "block";
-      editor.refresh();
     }
   }, [editorMode, editor, note]);
 
@@ -1142,9 +1179,7 @@ export default function NotePanel(props: Props) {
               setTextAreaElement(element);
             }}
           ></textarea>
-          {(editorMode === EditorMode.Preview ||
-            editorMode === EditorMode.SplitView) &&
-          editor ? (
+          {editorMode === EditorMode.Preview && editor ? (
             <div
               className={clsx(
                 classes.preview,

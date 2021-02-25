@@ -377,7 +377,23 @@ export default function NoteCard(props: Props) {
                 </Box>
                 <Box
                   className={clsx(classes.markdownPreview)}
-                  onClick={openNote}
+                  onClick={() => {
+                    if (note) {
+                      crossnoteContainer.addTabNode({
+                        type: "tab",
+                        component: "Note",
+                        config: {
+                          singleton: false,
+                          note,
+                          notebook: crossnoteContainer.getNotebookAtPath(
+                            note.notebookPath,
+                          ),
+                          reference,
+                        },
+                        name: `📝 ` + note.title,
+                      });
+                    }
+                  }}
                 >
                   {/*
                   <MarkdownPreview

@@ -82,6 +82,7 @@ export function MainPanel(props: Props) {
   const factory = useCallback(
     (node: TabNode) => {
       const config: TabNodeConfig = node.getConfig();
+      /*
       console.log(
         "render component: \n",
         `* id: ${node.getId()}\n`,
@@ -89,6 +90,7 @@ export function MainPanel(props: Props) {
         `* config: `,
         node.getConfig(),
       );
+      */
 
       const component: TabNodeComponent = node.getComponent() as TabNodeComponent;
       let renderElement = <Box></Box>;
@@ -112,6 +114,7 @@ export function MainPanel(props: Props) {
             notebook={config.notebook}
             note={config.note}
             tabNode={node}
+            reference={config.reference}
           ></NotePanel>
         );
       } else if (component === "Graph") {

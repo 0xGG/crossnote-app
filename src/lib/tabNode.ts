@@ -1,5 +1,6 @@
 import { Note } from "./note";
 import { Notebook } from "./notebook";
+import { Reference } from "./reference";
 
 export type TabNodeComponent =
   | "Settings"
@@ -13,6 +14,7 @@ export interface TabNodeConfig {
   singleton: boolean;
   note?: Note;
   notebook?: Notebook;
+  reference?: Reference;
 }
 
 export interface CrossnoteTabNode {
