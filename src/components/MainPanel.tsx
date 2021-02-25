@@ -18,6 +18,7 @@ import { PrivacyPolicy } from "../pages/Privacy";
 import GraphView from "./GraphView";
 import NotePanel from "./NotePanel";
 import NotesPanel from "./NotesPanel";
+import { Notifications } from "./Notifications";
 import { Settings } from "./Settings";
 
 const useStyles = makeStyles((theme: Theme) =>
@@ -117,7 +118,12 @@ export function MainPanel(props: Props) {
         renderElement = (
           <GraphView notebook={config.notebook} tabNode={node}></GraphView>
         );
+      } else if (component === "Notifications") {
+        renderElement = <Notifications></Notifications>;
+      } else {
+        console.error("Invalid component: ", component);
       }
+
       return (
         <ThemeProvider theme={settingsContainer.theme.muiTheme}>
           {renderElement}

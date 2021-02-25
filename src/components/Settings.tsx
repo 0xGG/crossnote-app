@@ -44,7 +44,7 @@ const useStyles = makeStyles((theme: Theme) =>
   createStyles({
     settingsPanel: {
       height: "100%",
-      overflow: "hidden",
+      overflow: "auto",
       backgroundColor: theme.palette.background.default,
     },
     settingsCard: {

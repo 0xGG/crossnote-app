@@ -5,11 +5,9 @@ export type TabNodeComponent =
   | "Settings"
   | "Note"
   | "Notes"
-  | "Today"
-  | "Todo"
-  | "Conflicted"
   | "Privacy"
-  | "Graph";
+  | "Graph"
+  | "Notifications";
 
 export interface TabNodeConfig {
   singleton: boolean;

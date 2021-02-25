@@ -33,6 +33,7 @@ import {
   useCreateCommentWidgetMutation,
   useRemoveReactionFromCommentWidgetMutation,
 } from "../../../generated/graphql";
+import { Note } from "../../../lib/note";
 import { GraphQLClient } from "../../../utilities/client";
 import { getHeaderFromMarkdown } from "../../../utilities/note";
 import { WidgetTopPanel } from "../widget/WidgetTopPanel";
@@ -198,7 +199,25 @@ function CommentWidget(props: WidgetArgs) {
     ) {
       const title =
         getHeaderFromMarkdown(editor.getValue()) || t("general/Untitled");
-      const source = window.location.href;
+      const note = (editor.getOption as any)("note") as Note;
+      let source = window.location.href;
+      if (note) {
+        const notebook = globalContainers.crossnoteContainer.getNotebookAtPath(
+          note.notebookPath,
+        );
+        if (notebook) {
+          // TODO: Refactor with NotePopover.tsx
+          source = notebook.gitURL
+            ? `${window.location.origin}/?repo=${encodeURIComponent(
+                notebook.gitURL,
+              )}&branch=${encodeURIComponent(
+                notebook.gitBranch || "master",
+              )}&filePath=${encodeURIComponent(note.filePath)}`
+            : `${window.location.origin}/?notebookID=${
+                notebook._id
+              }&filePath=${encodeURIComponent(note.filePath)}`;
+        }
+      }
       const description = `💬  **${title}**`;
       executeCreateCommentWidgetMutation({
         description,

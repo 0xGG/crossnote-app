@@ -3,7 +3,6 @@ import {
   Button,
   Card,
   Divider,
-  Hidden,
   IconButton,
   List,
   ListItem,
@@ -12,7 +11,7 @@ import {
 } from "@material-ui/core";
 import { createStyles, makeStyles, Theme } from "@material-ui/core/styles";
 import clsx from "clsx";
-import { Close, Menu as MenuIcon } from "mdi-material-ui";
+import { Close } from "mdi-material-ui";
 import React, { useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { CloudContainer } from "../containers/cloud";
@@ -24,6 +23,8 @@ const useStyles = makeStyles((theme: Theme) =>
   createStyles({
     notifications: {
       width: "100%",
+      height: "100%",
+      overflow: "auto",
       backgroundColor: theme.palette.background.default,
       padding: theme.spacing(2),
       [theme.breakpoints.down("sm")]: {
@@ -51,9 +52,7 @@ const useStyles = makeStyles((theme: Theme) =>
   }),
 );
 
-interface Props {
-  toggleDrawer: () => void;
-}
+interface Props {}
 export function Notifications(props: Props) {
   const classes = useStyles(props);
   const { t } = useTranslation();
@@ -91,12 +90,9 @@ export function Notifications(props: Props) {
     <Box className={clsx(classes.notifications)}>
       <Box className={clsx(classes.topBar)}>
         <Box className={clsx(classes.row)}>
-          <Hidden smUp implementation="css">
-            <IconButton onClick={props.toggleDrawer}>
-              <MenuIcon></MenuIcon>
-            </IconButton>
-          </Hidden>
-          <Typography variant={"h6"}>{t("general/Notifications")}</Typography>
+          <Typography variant={"h6"} color={"textPrimary"}>
+            {t("general/Notifications")}
+          </Typography>
         </Box>
         <Button
           variant={"contained"}
@@ -111,9 +107,13 @@ export function Notifications(props: Props) {
       </Box>
       {!notificationsContainer.notifications.length ? (
         notificationsContainer.fetching ? (
-          <Typography>{t("general/loading-notifications")}</Typography>
+          <Typography color={"textPrimary"}>
+            {t("general/loading-notifications")}
+          </Typography>
         ) : (
-          <Typography>{t("general/no-notifications-found")}</Typography>
+          <Typography color={"textPrimary"}>
+            {t("general/no-notifications-found")}
+          </Typography>
         )
       ) : (
         <>
