@@ -36,6 +36,7 @@ const useStyles = makeStyles((theme: Theme) =>
       "& .flexlayout__tabset_tabbar_outer.flexlayout__tabset_tabbar_outer_top": {
         backgroundColor: darken(theme.palette.background.default, 0.04),
         borderColor: theme.palette.divider,
+        border: "none",
       },
       "& .flexlayout__tab_button": {
         color: theme.palette.text.primary,

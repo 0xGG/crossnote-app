@@ -1,3 +1,4 @@
+import { debounce } from "@0xgg/echomd";
 import EmojiDefinitions from "@0xgg/echomd/addon/emoji";
 import { renderPreview } from "@0xgg/echomd/preview";
 import {
@@ -11,7 +12,12 @@ import {
   Tooltip,
   Typography,
 } from "@material-ui/core";
-import { createStyles, makeStyles, Theme } from "@material-ui/core/styles";
+import {
+  createStyles,
+  darken,
+  makeStyles,
+  Theme,
+} from "@material-ui/core/styles";
 import clsx from "clsx";
 import {
   Editor as CodeMirrorEditor,
@@ -26,6 +32,7 @@ import {
   DotsVertical,
   FilePresentationBox,
   Pencil,
+  TableOfContents,
 } from "mdi-material-ui";
 import Noty from "noty";
 import * as path from "path";
@@ -112,8 +119,34 @@ const useStyles = makeStyles((theme: Theme) =>
       position: "relative",
       height: "calc(100% - 48px - 30px)",
       overflow: "auto",
+      display: "flex",
+      flexDirection: "row",
+    },
+    noteContentPanel: {
+      flex: 1,
+      overflow: "auto",
+    },
+    tocPanel: {
+      width: "280px",
+      maxWidth: "80%",
+      padding: "0",
+      overflow: "auto",
+      borderLeft: `1px solid ${theme.palette.divider}`,
+      paddingTop: "32px",
+    },
+    toc: {
+      "& .toc-item": {
+        cursor: "pointer",
+        borderBottom: `1px solid ${theme.palette.divider}`,
+        color: theme.palette.text.primary,
+        padding: ".5em",
+      },
+      "& .toc-item:hover": {
+        backgroundColor: darken(theme.palette.background.paper, 0.06),
+      },
     },
     editorWrapper: {
+      "position": "relative",
       "flex": 1,
       "overflow": "auto",
       "backgroundColor": "inherit",
@@ -150,8 +183,11 @@ const useStyles = makeStyles((theme: Theme) =>
       */
       "& .CodeMirror-selected": codeMirrorSelectCss,
       "& .CodeMirror-focused .CodeMirror-selected": codeMirrorSelectCss,
-      "& .CodeMirror-line::-moz-selection": codeMirrorSelectCss,
+      "& .CodeMirror-line::selection": codeMirrorSelectCss,
       "& .CodeMirror-line > span::selection": codeMirrorSelectCss,
+      "& .CodeMirror-line > span > span::selection ": codeMirrorSelectCss,
+      "& .CodeMirror-line::-moz-selection": codeMirrorSelectCss,
+      "& .CodeMirror-line > span::-moz-selection": codeMirrorSelectCss,
       "& .CodeMirror-line > span > span::-moz-selection": codeMirrorSelectCss,
       /*
       [theme.breakpoints.down("sm")]: {
@@ -181,6 +217,12 @@ const useStyles = makeStyles((theme: Theme) =>
       [theme.breakpoints.down("sm")]: {
         padding: theme.spacing(1),
       },
+    },
+    tocButtonGroup: {
+      position: "absolute",
+      top: "48px",
+      right: "8px",
+      zIndex: previewZIndex + 1,
     },
     presentation: {
       padding: "0 !important",
@@ -260,6 +302,7 @@ export default function NotePanel(props: Props) {
   const [note, setNote] = useState<Note>(props.note);
   const [editor, setEditor] = useState<CodeMirrorEditor>(null);
   const [editorMode, setEditorMode] = useState<EditorMode>(EditorMode.Preview);
+  const [tocElement, setTOCElement] = useState<HTMLElement>(null);
   const [previewElement, setPreviewElement] = useState<HTMLElement>(null);
   const [previewIsPresentation, setPreviewIsPresentation] = useState<boolean>(
     false,
@@ -283,6 +326,7 @@ export default function NotePanel(props: Props) {
   );
   const [notePopoverElement, setNotePopoverElement] = useState<Element>(null);
   const [gitStatus, setGitStatus] = useState<string>("");
+  const [tocEnabled, setTocEnabled] = useState<boolean>(false);
 
   const confirmNoteTitle = useCallback(() => {
     const finalNoteTitle = noteTitle.trim().replace(/\//g, "-");
@@ -1088,6 +1132,79 @@ export default function NotePanel(props: Props) {
     };
   }, [editor, note, props.notebook]);
 
+  // TOC
+  useEffect(() => {
+    if (!editor || !tocElement || !note) {
+      return;
+    }
+
+    // The following code is referred from HymerPD demo/toc.js
+    let lastTOC = "";
+    const update = debounce(function () {
+      let newTOC = "";
+      editor.eachLine(function (line) {
+        const tmp = /^(#+)\s+(.+)(?:\s+\1)?$/.exec(line.text);
+        if (!tmp) return;
+        const lineNo = line.lineNo();
+        if (!editor.getStateAfter(lineNo).header) return; // double check but is not header
+        const level = tmp[1].length;
+        let title = tmp[2];
+        title = title.replace(/([*_]{1,2}|~~|`+)(.+?)\1/g, "$2"); // em / bold / del / code
+        title = title.replace(
+          /\\(?=.)|\[\^.+?\]|\!\[((?:[^\\\]]+|\\.)+)\](\(.+?\)| ?\[.+?\])?/g,
+          "",
+        ); // images / escaping slashes / footref
+        title = title.replace(
+          /\[((?:[^\\\]]+|\\.)+)\](\(.+?\)| ?\[.+?\])/g,
+          "$1",
+        ); // links
+        title = title.replace(/&/g, "&amp;");
+        title = title.replace(/</g, "&lt;");
+        newTOC +=
+          '<div data-line="' +
+          lineNo +
+          '" class="toc-item" style="padding-left:' +
+          level +
+          'em">' +
+          title +
+          "</div>";
+      });
+      newTOC =
+        `<div data-line="0" class="toc-item" style="padding-left: 1em;">${note.title}</div>` +
+        newTOC;
+      if (newTOC === lastTOC) return;
+      tocElement.innerHTML = lastTOC = newTOC;
+    }, 300);
+
+    const tocClick = (event: Event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      const t = event.target as HTMLElement;
+      if (!/toc-item/.test(t.className)) return;
+      const lineNo = parseInt(t.getAttribute("data-line"));
+      if (editorMode === EditorMode.Preview) {
+        const anchor = document.querySelector(`[data-line="${lineNo}"]`);
+        if (anchor) {
+          anchor.scrollIntoView();
+        }
+      } else {
+        editor.setCursor({ line: editor.lastLine(), ch: 0 });
+        setTimeout(function () {
+          editor.setCursor({ line: lineNo, ch: 0 });
+        }, 10);
+      }
+    };
+
+    editor.on("changes", update);
+    tocElement.addEventListener("click", tocClick, true);
+    update();
+
+    return () => {
+      editor.off("changes", update);
+      tocElement.removeEventListener("click", tocClick);
+    };
+  }, [editor, editorMode, previewElement, tocElement, note]);
+
   // Git Status
   useEffect(() => {
     crossnoteContainer
@@ -1187,7 +1304,7 @@ export default function NotePanel(props: Props) {
           <ButtonGroup
             variant="text"
             color="default"
-            aria-label="editor mode"
+            aria-label="actions"
             size="small"
           >
             <Button
@@ -1197,40 +1314,70 @@ export default function NotePanel(props: Props) {
               <DotsVertical></DotsVertical>
             </Button>
           </ButtonGroup>
+          <ButtonGroup
+            variant="text"
+            color="default"
+            aria-label="table of contents"
+            size="small"
+            className={clsx(classes.tocButtonGroup)}
+          >
+            <Button
+              className={clsx(
+                classes.controlBtn,
+                tocEnabled ? classes.controlBtnSelected : null,
+              )}
+              onClick={() => setTocEnabled(!tocEnabled)}
+            >
+              <TableOfContents></TableOfContents>
+            </Button>
+          </ButtonGroup>
         </Box>
         <Divider></Divider>
       </Box>
       <Box className={clsx(classes.contentPanel)}>
-        <Box className={clsx(classes.editorWrapper)}>
-          <textarea
-            className={clsx(classes.editor, "editor-textarea")}
-            placeholder={t("editor/placeholder")}
-            ref={(element: HTMLTextAreaElement) => {
-              setTextAreaElement(element);
-            }}
-          ></textarea>
-          {editorMode === EditorMode.Preview && editor ? (
+        <Box className={clsx(classes.noteContentPanel)}>
+          {" "}
+          <Box className={clsx(classes.editorWrapper)}>
+            <textarea
+              className={clsx(classes.editor, "editor-textarea")}
+              placeholder={t("editor/placeholder")}
+              ref={(element: HTMLTextAreaElement) => {
+                setTextAreaElement(element);
+              }}
+            ></textarea>
+            {editorMode === EditorMode.Preview && editor ? (
+              <div
+                className={clsx(
+                  classes.preview,
+                  "preview",
+                  previewIsPresentation ? classes.presentation : null,
+                )}
+                ref={(element: HTMLElement) => {
+                  setPreviewElement(element);
+                }}
+              ></div>
+            ) : null}
+          </Box>
+          <React.Fragment>
+            <Box style={{ marginTop: "32px" }}></Box>
+            <NotesPanel
+              title={"Linked references"}
+              tabNode={props.tabNode}
+              notebook={props.notebook}
+              note={note}
+            ></NotesPanel>
+          </React.Fragment>
+        </Box>
+        {tocEnabled && (
+          <Box className={clsx(classes.tocPanel)}>
             <div
-              className={clsx(
-                classes.preview,
-                "preview",
-                previewIsPresentation ? classes.presentation : null,
-              )}
+              className={clsx(classes.toc)}
               ref={(element: HTMLElement) => {
-                setPreviewElement(element);
+                setTOCElement(element);
               }}
             ></div>
-          ) : null}
-        </Box>
-        <React.Fragment>
-          <Box style={{ marginTop: "32px" }}></Box>
-          <NotesPanel
-            title={"Linked references"}
-            tabNode={props.tabNode}
-            notebook={props.notebook}
-            note={note}
-          ></NotesPanel>
-        </React.Fragment>
+          </Box>
+        )}
       </Box>
       <Box className={clsx(classes.bottomPanel, "editor-bottom-panel")}>
         <Box className={clsx(classes.row)}>
