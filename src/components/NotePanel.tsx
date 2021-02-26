@@ -78,6 +78,11 @@ interface CommandHint {
   render: (element: HTMLElement, data: any, current: CommandHint) => void;
 }
 
+const codeMirrorSelectCss = {
+  background: `#5091DA !important`,
+  color: `#fff !important`,
+};
+
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
     row: {
@@ -135,6 +140,19 @@ const useStyles = makeStyles((theme: Theme) =>
       "& .CodeMirror-placeholder": {
         color: theme.palette.text.hint,
       },
+      /*
+      CodeMirror selected text css:
+        .CodeMirror-selected { background: red; }
+        .CodeMirror-focused .CodeMirror-selected { background: blue; }
+        .CodeMirror-crosshair { cursor: crosshair; }
+        .CodeMirror-line::selection, .CodeMirror-line > span::selection, .CodeMirror-line > span > span::selection { background: #yellow; }
+        .CodeMirror-line::-moz-selection, .CodeMirror-line > span::-moz-selection, .CodeMirror-line > span > span::-moz-selection { background: #purple; }
+      */
+      "& .CodeMirror-selected": codeMirrorSelectCss,
+      "& .CodeMirror-focused .CodeMirror-selected": codeMirrorSelectCss,
+      "& .CodeMirror-line::-moz-selection": codeMirrorSelectCss,
+      "& .CodeMirror-line > span::selection": codeMirrorSelectCss,
+      "& .CodeMirror-line > span > span::-moz-selection": codeMirrorSelectCss,
       /*
       [theme.breakpoints.down("sm")]: {
         padding: theme.spacing(1),
@@ -507,11 +525,23 @@ export default function NotePanel(props: Props) {
   useEffect(() => {
     if (props.reference) {
       if (editorMode === EditorMode.Preview && previewElement) {
+        const highlightedElements = previewElement.querySelectorAll(
+          ".reference-highlight",
+        );
+        for (let i = 0; i < highlightedElements.length; i++) {
+          highlightedElements[i].classList.remove("reference-highlight");
+        }
+
         const element = previewElement.querySelector(
           `#` + props.reference.elementId,
         );
         if (element) {
           element.classList.add("reference-highlight");
+          element.scrollIntoView({
+            behavior: "auto",
+            block: "center",
+            inline: "center",
+          });
           const removeHighlightClass = () => {
             element.classList.remove("reference-highlight");
           };
