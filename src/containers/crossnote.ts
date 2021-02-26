@@ -156,7 +156,13 @@ function useCrossnoteContainer(initialState: InitialState) {
             eNote.notebookPath === note.notebookPath &&
             eNote.filePath === note.filePath
           ) {
-            return layoutModel.doAction(Actions.selectTab(eTabNode.getId()));
+            layoutModel.doAction(Actions.selectTab(eTabNode.getId()));
+            layoutModel.doAction(
+              Actions.updateNodeAttributes(eTabNode.getId(), {
+                config: tabNode.config,
+              }),
+            );
+            return;
           }
         }
       }
