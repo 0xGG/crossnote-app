@@ -326,7 +326,9 @@ export default function NotePanel(props: Props) {
   );
   const [notePopoverElement, setNotePopoverElement] = useState<Element>(null);
   const [gitStatus, setGitStatus] = useState<string>("");
-  const [tocEnabled, setTocEnabled] = useState<boolean>(false);
+  const [tocEnabled, setTocEnabled] = useState<boolean>(
+    false, // props.tabNode.getTabRect().width >= 500,
+  );
 
   const confirmNoteTitle = useCallback(() => {
     const finalNoteTitle = noteTitle.trim().replace(/\//g, "-");
@@ -535,8 +537,12 @@ export default function NotePanel(props: Props) {
         }
       });
       setEditor(editor);
+
+      if (props.tabNode.getRect()) {
+        setTocEnabled(props.tabNode.getRect().width >= 500);
+      }
     }
-  }, [textAreaElement, note, editor]);
+  }, [textAreaElement, note, editor, props.tabNode, settingsContainer.keyMap]);
 
   // Save note info to editor
   useEffect(() => {
