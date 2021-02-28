@@ -162,6 +162,30 @@ export class Notebook {
             parentToken,
             token,
           });
+        } else if (
+          token.type === "link_open" &&
+          tokens[i + 1] &&
+          tokens[i + 1].type === "text"
+        ) {
+          if (token.attrs.length && token.attrs[0][0] === "href") {
+            const link = token.attrs[0][1];
+            const text = tokens[i + 1].content.trim();
+            if (
+              link.match(/https?:\/\//) ||
+              !text.length ||
+              !link.endsWith(".md")
+            ) {
+              // TODO: Ignore more protocols
+              continue;
+            }
+            results.push({
+              elementId: "", // token.meta, // TODO: This is not working yet
+              text,
+              link: resolveLink(link),
+              parentToken,
+              token,
+            });
+          }
         } else if (token.children && token.children.length) {
           traverse(token.children, token, results, level + 1);
         }
