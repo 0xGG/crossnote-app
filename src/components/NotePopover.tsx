@@ -314,7 +314,6 @@ export default function NotePopover(props: Props) {
           setNoteAliasAnchorEl(null);
         }}
         addAlias={(alias) => {
-          console.log("add alias");
           crossnoteContainer
             .addNoteAlias(
               props.tabNode,

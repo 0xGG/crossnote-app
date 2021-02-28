@@ -1056,6 +1056,7 @@ export default function NotePanel(props: Props) {
                 );
                 return result["title"] + ".md" === filePath;
               },
+              fields: ["title"],
             });
             const commands: {
               text: string;
@@ -1103,6 +1104,7 @@ export default function NotePanel(props: Props) {
               .replace(/^\[+/, "");
             const searchResults = props.notebook.search.search(currentWord, {
               fuzzy: true,
+              fields: ["title", "aliases", "filePath"],
             });
             const commands: {
               text: string;
@@ -1114,7 +1116,9 @@ export default function NotePanel(props: Props) {
                 path.dirname(path.join(note.notebookPath, note.filePath)),
                 path.join(note.notebookPath, searchResult.filePath),
               );
-              const aliases = searchResult.title.split("|") as string[];
+              const aliases = searchResult.aliases
+                .split("|")
+                .concat(searchResult.title) as string[];
               const terms = searchResult.terms;
               aliases.forEach((alias) => {
                 let find = true;

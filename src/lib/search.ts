@@ -16,11 +16,11 @@ export default class Search {
   private _cache: { [key: string]: SearchDoc };
   constructor() {
     this.miniSearch = new MiniSearch<SearchDoc>({
-      fields: ["title", "filePath"],
+      fields: ["title", "aliases", "filePath"],
       storeFields: ["title", "aliases", "filePath"],
       extractField: (document, fieldName) => {
-        if (fieldName === "title") {
-          return [document["title"], ...document["aliases"]].join("|");
+        if (fieldName === "aliases") {
+          return document["aliases"].join("|");
         } else {
           return (document as any)[fieldName];
         }
