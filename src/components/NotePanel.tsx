@@ -67,7 +67,7 @@ import NotesPanel from "./NotesPanel";
 const EchoMD = require("@0xgg/echomd/core");
 
 const previewZIndex = 99;
-const tocPanelWidth = 300;
+let tocPanelWidth = parseInt(localStorage.getItem("toc-panel-width") || "300");
 const tocPanelMinWidth = 150;
 const tocPanelMaxWidth = 350;
 
@@ -1351,6 +1351,10 @@ export default function NotePanel(props: Props) {
           }}
           pane2Style={{
             display: tocEnabled ? "block" : "none",
+          }}
+          onDragFinished={(newSize) => {
+            tocPanelWidth = newSize;
+            localStorage.setItem("toc-panel-width", `${tocPanelWidth}`);
           }}
         >
           <Box className={clsx(classes.editorContentPanel)}>
