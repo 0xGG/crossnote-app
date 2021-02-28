@@ -660,6 +660,7 @@ function useCrossnoteContainer(initialState: InitialState) {
         aliases: newAliases,
       });
       await updateNoteConfig(tabNode, notebookPath, noteFilePath, newConfig);
+      notebook.search.addAlias(noteFilePath, alias);
       return newAliases;
     },
     [getNotebookAtPath, updateNoteConfig],
@@ -683,6 +684,7 @@ function useCrossnoteContainer(initialState: InitialState) {
         aliases: newAliases,
       });
       await updateNoteConfig(tabNode, notebookPath, noteFilePath, newConfig);
+      notebook.search.deleteAlias(noteFilePath, alias);
       return newAliases;
     },
     [getNotebookAtPath, updateNoteConfig],

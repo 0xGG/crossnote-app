@@ -202,7 +202,7 @@ export class Notebook {
     }
 
     await this.removeNoteRelations(oldFilePath);
-    this.search.removeAll(oldFilePath);
+    this.search.remove(oldFilePath);
 
     // git related works
     const newDirPath = path.dirname(path.resolve(this.dir, newFilePath));
@@ -337,7 +337,7 @@ export class Notebook {
 
       if (refreshNoteRelations) {
         this.notes[note.filePath] = note;
-        this.search.add(note.filePath, note.title);
+        this.search.add(note.filePath, note.title, note.config.aliases);
         await this.processNoteMentionsAndMentionedBy(note.filePath);
       }
 
@@ -392,7 +392,7 @@ export class Notebook {
       const note = await this.getNote(path.relative(this.dir, absFilePath));
       if (note) {
         this.notes[note.filePath] = note;
-        this.search.add(note.filePath, note.title);
+        this.search.add(note.filePath, note.title, note.config.aliases);
       }
 
       let stats;
@@ -480,7 +480,7 @@ export class Notebook {
         });
       }
       await this.removeNoteRelations(filePath);
-      this.search.removeAll(filePath);
+      this.search.remove(filePath);
     }
   }
 

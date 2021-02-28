@@ -1107,20 +1107,36 @@ export default function NotePanel(props: Props) {
             const commands: {
               text: string;
               displayText: string;
-            }[] = searchResults.map((searchResult: any) => {
+            }[] = [];
+            for (let i = 0; i < searchResults.length; i++) {
+              const searchResult = searchResults[i];
               const filtPath = path.relative(
                 path.dirname(path.join(note.notebookPath, note.filePath)),
                 path.join(note.notebookPath, searchResult.filePath),
               );
-              const val =
-                searchResult.title + ".md" === filtPath
-                  ? `[[${searchResult.title}]]`
-                  : `[[${filtPath}|${searchResult.title}]]`;
-              return {
-                text: val,
-                displayText: val,
-              };
-            });
+              const aliases = searchResult.title.split("|") as string[];
+              const terms = searchResult.terms;
+              aliases.forEach((alias) => {
+                let find = true;
+                for (let i = 0; i < terms.length; i++) {
+                  const lower = alias.toLocaleLowerCase();
+                  if (lower.indexOf(terms[i]) < 0) {
+                    find = false;
+                    break;
+                  }
+                }
+                if (find) {
+                  const val =
+                    alias + ".md" === filtPath
+                      ? `[[${alias}]]`
+                      : `[[${filtPath}|${alias}]]`;
+                  commands.push({
+                    text: val,
+                    displayText: val,
+                  });
+                }
+              });
+            }
             return {
               list: commands,
               from: { line, ch: start - 1 },
