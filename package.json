@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "license": "AGPL-3.0-or-later",
   "dependencies": {
-    "@0xgg/echomd": "^1.0.0",
+    "@0xgg/echomd": "^1.0.1",
     "@dicebear/avatars": "^4.0.8",
     "@dicebear/avatars-female-sprites": "^4.0.8",
     "@dicebear/avatars-human-sprites": "^4.0.8",

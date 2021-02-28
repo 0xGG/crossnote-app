@@ -2,10 +2,10 @@
 # yarn lockfile v1
 
 
-"@0xgg/echomd@^1.0.0":
-  version "1.0.0"
-  resolved "https://registry.npmjs.org/@0xgg/echomd/-/echomd-1.0.0.tgz#1300b0c979a4d68634f73c05bd74202de4d903f0"
-  integrity sha512-6wrz7CtPvhwOuukOCQvXFGqYHFr1EdTGm/xYxwEol6jQ3Nckfk1hyCHcYzR3iHuVhvbFTq0mI1Ay0q6CvfTj5Q==
+"@0xgg/echomd@^1.0.1":
+  version "1.0.1"
+  resolved "https://registry.npmjs.org/@0xgg/echomd/-/echomd-1.0.1.tgz#8748fb98eb287108344846111158c8c5bbf5efaf"
+  integrity sha512-1xkP7uCXKxtVZ+aCQAGMn/NvS7znP5H7MSdyJJHVNaRid+67YEyzVFGb5oqsNqb2zcc1og9RCRMGjjPiL4NKrA==
   optionalDependencies:
     echarts "^5.0.2"
     emojione "^4.5.0"
@@ -17,6 +17,7 @@
     markdown-it "^12.0.4"
     markdown-it-emoji "^2.0.0"
     markdown-it-footnote "^3.0.2"
+    markdown-it-for-inline "^0.1.1"
     markdown-it-ins "^3.0.1"
     markdown-it-mark "^3.0.1"
     markdown-it-sub "^1.0.0"
@@ -12434,6 +12435,11 @@ markdown-it-footnote@^3.0.2:
   version "3.0.2"
   resolved "https://registry.npm.taobao.org/markdown-it-footnote/download/markdown-it-footnote-3.0.2.tgz#1575ee7a093648d4e096aa33386b058d92ac8bc1"
   integrity sha1-FXXuegk2SNTglqozOGsFjZKsi8E=
+
+markdown-it-for-inline@^0.1.1:
+  version "0.1.1"
+  resolved "https://registry.npmjs.org/markdown-it-for-inline/-/markdown-it-for-inline-0.1.1.tgz#435f2316f5b5e68e1450cfa2242f2b8d59adc75f"
+  integrity sha1-Q18jFvW15o4UUM+iJC8rjVmtx18=
 
 markdown-it-ins@^3.0.1:
   version "3.0.1"

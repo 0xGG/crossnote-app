@@ -1,3 +1,4 @@
+import { uslug } from "@0xgg/echomd/preview/heading-id-generator";
 import MiniSearch, { SearchOptions, SearchResult } from "minisearch";
 
 export interface SearchDoc {
@@ -26,11 +27,7 @@ export default class Search {
         }
       },
       tokenize: (string) => {
-        return (
-          string
-            .replace(/[!@#$%^&*()[\]{},.?/\\=+\-_，。=（）【】]/g, " ")
-            .match(/([^\x00-\x7F]|\w+)/g) || []
-        );
+        return uslug(string, " ").match(/([^\x00-\x7F]|\w+)/g) || [];
       },
     });
     this._cache = {};

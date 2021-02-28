@@ -179,7 +179,7 @@ export class Notebook {
               continue;
             }
             results.push({
-              elementId: "", // token.meta, // TODO: This is not working yet
+              elementId: token.attrGet("id") || "", // token.meta, // TODO: This is not working yet
               text,
               link: resolveLink(link),
               parentToken,
