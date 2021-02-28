@@ -368,6 +368,11 @@ function useCrossnoteContainer(initialState: InitialState) {
       if (!filePath.endsWith(".md")) {
         filePath += ".md";
       }
+      // This is necessary to guarantee that an existing note will not be overwritten before the notebook is fully loaded
+      await notebook.refreshNotesIfNotLoaded({
+        dir: "./",
+        includeSubdirectories: true,
+      });
       let note: Note;
       if (filePath in notebook.notes) {
         note = notebook.notes[filePath];
