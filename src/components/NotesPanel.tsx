@@ -156,9 +156,7 @@ export default function NotesPanel(props: Props) {
   );
   const theme = useTheme();
   const crossnoteContainer = CrossnoteContainer.useContainer();
-
-  // Search
-  const [searchValue, setSearchValue] = useState<string>(
+  const [searchValue, setSearchValue] = useState<string>( // Search
     props.initialSearchValue || "",
   );
   const [searchValueInputTimeout, setSearchValueInputTimeout] = useState<
@@ -168,6 +166,7 @@ export default function NotesPanel(props: Props) {
   const [fixedTopPanel, setFixedTopPanel] = useState<boolean>(false);
   const container = useRef<HTMLDivElement>(null);
   const topPanel = useRef<HTMLElement>(null);
+  const isMounted = useRef<boolean>(false);
 
   const createNewNote = useCallback(() => {
     setIsCreatingNote(true);
@@ -206,6 +205,9 @@ export default function NotesPanel(props: Props) {
   );
 
   const refreshRawNotes = useCallback(async () => {
+    if (!isMounted.current) {
+      return;
+    }
     setRawNotesMap(
       Object.assign(
         {},
@@ -215,6 +217,12 @@ export default function NotesPanel(props: Props) {
       ) as any,
     );
   }, [props.notebook, props.note]);
+
+  useEffect(() => {
+    return () => {
+      isMounted.current = false;
+    };
+  }, []);
 
   useEffect(() => {
     setSearchValue("");

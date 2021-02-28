@@ -38,6 +38,7 @@ import Noty from "noty";
 import * as path from "path";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import SplitPane from "react-split-pane";
 import { CrossnoteContainer } from "../containers/crossnote";
 import { SettingsContainer } from "../containers/settings";
 import { initMathPreview } from "../editor/views/math-preview";
@@ -66,6 +67,9 @@ import NotesPanel from "./NotesPanel";
 const EchoMD = require("@0xgg/echomd/core");
 
 const previewZIndex = 99;
+const tocPanelWidth = 300;
+const tocPanelMinWidth = 150;
+const tocPanelMaxWidth = 350;
 
 const HMDFold = {
   image: true,
@@ -118,17 +122,15 @@ const useStyles = makeStyles((theme: Theme) =>
     contentPanel: {
       position: "relative",
       height: "calc(100% - 48px - 30px)",
-      overflow: "auto",
-      display: "flex",
-      flexDirection: "row",
+      display: "block",
     },
-    noteContentPanel: {
-      flex: 1,
+    editorContentPanel: {
+      display: "block",
       overflow: "auto",
+      height: "100%",
     },
     tocPanel: {
-      width: "280px",
-      maxWidth: "80%",
+      height: "100%",
       padding: "0",
       overflow: "auto",
       borderLeft: `1px solid ${theme.palette.divider}`,
@@ -137,7 +139,7 @@ const useStyles = makeStyles((theme: Theme) =>
     toc: {
       "& .toc-item": {
         cursor: "pointer",
-        borderBottom: `1px solid ${theme.palette.divider}`,
+        // borderBottom: `1px solid ${theme.palette.divider}`,
         color: theme.palette.text.primary,
         padding: ".5em",
       },
@@ -157,7 +159,7 @@ const useStyles = makeStyles((theme: Theme) =>
         width: "100%",
       },
       "& .CodeMirror": {
-        width: "800px",
+        // width: "800px",
         maxWidth: "100%",
         margin: "0 auto",
         height: "100%",
@@ -205,7 +207,7 @@ const useStyles = makeStyles((theme: Theme) =>
       position: "relative",
       left: "0",
       top: "0",
-      width: "800px",
+      // width: "800px",
       maxWidth: "100%",
       margin: "0 auto",
       height: "100%",
@@ -303,13 +305,11 @@ export default function NotePanel(props: Props) {
   const [editor, setEditor] = useState<CodeMirrorEditor>(null);
   const [editorMode, setEditorMode] = useState<EditorMode>(EditorMode.Preview);
   const [tocElement, setTOCElement] = useState<HTMLElement>(null);
-  const [previewElement, setPreviewElement] = useState<HTMLElement>(null);
+  const previewElement = useRef<HTMLDivElement>(null);
   const [previewIsPresentation, setPreviewIsPresentation] = useState<boolean>(
     false,
   );
-  const [textAreaElement, setTextAreaElement] = useState<HTMLTextAreaElement>(
-    null,
-  );
+  const textAreaElement = useRef<HTMLTextAreaElement>(null);
   const [cursorPosition, setCursorPosition] = useState<CursorPosition>({
     line: 0,
     ch: 0,
@@ -374,8 +374,6 @@ export default function NotePanel(props: Props) {
     if (!note) {
       return () => {
         setEditor(null);
-        setTextAreaElement(null);
-        setPreviewElement(null);
       };
     } else {
       if (note.markdown.length === 0) {
@@ -492,38 +490,43 @@ export default function NotePanel(props: Props) {
 
   // Set editor
   useEffect(() => {
-    if (textAreaElement && !editor && note) {
-      const editor: CodeMirrorEditor = EchoMD.fromTextArea(textAreaElement, {
-        mode: {
-          name: "hypermd",
-          hashtag: true,
-        },
-        // inputStyle: "textarea", // Break mobile device paste functionality
-        hmdFold: HMDFold,
-        keyMap: settingsContainer.keyMap,
-        showCursorWhenSelecting: true,
-        inputStyle: "contenteditable",
-        hmdClick: (info: any, cm: CodeMirrorEditor) => {
-          let { text, url } = info;
-          if (info.type === "link" || info.type === "url") {
-            const footnoteRef = text.match(/\[[^[\]]+\](?:\[\])?$/); // bare link, footref or [foot][] . assume no escaping char inside
-            if (!footnoteRef && (info.ctrlKey || info.altKey) && url) {
-              // Hack: Fix a wikilink click bug when clicking text like "[[haha]]."
-              if (url.startsWith("[[")) {
-                url = url.slice(2, url.length);
-                const i = url.lastIndexOf("]]");
-                if (i > 0) {
-                  url = url.slice(0, i);
+    if (textAreaElement.current && !editor && note) {
+      console.log("set editor: ", textAreaElement.current);
+      const editor: CodeMirrorEditor = EchoMD.fromTextArea(
+        textAreaElement.current,
+        {
+          mode: {
+            name: "hypermd",
+            hashtag: true,
+          },
+          // inputStyle: "textarea", // Break mobile device paste functionality
+          hmdFold: HMDFold,
+          keyMap: settingsContainer.keyMap,
+          showCursorWhenSelecting: true,
+          inputStyle: "contenteditable",
+          hmdClick: (info: any, cm: CodeMirrorEditor) => {
+            let { text, url } = info;
+            if (info.type === "link" || info.type === "url") {
+              const footnoteRef = text.match(/\[[^[\]]+\](?:\[\])?$/); // bare link, footref or [foot][] . assume no escaping char inside
+              if (!footnoteRef && (info.ctrlKey || info.altKey) && url) {
+                // Hack: Fix a wikilink click bug when clicking text like "[[haha]]."
+                if (url.startsWith("[[")) {
+                  url = url.slice(2, url.length);
+                  const i = url.lastIndexOf("]]");
+                  if (i > 0) {
+                    url = url.slice(0, i);
+                  }
                 }
-              }
 
-              // just open URL
-              openURL(url, note);
-              return false; // Prevent default click event
+                // just open URL
+                openURL(url, note);
+                return false; // Prevent default click event
+              }
             }
-          }
+          },
         },
-      });
+      );
+      console.log("finished initialize editor");
       editor.setOption("lineNumbers", false);
       editor.setOption("foldGutter", false);
       editor.setValue(note.markdown || "");
@@ -538,9 +541,9 @@ export default function NotePanel(props: Props) {
       });
       setEditor(editor);
 
-      if (props.tabNode.getRect()) {
-        setTocEnabled(props.tabNode.getRect().width >= 500);
-      }
+      // if (props.tabNode.getRect()) {
+      //   setTocEnabled(props.tabNode.getRect().width >= 500);
+      // }
     }
   }, [textAreaElement, note, editor, props.tabNode, settingsContainer.keyMap]);
 
@@ -562,11 +565,11 @@ export default function NotePanel(props: Props) {
   useEffect(() => {
     if (editorMode === EditorMode.Preview && editor && note && previewElement) {
       try {
-        renderPreview(previewElement, editor.getValue());
-        postprocessPreview(previewElement);
-        previewElement.scrollTop = 0;
+        renderPreview(previewElement.current, editor.getValue());
+        postprocessPreview(previewElement.current);
+        previewElement.current.scrollTop = 0;
       } catch (error) {
-        previewElement.innerText = error;
+        previewElement.current.innerText = error;
       }
     }
   }, [editorMode, editor, previewElement, note, postprocessPreview, t]);
@@ -574,15 +577,15 @@ export default function NotePanel(props: Props) {
   // Check need to highlight reference
   useEffect(() => {
     if (props.reference) {
-      if (editorMode === EditorMode.Preview && previewElement) {
-        const highlightedElements = previewElement.querySelectorAll(
+      if (editorMode === EditorMode.Preview && previewElement.current) {
+        const highlightedElements = previewElement.current.querySelectorAll(
           ".reference-highlight",
         );
         for (let i = 0; i < highlightedElements.length; i++) {
           highlightedElements[i].classList.remove("reference-highlight");
         }
 
-        const element = previewElement.querySelector(
+        const element = previewElement.current.querySelector(
           `#` + props.reference.elementId,
         );
         if (element) {
@@ -595,9 +598,15 @@ export default function NotePanel(props: Props) {
           const removeHighlightClass = () => {
             element.classList.remove("reference-highlight");
           };
-          previewElement.addEventListener("click", removeHighlightClass);
+          previewElement.current.addEventListener(
+            "click",
+            removeHighlightClass,
+          );
           return () => {
-            previewElement.removeEventListener("click", removeHighlightClass);
+            previewElement.current.removeEventListener(
+              "click",
+              removeHighlightClass,
+            );
           };
         }
       } /* else if (editor) { // <= Doesn't work very well
@@ -658,13 +667,13 @@ export default function NotePanel(props: Props) {
               markdown,
             );
           }
-          if (editorMode === EditorMode.Preview && previewElement) {
+          if (editorMode === EditorMode.Preview && previewElement.current) {
             try {
-              renderPreview(previewElement, editor.getValue());
-              postprocessPreview(previewElement);
-              previewElement.scrollTop = 0;
+              renderPreview(previewElement.current, editor.getValue());
+              postprocessPreview(previewElement.current);
+              previewElement.current.scrollTop = 0;
             } catch (error) {
-              previewElement.innerText = error;
+              previewElement.current.innerText = error;
             }
           }
         }, 300);
@@ -697,7 +706,7 @@ export default function NotePanel(props: Props) {
         editor.off("imageReadyToLoad", loadImage);
       };
     }
-  }, [editor, note, tabNode, editorMode, previewElement]);
+  }, [editor, note, tabNode, editorMode, previewElement, postprocessPreview]);
 
   // Command
   useEffect(() => {
@@ -878,14 +887,13 @@ export default function NotePanel(props: Props) {
                   icon: "mdi-music",
                   render,
                 },
-                /*
-                {
-                  text: "<!-- @crossnote.netease_music -->  \n",
-                  displayText: `/netease - ${t(
-                    "editor/toolbar/netease-music",
-                  )}`,
-                },
-                */
+                //
+                // {
+                //   text: "<!-- @crossnote.netease_music -->  \n",
+                //   displayText: `/netease - ${t(
+                //   "editor/toolbar/netease-music",
+                //   )}`,
+                //  },
                 {
                   text: "<!-- @crossnote.video -->  \n",
                   command: "/video",
@@ -929,14 +937,12 @@ export default function NotePanel(props: Props) {
                   icon: "mdi-developer-board",
                   render,
                 },
-                /*
-                {
-                  text: "<!-- @crossnote.abc -->  \n",
-                  displayText: `/abc - ${t(
-                    "editor/toolbar/insert-abc-notation",
-                  )}`,
-                },
-                */
+                // {
+                //   text: "<!-- @crossnote.abc -->  \n",
+                //   displayText: `/abc - ${t(
+                //      "editor/toolbar/insert-abc-notation",
+                //    )}`,
+                //  },
                 {
                   text: "<!-- @crossnote.github_gist -->  \n",
                   command: "/github_gist",
@@ -1341,41 +1347,44 @@ export default function NotePanel(props: Props) {
         <Divider></Divider>
       </Box>
       <Box className={clsx(classes.contentPanel)}>
-        <Box className={clsx(classes.noteContentPanel)}>
-          {" "}
-          <Box className={clsx(classes.editorWrapper)}>
-            <textarea
-              className={clsx(classes.editor, "editor-textarea")}
-              placeholder={t("editor/placeholder")}
-              ref={(element: HTMLTextAreaElement) => {
-                setTextAreaElement(element);
-              }}
-            ></textarea>
-            {editorMode === EditorMode.Preview && editor ? (
-              <div
-                className={clsx(
-                  classes.preview,
-                  "preview",
-                  previewIsPresentation ? classes.presentation : null,
-                )}
-                ref={(element: HTMLElement) => {
-                  setPreviewElement(element);
-                }}
-              ></div>
-            ) : null}
+        <SplitPane
+          defaultSize={tocPanelWidth}
+          minSize={tocPanelMinWidth}
+          maxSize={tocPanelMaxWidth}
+          primary={"second"}
+        >
+          <Box className={clsx(classes.editorContentPanel)}>
+            <Box className={clsx(classes.editorWrapper)}>
+              <textarea
+                className={clsx(classes.editor, "editor-textarea")}
+                placeholder={t("editor/placeholder")}
+                ref={textAreaElement}
+              ></textarea>
+              {editorMode === EditorMode.Preview && editor ? (
+                <div
+                  className={clsx(
+                    classes.preview,
+                    "preview",
+                    previewIsPresentation ? classes.presentation : null,
+                  )}
+                  ref={previewElement}
+                ></div>
+              ) : null}
+            </Box>
+            <React.Fragment>
+              <Box style={{ marginTop: "32px" }}></Box>
+              <NotesPanel
+                title={"Linked references"}
+                tabNode={props.tabNode}
+                notebook={props.notebook}
+                note={note}
+              ></NotesPanel>
+            </React.Fragment>
           </Box>
-          <React.Fragment>
-            <Box style={{ marginTop: "32px" }}></Box>
-            <NotesPanel
-              title={"Linked references"}
-              tabNode={props.tabNode}
-              notebook={props.notebook}
-              note={note}
-            ></NotesPanel>
-          </React.Fragment>
-        </Box>
-        {tocEnabled && (
-          <Box className={clsx(classes.tocPanel)}>
+          <Box
+            className={clsx(classes.tocPanel)}
+            style={{ display: tocEnabled ? "block" : "none" }}
+          >
             <div
               className={clsx(classes.toc)}
               ref={(element: HTMLElement) => {
@@ -1383,7 +1392,7 @@ export default function NotePanel(props: Props) {
               }}
             ></div>
           </Box>
-        )}
+        </SplitPane>
       </Box>
       <Box className={clsx(classes.bottomPanel, "editor-bottom-panel")}>
         <Box className={clsx(classes.row)}>
