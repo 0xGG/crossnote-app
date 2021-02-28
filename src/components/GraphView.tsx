@@ -1,3 +1,4 @@
+import { debounce } from "@0xgg/echomd";
 import {
   createStyles,
   makeStyles,
@@ -57,10 +58,10 @@ export default function GraphView(props: Props) {
     if (!graphViewPanel || !graphViewPanel.current || !props.tabNode) {
       return;
     }
-    const resize = () => {
+    const resize = debounce(() => {
       setWidth(graphViewPanel.current.offsetWidth);
       setHeight(graphViewPanel.current.offsetHeight);
-    };
+    }, 1000);
     window.addEventListener("resize", resize);
     props.tabNode.setEventListener("resize", resize);
     resize();
