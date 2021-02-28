@@ -683,6 +683,9 @@ function useCrossnoteContainer(initialState: InitialState) {
       const newConfig = Object.assign({}, note.config, {
         aliases: newAliases,
       });
+      if (!newAliases.length) {
+        delete newConfig.aliases;
+      }
       await updateNoteConfig(tabNode, notebookPath, noteFilePath, newConfig);
       notebook.search.deleteAlias(noteFilePath, alias);
       return newAliases;
