@@ -274,7 +274,9 @@ export default class Crossnote {
 
   public async deleteNotebook(notebookID: string) {
     const notebook = await this.notebookDB.get(notebookID);
-    await pfs.rmdir(notebook.dir);
+    if (!notebook.directoryHandle) {
+      await pfs.rmdir(notebook.dir);
+    }
     await this.notebookDB.remove(notebook);
   }
   public async updateNotebook(notebook: Notebook) {

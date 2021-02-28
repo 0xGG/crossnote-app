@@ -1,3 +1,4 @@
+import { debounce } from "@0xgg/echomd";
 import {
   createStyles,
   makeStyles,
@@ -61,12 +62,13 @@ export default function GraphView(props: Props) {
       setWidth(graphViewPanel.current.offsetWidth);
       setHeight(graphViewPanel.current.offsetHeight);
     };
-    window.addEventListener("resize", resize);
-    props.tabNode.setEventListener("resize", resize);
+    const debouncedResize = debounce(resize, 1000);
+    window.addEventListener("resize", debouncedResize);
+    props.tabNode.setEventListener("resize", debouncedResize);
     resize();
 
     return () => {
-      window.removeEventListener("resize", resize);
+      window.removeEventListener("resize", debouncedResize);
       props.tabNode.removeEventListener("resize");
     };
   }, [graphViewPanel, props.tabNode]);

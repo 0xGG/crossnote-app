@@ -625,7 +625,17 @@ export default function NotePanel(props: Props) {
             },
           );
         }
-      }*/
+      }*/ else if (
+        editor
+      ) {
+        const lineNo = (props.reference.parentToken.map || [])[0];
+        if (typeof lineNo === "number") {
+          editor.setCursor({ line: editor.lastLine(), ch: 0 });
+          setTimeout(function () {
+            editor.setCursor({ line: lineNo, ch: 0 });
+          }, 10);
+        }
+      }
     }
   }, [props.reference, editorMode, editor, previewElement]);
 

@@ -1,13 +1,13 @@
 import {
+  Accordion,
+  AccordionDetails,
+  AccordionSummary,
   Box,
   Button,
   Dialog,
   DialogActions,
   DialogContent,
   DialogTitle,
-  ExpansionPanel,
-  ExpansionPanelDetails,
-  ExpansionPanelSummary,
   Input,
   InputAdornment,
   Link,
@@ -15,7 +15,7 @@ import {
   Typography,
 } from "@material-ui/core";
 import { ChevronDown } from "mdi-material-ui";
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { CrossnoteContainer } from "../containers/crossnote";
 import { Notebook } from "../lib/notebook";
@@ -45,7 +45,15 @@ export default function ConfigureNotebookDialog(props: Props) {
   const [clickHardResetCount, setClickHardResetCount] = useState<number>(
     MaxClickDeleteCount,
   );
+  const isMounted = useRef<boolean>(false);
   const { t } = useTranslation();
+
+  useEffect(() => {
+    isMounted.current = true;
+    return () => {
+      isMounted.current = false;
+    };
+  }, []);
 
   useEffect(() => {
     setClickDeleteCount(MaxClickDeleteCount);
@@ -82,7 +90,9 @@ export default function ConfigureNotebookDialog(props: Props) {
     try {
       await crossnoteContainer.updateNotebook(notebook);
     } catch (error) {}
-    props.onClose();
+    if (isMounted.current) {
+      props.onClose();
+    }
   }, [
     props,
     props.notebook,
@@ -100,16 +110,20 @@ export default function ConfigureNotebookDialog(props: Props) {
     try {
       await crossnoteContainer.deleteNotebook(notebook);
     } catch (error) {}
-    props.onClose();
-  }, [props.notebook]);
+    if (isMounted.current) {
+      props.onClose();
+    }
+  }, [props.notebook, props]);
 
   const hardResetNotebook = useCallback(async () => {
     const notebook = props.notebook;
     try {
       await crossnoteContainer.hardResetNotebook(notebook);
     } catch (error) {}
-    props.onClose();
-  }, [props.notebook]);
+    if (isMounted.current) {
+      props.onClose();
+    }
+  }, [props.notebook, props]);
 
   useEffect(() => {
     setClickDeleteCount(MaxClickDeleteCount);
@@ -134,17 +148,17 @@ export default function ConfigureNotebookDialog(props: Props) {
           autoCorrect={"off"}
         ></TextField>
         {!props.notebook.isLocal && (
-          <ExpansionPanel
+          <Accordion
             elevation={2}
             expanded={expanded}
             onChange={() => setExpanded(!expanded)}
           >
-            <ExpansionPanelSummary expandIcon={<ChevronDown></ChevronDown>}>
+            <AccordionSummary expandIcon={<ChevronDown></ChevronDown>}>
               <Typography>{`${t("general/git-repository")} (${t(
                 "general/optional",
               )})`}</Typography>
-            </ExpansionPanelSummary>
-            <ExpansionPanelDetails>
+            </AccordionSummary>
+            <AccordionDetails>
               <Box>
                 <TextField
                   label={t("general/url")}
@@ -220,8 +234,8 @@ export default function ConfigureNotebookDialog(props: Props) {
                   </Box>
                 ) : null}
               </Box>
-            </ExpansionPanelDetails>
-          </ExpansionPanel>
+            </AccordionDetails>
+          </Accordion>
         )}
       </DialogContent>
       <DialogActions>

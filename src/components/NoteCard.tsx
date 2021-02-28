@@ -388,7 +388,7 @@ export default function NoteCard(props: Props) {
                           notebook: crossnoteContainer.getNotebookAtPath(
                             note.notebookPath,
                           ),
-                          reference,
+                          reference: Object.assign({}, reference) as Reference,
                         },
                         name: `📝 ` + note.title,
                       });
