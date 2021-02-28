@@ -160,6 +160,7 @@ const useStyles = makeStyles((theme: Theme) =>
       },
       "& .CodeMirror": {
         // width: "800px",
+        width: "100%",
         maxWidth: "100%",
         margin: "0 auto",
         height: "100%",
@@ -208,6 +209,7 @@ const useStyles = makeStyles((theme: Theme) =>
       left: "0",
       top: "0",
       // width: "800px",
+      width: "100%",
       maxWidth: "100%",
       margin: "0 auto",
       height: "100%",
@@ -491,7 +493,6 @@ export default function NotePanel(props: Props) {
   // Set editor
   useEffect(() => {
     if (textAreaElement.current && !editor && note) {
-      console.log("set editor: ", textAreaElement.current);
       const editor: CodeMirrorEditor = EchoMD.fromTextArea(
         textAreaElement.current,
         {
@@ -526,7 +527,6 @@ export default function NotePanel(props: Props) {
           },
         },
       );
-      console.log("finished initialize editor");
       editor.setOption("lineNumbers", false);
       editor.setOption("foldGutter", false);
       editor.setValue(note.markdown || "");
@@ -541,9 +541,9 @@ export default function NotePanel(props: Props) {
       });
       setEditor(editor);
 
-      // if (props.tabNode.getRect()) {
-      //   setTocEnabled(props.tabNode.getRect().width >= 500);
-      // }
+      if (props.tabNode.getRect()) {
+        setTocEnabled(props.tabNode.getRect().width >= 500);
+      }
     }
   }, [textAreaElement, note, editor, props.tabNode, settingsContainer.keyMap]);
 
@@ -1130,19 +1130,10 @@ export default function NotePanel(props: Props) {
       }
     };
     editor.on("change", onChangeHandler);
-
-    const onCursorActivityHandler = (instance: CodeMirrorEditor) => {
-      // console.log("cursorActivity", editor.getCursor());
-      // console.log("selection: ", editor.getSelection());
-      return;
-    };
-    editor.on("cursorActivity", onCursorActivityHandler);
-
     return () => {
       editor.off("change", onChangeHandler);
-      editor.off("cursorActivity", onCursorActivityHandler);
     };
-  }, [editor, note, props.notebook]);
+  }, [editor, note, props.notebook, t]);
 
   // TOC
   useEffect(() => {
@@ -1352,6 +1343,9 @@ export default function NotePanel(props: Props) {
           minSize={tocPanelMinWidth}
           maxSize={tocPanelMaxWidth}
           primary={"second"}
+          pane1Style={{
+            overflow: "auto",
+          }}
         >
           <Box className={clsx(classes.editorContentPanel)}>
             <Box className={clsx(classes.editorWrapper)}>

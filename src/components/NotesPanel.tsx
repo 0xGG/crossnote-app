@@ -50,10 +50,6 @@ import Notes from "./Notes";
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
     notesPanel: {
-      // position: "relative",
-      // display: "flex",
-      // flexDirection: "column",
-      // height: "100%",
       backgroundColor: theme.palette.background.paper,
       width: "800px",
       maxWidth: "100%",
@@ -219,6 +215,7 @@ export default function NotesPanel(props: Props) {
   }, [props.notebook, props.note]);
 
   useEffect(() => {
+    isMounted.current = true;
     return () => {
       isMounted.current = false;
     };
