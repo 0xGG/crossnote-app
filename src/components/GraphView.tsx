@@ -58,16 +58,17 @@ export default function GraphView(props: Props) {
     if (!graphViewPanel || !graphViewPanel.current || !props.tabNode) {
       return;
     }
-    const resize = debounce(() => {
+    const resize = () => {
       setWidth(graphViewPanel.current.offsetWidth);
       setHeight(graphViewPanel.current.offsetHeight);
-    }, 1000);
-    window.addEventListener("resize", resize);
-    props.tabNode.setEventListener("resize", resize);
+    };
+    const debouncedResize = debounce(resize, 1000);
+    window.addEventListener("resize", debouncedResize);
+    props.tabNode.setEventListener("resize", debouncedResize);
     resize();
 
     return () => {
-      window.removeEventListener("resize", resize);
+      window.removeEventListener("resize", debouncedResize);
       props.tabNode.removeEventListener("resize");
     };
   }, [graphViewPanel, props.tabNode]);
