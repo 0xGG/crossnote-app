@@ -1,5 +1,5 @@
 export enum KeyMap {
-  "DEFAULT" = "hypermd",
+  "DEFAULT" = "sublime",
   "VIM" = "vim",
   "EMACS" = "emacs",
   "SUBLIME" = "sublime",

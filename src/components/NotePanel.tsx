@@ -601,12 +601,10 @@ export default function NotePanel(props: Props) {
           const removeHighlightClass = () => {
             element.classList.remove("reference-highlight");
           };
-          previewElement.current.addEventListener(
-            "click",
-            removeHighlightClass,
-          );
+          const previewElementCurrent = previewElement.current;
+          previewElementCurrent.addEventListener("click", removeHighlightClass);
           return () => {
-            previewElement.current.removeEventListener(
+            previewElementCurrent.removeEventListener(
               "click",
               removeHighlightClass,
             );
@@ -1058,6 +1056,7 @@ export default function NotePanel(props: Props) {
                 );
                 return result["title"] + ".md" === filePath;
               },
+              fields: ["title"],
             });
             const commands: {
               text: string;
@@ -1105,24 +1104,43 @@ export default function NotePanel(props: Props) {
               .replace(/^\[+/, "");
             const searchResults = props.notebook.search.search(currentWord, {
               fuzzy: true,
+              fields: ["title", "aliases", "filePath"],
             });
             const commands: {
               text: string;
               displayText: string;
-            }[] = searchResults.map((searchResult: any) => {
+            }[] = [];
+            for (let i = 0; i < searchResults.length; i++) {
+              const searchResult = searchResults[i];
               const filtPath = path.relative(
                 path.dirname(path.join(note.notebookPath, note.filePath)),
                 path.join(note.notebookPath, searchResult.filePath),
               );
-              const val =
-                searchResult.title + ".md" === filtPath
-                  ? `[[${searchResult.title}]]`
-                  : `[[${filtPath}|${searchResult.title}]]`;
-              return {
-                text: val,
-                displayText: val,
-              };
-            });
+              const aliases = searchResult.aliases
+                .split("|")
+                .concat(searchResult.title) as string[];
+              const terms = searchResult.terms;
+              aliases.forEach((alias) => {
+                let find = true;
+                for (let i = 0; i < terms.length; i++) {
+                  const lower = alias.toLocaleLowerCase();
+                  if (lower.indexOf(terms[i]) < 0) {
+                    find = false;
+                    break;
+                  }
+                }
+                if (find) {
+                  const val =
+                    alias + ".md" === filtPath
+                      ? `[[${alias}]]`
+                      : `[[${filtPath}|${alias}]]`;
+                  commands.push({
+                    text: val,
+                    displayText: val,
+                  });
+                }
+              });
+            }
             return {
               list: commands,
               from: { line, ch: start - 1 },
@@ -1202,12 +1220,13 @@ export default function NotePanel(props: Props) {
     };
 
     editor.on("changes", update);
-    tocElement.current.addEventListener("click", tocClick, true);
+    const tocElementCurrent = tocElement.current;
+    tocElementCurrent.addEventListener("click", tocClick, true);
     update();
 
     return () => {
       editor.off("changes", update);
-      tocElement.current.removeEventListener("click", tocClick);
+      tocElementCurrent.removeEventListener("click", tocClick);
     };
   }, [editor, editorMode, previewElement, tocElement, note, tocEnabled]);
 

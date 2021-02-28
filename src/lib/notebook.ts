@@ -162,6 +162,30 @@ export class Notebook {
             parentToken,
             token,
           });
+        } else if (
+          token.type === "link_open" &&
+          tokens[i + 1] &&
+          tokens[i + 1].type === "text"
+        ) {
+          if (token.attrs.length && token.attrs[0][0] === "href") {
+            const link = token.attrs[0][1];
+            const text = tokens[i + 1].content.trim();
+            if (
+              link.match(/https?:\/\//) ||
+              !text.length ||
+              !link.endsWith(".md")
+            ) {
+              // TODO: Ignore more protocols
+              continue;
+            }
+            results.push({
+              elementId: token.attrGet("id") || "", // token.meta, // TODO: This is not working yet
+              text,
+              link: resolveLink(link),
+              parentToken,
+              token,
+            });
+          }
         } else if (token.children && token.children.length) {
           traverse(token.children, token, results, level + 1);
         }
@@ -202,7 +226,7 @@ export class Notebook {
     }
 
     await this.removeNoteRelations(oldFilePath);
-    this.search.removeAll(oldFilePath);
+    this.search.remove(oldFilePath);
 
     // git related works
     const newDirPath = path.dirname(path.resolve(this.dir, newFilePath));
@@ -279,9 +303,9 @@ export class Notebook {
 
       // Read the noteConfig, which is like <!-- note {...} --> at the end of the markdown file
       let noteConfig: NoteConfig = {
-        // id: "",
         createdAt: new Date(stats.ctimeMs),
         modifiedAt: new Date(stats.mtimeMs),
+        aliases: [],
       };
 
       try {
@@ -304,6 +328,10 @@ export class Notebook {
         if (data.data["favorited"]) {
           noteConfig.favorited = data.data["favorited"];
           delete frontMatter["favorited"];
+        }
+        if (data.data["aliases"]) {
+          noteConfig.aliases = data.data["aliases"];
+          delete frontMatter["aliases"];
         }
 
         // markdown = matter.stringify(data.content, frontMatter); // <= NOTE: I think gray-matter has bug. Although I delete "note" section from front-matter, it still includes it.
@@ -333,7 +361,7 @@ export class Notebook {
 
       if (refreshNoteRelations) {
         this.notes[note.filePath] = note;
-        this.search.add(note.filePath, note.title);
+        this.search.add(note.filePath, note.title, note.config.aliases);
         await this.processNoteMentionsAndMentionedBy(note.filePath);
       }
 
@@ -388,7 +416,7 @@ export class Notebook {
       const note = await this.getNote(path.relative(this.dir, absFilePath));
       if (note) {
         this.notes[note.filePath] = note;
-        this.search.add(note.filePath, note.title);
+        this.search.add(note.filePath, note.title, note.config.aliases);
       }
 
       let stats;
@@ -476,7 +504,7 @@ export class Notebook {
         });
       }
       await this.removeNoteRelations(filePath);
-      this.search.removeAll(filePath);
+      this.search.remove(filePath);
     }
   }
 
