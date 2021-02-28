@@ -306,7 +306,7 @@ export default function NotePanel(props: Props) {
   const [note, setNote] = useState<Note>(props.note);
   const [editor, setEditor] = useState<CodeMirrorEditor>(null);
   const [editorMode, setEditorMode] = useState<EditorMode>(EditorMode.Preview);
-  const [tocElement, setTOCElement] = useState<HTMLElement>(null);
+  const tocElement = useRef<HTMLDivElement>(null);
   const previewElement = useRef<HTMLDivElement>(null);
   const [previewIsPresentation, setPreviewIsPresentation] = useState<boolean>(
     false,
@@ -1137,7 +1137,7 @@ export default function NotePanel(props: Props) {
 
   // TOC
   useEffect(() => {
-    if (!editor || !tocElement || !note) {
+    if (!editor || !tocElement || !note || !tocEnabled) {
       return;
     }
 
@@ -1176,7 +1176,7 @@ export default function NotePanel(props: Props) {
         `<div data-line="0" class="toc-item" style="padding-left: 1em;">${note.title}</div>` +
         newTOC;
       if (newTOC === lastTOC) return;
-      tocElement.innerHTML = lastTOC = newTOC;
+      tocElement.current.innerHTML = lastTOC = newTOC;
     }, 300);
 
     const tocClick = (event: Event) => {
@@ -1199,14 +1199,14 @@ export default function NotePanel(props: Props) {
     };
 
     editor.on("changes", update);
-    tocElement.addEventListener("click", tocClick, true);
+    tocElement.current.addEventListener("click", tocClick, true);
     update();
 
     return () => {
       editor.off("changes", update);
-      tocElement.removeEventListener("click", tocClick);
+      tocElement.current.removeEventListener("click", tocClick);
     };
-  }, [editor, editorMode, previewElement, tocElement, note]);
+  }, [editor, editorMode, previewElement, tocElement, note, tocEnabled]);
 
   // Git Status
   useEffect(() => {
@@ -1346,6 +1346,12 @@ export default function NotePanel(props: Props) {
           pane1Style={{
             overflow: "auto",
           }}
+          resizerStyle={{
+            display: tocEnabled ? "block" : "none",
+          }}
+          pane2Style={{
+            display: tocEnabled ? "block" : "none",
+          }}
         >
           <Box className={clsx(classes.editorContentPanel)}>
             <Box className={clsx(classes.editorWrapper)}>
@@ -1379,12 +1385,7 @@ export default function NotePanel(props: Props) {
             className={clsx(classes.tocPanel)}
             style={{ display: tocEnabled ? "block" : "none" }}
           >
-            <div
-              className={clsx(classes.toc)}
-              ref={(element: HTMLElement) => {
-                setTOCElement(element);
-              }}
-            ></div>
+            <div className={clsx(classes.toc)} ref={tocElement}></div>
           </Box>
         </SplitPane>
       </Box>
