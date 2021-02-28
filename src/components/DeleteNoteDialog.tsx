@@ -7,7 +7,7 @@ import {
   DialogTitle,
 } from "@material-ui/core";
 import { TabNode } from "flexlayout-react";
-import React from "react";
+import React, { useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { CrossnoteContainer } from "../containers/crossnote";
 import { Note } from "../lib/note";
@@ -21,8 +21,16 @@ interface Props {
 
 export function DeleteNoteDialog(props: Props) {
   const { t } = useTranslation();
+  const isMounted = useRef<boolean>(false);
   const note = props.note;
   const crossnoteContainer = CrossnoteContainer.useContainer();
+
+  useEffect(() => {
+    isMounted.current = true;
+    return () => {
+      isMounted.current = false;
+    };
+  }, []);
 
   return (
     <Dialog open={props.open} onClose={props.onClose}>
@@ -41,7 +49,9 @@ export function DeleteNoteDialog(props: Props) {
               note.notebookPath,
               note.filePath,
             );
-            props.onClose();
+            if (isMounted.current) {
+              props.onClose();
+            }
           }}
         >
           {t("general/Delete")}
