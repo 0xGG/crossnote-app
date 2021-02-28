@@ -642,6 +642,52 @@ function useCrossnoteContainer(initialState: InitialState) {
     [getNotebookAtPath, updateNoteConfig],
   );
 
+  const addNoteAlias = useCallback(
+    async (
+      tabNode: TabNode,
+      notebookPath: string,
+      noteFilePath: string,
+      alias: string,
+    ) => {
+      const notebook = getNotebookAtPath(notebookPath);
+      if (!notebook) {
+        return;
+      }
+      const note = await notebook.getNote(noteFilePath);
+      const aliases: string[] = note.config.aliases || [];
+      const newAliases = aliases.concat(alias);
+      const newConfig = Object.assign({}, note.config, {
+        aliases: newAliases,
+      });
+      await updateNoteConfig(tabNode, notebookPath, noteFilePath, newConfig);
+      return newAliases;
+    },
+    [getNotebookAtPath, updateNoteConfig],
+  );
+
+  const deleteNoteAlias = useCallback(
+    async (
+      tabNode: TabNode,
+      notebookPath: string,
+      noteFilePath: string,
+      alias: string,
+    ) => {
+      const notebook = getNotebookAtPath(notebookPath);
+      if (!notebook) {
+        return;
+      }
+      const note = await notebook.getNote(noteFilePath);
+      const aliases: string[] = note.config.aliases || [];
+      const newAliases = aliases.filter((a) => a !== alias);
+      const newConfig = Object.assign({}, note.config, {
+        aliases: newAliases,
+      });
+      await updateNoteConfig(tabNode, notebookPath, noteFilePath, newConfig);
+      return newAliases;
+    },
+    [getNotebookAtPath, updateNoteConfig],
+  );
+
   const getStatus = useCallback(
     async (notebookPath: string, filePath: string) => {
       const notebook = getNotebookAtPath(notebookPath);
@@ -760,6 +806,8 @@ Please also check the [Explore](https://crossnote.app/explore) section to discov
     openLocalNotebook,
     togglePin,
     toggleFavorite,
+    addNoteAlias,
+    deleteNoteAlias,
     isAddingNotebook,
     isPushingNotebook,
     isPullingNotebook,

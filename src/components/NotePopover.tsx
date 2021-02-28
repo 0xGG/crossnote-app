@@ -31,6 +31,7 @@ import {
   ShareVariant,
   Star,
   StarOutline,
+  TooltipEdit,
 } from "mdi-material-ui";
 import React, { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -42,6 +43,7 @@ import { printPreview } from "../utilities/preview";
 import { copyToClipboard } from "../utilities/utils";
 import ChangeFilePathDialog from "./ChangeFilePathDialog";
 import { DeleteNoteDialog } from "./DeleteNoteDialog";
+import { NoteAliasPopover } from "./NoteAliasPopover";
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -75,6 +77,8 @@ export default function NotePopover(props: Props) {
   ] = useState<boolean>(false);
   const [needsToPrint, setNeedsToPrint] = useState<boolean>(false);
   const [shareAnchorEl, setShareAnchorEl] = useState<HTMLElement>(null);
+  const [noteAliasAnchorEl, setNoteAliasAnchorEl] = useState<HTMLElement>(null);
+  const [aliases, setAliases] = useState<string[]>(note.config.aliases);
   const theme = useTheme();
   const { t } = useTranslation();
   const crossnoteContainer = CrossnoteContainer.useContainer();
@@ -227,6 +231,15 @@ export default function NotePopover(props: Props) {
           </ListItem>
           <ListItem
             button
+            onClick={(event) => setNoteAliasAnchorEl(event.currentTarget)}
+          >
+            <ListItemIcon>
+              <TooltipEdit></TooltipEdit>
+            </ListItemIcon>
+            <ListItemText primary={t("general/edit-note-alias")}></ListItemText>
+          </ListItem>
+          <ListItem
+            button
             onClick={() => {
               setDeleteNoteDialogOpen(true);
               props.onClose();
@@ -295,6 +308,34 @@ export default function NotePopover(props: Props) {
         tabNode={props.tabNode}
         note={note}
       ></ChangeFilePathDialog>
+      <NoteAliasPopover
+        anchorElement={noteAliasAnchorEl}
+        onClose={() => {
+          setNoteAliasAnchorEl(null);
+        }}
+        addAlias={(alias) => {
+          console.log("add alias");
+          crossnoteContainer
+            .addNoteAlias(
+              props.tabNode,
+              note.notebookPath,
+              note.filePath,
+              alias,
+            )
+            .then((aliases) => setAliases(aliases));
+        }}
+        deleteAlias={(alias) => {
+          crossnoteContainer
+            .deleteNoteAlias(
+              props.tabNode,
+              note.notebookPath,
+              note.filePath,
+              alias,
+            )
+            .then((aliases) => setAliases(aliases));
+        }}
+        aliases={aliases}
+      ></NoteAliasPopover>
       <Popover
         open={Boolean(shareAnchorEl)}
         anchorEl={shareAnchorEl}

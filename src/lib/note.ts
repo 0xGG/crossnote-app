@@ -10,6 +10,7 @@ export interface NoteConfig {
   modifiedAt: Date;
   pinned?: boolean;
   favorited?: boolean;
+  aliases?: string[];
 }
 
 export type Mentions = { [key: string]: boolean };

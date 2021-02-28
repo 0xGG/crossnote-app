@@ -279,9 +279,9 @@ export class Notebook {
 
       // Read the noteConfig, which is like <!-- note {...} --> at the end of the markdown file
       let noteConfig: NoteConfig = {
-        // id: "",
         createdAt: new Date(stats.ctimeMs),
         modifiedAt: new Date(stats.mtimeMs),
+        aliases: [],
       };
 
       try {
@@ -304,6 +304,10 @@ export class Notebook {
         if (data.data["favorited"]) {
           noteConfig.favorited = data.data["favorited"];
           delete frontMatter["favorited"];
+        }
+        if (data.data["aliases"]) {
+          noteConfig.aliases = data.data["aliases"];
+          delete frontMatter["aliases"];
         }
 
         // markdown = matter.stringify(data.content, frontMatter); // <= NOTE: I think gray-matter has bug. Although I delete "note" section from front-matter, it still includes it.

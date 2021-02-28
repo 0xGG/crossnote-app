@@ -601,12 +601,10 @@ export default function NotePanel(props: Props) {
           const removeHighlightClass = () => {
             element.classList.remove("reference-highlight");
           };
-          previewElement.current.addEventListener(
-            "click",
-            removeHighlightClass,
-          );
+          const previewElementCurrent = previewElement.current;
+          previewElementCurrent.addEventListener("click", removeHighlightClass);
           return () => {
-            previewElement.current.removeEventListener(
+            previewElementCurrent.removeEventListener(
               "click",
               removeHighlightClass,
             );
@@ -1202,12 +1200,13 @@ export default function NotePanel(props: Props) {
     };
 
     editor.on("changes", update);
-    tocElement.current.addEventListener("click", tocClick, true);
+    const tocElementCurrent = tocElement.current;
+    tocElementCurrent.addEventListener("click", tocClick, true);
     update();
 
     return () => {
       editor.off("changes", update);
-      tocElement.current.removeEventListener("click", tocClick);
+      tocElementCurrent.removeEventListener("click", tocClick);
     };
   }, [editor, editorMode, previewElement, tocElement, note, tocEnabled]);
 
