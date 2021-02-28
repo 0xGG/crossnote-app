@@ -490,7 +490,9 @@ function useCrossnoteContainer(initialState: InitialState) {
           notebookPath: notebook.dir,
         });
         await crossnote.deleteNotebook(notebook._id);
-      } catch (error) {}
+      } catch (error) {
+        console.error(error);
+      }
       let selectedNotebook: Notebook = null;
       setNotebooks((notebooks) =>
         notebooks.filter((n) => {
