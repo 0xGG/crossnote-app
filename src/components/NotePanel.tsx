@@ -70,6 +70,7 @@ const previewZIndex = 99;
 let tocPanelWidth = parseInt(localStorage.getItem("toc-panel-width") || "300");
 const tocPanelMinWidth = 150;
 const tocPanelMaxWidth = 350;
+const bottomPanelHeight = 20;
 
 const HMDFold = {
   image: true,
@@ -121,7 +122,7 @@ const useStyles = makeStyles((theme: Theme) =>
     },
     contentPanel: {
       position: "relative",
-      height: "calc(100% - 48px - 30px)",
+      height: `calc(100% - 48px - ${bottomPanelHeight}px)`,
       display: "block",
     },
     editorContentPanel: {
@@ -276,7 +277,9 @@ const useStyles = makeStyles((theme: Theme) =>
       display: "flex",
       alignItems: "center",
       justifyContent: "space-between",
-      maxHeight: "30px",
+      maxHeight: `${bottomPanelHeight}px`,
+      backgroundColor: theme.palette.primary.main,
+      color: theme.palette.getContrastText(theme.palette.primary.main),
     },
     filePath: {
       wordBreak: "break-all",
@@ -1395,18 +1398,14 @@ export default function NotePanel(props: Props) {
       </Box>
       <Box className={clsx(classes.bottomPanel, "editor-bottom-panel")}>
         <Box className={clsx(classes.row)}>
-          <Typography
-            variant={"caption"}
-            className={clsx(classes.filePath)}
-            color={"textPrimary"}
-          >
+          <Typography variant={"caption"} className={clsx(classes.filePath)}>
             {note.filePath +
               (gitStatus ? " - " + t(`git/status/${gitStatus}`) : "")}
           </Typography>
         </Box>
         {editorMode !== EditorMode.Preview && (
           <Box className={clsx(classes.cursorPositionInfo)}>
-            <Typography variant={"caption"} color={"textPrimary"}>
+            <Typography variant={"caption"}>
               {`${t("editor/ln")} ${cursorPosition.line + 1}, ${t(
                 "editor/col",
               )} ${cursorPosition.ch}`}
