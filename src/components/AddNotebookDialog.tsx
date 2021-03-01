@@ -26,10 +26,10 @@ interface Props {
   open: boolean;
   onClose: () => void;
   canCancel: boolean;
-
   notebookName?: string;
   gitURL?: string;
   gitBranch?: string;
+  hideOpeningLocal?: boolean;
 }
 
 export default function AddNotebookDialog(props: Props) {
@@ -124,47 +124,49 @@ export default function AddNotebookDialog(props: Props) {
     >
       <DialogTitle>{t("general/add-a-notebook")}</DialogTitle>
       <DialogContent>
-        <Box>
-          <Button
-            style={{
-              margin: `${theme.spacing(2)}px auto`,
-              padding: `${theme.spacing(2)}px 0`,
-              width: "100%",
-            }}
-            color={"primary"}
-            variant={"outlined"}
-            startIcon={<FolderOpen></FolderOpen>}
-            size={"small"}
-            onClick={() => {
-              crossnoteContainer.openLocalNotebook();
-              props.onClose();
-            }}
-            disabled={!("showDirectoryPicker" in window)}
-          >
-            {"showDirectoryPicker" in window
-              ? t("general/open-a-local-folder")
-              : t("general/your-browser-doesnt-support-to-open-local-folder")}
-          </Button>
-          <Box style={{ position: "relative" }}>
-            <Typography
-              variant={"subtitle1"}
+        {!props.hideOpeningLocal && (
+          <Box>
+            <Button
               style={{
-                position: "absolute",
-                top: "-14px",
-                left: "50%",
-                transform: "translateX(-50%)",
-              }}
-            >
-              {t("widget/crossnote.auth/Or")}
-            </Typography>
-            <Divider
-              style={{
-                margin: `${theme.spacing(3)}px auto`,
+                margin: `${theme.spacing(2)}px auto`,
+                padding: `${theme.spacing(2)}px 0`,
                 width: "100%",
               }}
-            ></Divider>
+              color={"primary"}
+              variant={"outlined"}
+              startIcon={<FolderOpen></FolderOpen>}
+              size={"small"}
+              onClick={() => {
+                crossnoteContainer.openLocalNotebook();
+                props.onClose();
+              }}
+              disabled={!("showDirectoryPicker" in window)}
+            >
+              {"showDirectoryPicker" in window
+                ? t("general/open-a-local-folder")
+                : t("general/your-browser-doesnt-support-to-open-local-folder")}
+            </Button>
+            <Box style={{ position: "relative" }}>
+              <Typography
+                variant={"subtitle1"}
+                style={{
+                  position: "absolute",
+                  top: "-14px",
+                  left: "50%",
+                  transform: "translateX(-50%)",
+                }}
+              >
+                {t("widget/crossnote.auth/Or")}
+              </Typography>
+              <Divider
+                style={{
+                  margin: `${theme.spacing(3)}px auto`,
+                  width: "100%",
+                }}
+              ></Divider>
+            </Box>
           </Box>
-        </Box>
+        )}
         <Typography variant={"caption"}>
           {"* " + t("add-notebook-dialog/disclaimer")}
         </Typography>
