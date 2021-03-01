@@ -625,5 +625,9 @@ export const jaJP = {
     "git/status/*unmodified": "*未変更",
     "git/status/*absent": "*欠落",
     "git/status/*undeleted": "*削除されませんでした",
+
+    // graph view
+    "graph-view/node": "ノード",
+    "graph-view/link": "リンク",
   },
 };

@@ -1,4 +1,5 @@
 import { debounce } from "@0xgg/echomd";
+import { Box, Typography } from "@material-ui/core";
 import {
   createStyles,
   makeStyles,
@@ -9,6 +10,7 @@ import clsx from "clsx";
 import * as d3 from "d3";
 import { TabNode } from "flexlayout-react";
 import React, { useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { CrossnoteContainer } from "../containers/crossnote";
 import {
   ChangedNoteFilePathEventData,
@@ -27,11 +29,48 @@ import {
 } from "../lib/graphView";
 import { Notebook } from "../lib/notebook";
 
+const bottomPanelHeight = 20;
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
     graphViewPanel: {
       width: "100%",
       height: "100%",
+      /*
+      "& .tooltip": {
+        position: "absolute",
+        width: "200px",
+        backgroundColor: fade(theme.palette.grey[700], 0.9),
+        borderRadius: theme.shape.borderRadius,
+        color: theme.palette.common.white,
+        fontFamily: theme.typography.fontFamily,
+        padding: "4px 8px",
+        fontSize: theme.typography.pxToRem(10),
+        lineHeight: `${round(14 / 10)}em`,
+        maxWidth: 300,
+        wordWrap: "break-word",
+        fontWeight: theme.typography.fontWeightMedium,
+      },
+      */
+    },
+    graphView: {
+      position: "relative",
+      height: `calc(100% - ${bottomPanelHeight}px)`,
+      display: "block",
+    },
+    bottomPanel: {
+      position: "absolute",
+      bottom: "0",
+      width: "100%",
+      padding: theme.spacing(0.5, 1),
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "space-between",
+      maxHeight: `${bottomPanelHeight}px`,
+      backgroundColor: theme.palette.primary.main,
+      color: theme.palette.getContrastText(theme.palette.primary.main),
+    },
+    filePath: {
+      wordBreak: "break-all",
     },
   }),
 );
@@ -48,19 +87,23 @@ export default function GraphView(props: Props) {
     nodes: [],
     links: [],
   });
-  const graphViewPanel = useRef<HTMLDivElement>(null);
+  const graphView = useRef<HTMLDivElement>(null);
   const [width, setWidth] = useState<number>(0);
   const [height, setHeight] = useState<number>(0);
+  const [hoveredGraphViewNode, setHoveredGraphViewNode] = useState<
+    GraphViewNode
+  >(null);
+  const { t } = useTranslation();
   const crossnoteContainer = CrossnoteContainer.useContainer();
   const theme = useTheme();
 
   useEffect(() => {
-    if (!graphViewPanel || !graphViewPanel.current || !props.tabNode) {
+    if (!graphView || !graphView.current || !props.tabNode) {
       return;
     }
     const resize = () => {
-      setWidth(graphViewPanel.current.offsetWidth);
-      setHeight(graphViewPanel.current.offsetHeight);
+      setWidth(graphView.current.offsetWidth);
+      setHeight(graphView.current.offsetHeight);
     };
     const debouncedResize = debounce(resize, 1000);
     window.addEventListener("resize", debouncedResize);
@@ -71,10 +114,10 @@ export default function GraphView(props: Props) {
       window.removeEventListener("resize", debouncedResize);
       props.tabNode.removeEventListener("resize");
     };
-  }, [graphViewPanel, props.tabNode]);
+  }, [graphView, props.tabNode]);
 
   useEffect(() => {
-    if (!graphViewPanel || !props.notebook) {
+    if (!graphView || !props.notebook) {
       return;
     }
 
@@ -147,7 +190,7 @@ export default function GraphView(props: Props) {
       );
       globalEmitter.off(EventType.DeletedNotebook, deletedNotebookCallback);
     };
-  }, [graphViewPanel, props.notebook, props.tabNode, graphViewData]);
+  }, [graphView, props.notebook, props.tabNode, graphViewData]);
 
   useEffect(() => {
     const data = constructGraphView(props.notebook);
@@ -156,8 +199,8 @@ export default function GraphView(props: Props) {
 
   useEffect(() => {
     if (
-      !graphViewPanel ||
-      !graphViewPanel.current ||
+      !graphView ||
+      !graphView.current ||
       !graphViewData ||
       !width ||
       !height
@@ -166,7 +209,7 @@ export default function GraphView(props: Props) {
     }
 
     const svg = d3
-      .select(graphViewPanel.current)
+      .select(graphView.current)
       .append("svg")
       .attr("width", width)
       .attr("height", height);
@@ -215,6 +258,15 @@ export default function GraphView(props: Props) {
       .style("font-size", 12)
       .style("pointer-events", "none");
 
+    /*
+    // Define the div for the tooltip
+    const tooltip = d3
+      .select(graphView.current)
+      .append("div")
+      .attr("class", "tooltip")
+      .style("opacity", 0);
+      */
+
     const fixna = (x: number) => {
       if (isFinite(x)) return x;
       return 0;
@@ -237,12 +289,25 @@ export default function GraphView(props: Props) {
           ? 1
           : 0.2;
       });
+
+      setHoveredGraphViewNode(d);
+
+      /*
+      tooltip.transition().duration(200).style("opacity", 0.9);
+      tooltip
+        .html(`${d.id}`)
+        .style("left", event.offsetX + 32 + "px")
+        .style("top", event.offsetY + 32 + "px")
+        .style("opacity", 1);
+        */
     };
 
     const unfocus = () => {
       text.attr("display", "block");
       node.style("opacity", 1);
       link.style("opacity", 1);
+      setHoveredGraphViewNode(null);
+      // tooltip.style("opacity", 0);
     };
 
     const dragstarted = function (event: any, d: any) {
@@ -338,7 +403,7 @@ export default function GraphView(props: Props) {
     };
   }, [
     graphViewData,
-    graphViewPanel,
+    graphView,
     width,
     height,
     props.notebook,
@@ -346,6 +411,20 @@ export default function GraphView(props: Props) {
   ]);
 
   return (
-    <div className={clsx(classes.graphViewPanel)} ref={graphViewPanel}></div>
+    <Box className={clsx(classes.graphViewPanel)}>
+      <div className={clsx(classes.graphView)} ref={graphView}></div>
+      {graphViewData && (
+        <Box className={clsx(classes.bottomPanel, "editor-bottom-panel")}>
+          <Typography variant={"caption"} className={clsx(classes.filePath)}>
+            {hoveredGraphViewNode ? hoveredGraphViewNode.id : ""}
+          </Typography>
+          <Typography variant={"caption"} className={clsx(classes.filePath)}>
+            {`${graphViewData.nodes.length} ${t("graph-view/node")}, ${
+              graphViewData.links.length
+            } ${t("graph-view/link")} `}
+          </Typography>
+        </Box>
+      )}
+    </Box>
   );
 }

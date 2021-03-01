@@ -582,5 +582,9 @@ export const zhTW = {
     "git/status/*unmodified": "*未變更",
     "git/status/*absent": "*缺失",
     "git/status/*undeleted": "*未刪除",
+
+    // graph view
+    "graph-view/node": "節點",
+    "graph-view/link": "連接",
   },
 };

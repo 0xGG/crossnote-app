@@ -610,5 +610,9 @@ export const enUS = {
     "git/status/*undeleted": "*undeleted",
     "git/status/*undeletemodified": "*undeletemodified",
     "git/status/": "",
+
+    // graph view
+    "graph-view/node": "Node(s)",
+    "graph-view/link": "Link(s)",
   },
 };

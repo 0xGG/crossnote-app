@@ -1192,6 +1192,7 @@ export default function NotePanel(props: Props) {
           /\[((?:[^\\\]]+|\\.)+)\](\(.+?\)| ?\[.+?\])/g,
           "$1",
         ); // links
+        title = title.replace(/\[\[(.+?)\]\]/g, "$1"); // wikilinks
         title = title.replace(/&/g, "&amp;");
         title = title.replace(/</g, "&lt;");
         newTOC +=

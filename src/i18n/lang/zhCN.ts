@@ -582,5 +582,9 @@ export const zhCN = {
     "git/status/*unmodified": "*未修改",
     "git/status/*absent": "*缺失",
     "git/status/*undeleted": "*未删除",
+
+    // graph view
+    "graph-view/node": "节点",
+    "graph-view/link": "连接",
   },
 };
