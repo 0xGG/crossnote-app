@@ -308,7 +308,9 @@ export default function NotePanel(props: Props) {
   const [noteTitle, setNoteTitle] = useState<string>("");
   const [note, setNote] = useState<Note>(props.note);
   const [editor, setEditor] = useState<CodeMirrorEditor>(null);
-  const [editorMode, setEditorMode] = useState<EditorMode>(EditorMode.Preview);
+  const [editorMode, setEditorMode] = useState<EditorMode>(
+    settingsContainer.defaultEditorMode,
+  );
   const tocElement = useRef<HTMLDivElement>(null);
   const previewElement = useRef<HTMLDivElement>(null);
   const [previewIsPresentation, setPreviewIsPresentation] = useState<boolean>(
@@ -1265,7 +1267,6 @@ export default function NotePanel(props: Props) {
     if (!tabNode || !note) {
       return;
     }
-    console.log("* 1.useEffect: focused on note: ", note.filePath);
     globalEmitter.emit(EventType.FocusedOnNote, {
       notebookPath: note.notebookPath,
       noteFilePath: note.filePath,
@@ -1276,9 +1277,7 @@ export default function NotePanel(props: Props) {
       return;
     }
     tabNode.setEventListener("visibility", function (params) {
-      console.log("visibility: ", params, note.filePath);
       if (params.visible) {
-        console.log("* 2.useEffect: focused on note: ", note.filePath);
         globalEmitter.emit(EventType.FocusedOnNote, {
           notebookPath: note.notebookPath,
           noteFilePath: note.filePath,

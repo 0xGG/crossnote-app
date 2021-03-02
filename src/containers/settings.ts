@@ -2,6 +2,7 @@ import { ThemeName } from "@0xgg/echomd/theme";
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { createContainer } from "unstated-next";
+import { EditorMode } from "../lib/editorMode";
 import { getKeyMap, KeyMap } from "../lib/keymap";
 import { themeManager } from "../themes/manager";
 import { CrossnoteTheme } from "../themes/theme";
@@ -15,6 +16,10 @@ function useSettingsContainer(initialState: InitialState) {
   const [editorCursorColor, setEditorCursorColor] = useState<string>(
     localStorage.getItem("settings/editorCursorColor") ||
       "rgba(74, 144, 226, 1)",
+  );
+  const [defaultEditorMode, setDefaultEditorMode] = useState<EditorMode>(
+    (localStorage.getItem("settings/defaultEditorMode") as EditorMode) ||
+      EditorMode.Preview,
   );
   const [authorName, setAuthorName] = useState<string>(
     localStorage.getItem("settings/authorName") || "Anonymous",
@@ -58,6 +63,11 @@ function useSettingsContainer(initialState: InitialState) {
     setEditorCursorColor(editorCursorColor);
   }, []);
 
+  const _setDefaultEditorMode = useCallback((editorMode: EditorMode) => {
+    localStorage.setItem("settings/defaultEditorMode", editorMode);
+    setDefaultEditorMode(editorMode);
+  }, []);
+
   const _setAuthorName = useCallback((authorName: string) => {
     localStorage.setItem("settings/authorName", authorName);
     setAuthorName(authorName);
@@ -91,6 +101,8 @@ function useSettingsContainer(initialState: InitialState) {
     setLanguage: _setLanguage,
     editorCursorColor,
     setEditorCursorColor: _setEditorCursorColor,
+    defaultEditorMode,
+    setDefaultEditorMode: _setDefaultEditorMode,
     authorName,
     setAuthorName: _setAuthorName,
     authorEmail,
