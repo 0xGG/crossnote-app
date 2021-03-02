@@ -206,6 +206,10 @@ export function Home(props: Props) {
   );
   const [addNotebookRepo, setAddNotebookRepo] = useState<string>("");
   const [addNotebookBranch, setAddNotebookBranch] = useState<string>("");
+  const [
+    addNotebookDialogHideOpeningLocal,
+    setAddNotebookDialogHideOpeningLocal,
+  ] = useState<boolean>(false);
 
   const [drawerOpen, setDrawerOpen] = useState<boolean>(false);
   const { t } = useTranslation();
@@ -285,6 +289,7 @@ export function Home(props: Props) {
             // Show dialog
             setAddNotebookRepo(repo);
             setAddNotebookBranch(branch);
+            setAddNotebookDialogHideOpeningLocal(true);
             setAddNotebookDialogOpen(true);
           }
         }
@@ -315,7 +320,10 @@ export function Home(props: Props) {
                 <Tooltip title={t("general/add-a-notebook")}>
                   <IconButton
                     className={clsx(classes.listItemIcon)}
-                    onClick={() => setAddNotebookDialogOpen(true)}
+                    onClick={() => {
+                      setAddNotebookDialogHideOpeningLocal(false);
+                      setAddNotebookDialogOpen(true);
+                    }}
                   >
                     <PlusCircleOutline></PlusCircleOutline>
                   </IconButton>
@@ -492,10 +500,14 @@ export function Home(props: Props) {
       <MainPanel toggleDrawer={toggleDrawer}></MainPanel>
       <AddNotebookDialog
         open={addNotebookDialogOpen}
-        onClose={() => setAddNotebookDialogOpen(false)}
+        onClose={() => {
+          setAddNotebookDialogOpen(false);
+          setAddNotebookDialogHideOpeningLocal(false);
+        }}
         canCancel={true}
         gitURL={addNotebookRepo}
         gitBranch={addNotebookBranch}
+        hideOpeningLocal={addNotebookDialogHideOpeningLocal}
       ></AddNotebookDialog>
       <AuthDialog
         open={cloudContainer.authDialogOpen}

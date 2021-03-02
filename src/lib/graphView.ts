@@ -1,4 +1,5 @@
 import hash from "object-hash";
+import { basename } from "path";
 import { Notebook } from "./notebook";
 export interface GraphViewNode {
   id: string;
@@ -39,7 +40,7 @@ export function constructGraphView(notebook: Notebook): GraphViewData {
       }
       nodes.push({
         id: filePath,
-        label: label,
+        label: basename(label),
       });
     }
     addedNodes[filePath] = true;

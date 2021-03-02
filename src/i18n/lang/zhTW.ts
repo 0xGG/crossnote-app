@@ -153,7 +153,7 @@ export const zhTW = {
     "general/why-cors-proxy": "為什麼需要 CORS 代理？",
     "general/today": "今天",
     "general/todo": "待辦事項",
-    "general/graph-view": "圖形視圖",
+    "general/graph-view": "關聯圖",
     "general/wiki": "維琪",
     "general/tagged": "標籤",
     "general/untagged": "未標籤",
@@ -582,5 +582,9 @@ export const zhTW = {
     "git/status/*unmodified": "*未變更",
     "git/status/*absent": "*缺失",
     "git/status/*undeleted": "*未刪除",
+
+    // graph view
+    "graph-view/node": "節點",
+    "graph-view/link": "連接",
   },
 };

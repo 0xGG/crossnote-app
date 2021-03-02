@@ -1,4 +1,5 @@
 import { debounce } from "@0xgg/echomd";
+import { Box, Typography } from "@material-ui/core";
 import {
   createStyles,
   makeStyles,
@@ -9,6 +10,7 @@ import clsx from "clsx";
 import * as d3 from "d3";
 import { TabNode } from "flexlayout-react";
 import React, { useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { CrossnoteContainer } from "../containers/crossnote";
 import {
   ChangedNoteFilePathEventData,
@@ -16,6 +18,7 @@ import {
   DeletedNotebookEventData,
   DeletedNoteEventData,
   EventType,
+  FocusedOnNoteEventData,
   globalEmitter,
   ModifiedMarkdownEventData,
   PerformedGitOperationEventData,
@@ -23,15 +26,69 @@ import {
 import {
   constructGraphView,
   GraphViewData,
+  GraphViewLink,
   GraphViewNode,
 } from "../lib/graphView";
 import { Notebook } from "../lib/notebook";
 
+const bottomPanelHeight = 20;
+const defaultFillColor = `#aaa`;
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
     graphViewPanel: {
       width: "100%",
       height: "100%",
+      /*
+      "& .tooltip": {
+        position: "absolute",
+        width: "200px",
+        backgroundColor: fade(theme.palette.grey[700], 0.9),
+        borderRadius: theme.shape.borderRadius,
+        color: theme.palette.common.white,
+        fontFamily: theme.typography.fontFamily,
+        padding: "4px 8px",
+        fontSize: theme.typography.pxToRem(10),
+        lineHeight: `${round(14 / 10)}em`,
+        maxWidth: 300,
+        wordWrap: "break-word",
+        fontWeight: theme.typography.fontWeightMedium,
+      },
+      */
+    },
+    graphView: {
+      "position": "relative",
+      "height": `calc(100% - ${bottomPanelHeight}px)`,
+      "display": "block",
+      "& .nodes": {
+        zIndex: 10,
+      },
+      "& .nodes > circle": {
+        cursor: "pointer",
+        zIndex: 10,
+      },
+      "& .arrows": {
+        zIndex: 5,
+        pointerEvents: "none",
+      },
+      "& .arrows > circle": {
+        zIndex: 5,
+        pointerEvents: "none",
+      },
+    },
+    bottomPanel: {
+      position: "absolute",
+      bottom: "0",
+      width: "100%",
+      padding: theme.spacing(0.5, 1),
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "space-between",
+      maxHeight: `${bottomPanelHeight}px`,
+      backgroundColor: theme.palette.primary.main,
+      color: theme.palette.getContrastText(theme.palette.primary.main),
+    },
+    filePath: {
+      wordBreak: "break-all",
     },
   }),
 );
@@ -48,19 +105,24 @@ export default function GraphView(props: Props) {
     nodes: [],
     links: [],
   });
-  const graphViewPanel = useRef<HTMLDivElement>(null);
+  const graphView = useRef<HTMLDivElement>(null);
   const [width, setWidth] = useState<number>(0);
   const [height, setHeight] = useState<number>(0);
+  const [hoveredGraphViewNode, setHoveredGraphViewNode] = useState<
+    GraphViewNode
+  >(null);
+  const [focusedNoteFilePath, setFocusedNoteFilePath] = useState<string>(null);
+  const { t } = useTranslation();
   const crossnoteContainer = CrossnoteContainer.useContainer();
   const theme = useTheme();
 
   useEffect(() => {
-    if (!graphViewPanel || !graphViewPanel.current || !props.tabNode) {
+    if (!graphView || !graphView.current || !props.tabNode) {
       return;
     }
     const resize = () => {
-      setWidth(graphViewPanel.current.offsetWidth);
-      setHeight(graphViewPanel.current.offsetHeight);
+      setWidth(graphView.current.offsetWidth);
+      setHeight(graphView.current.offsetHeight);
     };
     const debouncedResize = debounce(resize, 1000);
     window.addEventListener("resize", debouncedResize);
@@ -71,10 +133,10 @@ export default function GraphView(props: Props) {
       window.removeEventListener("resize", debouncedResize);
       props.tabNode.removeEventListener("resize");
     };
-  }, [graphViewPanel, props.tabNode]);
+  }, [graphView, props.tabNode]);
 
   useEffect(() => {
-    if (!graphViewPanel || !props.notebook) {
+    if (!graphView || !props.notebook) {
       return;
     }
 
@@ -121,6 +183,12 @@ export default function GraphView(props: Props) {
       }
     };
 
+    const focusedOnNoteCallback = (data: FocusedOnNoteEventData) => {
+      if (data.notebookPath === props.notebook.dir) {
+        setFocusedNoteFilePath(data.noteFilePath);
+      }
+    };
+
     globalEmitter.on(EventType.ModifiedMarkdown, modifiedMarkdownCallback);
     globalEmitter.on(EventType.CreatedNote, createdNoteCallback);
     globalEmitter.on(EventType.DeletedNote, deletedNoteCallback);
@@ -133,6 +201,7 @@ export default function GraphView(props: Props) {
       performedGitOperationCallback,
     );
     globalEmitter.on(EventType.DeletedNotebook, deletedNotebookCallback);
+    globalEmitter.on(EventType.FocusedOnNote, focusedOnNoteCallback);
     return () => {
       globalEmitter.off(EventType.ModifiedMarkdown, modifiedMarkdownCallback);
       globalEmitter.off(EventType.CreatedNote, createdNoteCallback);
@@ -146,8 +215,9 @@ export default function GraphView(props: Props) {
         performedGitOperationCallback,
       );
       globalEmitter.off(EventType.DeletedNotebook, deletedNotebookCallback);
+      globalEmitter.off(EventType.FocusedOnNote, focusedOnNoteCallback);
     };
-  }, [graphViewPanel, props.notebook, props.tabNode, graphViewData]);
+  }, [graphView, props.notebook, props.tabNode, graphViewData]);
 
   useEffect(() => {
     const data = constructGraphView(props.notebook);
@@ -156,8 +226,8 @@ export default function GraphView(props: Props) {
 
   useEffect(() => {
     if (
-      !graphViewPanel ||
-      !graphViewPanel.current ||
+      !graphView ||
+      !graphView.current ||
       !graphViewData ||
       !width ||
       !height
@@ -166,7 +236,7 @@ export default function GraphView(props: Props) {
     }
 
     const svg = d3
-      .select(graphViewPanel.current)
+      .select(graphView.current)
       .append("svg")
       .attr("width", width)
       .attr("height", height);
@@ -189,8 +259,8 @@ export default function GraphView(props: Props) {
       .data(graphViewData.links)
       .enter()
       .append("line")
-      .style("stroke", "#aaa")
-      .attr("stroke-width", "1px");
+      .style("stroke", defaultFillColor)
+      .attr("stroke-width", "0.5px");
 
     const node = container
       .append("g")
@@ -200,7 +270,7 @@ export default function GraphView(props: Props) {
       .enter()
       .append("circle")
       .attr("r", 8)
-      .style("fill", "#aaa");
+      .style("fill", defaultFillColor);
 
     const text = container
       .append("g")
@@ -215,6 +285,22 @@ export default function GraphView(props: Props) {
       .style("font-size", 12)
       .style("pointer-events", "none");
 
+    let arrow: d3.Selection<
+      SVGCircleElement,
+      GraphViewLink,
+      SVGGElement,
+      unknown
+    >;
+
+    /*
+    // Define the div for the tooltip
+    const tooltip = d3
+      .select(graphView.current)
+      .append("div")
+      .attr("class", "tooltip")
+      .style("opacity", 0);
+      */
+
     const fixna = (x: number) => {
       if (isFinite(x)) return x;
       return 0;
@@ -225,28 +311,35 @@ export default function GraphView(props: Props) {
     };
 
     const focus = (event: any, d: GraphViewNode) => {
-      node.style("opacity", function (o) {
-        return neigh(d, o) ? 1 : 0.1;
-      });
-      text.attr("display", function (o) {
-        return neigh(d, o) ? "block" : "none";
-      });
-
-      link.style("opacity", function (o) {
+      node
+        .filter(function (o) {
+          return o.id === d.id || neigh(o, d);
+        })
+        .style("fill", function (o) {
+          return o.id === d.id
+            ? theme.palette.primary.main
+            : neigh(o, d)
+            ? theme.palette.primary.light
+            : defaultFillColor;
+        });
+      link.style("stroke", function (o) {
         return (o.source as any).id === d.id || (o.target as any).id === d.id
-          ? 1
-          : 0.2;
+          ? theme.palette.primary.light
+          : defaultFillColor;
       });
+      drawArrowPath(d);
+      setHoveredGraphViewNode(d);
     };
 
     const unfocus = () => {
-      text.attr("display", "block");
-      node.style("opacity", 1);
-      link.style("opacity", 1);
+      node.style("fill", defaultFillColor);
+      link.style("stroke", defaultFillColor);
+      removeArrows();
+      setHoveredGraphViewNode(null);
+      // tooltip.style("opacity", 0);
     };
 
     const dragstarted = function (event: any, d: any) {
-      console.log("dragstarted: ", d.active);
       event.sourceEvent.stopPropagation();
       if (!d.active) graphLayout.alphaTarget(0.3).restart();
 
@@ -255,7 +348,6 @@ export default function GraphView(props: Props) {
     };
 
     const dragged = function (event: any, d: any) {
-      console.log("dragged");
       d.x = event.x;
       d.y = event.y;
       // @ts-ignore
@@ -265,11 +357,60 @@ export default function GraphView(props: Props) {
     };
 
     const dragended = function (event: any, d: any) {
-      console.log("dragended");
       if (!d.active) graphLayout.alphaTarget(0);
 
       // @ts-ignore
       d3.select(this).attr("stroke", null);
+    };
+
+    const removeArrows = () => {
+      if (arrow) {
+        svg.selectAll(".arrows").remove();
+        arrow = null;
+      }
+    };
+
+    const drawArrowPath = (d: GraphViewNode) => {
+      removeArrows();
+      arrow = container
+        .append("g")
+        .attr("class", "arrows")
+        .selectAll("g")
+        .data(graphViewData.links)
+        .enter()
+        .filter(function (l) {
+          return (
+            ((l.source as any).id === d.id || (l.target as any).id === d.id) &&
+            (l.source as any).id !== (l.target as any).id
+          );
+        })
+        .append("circle")
+        .style("fill", theme.palette.primary.light)
+        .attr("r", 2);
+
+      const repeat = () => {
+        if (!arrow) {
+          return;
+        }
+        arrow
+          .attr("cx", function (l: any) {
+            return (l.source as any).x;
+          })
+          .attr("cy", function (l: any) {
+            return (l.source as any).y;
+          })
+          .transition()
+          .duration(1500)
+          .ease(d3.easeLinear)
+          .attr("cx", function (l: any) {
+            return (l.target as any).x;
+          })
+          .attr("cy", function (l: any) {
+            return (l.target as any).y;
+          })
+          .on("end", repeat);
+      };
+      repeat();
     };
 
     const updateLink = (link: any) => {
@@ -293,6 +434,7 @@ export default function GraphView(props: Props) {
         return "translate(" + fixna(d.x) + "," + fixna(d.y) + ")";
       });
     };
+
     const ticked = () => {
       // console.log("ticked");
       node.call(updateNode);
@@ -313,7 +455,7 @@ export default function GraphView(props: Props) {
           .id(function (d) {
             return (d as GraphViewNode).id;
           })
-          .distance(50)
+          .distance(100)
           .strength(1),
       )
       .on("tick", ticked);
@@ -331,6 +473,12 @@ export default function GraphView(props: Props) {
     });
 
     console.log("simulated");
+    if (focusedNoteFilePath) {
+      const d = graphViewData.nodes.find((n) => n.id === focusedNoteFilePath);
+      if (d) {
+        focus(null, d);
+      }
+    }
 
     return () => {
       console.log("destroyed");
@@ -338,14 +486,30 @@ export default function GraphView(props: Props) {
     };
   }, [
     graphViewData,
-    graphViewPanel,
+    graphView,
     width,
     height,
     props.notebook,
-    theme.palette.text.primary,
+    theme.palette.text,
+    theme.palette.primary,
+    focusedNoteFilePath,
   ]);
 
   return (
-    <div className={clsx(classes.graphViewPanel)} ref={graphViewPanel}></div>
+    <Box className={clsx(classes.graphViewPanel)}>
+      <div className={clsx(classes.graphView)} ref={graphView}></div>
+      {graphViewData && (
+        <Box className={clsx(classes.bottomPanel, "editor-bottom-panel")}>
+          <Typography variant={"caption"} className={clsx(classes.filePath)}>
+            {hoveredGraphViewNode ? hoveredGraphViewNode.id : ""}
+          </Typography>
+          <Typography variant={"caption"} className={clsx(classes.filePath)}>
+            {`${graphViewData.nodes.length} ${t("graph-view/node")}, ${
+              graphViewData.links.length
+            } ${t("graph-view/link")} `}
+          </Typography>
+        </Box>
+      )}
+    </Box>
   );
 }

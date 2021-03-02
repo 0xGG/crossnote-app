@@ -1192,6 +1192,7 @@ export default function NotePanel(props: Props) {
           /\[((?:[^\\\]]+|\\.)+)\](\(.+?\)| ?\[.+?\])/g,
           "$1",
         ); // links
+        title = title.replace(/\[\[(.+?)\]\]/g, "$1"); // wikilinks
         title = title.replace(/&/g, "&amp;");
         title = title.replace(/</g, "&lt;");
         newTOC +=
@@ -1258,6 +1259,36 @@ export default function NotePanel(props: Props) {
       });
     }
   }, [settingsContainer.theme, editor]);
+
+  // TabNode becomes visible
+  useEffect(() => {
+    if (!tabNode || !note) {
+      return;
+    }
+    console.log("* 1.useEffect: focused on note: ", note.filePath);
+    globalEmitter.emit(EventType.FocusedOnNote, {
+      notebookPath: note.notebookPath,
+      noteFilePath: note.filePath,
+    });
+  }, [note, tabNode]);
+  useEffect(() => {
+    if (!tabNode || !note || !globalEmitter) {
+      return;
+    }
+    tabNode.setEventListener("visibility", function (params) {
+      console.log("visibility: ", params, note.filePath);
+      if (params.visible) {
+        console.log("* 2.useEffect: focused on note: ", note.filePath);
+        globalEmitter.emit(EventType.FocusedOnNote, {
+          notebookPath: note.notebookPath,
+          noteFilePath: note.filePath,
+        });
+      }
+    });
+    return () => {
+      tabNode.removeEventListener("visibility");
+    };
+  }, [tabNode, note]);
 
   return (
     <Box className={clsx(classes.notePanel)}>

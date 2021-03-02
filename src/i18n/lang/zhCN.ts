@@ -153,7 +153,7 @@ export const zhCN = {
     "general/why-cors-proxy": "为什么需要 CORS 代理？",
     "general/today": "今天",
     "general/todo": "待办事项",
-    "general/graph-view": "图形视图",
+    "general/graph-view": "关联图",
     "general/wiki": "维基",
     "general/tagged": "标签",
     "general/untagged": "未标签",
@@ -582,5 +582,9 @@ export const zhCN = {
     "git/status/*unmodified": "*未修改",
     "git/status/*absent": "*缺失",
     "git/status/*undeleted": "*未删除",
+
+    // graph view
+    "graph-view/node": "节点",
+    "graph-view/link": "连接",
   },
 };
