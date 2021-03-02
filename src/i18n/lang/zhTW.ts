@@ -263,6 +263,7 @@ export const zhTW = {
     "settings/Name": "名字",
     "settings/enter-name": "輸入你的名字（這個不是你的用戶名）",
     "settings/editor-cursor-color": "編輯器光標顏色",
+    "settings/default-editor-mode": "默认编辑器模式",
     "settings/hello": "你好，",
     "settings/world": "世界！",
     "settings/linked-with-github-account": "已關聯 GitHub 帳號",

@@ -272,6 +272,7 @@ export const jaJP = {
     "settings/enter-name":
       "名前を入力してください（これはユーザー名ではありません）",
     "settings/editor-cursor-color": "エディターのカーソルの色",
+    "settings/default-editor-mode": "既定のエディター モード",
     "settings/hello": "こんにちは，",
     "settings/world": "世界！",
     "settings/linked-with-github-account":

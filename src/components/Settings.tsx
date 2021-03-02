@@ -18,6 +18,7 @@ import clsx from "clsx";
 import Identicon from "identicon.js";
 import { sha256 } from "js-sha256";
 import {
+  BookEdit,
   Github,
   ImagePlus,
   Keyboard,
@@ -34,6 +35,7 @@ import {
   useGitHubUserQuery,
   useUnlinkGitHubAccountMutation,
 } from "../generated/graphql";
+import { EditorMode } from "../lib/editorMode";
 import { KeyMap } from "../lib/keymap";
 import { themeManager } from "../themes/manager";
 import { smmsUploadImages } from "../utilities/image_uploader";
@@ -56,7 +58,7 @@ const useStyles = makeStyles((theme: Theme) =>
       height: "fit-content",
       [theme.breakpoints.down("sm")]: {
         top: "0",
-        margin: "0",
+        margin: "0 auto",
         height: "100%",
         overflow: "auto",
       },
@@ -102,7 +104,7 @@ const useStyles = makeStyles((theme: Theme) =>
       right: "16px",
     },
     section: {
-      marginTop: theme.spacing(1),
+      marginTop: theme.spacing(4),
     },
     swatch: {
       padding: "4px",
@@ -415,6 +417,10 @@ export function Settings(props: Props) {
             onChange={(event) =>
               settingsContainer.setAuthorName(event.currentTarget.value)
             }
+            style={{
+              marginTop: "0",
+              marginBottom: "0",
+            }}
           ></TextField>
         </Box>
         <Box className={clsx(classes.section)}>
@@ -430,6 +436,10 @@ export function Settings(props: Props) {
             onChange={(event) =>
               settingsContainer.setAuthorEmail(event.currentTarget.value)
             }
+            style={{
+              marginTop: "0",
+              marginBottom: "0",
+            }}
           ></TextField>
         </Box>
         <Box className={clsx(classes.section)}>
@@ -442,7 +452,7 @@ export function Settings(props: Props) {
             }}
           >
             <ThemeLightDark style={{ marginRight: "8px" }}></ThemeLightDark>
-            {t("settings/theme") + " (beta)"}
+            {t("settings/theme")}
           </Typography>
           <Select
             value={settingsContainer.theme.name}
@@ -524,6 +534,37 @@ export function Settings(props: Props) {
             ></SketchPicker>
           </Popover>
         </Box>
+
+        <Box className={clsx(classes.section)}>
+          <Typography
+            variant={"body2"}
+            style={{
+              fontSize: "0.75rem",
+              marginBottom: "6px",
+              marginTop: "16px",
+            }}
+          >
+            <BookEdit style={{ marginRight: "8px" }}></BookEdit>
+            {t("settings/default-editor-mode")}
+          </Typography>
+          <Select
+            value={settingsContainer.defaultEditorMode}
+            onChange={(event) => {
+              settingsContainer.setDefaultEditorMode(
+                event.target.value as EditorMode,
+              );
+            }}
+          >
+            <MenuItem value={EditorMode.EchoMD}>{t("general/echomd")}</MenuItem>
+            <MenuItem value={EditorMode.Preview}>
+              {t("editor/note-control/preview")}
+            </MenuItem>
+            <MenuItem value={EditorMode.SourceCode}>
+              {t("editor/note-control/source-code")}
+            </MenuItem>
+          </Select>
+        </Box>
+
         <Box className={clsx(classes.section)}>
           <Typography
             variant={"body2"}
@@ -534,7 +575,7 @@ export function Settings(props: Props) {
             }}
           >
             <Keyboard style={{ marginRight: "8px" }}></Keyboard>
-            {t("settings/key-map") + " (beta)"}
+            {t("settings/key-map")}
           </Typography>
           <Select
             value={settingsContainer.keyMap}

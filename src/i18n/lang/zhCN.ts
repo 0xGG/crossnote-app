@@ -263,6 +263,7 @@ export const zhCN = {
     "settings/Name": "名字",
     "settings/enter-name": "输入你的名字（这个不是你的用户名）",
     "settings/editor-cursor-color": "编辑器光标颜色",
+    "settings/default-editor-mode": "默认编辑器模式",
     "settings/hello": "你好，",
     "settings/world": "世界！",
     "settings/linked-with-github-account": "已关联 GitHub 帐号",

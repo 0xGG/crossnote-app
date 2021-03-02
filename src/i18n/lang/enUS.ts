@@ -269,6 +269,7 @@ export const enUS = {
     "settings/Name": "Name",
     "settings/enter-name": "Enter your Name (this is not your username)",
     "settings/editor-cursor-color": "Editor cursor color",
+    "settings/default-editor-mode": "Default editor mode",
     "settings/hello": "Hello, ",
     "settings/world": "world!",
     "settings/linked-with-github-account": "Linked with GitHub account",
