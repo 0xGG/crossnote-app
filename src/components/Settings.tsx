@@ -58,7 +58,7 @@ const useStyles = makeStyles((theme: Theme) =>
       height: "fit-content",
       [theme.breakpoints.down("sm")]: {
         top: "0",
-        margin: "0",
+        margin: "0 auto",
         height: "100%",
         overflow: "auto",
       },
@@ -104,7 +104,7 @@ const useStyles = makeStyles((theme: Theme) =>
       right: "16px",
     },
     section: {
-      marginTop: theme.spacing(1),
+      marginTop: theme.spacing(4),
     },
     swatch: {
       padding: "4px",
@@ -417,6 +417,10 @@ export function Settings(props: Props) {
             onChange={(event) =>
               settingsContainer.setAuthorName(event.currentTarget.value)
             }
+            style={{
+              marginTop: "0",
+              marginBottom: "0",
+            }}
           ></TextField>
         </Box>
         <Box className={clsx(classes.section)}>
@@ -432,6 +436,10 @@ export function Settings(props: Props) {
             onChange={(event) =>
               settingsContainer.setAuthorEmail(event.currentTarget.value)
             }
+            style={{
+              marginTop: "0",
+              marginBottom: "0",
+            }}
           ></TextField>
         </Box>
         <Box className={clsx(classes.section)}>
