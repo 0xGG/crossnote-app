@@ -59,12 +59,20 @@ const useStyles = makeStyles((theme: Theme) =>
       "position": "relative",
       "height": `calc(100% - ${bottomPanelHeight}px)`,
       "display": "block",
+      "& .nodes": {
+        zIndex: 10,
+      },
       "& .nodes > circle": {
         cursor: "pointer",
         zIndex: 10,
       },
+      "& .arrows": {
+        zIndex: 5,
+        pointerEvents: "none",
+      },
       "& .arrows > circle": {
-        zIndex: 9,
+        zIndex: 5,
+        pointerEvents: "none",
       },
     },
     bottomPanel: {
@@ -177,7 +185,6 @@ export default function GraphView(props: Props) {
 
     const focusedOnNoteCallback = (data: FocusedOnNoteEventData) => {
       if (data.notebookPath === props.notebook.dir) {
-        console.log("focused on note: ", data.noteFilePath);
         setFocusedNoteFilePath(data.noteFilePath);
       }
     };
@@ -253,7 +260,7 @@ export default function GraphView(props: Props) {
       .enter()
       .append("line")
       .style("stroke", defaultFillColor)
-      .attr("stroke-width", "1px");
+      .attr("stroke-width", "0.5px");
 
     const node = container
       .append("g")
@@ -278,17 +285,6 @@ export default function GraphView(props: Props) {
       .style("font-size", 12)
       .style("pointer-events", "none");
 
-    /*
-    const arrow = container
-      .append("g")
-      .attr("class", "arrows")
-      .selectAll("g")
-      .data(graphViewData.links)
-      .enter()
-      .append("circle")
-      .style("fill", theme.palette.primary.light)
-      .attr("r", 2);
-      */
     let arrow: d3.Selection<
       SVGCircleElement,
       GraphViewLink,
@@ -344,7 +340,6 @@ export default function GraphView(props: Props) {
     };
 
     const dragstarted = function (event: any, d: any) {
-      console.log("dragstarted: ", d.active);
       event.sourceEvent.stopPropagation();
       if (!d.active) graphLayout.alphaTarget(0.3).restart();
 
@@ -353,7 +348,6 @@ export default function GraphView(props: Props) {
     };
 
     const dragged = function (event: any, d: any) {
-      console.log("dragged");
       d.x = event.x;
       d.y = event.y;
       // @ts-ignore
@@ -363,7 +357,6 @@ export default function GraphView(props: Props) {
     };
 
     const dragended = function (event: any, d: any) {
-      console.log("dragended");
       if (!d.active) graphLayout.alphaTarget(0);
 
       // @ts-ignore
@@ -462,7 +455,7 @@ export default function GraphView(props: Props) {
           .id(function (d) {
             return (d as GraphViewNode).id;
           })
-          .distance(50)
+          .distance(100)
           .strength(1),
       )
       .on("tick", ticked);
