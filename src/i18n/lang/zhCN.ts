@@ -153,7 +153,7 @@ export const zhCN = {
     "general/why-cors-proxy": "为什么需要 CORS 代理？",
     "general/today": "今天",
     "general/todo": "待办事项",
-    "general/graph-view": "图形视图",
+    "general/graph-view": "关联图",
     "general/wiki": "维基",
     "general/tagged": "标签",
     "general/untagged": "未标签",
