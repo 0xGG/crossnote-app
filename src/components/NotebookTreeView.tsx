@@ -339,7 +339,7 @@ export default function NotebookTreeView(props: Props) {
                     name: "🕸 " + t("general/graph-view"),
                     config: {
                       singleton: true,
-                      notebook: props.notebook,
+                      notebookPath: props.notebook.dir,
                     },
                   });
                   props.onCloseDrawer();
@@ -374,7 +374,7 @@ export default function NotebookTreeView(props: Props) {
                     name: "📔 " + props.notebook.name,
                     config: {
                       singleton: true,
-                      notebook: props.notebook,
+                      notebookPath: props.notebook.dir,
                     },
                   });
                   props.onCloseDrawer();
@@ -410,8 +410,8 @@ export default function NotebookTreeView(props: Props) {
                         component: "Note",
                         config: {
                           singleton: false,
-                          note,
-                          notebook: props.notebook,
+                          noteFilePath: note.filePath,
+                          notebookPath: props.notebook.dir,
                         },
                         name: `📝 ` + note.title,
                       });

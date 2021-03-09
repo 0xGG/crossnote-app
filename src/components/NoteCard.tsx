@@ -165,8 +165,8 @@ export default function NoteCard(props: Props) {
         component: "Note",
         config: {
           singleton: false,
-          note,
-          notebook: crossnoteContainer.getNotebookAtPath(note.notebookPath),
+          noteFilePath: note.filePath,
+          notebookPath: note.notebookPath,
         },
         name: `📝 ` + note.title,
       });
@@ -213,7 +213,7 @@ export default function NoteCard(props: Props) {
           [],
       );
     }
-  }, [note, props.referredNote]);
+  }, [note, props.referredNote, crossnoteContainer.getNotebookAtPath]);
 
   useEffect(() => {
     setHeader(note.title);
@@ -384,10 +384,8 @@ export default function NoteCard(props: Props) {
                         component: "Note",
                         config: {
                           singleton: false,
-                          note,
-                          notebook: crossnoteContainer.getNotebookAtPath(
-                            note.notebookPath,
-                          ),
+                          noteFilePath: note.filePath,
+                          notebookPath: note.notebookPath,
                           reference: Object.assign({}, reference) as Reference,
                         },
                         name: `📝 ` + note.title,

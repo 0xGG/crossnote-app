@@ -38,7 +38,6 @@ export const DarkTheme: CrossnoteTheme = new CrossnoteTheme({
       },
       action: {
         active: "rgba(180, 180, 180, 1)",
-        disabled: "#353535",
       },
     },
   },

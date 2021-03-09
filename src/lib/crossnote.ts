@@ -169,7 +169,7 @@ export default class Crossnote {
       try {
         await this.notebookDB.put(Object.assign({ directoryHandle }, notebook));
       } catch (error) {
-        console.log("failed to save to error");
+        console.error("failed to save to database");
         // Failed to save to DB
         if (!directoryHandle) {
           await pfs.rmdir(dir);

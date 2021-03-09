@@ -31,7 +31,8 @@ export default class LocalFileSystem {
   private _prefix: string;
 
   constructor() {
-    this._prefix = randomID();
+    // this._prefix = randomID(); // cause the caching error of the layout model
+    this._prefix = "lfs";
   }
 
   public async attachLocalDirectory(

@@ -1,5 +1,3 @@
-import { Note } from "./note";
-import { Notebook } from "./notebook";
 import { Reference } from "./reference";
 
 export type TabNodeComponent =
@@ -12,8 +10,8 @@ export type TabNodeComponent =
 
 export interface TabNodeConfig {
   singleton: boolean;
-  note?: Note;
-  notebook?: Notebook;
+  noteFilePath?: string;
+  notebookPath?: string;
   reference?: Reference;
 }
 
