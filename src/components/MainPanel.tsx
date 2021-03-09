@@ -16,6 +16,7 @@ import { SettingsContainer } from "../containers/settings";
 import { TabNodeComponent, TabNodeConfig } from "../lib/tabNode";
 import { PrivacyPolicy } from "../pages/Privacy";
 import GraphView from "./GraphView";
+import { Loading } from "./Loading";
 import NotePanel from "./NotePanel";
 import NotesPanel from "./NotesPanel";
 import { Notifications } from "./Notifications";
@@ -82,6 +83,9 @@ export function MainPanel(props: Props) {
 
   const factory = useCallback(
     (node: TabNode) => {
+      if (!crossnoteContainer.initialized) {
+        return <Loading></Loading>;
+      }
       const config: TabNodeConfig = node.getConfig();
       /*
       console.log(
@@ -97,30 +101,45 @@ export function MainPanel(props: Props) {
       if (component === "Settings") {
         renderElement = <Settings></Settings>;
       } else if (component === "Notes") {
-        renderElement = (
-          <NotesPanel
-            tabNode={node}
-            notebook={config.notebook}
-            title={t("general/notes")}
-          ></NotesPanel>
+        const notebook = crossnoteContainer.getNotebookAtPath(
+          config.notebookPath,
         );
+        if (notebook) {
+          renderElement = (
+            <NotesPanel
+              tabNode={node}
+              notebook={notebook}
+              title={t("general/notes")}
+            ></NotesPanel>
+          );
+        }
       } else if (component === "Privacy") {
         renderElement = (
           <PrivacyPolicy toggleDrawer={props.toggleDrawer}></PrivacyPolicy>
         );
       } else if (component === "Note") {
-        renderElement = (
-          <NotePanel
-            notebook={config.notebook}
-            note={config.note}
-            tabNode={node}
-            reference={config.reference}
-          ></NotePanel>
+        const notebook = crossnoteContainer.getNotebookAtPath(
+          config.notebookPath,
         );
+        if (notebook) {
+          renderElement = (
+            <NotePanel
+              notebook={notebook}
+              noteFilePath={config.noteFilePath}
+              tabNode={node}
+              reference={config.reference}
+            ></NotePanel>
+          );
+        }
       } else if (component === "Graph") {
-        renderElement = (
-          <GraphView notebook={config.notebook} tabNode={node}></GraphView>
+        const notebook = crossnoteContainer.getNotebookAtPath(
+          config.notebookPath,
         );
+        if (notebook) {
+          renderElement = (
+            <GraphView notebook={notebook} tabNode={node}></GraphView>
+          );
+        }
       } else if (component === "Notifications") {
         renderElement = <Notifications></Notifications>;
       } else {
@@ -133,7 +152,12 @@ export function MainPanel(props: Props) {
         </ThemeProvider>
       );
     },
-    [props.toggleDrawer, t, settingsContainer.theme.muiTheme],
+    [
+      props.toggleDrawer,
+      t,
+      settingsContainer.theme.muiTheme,
+      crossnoteContainer.initialized,
+    ],
   );
 
   useEffect(() => {
@@ -145,6 +169,9 @@ export function MainPanel(props: Props) {
       <FlexLayout.Layout
         model={crossnoteContainer.layoutModel}
         factory={factory}
+        onModelChange={(model) => {
+          crossnoteContainer.saveCurrentLayoutModel();
+        }}
       ></FlexLayout.Layout>
     </div>
   );

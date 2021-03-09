@@ -254,8 +254,8 @@ export function Home(props: Props) {
                       component: "Note",
                       config: {
                         singleton: false,
-                        note,
-                        notebook: notebook,
+                        noteFilePath: note.filePath,
+                        notebookPath: note.notebookPath,
                       },
                       name: `📝 ` + note.title,
                     });
@@ -268,7 +268,7 @@ export function Home(props: Props) {
                       name: "📔 " + notebook.name,
                       config: {
                         singleton: true,
-                        notebook: notebook,
+                        notebookPath: notebook.dir,
                       },
                     });
                   }
@@ -280,7 +280,7 @@ export function Home(props: Props) {
                     name: "📔 " + notebook.name,
                     config: {
                       singleton: true,
-                      notebook: notebook,
+                      notebookPath: notebook.dir,
                     },
                   });
                 }

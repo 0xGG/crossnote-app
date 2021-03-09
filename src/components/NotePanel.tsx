@@ -62,6 +62,7 @@ import {
   postprocessPreview as previewPostprocessPreview,
 } from "../utilities/preview";
 import EditImageDialog from "./EditImageDialog";
+import { Loading } from "./Loading";
 import NotePopover from "./NotePopover";
 import NotesPanel from "./NotesPanel";
 const EchoMD = require("@0xgg/echomd/core");
@@ -295,7 +296,7 @@ const useStyles = makeStyles((theme: Theme) =>
 
 interface Props {
   notebook: Notebook;
-  note: Note;
+  noteFilePath: string;
   tabNode: TabNode;
   reference?: Reference;
 }
@@ -306,7 +307,7 @@ export default function NotePanel(props: Props) {
   const settingsContainer = SettingsContainer.useContainer();
   const { t } = useTranslation();
   const [noteTitle, setNoteTitle] = useState<string>("");
-  const [note, setNote] = useState<Note>(props.note);
+  const [note, setNote] = useState<Note>(null);
   const [editor, setEditor] = useState<CodeMirrorEditor>(null);
   const [editorMode, setEditorMode] = useState<EditorMode>(
     settingsContainer.defaultEditorMode,
@@ -494,6 +495,18 @@ export default function NotePanel(props: Props) {
       globalEmitter.off(EventType.DeletedNotebook, deletedNotebookCallback);
     };
   }, [tabNode, editor, note]);
+
+  // get note
+  useEffect(() => {
+    props.notebook
+      .refreshNotesIfNotLoaded({
+        dir: "./",
+        includeSubdirectories: true,
+      })
+      .then((notes) => {
+        setNote(notes[props.noteFilePath]);
+      });
+  }, [props.noteFilePath, props.notebook]);
 
   // Set editor
   useEffect(() => {
@@ -1245,12 +1258,15 @@ export default function NotePanel(props: Props) {
 
   // Git Status
   useEffect(() => {
+    if (!note) {
+      return;
+    }
     crossnoteContainer
       .getStatus(note.notebookPath, note.filePath)
       .then((status) => {
         setGitStatus(status);
       });
-  }, [note.markdown, note.config.modifiedAt, note]);
+  }, [note]);
 
   // Set theme
   useEffect(() => {
@@ -1288,6 +1304,10 @@ export default function NotePanel(props: Props) {
       tabNode.removeEventListener("visibility");
     };
   }, [tabNode, note]);
+
+  if (!note) {
+    return <Loading></Loading>;
+  }
 
   return (
     <Box className={clsx(classes.notePanel)}>
@@ -1458,7 +1478,9 @@ export default function NotePanel(props: Props) {
       <Box className={clsx(classes.bottomPanel, "editor-bottom-panel")}>
         <Box className={clsx(classes.row)}>
           <Typography variant={"caption"} className={clsx(classes.filePath)}>
-            {note.filePath +
+            {props.notebook.name +
+              ": " +
+              note.filePath +
               (gitStatus ? " - " + t(`git/status/${gitStatus}`) : "")}
           </Typography>
         </Box>

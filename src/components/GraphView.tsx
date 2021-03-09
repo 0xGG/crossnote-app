@@ -220,8 +220,12 @@ export default function GraphView(props: Props) {
   }, [graphView, props.notebook, props.tabNode, graphViewData]);
 
   useEffect(() => {
-    const data = constructGraphView(props.notebook);
-    setGraphViewData(data);
+    props.notebook
+      .refreshNotesIfNotLoaded({ dir: "./", includeSubdirectories: true })
+      .then(() => {
+        const data = constructGraphView(props.notebook);
+        setGraphViewData(data);
+      });
   }, [props.notebook]);
 
   useEffect(() => {
@@ -501,7 +505,8 @@ export default function GraphView(props: Props) {
       {graphViewData && (
         <Box className={clsx(classes.bottomPanel, "editor-bottom-panel")}>
           <Typography variant={"caption"} className={clsx(classes.filePath)}>
-            {hoveredGraphViewNode ? hoveredGraphViewNode.id : ""}
+            {props.notebook.name +
+              (hoveredGraphViewNode ? ": " + hoveredGraphViewNode.id : "")}
           </Typography>
           <Typography variant={"caption"} className={clsx(classes.filePath)}>
             {`${graphViewData.nodes.length} ${t("graph-view/node")}, ${

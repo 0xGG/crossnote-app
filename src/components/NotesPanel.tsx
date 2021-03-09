@@ -204,6 +204,10 @@ export default function NotesPanel(props: Props) {
     if (!isMounted.current) {
       return;
     }
+    await props.notebook.refreshNotesIfNotLoaded({
+      dir: "./",
+      includeSubdirectories: true,
+    });
     setRawNotesMap(
       Object.assign(
         {},

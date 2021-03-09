@@ -64,6 +64,42 @@ interface InitialState {
   crossnote: Crossnote;
 }
 
+const defaultLayoutModel: any = {
+  global: {
+    splitterSize: 4,
+    tabSetEnableMaximize: false,
+    tabSetHeaderHeight: TabHeight,
+    tabSetTabStripHeight: TabHeight,
+    tabEnableRename: false,
+  },
+  borders: [],
+  layout: {
+    type: "row",
+    weight: 100,
+    children: [
+      {
+        type: "tabset",
+        weight: 50,
+        selected: 0,
+        children: [],
+      },
+    ],
+  },
+};
+
+const getlayoutModelFromLocalStrorage = () => {
+  try {
+    const layoutModelString = localStorage.getItem("layoutModel");
+    if (layoutModelString) {
+      return JSON.parse(layoutModelString);
+    } else {
+      return defaultLayoutModel;
+    }
+  } catch (_) {
+    return defaultLayoutModel;
+  }
+};
+
 function useCrossnoteContainer(initialState: InitialState) {
   const { t } = useTranslation();
   const crossnote = initialState.crossnote;
@@ -80,28 +116,7 @@ function useCrossnoteContainer(initialState: InitialState) {
     HomeSection.Unknown,
   );
   const [layoutModel, setLayoutModel] = useState<Model>(
-    FlexLayout.Model.fromJson({
-      global: {
-        splitterSize: 4,
-        tabSetEnableMaximize: false,
-        tabSetHeaderHeight: TabHeight,
-        tabSetTabStripHeight: TabHeight,
-        tabEnableRename: false,
-      },
-      borders: [],
-      layout: {
-        type: "row",
-        weight: 100,
-        children: [
-          {
-            type: "tabset",
-            weight: 50,
-            selected: 0,
-            children: [],
-          },
-        ],
-      },
-    }),
+    FlexLayout.Model.fromJson(getlayoutModelFromLocalStrorage()),
   );
 
   const getNotebookAtPath = useCallback(
@@ -145,16 +160,20 @@ function useCrossnoteContainer(initialState: InitialState) {
         }
       }
       if (tabNode.component === "Note") {
-        const note = tabNode.config.note;
+        const notebookPath = tabNode.config.notebookPath;
+        const noteFilePath = tabNode.config.noteFilePath;
         const tabs = activeTabset.getChildren();
         for (let i = 0; i < tabs.length; i++) {
           const eTabNode: any = tabs[i];
-          const eNote: Note = eTabNode._attributes.config.note;
+          const eNotebookpath: string =
+            eTabNode._attributes.config.notebookPath;
+          const eNoteFilePath: string =
+            eTabNode._attributes.config.noteFilePath;
           if (
-            eNote &&
-            note &&
-            eNote.notebookPath === note.notebookPath &&
-            eNote.filePath === note.filePath
+            notebookPath &&
+            noteFilePath &&
+            notebookPath === eNotebookpath &&
+            noteFilePath === eNoteFilePath
           ) {
             layoutModel.doAction(Actions.selectTab(eTabNode.getId()));
             layoutModel.doAction(
@@ -385,8 +404,8 @@ function useCrossnoteContainer(initialState: InitialState) {
         name: `📝 ` + note.title,
         config: {
           singleton: false,
-          note,
-          notebook,
+          noteFilePath: note.filePath,
+          notebookPath: note.notebookPath,
         },
       });
     },
@@ -458,7 +477,6 @@ function useCrossnoteContainer(initialState: InitialState) {
 
   const openLocalNotebook = useCallback(async () => {
     const directoryHandle = await window.showDirectoryPicker();
-    (window as any)["directoryHandle"] = directoryHandle;
     const notebook = await crossnote.addNotebook({
       name: directoryHandle.name,
       gitURL: "",
@@ -712,6 +730,12 @@ function useCrossnoteContainer(initialState: InitialState) {
     [crossnote, getNotebookAtPath],
   );
 
+  const saveCurrentLayoutModel = useCallback(() => {
+    if (layoutModel) {
+      localStorage.setItem("layoutModel", JSON.stringify(layoutModel.toJson()));
+    }
+  }, [layoutModel]);
+
   useEffect(() => {
     if (!crossnote || initialized) {
       return;
@@ -754,23 +778,6 @@ please download and read the [Welcome notebook](https://crossnote.app/?repo=http
       }
     })();
   }, [crossnote, initialized]);
-
-  useEffect(() => {
-    if (!crossnote) {
-      return;
-    }
-    (async () => {
-      setIsLoadingNotebook(true);
-      /*
-      await selectedNotebook.refreshNotes({
-        dir: "./",
-        includeSubdirectories: true,
-      });
-      console.log("end loading notes: ", selectedNotebook);
-      */
-      setIsLoadingNotebook(false);
-    })();
-  }, [crossnote]);
 
   // TODO: This script should be moved to background (serviceWorker?)
   useInterval(async () => {
@@ -840,6 +847,7 @@ please download and read the [Welcome notebook](https://crossnote.app/?repo=http
     closeTabNode,
     getNotebookAtPath,
     getStatus,
+    saveCurrentLayoutModel,
   };
 }
 
