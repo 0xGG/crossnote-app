@@ -213,7 +213,7 @@ export default function NoteCard(props: Props) {
           [],
       );
     }
-  }, [note, props.referredNote]);
+  }, [note, props.referredNote, crossnoteContainer.getNotebookAtPath]);
 
   useEffect(() => {
     setHeader(note.title);

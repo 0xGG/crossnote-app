@@ -157,6 +157,7 @@ export function MainPanel(props: Props) {
       t,
       settingsContainer.theme.muiTheme,
       crossnoteContainer.initialized,
+      crossnoteContainer.getNotebookAtPath,
     ],
   );
 
