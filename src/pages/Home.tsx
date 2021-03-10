@@ -240,7 +240,6 @@ export function Home(props: Props) {
             (nb) => nb.gitURL === repo && nb.gitBranch === branch,
           );
           if (notebook) {
-            console.log("refreshNotesIfNotLoaded - Home.tsx ");
             notebook
               .refreshNotesIfNotLoaded({
                 dir: "./",
