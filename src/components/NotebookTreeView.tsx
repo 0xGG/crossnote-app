@@ -125,6 +125,9 @@ export default function NotebookTreeView(props: Props) {
             globalEmitter.emit(EventType.PerformedGitOperation, {
               notebookPath: props.notebook.dir,
             });
+          })
+          .catch((error) => {
+            console.error(error);
           });
 
         setExpanded(nodes);
@@ -260,18 +263,9 @@ export default function NotebookTreeView(props: Props) {
                     globalEmitter.emit(EventType.PerformedGitOperation, {
                       notebookPath: props.notebook.dir,
                     });
-                    /*
-                    crossnoteContainer.addTabNode({
-                      type: "tab",
-                      component: "Notes",
-                      id: "Notes: " + props.notebook.dir,
-                      name: "📔 " + props.notebook.name,
-                      config: {
-                        singleton: true,
-                        notebook: props.notebook,
-                      },
-                    });
-                    */
+                  })
+                  .catch((error) => {
+                    console.error(error);
                   });
               }}
               className={clsx(classes.treeItemLabelRoot)}

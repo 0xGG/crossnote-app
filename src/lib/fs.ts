@@ -41,6 +41,17 @@ class FileSystem {
     return await this.lfs.attachLocalDirectory(id, directoryHandle);
   }
 
+  public async requestPermission(
+    path: string,
+    mode: FileSystemPermissionMode = "readwrite",
+  ) {
+    await this.lfs.helper(path, mode);
+  }
+
+  public isPathOfLocalFileSystem(path: string) {
+    return this.lfs.isPathOfLocalFileSystem(path);
+  }
+
   private setUpFSMethods() {
     this.readFile = (path: string, opts?: any) => {
       if (this.lfs.isPathOfLocalFileSystem(path)) {
@@ -254,3 +265,4 @@ class FileSystem {
 
 export const fs = new LightningFS("fs");
 export const pfs = new FileSystem(fs);
+(window as any)["pfs"] = pfs;

@@ -24,8 +24,6 @@ export const OneDarkTheme: CrossnoteTheme = new CrossnoteTheme({
       text: {
         primary: "#ccc",
         secondary: "rgba(180, 180, 180, 1)",
-        disabled: "rgba(121, 7, 7, 0.38)",
-        hint: "rgba(0, 0, 0, 0.38)",
       },
       action: {
         active: "rgba(180, 180, 180, 1)",

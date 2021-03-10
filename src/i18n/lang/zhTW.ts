@@ -205,6 +205,8 @@ export const zhTW = {
     "general/your-browser-doesnt-support-to-open-local-folder":
       "妳的瀏覽器不支持打開本地文件夾",
     "general/refresh": "刷新",
+    "general/welcome-back-to-crossnote": "歡迎回到交叉筆記",
+    "general/continue": "繼續",
 
     // Error
     "error/authentication-failed": "認証失敗",

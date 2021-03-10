@@ -208,6 +208,8 @@ export const jaJP = {
     "general/your-browser-doesnt-support-to-open-local-folder":
       "ブラウザがローカル フォルダを開くことをサポートしていません",
     "general/refresh": "更新",
+    "general/welcome-back-to-crossnote": "クロスノートへようこそ",
+    "general/continue": "続行",
 
     // Error
     "error/authentication-failed": "認証に失敗しました",

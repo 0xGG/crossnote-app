@@ -176,7 +176,7 @@ const useStyles = makeStyles((theme: Theme) =>
         // display: "none !important",
       },
       "& .CodeMirror-placeholder": {
-        color: theme.palette.text.hint,
+        color: `${theme.palette.text.hint} !important`,
       },
       /*
       CodeMirror selected text css:
@@ -505,6 +505,9 @@ export default function NotePanel(props: Props) {
       })
       .then((notes) => {
         setNote(notes[props.noteFilePath]);
+      })
+      .catch((error) => {
+        console.error(error);
       });
   }, [props.noteFilePath, props.notebook]);
 
@@ -1223,7 +1226,9 @@ export default function NotePanel(props: Props) {
         `<div data-line="0" class="toc-item" style="padding-left: 1em;">${note.title}</div>` +
         newTOC;
       if (newTOC === lastTOC) return;
-      tocElement.current.innerHTML = lastTOC = newTOC;
+      if (tocElement && tocElement.current) {
+        tocElement.current.innerHTML = lastTOC = newTOC;
+      }
     }, 300);
 
     const tocClick = (event: Event) => {

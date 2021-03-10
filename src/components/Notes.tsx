@@ -13,6 +13,7 @@ import { useTranslation } from "react-i18next";
 import LazyLoad from "react-lazyload";
 import { CrossnoteContainer } from "../containers/crossnote";
 import { Note } from "../lib/note";
+import { Notebook } from "../lib/notebook";
 import NoteCard, { NoteCardMargin } from "./NoteCard";
 const is = require("is_js");
 
@@ -55,6 +56,7 @@ const useStyles = makeStyles((theme: Theme) =>
 interface Props {
   tabNode: TabNode;
   referredNote?: Note;
+  notebook: Notebook;
   notes: Note[];
   searchValue: string;
   scrollElement: HTMLElement;
@@ -65,50 +67,7 @@ export default function Notes(props: Props) {
   const { t } = useTranslation();
   const theme = useTheme();
   const crossnoteContainer = CrossnoteContainer.useContainer();
-  const [forceUpdate, setForceUpdate] = useState<number>(Date.now());
   const [notes, setNotes] = useState<Note[]>([]);
-  const [masonryInstance, setMasonryInstance] = useState<any>(null);
-
-  /*
-  const pullNotebook = useCallback(() => {
-    const notebook = crossnoteContainer.selectedNotebook;
-    if (!notebook) {
-      return;
-    }
-    crossnoteContainer
-      .pullNotebook({
-        notebook: notebook,
-        onAuthFailure: () => {
-          new Noty({
-            type: "error",
-            text: t("error/authentication-failed"),
-            layout: "topRight",
-            theme: "relax",
-            timeout: 5000,
-          }).show();
-        },
-      })
-      .then(() => {
-        new Noty({
-          type: "success",
-          text: t("success/notebook-downloaded"),
-          layout: "topRight",
-          theme: "relax",
-          timeout: 2000,
-        }).show();
-      })
-      .catch((error) => {
-        console.log(error);
-        new Noty({
-          type: "error",
-          text: t("error/failed-to-download-notebook"),
-          layout: "topRight",
-          theme: "relax",
-          timeout: 2000,
-        }).show();
-      });
-  }, [crossnoteContainer.selectedNotebook, t]);
-  */
 
   useEffect(() => {
     const notes = props.notes;
@@ -148,39 +107,6 @@ export default function Notes(props: Props) {
     setNotes([...pinned, ...unpinned]);
   }, [props.notes, props.searchValue]);
 
-  /*
-  useEffect(() => {
-    if (notesListElement) {
-      const keyDownHandler = (event: KeyboardEvent) => {
-        const selectedNote = crossnoteContainer.selectedNote;
-        if (!selectedNote || !notes.length) {
-          return;
-        }
-        const currentIndex = notes.findIndex(
-          (n) => n.filePath === selectedNote.filePath,
-        );
-        if (currentIndex < 0) {
-          crossnoteContainer.setSelectedNote(notes[0]);
-        } else if (event.which === 40) {
-          // Up
-          if (currentIndex >= 0 && currentIndex < notes.length - 1) {
-            crossnoteContainer.setSelectedNote(notes[currentIndex + 1]);
-          }
-        } else if (event.which === 38) {
-          // Down
-          if (currentIndex > 0 && currentIndex < notes.length) {
-            crossnoteContainer.setSelectedNote(notes[currentIndex - 1]);
-          }
-        }
-      };
-      notesListElement.addEventListener("keydown", keyDownHandler);
-      return () => {
-        notesListElement.removeEventListener("keydown", keyDownHandler);
-      };
-    }
-  }, [notesListElement, notes, crossnoteContainer.selectedNote]);
-  */
-
   useEffect(() => {
     if (props.scrollElement) {
       const scrollElement = props.scrollElement;
@@ -201,7 +127,7 @@ export default function Notes(props: Props) {
         window.removeEventListener("resize", hack);
       };
     }
-  }, [notes, props.scrollElement, masonryInstance]);
+  }, [notes, props.scrollElement]);
 
   return (
     <div className={clsx(classes.notesList)}>
@@ -242,7 +168,7 @@ export default function Notes(props: Props) {
         );
       })}
       {crossnoteContainer.initialized &&
-        !crossnoteContainer.isLoadingNotebook &&
+        props.notebook.hasLoadedNotes &&
         notes.length === 0 && (
           <Typography
             style={{
