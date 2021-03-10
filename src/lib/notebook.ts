@@ -1,4 +1,5 @@
 import { md } from "@0xgg/echomd/preview";
+import { Mutex } from "async-mutex";
 import * as git from "isomorphic-git";
 import Token from "markdown-it/lib/token";
 import * as path from "path";
@@ -55,7 +56,8 @@ export class Notebook {
 
   public isLocal: boolean;
 
-  private loadedNotes: boolean;
+  private refreshNotesIfNotLoadedMutex: Mutex;
+  public hasLoadedNotes: boolean;
 
   public referenceMap: ReferenceMap;
 
@@ -64,8 +66,9 @@ export class Notebook {
   constructor() {
     this.notes = {};
     this.isLocal = false;
-    this.loadedNotes = false;
+    this.hasLoadedNotes = false;
     this.referenceMap = new ReferenceMap();
+    this.refreshNotesIfNotLoadedMutex = new Mutex();
   }
 
   public initSearch() {
@@ -375,14 +378,16 @@ export class Notebook {
     dir = "./",
     includeSubdirectories = false,
   }: RefreshNotesArgs): Promise<Notes> {
-    if (!this.loadedNotes) {
-      await this.refreshNotes({
-        dir,
-        includeSubdirectories,
-        refreshRelations: true,
-      });
-      this.loadedNotes = true;
-    }
+    await this.refreshNotesIfNotLoadedMutex.runExclusive(async () => {
+      if (!this.hasLoadedNotes) {
+        await this.refreshNotes({
+          dir,
+          includeSubdirectories,
+          refreshRelations: true,
+        });
+        this.hasLoadedNotes = true;
+      }
+    });
     return this.notes;
   }
 
@@ -400,6 +405,7 @@ export class Notebook {
     try {
       files = await pfs.readdir(path.resolve(this.dir, dir));
     } catch (error) {
+      console.error(error);
       files = [];
     }
     const refreshNotesPromises = [];
@@ -422,7 +428,9 @@ export class Notebook {
       let stats;
       try {
         stats = await pfs.stats(absFilePath);
-      } catch (error) {}
+      } catch (error) {
+        console.error(error);
+      }
       if (stats && stats.isDirectory() && includeSubdirectories) {
         refreshNotesPromises.push(
           this.refreshNotes({

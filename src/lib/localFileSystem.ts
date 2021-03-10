@@ -18,6 +18,7 @@ export async function verifyPermission(
   if ((await fileHandle.queryPermission(options)) === "granted") {
     return true;
   }
+
   // Request permission. If the user grants permission, return true.
   if ((await fileHandle.requestPermission(options)) === "granted") {
     return true;
@@ -59,7 +60,7 @@ export default class LocalFileSystem {
     return path.startsWith("/" + this._prefix);
   }
 
-  private async helper(
+  public async helper(
     path: string,
     mode: FileSystemPermissionMode = "readwrite",
   ): Promise<[FileSystemDirectoryHandle, string[]]> {

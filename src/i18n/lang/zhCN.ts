@@ -205,6 +205,8 @@ export const zhCN = {
     "general/your-browser-doesnt-support-to-open-local-folder":
       "你的浏览器不支持打开本地文件夹",
     "general/refresh": "刷新",
+    "general/welcome-back-to-crossnote": "欢迎回到交叉笔记",
+    "general/continue": "继续",
 
     // Error
     "error/authentication-failed": "认证失败",

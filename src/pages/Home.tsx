@@ -284,6 +284,9 @@ export function Home(props: Props) {
                     },
                   });
                 }
+              })
+              .catch((error) => {
+                console.error(error);
               });
           } else {
             // Show dialog

@@ -348,7 +348,6 @@ export default function NotesPanel(props: Props) {
     const containerElement = container.current;
     const scrollElement = containerElement.parentElement;
     const scrollEvent = function () {
-      // console.log( "onscroll: ", scrollElement.scrollTop, containerElement.offsetTop,);
       if (scrollElement.scrollTop >= containerElement.offsetTop) {
         setFixedTopPanel(true);
       } else {
@@ -483,19 +482,20 @@ export default function NotesPanel(props: Props) {
         </List>
       </Popover>
 
-      {crossnoteContainer.isLoadingNotebook && (
+      {props.notebook.hasLoadedNotes ? (
+        <Notes
+          tabNode={props.tabNode}
+          notebook={props.notebook}
+          notes={notes}
+          referredNote={props.note}
+          searchValue={finalSearchValue}
+          scrollElement={
+            container && container.current && container.current.parentElement
+          }
+        ></Notes>
+      ) : (
         <CircularProgress className={clsx(classes.loading)}></CircularProgress>
       )}
-
-      <Notes
-        tabNode={props.tabNode}
-        notes={notes}
-        referredNote={props.note}
-        searchValue={finalSearchValue}
-        scrollElement={
-          container && container.current && container.current.parentElement
-        }
-      ></Notes>
     </div>
   );
 }

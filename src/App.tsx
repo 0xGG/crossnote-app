@@ -42,34 +42,10 @@ const App: FC = () => {
           <Switch>
             {/*
             <Route
-              path={`/settings`}
-              exact={true}
-              render={(props) => (
-                <Home section={HomeSection.Settings} queryParams={{}}></Home>
-              )}
-            ></Route>
-            <Route
               path={`/explore`}
               exact={true}
               render={(props) => (
                 <Home section={HomeSection.Explore} queryParams={{}}></Home>
-              )}
-            ></Route>
-            <Route
-              path={`/notifications`}
-              exact={true}
-              render={(props) => (
-                <Home
-                  section={HomeSection.Notifications}
-                  queryParams={{}}
-                ></Home>
-              )}
-            ></Route>
-            <Route
-              path={`/privacy`}
-              exact={true}
-              render={(props) => (
-                <Home section={HomeSection.Privacy} queryParams={{}}></Home>
               )}
             ></Route>
               */}

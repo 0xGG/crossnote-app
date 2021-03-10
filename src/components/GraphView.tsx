@@ -225,6 +225,9 @@ export default function GraphView(props: Props) {
       .then(() => {
         const data = constructGraphView(props.notebook);
         setGraphViewData(data);
+      })
+      .catch((error) => {
+        console.error(error);
       });
   }, [props.notebook]);
 

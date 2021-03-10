@@ -108,7 +108,6 @@ function useCrossnoteContainer(initialState: InitialState) {
   const [isAddingNotebook, setIsAddingNotebook] = useState<boolean>(false);
   const [isPushingNotebook, setIsPushingNotebook] = useState<boolean>(false);
   const [isPullingNotebook, setIsPullingNotebook] = useState<boolean>(false);
-  const [isLoadingNotebook, setIsLoadingNotebook] = useState<boolean>(false);
   const [isPerformingAutoFetch, setIsPerformingAutoFetch] = useState<boolean>(
     false,
   );
@@ -230,11 +229,6 @@ function useCrossnoteContainer(initialState: InitialState) {
           noteFilePath: note.filePath,
           noteConfig: newNote.config,
         });
-        /*
-          if (newNote !== note) {
-            console.log("new note created");
-          }
-          */
       }
     },
     [getNotebookAtPath],
@@ -529,12 +523,10 @@ function useCrossnoteContainer(initialState: InitialState) {
       if (!crossnote) {
         return;
       }
-      setIsLoadingNotebook(true);
       await notebook.refreshNotes({ dir: "./", includeSubdirectories: true });
       globalEmitter.emit(EventType.PerformedGitOperation, {
         notebookPath: notebook.dir,
       });
-      setIsLoadingNotebook(false);
     },
     [crossnote],
   );
@@ -802,7 +794,7 @@ please download and read the [Welcome notebook](https://crossnote.app/?repo=http
             });
           }
         } catch (error) {
-          console.log(error);
+          console.error(error);
         }
       }
     }
@@ -836,7 +828,6 @@ please download and read the [Welcome notebook](https://crossnote.app/?repo=http
     pullNotebook,
     checkoutNote,
     getNote,
-    isLoadingNotebook,
     openNoteAtPath,
     openTodayNote,
     homeSection,

@@ -208,6 +208,8 @@ export const enUS = {
     "general/your-browser-doesnt-support-to-open-local-folder":
       "Your browser doesn't support to open local folder",
     "general/refresh": "Refresh",
+    "general/welcome-back-to-crossnote": "Welcome back to Crossnote",
+    "general/continue": "Continue",
 
     // Error
     "error/authentication-failed": "Authentication failed",

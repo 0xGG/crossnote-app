@@ -1,4 +1,11 @@
-import { Box } from "@material-ui/core";
+import {
+  Box,
+  Button,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+} from "@material-ui/core";
 import {
   createStyles,
   darken,
@@ -9,10 +16,11 @@ import {
 import clsx from "clsx";
 import FlexLayout, { TabNode } from "flexlayout-react";
 import "flexlayout-react/style/light.css";
-import React, { useCallback, useEffect, useRef } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { CrossnoteContainer } from "../containers/crossnote";
 import { SettingsContainer } from "../containers/settings";
+import { pfs } from "../lib/fs";
 import { TabNodeComponent, TabNodeConfig } from "../lib/tabNode";
 import { PrivacyPolicy } from "../pages/Privacy";
 import GraphView from "./GraphView";
@@ -32,7 +40,16 @@ const useStyles = makeStyles((theme: Theme) =>
       "overflow": "auto",
       // overright the flexlayout style
       "& .flexlayout__tabset": {
-        backgroundColor: theme.palette.background.paper,
+        "backgroundColor": theme.palette.background.paper,
+        "&::before": {
+          content: '"📖"',
+          top: "50%",
+          left: "50%",
+          position: "absolute",
+          transform: "translate(-50%, -50%)",
+          color: theme.palette.text.hint,
+          fontSize: "1.6rem",
+        },
       },
       "& .flexlayout__tabset_tabbar_outer.flexlayout__tabset_tabbar_outer_top": {
         backgroundColor: darken(theme.palette.background.default, 0.04),
@@ -77,16 +94,19 @@ interface Props {
 export function MainPanel(props: Props) {
   const classes = useStyles();
   const container = useRef<HTMLDivElement>(null);
+  const [dialogOpen, setDialogOpen] = useState<boolean>(false);
+  const [ready, setReady] = useState<boolean>(false);
   const crossnoteContainer = CrossnoteContainer.useContainer();
   const settingsContainer = SettingsContainer.useContainer();
   const { t } = useTranslation();
 
   const factory = useCallback(
     (node: TabNode) => {
-      if (!crossnoteContainer.initialized) {
+      if (!crossnoteContainer.initialized || !ready) {
         return <Loading></Loading>;
       }
       const config: TabNodeConfig = node.getConfig();
+
       /*
       console.log(
         "render component: \n",
@@ -96,6 +116,7 @@ export function MainPanel(props: Props) {
         node.getConfig(),
       );
       */
+
       const component: TabNodeComponent = node.getComponent() as TabNodeComponent;
       let renderElement = <Box></Box>;
       if (component === "Settings") {
@@ -153,6 +174,7 @@ export function MainPanel(props: Props) {
       );
     },
     [
+      ready,
       props.toggleDrawer,
       t,
       settingsContainer.theme.muiTheme,
@@ -161,8 +183,38 @@ export function MainPanel(props: Props) {
     ],
   );
 
+  const closeDialog = useCallback(() => {
+    setDialogOpen(false);
+    setReady(true);
+  }, []);
+
   useEffect(() => {
-    console.log("render MainPanel");
+    if (crossnoteContainer.layoutModel) {
+      const data = crossnoteContainer.layoutModel.toJson();
+      let hasLocalDirectory = false;
+      const layout = data.layout || {};
+      const children = layout.children || [];
+      for (let i = 0; i < children.length; i++) {
+        const children2 = children[i].children || [];
+        for (let j = 0; j < children2.length; j++) {
+          const child = children2[j];
+          if (child && child.config.notebookPath) {
+            if (pfs.isPathOfLocalFileSystem(child.config.notebookPath)) {
+              hasLocalDirectory = true;
+              break;
+            }
+          }
+        }
+        if (hasLocalDirectory) {
+          break;
+        }
+      }
+      if (hasLocalDirectory) {
+        setDialogOpen(true);
+      } else {
+        setReady(true);
+      }
+    }
   }, [container, crossnoteContainer.layoutModel]);
 
   return (
@@ -174,6 +226,26 @@ export function MainPanel(props: Props) {
           crossnoteContainer.saveCurrentLayoutModel();
         }}
       ></FlexLayout.Layout>
+      {/*
+        The dialog here is useful for file system access API requestPermission from user interaction.
+      */}
+      <Dialog
+        open={dialogOpen}
+        onClose={closeDialog}
+        maxWidth={"sm"}
+        fullWidth={true}
+      >
+        <DialogContent>
+          <DialogContentText>
+            {t("general/welcome-back-to-crossnote")} 😆
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={closeDialog} color="primary" autoFocus>
+            {t("general/continue")}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </div>
   );
 }
