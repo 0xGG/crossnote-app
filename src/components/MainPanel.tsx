@@ -42,11 +42,13 @@ const useStyles = makeStyles((theme: Theme) =>
       "& .flexlayout__tabset": {
         "backgroundColor": theme.palette.background.paper,
         "&::before": {
-          content: '"👈 📚"',
-          top: "20%",
-          left: "20%",
+          content: '"📖"',
+          top: "50%",
+          left: "50%",
           position: "absolute",
           transform: "translate(-50%, -50%)",
+          color: theme.palette.text.hint,
+          fontSize: "1.6rem",
         },
       },
       "& .flexlayout__tabset_tabbar_outer.flexlayout__tabset_tabbar_outer_top": {
