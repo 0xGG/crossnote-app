@@ -1,4 +1,4 @@
-import { Box, IconButton, Tooltip, Typography } from "@material-ui/core";
+import { Box, Chip, IconButton, Tooltip, Typography } from "@material-ui/core";
 import {
   createStyles,
   darken,
@@ -419,6 +419,14 @@ export default function NotebookTreeView(props: Props) {
                     <Typography className={clsx(classes.treeItemLabelText)}>
                       {note.title}
                     </Typography>
+                    <Chip
+                      size={"small"}
+                      variant={"outlined"}
+                      style={{ marginRight: "4px" }}
+                      label={props.notebook.referenceMap.getReferredByNotesCount(
+                        note.filePath,
+                      )}
+                    ></Chip>
                   </Box>
                 }
               ></TreeItem>

@@ -1,4 +1,4 @@
-import { Box, IconButton, Tooltip, Typography } from "@material-ui/core";
+import { Box, Chip, IconButton, Tooltip, Typography } from "@material-ui/core";
 import {
   createStyles,
   darken,
@@ -296,7 +296,7 @@ export default function NoteCard(props: Props) {
             style={{
               display: "flex",
               flexDirection: "row",
-              alignItems: "flex-start",
+              alignItems: "center",
               justifyContent: "space-between",
             }}
           >
@@ -310,16 +310,15 @@ export default function NoteCard(props: Props) {
             </Typography>
             <Box style={{ display: "flex", alignItems: "center" }}>
               {props.referredNote && (
-                <Typography
-                  variant={"subtitle2"}
+                <Chip
+                  variant={"outlined"}
                   style={{
                     marginLeft: theme.spacing(1),
                     marginRight: theme.spacing(1),
                   }}
-                  color={"textPrimary"}
-                >
-                  {references.length} reference(s)
-                </Typography>
+                  label={`${references.length} ${t("general/reference(s)")}`}
+                  size={"small"}
+                ></Chip>
               )}
               <IconButton
                 size={"small"}

@@ -1,4 +1,4 @@
-import { Box, Typography } from "@material-ui/core";
+import { Box, Chip, Typography } from "@material-ui/core";
 import {
   createStyles,
   makeStyles,
@@ -130,57 +130,67 @@ export default function Notes(props: Props) {
   }, [notes, props.scrollElement]);
 
   return (
-    <div className={clsx(classes.notesList)}>
-      {(notes || []).map((note) => {
-        return (
-          <LazyLoad
-            key={"lazy-load-note-card-" + note.filePath}
-            placeholder={
-              <Box
-                style={{
-                  maxWidth: "100%",
-                  margin: `${NoteCardMargin}px auto`,
-                  padding: theme.spacing(2, 0.5, 0),
-                  height: `${lazyLoadPlaceholderHeight}px`,
-                }}
-                className={"note-card lazyload-placeholder"}
-              >
-                <Skeleton />
-                <Skeleton animation={false} />
-                <Skeleton animation="wave" />
-              </Box>
-            }
-            height={lazyLoadPlaceholderHeight}
-            overflow={true}
-            once={true}
-            scrollContainer={props.scrollElement}
-            resize={true}
-          >
-            <NoteCard
-              key={"note-card-" + note.filePath}
-              tabNode={props.tabNode}
-              note={note}
-              referredNote={props.referredNote}
-            ></NoteCard>
-          </LazyLoad>
+    <React.Fragment>
+      <Box style={{ textAlign: "center" }}>
+        <Chip
+          size={"small"}
+          variant={"outlined"}
+          color={"default"}
+          label={`${Object.keys(notes).length} ${t("profile-card/notes")}`}
+        ></Chip>
+      </Box>
+      <div className={clsx(classes.notesList)}>
+        {(notes || []).map((note) => {
+          return (
+            <LazyLoad
+              key={"lazy-load-note-card-" + note.filePath}
+              placeholder={
+                <Box
+                  style={{
+                    maxWidth: "100%",
+                    margin: `${NoteCardMargin}px auto`,
+                    padding: theme.spacing(2, 0.5, 0),
+                    height: `${lazyLoadPlaceholderHeight}px`,
+                  }}
+                  className={"note-card lazyload-placeholder"}
+                >
+                  <Skeleton />
+                  <Skeleton animation={false} />
+                  <Skeleton animation="wave" />
+                </Box>
+              }
+              height={lazyLoadPlaceholderHeight}
+              overflow={true}
+              once={true}
+              scrollContainer={props.scrollElement}
+              resize={true}
+            >
+              <NoteCard
+                key={"note-card-" + note.filePath}
+                tabNode={props.tabNode}
+                note={note}
+                referredNote={props.referredNote}
+              ></NoteCard>
+            </LazyLoad>
 
-          //   <NoteCard key={"note-card-" + note.filePath} note={note}></NoteCard>
-        );
-      })}
-      {crossnoteContainer.initialized &&
-        props.notebook.hasLoadedNotes &&
-        notes.length === 0 && (
-          <Typography
-            style={{
-              textAlign: "center",
-              marginTop: "32px",
-            }}
-            variant={"body2"}
-            color={"textPrimary"}
-          >
-            {"🧐 " + t("general/no-notes-found")}
-          </Typography>
-        )}
-    </div>
+            //   <NoteCard key={"note-card-" + note.filePath} note={note}></NoteCard>
+          );
+        })}
+        {crossnoteContainer.initialized &&
+          props.notebook.hasLoadedNotes &&
+          notes.length === 0 && (
+            <Typography
+              style={{
+                textAlign: "center",
+                marginTop: "32px",
+              }}
+              variant={"body2"}
+              color={"textPrimary"}
+            >
+              {"🧐 " + t("general/no-notes-found")}
+            </Typography>
+          )}
+      </div>
+    </React.Fragment>
   );
 }

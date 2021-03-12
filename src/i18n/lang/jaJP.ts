@@ -210,6 +210,8 @@ export const jaJP = {
     "general/refresh": "更新",
     "general/welcome-back-to-crossnote": "クロスノートへようこそ",
     "general/continue": "続行",
+    "general/reference(s)": "参照",
+    "general/References": "参照",
 
     // Error
     "error/authentication-failed": "認証に失敗しました",

@@ -236,7 +236,7 @@ export function MainPanel(props: Props) {
         fullWidth={true}
       >
         <DialogContent>
-          <DialogContentText>
+          <DialogContentText color={"textPrimary"}>
             {t("general/welcome-back-to-crossnote")} 😆
           </DialogContentText>
         </DialogContent>

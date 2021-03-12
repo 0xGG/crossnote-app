@@ -207,6 +207,8 @@ export const zhTW = {
     "general/refresh": "刷新",
     "general/welcome-back-to-crossnote": "歡迎回到交叉筆記",
     "general/continue": "繼續",
+    "general/reference(s)": "引用",
+    "general/References": "引用",
 
     // Error
     "error/authentication-failed": "認証失敗",
