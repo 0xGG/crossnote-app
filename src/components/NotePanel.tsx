@@ -154,9 +154,9 @@ const useStyles = makeStyles((theme: Theme) =>
       "flex": 1,
       "overflow": "auto",
       "backgroundColor": "inherit",
-      "width": "800px",
-      "margin": "0 auto",
-      "maxWidth": "100%",
+      // "width": "800px",
+      // "margin": "0 auto",
+      // "maxWidth": "100%",
       "& .CodeMirror-gutters": {
         display: "none",
       },
