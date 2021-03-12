@@ -87,6 +87,27 @@ interface NotebookDBEntry {
   directoryHandle?: FileSystemDirectoryHandle;
 }
 
+export function convertNotebookToNotebookDBEntry(
+  notebook: Notebook,
+  directoryHandle: FileSystemDirectoryHandle,
+): NotebookDBEntry {
+  return {
+    _id: notebook._id,
+    dir: notebook.dir,
+    name: notebook.name,
+    gitURL: notebook.gitURL,
+    gitBranch: notebook.gitBranch,
+    gitCorsProxy: notebook.gitCorsProxy,
+    gitUsername: notebook.gitUsername,
+    gitPassword: notebook.gitPassword,
+    autoFetchPeriod: notebook.autoFetchPeriod,
+    fetchedAt: notebook.fetchedAt,
+    remoteSha: notebook.remoteSha,
+    localSha: notebook.localSha,
+    directoryHandle: directoryHandle,
+  };
+}
+
 export default class Crossnote {
   private notebookDB: PouchDB.Database<NotebookDBEntry>;
 
@@ -167,22 +188,9 @@ export default class Crossnote {
 
       // Save to DB
       try {
-        const notebookDbEntry: NotebookDBEntry = {
-          _id: notebook._id,
-          dir: notebook.dir,
-          name: notebook.name,
-          gitURL: notebook.gitURL,
-          gitBranch: notebook.gitBranch,
-          gitCorsProxy: notebook.gitCorsProxy,
-          gitUsername: notebook.gitUsername,
-          gitPassword: notebook.gitPassword,
-          autoFetchPeriod: notebook.autoFetchPeriod,
-          fetchedAt: notebook.fetchedAt,
-          remoteSha: notebook.remoteSha,
-          localSha: notebook.localSha,
-          directoryHandle: directoryHandle,
-        };
-        await this.notebookDB.put(notebookDbEntry);
+        await this.notebookDB.put(
+          convertNotebookToNotebookDBEntry(notebook, directoryHandle),
+        );
       } catch (error) {
         console.error("failed to save to database");
         // Failed to save to DB
@@ -270,7 +278,7 @@ export default class Crossnote {
 
     // Save to DB
     try {
-      await this.notebookDB.put(notebook);
+      await this.notebookDB.put(convertNotebookToNotebookDBEntry(notebook, null));
     } catch (error) {
       // Failed to save to DB
       await pfs.rmdir(dir);
