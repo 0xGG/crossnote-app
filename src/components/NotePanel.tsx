@@ -154,6 +154,9 @@ const useStyles = makeStyles((theme: Theme) =>
       "flex": 1,
       "overflow": "auto",
       "backgroundColor": "inherit",
+      // "width": "800px",
+      // "margin": "0 auto",
+      // "maxWidth": "100%",
       "& .CodeMirror-gutters": {
         display: "none",
       },
@@ -1465,7 +1468,7 @@ export default function NotePanel(props: Props) {
             <React.Fragment>
               <Box style={{ marginTop: "32px" }}></Box>
               <NotesPanel
-                title={"Linked references"}
+                title={t("general/References")}
                 tabNode={props.tabNode}
                 notebook={props.notebook}
                 note={note}

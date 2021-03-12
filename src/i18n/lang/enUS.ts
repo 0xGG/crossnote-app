@@ -210,6 +210,8 @@ export const enUS = {
     "general/refresh": "Refresh",
     "general/welcome-back-to-crossnote": "Welcome back to Crossnote",
     "general/continue": "Continue",
+    "general/reference(s)": "reference(s)",
+    "general/References": "References",
 
     // Error
     "error/authentication-failed": "Authentication failed",

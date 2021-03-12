@@ -207,6 +207,8 @@ export const zhCN = {
     "general/refresh": "刷新",
     "general/welcome-back-to-crossnote": "欢迎回到交叉笔记",
     "general/continue": "继续",
+    "general/reference(s)": "引用",
+    "general/References": "引用",
 
     // Error
     "error/authentication-failed": "认证失败",

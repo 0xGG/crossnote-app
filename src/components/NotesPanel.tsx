@@ -383,7 +383,10 @@ export default function NotesPanel(props: Props) {
         {props.title && (
           <Typography
             variant={"h6"}
-            style={{ padding: "6px 0 7px", color: theme.palette.text.primary }}
+            style={{
+              padding: "6px 0 7px",
+              color: theme.palette.text.primary,
+            }}
           >
             {props.title}
           </Typography>

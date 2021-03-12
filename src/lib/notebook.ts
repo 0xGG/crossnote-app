@@ -469,6 +469,10 @@ export class Notebook {
         formatNoteConfig(noteConfig),
       );
       delete frontMatter["note"];
+      const aliases = frontMatter["aliases"];
+      if (!aliases || !aliases.length) {
+        delete frontMatter["aliases"];
+      }
       markdown = data.content;
       markdown = matterStringify(markdown, frontMatter);
     } catch (error) {

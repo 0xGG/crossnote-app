@@ -88,4 +88,16 @@ export class ReferenceMap {
   public noteHasReferences(filePath: string): boolean {
     return filePath in this.map;
   }
+
+  public getReferredByNotesCount(noteFilePath: string): number {
+    if (noteFilePath in this.map) {
+      let length = Object.keys(this.map[noteFilePath]).length;
+      if (noteFilePath in this.map[noteFilePath]) {
+        length -= 1;
+      }
+      return length;
+    } else {
+      return 0;
+    }
+  }
 }
