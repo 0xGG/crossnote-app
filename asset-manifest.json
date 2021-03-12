@@ -1,8 +1,8 @@
 {
   "files": {
-    "main.css": "/crossnote/static/css/main.703e111a.chunk.css",
-    "main.js": "/crossnote/static/js/main.dbe69f27.chunk.js",
-    "main.js.map": "/crossnote/static/js/main.dbe69f27.chunk.js.map",
+    "main.css": "/crossnote/static/css/main.6fe043b2.chunk.css",
+    "main.js": "/crossnote/static/js/main.89604de5.chunk.js",
+    "main.js.map": "/crossnote/static/js/main.89604de5.chunk.js.map",
     "runtime-main.js": "/crossnote/static/js/runtime-main.eaad50b8.js",
     "runtime-main.js.map": "/crossnote/static/js/runtime-main.eaad50b8.js.map",
     "static/css/2.4b71ecc8.chunk.css": "/crossnote/static/css/2.4b71ecc8.chunk.css",
@@ -10,7 +10,7 @@
     "static/js/2.06bc712b.chunk.js.map": "/crossnote/static/js/2.06bc712b.chunk.js.map",
     "index.html": "/crossnote/index.html",
     "static/css/2.4b71ecc8.chunk.css.map": "/crossnote/static/css/2.4b71ecc8.chunk.css.map",
-    "static/css/main.703e111a.chunk.css.map": "/crossnote/static/css/main.703e111a.chunk.css.map",
+    "static/css/main.6fe043b2.chunk.css.map": "/crossnote/static/css/main.6fe043b2.chunk.css.map",
     "static/js/2.06bc712b.chunk.js.LICENSE.txt": "/crossnote/static/js/2.06bc712b.chunk.js.LICENSE.txt",
     "static/media/katex.min.css": "/crossnote/static/media/KaTeX_Typewriter-Regular.ea67dc3c.ttf",
     "static/media/materialdesignicons.min.css": "/crossnote/static/media/materialdesignicons-webfont.e9db4005.woff2",
@@ -20,7 +20,7 @@
     "static/js/runtime-main.eaad50b8.js",
     "static/css/2.4b71ecc8.chunk.css",
     "static/js/2.06bc712b.chunk.js",
-    "static/css/main.703e111a.chunk.css",
-    "static/js/main.dbe69f27.chunk.js"
+    "static/css/main.6fe043b2.chunk.css",
+    "static/js/main.89604de5.chunk.js"
   ]
 }
