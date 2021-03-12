@@ -55,7 +55,6 @@ gulp.task("service-worker", () => {
       globPatterns: ["**/*.{js,css,html,png,svg,woff2}"], // We ignore eot,ttf,woff and only support woff2 font
       globIgnores: ["assets/apple-*"],
       maximumFileSizeToCacheInBytes: 1024 * 1024 * 8, // 8mb
-      mode: "production",
     })
     .then(({ count, size, warnings }) => {
       // Optionally, log any warnings and details.
