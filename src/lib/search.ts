@@ -33,7 +33,7 @@ export default class Search {
     this._cache = {};
   }
 
-  add(filePath: string, title: string, aliases: string[]) {
+  add(filePath: string, title: string, aliases: string[] = []) {
     if (!(filePath in this._cache)) {
       const searchDoc = {
         id: filePath + "#" + title,

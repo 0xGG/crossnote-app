@@ -333,7 +333,12 @@ export class Notebook {
           delete frontMatter["favorited"];
         }
         if (data.data["aliases"]) {
-          noteConfig.aliases = data.data["aliases"];
+          const aliases = data.data["aliases"] || [];
+          if (typeof aliases === "string") {
+            noteConfig.aliases = aliases.split(",").map((x) => x.trim());
+          } else {
+            noteConfig.aliases = aliases;
+          }
           delete frontMatter["aliases"];
         }
 
