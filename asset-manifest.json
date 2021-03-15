@@ -1,8 +1,8 @@
 {
   "files": {
     "main.css": "/crossnote/static/css/main.90a67de5.chunk.css",
-    "main.js": "/crossnote/static/js/main.c671f24e.chunk.js",
-    "main.js.map": "/crossnote/static/js/main.c671f24e.chunk.js.map",
+    "main.js": "/crossnote/static/js/main.ed0f5503.chunk.js",
+    "main.js.map": "/crossnote/static/js/main.ed0f5503.chunk.js.map",
     "runtime-main.js": "/crossnote/static/js/runtime-main.ebc7a760.js",
     "runtime-main.js.map": "/crossnote/static/js/runtime-main.ebc7a760.js.map",
     "static/css/2.f9983761.chunk.css": "/crossnote/static/css/2.f9983761.chunk.css",
@@ -21,6 +21,6 @@
     "static/css/2.f9983761.chunk.css",
     "static/js/2.1351e01a.chunk.js",
     "static/css/main.90a67de5.chunk.css",
-    "static/js/main.c671f24e.chunk.js"
+    "static/js/main.ed0f5503.chunk.js"
   ]
 }
