@@ -310,6 +310,8 @@ export const zhCN = {
     "editor/placeholder": "#  你好 😀 输入 '/' 打开命令",
     "editor/ln": "行",
     "editor/col": "列",
+    "editor/split-horizontally": "水平拆分",
+    "editor/split-vertically": "垂直拆分",
 
     // * NoteControl
     "editor/note-control/allow-readers-to-suggest-note-tags":

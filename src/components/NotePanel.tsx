@@ -10,20 +10,20 @@ import {
   IconButton,
   InputBase,
   Tooltip,
-  Typography,
+  Typography
 } from "@material-ui/core";
 import {
   createStyles,
   darken,
   makeStyles,
-  Theme,
+  Theme
 } from "@material-ui/core/styles";
 import clsx from "clsx";
 import {
   Editor as CodeMirrorEditor,
   EditorChangeLinkedList,
   Position as CursorPosition,
-  TextMarker,
+  TextMarker
 } from "codemirror";
 import { Actions, TabNode } from "flexlayout-react";
 import {
@@ -32,7 +32,7 @@ import {
   DotsVertical,
   FilePresentationBox,
   Pencil,
-  TableOfContents,
+  TableOfContents
 } from "mdi-material-ui";
 import Noty from "noty";
 import * as path from "path";
@@ -50,7 +50,7 @@ import {
   EventType,
   globalEmitter,
   ModifiedMarkdownEventData,
-  PerformedGitOperationEventData,
+  PerformedGitOperationEventData
 } from "../lib/event";
 import { Note } from "../lib/note";
 import { Notebook } from "../lib/notebook";
@@ -59,7 +59,7 @@ import { setTheme } from "../themes/manager";
 import { resolveNoteImageSrc } from "../utilities/image";
 import {
   openURL,
-  postprocessPreview as previewPostprocessPreview,
+  postprocessPreview as previewPostprocessPreview
 } from "../utilities/preview";
 import EditImageDialog from "./EditImageDialog";
 import { Loading } from "./Loading";

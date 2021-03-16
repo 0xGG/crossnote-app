@@ -728,6 +728,72 @@ function useCrossnoteContainer(initialState: InitialState) {
     }
   }, [layoutModel]);
 
+  const removeNodeID = useCallback((node: any) => {
+    delete node.id;
+    const children = node.children || [];
+    children.forEach((child: any) => removeNodeID(child));
+  }, []);
+
+  const splitNoteHorizontally = useCallback(
+    (note: Note, tabNode: TabNode) => {
+      if (layoutModel) {
+        let activeTabset: TabSetNode = layoutModel.getActiveTabset();
+        if (!activeTabset) {
+          return;
+        }
+        const newTabNode: CrossnoteTabNode = {
+          type: "tab",
+          name: `📝 ${note.title}`,
+          component: "Note",
+          config: {
+            singleton: false,
+            noteFilePath: note.filePath,
+            notebookPath: note.notebookPath,
+          },
+        };
+        layoutModel.doAction(
+          Actions.addNode(
+            newTabNode,
+            activeTabset.getId(),
+            DockLocation.BOTTOM,
+            0,
+          ),
+        );
+      }
+    },
+    [layoutModel],
+  );
+
+  const splitNoteVertically = useCallback(
+    (note: Note) => {
+      if (layoutModel) {
+        let activeTabset: TabSetNode = layoutModel.getActiveTabset();
+        if (!activeTabset) {
+          return;
+        }
+        const newTabNode: CrossnoteTabNode = {
+          type: "tab",
+          name: `📝 ${note.title}`,
+          component: "Note",
+          config: {
+            singleton: false,
+            noteFilePath: note.filePath,
+            notebookPath: note.notebookPath,
+          },
+        };
+        layoutModel.doAction(
+          Actions.addNode(
+            newTabNode,
+            activeTabset.getId(),
+            DockLocation.RIGHT,
+            0,
+          ),
+        );
+      }
+    },
+    [layoutModel],
+  );
+
   useEffect(() => {
     if (!crossnote || initialized) {
       return;
@@ -834,6 +900,8 @@ please download and read the [Welcome notebook](https://crossnote.app/?repo=http
     setHomeSection,
     layoutModel,
     setLayoutModel,
+    splitNoteHorizontally,
+    splitNoteVertically,
     addTabNode,
     closeTabNode,
     getNotebookAtPath,
