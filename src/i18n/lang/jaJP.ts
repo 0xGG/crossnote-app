@@ -322,6 +322,8 @@ export const jaJP = {
     "editor/placeholder": "#  こんにちは 😀 コマンドに 「/」 と入力します。",
     "editor/ln": "行",
     "editor/col": "列",
+    "editor/split-horizontally": "水平方向に分割",
+    "editor/split-vertically": "垂直方向に分割",
 
     // * NoteControl
     "editor/note-control/allow-readers-to-suggest-note-tags":

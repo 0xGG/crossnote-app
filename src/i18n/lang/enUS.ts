@@ -316,6 +316,8 @@ export const enUS = {
     "editor/placeholder": "#  Hi 😀 Type '/' for commands",
     "editor/ln": "Ln",
     "editor/col": "Col",
+    "editor/split-horizontally": "Split horizontally",
+    "editor/split-vertically": "Split vertically",
 
     // * NoteControl
     "editor/note-control/allow-readers-to-suggest-note-tags":

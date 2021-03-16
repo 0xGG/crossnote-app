@@ -8,7 +8,7 @@ import {
 import { Skeleton } from "@material-ui/lab";
 import clsx from "clsx";
 import { TabNode } from "flexlayout-react";
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import LazyLoad from "react-lazyload";
 import { CrossnoteContainer } from "../containers/crossnote";
@@ -69,6 +69,31 @@ export default function Notes(props: Props) {
   const crossnoteContainer = CrossnoteContainer.useContainer();
   const [notes, setNotes] = useState<Note[]>([]);
 
+  // Hack: fix note cards not displaying bug when searchValue is not empty
+  const hack = useCallback(() => {
+    if (props.scrollElement) {
+      const scrollElement = props.scrollElement;
+      const initialHeight = scrollElement.style.height;
+      const initialFlex = scrollElement.style.flex;
+      scrollElement.style.flex = "initial";
+      scrollElement.style.height = "10px";
+      scrollElement.scrollTop += 1;
+      scrollElement.scrollTop -= 1;
+      scrollElement.style.height = initialHeight;
+      scrollElement.style.flex = initialFlex;
+    }
+  }, [props.scrollElement]);
+
+  useEffect(() => {
+    if (props.tabNode) {
+      props.tabNode.setEventListener("resize", hack);
+      hack();
+      return () => {
+        props.tabNode.removeEventListener("resize");
+      };
+    }
+  }, [props.tabNode, hack]);
+
   useEffect(() => {
     const notes = props.notes;
     const searchValue = props.searchValue;
@@ -109,18 +134,6 @@ export default function Notes(props: Props) {
 
   useEffect(() => {
     if (props.scrollElement) {
-      const scrollElement = props.scrollElement;
-      // Hack: fix note cards not displaying bug when searchValue is not empty
-      const hack = () => {
-        const initialHeight = scrollElement.style.height;
-        const initialFlex = scrollElement.style.flex;
-        scrollElement.style.flex = "initial";
-        scrollElement.style.height = "10px";
-        scrollElement.scrollTop += 1;
-        scrollElement.scrollTop -= 1;
-        scrollElement.style.height = initialHeight;
-        scrollElement.style.flex = initialFlex;
-      };
       window.addEventListener("resize", hack);
       hack();
       return () => {

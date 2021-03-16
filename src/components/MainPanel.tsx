@@ -198,7 +198,7 @@ export function MainPanel(props: Props) {
         const children2 = children[i].children || [];
         for (let j = 0; j < children2.length; j++) {
           const child = children2[j];
-          if (child && child.config.notebookPath) {
+          if (child && child.config && child.config.notebookPath) {
             if (pfs.isPathOfLocalFileSystem(child.config.notebookPath)) {
               hasLocalDirectory = true;
               break;

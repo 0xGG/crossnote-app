@@ -32,6 +32,8 @@ import {
   Star,
   StarOutline,
   TooltipEdit,
+  ViewSplitHorizontal,
+  ViewSplitVertical,
 } from "mdi-material-ui";
 import React, { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -213,7 +215,31 @@ export default function NotePopover(props: Props) {
               }
             ></ListItemText>
           </ListItem>
-          <ListItem></ListItem>
+          <Divider></Divider>
+          <ListItem
+            button
+            onClick={() => {
+              crossnoteContainer.splitNoteVertically(note);
+              props.onClose();
+            }}
+          >
+            <ListItemIcon>
+              <ViewSplitVertical></ViewSplitVertical>
+            </ListItemIcon>
+            <ListItemText>{t("editor/split-vertically")}</ListItemText>
+          </ListItem>
+          <ListItem
+            button
+            onClick={() => {
+              crossnoteContainer.splitNoteHorizontally(note, props.tabNode);
+              props.onClose();
+            }}
+          >
+            <ListItemIcon>
+              <ViewSplitHorizontal></ViewSplitHorizontal>
+            </ListItemIcon>
+            <ListItemText>{t("editor/split-horizontally")}</ListItemText>
+          </ListItem>
           <Divider></Divider>
           <ListItem
             button
