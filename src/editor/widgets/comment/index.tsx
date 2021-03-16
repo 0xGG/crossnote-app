@@ -92,9 +92,10 @@ function CommentWidget(props: WidgetArgs) {
     resRemoveReactionFromCommentWidget,
     executeRemoveReactionFromCommentWidgetMutation,
   ] = useRemoveReactionFromCommentWidgetMutation();
-  const [commentWidget, setCommentWidget] = useState<
-    CommentWidgetFieldsFragment
-  >(null);
+  const [
+    commentWidget,
+    setCommentWidget,
+  ] = useState<CommentWidgetFieldsFragment>(null);
 
   const updateReactionSummaries = useCallback(
     (reaction: string) => {
@@ -350,7 +351,11 @@ function CommentWidget(props: WidgetArgs) {
                   }}
                   avatar={
                     <Avatar>
-                      <Emoji emoji={reactionSummary.reaction} size={16}></Emoji>
+                      <Emoji
+                        set={"twitter"}
+                        emoji={reactionSummary.reaction}
+                        size={16}
+                      ></Emoji>
                     </Avatar>
                   }
                 />
@@ -362,6 +367,7 @@ function CommentWidget(props: WidgetArgs) {
       <Dialog open={emojiPickerOpen} onClose={() => setEmojiPickerOpen(false)}>
         <EmojiPicker
           emoji={""}
+          set={"twitter"}
           showSkinTones={false}
           onSelect={(data) => {
             if (!globalContainers.cloudContainer.loggedIn) {

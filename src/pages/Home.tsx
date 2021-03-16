@@ -44,6 +44,7 @@ import { CloudContainer } from "../containers/cloud";
 import { CrossnoteContainer, HomeSection } from "../containers/crossnote";
 import { globalContainers } from "../containers/global";
 import { SettingsContainer } from "../containers/settings";
+import { getNoteIcon } from "../lib/note";
 const is = require("is_js");
 
 const drawerWidth = 200;
@@ -257,7 +258,7 @@ export function Home(props: Props) {
                         noteFilePath: note.filePath,
                         notebookPath: note.notebookPath,
                       },
-                      name: `📝 ` + note.title,
+                      name: `${getNoteIcon(note)} ` + note.title,
                     });
                   } else {
                     //note not found

@@ -10,6 +10,7 @@ export interface NoteConfig {
   modifiedAt: Date;
   pinned?: boolean;
   favorited?: boolean;
+  icon?: string;
   aliases?: string[];
 }
 
@@ -29,4 +30,12 @@ export interface Note {
 
 export interface Notes {
   [key: string]: Note;
+}
+
+export function getNoteIcon(note: Note) {
+  if (note.config.icon) {
+    return note.config.icon;
+  } else {
+    return "📝";
+  }
 }

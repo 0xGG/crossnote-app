@@ -1,6 +1,6 @@
 import { debounce } from "@0xgg/echomd";
-import EmojiDefinitions from "@0xgg/echomd/addon/emoji";
-import { renderPreview } from "@0xgg/echomd/preview";
+import { EmojiDefinitions } from "@0xgg/echomd/addon/emoji";
+import { renderPreview, renderTwemoji } from "@0xgg/echomd/preview";
 import {
   Box,
   Button,
@@ -10,20 +10,20 @@ import {
   IconButton,
   InputBase,
   Tooltip,
-  Typography
+  Typography,
 } from "@material-ui/core";
 import {
   createStyles,
   darken,
   makeStyles,
-  Theme
+  Theme,
 } from "@material-ui/core/styles";
 import clsx from "clsx";
 import {
   Editor as CodeMirrorEditor,
   EditorChangeLinkedList,
   Position as CursorPosition,
-  TextMarker
+  TextMarker,
 } from "codemirror";
 import { Actions, TabNode } from "flexlayout-react";
 import {
@@ -32,7 +32,7 @@ import {
   DotsVertical,
   FilePresentationBox,
   Pencil,
-  TableOfContents
+  TableOfContents,
 } from "mdi-material-ui";
 import Noty from "noty";
 import * as path from "path";
@@ -50,18 +50,19 @@ import {
   EventType,
   globalEmitter,
   ModifiedMarkdownEventData,
-  PerformedGitOperationEventData
+  PerformedGitOperationEventData,
 } from "../lib/event";
-import { Note } from "../lib/note";
+import { getNoteIcon, Note } from "../lib/note";
 import { Notebook } from "../lib/notebook";
 import { Reference } from "../lib/reference";
 import { setTheme } from "../themes/manager";
 import { resolveNoteImageSrc } from "../utilities/image";
 import {
   openURL,
-  postprocessPreview as previewPostprocessPreview
+  postprocessPreview as previewPostprocessPreview,
 } from "../utilities/preview";
 import EditImageDialog from "./EditImageDialog";
+import IconPopover from "./IconPopover";
 import { Loading } from "./Loading";
 import NotePopover from "./NotePopover";
 import NotesPanel from "./NotesPanel";
@@ -147,6 +148,11 @@ const useStyles = makeStyles((theme: Theme) =>
       },
       "& .toc-item:hover": {
         backgroundColor: darken(theme.palette.background.paper, 0.06),
+      },
+      "& .emoji": {
+        height: "1rem",
+        top: "2px",
+        position: "relative",
       },
     },
     editorWrapper: {
@@ -336,6 +342,7 @@ export default function NotePanel(props: Props) {
     false,
   );
   const [notePopoverElement, setNotePopoverElement] = useState<Element>(null);
+  const [iconPopoverElement, setIconPopoverElement] = useState<Element>(null);
   const [gitStatus, setGitStatus] = useState<string>("");
   const [tocEnabled, setTocEnabled] = useState<boolean>(
     false, // props.tabNode.getTabRect().width >= 500,
@@ -399,7 +406,7 @@ export default function NotePanel(props: Props) {
     }
     setNoteTitle(note.title);
     crossnoteContainer.layoutModel.doAction(
-      Actions.renameTab(tabNode.getId(), `📝 ` + note.title),
+      Actions.renameTab(tabNode.getId(), `${getNoteIcon(note)} ` + note.title),
     );
   }, [note, crossnoteContainer.layoutModel, tabNode]);
 
@@ -665,7 +672,7 @@ export default function NotePanel(props: Props) {
     if (!editor || !note) return;
     if (editorMode === EditorMode.EchoMD) {
       EchoMD.switchToHyperMD(editor);
-      editor.setOption("hmdFold", HMDFold);
+      editor.setOption("hmdFold" as any, HMDFold);
       editor.getWrapperElement().style.display = "block";
       editor.refresh();
     } else if (editorMode === EditorMode.SourceCode) {
@@ -1200,7 +1207,7 @@ export default function NotePanel(props: Props) {
       editor.eachLine(function (line) {
         const tmp = /^(#+)\s+(.+)(?:\s+\1)?$/.exec(line.text);
         if (!tmp) return;
-        const lineNo = line.lineNo();
+        const lineNo = (line as any).lineNo();
         if (!editor.getStateAfter(lineNo).header) return; // double check but is not header
         const level = tmp[1].length;
         let title = tmp[2];
@@ -1231,6 +1238,7 @@ export default function NotePanel(props: Props) {
       if (newTOC === lastTOC) return;
       if (tocElement && tocElement.current) {
         tocElement.current.innerHTML = lastTOC = newTOC;
+        renderTwemoji(tocElement.current);
       }
     }, 300);
 
@@ -1327,6 +1335,14 @@ export default function NotePanel(props: Props) {
         }}
       >
         <Box className={clsx(classes.row)} style={{ width: "100%" }}>
+          <Box>
+            <IconButton
+              color={"primary"}
+              onClick={(event) => setIconPopoverElement(event.currentTarget)}
+            >
+              {getNoteIcon(note)}
+            </IconButton>
+          </Box>
           <InputBase
             value={noteTitle}
             style={{
@@ -1518,6 +1534,13 @@ export default function NotePanel(props: Props) {
         anchorElement={notePopoverElement}
         onClose={() => setNotePopoverElement(null)}
       ></NotePopover>
+
+      <IconPopover
+        tabNode={props.tabNode}
+        note={note}
+        anchorElement={iconPopoverElement}
+        onClose={() => setIconPopoverElement(null)}
+      ></IconPopover>
 
       <Card
         id="math-preview"

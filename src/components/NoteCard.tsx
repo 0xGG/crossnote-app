@@ -21,7 +21,7 @@ import {
   globalEmitter,
   ModifiedMarkdownEventData,
 } from "../lib/event";
-import { Note } from "../lib/note";
+import { getNoteIcon, Note } from "../lib/note";
 import { Reference } from "../lib/reference";
 import { resolveNoteImageSrc } from "../utilities/image";
 import { generateSummaryFromMarkdown, Summary } from "../utilities/note";
@@ -168,7 +168,7 @@ export default function NoteCard(props: Props) {
           noteFilePath: note.filePath,
           notebookPath: note.notebookPath,
         },
-        name: `📝 ` + note.title,
+        name: `${getNoteIcon(note)} ` + note.title,
       });
     }
   }, [note]);
@@ -216,7 +216,7 @@ export default function NoteCard(props: Props) {
   }, [note, props.referredNote, crossnoteContainer.getNotebookAtPath]);
 
   useEffect(() => {
-    setHeader(note.title);
+    setHeader(`${getNoteIcon(note)} ${note.title}`);
     generateSummaryFromMarkdown(
       note.markdown.trim() || t("general/this-note-is-empty"),
     )
@@ -387,7 +387,7 @@ export default function NoteCard(props: Props) {
                           notebookPath: note.notebookPath,
                           reference: Object.assign({}, reference) as Reference,
                         },
-                        name: `📝 ` + note.title,
+                        name: `${getNoteIcon(note)} ` + note.title,
                       });
                     }
                   }}

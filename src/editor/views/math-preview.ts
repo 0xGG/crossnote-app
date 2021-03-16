@@ -21,7 +21,7 @@ export function initMathPreview(
 
     if (!mathRenderer) {
       // initialize renderer and preview window
-      mathRenderer = cm.hmd.FoldMath.createRenderer(
+      mathRenderer = (cm as any).hmd.FoldMath.createRenderer(
         document.getElementById("math-preview-content"),
         "display",
       );
@@ -48,7 +48,7 @@ export function initMathPreview(
     supressed = false;
   }
 
-  cm.setOption("hmdFoldMath", {
+  cm.setOption("hmdFoldMath" as any, {
     onPreview: updatePreview,
     onPreviewEnd: hidePreview,
   });

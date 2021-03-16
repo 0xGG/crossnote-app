@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "license": "AGPL-3.0-or-later",
   "dependencies": {
-    "@0xgg/echomd": "^1.0.1",
+    "@0xgg/echomd": "^1.0.3",
     "@dicebear/avatars": "^4.0.8",
     "@dicebear/avatars-female-sprites": "^4.0.8",
     "@dicebear/avatars-human-sprites": "^4.0.8",
@@ -69,6 +69,7 @@
     "subscriptions-transport-ws": "^0.9.18",
     "super-react-gist": "^1.0.4",
     "tesseract.js": "^2.1.4",
+    "twemoji": "^13.0.2",
     "typeface-noto-sans": "^1.1.13",
     "typeface-noto-sans-hk": "^1.1.13",
     "typeface-noto-sans-sc": "^1.1.13",

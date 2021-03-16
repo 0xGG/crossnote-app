@@ -7,6 +7,7 @@ import {
 } from "@material-ui/core/styles";
 import { TreeItem, TreeView } from "@material-ui/lab";
 import clsx from "clsx";
+import { Emoji } from "emoji-mart";
 import { ChevronDown, ChevronRight } from "mdi-material-ui";
 import Noty from "noty";
 import React, { useCallback, useEffect, useState } from "react";
@@ -20,7 +21,7 @@ import {
   ModifiedMarkdownEventData,
   PerformedGitOperationEventData,
 } from "../lib/event";
-import { Notes } from "../lib/note";
+import { getNoteIcon, Notes } from "../lib/note";
 import { Notebook } from "../lib/notebook";
 import ConfigureNotebookDialog from "./ConfigureNotebookDialog";
 import PushNotebookDialog from "./PushNotebookDialog";
@@ -277,11 +278,17 @@ export default function NotebookTreeView(props: Props) {
                 style={{ paddingLeft: "4px" }}
               >
                 <span role="img" style={{ paddingRight: "8px" }}>
-                  {props.notebook.isLocal
-                    ? "🗂️ "
-                    : props.notebook.localSha === props.notebook.remoteSha
-                    ? "☁️ "
-                    : "🔔 "}
+                  {props.notebook.isLocal ? (
+                    <Emoji
+                      set={"twitter"}
+                      emoji={":card_index_dividers:"}
+                      size={16}
+                    ></Emoji>
+                  ) : props.notebook.localSha === props.notebook.remoteSha ? (
+                    <Emoji set={"twitter"} emoji={":cloud:"} size={16}></Emoji>
+                  ) : (
+                    <Emoji set={"twitter"} emoji={":bell:"} size={16}></Emoji>
+                  )}
                 </span>
                 {props.notebook.name}
               </Typography>
@@ -306,7 +313,7 @@ export default function NotebookTreeView(props: Props) {
                 className={clsx(classes.treeItemLabelRoot)}
               >
                 <span role="img" aria-label="today-notes">
-                  {"📅"}
+                  <Emoji set={"twitter"} emoji={":calendar:"} size={16}></Emoji>
                 </span>
                 <Typography className={clsx(classes.treeItemLabelText)}>
                   {t("general/today")}
@@ -341,7 +348,11 @@ export default function NotebookTreeView(props: Props) {
                 className={clsx(classes.treeItemLabelRoot)}
               >
                 <span role="img" aria-label="todo-notes">
-                  {"🕸"}
+                  <Emoji
+                    set={"twitter"}
+                    emoji={":spider_web:"}
+                    size={16}
+                  ></Emoji>
                 </span>
                 <Typography className={clsx(classes.treeItemLabelText)}>
                   {t("general/graph-view")}
@@ -376,7 +387,11 @@ export default function NotebookTreeView(props: Props) {
                 className={clsx(classes.treeItemLabelRoot)}
               >
                 <span role="img" aria-label="Notes">
-                  {"📔"}
+                  <Emoji
+                    set={"twitter"}
+                    emoji={":notebook_with_decorative_cover:"}
+                    size={16}
+                  ></Emoji>
                 </span>
                 <Typography className={clsx(classes.treeItemLabelText)}>
                   {t("general/notes")}
@@ -407,14 +422,14 @@ export default function NotebookTreeView(props: Props) {
                           noteFilePath: note.filePath,
                           notebookPath: props.notebook.dir,
                         },
-                        name: `📝 ` + note.title,
+                        name: `${getNoteIcon(note)} ` + note.title,
                       });
                       props.onCloseDrawer();
                     }}
                     className={clsx(classes.treeItemLabelRoot)}
                   >
                     <span role="img" aria-label="quick-access">
-                      {"⭐️"}
+                      {getNoteIcon(note)}
                     </span>
                     <Typography className={clsx(classes.treeItemLabelText)}>
                       {note.title}
@@ -447,7 +462,7 @@ export default function NotebookTreeView(props: Props) {
                 className={clsx(classes.treeItemLabelRoot)}
               >
                 <span role="img" aria-label={t("general/Settings")}>
-                  {"⚙️"}
+                  <Emoji set={"twitter"} emoji={":gear:"} size={16}></Emoji>
                 </span>
                 <Typography className={clsx(classes.treeItemLabelText)}>
                   {t("general/Settings")}
@@ -471,7 +486,11 @@ export default function NotebookTreeView(props: Props) {
                   className={clsx(classes.treeItemLabelRoot)}
                 >
                   <span role="img" aria-label={t("general/Upload")}>
-                    {"📤"}
+                    <Emoji
+                      set={"twitter"}
+                      emoji={":outbox_tray:"}
+                      size={16}
+                    ></Emoji>
                   </span>
                   <Tooltip title={t("general/upload-push")}>
                     <Typography className={clsx(classes.treeItemLabelText)}>
@@ -500,7 +519,11 @@ export default function NotebookTreeView(props: Props) {
                   className={clsx(classes.treeItemLabelRoot)}
                 >
                   <span role="img" aria-label={t("general/refresh")}>
-                    {"🔄"}
+                    <Emoji
+                      set={"twitter"}
+                      emoji={":arrows_counterclockwise:"}
+                      size={16}
+                    ></Emoji>
                   </span>
                   <Tooltip title={t("general/refresh")}>
                     <Typography className={clsx(classes.treeItemLabelText)}>
@@ -572,7 +595,11 @@ export default function NotebookTreeView(props: Props) {
                   )}
                 >
                   <span role="img" aria-label={t("general/Download")}>
-                    {"📥"}
+                    <Emoji
+                      set={"twitter"}
+                      emoji={":inbox_tray:"}
+                      size={16}
+                    ></Emoji>
                   </span>
                   <Tooltip title={t("general/download-pull")}>
                     <Typography className={clsx(classes.treeItemLabelText)}>

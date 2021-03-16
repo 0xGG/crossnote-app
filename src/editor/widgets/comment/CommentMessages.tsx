@@ -318,7 +318,11 @@ export function CommentMessage(props: Props) {
                 }}
                 avatar={
                   <Avatar>
-                    <Emoji emoji={reactionSummary.reaction} size={16}></Emoji>
+                    <Emoji
+                      set="twitter"
+                      emoji={reactionSummary.reaction}
+                      size={16}
+                    ></Emoji>
                   </Avatar>
                 }
               />
@@ -368,6 +372,7 @@ export function CommentMessage(props: Props) {
       <Dialog open={emojiPickerOpen} onClose={() => setEmojiPickerOpen(false)}>
         <EmojiPicker
           emoji={""}
+          set={"twitter"}
           showSkinTones={false /* Disable skin for now */}
           onSelect={(data) => {
             if (!globalContainers.cloudContainer.loggedIn) {

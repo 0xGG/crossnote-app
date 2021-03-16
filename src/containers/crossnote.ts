@@ -17,7 +17,7 @@ import Crossnote, {
 } from "../lib/crossnote";
 import { EventType, globalEmitter } from "../lib/event";
 import { pfs } from "../lib/fs";
-import { Note, NoteConfig } from "../lib/note";
+import { getNoteIcon, Note, NoteConfig } from "../lib/note";
 import { Notebook } from "../lib/notebook";
 import { CrossnoteTabNode, TabHeight } from "../lib/tabNode";
 import { getTodayName } from "../utilities/utils";
@@ -395,7 +395,7 @@ function useCrossnoteContainer(initialState: InitialState) {
       addTabNode({
         type: "tab",
         component: "Note",
-        name: `📝 ` + note.title,
+        name: `${getNoteIcon(note)} ` + note.title,
         config: {
           singleton: false,
           noteFilePath: note.filePath,
@@ -743,7 +743,7 @@ function useCrossnoteContainer(initialState: InitialState) {
         }
         const newTabNode: CrossnoteTabNode = {
           type: "tab",
-          name: `📝 ${note.title}`,
+          name: `${getNoteIcon(note)} ${note.title}`,
           component: "Note",
           config: {
             singleton: false,
@@ -773,7 +773,7 @@ function useCrossnoteContainer(initialState: InitialState) {
         }
         const newTabNode: CrossnoteTabNode = {
           type: "tab",
-          name: `📝 ${note.title}`,
+          name: `${getNoteIcon(note)} ${note.title}`,
           component: "Note",
           config: {
             singleton: false,
@@ -824,7 +824,10 @@ function useCrossnoteContainer(initialState: InitialState) {
         });
         await pfs.writeFile(
           path.resolve(notebook.dir, "README.md"),
-          `# Welcome to Crossnote 😊
+          `---
+favorited: true
+---
+# Welcome to Crossnote 😊
 
 If you want to know more about this project,  
 please download and read the [Welcome notebook](https://crossnote.app/?repo=https%3A%2F%2Fgithub.com%2F0xGG%2Fwelcome-notebook.git&branch=master&filePath=README.md).
