@@ -395,11 +395,12 @@ function useCrossnoteContainer(initialState: InitialState) {
       addTabNode({
         type: "tab",
         component: "Note",
-        name: `${getNoteIcon(note)} ` + note.title,
+        name: note.title,
         config: {
           singleton: false,
           noteFilePath: note.filePath,
           notebookPath: note.notebookPath,
+          icon: getNoteIcon(note),
         },
       });
     },
@@ -659,6 +660,24 @@ function useCrossnoteContainer(initialState: InitialState) {
     [getNotebookAtPath, updateNoteConfig],
   );
 
+  const setNoteIcon = useCallback(
+    async (
+      tabNode: TabNode,
+      notebookPath: string,
+      noteFilePath: string,
+      icon: string,
+    ) => {
+      const notebook = getNotebookAtPath(notebookPath);
+      if (!notebook) {
+        return;
+      }
+      const note = await notebook.getNote(noteFilePath);
+      const newConfig = Object.assign({}, note.config, { icon });
+      await updateNoteConfig(tabNode, notebookPath, noteFilePath, newConfig);
+    },
+    [getNotebookAtPath, updateNoteConfig],
+  );
+
   const addNoteAlias = useCallback(
     async (
       tabNode: TabNode,
@@ -743,12 +762,13 @@ function useCrossnoteContainer(initialState: InitialState) {
         }
         const newTabNode: CrossnoteTabNode = {
           type: "tab",
-          name: `${getNoteIcon(note)} ${note.title}`,
+          name: note.title,
           component: "Note",
           config: {
             singleton: false,
             noteFilePath: note.filePath,
             notebookPath: note.notebookPath,
+            icon: getNoteIcon(note),
           },
         };
         layoutModel.doAction(
@@ -773,12 +793,13 @@ function useCrossnoteContainer(initialState: InitialState) {
         }
         const newTabNode: CrossnoteTabNode = {
           type: "tab",
-          name: `${getNoteIcon(note)} ${note.title}`,
+          name: note.title,
           component: "Note",
           config: {
             singleton: false,
             noteFilePath: note.filePath,
             notebookPath: note.notebookPath,
+            icon: getNoteIcon(note),
           },
         };
         layoutModel.doAction(
@@ -884,6 +905,7 @@ please download and read the [Welcome notebook](https://crossnote.app/?repo=http
     openLocalNotebook,
     togglePin,
     toggleFavorite,
+    setNoteIcon,
     addNoteAlias,
     deleteNoteAlias,
     isAddingNotebook,

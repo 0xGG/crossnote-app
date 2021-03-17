@@ -12,8 +12,10 @@ import {
   makeStyles,
   Theme,
   ThemeProvider,
+  useTheme,
 } from "@material-ui/core/styles";
 import clsx from "clsx";
+import { Emoji } from "emoji-mart";
 import FlexLayout, { TabNode } from "flexlayout-react";
 import "flexlayout-react/style/light.css";
 import React, { useCallback, useEffect, useRef, useState } from "react";
@@ -93,6 +95,7 @@ interface Props {
 
 export function MainPanel(props: Props) {
   const classes = useStyles();
+  const theme = useTheme();
   const container = useRef<HTMLDivElement>(null);
   const [dialogOpen, setDialogOpen] = useState<boolean>(false);
   const [ready, setReady] = useState<boolean>(false);
@@ -224,6 +227,15 @@ export function MainPanel(props: Props) {
         factory={factory}
         onModelChange={(model) => {
           crossnoteContainer.saveCurrentLayoutModel();
+        }}
+        iconFactory={(node) => {
+          const config: TabNodeConfig = node.getConfig();
+          const emoji = config.icon || ":memo:";
+          return (
+            <Box style={{ marginRight: "4px", marginTop: "4px" }}>
+              <Emoji set={"twitter"} size={16} emoji={emoji}></Emoji>
+            </Box>
+          );
         }}
       ></FlexLayout.Layout>
       {/*

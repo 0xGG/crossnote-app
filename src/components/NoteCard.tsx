@@ -9,6 +9,7 @@ import {
 import clsx from "clsx";
 import { formatRelative } from "date-fns";
 import { formatDistanceStrict } from "date-fns/esm";
+import { Emoji } from "emoji-mart";
 import { TabNode } from "flexlayout-react";
 import { DotsVertical, Pin } from "mdi-material-ui";
 import React, { useCallback, useEffect, useState } from "react";
@@ -71,6 +72,8 @@ const useStyles = makeStyles((theme: Theme) =>
         cursor: "pointer",
       },
       "flex": 1,
+      "display": "flex",
+      "alignItems": "center",
     },
     summary: {
       "color": theme.palette.text.secondary,
@@ -167,11 +170,12 @@ export default function NoteCard(props: Props) {
           singleton: false,
           noteFilePath: note.filePath,
           notebookPath: note.notebookPath,
+          icon: getNoteIcon(note),
         },
-        name: `${getNoteIcon(note)} ` + note.title,
+        name: note.title,
       });
     }
-  }, [note]);
+  }, [note, crossnoteContainer.addTabNode]);
 
   useEffect(() => {
     setNote(props.note);
@@ -216,7 +220,7 @@ export default function NoteCard(props: Props) {
   }, [note, props.referredNote, crossnoteContainer.getNotebookAtPath]);
 
   useEffect(() => {
-    setHeader(`${getNoteIcon(note)} ${note.title}`);
+    setHeader(`${note.title}`);
     generateSummaryFromMarkdown(
       note.markdown.trim() || t("general/this-note-is-empty"),
     )
@@ -300,14 +304,23 @@ export default function NoteCard(props: Props) {
               justifyContent: "space-between",
             }}
           >
-            <Typography
-              style={{ fontWeight: "bold", marginBottom: "0" }}
-              variant={"body1"}
-              className={clsx(classes.header)}
-              onClick={openNote}
-            >
-              {header}
-            </Typography>
+            <Box className={clsx(classes.header)} onClick={openNote}>
+              <Emoji
+                set={"twitter"}
+                emoji={getNoteIcon(note)}
+                size={16}
+              ></Emoji>
+              <Typography
+                style={{
+                  fontWeight: "bold",
+                  marginBottom: "0",
+                  marginLeft: theme.spacing(1),
+                }}
+                variant={"body1"}
+              >
+                {header}
+              </Typography>
+            </Box>
             <Box style={{ display: "flex", alignItems: "center" }}>
               {props.referredNote && (
                 <Chip
@@ -386,8 +399,9 @@ export default function NoteCard(props: Props) {
                           noteFilePath: note.filePath,
                           notebookPath: note.notebookPath,
                           reference: Object.assign({}, reference) as Reference,
+                          icon: getNoteIcon(note),
                         },
-                        name: `${getNoteIcon(note)} ` + note.title,
+                        name: note.title,
                       });
                     }
                   }}

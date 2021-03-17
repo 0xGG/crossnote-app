@@ -36,6 +36,6 @@ export function getNoteIcon(note: Note) {
   if (note.config.icon) {
     return note.config.icon;
   } else {
-    return "📝";
+    return ":memo:";
   }
 }

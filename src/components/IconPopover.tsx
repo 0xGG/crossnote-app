@@ -2,6 +2,7 @@ import { Popover } from "@material-ui/core";
 import { createStyles, makeStyles, Theme } from "@material-ui/core/styles";
 import { Picker as EmojiPicker } from "emoji-mart";
 import { TabNode } from "flexlayout-react";
+import { CrossnoteContainer } from "../containers/crossnote";
 import { Note } from "../lib/note";
 
 const useStyles = makeStyles((theme: Theme) =>
@@ -26,6 +27,7 @@ interface Props {
 
 export default function IconPopover(props: Props) {
   const classes = useStyles(props);
+  const crossnoteContainer = CrossnoteContainer.useContainer();
   const note = props.note;
 
   return (
@@ -41,6 +43,13 @@ export default function IconPopover(props: Props) {
         showSkinTones={false}
         onSelect={(data) => {
           console.log("Selected ", data);
+          crossnoteContainer.setNoteIcon(
+            props.tabNode,
+            note.notebookPath,
+            note.filePath,
+            data.colons,
+          );
+          props.onClose();
         }}
       ></EmojiPicker>
     </Popover>

@@ -146,6 +146,12 @@ export default function NotebookTreeView(props: Props) {
       const isFavorited = data.noteFilePath in favoritedNotes;
       if (data.noteConfig.favorited !== isFavorited) {
         refreshQuickAccessNotes(props.notebook.notes);
+      } else if (isFavorited) {
+        const oNote = favoritedNotes[data.noteFilePath];
+        const nNote = props.notebook.notes[data.noteFilePath];
+        if (oNote.config.icon !== nNote.config.icon) {
+          refreshQuickAccessNotes(props.notebook.notes);
+        }
       }
       // refreshQuickAccessNotes(props.notebook.notes);
     };
@@ -337,10 +343,11 @@ export default function NotebookTreeView(props: Props) {
                     type: "tab",
                     component: "Graph",
                     id: "Graph: " + props.notebook.dir,
-                    name: "🕸 " + t("general/graph-view"),
+                    name: t("general/graph-view"),
                     config: {
                       singleton: true,
                       notebookPath: props.notebook.dir,
+                      icon: ":spider_web:",
                     },
                   });
                   props.onCloseDrawer();
@@ -376,10 +383,11 @@ export default function NotebookTreeView(props: Props) {
                     type: "tab",
                     component: "Notes",
                     id: "Notes: " + props.notebook.dir,
-                    name: "📔 " + props.notebook.name,
+                    name: props.notebook.name,
                     config: {
                       singleton: true,
                       notebookPath: props.notebook.dir,
+                      icon: ":notebook_with_decorative_cover:",
                     },
                   });
                   props.onCloseDrawer();
@@ -421,15 +429,20 @@ export default function NotebookTreeView(props: Props) {
                           singleton: false,
                           noteFilePath: note.filePath,
                           notebookPath: props.notebook.dir,
+                          icon: getNoteIcon(note),
                         },
-                        name: `${getNoteIcon(note)} ` + note.title,
+                        name: note.title,
                       });
                       props.onCloseDrawer();
                     }}
                     className={clsx(classes.treeItemLabelRoot)}
                   >
                     <span role="img" aria-label="quick-access">
-                      {getNoteIcon(note)}
+                      <Emoji
+                        set={"twitter"}
+                        emoji={getNoteIcon(note)}
+                        size={16}
+                      ></Emoji>
                     </span>
                     <Typography className={clsx(classes.treeItemLabelText)}>
                       {note.title}

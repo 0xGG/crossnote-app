@@ -257,8 +257,9 @@ export function Home(props: Props) {
                         singleton: false,
                         noteFilePath: note.filePath,
                         notebookPath: note.notebookPath,
+                        icon: getNoteIcon(note),
                       },
-                      name: `${getNoteIcon(note)} ` + note.title,
+                      name: note.title,
                     });
                   } else {
                     //note not found
@@ -266,10 +267,11 @@ export function Home(props: Props) {
                       type: "tab",
                       component: "Notes",
                       id: "Notes: " + notebook.dir,
-                      name: "📔 " + notebook.name,
+                      name: notebook.name,
                       config: {
                         singleton: true,
                         notebookPath: notebook.dir,
+                        icon: ":notebook_with_decorative_cover:",
                       },
                     });
                   }
@@ -278,10 +280,11 @@ export function Home(props: Props) {
                     type: "tab",
                     component: "Notes",
                     id: "Notes: " + notebook.dir,
-                    name: "📔 " + notebook.name,
+                    name: notebook.name,
                     config: {
                       singleton: true,
                       notebookPath: notebook.dir,
+                      icon: ":notebook_with_decorative_cover:",
                     },
                   });
                 }
@@ -387,10 +390,11 @@ export function Home(props: Props) {
               crossnoteContainer.addTabNode({
                 type: "tab",
                 component: "Settings",
-                name: "⚙️ " + t("general/Settings"),
+                name: t("general/Settings"),
                 id: "Settings",
                 config: {
                   singleton: true,
+                  icon: ":gear:",
                 },
               });
               setDrawerOpen(false);

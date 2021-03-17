@@ -25,6 +25,7 @@ import {
   Position as CursorPosition,
   TextMarker,
 } from "codemirror";
+import { Emoji } from "emoji-mart";
 import { Actions, TabNode } from "flexlayout-react";
 import {
   Close,
@@ -52,7 +53,7 @@ import {
   ModifiedMarkdownEventData,
   PerformedGitOperationEventData,
 } from "../lib/event";
-import { getNoteIcon, Note } from "../lib/note";
+import { Note } from "../lib/note";
 import { Notebook } from "../lib/notebook";
 import { Reference } from "../lib/reference";
 import { setTheme } from "../themes/manager";
@@ -317,6 +318,7 @@ export default function NotePanel(props: Props) {
   const { t } = useTranslation();
   const [noteTitle, setNoteTitle] = useState<string>("");
   const [note, setNote] = useState<Note>(null);
+  const [noteIcon, setNoteIcon] = useState<string>("");
   const [editor, setEditor] = useState<CodeMirrorEditor>(null);
   const [editorMode, setEditorMode] = useState<EditorMode>(
     settingsContainer.defaultEditorMode,
@@ -406,7 +408,7 @@ export default function NotePanel(props: Props) {
     }
     setNoteTitle(note.title);
     crossnoteContainer.layoutModel.doAction(
-      Actions.renameTab(tabNode.getId(), `${getNoteIcon(note)} ` + note.title),
+      Actions.renameTab(tabNode.getId(), note.title),
     );
   }, [note, crossnoteContainer.layoutModel, tabNode]);
 
@@ -418,6 +420,7 @@ export default function NotePanel(props: Props) {
 
     const modifiedMarkdownCallback = (data: ModifiedMarkdownEventData) => {
       if (data.tabId === tabNode.getId()) {
+        setNoteIcon(data.noteConfig.icon);
         return;
       }
       if (
@@ -428,6 +431,7 @@ export default function NotePanel(props: Props) {
         if (editor.getValue() !== data.markdown) {
           editor.setValue(data.markdown);
         }
+        setNoteIcon(note.config.icon);
       }
     };
 
@@ -520,6 +524,13 @@ export default function NotePanel(props: Props) {
         console.error(error);
       });
   }, [props.noteFilePath, props.notebook]);
+
+  // set note icon
+  useEffect(() => {
+    if (note) {
+      setNoteIcon(note.config.icon);
+    }
+  }, [note]);
 
   // Set editor
   useEffect(() => {
@@ -1340,7 +1351,13 @@ export default function NotePanel(props: Props) {
               color={"primary"}
               onClick={(event) => setIconPopoverElement(event.currentTarget)}
             >
-              {getNoteIcon(note)}
+              {
+                <Emoji
+                  set={"twitter"}
+                  emoji={noteIcon || ":memo:"}
+                  size={32}
+                ></Emoji>
+              }
             </IconButton>
           </Box>
           <InputBase
