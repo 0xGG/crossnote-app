@@ -86,7 +86,7 @@
     "start:react-scripts": "react-app-rewired start",
     "start:copy-css-files": "gulp copy-css-files",
     "start:twemoji-sheet": "node download-emoji-sheet.js",
-    "build": "yarn git-info; yarn build:copy-css-files; yarn build:react-scripts; yarn build:service-worker; yarn start:twemoji-sheet",
+    "build": "yarn git-info; yarn start:twemoji-sheet; yarn build:copy-css-files; yarn build:react-scripts; yarn build:service-worker;",
     "build:react-scripts": "react-app-rewired build",
     "build:copy-css-files": "gulp copy-css-files",
     "build:service-worker": "gulp service-worker",
