@@ -75,6 +75,10 @@ const useStyles = makeStyles((theme: Theme) =>
     disabled: {
       color: theme.palette.text.disabled,
     },
+    emojiIcon: {
+      top: "2px",
+      position: "relative",
+    },
   }),
 );
 
@@ -283,7 +287,11 @@ export default function NotebookTreeView(props: Props) {
                 className={clsx(classes.treeItemLabelText)}
                 style={{ paddingLeft: "4px" }}
               >
-                <span role="img" style={{ paddingRight: "8px" }}>
+                <span
+                  role="img"
+                  className={clsx(classes.emojiIcon)}
+                  style={{ paddingRight: "8px" }}
+                >
                   {props.notebook.isLocal ? (
                     <Emoji emoji={":card_index_dividers:"} size={16}></Emoji>
                   ) : props.notebook.localSha === props.notebook.remoteSha ? (
@@ -314,7 +322,11 @@ export default function NotebookTreeView(props: Props) {
                 }}
                 className={clsx(classes.treeItemLabelRoot)}
               >
-                <span role="img" aria-label="today-notes">
+                <span
+                  role="img"
+                  className={clsx(classes.emojiIcon)}
+                  aria-label="today-notes"
+                >
                   <Emoji emoji={":calendar:"} size={16}></Emoji>
                 </span>
                 <Typography className={clsx(classes.treeItemLabelText)}>
@@ -350,7 +362,11 @@ export default function NotebookTreeView(props: Props) {
                 }}
                 className={clsx(classes.treeItemLabelRoot)}
               >
-                <span role="img" aria-label="todo-notes">
+                <span
+                  role="img"
+                  className={clsx(classes.emojiIcon)}
+                  aria-label="todo-notes"
+                >
                   <Emoji emoji={":spider_web:"} size={16}></Emoji>
                 </span>
                 <Typography className={clsx(classes.treeItemLabelText)}>
@@ -386,7 +402,11 @@ export default function NotebookTreeView(props: Props) {
                 }}
                 className={clsx(classes.treeItemLabelRoot)}
               >
-                <span role="img" aria-label="Notes">
+                <span
+                  role="img"
+                  className={clsx(classes.emojiIcon)}
+                  aria-label="Notes"
+                >
                   <Emoji
                     emoji={":notebook_with_decorative_cover:"}
                     size={16}
@@ -428,7 +448,11 @@ export default function NotebookTreeView(props: Props) {
                     }}
                     className={clsx(classes.treeItemLabelRoot)}
                   >
-                    <span role="img" aria-label="quick-access">
+                    <span
+                      role="img"
+                      className={clsx(classes.emojiIcon)}
+                      aria-label="quick-access"
+                    >
                       <Emoji emoji={getNoteIcon(note)} size={16}></Emoji>
                     </span>
                     <Typography className={clsx(classes.treeItemLabelText)}>
@@ -461,7 +485,11 @@ export default function NotebookTreeView(props: Props) {
                 onClick={() => setNotebookConfigurationDialogOpen(true)}
                 className={clsx(classes.treeItemLabelRoot)}
               >
-                <span role="img" aria-label={t("general/Settings")}>
+                <span
+                  role="img"
+                  className={clsx(classes.emojiIcon)}
+                  aria-label={t("general/Settings")}
+                >
                   <Emoji emoji={":gear:"} size={16}></Emoji>
                 </span>
                 <Typography className={clsx(classes.treeItemLabelText)}>
@@ -485,7 +513,11 @@ export default function NotebookTreeView(props: Props) {
                   onClick={() => setPushNotebookDialogOpen(true)}
                   className={clsx(classes.treeItemLabelRoot)}
                 >
-                  <span role="img" aria-label={t("general/Upload")}>
+                  <span
+                    role="img"
+                    className={clsx(classes.emojiIcon)}
+                    aria-label={t("general/Upload")}
+                  >
                     <Emoji emoji={":outbox_tray:"} size={16}></Emoji>
                   </span>
                   <Tooltip title={t("general/upload-push")}>
@@ -514,7 +546,11 @@ export default function NotebookTreeView(props: Props) {
                   }
                   className={clsx(classes.treeItemLabelRoot)}
                 >
-                  <span role="img" aria-label={t("general/refresh")}>
+                  <span
+                    role="img"
+                    className={clsx(classes.emojiIcon)}
+                    aria-label={t("general/refresh")}
+                  >
                     <Emoji
                       emoji={":arrows_counterclockwise:"}
                       size={16}
@@ -589,7 +625,11 @@ export default function NotebookTreeView(props: Props) {
                       : null,
                   )}
                 >
-                  <span role="img" aria-label={t("general/Download")}>
+                  <span
+                    role="img"
+                    className={clsx(classes.emojiIcon)}
+                    aria-label={t("general/Download")}
+                  >
                     <Emoji emoji={":inbox_tray:"} size={16}></Emoji>
                   </span>
                   <Tooltip title={t("general/download-pull")}>
