@@ -2,17 +2,17 @@
 # yarn lockfile v1
 
 
-"@0xgg/echomd@^1.0.1":
-  version "1.0.1"
-  resolved "https://registry.npmjs.org/@0xgg/echomd/-/echomd-1.0.1.tgz#8748fb98eb287108344846111158c8c5bbf5efaf"
-  integrity sha512-1xkP7uCXKxtVZ+aCQAGMn/NvS7znP5H7MSdyJJHVNaRid+67YEyzVFGb5oqsNqb2zcc1og9RCRMGjjPiL4NKrA==
+"@0xgg/echomd@^1.0.4":
+  version "1.0.4"
+  resolved "https://registry.npmjs.org/@0xgg/echomd/-/echomd-1.0.4.tgz#dfe5aefc3b2e58ab12d8e90b51a4346243fa48d9"
+  integrity sha512-vATyQltap3796+BJ6SmUzYuhPtBKhCQfOGnMFbtVyIIpmnL2G6OI4YG4+ijr7JaFdwuuBmlfdqPw+/F/THCBAA==
   optionalDependencies:
     echarts "^5.0.2"
     emojione "^4.5.0"
     flowchart.js "1.13.0"
     html2pdf.js "^0.9.2"
     jsonic "^1.0.1"
-    katex "^0.12.0"
+    katex "^0.13.0"
     lodash "^4.17.21"
     markdown-it "^12.0.4"
     markdown-it-emoji "^2.0.0"
@@ -25,17 +25,17 @@
     markdown-it-task-lists "^2.1.1"
     marked "^2.0.0"
     mathjax "^3.1.2"
-    mermaid "^8.9.1"
+    mermaid "^8.9.2"
     plantuml-encoder "^1.4.0"
     prismjs "^1.23.0"
     react "^17.0.1"
     react-dom "^17.0.1"
     turndown "^7.0.0"
     turndown-plugin-gfm "^1.0.2"
-    twemoji "13.0.0"
-    vega "^5.19.1"
-    vega-embed "^6.15.1"
-    vega-lite "^4.17.0"
+    twemoji "13.0.2"
+    vega "^5.20.0"
+    vega-embed "^6.16.0"
+    vega-lite "^5.0.0"
     yamljs "^0.3.0"
 
 "@ardatan/aggregate-error@0.0.1":
@@ -3164,6 +3164,11 @@
   dependencies:
     "@types/estree" "*"
 
+"@types/twemoji@^12.1.1":
+  version "12.1.1"
+  resolved "https://registry.npmjs.org/@types/twemoji/-/twemoji-12.1.1.tgz#34c5dcecff438b5be173889a6ee8ad51ba90445f"
+  integrity sha512-dW1B1WHTfrWmEzXb/tp8xsZqQHAyMB9JwLwbBqkIQVzmNUI02R7lJqxUpKFM114ygNZHKA1r74oPugCAiYHt1A==
+
 "@types/uglify-js@*":
   version "3.13.0"
   resolved "https://registry.npmjs.org/@types/uglify-js/-/uglify-js-3.13.0.tgz#1cad8df1fb0b143c5aba08de5712ea9d1ff71124"
@@ -5291,7 +5296,7 @@ cliui@^6.0.0:
     strip-ansi "^6.0.0"
     wrap-ansi "^6.2.0"
 
-cliui@^7.0.0, cliui@^7.0.2:
+cliui@^7.0.2:
   version "7.0.4"
   resolved "https://registry.npmjs.org/cliui/-/cliui-7.0.4.tgz#a0265ee655476fc807aea9df3df8df7783808b4f"
   integrity sha512-OcRE68cOsVMXp1Yvonl/fzkQOyjLSu/8bhPDfQt0e0/Eb283TKP20Fs2MqoPsr9SwA595rRCA+QMzYc9nBP+JQ==
@@ -5453,6 +5458,11 @@ commander@^4.1.1:
   version "4.1.1"
   resolved "https://registry.npmjs.org/commander/-/commander-4.1.1.tgz#9fd602bd936294e9e9ef46a3f4d6964044b18068"
   integrity sha512-NOKm8xhkzAjzFx8B2v5OAHT+u5pRQc2UCa2Vq9jYL/31o2wi9mxBA7LIFs3sV5VSC49z6pEhfbMULvShKj26WA==
+
+commander@^6.0.0:
+  version "6.2.1"
+  resolved "https://registry.npmjs.org/commander/-/commander-6.2.1.tgz#0792eb682dfbc325999bb2b84fddddba110ac73c"
+  integrity sha512-U7VdrJFnJgo4xjrHpTzu0yrHPGImdsmD95ZlgYSEajAn2JKzDhDTPG9kBTefmObL2w/ngeZnilk+OV9CG3d7UA==
 
 common-tags@1.8.0, common-tags@^1.8.0:
   version "1.8.0"
@@ -10875,15 +10885,10 @@ json-stable-stringify@^1.0.1:
   dependencies:
     jsonify "~0.0.0"
 
-json-stringify-pretty-compact@^3.0.0:
+json-stringify-pretty-compact@^3.0.0, json-stringify-pretty-compact@~3.0.0:
   version "3.0.0"
   resolved "https://registry.npmjs.org/json-stringify-pretty-compact/-/json-stringify-pretty-compact-3.0.0.tgz#f71ef9d82ef16483a407869556588e91b681d9ab"
   integrity sha512-Rc2suX5meI0S3bfdZuA7JMFBGkJ875ApfVyq2WHELjBiiG22My/l7/8zPpH/CfFVQHuVLd8NLR0nv6vi0BYYKA==
-
-json-stringify-pretty-compact@~2.0.0:
-  version "2.0.0"
-  resolved "https://registry.npmjs.org/json-stringify-pretty-compact/-/json-stringify-pretty-compact-2.0.0.tgz#e77c419f52ff00c45a31f07f4c820c2433143885"
-  integrity sha512-WRitRfs6BGq4q8gTgOy4ek7iPFXjbra0H3PmDLKm2xnZ+Gh1HUhiKGgCZkSPNULlP7mvfu6FV/mOLhCarspADQ==
 
 json-stringify-safe@~5.0.1:
   version "5.0.1"
@@ -11108,12 +11113,12 @@ kapellmeister@^3.0.1:
   dependencies:
     d3-timer "^1.0.9"
 
-katex@^0.12.0:
-  version "0.12.0"
-  resolved "https://registry.npmjs.org/katex/-/katex-0.12.0.tgz#2fb1c665dbd2b043edcf8a1f5c555f46beaa0cb9"
-  integrity sha512-y+8btoc/CK70XqcHqjxiGWBOeIL8upbS0peTPXTvgrh21n1RiWWcIpSWM+4uXq+IAgNh9YYQWdc7LVDPDAEEAg==
+katex@^0.13.0:
+  version "0.13.0"
+  resolved "https://registry.npmjs.org/katex/-/katex-0.13.0.tgz#62900e56c1ad8fdf7da23399e50d7a7b690b39ab"
+  integrity sha512-6cHbzbegYgS9vvVGuH8UA+o97X+ZshtboSqJJCdq7trBYzuD75JNwr7Ef606xkUjecPPhFnyB+afx1dVafielg==
   dependencies:
-    commander "^2.19.0"
+    commander "^6.0.0"
 
 keyv@^3.0.0:
   version "3.1.0"
@@ -11929,7 +11934,7 @@ merge2@^1.2.3, merge2@^1.3.0:
   resolved "https://registry.npmjs.org/merge2/-/merge2-1.4.1.tgz#4368892f885e907455a6fd7dc55c0c9d404990ae"
   integrity sha512-8q7VEgMJW4J8tcfVPy8g09NcQwZdbwFEqhe/WZkoIzjn/3TGDwtOCYtXGxA3O8tPzpczCCDgv+P2P5y00ZJOOg==
 
-mermaid@^8.9.1:
+mermaid@^8.9.2:
   version "8.9.2"
   resolved "https://registry.npmjs.org/mermaid/-/mermaid-8.9.2.tgz#40bb2052cc6c4feaf5d93a5e527a8d06d0bacea7"
   integrity sha512-XWEaraDRDlHZexdeHSSr/MH4VJAOksRSPudchi69ecZJ7IUjjlzHsg32n4ZwJUh6lFO+NMYLHwHNNYUyxIjGPg==
@@ -17194,7 +17199,7 @@ tsconfig-paths@^3.9.0:
     minimist "^1.2.0"
     strip-bom "^3.0.0"
 
-tslib@2.0.3, tslib@~2.0.0, tslib@~2.0.1, tslib@~2.0.3:
+tslib@2.0.3, tslib@~2.0.0, tslib@~2.0.1:
   version "2.0.3"
   resolved "https://registry.npmjs.org/tslib/-/tslib-2.0.3.tgz#8e0741ac45fc0c226e58a17bfc3e64b9bc6ca61c"
   integrity sha512-uZtkfKblCEQtZKBF6EBXVZeQNl82yqtDQdv+eck8u7tdPxjLu2/lp5/uPW+um2tpuxINHWy3GhiccY7QgEaVHQ==
@@ -17250,10 +17255,10 @@ twemoji-parser@13.0.0:
   resolved "https://registry.npmjs.org/twemoji-parser/-/twemoji-parser-13.0.0.tgz#bd9d1b98474f1651dc174696b45cabefdfa405af"
   integrity sha512-zMaGdskpH8yKjT2RSE/HwE340R4Fm+fbie4AaqjDa4H/l07YUmAvxkSfNl6awVWNRRQ0zdzLQ8SAJZuY5MgstQ==
 
-twemoji@13.0.0:
-  version "13.0.0"
-  resolved "https://registry.npmjs.org/twemoji/-/twemoji-13.0.0.tgz#bdda95c0a76553bb57a355459955feb79eeebcfb"
-  integrity sha512-JIkoLy0lL7ZlsiUKAOdXTp0o8C15O3CzDzAmnWdeDHpjeifmKDDKX4CyViUj+9g33pIqMr8Uhcy1WLwETr8oNg==
+twemoji@13.0.2, twemoji@^13.0.2:
+  version "13.0.2"
+  resolved "https://registry.npmjs.org/twemoji/-/twemoji-13.0.2.tgz#e7ee8d26fd0ccc23a0afe68c7b7e61bd8d14ad24"
+  integrity sha512-R9tDS4pEVczjVYM5SvoAJ0AcZ4EgG1h3yw1oi1m/yrXOH17OOjaaRxZU4r5TIHEy3xYbuZQLB/tJZyC6rpQVmA==
   dependencies:
     fs-extra "^8.0.1"
     jsonfile "^5.0.0"
@@ -17786,17 +17791,17 @@ vega-dataflow@^5.7.3, vega-dataflow@~5.7.3:
     vega-loader "^4.3.2"
     vega-util "^1.15.2"
 
-vega-embed@^6.15.1:
-  version "6.15.2"
-  resolved "https://registry.npmjs.org/vega-embed/-/vega-embed-6.15.2.tgz#9fb8f7d77f202e68d6a10a3775f82b88c8db6aad"
-  integrity sha512-/Qk+YdDP8hELbvtGzxnKbNzk1oi33k3qrdwE/bpSQdHoM2UoQoR7lePq6/uEgGQtIMEm34XcMte9/rWkmnUPWA==
+vega-embed@^6.16.0:
+  version "6.16.0"
+  resolved "https://registry.npmjs.org/vega-embed/-/vega-embed-6.16.0.tgz#cd4a066203fd236e7908a6e4a997b5a420536d63"
+  integrity sha512-9lbSGqES6a8zHNM5TV4pJAWq1lH0E3bzmgjT1K7PaONcl8N7Xy1Sg6RjBeyKTF4zNNi+0SwrjjqXxbr3YYIxFw==
   dependencies:
     fast-json-patch "^3.0.0-1"
     json-stringify-pretty-compact "^3.0.0"
     semver "^7.3.4"
     vega-schema-url-parser "^2.1.0"
-    vega-themes "^2.9.1"
-    vega-tooltip "^0.25.0"
+    vega-themes "^2.10.0"
+    vega-tooltip "^0.25.1"
 
 vega-encode@~4.8.3:
   version "4.8.3"
@@ -17820,13 +17825,6 @@ vega-expression@^4.0.1, vega-expression@~4.0.1:
   integrity sha512-ZrDj0hP8NmrCpdLFf7Rd/xMUHGoSYsAOTaYp7uXZ2dkEH5x0uPy5laECMc8TiQvL8W+8IrN2HAWCMRthTSRe2Q==
   dependencies:
     vega-util "^1.16.0"
-
-vega-expression@~3.0.0:
-  version "3.0.1"
-  resolved "https://registry.npmjs.org/vega-expression/-/vega-expression-3.0.1.tgz#bbccd8f59371a537eab16f3d9eff5cbeaa27532d"
-  integrity sha512-+UwOFEkBnAWo8Zud6i8O4Pd2W6QqmPUOaAhjNtj0OxRL+d+Duoy7M4edUDZ+YuoUcMnjjBFfDQu7oRAA1fIMEQ==
-  dependencies:
-    vega-util "^1.15.2"
 
 vega-force@~4.0.7:
   version "4.0.7"
@@ -17898,10 +17896,10 @@ vega-label@~1.0.0:
     vega-scenegraph "^4.9.2"
     vega-util "^1.15.2"
 
-vega-lite@^4.17.0:
-  version "4.17.0"
-  resolved "https://registry.npmjs.org/vega-lite/-/vega-lite-4.17.0.tgz#01ad4535e92f28c3852c1071711de272ddfb4631"
-  integrity sha512-MO2XsaVZqx6iWWmVA5vwYFamvhRUsKfVp7n0pNlkZ2/21cuxelSl92EePZ2YGmzL6z4/3K7r/45zaG8p+qNHeg==
+vega-lite@^5.0.0:
+  version "5.0.0"
+  resolved "https://registry.npmjs.org/vega-lite/-/vega-lite-5.0.0.tgz#93898a910702736da41048f590882b907d78ac65"
+  integrity sha512-CrMAy3D2E662qtShrOeGttwwthRxUOZUfdu39THyxkOfLNJBCLkNjfQpFekEidxwbtFTO1zMZzyFIP3AE2I8kQ==
   dependencies:
     "@types/clone" "~2.1.0"
     "@types/fast-json-stable-stringify" "^2.0.0"
@@ -17909,12 +17907,12 @@ vega-lite@^4.17.0:
     clone "~2.1.2"
     fast-deep-equal "~3.1.3"
     fast-json-stable-stringify "~2.1.0"
-    json-stringify-pretty-compact "~2.0.0"
-    tslib "~2.0.3"
+    json-stringify-pretty-compact "~3.0.0"
+    tslib "~2.1.0"
     vega-event-selector "~2.0.6"
-    vega-expression "~3.0.0"
+    vega-expression "~4.0.1"
     vega-util "~1.16.0"
-    yargs "~16.0.3"
+    yargs "~16.2.0"
 
 vega-loader@^4.3.2, vega-loader@^4.3.3, vega-loader@~4.4.0:
   version "4.4.0"
@@ -17975,10 +17973,22 @@ vega-scale@^7.0.3, vega-scale@^7.1.1, vega-scale@~7.1.1:
     vega-time "^2.0.4"
     vega-util "^1.15.2"
 
-vega-scenegraph@^4.9.2, vega-scenegraph@^4.9.3, vega-scenegraph@~4.9.3:
+vega-scenegraph@^4.9.2, vega-scenegraph@^4.9.3:
   version "4.9.3"
   resolved "https://registry.npmjs.org/vega-scenegraph/-/vega-scenegraph-4.9.3.tgz#c4720550ea7ff5c8d9d0690f47fe2640547cfc6b"
   integrity sha512-lBvqLbXqrqRCTGJmSgzZC/tLR/o+TXfakbdhDzNdpgTavTaQ65S/67Gpj5hPpi77DvsfZUIY9lCEeO37aJhy0Q==
+  dependencies:
+    d3-path "^2.0.0"
+    d3-shape "^2.0.0"
+    vega-canvas "^1.2.5"
+    vega-loader "^4.3.3"
+    vega-scale "^7.1.1"
+    vega-util "^1.15.2"
+
+vega-scenegraph@^4.9.4, vega-scenegraph@~4.9.4:
+  version "4.9.4"
+  resolved "https://registry.npmjs.org/vega-scenegraph/-/vega-scenegraph-4.9.4.tgz#468408c1e89703fa9d3450445daabff623de2757"
+  integrity sha512-QaegQzbFE2yhYLNWAmHwAuguW3yTtQrmwvfxYT8tk0g+KKodrQ5WSmNrphWXhqwtsgVSvtdZkfp2IPeumcOQJg==
   dependencies:
     d3-path "^2.0.0"
     d3-shape "^2.0.0"
@@ -18007,7 +18017,7 @@ vega-statistics@^1.7.9, vega-statistics@~1.7.9:
   dependencies:
     d3-array "^2.7.1"
 
-vega-themes@^2.9.1:
+vega-themes@^2.10.0:
   version "2.10.0"
   resolved "https://registry.npmjs.org/vega-themes/-/vega-themes-2.10.0.tgz#82768b14686e3fbfbdab0e77cb63e12c62b4911e"
   integrity sha512-prePRUKFUFGWniuZsJOfkdb+27Gwrrm82yAlVuU+912kcknsx1DVmMSg2yF79f4jdtqnAFIGycZgxoj13SEIuQ==
@@ -18021,7 +18031,7 @@ vega-time@^2.0.3, vega-time@^2.0.4, vega-time@~2.0.4:
     d3-time "^2.0.0"
     vega-util "^1.15.2"
 
-vega-tooltip@^0.25.0:
+vega-tooltip@^0.25.1:
   version "0.25.1"
   resolved "https://registry.npmjs.org/vega-tooltip/-/vega-tooltip-0.25.1.tgz#cb7e438438649eb46896e7bee6f54e25d25b3c09"
   integrity sha512-ugGwGi2/p3OpB8N15xieuzP8DyV5DreqMWcmJ9zpWT8GlkyKtef4dGRXnvHeHQ+iJFmWrq4oZJ+kLTrdiECjAg==
@@ -18039,10 +18049,10 @@ vega-transforms@~4.9.3:
     vega-time "^2.0.4"
     vega-util "^1.15.2"
 
-vega-typings@~0.19.2:
-  version "0.19.2"
-  resolved "https://registry.npmjs.org/vega-typings/-/vega-typings-0.19.2.tgz#374fc1020c1abb263a0be87de28d1a4bd0526c3f"
-  integrity sha512-YU/S9rDk4d+t4+4eTa9fzuw87PMNteeVtpcL51kUO8H7HvGaoW7ll8RHKLkR0NYBEGPRoFDKUxnoyMvhgjsdYw==
+vega-typings@~0.20.0:
+  version "0.20.0"
+  resolved "https://registry.npmjs.org/vega-typings/-/vega-typings-0.20.0.tgz#aac32f45ca69d3640d205ffdd9cd94fe1d6dcc19"
+  integrity sha512-S+HIRN/3WYiS5zrQjJ4FDEOlvFVHLxPXMJerrnN3YZ6bxCDYo7tEvQUUuByGZ3d19GuKjgejczWS7XHvF3WjDw==
   dependencies:
     vega-util "^1.15.2"
 
@@ -18050,6 +18060,11 @@ vega-util@^1.15.2, vega-util@^1.16.0, vega-util@~1.16.0:
   version "1.16.0"
   resolved "https://registry.npmjs.org/vega-util/-/vega-util-1.16.0.tgz#77405d8df0a94944d106bdc36015f0d43aa2caa3"
   integrity sha512-6mmz6mI+oU4zDMeKjgvE2Fjz0Oh6zo6WGATcvCfxH2gXBzhBHmy5d25uW5Zjnkc6QBXSWPLV9Xa6SiqMsrsKog==
+
+vega-util@^1.16.1, vega-util@~1.16.1:
+  version "1.16.1"
+  resolved "https://registry.npmjs.org/vega-util/-/vega-util-1.16.1.tgz#992bf3c3b6e145797214d99862841baea417ba39"
+  integrity sha512-FdgD72fmZMPJE99FxvFXth0IL4BbLA93WmBg/lvcJmfkK4Uf90WIlvGwaIUdSePIsdpkZjBPyQcHMQ8OcS8Smg==
 
 vega-view-transforms@~4.5.8:
   version "4.5.8"
@@ -18060,10 +18075,10 @@ vega-view-transforms@~4.5.8:
     vega-scenegraph "^4.9.2"
     vega-util "^1.15.2"
 
-vega-view@~5.9.2:
-  version "5.9.2"
-  resolved "https://registry.npmjs.org/vega-view/-/vega-view-5.9.2.tgz#cb957e481a952abbe7b3a11aa2d58cc728f295e7"
-  integrity sha512-XAwKWyVjLClR3aCbTLCWdZj7aZozOULNg7078GxJIgVcBJOENCAidceI/H7JieyUZ96p3AiEHLQdWr167InBpg==
+vega-view@~5.10.0:
+  version "5.10.0"
+  resolved "https://registry.npmjs.org/vega-view/-/vega-view-5.10.0.tgz#12ce02d8f58151bf10211d2ac4c65cf35a1ef1f4"
+  integrity sha512-HuqTVimMqlgqe64EQkTEnt0+yDkt29/q1szg/m9QwCrSc5QMXI8Mkt58O/F7OD3QyVr7xrKHyPTk9I9gCaZ6sw==
   dependencies:
     d3-array "^2.7.1"
     d3-timer "^2.0.0"
@@ -18071,8 +18086,8 @@ vega-view@~5.9.2:
     vega-format "^1.0.4"
     vega-functions "^5.10.0"
     vega-runtime "^6.1.3"
-    vega-scenegraph "^4.9.2"
-    vega-util "^1.15.2"
+    vega-scenegraph "^4.9.4"
+    vega-util "^1.16.1"
 
 vega-voronoi@~4.1.5:
   version "4.1.5"
@@ -18094,10 +18109,10 @@ vega-wordcloud@~4.1.3:
     vega-statistics "^1.7.9"
     vega-util "^1.15.2"
 
-vega@^5.19.1:
-  version "5.19.1"
-  resolved "https://registry.npmjs.org/vega/-/vega-5.19.1.tgz#64c8350740fe1a11d56cc6617ab3a76811fd704c"
-  integrity sha512-UE6/c9q9kzuz4HULFuU9HscBASoZa+zcXqGKdbQP545Nwmhd078QpcH+wZsq9lYfiTxmFtzLK/a0OH0zhkghvA==
+vega@^5.20.0:
+  version "5.20.0"
+  resolved "https://registry.npmjs.org/vega/-/vega-5.20.0.tgz#8be803391c9441d569a72531917b69d62edb5e57"
+  integrity sha512-L2hDaTH2gz9DFbu7l1B8fR637HzctViuosFCo/Db5aBe93fCJ/w/oJu+vQNfQELzfm9sntkS/+A4u+39xrDCNA==
   dependencies:
     vega-crossfilter "~4.0.5"
     vega-dataflow "~5.7.3"
@@ -18116,13 +18131,13 @@ vega@^5.19.1:
     vega-regression "~1.0.9"
     vega-runtime "~6.1.3"
     vega-scale "~7.1.1"
-    vega-scenegraph "~4.9.3"
+    vega-scenegraph "~4.9.4"
     vega-statistics "~1.7.9"
     vega-time "~2.0.4"
     vega-transforms "~4.9.3"
-    vega-typings "~0.19.2"
-    vega-util "~1.16.0"
-    vega-view "~5.9.2"
+    vega-typings "~0.20.0"
+    vega-util "~1.16.1"
+    vega-view "~5.10.0"
     vega-view-transforms "~4.5.8"
     vega-voronoi "~4.1.5"
     vega-wordcloud "~4.1.3"
@@ -18977,7 +18992,7 @@ y18n@^4.0.0:
   resolved "https://registry.npmjs.org/y18n/-/y18n-4.0.1.tgz#8db2b83c31c5d75099bb890b23f3094891e247d4"
   integrity sha512-wNcy4NvjMYL8gogWWYAO7ZFWFfHcbdbE57tZO8e4cbpj8tfUcwrwqSl3ad8HxpYWCdXcJUCeKKZS62Av1affwQ==
 
-y18n@^5.0.1, y18n@^5.0.5:
+y18n@^5.0.5:
   version "5.0.5"
   resolved "https://registry.npmjs.org/y18n/-/y18n-5.0.5.tgz#8769ec08d03b1ea2df2500acef561743bbb9ab18"
   integrity sha512-hsRUr4FFrvhhRH12wOdfs38Gy7k2FFzB9qgN9v3aLykRq0dRcdcpz5C9FxdS2NuhOrI/628b/KSTJ3rwHysYSg==
@@ -19039,7 +19054,7 @@ yargs-parser@^18.1.2:
     camelcase "^5.0.0"
     decamelize "^1.2.0"
 
-yargs-parser@^20.0.0, yargs-parser@^20.2.1, yargs-parser@^20.2.2:
+yargs-parser@^20.2.1, yargs-parser@^20.2.2:
   version "20.2.7"
   resolved "https://registry.npmjs.org/yargs-parser/-/yargs-parser-20.2.7.tgz#61df85c113edfb5a7a4e36eb8aa60ef423cbc90a"
   integrity sha512-FiNkvbeHzB/syOjIUxFDCnhSfzAL8R5vs40MgLFBorXACCOAEaWu0gRZl14vG8MR9AOJIZbmkjhusqBYZ3HTHw==
@@ -19077,7 +19092,7 @@ yargs@^15.3.1, yargs@^15.4.1:
     y18n "^4.0.0"
     yargs-parser "^18.1.2"
 
-yargs@^16.1.1:
+yargs@^16.1.1, yargs@~16.2.0:
   version "16.2.0"
   resolved "https://registry.npmjs.org/yargs/-/yargs-16.2.0.tgz#1c82bf0f6b6a66eafce7ef30e376f49a12477f66"
   integrity sha512-D1mvvtDG0L5ft/jGWkLpG1+m0eQxOfaBvTNELraWj22wSVUMWxZUvYgJYcKh6jGGIkJFhH4IZPQhR4TKpc8mBw==
@@ -19108,19 +19123,6 @@ yargs@^7.1.0:
     which-module "^1.0.0"
     y18n "^3.2.1"
     yargs-parser "5.0.0-security.0"
-
-yargs@~16.0.3:
-  version "16.0.3"
-  resolved "https://registry.npmjs.org/yargs/-/yargs-16.0.3.tgz#7a919b9e43c90f80d4a142a89795e85399a7e54c"
-  integrity sha512-6+nLw8xa9uK1BOEOykaiYAJVh6/CjxWXK/q9b5FpRgNslt8s22F2xMBqVIKgCRjNgGvGPBy8Vog7WN7yh4amtA==
-  dependencies:
-    cliui "^7.0.0"
-    escalade "^3.0.2"
-    get-caller-file "^2.0.5"
-    require-directory "^2.1.1"
-    string-width "^4.2.0"
-    y18n "^5.0.1"
-    yargs-parser "^20.0.0"
 
 yn@3.1.1:
   version "3.1.1"

@@ -44,6 +44,7 @@ import { CloudContainer } from "../containers/cloud";
 import { CrossnoteContainer, HomeSection } from "../containers/crossnote";
 import { globalContainers } from "../containers/global";
 import { SettingsContainer } from "../containers/settings";
+import { getNoteIcon } from "../lib/note";
 const is = require("is_js");
 
 const drawerWidth = 200;
@@ -256,8 +257,9 @@ export function Home(props: Props) {
                         singleton: false,
                         noteFilePath: note.filePath,
                         notebookPath: note.notebookPath,
+                        icon: getNoteIcon(note),
                       },
-                      name: `📝 ` + note.title,
+                      name: note.title,
                     });
                   } else {
                     //note not found
@@ -265,10 +267,11 @@ export function Home(props: Props) {
                       type: "tab",
                       component: "Notes",
                       id: "Notes: " + notebook.dir,
-                      name: "📔 " + notebook.name,
+                      name: notebook.name,
                       config: {
                         singleton: true,
                         notebookPath: notebook.dir,
+                        icon: ":notebook_with_decorative_cover:",
                       },
                     });
                   }
@@ -277,10 +280,11 @@ export function Home(props: Props) {
                     type: "tab",
                     component: "Notes",
                     id: "Notes: " + notebook.dir,
-                    name: "📔 " + notebook.name,
+                    name: notebook.name,
                     config: {
                       singleton: true,
                       notebookPath: notebook.dir,
+                      icon: ":notebook_with_decorative_cover:",
                     },
                   });
                 }
@@ -386,10 +390,11 @@ export function Home(props: Props) {
               crossnoteContainer.addTabNode({
                 type: "tab",
                 component: "Settings",
-                name: "⚙️ " + t("general/Settings"),
+                name: t("general/Settings"),
                 id: "Settings",
                 config: {
                   singleton: true,
+                  icon: ":gear:",
                 },
               });
               setDrawerOpen(false);

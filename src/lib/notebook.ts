@@ -148,7 +148,7 @@ export class Notebook {
           }
           // console.log("find link token: ", token, parentToken);
           results.push({
-            elementId: token.meta,
+            elementId: token.attrGet("id") || "",
             text,
             link: resolveLink(link),
             parentToken,
@@ -159,7 +159,7 @@ export class Notebook {
           const link = token.content.trim();
           // console.log("find link token: ", token, parentToken);
           results.push({
-            elementId: token.meta,
+            elementId: token.attrGet("id") || "",
             text,
             link: resolveLink(link),
             parentToken,
@@ -182,7 +182,7 @@ export class Notebook {
               continue;
             }
             results.push({
-              elementId: token.attrGet("id") || "", // token.meta, // TODO: This is not working yet
+              elementId: token.attrGet("id") || "",
               text,
               link: resolveLink(link),
               parentToken,
@@ -331,6 +331,10 @@ export class Notebook {
         if (data.data["favorited"]) {
           noteConfig.favorited = data.data["favorited"];
           delete frontMatter["favorited"];
+        }
+        if (data.data["icon"]) {
+          noteConfig.icon = data.data["icon"];
+          delete frontMatter["icon"];
         }
         if (data.data["aliases"]) {
           const aliases = data.data["aliases"] || [];
