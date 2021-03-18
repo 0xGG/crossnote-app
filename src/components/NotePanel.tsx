@@ -91,7 +91,18 @@ interface CommandHint {
   command: string;
   description: string;
   icon?: string;
-  render: (element: HTMLElement, data: any, current: CommandHint) => void;
+  render: (
+    element: HTMLElement,
+    data: CommandHint[],
+    current: CommandHint,
+  ) => void;
+}
+
+interface EmojiHint {
+  shortName: string;
+  text: string;
+  displayText: string;
+  render: (element: HTMLElement, data: EmojiHint[], current: EmojiHint) => void;
 }
 
 const codeMirrorSelectCss = {
@@ -1092,13 +1103,46 @@ export default function NotePanel(props: Props) {
             const currentWord: string = lineStr
               .slice(start, end)
               .replace(/^:+/, "");
+            const render = (
+              element: HTMLElement,
+              data: EmojiHint[],
+              cur: EmojiHint,
+            ) => {
+              const wrapper = document.createElement("div");
+              wrapper.style.padding = "6px 0";
+              wrapper.style.display = "flex";
+              wrapper.style.flexDirection = "row";
+              wrapper.style.alignItems = "flex-start";
+              wrapper.style.justifyContent = "space-between";
+              wrapper.style.maxWidth = "100%";
+              wrapper.style.minWidth = "200px";
 
-            const commands: { text: string; displayText: string }[] = [];
-            for (const def in EmojiDefinitions) {
-              const emoji = EmojiDefinitions[def];
+              const leftPanel = document.createElement("div");
+              const shortNameWrapper = document.createElement("div");
+              shortNameWrapper.style.padding = "0 6px";
+              shortNameWrapper.style.marginRight = "6px";
+              shortNameWrapper.style.fontSize = "0.7rem";
+              shortNameWrapper.innerText = `:${cur.shortName}:`;
+              leftPanel.appendChild(shortNameWrapper);
+
+              const rightPanel = document.createElement("div");
+              rightPanel.innerText = EmojiDefinitions[cur.shortName];
+              rightPanel.style.padding = "0 6px";
+              renderTwemoji(rightPanel);
+
+              wrapper.appendChild(leftPanel);
+              wrapper.appendChild(rightPanel);
+              element.appendChild(wrapper);
+            };
+
+            const commands: EmojiHint[] = [];
+            for (const shortName in EmojiDefinitions) {
+              const emoji = EmojiDefinitions[shortName];
               commands.push({
-                text: doubleSemiColon ? `:${def}: ` : `${emoji} `,
-                displayText: `:${def}: ${emoji}`,
+                shortName,
+                text: doubleSemiColon ? `:${shortName}: ` : `${emoji} `,
+                displayText: `:${shortName}: ${emoji}`,
+                render,
               });
             }
             const filtered = commands.filter(
