@@ -32,6 +32,7 @@ import "codemirror/mode/yaml/yaml"; // for Front Matters
 import { Emoji } from "emoji-mart";
 import EmojiData from "emoji-mart/data/all.json";
 import twemoji from "twemoji";
+import { EmojiBackgroundImageFn } from "../components/EmojiWrapper";
 import { AudioWidgetCreator } from "./widgets/audio";
 import { BilibiliWidgetCreator } from "./widgets/bilibili";
 // import { ABCWidgetCreator } from "./widgets/abc";
@@ -65,6 +66,7 @@ registerWidgetCreator("crossnote.github_gist", GitHubGistWidgetCreator);
 const packageJSON = require("../../package.json");
 export const EchoMDVersion: string = packageJSON.dependencies["@0xgg/echomd"];
 
+// Hack twemoji
 const oldTwemojiParse = twemoji.parse;
 twemoji.parse = function (what: string | HTMLElement, options: any) {
   const result = oldTwemojiParse(what, options);
@@ -95,7 +97,6 @@ twemoji.parse = function (what: string | HTMLElement, options: any) {
     return;
   }
 };
-
 const emojiCodePointToShortNameMap: { [key: string]: string } = ((data) => {
   const m: { [key: string]: string } = {};
   const emojiDefinitions: { [key: string]: string } = {};
@@ -138,6 +139,7 @@ setTwemojiOptions({
         set: "twitter",
         emoji: shortName,
         size: 16,
+        backgroundImageFn: EmojiBackgroundImageFn,
       }) as any;
       const attr: { [key: string]: string } = {};
       const attrRegExp = /\s([a-z-]+)='(.+?)'/g;
@@ -146,7 +148,7 @@ setTwemojiOptions({
         const attrName = result[1];
         const attrValue = result[2];
         if (attrName !== "class") {
-          attr[attrName] = attrValue.replace(/&quot;/, '"');
+          attr[attrName] = attrValue.replace(/&quot;/, "");
         }
       }
       return attr;

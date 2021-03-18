@@ -17,7 +17,6 @@ import {
   ThemeProvider,
 } from "@material-ui/core/styles";
 import clsx from "clsx";
-import { Emoji, Picker as EmojiPicker } from "emoji-mart";
 import "emoji-mart/css/emoji-mart.css";
 import { CommentOutline, StickerEmoji } from "mdi-material-ui";
 import Noty from "noty";
@@ -25,6 +24,7 @@ import React, { useCallback, useEffect, useState } from "react";
 import ReactDOM from "react-dom";
 import { useTranslation } from "react-i18next";
 import { Provider } from "urql";
+import { Emoji, EmojiPicker } from "../../../components/EmojiWrapper";
 import { globalContainers } from "../../../containers/global";
 import {
   CommentWidgetFieldsFragment,
@@ -351,11 +351,7 @@ function CommentWidget(props: WidgetArgs) {
                   }}
                   avatar={
                     <Avatar>
-                      <Emoji
-                        set={"twitter"}
-                        emoji={reactionSummary.reaction}
-                        size={16}
-                      ></Emoji>
+                      <Emoji emoji={reactionSummary.reaction} size={16}></Emoji>
                     </Avatar>
                   }
                 />
@@ -366,8 +362,6 @@ function CommentWidget(props: WidgetArgs) {
 
       <Dialog open={emojiPickerOpen} onClose={() => setEmojiPickerOpen(false)}>
         <EmojiPicker
-          emoji={""}
-          set={"twitter"}
           showSkinTones={false}
           onSelect={(data) => {
             if (!globalContainers.cloudContainer.loggedIn) {

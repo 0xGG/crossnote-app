@@ -91,3 +91,4 @@ _git_commit.js
 *.css.map
 public/styles
 package-lock.json
+public/assets/emoji

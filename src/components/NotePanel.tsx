@@ -25,7 +25,6 @@ import {
   Position as CursorPosition,
   TextMarker,
 } from "codemirror";
-import { Emoji } from "emoji-mart";
 import { Actions, TabNode } from "flexlayout-react";
 import {
   Close,
@@ -63,6 +62,7 @@ import {
   postprocessPreview as previewPostprocessPreview,
 } from "../utilities/preview";
 import EditImageDialog from "./EditImageDialog";
+import { Emoji } from "./EmojiWrapper";
 import IconPopover from "./IconPopover";
 import { Loading } from "./Loading";
 import NotePopover from "./NotePopover";
@@ -1351,13 +1351,7 @@ export default function NotePanel(props: Props) {
               color={"primary"}
               onClick={(event) => setIconPopoverElement(event.currentTarget)}
             >
-              {
-                <Emoji
-                  set={"twitter"}
-                  emoji={noteIcon || ":memo:"}
-                  size={32}
-                ></Emoji>
-              }
+              {<Emoji emoji={noteIcon || ":memo:"} size={32}></Emoji>}
             </IconButton>
           </Box>
           <InputBase

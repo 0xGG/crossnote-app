@@ -9,7 +9,6 @@ import {
 import clsx from "clsx";
 import { formatRelative } from "date-fns";
 import { formatDistanceStrict } from "date-fns/esm";
-import { Emoji } from "emoji-mart";
 import { TabNode } from "flexlayout-react";
 import { DotsVertical, Pin } from "mdi-material-ui";
 import React, { useCallback, useEffect, useState } from "react";
@@ -26,6 +25,7 @@ import { getNoteIcon, Note } from "../lib/note";
 import { Reference } from "../lib/reference";
 import { resolveNoteImageSrc } from "../utilities/image";
 import { generateSummaryFromMarkdown, Summary } from "../utilities/note";
+import { Emoji } from "./EmojiWrapper";
 import NotePopover from "./NotePopover";
 
 export const NoteCardMargin = 4;
@@ -305,11 +305,7 @@ export default function NoteCard(props: Props) {
             }}
           >
             <Box className={clsx(classes.header)} onClick={openNote}>
-              <Emoji
-                set={"twitter"}
-                emoji={getNoteIcon(note)}
-                size={16}
-              ></Emoji>
+              <Emoji emoji={getNoteIcon(note)} size={16}></Emoji>
               <Typography
                 style={{
                   fontWeight: "bold",

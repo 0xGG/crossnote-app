@@ -1,9 +1,9 @@
 import { Popover } from "@material-ui/core";
 import { createStyles, makeStyles, Theme } from "@material-ui/core/styles";
-import { Picker as EmojiPicker } from "emoji-mart";
 import { TabNode } from "flexlayout-react";
 import { CrossnoteContainer } from "../containers/crossnote";
 import { Note } from "../lib/note";
+import { EmojiPicker } from "./EmojiWrapper";
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -38,8 +38,6 @@ export default function IconPopover(props: Props) {
       onClose={props.onClose}
     >
       <EmojiPicker
-        emoji={""}
-        set={"twitter"}
         showSkinTones={false}
         onSelect={(data) => {
           console.log("Selected ", data);
