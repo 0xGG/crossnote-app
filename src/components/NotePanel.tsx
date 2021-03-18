@@ -55,6 +55,7 @@ import {
 import { Note } from "../lib/note";
 import { Notebook } from "../lib/notebook";
 import { Reference } from "../lib/reference";
+import { TabNodeConfig } from "../lib/tabNode";
 import { setTheme } from "../themes/manager";
 import { resolveNoteImageSrc } from "../utilities/image";
 import {
@@ -209,6 +210,13 @@ const useStyles = makeStyles((theme: Theme) =>
         padding: theme.spacing(1),
       },
       */
+
+      "& .CodeMirror span.emoji": {
+        height: "1.2em !important",
+        width: "1.2em !important",
+        top: ".2em !important",
+        position: "relative",
+      },
     },
     editor: {
       width: "100%",
@@ -217,21 +225,27 @@ const useStyles = makeStyles((theme: Theme) =>
       border: "none",
     },
     preview: {
-      position: "relative",
-      left: "0",
-      top: "0",
+      "position": "relative",
+      "left": "0",
+      "top": "0",
       // width: "800px",
-      width: "100%",
-      maxWidth: "100%",
-      margin: "0 auto",
-      height: "100%",
-      border: "none",
-      overflow: "auto !important",
-      padding: theme.spacing(1, 2),
-      zIndex: previewZIndex,
-      backgroundColor: `${theme.palette.background.paper} !important`,
+      "width": "100%",
+      "maxWidth": "100%",
+      "margin": "0 auto",
+      "height": "100%",
+      "border": "none",
+      "overflow": "auto !important",
+      "padding": theme.spacing(1, 2),
+      "zIndex": previewZIndex,
+      "backgroundColor": `${theme.palette.background.paper} !important`,
       [theme.breakpoints.down("sm")]: {
         padding: theme.spacing(1),
+      },
+      "& span.emoji": {
+        height: "1.2em !important",
+        width: "1.2em !important",
+        top: ".2em !important",
+        position: "relative",
       },
     },
     tocButtonGroup: {
@@ -349,6 +363,7 @@ export default function NotePanel(props: Props) {
   const [tocEnabled, setTocEnabled] = useState<boolean>(
     false, // props.tabNode.getTabRect().width >= 500,
   );
+  const isMounted = useRef<boolean>(false);
 
   const confirmNoteTitle = useCallback(() => {
     const finalNoteTitle = noteTitle.trim().replace(/\//g, "-");
@@ -391,6 +406,13 @@ export default function NotePanel(props: Props) {
   );
 
   useEffect(() => {
+    isMounted.current = true;
+    return () => {
+      isMounted.current = false;
+    };
+  }, []);
+
+  useEffect(() => {
     if (!note) {
       return () => {
         setEditor(null);
@@ -419,9 +441,18 @@ export default function NotePanel(props: Props) {
     }
 
     const modifiedMarkdownCallback = (data: ModifiedMarkdownEventData) => {
-      if (data.tabId === tabNode.getId()) {
+      const updateNoteIcon = () => {
+        const tabNodeConfig: TabNodeConfig = tabNode.getConfig();
+        tabNodeConfig.icon = data.noteConfig.icon;
         setNoteIcon(data.noteConfig.icon);
-        return;
+        crossnoteContainer.layoutModel.doAction(
+          Actions.updateNodeAttributes(tabNode.getId(), {
+            config: tabNodeConfig,
+          }),
+        );
+      };
+      if (data.tabId === tabNode.getId()) {
+        return updateNoteIcon();
       }
       if (
         data.notebookPath === note.notebookPath &&
@@ -431,7 +462,7 @@ export default function NotePanel(props: Props) {
         if (editor.getValue() !== data.markdown) {
           editor.setValue(data.markdown);
         }
-        setNoteIcon(note.config.icon);
+        return updateNoteIcon();
       }
     };
 
@@ -508,7 +539,14 @@ export default function NotePanel(props: Props) {
       );
       globalEmitter.off(EventType.DeletedNotebook, deletedNotebookCallback);
     };
-  }, [tabNode, editor, note]);
+  }, [
+    tabNode,
+    editor,
+    note,
+    crossnoteContainer.layoutModel,
+    crossnoteContainer.closeTabNode,
+    crossnoteContainer.getNote,
+  ]);
 
   // get note
   useEffect(() => {
@@ -1234,6 +1272,13 @@ export default function NotePanel(props: Props) {
         title = title.replace(/\[\[(.+?)\]\]/g, "$1"); // wikilinks
         title = title.replace(/&/g, "&amp;");
         title = title.replace(/</g, "&lt;");
+        title = title.replace(/:(.+?):/g, ($0, $1) => {
+          if ($1 in EmojiDefinitions) {
+            return EmojiDefinitions[$1];
+          } else {
+            return $0;
+          }
+        });
         newTOC +=
           '<div data-line="' +
           lineNo +
@@ -1285,7 +1330,7 @@ export default function NotePanel(props: Props) {
 
   // Git Status
   useEffect(() => {
-    if (!note) {
+    if (!note || !isMounted.current) {
       return;
     }
     crossnoteContainer
@@ -1293,7 +1338,7 @@ export default function NotePanel(props: Props) {
       .then((status) => {
         setGitStatus(status);
       });
-  }, [note]);
+  }, [note, crossnoteContainer.getStatus]);
 
   // Set theme
   useEffect(() => {

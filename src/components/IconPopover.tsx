@@ -38,9 +38,8 @@ export default function IconPopover(props: Props) {
       onClose={props.onClose}
     >
       <EmojiPicker
-        showSkinTones={false}
+        showSkinTones={true}
         onSelect={(data) => {
-          console.log("Selected ", data);
           crossnoteContainer.setNoteIcon(
             props.tabNode,
             note.notebookPath,

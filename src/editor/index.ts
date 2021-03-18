@@ -107,22 +107,27 @@ const emojiCodePointToShortNameMap: { [key: string]: string } = ((data) => {
     }
     const nonQualified: string = emojiData.non_qualified;
     const unified: string = emojiData.unified;
-    if (nonQualified) {
-      m[nonQualified.toLocaleLowerCase()] = shortName;
-      const emoji = twemoji.convert.fromCodePoint(nonQualified);
+    if (unified) {
+      m[unified.toLocaleLowerCase()] = shortName;
+      const emoji = unified
+        .split("-")
+        .map((x) => twemoji.convert.fromCodePoint(x))
+        .join("");
       if (emoji.trim()) {
         emojiDefinitions[shortName] = emoji;
       }
     }
-    if (unified) {
-      m[unified.toLocaleLowerCase()] = shortName;
-      const emoji = twemoji.convert.fromCodePoint(unified);
-      if (emoji.trim()) {
+    if (nonQualified) {
+      m[nonQualified.toLocaleLowerCase()] = shortName;
+      const emoji = nonQualified
+        .split("-")
+        .map((x) => twemoji.convert.fromCodePoint(x))
+        .join("");
+      if (emoji.trim() && !unified) {
         emojiDefinitions[shortName] = emoji;
       }
     }
   }
-
   enableEmoji(emojiDefinitions);
   return m;
 })(EmojiData);
