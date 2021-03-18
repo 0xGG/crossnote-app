@@ -2,10 +2,10 @@
 # yarn lockfile v1
 
 
-"@0xgg/echomd@^1.0.3":
-  version "1.0.3"
-  resolved "https://registry.npmjs.org/@0xgg/echomd/-/echomd-1.0.3.tgz#4a5b0641c383947a956f07fa6b75ea4266b12713"
-  integrity sha512-ciKFw5MTiqQoNJtfhKzPfoE5IdZIybUutOPyWQVIKNYUD84T6V9q6CPfki7QayEJVDDnAmdlY4M/a5a9dq6AMQ==
+"@0xgg/echomd@^1.0.4":
+  version "1.0.4"
+  resolved "https://registry.npmjs.org/@0xgg/echomd/-/echomd-1.0.4.tgz#dfe5aefc3b2e58ab12d8e90b51a4346243fa48d9"
+  integrity sha512-vATyQltap3796+BJ6SmUzYuhPtBKhCQfOGnMFbtVyIIpmnL2G6OI4YG4+ijr7JaFdwuuBmlfdqPw+/F/THCBAA==
   optionalDependencies:
     echarts "^5.0.2"
     emojione "^4.5.0"
@@ -3163,6 +3163,11 @@
   integrity sha512-imDtS4TAoTcXk0g7u4kkWqedB3E4qpjXzCpD2LU5M5NAXHzCDsypyvXSaG7mM8DKYkCRa7tFp4tS/lp/Wo7Q3w==
   dependencies:
     "@types/estree" "*"
+
+"@types/twemoji@^12.1.1":
+  version "12.1.1"
+  resolved "https://registry.npmjs.org/@types/twemoji/-/twemoji-12.1.1.tgz#34c5dcecff438b5be173889a6ee8ad51ba90445f"
+  integrity sha512-dW1B1WHTfrWmEzXb/tp8xsZqQHAyMB9JwLwbBqkIQVzmNUI02R7lJqxUpKFM114ygNZHKA1r74oPugCAiYHt1A==
 
 "@types/uglify-js@*":
   version "3.13.0"

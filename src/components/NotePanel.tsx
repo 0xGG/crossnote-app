@@ -236,7 +236,7 @@ const useStyles = makeStyles((theme: Theme) =>
     },
     tocButtonGroup: {
       position: "absolute",
-      top: "48px",
+      top: "60px",
       right: "8px",
       zIndex: previewZIndex + 1,
     },

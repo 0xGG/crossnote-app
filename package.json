@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "license": "AGPL-3.0-or-later",
   "dependencies": {
-    "@0xgg/echomd": "^1.0.3",
+    "@0xgg/echomd": "^1.0.4",
     "@dicebear/avatars": "^4.0.8",
     "@dicebear/avatars-female-sprites": "^4.0.8",
     "@dicebear/avatars-human-sprites": "^4.0.8",
@@ -143,6 +143,7 @@
     "@types/react-i18next": "^8.1.0",
     "@types/react-lazyload": "^3.0.0",
     "@types/react-router-dom": "^5.1.7",
+    "@types/twemoji": "^12.1.1",
     "@types/wicg-file-system-access": "^2020.9.1",
     "del": "^5.1.0",
     "gh-pages": "^3.1.0",
