@@ -128,7 +128,7 @@ export default function GraphView(props: Props) {
   }, []);
 
   useEffect(() => {
-    if (!graphView || !graphView.current || !props.tabNode) {
+    if (!graphView || !graphView.current || !props.tabNode || !tabNodeVisible) {
       return;
     }
     const resize = () => {
@@ -144,7 +144,7 @@ export default function GraphView(props: Props) {
       window.removeEventListener("resize", debouncedResize);
       props.tabNode.removeEventListener("resize");
     };
-  }, [graphView, props.tabNode]);
+  }, [graphView, props.tabNode, tabNodeVisible]);
 
   // Visibility
   useEffect(() => {

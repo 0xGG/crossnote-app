@@ -14,6 +14,7 @@ import LazyLoad from "react-lazyload";
 import { CrossnoteContainer } from "../containers/crossnote";
 import { Note } from "../lib/note";
 import { Notebook } from "../lib/notebook";
+import { TabNodeConfig } from "../lib/tabNode";
 import NoteCard, { NoteCardMargin } from "./NoteCard";
 const is = require("is_js");
 
@@ -86,13 +87,21 @@ export default function Notes(props: Props) {
 
   useEffect(() => {
     if (props.tabNode) {
+      const tabNodeConfig: TabNodeConfig = props.tabNode.getConfig();
+      if (
+        tabNodeConfig.component !== "Notes" ||
+        tabNodeConfig.notebookPath !== props.notebook.dir
+      ) {
+        return;
+      }
+
       props.tabNode.setEventListener("resize", hack);
       hack();
       return () => {
         props.tabNode.removeEventListener("resize");
       };
     }
-  }, [props.tabNode, hack]);
+  }, [props.tabNode, props.notebook.dir, hack]);
 
   useEffect(() => {
     const notes = props.notes;
