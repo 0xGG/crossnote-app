@@ -74,6 +74,10 @@ window["CodeMirror"].keyMap["sublime"] = Object.assign(
     "Ctrl-B": hypermdKeyMap["Ctrl-B"],
     "Ctrl-D": hypermdKeyMap["Ctrl-D"],
     "Ctrl-I": hypermdKeyMap["Ctrl-I"],
+    "Enter": hypermdKeyMap["Enter"],
+    "Shift-Enter": hypermdKeyMap["Shift-Enter"],
+    "Shift-Tab": hypermdKeyMap["Shift-Tab"],
+    "Tab": hypermdKeyMap["Tab"],
   },
 );
 
