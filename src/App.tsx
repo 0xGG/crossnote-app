@@ -25,6 +25,7 @@ const App: FC = () => {
         event.prompt();
         event.userChoice.then((choiceResult: any) => {
           console.log(choiceResult);
+          localStorage.removeItem("layoutModel");
         });
       } catch (error) {
         console.error(error);
