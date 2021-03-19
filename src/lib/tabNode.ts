@@ -9,6 +9,7 @@ export type TabNodeComponent =
   | "Notifications";
 
 export interface TabNodeConfig {
+  component: TabNodeComponent;
   singleton: boolean;
   noteFilePath?: string;
   notebookPath?: string;

@@ -66,6 +66,17 @@ registerWidgetCreator("crossnote.github_gist", GitHubGistWidgetCreator);
 const packageJSON = require("../../package.json");
 export const EchoMDVersion: string = packageJSON.dependencies["@0xgg/echomd"];
 
+// Hack the keymap for sublime
+const hypermdKeyMap = window["CodeMirror"].keyMap["hypermd"] || {};
+window["CodeMirror"].keyMap["sublime"] = Object.assign(
+  window["CodeMirror"].keyMap["sublime"],
+  {
+    "Ctrl-B": hypermdKeyMap["Ctrl-B"],
+    "Ctrl-D": hypermdKeyMap["Ctrl-D"],
+    "Ctrl-I": hypermdKeyMap["Ctrl-I"],
+  },
+);
+
 // Hack twemoji
 const oldTwemojiParse = twemoji.parse;
 twemoji.parse = function (what: string | HTMLElement, options: any) {

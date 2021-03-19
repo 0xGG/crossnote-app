@@ -45,6 +45,7 @@ import {
 import { Note, Notes as NotesValue } from "../lib/note";
 import { Notebook } from "../lib/notebook";
 import { OrderBy, OrderDirection } from "../lib/order";
+import { TabNodeConfig } from "../lib/tabNode";
 import Notes from "./Notes";
 
 const useStyles = makeStyles((theme: Theme) =>
@@ -155,11 +156,13 @@ export default function NotesPanel(props: Props) {
   const [searchValue, setSearchValue] = useState<string>( // Search
     props.initialSearchValue || "",
   );
-  const [searchValueInputTimeout, setSearchValueInputTimeout] = useState<
-    NodeJS.Timeout
-  >(null);
+  const [
+    searchValueInputTimeout,
+    setSearchValueInputTimeout,
+  ] = useState<NodeJS.Timeout>(null);
   const [finalSearchValue, setFinalSearchValue] = useState<string>("");
   const [fixedTopPanel, setFixedTopPanel] = useState<boolean>(false);
+  const [tabNodeVisible, setTabNodeVisible] = useState<boolean>(false);
   const container = useRef<HTMLDivElement>(null);
   const topPanel = useRef<HTMLElement>(null);
   const isMounted = useRef<boolean>(false);
@@ -201,7 +204,7 @@ export default function NotesPanel(props: Props) {
   );
 
   const refreshRawNotes = useCallback(async () => {
-    if (!isMounted.current) {
+    if (!isMounted.current || !tabNodeVisible) {
       return;
     }
     await props.notebook.refreshNotesIfNotLoaded({
@@ -216,7 +219,7 @@ export default function NotesPanel(props: Props) {
           : props.notebook.notes,
       ) as any,
     );
-  }, [props.notebook, props.note]);
+  }, [props.notebook, props.note, tabNodeVisible]);
 
   useEffect(() => {
     isMounted.current = true;
@@ -230,9 +233,33 @@ export default function NotesPanel(props: Props) {
     setFinalSearchValue("");
   }, [props.notebook]);
 
+  // Visibility
+  useEffect(() => {
+    if (!props.tabNode) {
+      return;
+    }
+    const tabNodeConfig: TabNodeConfig = props.tabNode.getConfig();
+    if (
+      tabNodeConfig.component !== "Notes" ||
+      tabNodeConfig.notebookPath !== props.notebook.dir
+    ) {
+      return;
+    }
+
+    setTabNodeVisible(props.tabNode.isVisible());
+    props.tabNode.setEventListener("visibility", function (params) {
+      if (isMounted.current) {
+        setTabNodeVisible(params.visible);
+      }
+    });
+    return () => {
+      props.tabNode.removeEventListener("visibility");
+    };
+  }, [props.tabNode, props.notebook.dir]);
+
   // Emitter
   useEffect(() => {
-    if (!globalEmitter) {
+    if (!globalEmitter || !tabNodeVisible) {
       return;
     }
     const modifiedMarkdownCallback = async (
@@ -299,7 +326,13 @@ export default function NotesPanel(props: Props) {
       );
       globalEmitter.off(EventType.DeletedNotebook, deletedNotebookCallback);
     };
-  }, [refreshRawNotes, props.notebook, props.note, props.tabNode]);
+  }, [
+    refreshRawNotes,
+    props.notebook,
+    props.note,
+    props.tabNode,
+    tabNodeVisible,
+  ]);
 
   useEffect(() => {
     if (refreshRawNotes) {

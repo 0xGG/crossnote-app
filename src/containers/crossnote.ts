@@ -397,6 +397,7 @@ function useCrossnoteContainer(initialState: InitialState) {
         component: "Note",
         name: note.title,
         config: {
+          component: "Note",
           singleton: false,
           noteFilePath: note.filePath,
           notebookPath: note.notebookPath,
@@ -765,6 +766,7 @@ function useCrossnoteContainer(initialState: InitialState) {
           name: note.title,
           component: "Note",
           config: {
+            component: "Note",
             singleton: false,
             noteFilePath: note.filePath,
             notebookPath: note.notebookPath,
@@ -796,6 +798,7 @@ function useCrossnoteContainer(initialState: InitialState) {
           name: note.title,
           component: "Note",
           config: {
+            component: "Note",
             singleton: false,
             noteFilePath: note.filePath,
             notebookPath: note.notebookPath,

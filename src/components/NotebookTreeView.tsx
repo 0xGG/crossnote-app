@@ -353,6 +353,7 @@ export default function NotebookTreeView(props: Props) {
                     id: "Graph: " + props.notebook.dir,
                     name: t("general/graph-view"),
                     config: {
+                      component: "Graph",
                       singleton: true,
                       notebookPath: props.notebook.dir,
                       icon: ":spider_web:",
@@ -393,6 +394,7 @@ export default function NotebookTreeView(props: Props) {
                     id: "Notes: " + props.notebook.dir,
                     name: props.notebook.name,
                     config: {
+                      component: "Notes",
                       singleton: true,
                       notebookPath: props.notebook.dir,
                       icon: ":notebook_with_decorative_cover:",
@@ -437,6 +439,7 @@ export default function NotebookTreeView(props: Props) {
                         type: "tab",
                         component: "Note",
                         config: {
+                          component: "Note",
                           singleton: false,
                           noteFilePath: note.filePath,
                           notebookPath: props.notebook.dir,

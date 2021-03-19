@@ -30,6 +30,7 @@ import {
   GraphViewNode,
 } from "../lib/graphView";
 import { Notebook } from "../lib/notebook";
+import { TabNodeConfig } from "../lib/tabNode";
 
 const bottomPanelHeight = 20;
 const defaultFillColor = `#aaa`;
@@ -108,13 +109,23 @@ export default function GraphView(props: Props) {
   const graphView = useRef<HTMLDivElement>(null);
   const [width, setWidth] = useState<number>(0);
   const [height, setHeight] = useState<number>(0);
-  const [hoveredGraphViewNode, setHoveredGraphViewNode] = useState<
-    GraphViewNode
-  >(null);
+  const [
+    hoveredGraphViewNode,
+    setHoveredGraphViewNode,
+  ] = useState<GraphViewNode>(null);
   const [focusedNoteFilePath, setFocusedNoteFilePath] = useState<string>(null);
+  const [tabNodeVisible, setTabNodeVisible] = useState<boolean>(false);
   const { t } = useTranslation();
   const crossnoteContainer = CrossnoteContainer.useContainer();
   const theme = useTheme();
+  const isMounted = useRef<boolean>(false);
+
+  useEffect(() => {
+    isMounted.current = true;
+    return () => {
+      isMounted.current = false;
+    };
+  }, []);
 
   useEffect(() => {
     if (!graphView || !graphView.current || !props.tabNode) {
@@ -135,8 +146,33 @@ export default function GraphView(props: Props) {
     };
   }, [graphView, props.tabNode]);
 
+  // Visibility
   useEffect(() => {
-    if (!graphView || !props.notebook) {
+    if (!props.tabNode) {
+      return;
+    }
+    const tabNodeConfig: TabNodeConfig = props.tabNode.getConfig();
+    if (
+      tabNodeConfig.component !== "Graph" ||
+      tabNodeConfig.notebookPath !== props.notebook.dir
+    ) {
+      return;
+    }
+
+    setTabNodeVisible(props.tabNode.isVisible());
+    props.tabNode.setEventListener("visibility", function (params) {
+      if (isMounted.current) {
+        setTabNodeVisible(params.visible);
+      }
+    });
+    return () => {
+      props.tabNode.removeEventListener("visibility");
+    };
+  }, [props.tabNode, props.notebook.dir]);
+
+  // Emitter
+  useEffect(() => {
+    if (!graphView || !props.notebook || !tabNodeVisible) {
       return;
     }
 
@@ -217,9 +253,13 @@ export default function GraphView(props: Props) {
       globalEmitter.off(EventType.DeletedNotebook, deletedNotebookCallback);
       globalEmitter.off(EventType.FocusedOnNote, focusedOnNoteCallback);
     };
-  }, [graphView, props.notebook, props.tabNode, graphViewData]);
+  }, [graphView, props.notebook, props.tabNode, graphViewData, tabNodeVisible]);
 
   useEffect(() => {
+    if (!tabNodeVisible) {
+      return;
+    }
+
     props.notebook
       .refreshNotesIfNotLoaded({ dir: "./", includeSubdirectories: true })
       .then(() => {
@@ -229,7 +269,7 @@ export default function GraphView(props: Props) {
       .catch((error) => {
         console.error(error);
       });
-  }, [props.notebook]);
+  }, [props.notebook, tabNodeVisible]);
 
   useEffect(() => {
     if (
