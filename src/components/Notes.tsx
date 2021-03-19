@@ -89,7 +89,8 @@ export default function Notes(props: Props) {
     if (props.tabNode) {
       const tabNodeConfig: TabNodeConfig = props.tabNode.getConfig();
       if (
-        tabNodeConfig.component !== "Notes" ||
+        (tabNodeConfig.component !== "Notes" &&
+          tabNodeConfig.component !== "Note") ||
         tabNodeConfig.notebookPath !== props.notebook.dir
       ) {
         return;
