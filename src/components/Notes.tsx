@@ -8,7 +8,8 @@ import {
 import { Skeleton } from "@material-ui/lab";
 import clsx from "clsx";
 import { TabNode } from "flexlayout-react";
-import React, { useCallback, useEffect, useState } from "react";
+import _ from "lodash";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import LazyLoad from "react-lazyload";
 import { CrossnoteContainer } from "../containers/crossnote";
@@ -139,7 +140,18 @@ export default function Notes(props: Props) {
       }
     });
 
-    setNotes([...pinned, ...unpinned]);
+    const newNotes = [...pinned, ...unpinned];
+
+    if (
+      _.differenceWith(newNotes, props.notes, (a, b) => {
+        if (a.filePath === b.filePath) {
+          return true;
+        }
+        return false;
+      })
+    ) {
+      setNotes(newNotes);
+    }
   }, [props.notes, props.searchValue]);
 
   useEffect(() => {
@@ -152,6 +164,45 @@ export default function Notes(props: Props) {
     }
   }, [notes, props.scrollElement]);
 
+  const notesComponent = useMemo(() => {
+    return (notes || []).map((note) => {
+      return (
+        <LazyLoad
+          key={"lazy-load-note-card-" + note.filePath}
+          placeholder={
+            <Box
+              style={{
+                maxWidth: "100%",
+                margin: `${NoteCardMargin}px auto`,
+                padding: theme.spacing(2, 0.5, 0),
+                height: `${lazyLoadPlaceholderHeight}px`,
+              }}
+              className={"note-card lazyload-placeholder"}
+            >
+              <Skeleton />
+              <Skeleton animation={false} />
+              <Skeleton animation="wave" />
+            </Box>
+          }
+          height={lazyLoadPlaceholderHeight}
+          overflow={true}
+          once={true}
+          scrollContainer={props.scrollElement}
+          resize={true}
+        >
+          <NoteCard
+            key={"note-card-" + note.filePath}
+            tabNode={props.tabNode}
+            note={note}
+            referredNote={props.referredNote}
+          ></NoteCard>
+        </LazyLoad>
+
+        //   <NoteCard key={"note-card-" + note.filePath} note={note}></NoteCard>
+      );
+    });
+  }, [notes, props.referredNote, props.scrollElement, props.tabNode]);
+
   return (
     <React.Fragment>
       <Box style={{ textAlign: "center" }}>
@@ -163,42 +214,7 @@ export default function Notes(props: Props) {
         ></Chip>
       </Box>
       <div className={clsx(classes.notesList)}>
-        {(notes || []).map((note) => {
-          return (
-            <LazyLoad
-              key={"lazy-load-note-card-" + note.filePath}
-              placeholder={
-                <Box
-                  style={{
-                    maxWidth: "100%",
-                    margin: `${NoteCardMargin}px auto`,
-                    padding: theme.spacing(2, 0.5, 0),
-                    height: `${lazyLoadPlaceholderHeight}px`,
-                  }}
-                  className={"note-card lazyload-placeholder"}
-                >
-                  <Skeleton />
-                  <Skeleton animation={false} />
-                  <Skeleton animation="wave" />
-                </Box>
-              }
-              height={lazyLoadPlaceholderHeight}
-              overflow={true}
-              once={true}
-              scrollContainer={props.scrollElement}
-              resize={true}
-            >
-              <NoteCard
-                key={"note-card-" + note.filePath}
-                tabNode={props.tabNode}
-                note={note}
-                referredNote={props.referredNote}
-              ></NoteCard>
-            </LazyLoad>
-
-            //   <NoteCard key={"note-card-" + note.filePath} note={note}></NoteCard>
-          );
-        })}
+        {notesComponent}
         {crossnoteContainer.initialized &&
           props.notebook.hasLoadedNotes &&
           notes.length === 0 && (

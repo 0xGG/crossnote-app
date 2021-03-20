@@ -351,37 +351,37 @@ export default function NotesPanel(props: Props) {
   }, [refreshRawNotes, props.note]);
 
   useEffect(() => {
-    const notes = Object.values(rawNotesMap);
+    const newNotes = Object.values(rawNotesMap);
     if (orderBy === OrderBy.ModifiedAt) {
       if (orderDirection === OrderDirection.DESC) {
-        notes.sort(
+        newNotes.sort(
           (a, b) =>
             b.config.modifiedAt.getTime() - a.config.modifiedAt.getTime(),
         );
       } else {
-        notes.sort(
+        newNotes.sort(
           (a, b) =>
             a.config.modifiedAt.getTime() - b.config.modifiedAt.getTime(),
         );
       }
     } else if (orderBy === OrderBy.CreatedAt) {
       if (orderDirection === OrderDirection.DESC) {
-        notes.sort(
+        newNotes.sort(
           (a, b) => b.config.createdAt.getTime() - a.config.createdAt.getTime(),
         );
       } else {
-        notes.sort(
+        newNotes.sort(
           (a, b) => a.config.createdAt.getTime() - b.config.createdAt.getTime(),
         );
       }
     } else if (orderBy === OrderBy.Title) {
       if (orderDirection === OrderDirection.DESC) {
-        notes.sort((a, b) => b.title.localeCompare(a.title));
+        newNotes.sort((a, b) => b.title.localeCompare(a.title));
       } else {
-        notes.sort((a, b) => a.title.localeCompare(b.title));
+        newNotes.sort((a, b) => a.title.localeCompare(b.title));
       }
     }
-    setNotes(notes);
+    setNotes(newNotes);
   }, [rawNotesMap, orderBy, orderDirection]);
 
   useEffect(() => {
@@ -545,7 +545,13 @@ export default function NotesPanel(props: Props) {
         )}
       </div>
     );
-  }, [props.notebook.hasLoadedNotes]);
+  }, [
+    props.tabNode,
+    props.note,
+    props.notebook,
+    props.notebook.hasLoadedNotes,
+    notes,
+  ]);
 
   if (props.note && !notes.length) {
     return <Box></Box>;
