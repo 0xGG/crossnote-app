@@ -9,7 +9,7 @@ import {
 import clsx from "clsx";
 import * as d3 from "d3";
 import { TabNode } from "flexlayout-react";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { CrossnoteContainer } from "../containers/crossnote";
 import {
@@ -30,6 +30,7 @@ import {
   GraphViewNode,
 } from "../lib/graphView";
 import { Notebook } from "../lib/notebook";
+import { TabNodeConfig } from "../lib/tabNode";
 
 const bottomPanelHeight = 20;
 const defaultFillColor = `#aaa`;
@@ -106,23 +107,175 @@ export default function GraphView(props: Props) {
     links: [],
   });
   const graphView = useRef<HTMLDivElement>(null);
-  const [width, setWidth] = useState<number>(0);
-  const [height, setHeight] = useState<number>(0);
-  const [hoveredGraphViewNode, setHoveredGraphViewNode] = useState<
-    GraphViewNode
-  >(null);
+  const [
+    hoveredGraphViewNode,
+    setHoveredGraphViewNode,
+  ] = useState<GraphViewNode>(null);
   const [focusedNoteFilePath, setFocusedNoteFilePath] = useState<string>(null);
+  const [tabNodeVisible, setTabNodeVisible] = useState<boolean>(false);
   const { t } = useTranslation();
   const crossnoteContainer = CrossnoteContainer.useContainer();
   const theme = useTheme();
+  const isMounted = useRef<boolean>(false);
+
+  // Graph related variables
+  const [graphLayout, setGraphLayout] = useState<
+    d3.Simulation<d3.SimulationNodeDatum, undefined>
+  >(null);
+  const [svg, setSVG] = useState<
+    d3.Selection<SVGSVGElement, unknown, HTMLDivElement, undefined>
+  >(null);
+  const [container, setContainer] = useState<
+    d3.Selection<SVGGElement, unknown, SVGSVGElement, undefined>
+  >(null);
+  const [link, setLink] = useState<
+    d3.Selection<SVGLineElement, GraphViewLink, SVGGElement, unknown>
+  >(null);
+  const [node, setNode] = useState<
+    d3.Selection<SVGCircleElement, GraphViewNode, SVGGElement, unknown>
+  >(null);
+  const [text, setText] = useState<
+    d3.Selection<SVGTextElement, GraphViewNode, SVGGElement, unknown>
+  >(null);
+
+  const neigh = useCallback(
+    (n1: GraphViewNode, n2: GraphViewNode) => {
+      if (!props.notebook) {
+        return false;
+      } else {
+        return props.notebook.referenceMap.hasRelation(n1.id, n2.id);
+      }
+    },
+    [props.notebook],
+  );
+
+  const removeArrows = useCallback(() => {
+    if (svg) {
+      svg.selectAll(".arrows").remove();
+    }
+  }, [svg]);
+
+  const drawArrowPath = useCallback(
+    (d: GraphViewNode) => {
+      if (!container) {
+        return;
+      }
+      removeArrows();
+      const arrow = container
+        .append("g")
+        .attr("class", "arrows")
+        .selectAll("g")
+        .data(graphViewData.links)
+        .enter()
+        .filter(function (l) {
+          return (
+            ((l.source as any).id === d.id || (l.target as any).id === d.id) &&
+            (l.source as any).id !== (l.target as any).id
+          );
+        })
+        .append("circle")
+        .style("fill", theme.palette.primary.light)
+        .attr("r", 2);
+
+      const repeat = () => {
+        if (!arrow) {
+          return;
+        }
+        arrow
+          .attr("cx", function (l: any) {
+            return (l.source as any).x;
+          })
+          .attr("cy", function (l: any) {
+            return (l.source as any).y;
+          })
+          .transition()
+          .duration(1500)
+          .ease(d3.easeLinear)
+          .attr("cx", function (l: any) {
+            return (l.target as any).x;
+          })
+          .attr("cy", function (l: any) {
+            return (l.target as any).y;
+          })
+          .on("end", repeat);
+      };
+      repeat();
+    },
+    [container, graphViewData.links, removeArrows, theme.palette.primary.light],
+  );
+
+  const focus = useCallback(
+    (event: any, d: GraphViewNode) => {
+      if (!node || !link) {
+        return;
+      }
+      node
+        .filter(function (o) {
+          return o.id === d.id || neigh(o, d);
+        })
+        .style("fill", function (o) {
+          return o.id === d.id
+            ? theme.palette.primary.main
+            : neigh(o, d)
+            ? theme.palette.primary.light
+            : defaultFillColor;
+        });
+      link.style("stroke", function (o) {
+        return (o.source as any).id === d.id || (o.target as any).id === d.id
+          ? theme.palette.primary.light
+          : defaultFillColor;
+      });
+      drawArrowPath(d);
+      setHoveredGraphViewNode(d);
+    },
+    [
+      node,
+      link,
+      drawArrowPath,
+      neigh,
+      theme.palette.primary.main,
+      theme.palette.primary.light,
+    ],
+  );
+
+  const unfocus = useCallback(() => {
+    if (!node || !link) {
+      return;
+    }
+    node.style("fill", defaultFillColor);
+    link.style("stroke", defaultFillColor);
+    removeArrows();
+    setHoveredGraphViewNode(null);
+  }, [node, link, removeArrows]);
 
   useEffect(() => {
-    if (!graphView || !graphView.current || !props.tabNode) {
+    isMounted.current = true;
+    return () => {
+      isMounted.current = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (
+      !graphView ||
+      !graphLayout ||
+      !graphView.current ||
+      !props.tabNode ||
+      !tabNodeVisible
+    ) {
       return;
     }
     const resize = () => {
-      setWidth(graphView.current.offsetWidth);
-      setHeight(graphView.current.offsetHeight);
+      const width = graphView.current.offsetWidth;
+      const height = graphView.current.offsetHeight;
+      d3.select(graphView.current)
+        .selectChild()
+        .attr("width", width)
+        .attr("height", height);
+      graphLayout
+        .force("center", d3.forceCenter(width / 2, height / 2))
+        .force("x", d3.forceX(width / 2).strength(1))
+        .force("y", d3.forceY(height / 2).strength(1));
     };
     const debouncedResize = debounce(resize, 1000);
     window.addEventListener("resize", debouncedResize);
@@ -133,10 +286,38 @@ export default function GraphView(props: Props) {
       window.removeEventListener("resize", debouncedResize);
       props.tabNode.removeEventListener("resize");
     };
-  }, [graphView, props.tabNode]);
+  }, [graphView, graphLayout, props.tabNode, tabNodeVisible]);
 
+  // Visibility
   useEffect(() => {
-    if (!graphView || !props.notebook) {
+    if (!props.tabNode) {
+      return;
+    }
+    const tabNodeConfig: TabNodeConfig = props.tabNode.getConfig();
+    if (
+      tabNodeConfig.component !== "Graph" ||
+      tabNodeConfig.notebookPath !== props.notebook.dir
+    ) {
+      return;
+    }
+
+    setTabNodeVisible(props.tabNode.isVisible());
+    props.tabNode.setEventListener("visibility", function (params) {
+      // hack: need to wait for props.tabNode.isVisible() === params.visible to setState
+      setTimeout(() => {
+        if (isMounted.current) {
+          setTabNodeVisible(params.visible);
+        }
+      }, 1000);
+    });
+    return () => {
+      props.tabNode.removeEventListener("visibility");
+    };
+  }, [props.tabNode, props.notebook.dir]);
+
+  // Emitter
+  useEffect(() => {
+    if (!graphView || !props.notebook || !tabNodeVisible || !props.tabNode) {
       return;
     }
 
@@ -217,9 +398,19 @@ export default function GraphView(props: Props) {
       globalEmitter.off(EventType.DeletedNotebook, deletedNotebookCallback);
       globalEmitter.off(EventType.FocusedOnNote, focusedOnNoteCallback);
     };
-  }, [graphView, props.notebook, props.tabNode, graphViewData]);
+  }, [
+    crossnoteContainer.closeTabNode,
+    graphViewData.hash,
+    props.notebook,
+    props.tabNode,
+    tabNodeVisible,
+  ]);
 
   useEffect(() => {
+    if (!tabNodeVisible) {
+      return;
+    }
+
     props.notebook
       .refreshNotesIfNotLoaded({ dir: "./", includeSubdirectories: true })
       .then(() => {
@@ -229,32 +420,27 @@ export default function GraphView(props: Props) {
       .catch((error) => {
         console.error(error);
       });
-  }, [props.notebook]);
+  }, [props.notebook, tabNodeVisible]);
 
   useEffect(() => {
-    if (
-      !graphView ||
-      !graphView.current ||
-      !graphViewData ||
-      !width ||
-      !height
-    ) {
+    if (!graphView || !graphView.current || !graphViewData) {
       return;
     }
 
     const svg = d3
       .select(graphView.current)
       .append("svg")
-      .attr("width", width)
-      .attr("height", height);
+      .attr("width", graphView.current.offsetWidth)
+      .attr("height", graphView.current.offsetHeight);
+    setSVG(svg);
+
     const container = svg.append("g");
+    setContainer(container);
 
     const zoomHandler = d3
       .zoom()
       .scaleExtent([0.1, 4])
       .on("zoom", function (event: any) {
-        console.log("zoomed");
-        (window as any)["event_"] = event;
         container.attr("transform", event.transform);
       });
     zoomHandler(svg as any);
@@ -268,6 +454,7 @@ export default function GraphView(props: Props) {
       .append("line")
       .style("stroke", defaultFillColor)
       .attr("stroke-width", "0.5px");
+    setLink(link);
 
     const node = container
       .append("g")
@@ -278,6 +465,7 @@ export default function GraphView(props: Props) {
       .append("circle")
       .attr("r", 8)
       .style("fill", defaultFillColor);
+    setNode(node);
 
     const text = container
       .append("g")
@@ -291,14 +479,31 @@ export default function GraphView(props: Props) {
       .style("font-family", "Arial")
       .style("font-size", 12)
       .style("pointer-events", "none");
+    setText(text);
 
-    let arrow: d3.Selection<
-      SVGCircleElement,
-      GraphViewLink,
-      SVGGElement,
-      unknown
-    >;
+    console.log("simulated");
+    return () => {
+      console.log("destroyed");
+      svg.remove();
+      setSVG(null);
+      setContainer(null);
+      setNode(null);
+      setLink(null);
+      setText(null);
+    };
+  }, [
+    graphViewData,
+    graphView,
+    props.notebook,
+    theme.palette.text,
+    theme.palette.primary,
+    crossnoteContainer.openNoteAtPath,
+  ]);
 
+  useEffect(() => {
+    if (!svg || !container || !link || !node || !text) {
+      return;
+    }
     /*
     // Define the div for the tooltip
     const tooltip = d3
@@ -311,39 +516,6 @@ export default function GraphView(props: Props) {
     const fixna = (x: number) => {
       if (isFinite(x)) return x;
       return 0;
-    };
-
-    const neigh = (n1: GraphViewNode, n2: GraphViewNode) => {
-      return props.notebook.referenceMap.hasRelation(n1.id, n2.id);
-    };
-
-    const focus = (event: any, d: GraphViewNode) => {
-      node
-        .filter(function (o) {
-          return o.id === d.id || neigh(o, d);
-        })
-        .style("fill", function (o) {
-          return o.id === d.id
-            ? theme.palette.primary.main
-            : neigh(o, d)
-            ? theme.palette.primary.light
-            : defaultFillColor;
-        });
-      link.style("stroke", function (o) {
-        return (o.source as any).id === d.id || (o.target as any).id === d.id
-          ? theme.palette.primary.light
-          : defaultFillColor;
-      });
-      drawArrowPath(d);
-      setHoveredGraphViewNode(d);
-    };
-
-    const unfocus = () => {
-      node.style("fill", defaultFillColor);
-      link.style("stroke", defaultFillColor);
-      removeArrows();
-      setHoveredGraphViewNode(null);
-      // tooltip.style("opacity", 0);
     };
 
     const dragstarted = function (event: any, d: any) {
@@ -368,56 +540,6 @@ export default function GraphView(props: Props) {
 
       // @ts-ignore
       d3.select(this).attr("stroke", null);
-    };
-
-    const removeArrows = () => {
-      if (arrow) {
-        svg.selectAll(".arrows").remove();
-        arrow = null;
-      }
-    };
-
-    const drawArrowPath = (d: GraphViewNode) => {
-      removeArrows();
-      arrow = container
-        .append("g")
-        .attr("class", "arrows")
-        .selectAll("g")
-        .data(graphViewData.links)
-        .enter()
-        .filter(function (l) {
-          return (
-            ((l.source as any).id === d.id || (l.target as any).id === d.id) &&
-            (l.source as any).id !== (l.target as any).id
-          );
-        })
-        .append("circle")
-        .style("fill", theme.palette.primary.light)
-        .attr("r", 2);
-
-      const repeat = () => {
-        if (!arrow) {
-          return;
-        }
-        arrow
-          .attr("cx", function (l: any) {
-            return (l.source as any).x;
-          })
-          .attr("cy", function (l: any) {
-            return (l.source as any).y;
-          })
-          .transition()
-          .duration(1500)
-          .ease(d3.easeLinear)
-          .attr("cx", function (l: any) {
-            return (l.target as any).x;
-          })
-          .attr("cy", function (l: any) {
-            return (l.target as any).y;
-          })
-          .on("end", repeat);
-      };
-      repeat();
     };
 
     const updateLink = (link: any) => {
@@ -449,6 +571,8 @@ export default function GraphView(props: Props) {
       text.call(updateNode);
     };
 
+    const width = graphView.current.offsetWidth;
+    const height = graphView.current.offsetHeight;
     const graphLayout = d3
       .forceSimulation(graphViewData.nodes as any)
       .force("charge", d3.forceManyBody().strength(-3000))
@@ -466,6 +590,7 @@ export default function GraphView(props: Props) {
           .strength(1),
       )
       .on("tick", ticked);
+    setGraphLayout(graphLayout);
 
     node.on("mouseover", focus).on("mouseout", unfocus);
     const drag = d3
@@ -478,29 +603,29 @@ export default function GraphView(props: Props) {
     node.on("click", (event: any, d: GraphViewNode) => {
       crossnoteContainer.openNoteAtPath(props.notebook, d.id);
     });
+  }, [
+    svg,
+    container,
+    link,
+    node,
+    text,
+    crossnoteContainer.openNoteAtPath,
+    graphViewData.links,
+    graphViewData.nodes,
+    focus,
+    unfocus,
+    props.notebook,
+  ]);
 
-    console.log("simulated");
+  useEffect(() => {
     if (focusedNoteFilePath) {
       const d = graphViewData.nodes.find((n) => n.id === focusedNoteFilePath);
       if (d) {
+        unfocus();
         focus(null, d);
       }
     }
-
-    return () => {
-      console.log("destroyed");
-      svg.remove();
-    };
-  }, [
-    graphViewData,
-    graphView,
-    width,
-    height,
-    props.notebook,
-    theme.palette.text,
-    theme.palette.primary,
-    focusedNoteFilePath,
-  ]);
+  }, [focusedNoteFilePath, unfocus, focus, graphViewData.nodes]);
 
   return (
     <Box className={clsx(classes.graphViewPanel)}>

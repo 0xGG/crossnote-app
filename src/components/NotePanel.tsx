@@ -316,6 +316,7 @@ const useStyles = makeStyles((theme: Theme) =>
       maxHeight: `${bottomPanelHeight}px`,
       backgroundColor: theme.palette.primary.main,
       color: theme.palette.getContrastText(theme.palette.primary.main),
+      zIndex: previewZIndex + 1,
     },
     filePath: {
       wordBreak: "break-all",

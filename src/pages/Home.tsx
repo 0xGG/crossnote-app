@@ -254,6 +254,8 @@ export function Home(props: Props) {
                       type: "tab",
                       component: "Note",
                       config: {
+                        component: "Note",
+
                         singleton: false,
                         noteFilePath: note.filePath,
                         notebookPath: note.notebookPath,
@@ -269,6 +271,8 @@ export function Home(props: Props) {
                       id: "Notes: " + notebook.dir,
                       name: notebook.name,
                       config: {
+                        component: "Note",
+
                         singleton: true,
                         notebookPath: notebook.dir,
                         icon: ":notebook_with_decorative_cover:",
@@ -282,6 +286,7 @@ export function Home(props: Props) {
                     id: "Notes: " + notebook.dir,
                     name: notebook.name,
                     config: {
+                      component: "Notes",
                       singleton: true,
                       notebookPath: notebook.dir,
                       icon: ":notebook_with_decorative_cover:",
@@ -393,6 +398,7 @@ export function Home(props: Props) {
                 name: t("general/Settings"),
                 id: "Settings",
                 config: {
+                  component: "Settings",
                   singleton: true,
                   icon: ":gear:",
                 },
@@ -435,6 +441,7 @@ export function Home(props: Props) {
                   name: "🔔 " + t("general/Notifications"),
                   id: "Notifications",
                   config: {
+                    component: "Notifications",
                     singleton: true,
                   },
                 });

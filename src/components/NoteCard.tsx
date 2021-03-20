@@ -167,6 +167,7 @@ export default function NoteCard(props: Props) {
         type: "tab",
         component: "Note",
         config: {
+          component: "Note",
           singleton: false,
           noteFilePath: note.filePath,
           notebookPath: note.notebookPath,
@@ -391,6 +392,7 @@ export default function NoteCard(props: Props) {
                         type: "tab",
                         component: "Note",
                         config: {
+                          component: "Note",
                           singleton: false,
                           noteFilePath: note.filePath,
                           notebookPath: note.notebookPath,

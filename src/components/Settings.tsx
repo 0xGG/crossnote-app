@@ -172,12 +172,14 @@ interface Props {}
 export function Settings(props: Props) {
   const classes = useStyles(props);
   const { t } = useTranslation();
-  const [colorPickerAnchorElement, setColorPickerAnchorElement] = useState<
-    HTMLElement
-  >(null);
-  const [imageUploaderElement, setImageUploaderElement] = useState<
-    HTMLInputElement
-  >(null);
+  const [
+    colorPickerAnchorElement,
+    setColorPickerAnchorElement,
+  ] = useState<HTMLElement>(null);
+  const [
+    imageUploaderElement,
+    setImageUploaderElement,
+  ] = useState<HTMLInputElement>(null);
   const displayColorPicker = Boolean(colorPickerAnchorElement);
   const settingsContainer = SettingsContainer.useContainer();
   const cloudContainer = CloudContainer.useContainer();
@@ -627,6 +629,7 @@ export function Settings(props: Props) {
                 component: "Privacy",
                 id: "Privacy",
                 config: {
+                  component: "Privacy",
                   singleton: true,
                 },
               });
