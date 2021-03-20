@@ -29,7 +29,13 @@ import {
   SortDescending,
   SortVariant,
 } from "mdi-material-ui";
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { useTranslation } from "react-i18next";
 import { CrossnoteContainer } from "../containers/crossnote";
 import {
@@ -345,37 +351,37 @@ export default function NotesPanel(props: Props) {
   }, [refreshRawNotes, props.note]);
 
   useEffect(() => {
-    const notes = Object.values(rawNotesMap);
+    const newNotes = Object.values(rawNotesMap);
     if (orderBy === OrderBy.ModifiedAt) {
       if (orderDirection === OrderDirection.DESC) {
-        notes.sort(
+        newNotes.sort(
           (a, b) =>
             b.config.modifiedAt.getTime() - a.config.modifiedAt.getTime(),
         );
       } else {
-        notes.sort(
+        newNotes.sort(
           (a, b) =>
             a.config.modifiedAt.getTime() - b.config.modifiedAt.getTime(),
         );
       }
     } else if (orderBy === OrderBy.CreatedAt) {
       if (orderDirection === OrderDirection.DESC) {
-        notes.sort(
+        newNotes.sort(
           (a, b) => b.config.createdAt.getTime() - a.config.createdAt.getTime(),
         );
       } else {
-        notes.sort(
+        newNotes.sort(
           (a, b) => a.config.createdAt.getTime() - b.config.createdAt.getTime(),
         );
       }
     } else if (orderBy === OrderBy.Title) {
       if (orderDirection === OrderDirection.DESC) {
-        notes.sort((a, b) => b.title.localeCompare(a.title));
+        newNotes.sort((a, b) => b.title.localeCompare(a.title));
       } else {
-        notes.sort((a, b) => a.title.localeCompare(b.title));
+        newNotes.sort((a, b) => a.title.localeCompare(b.title));
       }
     }
-    setNotes(notes);
+    setNotes(newNotes);
   }, [rawNotesMap, orderBy, orderDirection]);
 
   useEffect(() => {
@@ -405,137 +411,151 @@ export default function NotesPanel(props: Props) {
     }
   }, 15000);
 
+  const rootComponent = useMemo(() => {
+    return (
+      <div className={clsx(classes.notesPanel, "notes-panel")} ref={container}>
+        <Box
+          className={clsx(
+            classes.topPanel,
+            fixedTopPanel ? classes.fixedTopPanel : "",
+          )}
+        >
+          {props.title && (
+            <Typography
+              variant={"h6"}
+              style={{
+                padding: "6px 0 7px",
+                color: theme.palette.text.primary,
+              }}
+            >
+              {props.title}
+            </Typography>
+          )}
+          <Box className={clsx(classes.row)}>
+            <div className={classes.search}>
+              <div className={classes.searchIcon}>
+                <Magnify />
+              </div>
+              <InputBase
+                placeholder={t("search/notes")}
+                classes={{
+                  root: classes.inputRoot,
+                  input: classes.inputInput,
+                }}
+                value={searchValue}
+                inputProps={{ "aria-label": "search" }}
+                onChange={onChangeSearchValue}
+                autoComplete={"off"}
+                autoCorrect={"off"}
+              />
+            </div>
+            <IconButton
+              onClick={createNewNote}
+              disabled={!crossnoteContainer.initialized || isCreatingNote}
+            >
+              <Tooltip title={t("general/new-note")}>
+                <FileEditOutline></FileEditOutline>
+              </Tooltip>
+            </IconButton>
+            <IconButton
+              onClick={(event) => setSortMenuAnchorEl(event.currentTarget)}
+            >
+              <SortVariant></SortVariant>
+            </IconButton>
+          </Box>
+        </Box>
+
+        <Popover
+          anchorEl={sortMenuAnchorEl}
+          keepMounted
+          open={Boolean(sortMenuAnchorEl)}
+          onClose={() => setSortMenuAnchorEl(null)}
+        >
+          <List>
+            <ListItem
+              button
+              onClick={() => setOrderBy(OrderBy.ModifiedAt)}
+              className={clsx(
+                orderBy === OrderBy.ModifiedAt && classes.sortSelected,
+              )}
+            >
+              <ListItemText primary={t("general/date-modified")}></ListItemText>
+            </ListItem>
+            <ListItem
+              button
+              onClick={() => setOrderBy(OrderBy.CreatedAt)}
+              className={clsx(
+                orderBy === OrderBy.CreatedAt && classes.sortSelected,
+              )}
+            >
+              <ListItemText primary={t("general/date-created")}></ListItemText>
+            </ListItem>
+            <ListItem
+              button
+              onClick={() => setOrderBy(OrderBy.Title)}
+              className={clsx(
+                orderBy === OrderBy.Title && classes.sortSelected,
+              )}
+            >
+              <ListItemText primary={t("general/title")}></ListItemText>
+            </ListItem>
+            <Divider></Divider>
+            <ListItem
+              button
+              onClick={() => setOrderDirection(OrderDirection.DESC)}
+              className={clsx(
+                orderDirection === OrderDirection.DESC && classes.sortSelected,
+              )}
+            >
+              <ListItemText primary={t("general/Desc")}></ListItemText>
+              <ListItemIcon style={{ marginLeft: "8px" }}>
+                <SortDescending></SortDescending>
+              </ListItemIcon>
+            </ListItem>
+            <ListItem
+              button
+              onClick={() => setOrderDirection(OrderDirection.ASC)}
+              className={clsx(
+                orderDirection === OrderDirection.ASC && classes.sortSelected,
+              )}
+            >
+              <ListItemText primary={t("general/Asc")}></ListItemText>
+              <ListItemIcon style={{ marginLeft: "8px" }}>
+                <SortAscending></SortAscending>
+              </ListItemIcon>
+            </ListItem>
+          </List>
+        </Popover>
+
+        {props.notebook.hasLoadedNotes ? (
+          <Notes
+            tabNode={props.tabNode}
+            notebook={props.notebook}
+            notes={notes}
+            referredNote={props.note}
+            searchValue={finalSearchValue}
+            scrollElement={
+              container && container.current && container.current.parentElement
+            }
+          ></Notes>
+        ) : (
+          <CircularProgress
+            className={clsx(classes.loading)}
+          ></CircularProgress>
+        )}
+      </div>
+    );
+  }, [
+    props.tabNode,
+    props.note,
+    props.notebook,
+    props.notebook.hasLoadedNotes,
+    notes,
+  ]);
+
   if (props.note && !notes.length) {
     return <Box></Box>;
   }
 
-  return (
-    <div className={clsx(classes.notesPanel, "notes-panel")} ref={container}>
-      <Box
-        className={clsx(
-          classes.topPanel,
-          fixedTopPanel ? classes.fixedTopPanel : "",
-        )}
-      >
-        {props.title && (
-          <Typography
-            variant={"h6"}
-            style={{
-              padding: "6px 0 7px",
-              color: theme.palette.text.primary,
-            }}
-          >
-            {props.title}
-          </Typography>
-        )}
-        <Box className={clsx(classes.row)}>
-          <div className={classes.search}>
-            <div className={classes.searchIcon}>
-              <Magnify />
-            </div>
-            <InputBase
-              placeholder={t("search/notes")}
-              classes={{
-                root: classes.inputRoot,
-                input: classes.inputInput,
-              }}
-              value={searchValue}
-              inputProps={{ "aria-label": "search" }}
-              onChange={onChangeSearchValue}
-              autoComplete={"off"}
-              autoCorrect={"off"}
-            />
-          </div>
-          <IconButton
-            onClick={createNewNote}
-            disabled={!crossnoteContainer.initialized || isCreatingNote}
-          >
-            <Tooltip title={t("general/new-note")}>
-              <FileEditOutline></FileEditOutline>
-            </Tooltip>
-          </IconButton>
-          <IconButton
-            onClick={(event) => setSortMenuAnchorEl(event.currentTarget)}
-          >
-            <SortVariant></SortVariant>
-          </IconButton>
-        </Box>
-      </Box>
-
-      <Popover
-        anchorEl={sortMenuAnchorEl}
-        keepMounted
-        open={Boolean(sortMenuAnchorEl)}
-        onClose={() => setSortMenuAnchorEl(null)}
-      >
-        <List>
-          <ListItem
-            button
-            onClick={() => setOrderBy(OrderBy.ModifiedAt)}
-            className={clsx(
-              orderBy === OrderBy.ModifiedAt && classes.sortSelected,
-            )}
-          >
-            <ListItemText primary={t("general/date-modified")}></ListItemText>
-          </ListItem>
-          <ListItem
-            button
-            onClick={() => setOrderBy(OrderBy.CreatedAt)}
-            className={clsx(
-              orderBy === OrderBy.CreatedAt && classes.sortSelected,
-            )}
-          >
-            <ListItemText primary={t("general/date-created")}></ListItemText>
-          </ListItem>
-          <ListItem
-            button
-            onClick={() => setOrderBy(OrderBy.Title)}
-            className={clsx(orderBy === OrderBy.Title && classes.sortSelected)}
-          >
-            <ListItemText primary={t("general/title")}></ListItemText>
-          </ListItem>
-          <Divider></Divider>
-          <ListItem
-            button
-            onClick={() => setOrderDirection(OrderDirection.DESC)}
-            className={clsx(
-              orderDirection === OrderDirection.DESC && classes.sortSelected,
-            )}
-          >
-            <ListItemText primary={t("general/Desc")}></ListItemText>
-            <ListItemIcon style={{ marginLeft: "8px" }}>
-              <SortDescending></SortDescending>
-            </ListItemIcon>
-          </ListItem>
-          <ListItem
-            button
-            onClick={() => setOrderDirection(OrderDirection.ASC)}
-            className={clsx(
-              orderDirection === OrderDirection.ASC && classes.sortSelected,
-            )}
-          >
-            <ListItemText primary={t("general/Asc")}></ListItemText>
-            <ListItemIcon style={{ marginLeft: "8px" }}>
-              <SortAscending></SortAscending>
-            </ListItemIcon>
-          </ListItem>
-        </List>
-      </Popover>
-
-      {props.notebook.hasLoadedNotes ? (
-        <Notes
-          tabNode={props.tabNode}
-          notebook={props.notebook}
-          notes={notes}
-          referredNote={props.note}
-          searchValue={finalSearchValue}
-          scrollElement={
-            container && container.current && container.current.parentElement
-          }
-        ></Notes>
-      ) : (
-        <CircularProgress className={clsx(classes.loading)}></CircularProgress>
-      )}
-    </div>
-  );
+  return rootComponent;
 }
