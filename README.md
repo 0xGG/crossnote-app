@@ -30,6 +30,20 @@ Let's open the [Welcome Notebook](https://crossnote.app/?repo=https%3A%2F%2Fgith
 
 ![Screenshot from 2021-02-28 22-47-51](https://user-images.githubusercontent.com/1908863/109422670-876f8000-7a17-11eb-911f-8a8efee856ad.png)
 
+## Sponsors
+
+<p><a title="Try CodeStream" href="https://sponsorlink.codestream.com/?utm_source=vscmarket&amp;utm_campaign=shd101wyy-markdown&amp;utm_medium=banner"><img src="https://alt-images.codestream.com/codestream_logo_shd101wyy-markdown.png"></a></br>
+Manage pull requests and conduct code reviews in your IDE with full source-tree context. Comment on any line, not just the diffs. Use jump-to-definition, your favorite keybindings, and code intelligence with more of your workflow.<br> <a title="Try CodeStream" href="https://sponsorlink.codestream.com/?utm_source=vscmarket&amp;utm_campaign=shd101wyy-markdown&amp;utm_medium=banner">Learn More</a></p>
+
+<br>
+
+<a href="https://github.com/sponsors/shd101wyy">
+  <img src="https://github.blog/wp-content/uploads/2019/05/mona-heart-featured.png?" width="200"></a><br>
+
+These [GitHub Sponsors](https://github.com/sponsors/shd101wyy#sponsors) help push this project forward 🎉.
+
+
+
 ## Development
 
 Please check [this documentation](https://github.com/0xGG/welcome-notebook/tree/master/development).
