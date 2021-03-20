@@ -303,9 +303,12 @@ export default function GraphView(props: Props) {
 
     setTabNodeVisible(props.tabNode.isVisible());
     props.tabNode.setEventListener("visibility", function (params) {
-      if (isMounted.current) {
-        setTabNodeVisible(params.visible);
-      }
+      // hack: need to wait for props.tabNode.isVisible() === params.visible to setState
+      setTimeout(() => {
+        if (isMounted.current) {
+          setTabNodeVisible(params.visible);
+        }
+      }, 1000);
     });
     return () => {
       props.tabNode.removeEventListener("visibility");
