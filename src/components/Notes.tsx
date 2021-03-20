@@ -8,7 +8,6 @@ import {
 import { Skeleton } from "@material-ui/lab";
 import clsx from "clsx";
 import { TabNode } from "flexlayout-react";
-import _ from "lodash";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import LazyLoad from "react-lazyload";
@@ -106,11 +105,11 @@ export default function Notes(props: Props) {
   }, [props.tabNode, props.notebook.dir, hack]);
 
   useEffect(() => {
-    const notes = props.notes;
+    const newNotes = props.notes;
     const searchValue = props.searchValue;
     const pinned: Note[] = [];
     const unpinned: Note[] = [];
-    notes.forEach((note) => {
+    newNotes.forEach((note) => {
       // TODO: Convert to use MiniSearch for searching
       if (searchValue.trim().length) {
         const regexp = new RegExp(
@@ -140,18 +139,21 @@ export default function Notes(props: Props) {
       }
     });
 
-    const newNotes = [...pinned, ...unpinned];
+    const mergedNotes = [...pinned, ...unpinned];
 
-    if (
-      _.differenceWith(newNotes, props.notes, (a, b) => {
-        if (a.filePath === b.filePath) {
-          return true;
-        }
-        return false;
-      })
-    ) {
-      setNotes(newNotes);
+    if (mergedNotes.length !== notes.length) {
+      setNotes(mergedNotes);
+      return;
     }
+
+    mergedNotes.some((mergedNote, index) => {
+      const note = notes[index];
+      if (mergedNote.filePath !== note.filePath) {
+        setNotes(mergedNotes);
+        return true;
+      }
+      return false;
+    });
   }, [props.notes, props.searchValue]);
 
   useEffect(() => {
