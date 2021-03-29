@@ -10,14 +10,14 @@ import {
   ListItemText,
   Popover,
   Tooltip,
-  Typography,
+  Typography
 } from "@material-ui/core";
 import {
   createStyles,
   fade,
   makeStyles,
   Theme,
-  useTheme,
+  useTheme
 } from "@material-ui/core/styles";
 import useInterval from "@use-it/interval";
 import clsx from "clsx";
@@ -27,14 +27,14 @@ import {
   Magnify,
   SortAscending,
   SortDescending,
-  SortVariant,
+  SortVariant
 } from "mdi-material-ui";
 import React, {
   useCallback,
   useEffect,
   useMemo,
   useRef,
-  useState,
+  useState
 } from "react";
 import { useTranslation } from "react-i18next";
 import { CrossnoteContainer } from "../containers/crossnote";
@@ -46,7 +46,7 @@ import {
   EventType,
   globalEmitter,
   ModifiedMarkdownEventData,
-  PerformedGitOperationEventData,
+  PerformedGitOperationEventData
 } from "../lib/event";
 import { Note, Notes as NotesValue } from "../lib/note";
 import { Notebook } from "../lib/notebook";
@@ -551,6 +551,8 @@ export default function NotesPanel(props: Props) {
     props.notebook,
     props.notebook.hasLoadedNotes,
     notes,
+    searchValue,
+    finalSearchValue,
   ]);
 
   if (props.note && !notes.length) {
