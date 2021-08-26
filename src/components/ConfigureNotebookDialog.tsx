@@ -8,13 +8,14 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
+  IconButton,
   Input,
   InputAdornment,
   Link,
   TextField,
   Typography,
 } from "@material-ui/core";
-import { ChevronDown } from "mdi-material-ui";
+import { ChevronDown, Eye, EyeOff } from "mdi-material-ui";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { CrossnoteContainer } from "../containers/crossnote";
@@ -38,6 +39,8 @@ export default function ConfigureNotebookDialog(props: Props) {
   const [gitCorsProxy, setGitCorsProxy] = useState<string>(
     "https://crossnote.app/cors/",
   );
+  const [showUsername, setShowUsername] = useState<boolean>(false);
+  const [showPassword, setShowPassword] = useState<boolean>(false);
   const [autoFetchPeriod, setAutoFetchPeriod] = useState<number>(0);
   const [clickDeleteCount, setClickDeleteCount] = useState<number>(
     MaxClickDeleteCount,
@@ -47,6 +50,12 @@ export default function ConfigureNotebookDialog(props: Props) {
   );
   const isMounted = useRef<boolean>(false);
   const { t } = useTranslation();
+
+  const close = useCallback(() => {
+    setShowUsername(false);
+    setShowPassword(false);
+    props.onClose();
+  }, [props]);
 
   useEffect(() => {
     isMounted.current = true;
@@ -72,12 +81,14 @@ export default function ConfigureNotebookDialog(props: Props) {
     setGitPassword(notebook.gitPassword);
     setGitCorsProxy(notebook.gitCorsProxy);
     setAutoFetchPeriod(notebook.autoFetchPeriod / 60000);
+    setShowUsername(false);
+    setShowPassword(false);
   }, [props.notebook]);
 
   const updateNotebook = useCallback(async () => {
     const notebook = props.notebook;
     if (!notebook) {
-      props.onClose();
+      close();
       return;
     }
     notebook.name = notebookName.trim();
@@ -91,7 +102,7 @@ export default function ConfigureNotebookDialog(props: Props) {
       await crossnoteContainer.updateNotebook(notebook);
     } catch (error) {}
     if (isMounted.current) {
-      props.onClose();
+      close();
     }
   }, [
     props,
@@ -103,6 +114,7 @@ export default function ConfigureNotebookDialog(props: Props) {
     gitPassword,
     gitCorsProxy,
     autoFetchPeriod,
+    close,
   ]);
 
   const deleteNotebook = useCallback(async () => {
@@ -111,9 +123,9 @@ export default function ConfigureNotebookDialog(props: Props) {
       await crossnoteContainer.deleteNotebook(notebook);
     } catch (error) {}
     if (isMounted.current) {
-      props.onClose();
+      close();
     }
-  }, [props.notebook, props]);
+  }, [props.notebook, props, close]);
 
   const hardResetNotebook = useCallback(async () => {
     const notebook = props.notebook;
@@ -121,19 +133,16 @@ export default function ConfigureNotebookDialog(props: Props) {
       await crossnoteContainer.hardResetNotebook(notebook);
     } catch (error) {}
     if (isMounted.current) {
-      props.onClose();
+      close();
     }
-  }, [props.notebook, props]);
+  }, [props.notebook, props, close]);
 
   useEffect(() => {
     setClickDeleteCount(MaxClickDeleteCount);
   }, [props.notebook]);
 
   return (
-    <Dialog
-      open={props.open}
-      onClose={!clickDeleteCount ? null : props.onClose}
-    >
+    <Dialog open={props.open} onClose={!clickDeleteCount ? null : close}>
       <DialogTitle>{t("general/configure-the-notebook")}</DialogTitle>
       <DialogContent>
         <TextField
@@ -181,19 +190,46 @@ export default function ConfigureNotebookDialog(props: Props) {
                   placeholder={`${t("general/Username")} (${t(
                     "general/optional",
                   )})`}
+                  type={showUsername ? "text" : "password"}
                   fullWidth={true}
                   value={gitUsername}
                   onChange={(event) => setGitUsername(event.target.value)}
+                  InputProps={{
+                    endAdornment: (
+                      <InputAdornment position={"end"}>
+                        <IconButton
+                          aria-label="toggle username visibility"
+                          onClick={() => setShowUsername(!showUsername)}
+                        >
+                          {" "}
+                          {showUsername ? <Eye></Eye> : <EyeOff></EyeOff>}{" "}
+                        </IconButton>
+                      </InputAdornment>
+                    ),
+                  }}
                 ></TextField>
                 <TextField
                   label={`${t("general/Password")} (${t("general/optional")})`}
                   placeholder={`${t("general/Password")} (${t(
                     "general/optional",
                   )})`}
-                  type={"password"}
+                  type={showPassword ? "text" : "password"}
                   fullWidth={true}
                   value={gitPassword}
                   onChange={(event) => setGitPassword(event.target.value)}
+                  InputProps={{
+                    endAdornment: (
+                      <InputAdornment position={"end"}>
+                        <IconButton
+                          aria-label="toggle password visibility"
+                          onClick={() => setShowPassword(!showPassword)}
+                        >
+                          {" "}
+                          {showPassword ? <Eye></Eye> : <EyeOff></EyeOff>}{" "}
+                        </IconButton>
+                      </InputAdornment>
+                    ),
+                  }}
                 ></TextField>
                 <TextField
                   label={t("general/cors-proxy")}
@@ -289,7 +325,7 @@ export default function ConfigureNotebookDialog(props: Props) {
         >
           {t("general/Save")}
         </Button>
-        <Button onClick={props.onClose} disabled={!clickDeleteCount}>
+        <Button onClick={close} disabled={!clickDeleteCount}>
           {t("general/cancel")}
         </Button>
       </DialogActions>

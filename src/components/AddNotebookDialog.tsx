@@ -11,12 +11,14 @@ import {
   DialogTitle,
   Divider,
   FormControlLabel,
+  IconButton,
+  InputAdornment,
   Link,
   TextField,
   Typography,
 } from "@material-ui/core";
 import { useTheme } from "@material-ui/core/styles";
-import { ChevronDown, FolderOpen } from "mdi-material-ui";
+import { ChevronDown, Eye, EyeOff, FolderOpen } from "mdi-material-ui";
 import Noty from "noty";
 import React, { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -43,9 +45,12 @@ export default function AddNotebookDialog(props: Props) {
   const [gitCorsProxy, setGitCorsProxy] = useState<string>(
     "https://crossnote.app/cors/",
   );
-  const [rememberCredentialsChecked, setRememberCredentialsChecked] = useState<
-    boolean
-  >(false);
+  const [
+    rememberCredentialsChecked,
+    setRememberCredentialsChecked,
+  ] = useState<boolean>(false);
+  const [showUsername, setShowUsername] = useState<boolean>(true);
+  const [showPassword, setShowPassword] = useState<boolean>(false);
   const { t } = useTranslation();
   const theme = useTheme();
 
@@ -214,19 +219,46 @@ export default function AddNotebookDialog(props: Props) {
                 placeholder={`${t("general/Username")} (${t(
                   "general/optional",
                 )})`}
+                type={showUsername ? "text" : "password"}
                 fullWidth={true}
                 value={gitUsername}
                 onChange={(event) => setGitUsername(event.target.value)}
+                InputProps={{
+                  endAdornment: (
+                    <InputAdornment position={"end"}>
+                      <IconButton
+                        aria-label="toggle username visibility"
+                        onClick={() => setShowUsername(!showUsername)}
+                      >
+                        {" "}
+                        {showUsername ? <Eye></Eye> : <EyeOff></EyeOff>}{" "}
+                      </IconButton>
+                    </InputAdornment>
+                  ),
+                }}
               ></TextField>
               <TextField
                 label={`${t("general/Password")} (${t("general/optional")})`}
                 placeholder={`${t("general/Password")} (${t(
                   "general/optional",
                 )})`}
-                type={"password"}
+                type={showPassword ? "text" : "password"}
                 fullWidth={true}
                 value={gitPassword}
                 onChange={(event) => setGitPassword(event.target.value)}
+                InputProps={{
+                  endAdornment: (
+                    <InputAdornment position={"end"}>
+                      <IconButton
+                        aria-label="toggle password visibility"
+                        onClick={() => setShowPassword(!showPassword)}
+                      >
+                        {" "}
+                        {showPassword ? <Eye></Eye> : <EyeOff></EyeOff>}{" "}
+                      </IconButton>
+                    </InputAdornment>
+                  ),
+                }}
               ></TextField>
               <FormControlLabel
                 control={
