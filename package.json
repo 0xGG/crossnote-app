@@ -33,7 +33,7 @@
     "i18next": "^19.8.4",
     "identicon.js": "^2.3.3",
     "is_js": "^0.9.0",
-    "isomorphic-git": "1.3.1",
+    "isomorphic-git": "1.8.2",
     "istextorbinary": "^5.12.0",
     "js-sha1": "^0.6.0",
     "js-sha256": "^0.9.0",
