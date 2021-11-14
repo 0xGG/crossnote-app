@@ -267,6 +267,10 @@ const useStyles = makeStyles((theme: Theme) =>
     },
     presentation: {
       padding: "0 !important",
+      overflow: "hidden !important",
+    },
+    editorPresentation: {
+      height: "100%",
     },
     controlBtn: {
       padding: theme.spacing(0.5, 0),
@@ -1524,23 +1528,25 @@ export default function NotePanel(props: Props) {
               <DotsVertical></DotsVertical>
             </Button>
           </ButtonGroup>
-          <ButtonGroup
-            variant="text"
-            color="default"
-            aria-label="table of contents"
-            size="small"
-            className={clsx(classes.tocButtonGroup)}
-          >
-            <Button
-              className={clsx(
-                classes.controlBtn,
-                tocEnabled ? classes.controlBtnSelected : null,
-              )}
-              onClick={() => setTocEnabled(!tocEnabled)}
+          {!(previewIsPresentation && editorMode === EditorMode.Preview) && (
+            <ButtonGroup
+              variant="text"
+              color="default"
+              aria-label="table of contents"
+              size="small"
+              className={clsx(classes.tocButtonGroup)}
             >
-              <TableOfContents></TableOfContents>
-            </Button>
-          </ButtonGroup>
+              <Button
+                className={clsx(
+                  classes.controlBtn,
+                  tocEnabled ? classes.controlBtnSelected : null,
+                )}
+                onClick={() => setTocEnabled(!tocEnabled)}
+              >
+                <TableOfContents></TableOfContents>
+              </Button>
+            </ButtonGroup>
+          )}
         </Box>
         <Divider></Divider>
       </Box>
@@ -1554,10 +1560,18 @@ export default function NotePanel(props: Props) {
             overflow: "auto",
           }}
           resizerStyle={{
-            display: tocEnabled ? "block" : "none",
+            display:
+              tocEnabled &&
+              !(previewIsPresentation && editorMode === EditorMode.Preview)
+                ? "block"
+                : "none",
           }}
           pane2Style={{
-            display: tocEnabled ? "block" : "none",
+            display:
+              tocEnabled &&
+              !(previewIsPresentation && editorMode === EditorMode.Preview)
+                ? "block"
+                : "none",
           }}
           onDragFinished={(newSize) => {
             tocPanelWidth = newSize;
@@ -1565,7 +1579,14 @@ export default function NotePanel(props: Props) {
           }}
         >
           <Box className={clsx(classes.editorContentPanel)}>
-            <Box className={clsx(classes.editorWrapper)}>
+            <Box
+              className={clsx(
+                classes.editorWrapper,
+                previewIsPresentation && editorMode === EditorMode.Preview
+                  ? classes.editorPresentation
+                  : null,
+              )}
+            >
               <textarea
                 className={clsx(classes.editor, "editor-textarea")}
                 placeholder={t("editor/placeholder")}
@@ -1582,19 +1603,27 @@ export default function NotePanel(props: Props) {
                 ></div>
               ) : null}
             </Box>
-            <React.Fragment>
-              <Box style={{ marginTop: "32px" }}></Box>
-              <NotesPanel
-                title={t("general/References")}
-                tabNode={props.tabNode}
-                notebook={props.notebook}
-                note={note}
-              ></NotesPanel>
-            </React.Fragment>
+            {!(editorMode === EditorMode.Preview && previewIsPresentation) && (
+              <React.Fragment>
+                <Box style={{ marginTop: "32px" }}></Box>
+                <NotesPanel
+                  title={t("general/References")}
+                  tabNode={props.tabNode}
+                  notebook={props.notebook}
+                  note={note}
+                ></NotesPanel>
+              </React.Fragment>
+            )}
           </Box>
           <Box
             className={clsx(classes.tocPanel)}
-            style={{ display: tocEnabled ? "block" : "none" }}
+            style={{
+              display:
+                tocEnabled &&
+                !(previewIsPresentation && editorMode === EditorMode.Preview)
+                  ? "block"
+                  : "none",
+            }}
           >
             <div className={clsx(classes.toc)} ref={tocElement}></div>
           </Box>
