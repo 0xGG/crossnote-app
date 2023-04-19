@@ -25,3 +25,4 @@ stages:
   - name: build
   - name: deploy
     if: (branch = develop) AND (type = push)
+# Added comment - 
