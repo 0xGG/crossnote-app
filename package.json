@@ -52,7 +52,7 @@
     "pouchdb": "^7.2.2",
     "pouchdb-find": "^7.2.2",
     "prismjs": "^1.23.0",
-    "qs": "^6.9.3",
+    "qs": "^6.9.7",
     "random-access-memory": "^3.1.1",
     "react": "^17.0.1",
     "react-color": "^2.19.3",
