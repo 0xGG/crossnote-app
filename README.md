@@ -1,56 +1,37 @@
----
-created: 2020-04-12T13:19:52.701Z
-modified: 2020-05-11T11:14:44.140Z
----
-
-⚠️ This project is no longer maintained. Its website backend server is down. You can still visit its website frontend.    
-You could also try out the [markdown-preview-enhanced](https://github.com/shd101wyy/vscode-markdown-preview-enhanced) vscode extension which provides similar functionalities.  
-
----
-
 ![](./public/logo192.png)
 
 # 📝 Crossnote 交叉笔记
 
+> ## ⚠️ Project Status / 项目状态
+>
+> **EN:** The original author [@shd101wyy](https://github.com/shd101wyy) has stopped maintaining this project, and its backend service has been shut down. Maintenance has been taken over by [@dongshunyao](https://github.com/dongshunyao). The project is undergoing a complete rebuild — it will be revived and continuously maintained.
+>
+> **中文：** 原作者 [@shd101wyy](https://github.com/shd101wyy) 已停止维护本项目，其后端服务已经关闭。本项目现由 [@dongshunyao](https://github.com/dongshunyao) 接手维护，正在进行完全重构，未来将会复活并持续维护。
+>
+> - 📦 Last version from the original author / 原作者维护的最后版本：tag [`legacy-final`](https://github.com/0xGG/crossnote-app/releases/tag/legacy-final) · branch [`archive/develop`](https://github.com/0xGG/crossnote-app/tree/archive/develop)
+> - 🗄️ Backup repository / 备份仓库：[dongshunyao/crossnote-app](https://github.com/dongshunyao/crossnote-app)
 
-https://crossnote.app
+## Introduction / 简介
 
----
+**EN:** Crossnote is a markdown notes reader & editor Progressive Web App that works offline and supports syncing with arbitrary git repositories directly inside your browser — your notes are plain markdown files and never have to pass through any dedicated server.
 
-<a href="https://www.producthunt.com/posts/crossnote?utm_source=badge-featured&utm_medium=badge&utm_souce=badge-crossnote" target="_blank"><img src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=197331&theme=dark" alt="Crossnote - An interesting markdown note taking progressive web app | Product Hunt Embed" style="width: 250px; height: 54px;" width="250px" height="54px" /></a>  
-<a href="https://play.google.com/store/apps/details?id=app.crossnote.twa" target="_blank"><img src="https://play.google.com/intl/en_us/badges/static/images/badges/en_badge_web_generic.png" alt="Get it on Google Play" style="height: 70px"  height="70px"></a>
-
-**Crossnote** is probably the world's first markdown notes reader & editor Progressive Web Application that works offline and supports syncing with arbitrary git repository right inside your browser.
-
-Let's open the [Welcome Notebook](https://crossnote.app/?repo=https%3A%2F%2Fgithub.com%2F0xGG%2Fwelcome-notebook.git&branch=master&filePath=README.md) in crossnote for more information! (Just click the `ADD` button once the webpage is open to add this notebook)
-
-让我们在交叉笔记中打开 [欢迎笔记本](https://crossnote.app/?repo=https%3A%2F%2Fgithub.com%2F0xGG%2Fwelcome-notebook.git&branch=master&filePath=README.md) 以查看更详尽的介绍！（在网页打开后点击 `ADD` 按钮直接添加该笔记本）
-
-由于服务器目前位于境外，所以国内用户第一次打开速度会略慢，但是第一次打开后程序就会被缓存了以供离线使用，往后打开速度就快了。
-
+**中文：** Crossnote（交叉笔记）是一个支持离线使用的 markdown 笔记阅读器与编辑器 PWA，可以直接在浏览器内与任意 git 仓库同步。你的笔记就是纯粹的 markdown 文件，无需经过任何专用服务器。
 
 ![Screenshot from 2021-02-28 22-47-35](https://user-images.githubusercontent.com/1908863/109422675-89d1da00-7a17-11eb-9163-c50126114ff1.png)
 
 ![Screenshot from 2021-02-28 22-47-51](https://user-images.githubusercontent.com/1908863/109422670-876f8000-7a17-11eb-911f-8a8efee856ad.png)
 
-## Sponsors
+## Credits / 致谢
 
-<p><a title="Try CodeStream" href="https://sponsorlink.codestream.com/?utm_source=vscmarket&amp;utm_campaign=shd101wyy-markdown&amp;utm_medium=banner"><img src="https://alt-images.codestream.com/codestream_logo_shd101wyy-markdown.png"></a></br>
-Manage pull requests and conduct code reviews in your IDE with full source-tree context. Comment on any line, not just the diffs. Use jump-to-definition, your favorite keybindings, and code intelligence with more of your workflow.<br> <a title="Try CodeStream" href="https://sponsorlink.codestream.com/?utm_source=vscmarket&amp;utm_campaign=shd101wyy-markdown&amp;utm_medium=banner">Learn More</a></p>
+**EN:** Crossnote was created by the 0xGG team ([@shd101wyy](https://github.com/shd101wyy), the author of [Markdown Preview Enhanced](https://github.com/shd101wyy/vscode-markdown-preview-enhanced)). Thanks for the great work.
 
-<br>
+**中文：** Crossnote 由 0xGG 团队（[@shd101wyy](https://github.com/shd101wyy)，[Markdown Preview Enhanced](https://github.com/shd101wyy/vscode-markdown-preview-enhanced) 的作者）创建。感谢原作者的杰出工作。
 
-<a href="https://github.com/sponsors/shd101wyy">
-  <img src="https://github.blog/wp-content/uploads/2019/05/mona-heart-featured.png?" width="200"></a><br>
+## License / 协议
 
-These [GitHub Sponsors](https://github.com/sponsors/shd101wyy#sponsors) help push this project forward 🎉.
+[GNU AGPL-3.0-or-later](./LICENSE)
 
-
-
-## Development
-
-Please check [this documentation](https://github.com/0xGG/welcome-notebook/tree/master/development).
-
-## License
-
-AGPL3
+```
+Copyright (C) 2020  0xGG Team: @shd101wyy
+Copyright (C) 2026  dongshunyao
+```
