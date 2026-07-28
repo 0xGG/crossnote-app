@@ -161,5 +161,8 @@
     "request": "^2.88.2",
     "workbox-build": "^6.1.1"
   },
-  "homepage": "https://crossnote.app"
+  "homepage": "https://crossnote.app",
+  "resolutions": {
+    "cipher-base": "1.0.5"
+  }
 }
