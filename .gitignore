@@ -8,7 +8,6 @@ build/
 dist/
 
 # Generated at dev/build time
-src/_git_commit.js
 public/styles/
 public/assets/emoji/
 

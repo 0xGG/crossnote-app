@@ -2,7 +2,7 @@
 # regardless of each contributor's local core.autocrlf setting.
 * text=auto eol=lf
 
-# Binary assets — never subject to text normalization or diffs
+# Binary assets - never subject to text normalization or diffs
 *.png binary
 *.ico binary
 *.jpg binary

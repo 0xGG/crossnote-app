@@ -1,0 +1,181 @@
+diff --git a/emoji/index.js b/emoji/index.js
+index 4736cbb03137d151f9b485fb1c2707ad6087a53c..bd5246bb21ab083d1575962e8a4f95acfdf8acd3 100644
+--- a/emoji/index.js
++++ b/emoji/index.js
+@@ -1,4 +1,8 @@
+-define(["require", "exports"], function (require, exports) {
++// [crossnote patch] This file was compiled as a bare AMD module; webpack 4
++// supported AMD natively but esbuild/rollup do not, so the define() call is
++// rewritten as a CommonJS factory invocation with static requires.
++(function (factory) { factory(require, exports); })(
++function (require, exports) {
+     "use strict";
+     Object.defineProperty(exports, "__esModule", { value: true });
+     var EmojiDict = {
+diff --git a/preview/features/heading.js b/preview/features/heading.js
+index 33a2f419596266e3320593abaff37893a8dd6ac9..1e4436d29d71ae5219795f5ccd66bd2fdbc5216f 100644
+--- a/preview/features/heading.js
++++ b/preview/features/heading.js
+@@ -1,4 +1,8 @@
+-define(["require", "exports"], function (require, exports) {
++// [crossnote patch] This file was compiled as a bare AMD module; webpack 4
++// supported AMD natively but esbuild/rollup do not, so the define() call is
++// rewritten as a CommonJS factory invocation with static requires.
++(function (factory) { factory(require, exports); })(
++function (require, exports) {
+     "use strict";
+     Object.defineProperty(exports, "__esModule", { value: true });
+     function isSpace(code) {
+diff --git a/preview/toc.js b/preview/toc.js
+index 36f5a48061f241aa848edbe29214475dced87c9b..d9da301eb93f76390b58d03d38d86b50e3004050 100644
+--- a/preview/toc.js
++++ b/preview/toc.js
+@@ -1,7 +1,11 @@
+ var __importDefault = (this && this.__importDefault) || function (mod) {
+     return (mod && mod.__esModule) ? mod : { "default": mod };
+ };
+-define(["require", "exports", "./heading-id-generator"], function (require, exports, heading_id_generator_1) {
++// [crossnote patch] This file was compiled as a bare AMD module; webpack 4
++// supported AMD natively but esbuild/rollup do not, so the define() call is
++// rewritten as a CommonJS factory invocation with static requires.
++(function (factory) { factory(require, exports, require("./heading-id-generator")); })(
++function (require, exports, heading_id_generator_1) {
+     "use strict";
+     Object.defineProperty(exports, "__esModule", { value: true });
+     exports.toc = void 0;
+diff --git a/widget/audio/audio.js b/widget/audio/audio.js
+index f9fcd31b42855d73f3b28ab3148d419d7932098c..511e711317bd181c8ce4035dfa9488b015827282 100644
+--- a/widget/audio/audio.js
++++ b/widget/audio/audio.js
+@@ -16,7 +16,11 @@ var __assign = (this && this.__assign) || function () {
+ var __importDefault = (this && this.__importDefault) || function (mod) {
+     return (mod && mod.__esModule) ? mod : { "default": mod };
+ };
+-define(["require", "exports", "react", "react-dom", "../component/widget", "../error/error"], function (require, exports, react_1, react_dom_1, widget_1, error_1) {
++// [crossnote patch] This file was compiled as a bare AMD module; webpack 4
++// supported AMD natively but esbuild/rollup do not, so the define() call is
++// rewritten as a CommonJS factory invocation with static requires.
++(function (factory) { factory(require, exports, require("react"), require("react-dom"), require("../component/widget"), require("../error/error")); })(
++function (require, exports, react_1, react_dom_1, widget_1, error_1) {
+     "use strict";
+     Object.defineProperty(exports, "__esModule", { value: true });
+     react_1 = __importDefault(react_1);
+diff --git a/widget/bilibili/bilibili.js b/widget/bilibili/bilibili.js
+index a126039c4709a3b11ec388a07900391701e583bb..3f99de37e9d6ca1aa2fc63701235ccc75eef8585 100644
+--- a/widget/bilibili/bilibili.js
++++ b/widget/bilibili/bilibili.js
+@@ -16,7 +16,11 @@ var __assign = (this && this.__assign) || function () {
+ var __importDefault = (this && this.__importDefault) || function (mod) {
+     return (mod && mod.__esModule) ? mod : { "default": mod };
+ };
+-define(["require", "exports", "react", "react-dom", "../component/widget", "../error/error"], function (require, exports, react_1, react_dom_1, widget_1, error_1) {
++// [crossnote patch] This file was compiled as a bare AMD module; webpack 4
++// supported AMD natively but esbuild/rollup do not, so the define() call is
++// rewritten as a CommonJS factory invocation with static requires.
++(function (factory) { factory(require, exports, require("react"), require("react-dom"), require("../component/widget"), require("../error/error")); })(
++function (require, exports, react_1, react_dom_1, widget_1, error_1) {
+     "use strict";
+     Object.defineProperty(exports, "__esModule", { value: true });
+     react_1 = __importDefault(react_1);
+diff --git a/widget/component/widget.js b/widget/component/widget.js
+index ed8186eab56fbea69bd27ccc46abed33335062d1..5d99501d962785eed1c0c93c4fdf310bad9bc8b3 100644
+--- a/widget/component/widget.js
++++ b/widget/component/widget.js
+@@ -1,7 +1,11 @@
+ var __importDefault = (this && this.__importDefault) || function (mod) {
+     return (mod && mod.__esModule) ? mod : { "default": mod };
+ };
+-define(["require", "exports", "react"], function (require, exports, react_1) {
++// [crossnote patch] This file was compiled as a bare AMD module; webpack 4
++// supported AMD natively but esbuild/rollup do not, so the define() call is
++// rewritten as a CommonJS factory invocation with static requires.
++(function (factory) { factory(require, exports, require("react")); })(
++function (require, exports, react_1) {
+     "use strict";
+     Object.defineProperty(exports, "__esModule", { value: true });
+     exports.Widget = void 0;
+diff --git a/widget/error/error.js b/widget/error/error.js
+index 08851c699e3faf63d9613b5ebe4be2eb3b14bc48..cf1c770455376e742b05d570d26d05e8531ea95a 100644
+--- a/widget/error/error.js
++++ b/widget/error/error.js
+@@ -5,7 +5,11 @@
+ var __importDefault = (this && this.__importDefault) || function (mod) {
+     return (mod && mod.__esModule) ? mod : { "default": mod };
+ };
+-define(["require", "exports", "react", "react-dom", "../component/widget"], function (require, exports, react_1, react_dom_1, widget_1) {
++// [crossnote patch] This file was compiled as a bare AMD module; webpack 4
++// supported AMD natively but esbuild/rollup do not, so the define() call is
++// rewritten as a CommonJS factory invocation with static requires.
++(function (factory) { factory(require, exports, require("react"), require("react-dom"), require("../component/widget")); })(
++function (require, exports, react_1, react_dom_1, widget_1) {
+     "use strict";
+     Object.defineProperty(exports, "__esModule", { value: true });
+     exports.ErrorWidget = void 0;
+diff --git a/widget/hello/hello.js b/widget/hello/hello.js
+index cb5007da43fc1c80ea8c47bb11a3a8166b0dc29b..9cf4b96f39316c4b3e06e78395aa13334c41ead1 100644
+--- a/widget/hello/hello.js
++++ b/widget/hello/hello.js
+@@ -35,7 +35,11 @@ var __importStar = (this && this.__importStar) || function (mod) {
+ var __importDefault = (this && this.__importDefault) || function (mod) {
+     return (mod && mod.__esModule) ? mod : { "default": mod };
+ };
+-define(["require", "exports", "react", "react-dom"], function (require, exports, react_1, react_dom_1) {
++// [crossnote patch] This file was compiled as a bare AMD module; webpack 4
++// supported AMD natively but esbuild/rollup do not, so the define() call is
++// rewritten as a CommonJS factory invocation with static requires.
++(function (factory) { factory(require, exports, require("react"), require("react-dom")); })(
++function (require, exports, react_1, react_dom_1) {
+     "use strict";
+     Object.defineProperty(exports, "__esModule", { value: true });
+     exports.HelloWidget = void 0;
+diff --git a/widget/timer/timer.js b/widget/timer/timer.js
+index defc3de590a0ac1872b4569502751ef9358b2981..0659ef09c434d227ba930dae2dc7d6c3f0d2166a 100644
+--- a/widget/timer/timer.js
++++ b/widget/timer/timer.js
+@@ -16,7 +16,11 @@ var __assign = (this && this.__assign) || function () {
+ var __importDefault = (this && this.__importDefault) || function (mod) {
+     return (mod && mod.__esModule) ? mod : { "default": mod };
+ };
+-define(["require", "exports", "react", "react-dom", "../component/widget", "../error/error"], function (require, exports, react_1, react_dom_1, widget_1, error_1) {
++// [crossnote patch] This file was compiled as a bare AMD module; webpack 4
++// supported AMD natively but esbuild/rollup do not, so the define() call is
++// rewritten as a CommonJS factory invocation with static requires.
++(function (factory) { factory(require, exports, require("react"), require("react-dom"), require("../component/widget"), require("../error/error")); })(
++function (require, exports, react_1, react_dom_1, widget_1, error_1) {
+     "use strict";
+     Object.defineProperty(exports, "__esModule", { value: true });
+     react_1 = __importDefault(react_1);
+diff --git a/widget/video/video.js b/widget/video/video.js
+index 0167f588a434848c6918fee17c5a648ba5c3359a..9d1885b1475bf4e316e1b97e4993eb5662b2a45a 100644
+--- a/widget/video/video.js
++++ b/widget/video/video.js
+@@ -12,7 +12,11 @@ var __assign = (this && this.__assign) || function () {
+ var __importDefault = (this && this.__importDefault) || function (mod) {
+     return (mod && mod.__esModule) ? mod : { "default": mod };
+ };
+-define(["require", "exports", "react", "react-dom", "../component/widget", "../error/error"], function (require, exports, react_1, react_dom_1, widget_1, error_1) {
++// [crossnote patch] This file was compiled as a bare AMD module; webpack 4
++// supported AMD natively but esbuild/rollup do not, so the define() call is
++// rewritten as a CommonJS factory invocation with static requires.
++(function (factory) { factory(require, exports, require("react"), require("react-dom"), require("../component/widget"), require("../error/error")); })(
++function (require, exports, react_1, react_dom_1, widget_1, error_1) {
+     "use strict";
+     Object.defineProperty(exports, "__esModule", { value: true });
+     react_1 = __importDefault(react_1);
+diff --git a/widget/youtube/youtube.js b/widget/youtube/youtube.js
+index d17f5859c3dde21136ee113a9cea9e834172a9cb..5a8d59f312a6185cb4d7d12d29f4b3d5d8d5f413 100644
+--- a/widget/youtube/youtube.js
++++ b/widget/youtube/youtube.js
+@@ -16,7 +16,11 @@ var __assign = (this && this.__assign) || function () {
+ var __importDefault = (this && this.__importDefault) || function (mod) {
+     return (mod && mod.__esModule) ? mod : { "default": mod };
+ };
+-define(["require", "exports", "react", "react-dom", "../component/widget", "../error/error"], function (require, exports, react_1, react_dom_1, widget_1, error_1) {
++// [crossnote patch] This file was compiled as a bare AMD module; webpack 4
++// supported AMD natively but esbuild/rollup do not, so the define() call is
++// rewritten as a CommonJS factory invocation with static requires.
++(function (factory) { factory(require, exports, require("react"), require("react-dom"), require("../component/widget"), require("../error/error")); })(
++function (require, exports, react_1, react_dom_1, widget_1, error_1) {
+     "use strict";
+     Object.defineProperty(exports, "__esModule", { value: true });
+     react_1 = __importDefault(react_1);
