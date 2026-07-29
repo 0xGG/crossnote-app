@@ -45,9 +45,9 @@ const useStyles = makeStyles((theme: Theme) =>
       // paddingLeft: theme.spacing(1),
       // paddingRight: theme.spacing(1),
       "userSelect": "none",
-      "fontWeight": theme.typography.fontWeightMedium,
+      "fontWeight": theme.typography.fontWeightMedium as any,
       "$treeItemExpanded > &": {
-        fontWeight: theme.typography.fontWeightRegular,
+        fontWeight: theme.typography.fontWeightRegular as any,
       },
     },
     treeItemGroup: {

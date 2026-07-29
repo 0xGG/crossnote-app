@@ -54,7 +54,7 @@ export default function MarkdownPreview(props: Props) {
         renderPreview(previewElement, props.markdown);
         postprocessPreview(previewElement);
       } catch (error) {
-        previewElement.innerText = error;
+        previewElement.innerText = String(error);
       }
     }
   }, [props.markdown, props.note, previewElement, postprocessPreview]);

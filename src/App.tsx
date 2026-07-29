@@ -13,7 +13,7 @@ import { SettingsContainer } from "./containers/settings";
 import "./editor";
 import { Home } from "./pages/Home";
 import { browserHistory } from "./utilities/history";
-const is = require("is_js");
+import is from "is_js";
 
 const App: FC = () => {
   const { t } = useTranslation();

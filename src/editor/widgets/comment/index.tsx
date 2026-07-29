@@ -21,7 +21,7 @@ import "emoji-mart/css/emoji-mart.css";
 import { CommentOutline, StickerEmoji } from "mdi-material-ui";
 import Noty from "noty";
 import React, { useCallback, useEffect, useState } from "react";
-import ReactDOM from "react-dom";
+import { renderWidget } from "../../../utilities/widgetRender";
 import { useTranslation } from "react-i18next";
 import { Provider } from "urql";
 import { Emoji, EmojiPicker } from "../../../components/EmojiWrapper";
@@ -389,7 +389,7 @@ function CommentWidget(props: WidgetArgs) {
 
 export const CommentWidgetCreator: WidgetCreator = (args) => {
   const el = document.createElement("span");
-  ReactDOM.render(
+  renderWidget(
     <Provider value={GraphQLClient}>
       <ThemeProvider theme={globalContainers.settingsContainer.theme.muiTheme}>
         <CommentWidget {...args}></CommentWidget>

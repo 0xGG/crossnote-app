@@ -19,7 +19,7 @@ import {
   Theme,
   useTheme
 } from "@material-ui/core/styles";
-import useInterval from "@use-it/interval";
+import useInterval from "../utilities/useInterval";
 import clsx from "clsx";
 import { TabNode } from "flexlayout-react";
 import {

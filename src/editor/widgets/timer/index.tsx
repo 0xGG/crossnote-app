@@ -6,7 +6,7 @@ import { WidgetArgs, WidgetCreator } from "@0xgg/echomd/widget";
 import { ErrorWidget } from "@0xgg/echomd/widget/error/error";
 import { ThemeProvider, useTheme } from "@material-ui/core";
 import React from "react";
-import ReactDOM from "react-dom";
+import { renderWidget } from "../../../utilities/widgetRender";
 import { globalContainers } from "../../../containers/global";
 
 function Timer(props: WidgetArgs) {
@@ -55,7 +55,7 @@ export const TimerWidgetCreator: WidgetCreator = (args) => {
       },
     });
   }
-  ReactDOM.render(
+  renderWidget(
     <ThemeProvider theme={globalContainers.settingsContainer.theme.muiTheme}>
       <Timer attributes={args.attributes} isPreview={args.isPreview}></Timer>
     </ThemeProvider>,

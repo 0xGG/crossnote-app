@@ -38,7 +38,10 @@ import Noty from "noty";
 import * as path from "path";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import SplitPane from "react-split-pane";
+import SplitPaneRaw from "react-split-pane";
+// react-split-pane's typings predate React 18 and reject children;
+// the component works fine at runtime.
+const SplitPane = SplitPaneRaw as any;
 import { CrossnoteContainer } from "../containers/crossnote";
 import { SettingsContainer } from "../containers/settings";
 import { initMathPreview } from "../editor/views/math-preview";
@@ -68,7 +71,7 @@ import IconPopover from "./IconPopover";
 import { Loading } from "./Loading";
 import NotePopover from "./NotePopover";
 import NotesPanel from "./NotesPanel";
-const EchoMD = require("@0xgg/echomd/core");
+import * as EchoMD from "@0xgg/echomd/core";
 
 const previewZIndex = 99;
 let tocPanelWidth = parseInt(localStorage.getItem("toc-panel-width") || "300");
@@ -665,7 +668,7 @@ export default function NotePanel(props: Props) {
         postprocessPreview(previewElement.current);
         previewElement.current.scrollTop = 0;
       } catch (error) {
-        previewElement.current.innerText = error;
+        previewElement.current.innerText = String(error);
       }
     }
   }, [editorMode, editor, previewElement, note, postprocessPreview, t]);
@@ -777,7 +780,7 @@ export default function NotePanel(props: Props) {
               postprocessPreview(previewElement.current);
               previewElement.current.scrollTop = 0;
             } catch (error) {
-              previewElement.current.innerText = error;
+              previewElement.current.innerText = String(error);
             }
           }
         }, 300);
@@ -1573,7 +1576,7 @@ export default function NotePanel(props: Props) {
                 ? "block"
                 : "none",
           }}
-          onDragFinished={(newSize) => {
+          onDragFinished={(newSize: number) => {
             tocPanelWidth = newSize;
             localStorage.setItem("toc-panel-width", `${tocPanelWidth}`);
           }}

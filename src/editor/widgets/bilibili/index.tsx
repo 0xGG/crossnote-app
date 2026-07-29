@@ -16,7 +16,7 @@ import {
 import clsx from "clsx";
 import { TrashCan } from "mdi-material-ui";
 import React, { useState } from "react";
-import ReactDOM from "react-dom";
+import { renderWidget } from "../../../utilities/widgetRender";
 import { useTranslation } from "react-i18next";
 import { globalContainers } from "../../../containers/global";
 
@@ -154,7 +154,7 @@ function BilibiliWidget(props: WidgetArgs) {
 
 export const BilibiliWidgetCreator: WidgetCreator = (args) => {
   const el = document.createElement("span");
-  ReactDOM.render(
+  renderWidget(
     <ThemeProvider theme={globalContainers.settingsContainer.theme.muiTheme}>
       <BilibiliWidget {...args}></BilibiliWidget>
     </ThemeProvider>,

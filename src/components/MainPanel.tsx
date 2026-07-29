@@ -195,7 +195,7 @@ export function MainPanel(props: Props) {
     if (crossnoteContainer.layoutModel) {
       const data = crossnoteContainer.layoutModel.toJson();
       let hasLocalDirectory = false;
-      const layout = data.layout || {};
+      const layout: any = data.layout || {};
       const children = layout.children || [];
       for (let i = 0; i < children.length; i++) {
         const children2 = children[i].children || [];

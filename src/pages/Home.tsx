@@ -45,7 +45,7 @@ import { CrossnoteContainer, HomeSection } from "../containers/crossnote";
 import { globalContainers } from "../containers/global";
 import { SettingsContainer } from "../containers/settings";
 import { getNoteIcon } from "../lib/note";
-const is = require("is_js");
+import is from "is_js";
 
 const drawerWidth = 200;
 const notesPanelWidth = 350;

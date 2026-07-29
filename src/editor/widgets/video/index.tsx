@@ -18,7 +18,7 @@ import {
 import clsx from "clsx";
 import { TrashCan } from "mdi-material-ui";
 import React, { useState } from "react";
-import ReactDOM from "react-dom";
+import { renderWidget } from "../../../utilities/widgetRender";
 import { useTranslation } from "react-i18next";
 import { globalContainers } from "../../../containers/global";
 
@@ -194,7 +194,7 @@ function VideoWidget(props: WidgetArgs) {
 
 export const VideoWidgetCreator: WidgetCreator = (args) => {
   const el = document.createElement("span");
-  ReactDOM.render(
+  renderWidget(
     <ThemeProvider theme={globalContainers.settingsContainer.theme.muiTheme}>
       <VideoWidget {...args}></VideoWidget>
     </ThemeProvider>,

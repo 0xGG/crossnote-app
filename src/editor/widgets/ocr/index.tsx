@@ -27,7 +27,7 @@ import {
 import clsx from "clsx";
 import { TrashCan } from "mdi-material-ui";
 import React, { useEffect, useState } from "react";
-import ReactDOM from "react-dom";
+import { renderWidget } from "../../../utilities/widgetRender";
 import { useTranslation } from "react-i18next";
 import { createWorker } from "tesseract.js";
 import { globalContainers } from "../../../containers/global";
@@ -410,7 +410,7 @@ function OCRWidget(props: WidgetArgs) {
 
 export const OCRWidgetCreator: WidgetCreator = (args) => {
   const el = document.createElement("span");
-  ReactDOM.render(
+  renderWidget(
     <ThemeProvider theme={globalContainers.settingsContainer.theme.muiTheme}>
       <OCRWidget {...args}></OCRWidget>
     </ThemeProvider>,

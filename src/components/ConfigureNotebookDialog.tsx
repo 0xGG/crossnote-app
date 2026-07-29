@@ -263,7 +263,7 @@ export default function ConfigureNotebookDialog(props: Props) {
                       }}
                       endAdornment={
                         <InputAdornment position="end">
-                          {t("general/minutes")}
+                          {t("general/minutes") as string}
                         </InputAdornment>
                       }
                     ></Input>
