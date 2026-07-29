@@ -33,6 +33,7 @@
     "@mdi/font": "^5.9.55",
     "async-mutex": "^0.3.1",
     "automerge": "^0.14.0",
+    "buffer": "^6.0.3",
     "chinese-conv": "^1.0.1",
     "clsx": "^1.1.0",
     "codemirror": "^5.59.4",

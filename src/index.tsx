@@ -1,3 +1,4 @@
+import "./polyfills";
 import "@mdi/font/css/materialdesignicons.min.css";
 import "noty/lib/noty.css";
 import "noty/lib/themes/relax.css";
