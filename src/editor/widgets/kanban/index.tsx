@@ -32,7 +32,7 @@ import {
   TrashCan,
 } from "mdi-material-ui";
 import React, { useEffect, useState } from "react";
-import ReactDOM from "react-dom";
+import { renderWidget } from "../../../utilities/widgetRender";
 import { useTranslation } from "react-i18next";
 import EditImageDialog from "../../../components/EditImageDialog";
 import { globalContainers } from "../../../containers/global";
@@ -41,7 +41,7 @@ import { setTheme } from "../../../themes/manager";
 import { resolveNoteImageSrc } from "../../../utilities/image";
 import { openURL, postprocessPreview } from "../../../utilities/preview";
 
-const EchoMD = require("@0xgg/echomd/core");
+import * as EchoMD from "@0xgg/echomd/core";
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -511,7 +511,7 @@ function KanbanWidget(props: WidgetArgs) {
 
 export const KanbanWidgetCreator: WidgetCreator = (args) => {
   const el = document.createElement("span");
-  ReactDOM.render(
+  renderWidget(
     <ThemeProvider theme={globalContainers.settingsContainer.theme.muiTheme}>
       <KanbanWidget {...args}></KanbanWidget>
     </ThemeProvider>,

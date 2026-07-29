@@ -1,4 +1,4 @@
-import useInterval from "@use-it/interval";
+import useInterval from "../utilities/useInterval";
 import FlexLayout, {
   Actions,
   DockLocation,

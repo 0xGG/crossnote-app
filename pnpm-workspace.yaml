@@ -1,0 +1,10 @@
+# Neither package needs its install scripts for the browser build:
+# - leveldown is only reachable from PouchDB's Node adapter, which the app
+#   never imports (the browser adapter is used instead).
+# - tesseract.js loads its worker and wasm from a CDN at runtime.
+allowBuilds:
+  esbuild: true
+  leveldown: false
+  tesseract.js: false
+patchedDependencies:
+  '@0xgg/echomd@1.0.4': patches/@0xgg__echomd@1.0.4.patch

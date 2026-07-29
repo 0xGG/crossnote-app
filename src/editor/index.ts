@@ -14,7 +14,7 @@ import "@0xgg/echomd/powerpack/fold-math-with-katex";
 import "@0xgg/echomd/powerpack/hover-with-marked";
 import { enableEmoji } from "@0xgg/echomd/preview";
 import { registerWidgetCreator } from "@0xgg/echomd/widget";
-import "codemirror";
+import CodeMirror from "codemirror";
 import "codemirror/addon/dialog/dialog.css";
 import "codemirror/addon/display/placeholder";
 import "codemirror/addon/hint/show-hint";
@@ -35,7 +35,6 @@ import twemoji from "twemoji";
 import { EmojiBackgroundImageFn } from "../components/EmojiWrapper";
 import { AudioWidgetCreator } from "./widgets/audio";
 import { BilibiliWidgetCreator } from "./widgets/bilibili";
-// import { ABCWidgetCreator } from "./widgets/abc";
 import { CommentWidgetCreator } from "./widgets/comment";
 import { GitHubGistWidgetCreator } from "./widgets/github_gist";
 import { ImageWidgetCreator } from "./widgets/image";
@@ -47,7 +46,7 @@ import { VideoWidgetCreator } from "./widgets/video";
 import { YoutubeWidgetCreator } from "./widgets/youtube";
 
 // Set necessary window scope variables
-window["CodeMirror"] = require("codemirror");
+window["CodeMirror"] = CodeMirror;
 
 // Register widget creators
 registerWidgetCreator("timer", TimerWidgetCreator);
@@ -59,11 +58,10 @@ registerWidgetCreator("crossnote.bilibili", BilibiliWidgetCreator);
 registerWidgetCreator("crossnote.youtube", YoutubeWidgetCreator);
 registerWidgetCreator("crossnote.ocr", OCRWidgetCreator);
 registerWidgetCreator("crossnote.kanban", KanbanWidgetCreator);
-// registerWidgetCreator("crossnote.abc", ABCWidgetCreator);
 registerWidgetCreator("crossnote.comment", CommentWidgetCreator);
 registerWidgetCreator("crossnote.github_gist", GitHubGistWidgetCreator);
 
-const packageJSON = require("../../package.json");
+import packageJSON from "../../package.json";
 export const EchoMDVersion: string = packageJSON.dependencies["@0xgg/echomd"];
 
 // Hack the keymap for sublime
@@ -84,7 +82,7 @@ window["CodeMirror"].keyMap["sublime"] = Object.assign(
 // Hack twemoji
 const oldTwemojiParse = twemoji.parse;
 twemoji.parse = function (what: string | HTMLElement, options: any) {
-  const result = oldTwemojiParse(what, options);
+  const result: any = oldTwemojiParse(what as any, options);
   if (typeof what === "string") {
     return (
       result

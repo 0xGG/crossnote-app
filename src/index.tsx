@@ -1,10 +1,12 @@
+import "./polyfills";
 import "@mdi/font/css/materialdesignicons.min.css";
 import "noty/lib/noty.css";
 import "noty/lib/themes/relax.css";
 import React from "react";
 import ReactDOM from "react-dom";
-import "typeface-noto-sans-sc";
-import "typeface-roboto";
+import { createRoot } from "react-dom/client";
+import "typeface-noto-sans-sc/index.css";
+import "typeface-roboto/index.css";
 import { Provider } from "urql";
 import App from "./App";
 import { CloudContainer } from "./containers/cloud";
@@ -24,7 +26,7 @@ window["ReactDOM"] = ReactDOM;
 
 try {
   const crossnote = new Crossnote();
-  ReactDOM.render(
+  createRoot(document.getElementById("root")).render(
     <Provider value={GraphQLClient}>
       <CrossnoteContainer.Provider
         initialState={{
@@ -40,7 +42,6 @@ try {
         </SettingsContainer.Provider>
       </CrossnoteContainer.Provider>
     </Provider>,
-    document.getElementById("root"),
   );
 } catch (error) {
   console.log(error);

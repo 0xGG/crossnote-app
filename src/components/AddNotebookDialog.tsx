@@ -88,7 +88,7 @@ export default function AddNotebookDialog(props: Props) {
     } catch (error) {
       new Noty({
         type: "error",
-        text: error.message,
+        text: error instanceof Error ? error.message : String(error),
         layout: "topRight",
         theme: "relax",
         timeout: 2000,

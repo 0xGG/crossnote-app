@@ -40,7 +40,7 @@ import { KeyMap } from "../lib/keymap";
 import { themeManager } from "../themes/manager";
 import { smmsUploadImages } from "../utilities/image_uploader";
 import { startGitHubOAuth } from "../utilities/utils";
-import GitCommit from "../_git_commit";
+const GitCommit = __GIT_COMMIT__;
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -557,12 +557,14 @@ export function Settings(props: Props) {
               );
             }}
           >
-            <MenuItem value={EditorMode.EchoMD}>{t("general/echomd")}</MenuItem>
+            <MenuItem value={EditorMode.EchoMD}>
+              {t("general/echomd") as string}
+            </MenuItem>
             <MenuItem value={EditorMode.Preview}>
-              {t("editor/note-control/preview")}
+              {t("editor/note-control/preview") as string}
             </MenuItem>
             <MenuItem value={EditorMode.SourceCode}>
-              {t("editor/note-control/source-code")}
+              {t("editor/note-control/source-code") as string}
             </MenuItem>
           </Select>
         </Box>
@@ -585,9 +587,13 @@ export function Settings(props: Props) {
               settingsContainer.setKeyMap(event.target.value as KeyMap);
             }}
           >
-            <MenuItem value={KeyMap.DEFAULT}>{t("general/Default")}</MenuItem>
-            <MenuItem value={KeyMap.VIM}>{t("general/Vim")}</MenuItem>
-            <MenuItem value={KeyMap.EMACS}>{t("general/Emacs")}</MenuItem>
+            <MenuItem value={KeyMap.DEFAULT}>
+              {t("general/Default") as string}
+            </MenuItem>
+            <MenuItem value={KeyMap.VIM}>{t("general/Vim") as string}</MenuItem>
+            <MenuItem value={KeyMap.EMACS}>
+              {t("general/Emacs") as string}
+            </MenuItem>
           </Select>
         </Box>
         <Box className={clsx(classes.section)} style={{ marginTop: "32px" }}>

@@ -16,7 +16,7 @@ import {
 import clsx from "clsx";
 import { TrashCan, TrashCanOutline } from "mdi-material-ui";
 import React, { useCallback, useState } from "react";
-import ReactDOM from "react-dom";
+import { renderWidget } from "../../../utilities/widgetRender";
 import { useTranslation } from "react-i18next";
 // @ts-ignore
 import Gist from "super-react-gist"; // <-- import the library
@@ -108,7 +108,7 @@ function GitHubGistWidget(props: WidgetArgs) {
 
 export const GitHubGistWidgetCreator: WidgetCreator = (args) => {
   const el = document.createElement("span");
-  ReactDOM.render(
+  renderWidget(
     <ThemeProvider theme={globalContainers.settingsContainer.theme.muiTheme}>
       <GitHubGistWidget {...args}></GitHubGistWidget>
     </ThemeProvider>,

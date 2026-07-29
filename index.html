@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" href="/favicon.ico" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="img-src 'self' data: https://*; script-src 'self' 'unsafe-eval' 'unsafe-inline' *.jsdelivr.net tessdata.projectnaptha.com gist.github.com unpkg.com blob:"
+    />
+    <meta
+      name="description"
+      content="Crossnote - A markdown note app that supports offline editing as well as git repository push&pull"
+    />
+    <link rel="manifest" href="/manifest.json" />
+    <title>Crossnote</title>
+
+    <link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-icon-180.png" />
+    <link rel="apple-touch-icon" sizes="167x167" href="/assets/apple-icon-167.png" />
+    <link rel="apple-touch-icon" sizes="152x152" href="/assets/apple-icon-152.png" />
+    <link rel="apple-touch-icon" sizes="120x120" href="/assets/apple-icon-120.png" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+
+    <!-- Runtime dependencies loaded from /public/deps (used by the echomd powerpacks) -->
+    <!-- mermaid -->
+    <script src="/deps/mermaid/mermaid.min.js"></script>
+    <!-- marked -->
+    <script src="/deps/marked/marked.min.js"></script>
+    <!-- plantuml-encoder -->
+    <script src="/deps/plantuml-encoder/plantuml-encoder.min.js"></script>
+    <!-- echarts -->
+    <script src="/deps/echarts/echarts.min.js"></script>
+    <script src="/deps/echarts-gl/echarts-gl.min.js"></script>
+    <!-- wavedrom -->
+    <script src="/deps/wavedrom/skins/default.js" type="text/javascript"></script>
+    <script src="/deps/wavedrom/wavedrom.min.js" type="text/javascript"></script>
+    <!-- yamljs -->
+    <script src="/deps/yamljs/yaml.min.js"></script>
+    <!-- prismjs -->
+    <script src="/deps/prism/prism.js"></script>
+    <!-- vega -->
+    <script src="/deps/vega/vega.min.js"></script>
+    <script src="/deps/vega-lite/vega-lite.min.js"></script>
+    <script src="/deps/vega-embed/vega-embed.min.js"></script>
+  </head>
+  <body>
+    <noscript>You need to enable JavaScript to run this app.</noscript>
+    <div id="root"></div>
+    <script type="module" src="/src/index.tsx"></script>
+  </body>
+</html>

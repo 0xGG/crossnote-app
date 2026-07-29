@@ -34,7 +34,7 @@ import {
 } from "../../../generated/graphql";
 import { setTheme } from "../../../themes/manager";
 import { browserHistory } from "../../../utilities/history";
-const EchoMD = require("@0xgg/echomd/core");
+import * as EchoMD from "@0xgg/echomd/core";
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({

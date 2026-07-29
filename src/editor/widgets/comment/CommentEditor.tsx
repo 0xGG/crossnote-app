@@ -18,7 +18,7 @@ import { Note } from "../../../lib/note";
 import { setTheme } from "../../../themes/manager";
 import { resolveNoteImageSrc } from "../../../utilities/image";
 import { openURL } from "../../../utilities/preview";
-const EchoMD = require("@0xgg/echomd/core");
+import * as EchoMD from "@0xgg/echomd/core";
 
 export const ChatMessageEditorHeight = "150";
 const useStyles = makeStyles((theme: Theme) =>

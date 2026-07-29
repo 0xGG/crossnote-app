@@ -14,7 +14,7 @@ export const UUIDNil = "00000000-0000-0000-0000-000000000000";
 export const OneDay = 1000 * 60 * 60 * 24;
 
 export function getGraphQLEndpoint() {
-  if (process.env.NODE_ENV === "production") {
+  if (import.meta.env.PROD) {
     return `https://crossnote.app/api/graphql`;
   } else {
     return `http://${window.location.hostname}:9999/graphql`;
@@ -22,7 +22,7 @@ export function getGraphQLEndpoint() {
 }
 
 export function getPeerJSEndpoint(): PeerJSOption {
-  if (process.env.NODE_ENV === "production") {
+  if (import.meta.env.PROD) {
     return {
       host: `crossnote.app`,
       path: "/peer",
@@ -41,7 +41,7 @@ export function getPeerJSEndpoint(): PeerJSOption {
 }
 
 export function getGitHubOAuthClientID() {
-  if (process.env.NODE_ENV === "production") {
+  if (import.meta.env.PROD) {
     return "3dd81bb2c212b7749761";
   } else {
     return "c7477b9aa512785936e0";
@@ -49,7 +49,7 @@ export function getGitHubOAuthClientID() {
 }
 
 export function getGitHubOAuthCallbackURL() {
-  if (process.env.NODE_ENV === "production") {
+  if (import.meta.env.PROD) {
     return "https://crossnote.app/github_oauth_callback";
   } else {
     return `http://${window.location.host}/github_oauth_callback`;

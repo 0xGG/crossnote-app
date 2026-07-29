@@ -7,7 +7,7 @@ import {
   ListItemText,
   Typography,
 } from "@material-ui/core";
-import useInterval from "@use-it/interval";
+import useInterval from "../utilities/useInterval";
 import { ChevronDown, Translate } from "mdi-material-ui";
 import React, { useCallback, useState } from "react";
 import { useTranslation } from "react-i18next";
