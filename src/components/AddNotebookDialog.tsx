@@ -61,6 +61,8 @@ export default function AddNotebookDialog(props: Props) {
     setGitBranch("");
     setGitUsername("");
     setGitPassword("");
+    setGitCorsProxy(DEFAULT_CORS_PROXY);
+    setRememberCredentialsChecked(false);
     setExpanded(false);
     props.onClose();
   }, [props]);
@@ -124,7 +126,7 @@ export default function AddNotebookDialog(props: Props) {
       open={props.open}
       onClose={() => {
         if (!crossnoteContainer.isAddingNotebook) {
-          props.onClose();
+          close();
         }
       }}
     >
@@ -144,7 +146,7 @@ export default function AddNotebookDialog(props: Props) {
               size={"small"}
               onClick={() => {
                 crossnoteContainer.openLocalNotebook();
-                props.onClose();
+                close();
               }}
               disabled={!("showDirectoryPicker" in window)}
             >
@@ -312,7 +314,7 @@ export default function AddNotebookDialog(props: Props) {
             : t("general/add")}
         </Button>
         {props.canCancel && (
-          <Button onClick={props.onClose}>{t("general/cancel")}</Button>
+          <Button onClick={close}>{t("general/cancel")}</Button>
         )}
       </DialogActions>
     </Dialog>

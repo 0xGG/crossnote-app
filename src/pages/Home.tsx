@@ -219,9 +219,12 @@ export function Home(props: Props) {
     if (props.section === HomeSection.Notebooks) {
       if (props.queryParams) {
         if (props.queryParams.repo && props.queryParams.branch) {
-          const repo = decodeURIComponent(props.queryParams.repo || "");
-          const branch = decodeURIComponent(props.queryParams.branch || "");
-          const filePath = decodeURIComponent(props.queryParams.filePath || "");
+          // The query values are already percent-decoded by URLSearchParams;
+          // decoding again would corrupt values containing a literal "%" and
+          // throw URIError on malformed sequences.
+          const repo = props.queryParams.repo || "";
+          const branch = props.queryParams.branch || "";
+          const filePath = props.queryParams.filePath || "";
           const notebook = crossnoteContainer.notebooks.find(
             (nb) => nb.gitURL === repo && nb.gitBranch === branch,
           );
