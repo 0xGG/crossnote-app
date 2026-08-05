@@ -63,7 +63,12 @@ export default function AddNotebookDialog(props: Props) {
     setGitPassword("");
     setGitCorsProxy(DEFAULT_CORS_PROXY);
     setRememberCredentialsChecked(false);
-    setExpanded(false);
+    setShowUsername(true);
+    setShowPassword(false);
+    // Back to the initial expanded state: the dialog stays mounted across
+    // open cycles, and the init effect re-expands only when props change,
+    // so collapsing here would leave the next plain open with a folded form.
+    setExpanded(true);
     props.onClose();
   }, [props]);
 
