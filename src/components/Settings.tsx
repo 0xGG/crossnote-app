@@ -47,46 +47,6 @@ const useStyles = makeStyles((theme: Theme) =>
         overflow: "auto",
       },
     },
-    cover: {
-      position: "relative",
-      width: "100%",
-      height: "0",
-      marginTop: theme.spacing(2),
-      paddingTop: "30%",
-      backgroundSize: "cover",
-      backgroundPosition: "center",
-      backgroundColor: "#fade79",
-      [theme.breakpoints.down("sm")]: {
-        paddingTop: "50%",
-      },
-    },
-    row: {
-      display: "flex",
-      flexDirection: "row",
-      alignItems: "center",
-    },
-    loggedInSection: {
-      position: "relative",
-      padding: theme.spacing(0, 2),
-      border: `1px solid ${theme.palette.primary.light}`,
-      marginBottom: theme.spacing(4),
-      marginTop: theme.spacing(2),
-      borderRadius: "4px",
-    },
-    avatar: {
-      marginTop: theme.spacing(2),
-      width: "64px",
-      height: "64px",
-      borderRadius: "4px",
-    },
-    saveBtn: {
-      marginBottom: theme.spacing(2),
-    },
-    logoutBtn: {
-      position: "absolute",
-      top: "16px",
-      right: "16px",
-    },
     section: {
       marginTop: theme.spacing(4),
     },

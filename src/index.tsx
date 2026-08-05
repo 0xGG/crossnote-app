@@ -2,8 +2,6 @@ import "./polyfills";
 import "@mdi/font/css/materialdesignicons.min.css";
 import "noty/lib/noty.css";
 import "noty/lib/themes/relax.css";
-import React from "react";
-import ReactDOM from "react-dom";
 import { createRoot } from "react-dom/client";
 import "typeface-noto-sans-sc/index.css";
 import "typeface-roboto/index.css";
@@ -15,10 +13,6 @@ import "./index.css";
 import Crossnote from "./lib/crossnote";
 import "./lib/fs";
 import "./themes/manager";
-
-// Hack for GoldenLayout
-window["React"] = React;
-window["ReactDOM"] = ReactDOM;
 
 try {
   const crossnote = new Crossnote();

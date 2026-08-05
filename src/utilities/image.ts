@@ -32,22 +32,20 @@ export async function loadImageAsBase64(
   }
   if (await pfs.exists(imageFilePath)) {
     // @ts-ignore
-    const data: Uint8Array = await pfs.readFile(imageFilePath);
-    // btoa expects a binary string; convert in chunks to avoid call-stack
-    // limits on large images. (Buffer is not available in the browser.)
-    let binary = "";
-    const chunkSize = 0x8000;
-    for (let i = 0; i < data.length; i += chunkSize) {
-      binary += String.fromCharCode(...data.subarray(i, i + chunkSize));
-    }
-    const base64 = btoa(binary);
+    const data: Uint8Array<ArrayBuffer> = await pfs.readFile(imageFilePath);
     let imageType = path.extname(imageSrc).slice(1);
     if (imageType.match(/^svg$/i)) {
       imageType = "svg+xml";
     } else if (imageType.match(/^jpg$/i)) {
       imageType = "jpeg";
     }
-    return `data:image/${imageType};base64,${base64}`;
+    const blob = new Blob([data], { type: `image/${imageType}` });
+    return await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = () => reject(reader.error);
+      reader.readAsDataURL(blob);
+    });
   } else {
     return "";
   }

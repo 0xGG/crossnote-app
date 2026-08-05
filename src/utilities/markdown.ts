@@ -1,6 +1,3 @@
-// const loadLanguages = require("prismjs/components/");
-// loadLanguages(["python"]);
-
 export const TagStopRegExp = /[@#,.!$%^&*()[\]-_+=~`<>?\\，。]/g;
 export function getTags(markdown: string): string[] {
   const tags = new Set(

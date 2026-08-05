@@ -10,6 +10,11 @@ import { randomID } from "../utilities/utils";
 import { fs, pfs } from "./fs";
 import { Notebook } from "./notebook";
 
+// Shared UTF-8 decoder for git blob contents; TextDecoder keeps no state
+// across non-streaming decode() calls, so one instance serves all call
+// sites (pullNotebook decodes two blobs per changed file).
+const utf8Decoder = new TextDecoder();
+
 /*
 export interface Attachment {
   notebook: Notebook;
@@ -630,7 +635,7 @@ export default class Crossnote {
               oid: localSha,
               filepath: filePath,
             });
-            baseContent = new TextDecoder().decode(baseContentBlobResult.blob);
+            baseContent = utf8Decoder.decode(baseContentBlobResult.blob);
           } catch (error) {}
           try {
             const theirContentBlobTresult = await git.readBlob({
@@ -639,9 +644,7 @@ export default class Crossnote {
               oid: remoteSha,
               filepath: filePath,
             });
-            theirContent = new TextDecoder().decode(
-              theirContentBlobTresult.blob,
-            );
+            theirContent = utf8Decoder.decode(theirContentBlobTresult.blob);
           } catch (error) {}
           // console.log("ourContent: ", ourContent);
           // console.log("theirContent: ", theirContent);

@@ -101,9 +101,6 @@ importers:
       pouchdb-find:
         specifier: ^7.2.2
         version: 7.3.1
-      prismjs:
-        specifier: ^1.23.0
-        version: 1.30.0
       react:
         specifier: ^18.3.1
         version: 18.3.1
@@ -165,9 +162,6 @@ importers:
       '@types/pouchdb':
         specifier: ^6.4.0
         version: 6.4.2
-      '@types/prismjs':
-        specifier: ^1.16.2
-        version: 1.26.6
       '@types/react':
         specifier: ^18.3.0
         version: 18.3.31
@@ -932,9 +926,6 @@ packages:
 
   '@types/pouchdb@6.4.2':
     resolution: {integrity: sha512-YsI47rASdtzR+3V3JE2UKY58snhm0AglHBpyckQBkRYoCbTvGagXHtV0x5n8nzN04jQmvTG+Sm85cIzKT3KXBA==}
-
-  '@types/prismjs@1.26.6':
-    resolution: {integrity: sha512-vqlvI7qlMvcCBbVe0AKAb4f97//Hy0EBTaiW8AalRnG/xAN5zOiWWyrNqNXeq8+KAuvRewjCVY1+IPxk4RdNYw==}
 
   '@types/prop-types@15.7.15':
     resolution: {integrity: sha512-F6bEyamV9jKGAFBEmlQnesRPGOQqS2+Uwi0Em15xenOxHaf2hv6L8YCVn3rPdPJOiJfPiCnLIRyvwVaqMY3MIw==}
@@ -4033,8 +4024,6 @@ snapshots:
       '@types/pouchdb-node': 6.1.7
       '@types/pouchdb-replication': 6.4.7
 
-  '@types/prismjs@1.26.6': {}
-
   '@types/prop-types@15.7.15': {}
 
   '@types/react-color@3.0.13(@types/react@18.3.31)':
@@ -5985,7 +5974,8 @@ snapshots:
 
   prettier@2.8.8: {}
 
-  prismjs@1.30.0: {}
+  prismjs@1.30.0:
+    optional: true
 
   prop-types@15.8.1:
     dependencies:

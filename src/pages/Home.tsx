@@ -120,11 +120,6 @@ const useStyles = makeStyles((theme: Theme) =>
     listItemIcon: {
       color: theme.palette.text.secondary,
     },
-    avatar: {
-      width: "24px",
-      height: "24px",
-      borderRadius: "4px",
-    },
     selectedSection: {
       backgroundColor: "#ccc",
     },
