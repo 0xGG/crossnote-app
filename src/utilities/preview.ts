@@ -2,7 +2,6 @@ import { printPreview as EchoMDPrintPreview } from "@0xgg/echomd/preview";
 import * as path from "path";
 import { globalContainers } from "../containers/global";
 import { Note } from "../lib/note";
-import { browserHistory } from "./history";
 import { resolveNoteImageSrc } from "./image";
 
 export function printPreview(
@@ -37,7 +36,10 @@ export function openURL(url: string = "", note: Note) {
   }
   if (url.match(/https?:\/\//)) {
     if (url.startsWith(window.location.origin)) {
-      browserHistory.push(url.replace(window.location.origin, ""));
+      // Same-origin deep links (/?repo=...) are handled by the query-string
+      // parsing at boot, so navigate for real; a bare pushState would only
+      // change the address bar (nothing subscribes to history changes).
+      window.location.assign(url);
     } else {
       window.open(url, "_blank"); // TODO: opener bug, check zhihu
     }

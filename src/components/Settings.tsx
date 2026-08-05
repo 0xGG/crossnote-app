@@ -222,7 +222,7 @@ export function Settings(props: Props) {
         <Box className={clsx(classes.section)}>
           <TextField
             label={t("settings/author-email")}
-            placeholder={"anonymous@crossnote.app"}
+            placeholder={"anonymous@example.com"}
             fullWidth
             margin="normal"
             InputLabelProps={{
@@ -392,9 +392,7 @@ export function Settings(props: Props) {
         </Box>
         <Box className={clsx(classes.section)} style={{ marginTop: "32px" }}>
           <Link
-            href={
-              "https://crossnote.app/?repo=https%3A%2F%2Fgithub.com%2F0xGG%2Fwelcome-notebook.git&branch=master&filePath=README.md"
-            }
+            href={"https://github.com/0xGG/crossnote-app"}
             target={"_blank"}
           >
             <Typography variant={"caption"}>
