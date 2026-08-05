@@ -1,3 +1,4 @@
+import { DEFAULT_CORS_PROXY } from "../config";
 import useInterval from "../utilities/useInterval";
 import FlexLayout, {
   Actions,
@@ -843,7 +844,7 @@ function useCrossnoteContainer(initialState: InitialState) {
         */
         notebook = await crossnote.addNotebook({
           name: "Drafts",
-          corsProxy: "https://cors.isomorphic-git.org",
+          corsProxy: DEFAULT_CORS_PROXY,
           gitURL: "",
         });
         await pfs.writeFile(

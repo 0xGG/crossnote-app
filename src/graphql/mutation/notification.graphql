@@ -1,7 +1,0 @@
-mutation DeleteNotification($notificationID: UUID!) {
-  deleteNotification(input: { notificationID: $notificationID })
-}
-
-mutation DeleteAllNotifications {
-  deleteAllNotifications
-}

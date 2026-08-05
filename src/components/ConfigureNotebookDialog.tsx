@@ -1,3 +1,4 @@
+import { DEFAULT_CORS_PROXY } from "../config";
 import {
   Accordion,
   AccordionDetails,
@@ -37,7 +38,7 @@ export default function ConfigureNotebookDialog(props: Props) {
   const [gitUsername, setGitUsername] = useState<string>("");
   const [gitPassword, setGitPassword] = useState<string>("");
   const [gitCorsProxy, setGitCorsProxy] = useState<string>(
-    "https://cors.isomorphic-git.org",
+    DEFAULT_CORS_PROXY,
   );
   const [showUsername, setShowUsername] = useState<boolean>(false);
   const [showPassword, setShowPassword] = useState<boolean>(false);
@@ -233,7 +234,7 @@ export default function ConfigureNotebookDialog(props: Props) {
                 ></TextField>
                 <TextField
                   label={t("general/cors-proxy")}
-                  placeholder={"https://cors.isomorphic-git.org"}
+                  placeholder={DEFAULT_CORS_PROXY}
                   fullWidth={true}
                   value={gitCorsProxy}
                   onChange={(event) => setGitCorsProxy(event.target.value)}

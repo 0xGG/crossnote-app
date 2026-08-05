@@ -1,5 +1,4 @@
 import * as path from "path";
-import { NotebookFieldsFragment } from "../generated/graphql";
 import { pfs } from "../lib/fs";
 import { Note } from "../lib/note";
 
@@ -13,39 +12,6 @@ export async function resolveNoteImageSrc(note: Note, imageSrc: string) {
     return "";
   } else {
     return await loadImageAsBase64(note.notebookPath, note.filePath, imageSrc);
-  }
-}
-
-export function resolveNotebookFilePath(
-  notebook: NotebookFieldsFragment,
-  filePath: string,
-) {
-  if (!notebook) {
-    return filePath;
-  }
-  if (filePath.startsWith("https://") || filePath.startsWith("data:")) {
-    return filePath;
-  } else if (filePath.startsWith("http://")) {
-    return "";
-  } else {
-    const { gitURL, gitBranch } = notebook;
-    const gitURLArr = gitURL.replace("https://", "").split("/");
-    const gitHost = gitURLArr[0].toLowerCase();
-    const gitOwner = gitURLArr[1];
-    const gitRepo = gitURLArr[2].replace(/\.git$/, "");
-    let outFilePath = "";
-    filePath = filePath.replace(/^\/+/, "").replace(/^\.\/+/, "");
-    if (gitHost === "github.com") {
-      outFilePath = `https://github.com/${gitOwner}/${gitRepo}/raw/${gitBranch}/${filePath}`;
-    } else if (gitHost === "gitlab.com") {
-      outFilePath = `https://gitlab.com/${gitOwner}/${gitRepo}/-/raw/${gitBranch}/${filePath}`;
-    } else if (gitHost === "gitee.com") {
-      outFilePath = `https://gitee.com/${gitOwner}/${gitRepo}/raw/${gitBranch}/${filePath}`;
-    } else if (gitHost === "gitea.com") {
-      outFilePath = `https://gitea.com/${gitOwner}/${gitRepo}/raw/branch/${gitBranch}/${filePath}`;
-    }
-
-    return outFilePath;
   }
 }
 
@@ -67,7 +33,14 @@ export async function loadImageAsBase64(
   if (await pfs.exists(imageFilePath)) {
     // @ts-ignore
     const data: Uint8Array = await pfs.readFile(imageFilePath);
-    const base64 = Buffer.from(data.buffer).toString("base64");
+    // btoa expects a binary string; convert in chunks to avoid call-stack
+    // limits on large images. (Buffer is not available in the browser.)
+    let binary = "";
+    const chunkSize = 0x8000;
+    for (let i = 0; i < data.length; i += chunkSize) {
+      binary += String.fromCharCode(...data.subarray(i, i + chunkSize));
+    }
+    const base64 = btoa(binary);
     let imageType = path.extname(imageSrc).slice(1);
     if (imageType.match(/^svg$/i)) {
       imageType = "svg+xml";

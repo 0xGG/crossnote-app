@@ -1,3 +1,4 @@
+import { DEFAULT_CORS_PROXY } from "../config";
 // @ts-ignore
 import diff3Merge from "diff3";
 import * as git from "isomorphic-git";
@@ -629,9 +630,7 @@ export default class Crossnote {
               oid: localSha,
               filepath: filePath,
             });
-            baseContent = Buffer.from(baseContentBlobResult.blob).toString(
-              "utf8",
-            );
+            baseContent = new TextDecoder().decode(baseContentBlobResult.blob);
           } catch (error) {}
           try {
             const theirContentBlobTresult = await git.readBlob({
@@ -640,8 +639,8 @@ export default class Crossnote {
               oid: remoteSha,
               filepath: filePath,
             });
-            theirContent = Buffer.from(theirContentBlobTresult.blob).toString(
-              "utf8",
+            theirContent = new TextDecoder().decode(
+              theirContentBlobTresult.blob,
             );
           } catch (error) {}
           // console.log("ourContent: ", ourContent);
@@ -794,7 +793,7 @@ export default class Crossnote {
         typeof notebook.gitCorsProxy === "string" &&
         notebook.gitCorsProxy.startsWith("https://crossnote.app/cors")
       ) {
-        notebook.gitCorsProxy = "https://cors.isomorphic-git.org";
+        notebook.gitCorsProxy = DEFAULT_CORS_PROXY;
       }
 
       if (n.directoryHandle) {

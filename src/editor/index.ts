@@ -35,13 +35,11 @@ import twemoji from "twemoji";
 import { EmojiBackgroundImageFn } from "../components/EmojiWrapper";
 import { AudioWidgetCreator } from "./widgets/audio";
 import { BilibiliWidgetCreator } from "./widgets/bilibili";
-import { CommentWidgetCreator } from "./widgets/comment";
 import { GitHubGistWidgetCreator } from "./widgets/github_gist";
 import { ImageWidgetCreator } from "./widgets/image";
 import { KanbanWidgetCreator } from "./widgets/kanban";
 import { OCRWidgetCreator } from "./widgets/ocr";
 import { TimerWidgetCreator } from "./widgets/timer";
-// import { NeteaseMusicWidgetCreator } from "./widgets/netease_music";
 import { VideoWidgetCreator } from "./widgets/video";
 import { YoutubeWidgetCreator } from "./widgets/youtube";
 
@@ -52,13 +50,11 @@ window["CodeMirror"] = CodeMirror;
 registerWidgetCreator("timer", TimerWidgetCreator);
 registerWidgetCreator("crossnote.image", ImageWidgetCreator);
 registerWidgetCreator("crossnote.audio", AudioWidgetCreator);
-// registerWidgetCreator("crossnote.netease_music", NeteaseMusicWidgetCreator);
 registerWidgetCreator("crossnote.video", VideoWidgetCreator);
 registerWidgetCreator("crossnote.bilibili", BilibiliWidgetCreator);
 registerWidgetCreator("crossnote.youtube", YoutubeWidgetCreator);
 registerWidgetCreator("crossnote.ocr", OCRWidgetCreator);
 registerWidgetCreator("crossnote.kanban", KanbanWidgetCreator);
-registerWidgetCreator("crossnote.comment", CommentWidgetCreator);
 registerWidgetCreator("crossnote.github_gist", GitHubGistWidgetCreator);
 
 import packageJSON from "../../package.json";

@@ -1,7 +1,0 @@
-mutation LinkWithGitHubAccount($code: String!) {
-  linkWithGitHubAccount(input: { code: $code })
-}
-
-mutation UnlinkGitHubAccount {
-  unlinkGitHubAccount
-}

@@ -29,7 +29,6 @@ import GraphView from "./GraphView";
 import { Loading } from "./Loading";
 import NotePanel from "./NotePanel";
 import NotesPanel from "./NotesPanel";
-import { Notifications } from "./Notifications";
 import { Settings } from "./Settings";
 
 const useStyles = makeStyles((theme: Theme) =>
@@ -164,8 +163,6 @@ export function MainPanel(props: Props) {
             <GraphView notebook={notebook} tabNode={node}></GraphView>
           );
         }
-      } else if (component === "Notifications") {
-        renderElement = <Notifications></Notifications>;
       } else {
         console.error("Invalid component: ", component);
       }
