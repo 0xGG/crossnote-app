@@ -63,6 +63,7 @@
     "unstated-next": "^1.1.0"
   },
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
     "@types/codemirror": "^0.0.91",
     "@types/d3": "^6.2.0",
     "@types/emoji-mart": "^3.0.4",
@@ -77,9 +78,16 @@
     "@types/twemoji": "^12.1.1",
     "@types/wicg-file-system-access": "^2020.9.1",
     "@vitejs/plugin-react": "^5.2.0",
-    "prettier": "^2.0.5",
+    "eslint": "^10.8.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "fake-indexeddb": "^6.2.5",
+    "jsdom": "^29.1.1",
+    "prettier": "^3.9.6",
     "typescript": "^7.0.2",
+    "typescript-eslint": "^8.65.0",
     "vite": "^7.3.6",
-    "vite-plugin-static-copy": "^3.4.0"
+    "vite-plugin-static-copy": "^3.4.0",
+    "vitest": "^4.1.10"
   }
 }

@@ -109,9 +109,8 @@ function useCrossnoteContainer(initialState: InitialState) {
   const [isAddingNotebook, setIsAddingNotebook] = useState<boolean>(false);
   const [isPushingNotebook, setIsPushingNotebook] = useState<boolean>(false);
   const [isPullingNotebook, setIsPullingNotebook] = useState<boolean>(false);
-  const [isPerformingAutoFetch, setIsPerformingAutoFetch] = useState<boolean>(
-    false,
-  );
+  const [isPerformingAutoFetch, setIsPerformingAutoFetch] =
+    useState<boolean>(false);
   const [homeSection, setHomeSection] = useState<HomeSection>(
     HomeSection.Unknown,
   );

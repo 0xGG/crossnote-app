@@ -37,18 +37,14 @@ export default function ConfigureNotebookDialog(props: Props) {
   const [gitBranch, setGitBranch] = useState<string>("");
   const [gitUsername, setGitUsername] = useState<string>("");
   const [gitPassword, setGitPassword] = useState<string>("");
-  const [gitCorsProxy, setGitCorsProxy] = useState<string>(
-    DEFAULT_CORS_PROXY,
-  );
+  const [gitCorsProxy, setGitCorsProxy] = useState<string>(DEFAULT_CORS_PROXY);
   const [showUsername, setShowUsername] = useState<boolean>(false);
   const [showPassword, setShowPassword] = useState<boolean>(false);
   const [autoFetchPeriod, setAutoFetchPeriod] = useState<number>(0);
-  const [clickDeleteCount, setClickDeleteCount] = useState<number>(
-    MaxClickDeleteCount,
-  );
-  const [clickHardResetCount, setClickHardResetCount] = useState<number>(
-    MaxClickDeleteCount,
-  );
+  const [clickDeleteCount, setClickDeleteCount] =
+    useState<number>(MaxClickDeleteCount);
+  const [clickHardResetCount, setClickHardResetCount] =
+    useState<number>(MaxClickDeleteCount);
   const isMounted = useRef<boolean>(false);
   const { t } = useTranslation();
 

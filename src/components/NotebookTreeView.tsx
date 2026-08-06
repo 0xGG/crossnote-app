@@ -89,13 +89,10 @@ interface Props {
 export default function NotebookTreeView(props: Props) {
   const classes = useStyles();
   const [expanded, setExpanded] = useState<string[]>([]);
-  const [
-    notebookConfigurationDialogOpen,
-    setNotebookConfigurationDialogOpen,
-  ] = useState<boolean>(false);
-  const [pushNotebookDialogOpen, setPushNotebookDialogOpen] = useState<boolean>(
-    false,
-  );
+  const [notebookConfigurationDialogOpen, setNotebookConfigurationDialogOpen] =
+    useState<boolean>(false);
+  const [pushNotebookDialogOpen, setPushNotebookDialogOpen] =
+    useState<boolean>(false);
   const [favoritedNotes, setFavoritedNotes] = useState<Notes>({});
   const crossnoteContainer = CrossnoteContainer.useContainer();
   const { t } = useTranslation();

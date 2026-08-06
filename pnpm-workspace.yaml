@@ -7,4 +7,4 @@ allowBuilds:
   leveldown: false
   tesseract.js: false
 patchedDependencies:
-  '@0xgg/echomd@1.0.4': patches/@0xgg__echomd@1.0.4.patch
+  "@0xgg/echomd@1.0.4": patches/@0xgg__echomd@1.0.4.patch

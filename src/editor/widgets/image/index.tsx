@@ -57,9 +57,8 @@ function ImageWidget(props: WidgetArgs) {
   const classes = useStyles(props);
   const { t } = useTranslation();
   const [url, setURL] = useState<string>("");
-  const [imageUploaderElement, setImageUploaderElement] = useState<
-    HTMLInputElement
-  >(null);
+  const [imageUploaderElement, setImageUploaderElement] =
+    useState<HTMLInputElement>(null);
   const [uploadingImages, setUploadingImages] = useState<boolean>(false);
 
   function clickDropArea(e: any) {

@@ -107,10 +107,8 @@ export default function GraphView(props: Props) {
     links: [],
   });
   const graphView = useRef<HTMLDivElement>(null);
-  const [
-    hoveredGraphViewNode,
-    setHoveredGraphViewNode,
-  ] = useState<GraphViewNode>(null);
+  const [hoveredGraphViewNode, setHoveredGraphViewNode] =
+    useState<GraphViewNode>(null);
   const [focusedNoteFilePath, setFocusedNoteFilePath] = useState<string>(null);
   const [tabNodeVisible, setTabNodeVisible] = useState<boolean>(false);
   const { t } = useTranslation();
@@ -119,24 +117,28 @@ export default function GraphView(props: Props) {
   const isMounted = useRef<boolean>(false);
 
   // Graph related variables
-  const [graphLayout, setGraphLayout] = useState<
-    d3.Simulation<d3.SimulationNodeDatum, undefined>
-  >(null);
-  const [svg, setSVG] = useState<
-    d3.Selection<SVGSVGElement, unknown, HTMLDivElement, undefined>
-  >(null);
-  const [container, setContainer] = useState<
-    d3.Selection<SVGGElement, unknown, SVGSVGElement, undefined>
-  >(null);
-  const [link, setLink] = useState<
-    d3.Selection<SVGLineElement, GraphViewLink, SVGGElement, unknown>
-  >(null);
-  const [node, setNode] = useState<
-    d3.Selection<SVGCircleElement, GraphViewNode, SVGGElement, unknown>
-  >(null);
-  const [text, setText] = useState<
-    d3.Selection<SVGTextElement, GraphViewNode, SVGGElement, unknown>
-  >(null);
+  const [graphLayout, setGraphLayout] =
+    useState<d3.Simulation<d3.SimulationNodeDatum, undefined>>(null);
+  const [svg, setSVG] =
+    useState<d3.Selection<SVGSVGElement, unknown, HTMLDivElement, undefined>>(
+      null,
+    );
+  const [container, setContainer] =
+    useState<d3.Selection<SVGGElement, unknown, SVGSVGElement, undefined>>(
+      null,
+    );
+  const [link, setLink] =
+    useState<d3.Selection<SVGLineElement, GraphViewLink, SVGGElement, unknown>>(
+      null,
+    );
+  const [node, setNode] =
+    useState<
+      d3.Selection<SVGCircleElement, GraphViewNode, SVGGElement, unknown>
+    >(null);
+  const [text, setText] =
+    useState<d3.Selection<SVGTextElement, GraphViewNode, SVGGElement, unknown>>(
+      null,
+    );
 
   const neigh = useCallback(
     (n1: GraphViewNode, n2: GraphViewNode) => {
@@ -217,8 +219,8 @@ export default function GraphView(props: Props) {
           return o.id === d.id
             ? theme.palette.primary.main
             : neigh(o, d)
-            ? theme.palette.primary.light
-            : defaultFillColor;
+              ? theme.palette.primary.light
+              : defaultFillColor;
         });
       link.style("stroke", function (o) {
         return (o.source as any).id === d.id || (o.target as any).id === d.id

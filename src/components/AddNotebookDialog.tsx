@@ -43,13 +43,9 @@ export default function AddNotebookDialog(props: Props) {
   const [gitBranch, setGitBranch] = useState<string>(props.gitBranch || "");
   const [gitUsername, setGitUsername] = useState<string>("");
   const [gitPassword, setGitPassword] = useState<string>("");
-  const [gitCorsProxy, setGitCorsProxy] = useState<string>(
-    DEFAULT_CORS_PROXY,
-  );
-  const [
-    rememberCredentialsChecked,
-    setRememberCredentialsChecked,
-  ] = useState<boolean>(false);
+  const [gitCorsProxy, setGitCorsProxy] = useState<string>(DEFAULT_CORS_PROXY);
+  const [rememberCredentialsChecked, setRememberCredentialsChecked] =
+    useState<boolean>(false);
   const [showUsername, setShowUsername] = useState<boolean>(true);
   const [showPassword, setShowPassword] = useState<boolean>(false);
   const { t } = useTranslation();

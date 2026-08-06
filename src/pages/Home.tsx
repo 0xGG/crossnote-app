@@ -189,9 +189,8 @@ export function Home(props: Props) {
   const classes = useStyles(props);
   const theme = useTheme();
   // const isMobile = useMediaQuery(theme.breakpoints.down("xs"));
-  const [addNotebookDialogOpen, setAddNotebookDialogOpen] = useState<boolean>(
-    false,
-  );
+  const [addNotebookDialogOpen, setAddNotebookDialogOpen] =
+    useState<boolean>(false);
   const [addNotebookRepo, setAddNotebookRepo] = useState<string>("");
   const [addNotebookBranch, setAddNotebookBranch] = useState<string>("");
   const [

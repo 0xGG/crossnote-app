@@ -70,13 +70,10 @@ interface Props {
 export default function NotePopover(props: Props) {
   const classes = useStyles(props);
   const note = props.note;
-  const [deleteNoteDialogOpen, setDeleteNoteDialogOpen] = useState<boolean>(
-    false,
-  );
-  const [
-    changeNoteFilePathDialogOpen,
-    setChangeNoteFilePathDialogOpen,
-  ] = useState<boolean>(false);
+  const [deleteNoteDialogOpen, setDeleteNoteDialogOpen] =
+    useState<boolean>(false);
+  const [changeNoteFilePathDialogOpen, setChangeNoteFilePathDialogOpen] =
+    useState<boolean>(false);
   const [needsToPrint, setNeedsToPrint] = useState<boolean>(false);
   const [shareAnchorEl, setShareAnchorEl] = useState<HTMLElement>(null);
   const [noteAliasAnchorEl, setNoteAliasAnchorEl] = useState<HTMLElement>(null);

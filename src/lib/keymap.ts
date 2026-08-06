@@ -1,8 +1,8 @@
 export enum KeyMap {
-  "DEFAULT" = "sublime",
-  "VIM" = "vim",
-  "EMACS" = "emacs",
-  "SUBLIME" = "sublime",
+  DEFAULT = "sublime",
+  VIM = "vim",
+  EMACS = "emacs",
+  SUBLIME = "sublime",
 }
 
 export function getKeyMap(v: string): KeyMap {

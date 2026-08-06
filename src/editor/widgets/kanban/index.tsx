@@ -198,23 +198,19 @@ function KanbanCardDisplay(props: KanbanCardProps) {
   const card = props.card;
   const isPreview = props.isPreview;
   const note: Note = null; // = globalContainers.crossnoteContainer.selectedNote;
-  const [textAreaElement, setTextAreaElement] = useState<HTMLTextAreaElement>(
-    null,
-  );
+  const [textAreaElement, setTextAreaElement] =
+    useState<HTMLTextAreaElement>(null);
   const [previewElement, setPreviewElement] = React.useState<HTMLElement>(null);
 
   const [editor, setEditor] = useState<CodeMirrorEditor>(null);
   const [description, setDescription] = useState<string>(card.description);
   const [editorDialogOpen, setEditDialogOpen] = useState<boolean>(false);
-  const [editImageElement, setEditImageElement] = useState<HTMLImageElement>(
-    null,
-  );
-  const [editImageTextMarker, setEditImageTextMarker] = useState<TextMarker>(
-    null,
-  );
-  const [editImageDialogOpen, setEditImageDialogOpen] = useState<boolean>(
-    false,
-  );
+  const [editImageElement, setEditImageElement] =
+    useState<HTMLImageElement>(null);
+  const [editImageTextMarker, setEditImageTextMarker] =
+    useState<TextMarker>(null);
+  const [editImageDialogOpen, setEditImageDialogOpen] =
+    useState<boolean>(false);
 
   const { t } = useTranslation();
 

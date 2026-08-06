@@ -1,11 +1,7 @@
 import { Reference } from "./reference";
 
 export type TabNodeComponent =
-  | "Settings"
-  | "Note"
-  | "Notes"
-  | "Privacy"
-  | "Graph";
+  "Settings" | "Note" | "Notes" | "Privacy" | "Graph";
 
 export interface TabNodeConfig {
   component: TabNodeComponent;
