@@ -15,6 +15,11 @@ const {
 
 const SHEET_SIZE = 64;
 const projectRoot = fileURLToPath(new URL("..", import.meta.url));
+// --dry-run resolves the emoji-mart internals and the sheet URL, then stops
+// before the network. CI uses it to catch the fragile part of this script (the
+// deep import above, which any emoji-mart upgrade can break) without making
+// the pipeline depend on a CDN.
+const dryRun = process.argv.includes("--dry-run");
 
 async function downloadSheet(size) {
   const url = EmojiDefaultProps.backgroundImageFn("twitter", size);
@@ -26,12 +31,18 @@ async function downloadSheet(size) {
     "twitter",
     `${size}.png`,
   );
+  if (dryRun) {
+    console.log(`Resolved the sheet URL: ${url} (would write ${targetFile})`);
+    return;
+  }
   if (existsSync(targetFile)) {
     return;
   }
   console.log(`Downloading ${url} to ${targetFile}`);
   try {
-    const response = await fetch(url);
+    // Bound the fetch: a stalled connection would otherwise hang the build
+    // forever instead of reaching the warn-and-continue path below.
+    const response = await fetch(url, { signal: AbortSignal.timeout(30_000) });
     if (!response.ok) {
       throw new Error(`Response status was ${response.status}`);
     }
