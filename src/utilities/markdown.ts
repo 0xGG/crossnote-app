@@ -1,3 +1,5 @@
+import YAML from "yamljs";
+
 export const TagStopRegExp = /[@#,.!$%^&*()[\]-_+=~`<>?\\，。]/g;
 export function getTags(markdown: string): string[] {
   const tags = new Set(
@@ -40,7 +42,7 @@ export function matter(markdown: string): MatterOutput {
   ) {
     const frontMatterString = markdown.slice(3, endFrontMatterOffset);
     try {
-      frontMatter = (window as any)["YAML"].parse(frontMatterString);
+      frontMatter = YAML.parse(frontMatterString);
     } catch (error) {}
     markdown = markdown
       .slice(endFrontMatterOffset + 4)
@@ -54,7 +56,7 @@ export function matter(markdown: string): MatterOutput {
 
 export function matterStringify(markdown: string, frontMatter: any) {
   frontMatter = frontMatter || {};
-  const yamlStr = (window as any)["YAML"].stringify(frontMatter).trim();
+  const yamlStr = YAML.stringify(frontMatter).trim();
   if (yamlStr === "{}" || !yamlStr) {
     return markdown;
   } else {

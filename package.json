@@ -60,7 +60,8 @@
     "twemoji": "^13.0.2",
     "typeface-noto-sans-sc": "^1.1.13",
     "typeface-roboto": "^1.1.13",
-    "unstated-next": "^1.1.0"
+    "unstated-next": "^1.1.0",
+    "yamljs": "^0.3.0"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
@@ -77,6 +78,7 @@
     "@types/react-lazyload": "^3.0.0",
     "@types/twemoji": "^12.1.1",
     "@types/wicg-file-system-access": "^2020.9.1",
+    "@types/yamljs": "^0.2.34",
     "@vitejs/plugin-react": "^5.2.0",
     "eslint": "^10.8.0",
     "eslint-config-prettier": "^10.1.8",
