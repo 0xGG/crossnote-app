@@ -1,6 +1,4 @@
 import {
-  Avatar,
-  Badge,
   Box,
   CircularProgress,
   CssBaseline,
@@ -24,10 +22,7 @@ import {
   useTheme,
 } from "@material-ui/core/styles";
 import clsx from "clsx";
-import Identicon from "identicon.js";
-import { sha256 } from "js-sha256";
 import {
-  Bell,
   Cog as SettingsIcon,
   Menu,
   Notebook,
@@ -36,16 +31,13 @@ import {
 import React, { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import AddNotebookDialog from "../components/AddNotebookDialog";
-import { AuthDialog } from "../components/AuthDialog";
 import LanguageSelectorDialog from "../components/LanguageSelectorDialog";
 import { MainPanel } from "../components/MainPanel";
 import NotebookTreeView from "../components/NotebookTreeView";
-import { CloudContainer } from "../containers/cloud";
 import { CrossnoteContainer, HomeSection } from "../containers/crossnote";
 import { globalContainers } from "../containers/global";
 import { SettingsContainer } from "../containers/settings";
 import { getNoteIcon } from "../lib/note";
-import is from "is_js";
 
 const drawerWidth = 200;
 const notesPanelWidth = 350;
@@ -127,11 +119,6 @@ const useStyles = makeStyles((theme: Theme) =>
     },
     listItemIcon: {
       color: theme.palette.text.secondary,
-    },
-    avatar: {
-      width: "24px",
-      height: "24px",
-      borderRadius: "4px",
     },
     selectedSection: {
       backgroundColor: "#ccc",
@@ -215,11 +202,9 @@ export function Home(props: Props) {
   const [drawerOpen, setDrawerOpen] = useState<boolean>(false);
   const { t } = useTranslation();
   const crossnoteContainer = CrossnoteContainer.useContainer();
-  const cloudContainer = CloudContainer.useContainer();
   const settingsContainer = SettingsContainer.useContainer();
 
   // HACK: Register globalContainers for widgets use
-  globalContainers.cloudContainer = cloudContainer;
   globalContainers.settingsContainer = settingsContainer;
   globalContainers.crossnoteContainer = crossnoteContainer;
 
@@ -234,9 +219,12 @@ export function Home(props: Props) {
     if (props.section === HomeSection.Notebooks) {
       if (props.queryParams) {
         if (props.queryParams.repo && props.queryParams.branch) {
-          const repo = decodeURIComponent(props.queryParams.repo || "");
-          const branch = decodeURIComponent(props.queryParams.branch || "");
-          const filePath = decodeURIComponent(props.queryParams.filePath || "");
+          // The query values are already percent-decoded by URLSearchParams;
+          // decoding again would corrupt values containing a literal "%" and
+          // throw URIError on malformed sequences.
+          const repo = props.queryParams.repo || "";
+          const branch = props.queryParams.branch || "";
+          const filePath = props.queryParams.filePath || "";
           const notebook = crossnoteContainer.notebooks.find(
             (nb) => nb.gitURL === repo && nb.gitBranch === branch,
           );
@@ -370,25 +358,6 @@ export function Home(props: Props) {
       <Box className={clsx(classes.controllersSection)}>
         <Divider></Divider>
         <List disablePadding={true}>
-          {/*
-          <ListItem
-            button
-            onClick={() => {
-              browserHistory.push(`/explore`);
-              setDrawerOpen(false);
-            }}
-            style={{ display: is.online() ? "flex" : "none" }}
-          >
-            <ListItemIcon className={clsx(classes.listItemIcon)}>
-              <img
-                src="/logo.svg"
-                style={{ width: "28px", height: "28px" }}
-                alt={"Crossnote"}
-              ></img>
-            </ListItemIcon>
-            <ListItemText primary={t("general/Explore")}></ListItemText>
-          </ListItem>
-          */}
           <ListItem
             button
             onClick={() => {
@@ -406,65 +375,11 @@ export function Home(props: Props) {
               setDrawerOpen(false);
             }}
           >
-            {cloudContainer.viewer ? (
-              <ListItemIcon className={clsx(classes.listItemIcon)}>
-                <Avatar
-                  className={clsx(classes.avatar)}
-                  variant={"rounded"}
-                  src={
-                    cloudContainer.viewer.avatar ||
-                    "data:image/png;base64," +
-                      new Identicon(
-                        sha256(
-                          cloudContainer.viewer &&
-                            cloudContainer.viewer.username,
-                        ),
-                        80,
-                      ).toString()
-                  }
-                ></Avatar>
-              </ListItemIcon>
-            ) : (
-              <ListItemIcon className={clsx(classes.listItemIcon)}>
-                <SettingsIcon></SettingsIcon>
-              </ListItemIcon>
-            )}
+            <ListItemIcon className={clsx(classes.listItemIcon)}>
+              <SettingsIcon></SettingsIcon>
+            </ListItemIcon>
             <ListItemText primary={t("general/Settings")}></ListItemText>
           </ListItem>
-          {cloudContainer.loggedIn && (
-            <ListItem
-              button
-              onClick={() => {
-                crossnoteContainer.addTabNode({
-                  type: "tab",
-                  component: "Notifications",
-                  name: "🔔 " + t("general/Notifications"),
-                  id: "Notifications",
-                  config: {
-                    component: "Notifications",
-                    singleton: true,
-                  },
-                });
-                setDrawerOpen(false);
-              }}
-            >
-              <ListItemIcon className={clsx(classes.listItemIcon)}>
-                {cloudContainer.viewer.notifications.totalCount > 0 ? (
-                  <Badge
-                    color={"secondary"}
-                    badgeContent={
-                      cloudContainer.viewer.notifications.totalCount || ""
-                    }
-                  >
-                    <Bell></Bell>
-                  </Badge>
-                ) : (
-                  <Bell></Bell>
-                )}
-              </ListItemIcon>
-              <ListItemText primary={t("general/Notifications")}></ListItemText>
-            </ListItem>
-          )}
         </List>
       </Box>
     </React.Fragment>
@@ -524,10 +439,6 @@ export function Home(props: Props) {
         gitBranch={addNotebookBranch}
         hideOpeningLocal={addNotebookDialogHideOpeningLocal}
       ></AddNotebookDialog>
-      <AuthDialog
-        open={cloudContainer.authDialogOpen}
-        onClose={() => cloudContainer.setAuthDialogOpen(false)}
-      ></AuthDialog>
       <LanguageSelectorDialog></LanguageSelectorDialog>
     </Box>
   );

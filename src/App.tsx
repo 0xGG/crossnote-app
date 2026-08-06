@@ -1,95 +1,25 @@
 import { ThemeProvider } from "@material-ui/styles";
-import * as qs from "qs";
-import React, { FC, useEffect } from "react";
-import { useTranslation } from "react-i18next";
-// @ts-ignore
-import PWAPrompt from "react-ios-pwa-prompt";
-import { Route, Router, Switch } from "react-router-dom";
+import React, { FC } from "react";
 import "./App.css";
-import { GitHubOAuthCallback } from "./components/GitHubOAuthCallback";
-import ServiceWorkerWrapper from "./components/ServiceWorkerWrapper";
 import { HomeSection } from "./containers/crossnote";
 import { SettingsContainer } from "./containers/settings";
 import "./editor";
 import { Home } from "./pages/Home";
-import { browserHistory } from "./utilities/history";
-import is from "is_js";
+
+// Without a router the URL only changes through a full page load, so the
+// boot query string is parsed exactly once. Parsing per render would mint a
+// fresh object each time and re-trigger Home's deep-link effect (which is
+// keyed on the object's identity) on every unrelated re-render.
+const queryParams = Object.fromEntries(
+  new URLSearchParams(window.location.search),
+);
 
 const App: FC = () => {
-  const { t } = useTranslation();
   const settingsContainer = SettingsContainer.useContainer();
-  useEffect(() => {
-    const handler = (event: any) => {
-      try {
-        event.preventDefault();
-        event.prompt();
-        event.userChoice.then((choiceResult: any) => {
-          console.log(choiceResult);
-          localStorage.removeItem("layoutModel");
-        });
-      } catch (error) {
-        console.error(error);
-      }
-    };
-    window.addEventListener("beforeinstallprompt", handler);
-    return () => {
-      window.removeEventListener("beforeinstallprompt", handler);
-    };
-  }, []);
   return (
     <ThemeProvider theme={settingsContainer.theme.muiTheme}>
       <div className="App">
-        <Router history={browserHistory}>
-          <Switch>
-            {/*
-            <Route
-              path={`/explore`}
-              exact={true}
-              render={(props) => (
-                <Home section={HomeSection.Explore} queryParams={{}}></Home>
-              )}
-            ></Route>
-              */}
-            <Route
-              exact={true}
-              path={`/github_oauth_callback`}
-              render={(props) => (
-                <GitHubOAuthCallback
-                  code={
-                    (qs.parse(props.location.search.replace(/^\?/, ""))[
-                      "code"
-                    ] as string) || ""
-                  }
-                ></GitHubOAuthCallback>
-              )}
-            ></Route>
-            <Route
-              path={`/`}
-              render={(props) => (
-                <Home
-                  section={HomeSection.Notebooks}
-                  queryParams={qs.parse(
-                    props.location.search.replace(/^\?/, ""),
-                  )}
-                ></Home>
-              )}
-            ></Route>
-          </Switch>
-        </Router>
-        <ServiceWorkerWrapper></ServiceWorkerWrapper>
-        {is.safari() ? (
-          <PWAPrompt
-            copyTitle={t("react-ios-pwa-prompt/copy-title")}
-            copyBody={t("react-ios-pwa-prompt/copy-body")}
-            copyShareButtonLabel={t(
-              "react-ios-pwa-prompt/copy-share-button-label",
-            )}
-            copyAddHomeButtonLabel={t(
-              "react-ios-pwa-prompt/copy-add-home-button-label",
-            )}
-            copyClosePrompt={t("general/cancel")}
-          ></PWAPrompt>
-        ) : null}
+        <Home section={HomeSection.Notebooks} queryParams={queryParams}></Home>
       </div>
     </ThemeProvider>
   );

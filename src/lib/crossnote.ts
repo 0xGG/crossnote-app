@@ -1,3 +1,4 @@
+import { DEFAULT_CORS_PROXY } from "../config";
 // @ts-ignore
 import diff3Merge from "diff3";
 import * as git from "isomorphic-git";
@@ -8,6 +9,11 @@ import PouchdbFind from "pouchdb-find";
 import { randomID } from "../utilities/utils";
 import { fs, pfs } from "./fs";
 import { Notebook } from "./notebook";
+
+// Shared UTF-8 decoder for git blob contents; TextDecoder keeps no state
+// across non-streaming decode() calls, so one instance serves all call
+// sites (pullNotebook decodes two blobs per changed file).
+const utf8Decoder = new TextDecoder();
 
 /*
 export interface Attachment {
@@ -629,9 +635,7 @@ export default class Crossnote {
               oid: localSha,
               filepath: filePath,
             });
-            baseContent = Buffer.from(baseContentBlobResult.blob).toString(
-              "utf8",
-            );
+            baseContent = utf8Decoder.decode(baseContentBlobResult.blob);
           } catch (error) {}
           try {
             const theirContentBlobTresult = await git.readBlob({
@@ -640,9 +644,7 @@ export default class Crossnote {
               oid: remoteSha,
               filepath: filePath,
             });
-            theirContent = Buffer.from(theirContentBlobTresult.blob).toString(
-              "utf8",
-            );
+            theirContent = utf8Decoder.decode(theirContentBlobTresult.blob);
           } catch (error) {}
           // console.log("ourContent: ", ourContent);
           // console.log("theirContent: ", theirContent);
@@ -794,7 +796,7 @@ export default class Crossnote {
         typeof notebook.gitCorsProxy === "string" &&
         notebook.gitCorsProxy.startsWith("https://crossnote.app/cors")
       ) {
-        notebook.gitCorsProxy = "https://cors.isomorphic-git.org";
+        notebook.gitCorsProxy = DEFAULT_CORS_PROXY;
       }
 
       if (n.directoryHandle) {

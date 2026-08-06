@@ -2,7 +2,6 @@ import { printPreview as EchoMDPrintPreview } from "@0xgg/echomd/preview";
 import * as path from "path";
 import { globalContainers } from "../containers/global";
 import { Note } from "../lib/note";
-import { browserHistory } from "./history";
 import { resolveNoteImageSrc } from "./image";
 
 export function printPreview(
@@ -36,8 +35,20 @@ export function openURL(url: string = "", note: Note) {
     return;
   }
   if (url.match(/https?:\/\//)) {
-    if (url.startsWith(window.location.origin)) {
-      browserHistory.push(url.replace(window.location.origin, ""));
+    // Strict same-origin comparison: a prefix test would also match
+    // lookalike hosts such as https://<origin>.evil.example or
+    // https://<origin>@attacker.example.
+    let isSameOrigin = false;
+    try {
+      isSameOrigin = new URL(url).origin === window.location.origin;
+    } catch {
+      // Not a parseable absolute URL; treat it as external.
+    }
+    if (isSameOrigin) {
+      // Same-origin deep links (/?repo=...) are handled by the query-string
+      // parsing at boot, so navigate for real; a bare pushState would only
+      // change the address bar (nothing subscribes to history changes).
+      window.location.assign(url);
     } else {
       window.open(url, "_blank"); // TODO: opener bug, check zhihu
     }

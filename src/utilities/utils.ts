@@ -1,4 +1,3 @@
-import { PeerJSOption } from "peerjs";
 import moment from "moment";
 
 export function waitForTimeout(timeout: number): Promise<void> {
@@ -13,65 +12,6 @@ export const UUIDNil = "00000000-0000-0000-0000-000000000000";
 
 export const OneDay = 1000 * 60 * 60 * 24;
 
-export function getGraphQLEndpoint() {
-  if (import.meta.env.PROD) {
-    return `https://crossnote.app/api/graphql`;
-  } else {
-    return `http://${window.location.hostname}:9999/graphql`;
-  }
-}
-
-export function getPeerJSEndpoint(): PeerJSOption {
-  if (import.meta.env.PROD) {
-    return {
-      host: `crossnote.app`,
-      path: "/peer",
-      secure: true,
-      // config: { iceServers: [{ url: "stun:stun.l.google.com:19302" }] }
-    };
-  } else {
-    return {
-      host: window.location.hostname,
-      port: 9000,
-      path: "/peer",
-      secure: false,
-      // config: { iceServers: [{ url: "stun:stun.l.google.com:19302" }] }
-    };
-  }
-}
-
-export function getGitHubOAuthClientID() {
-  if (import.meta.env.PROD) {
-    return "3dd81bb2c212b7749761";
-  } else {
-    return "c7477b9aa512785936e0";
-  }
-}
-
-export function getGitHubOAuthCallbackURL() {
-  if (import.meta.env.PROD) {
-    return "https://crossnote.app/github_oauth_callback";
-  } else {
-    return `http://${window.location.host}/github_oauth_callback`;
-  }
-}
-
-export function startGitHubOAuth() {
-  window.open(
-    `https://github.com/login/oauth/authorize?client_id=${getGitHubOAuthClientID()}&redirect_uri=${encodeURIComponent(
-      getGitHubOAuthCallbackURL(),
-    )}`,
-    "_self",
-  );
-}
-
-export const graphqlFetchContext = {
-  fetchOptions: {
-    headers: {
-      Authorization: `Bearer ${localStorage.getItem("token")}`,
-    },
-  },
-};
 export function formatDate(dateString: string) {
   if (!dateString) return "";
   const date = new Date(dateString);

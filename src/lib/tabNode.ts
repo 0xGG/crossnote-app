@@ -5,8 +5,7 @@ export type TabNodeComponent =
   | "Note"
   | "Notes"
   | "Privacy"
-  | "Graph"
-  | "Notifications";
+  | "Graph";
 
 export interface TabNodeConfig {
   component: TabNodeComponent;

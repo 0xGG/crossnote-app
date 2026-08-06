@@ -13,9 +13,9 @@
 
 ## Introduction / 简介
 
-**EN:** Crossnote is a progressive web app for reading and writing markdown notes. It works offline and syncs with any git repository, right from your browser. Your notes are just plain markdown files - no dedicated server in the middle.
+**EN:** Crossnote is a local-first web app for reading and writing markdown notes. Your notes live in your browser, sync with any git repository directly, and stay plain markdown files - no dedicated server in the middle.
 
-**中文：** Crossnote（交叉笔记）是一个阅读和编写 markdown 笔记的 PWA，支持离线使用，能直接在浏览器里和任意 git 仓库同步。你的笔记就是普通的 markdown 文件，中间不经过任何专用服务器。
+**中文：** Crossnote（交叉笔记）是一个本地优先的 markdown 笔记应用：笔记保存在你自己的浏览器里，能直接和任意 git 仓库同步。你的笔记就是普通的 markdown 文件，中间不经过任何专用服务器。
 
 ![Screenshot from 2021-02-28 22-47-35](https://user-images.githubusercontent.com/1908863/109422675-89d1da00-7a17-11eb-9163-c50126114ff1.png)
 

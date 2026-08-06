@@ -1,3 +1,4 @@
+import { DEFAULT_CORS_PROXY } from "../config";
 import {
   Accordion,
   AccordionDetails,
@@ -43,7 +44,7 @@ export default function AddNotebookDialog(props: Props) {
   const [gitUsername, setGitUsername] = useState<string>("");
   const [gitPassword, setGitPassword] = useState<string>("");
   const [gitCorsProxy, setGitCorsProxy] = useState<string>(
-    "https://cors.isomorphic-git.org",
+    DEFAULT_CORS_PROXY,
   );
   const [
     rememberCredentialsChecked,
@@ -60,7 +61,14 @@ export default function AddNotebookDialog(props: Props) {
     setGitBranch("");
     setGitUsername("");
     setGitPassword("");
-    setExpanded(false);
+    setGitCorsProxy(DEFAULT_CORS_PROXY);
+    setRememberCredentialsChecked(false);
+    setShowUsername(true);
+    setShowPassword(false);
+    // Back to the initial expanded state: the dialog stays mounted across
+    // open cycles, and the init effect re-expands only when props change,
+    // so collapsing here would leave the next plain open with a folded form.
+    setExpanded(true);
     props.onClose();
   }, [props]);
 
@@ -123,7 +131,7 @@ export default function AddNotebookDialog(props: Props) {
       open={props.open}
       onClose={() => {
         if (!crossnoteContainer.isAddingNotebook) {
-          props.onClose();
+          close();
         }
       }}
     >
@@ -143,7 +151,7 @@ export default function AddNotebookDialog(props: Props) {
               size={"small"}
               onClick={() => {
                 crossnoteContainer.openLocalNotebook();
-                props.onClose();
+                close();
               }}
               disabled={!("showDirectoryPicker" in window)}
             >
@@ -282,7 +290,7 @@ export default function AddNotebookDialog(props: Props) {
               />
               <TextField
                 label={t("general/cors-proxy")}
-                placeholder={"https://cors.isomorphic-git.org"}
+                placeholder={DEFAULT_CORS_PROXY}
                 fullWidth={true}
                 value={gitCorsProxy}
                 onChange={(event) => setGitCorsProxy(event.target.value)}
@@ -311,7 +319,7 @@ export default function AddNotebookDialog(props: Props) {
             : t("general/add")}
         </Button>
         {props.canCancel && (
-          <Button onClick={props.onClose}>{t("general/cancel")}</Button>
+          <Button onClick={close}>{t("general/cancel")}</Button>
         )}
       </DialogActions>
     </Dialog>
