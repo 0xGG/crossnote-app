@@ -62,5 +62,9 @@ export default defineConfig({
   test: {
     environment: "jsdom",
     setupFiles: ["src/test/setup.ts"],
+    // Run in random order every time so order-independence stays an enforced
+    // invariant rather than a one-off verification; Vitest prints the seed on
+    // failure for reproduction.
+    sequence: { shuffle: true },
   },
 });

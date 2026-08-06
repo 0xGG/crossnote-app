@@ -215,7 +215,7 @@ importers:
         specifier: ^3.9.6
         version: 3.9.6
       typescript:
-        specifier: ^6.0.3
+        specifier: 6.0.3
         version: 6.0.3
       typescript-eslint:
         specifier: ^8.65.0
