@@ -16,7 +16,6 @@ import { Note } from "../lib/note";
 import { Notebook } from "../lib/notebook";
 import { TabNodeConfig } from "../lib/tabNode";
 import NoteCard, { NoteCardMargin } from "./NoteCard";
-import is from "is_js";
 
 const lazyLoadPlaceholderHeight = 92 + 2 * NoteCardMargin;
 
