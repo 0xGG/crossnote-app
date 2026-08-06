@@ -15,7 +15,9 @@
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
-    "fix:prettier": "prettier --write \"**/*.*\""
+    "fix:prettier": "prettier --write \"**/*.*\"",
+    "lint": "eslint . --max-warnings 142",
+    "lint:fix": "eslint . --fix"
   },
   "dependencies": {
     "@0xgg/echomd": "^1.0.4",
@@ -84,9 +86,10 @@
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-react-hooks": "^7.1.1",
     "fake-indexeddb": "^6.2.5",
+    "globals": "^17.8.0",
     "jsdom": "^29.1.1",
     "prettier": "^3.9.6",
-    "typescript": "^7.0.2",
+    "typescript": "^6.0.3",
     "typescript-eslint": "^8.65.0",
     "vite": "^7.3.6",
     "vite-plugin-static-copy": "^3.4.0",
