@@ -52,11 +52,12 @@ const useStyles = makeStyles((theme: Theme) =>
           fontSize: "1.6rem",
         },
       },
-      "& .flexlayout__tabset_tabbar_outer.flexlayout__tabset_tabbar_outer_top": {
-        backgroundColor: darken(theme.palette.background.default, 0.04),
-        borderColor: theme.palette.divider,
-        border: "none",
-      },
+      "& .flexlayout__tabset_tabbar_outer.flexlayout__tabset_tabbar_outer_top":
+        {
+          backgroundColor: darken(theme.palette.background.default, 0.04),
+          borderColor: theme.palette.divider,
+          border: "none",
+        },
       "& .flexlayout__tab_button": {
         color: theme.palette.text.primary,
       },
@@ -77,10 +78,11 @@ const useStyles = makeStyles((theme: Theme) =>
         backgroundColor: theme.palette.background.paper,
         borderColor: theme.palette.divider,
       },
-      "& .flexlayout__popup_menu_container .flexlayout__popup_menu_item:hover": {
-        backgroundColor: darken(theme.palette.background.paper, 0.1),
-        cursor: "pointer",
-      },
+      "& .flexlayout__popup_menu_container .flexlayout__popup_menu_item:hover":
+        {
+          backgroundColor: darken(theme.palette.background.paper, 0.1),
+          cursor: "pointer",
+        },
       "& .flexlayout__outline_rect": {
         borderColor: theme.palette.primary.main,
       },
@@ -119,7 +121,8 @@ export function MainPanel(props: Props) {
       );
       */
 
-      const component: TabNodeComponent = node.getComponent() as TabNodeComponent;
+      const component: TabNodeComponent =
+        node.getComponent() as TabNodeComponent;
       let renderElement = <Box></Box>;
       if (component === "Settings") {
         renderElement = <Settings></Settings>;

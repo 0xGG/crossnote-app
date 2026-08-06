@@ -1,17 +1,17 @@
-*.*
-!*.css
-!*.js
-!*.json
-!*.less
-!*.md
-!*.ts
-!*.tsx
-!*.yaml
-!*.yml
+# Lockfiles and generated output
+pnpm-lock.yaml
+dist/
+coverage/
 
-.DS_Store
-node_modules
-build
-public
-.vscode
-src/_git_commit.js
+# Vendored / generated static assets
+public/deps/
+public/styles/
+public/assets/
+
+# pnpm patch files
+patches/
+
+# Local-only directories
+.pr-docs/
+.claude/
+.idea/

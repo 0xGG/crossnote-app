@@ -15,7 +15,12 @@
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
-    "fix:prettier": "prettier --write \"**/*.*\""
+    "lint": "eslint . --max-warnings 141",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "@0xgg/echomd": "^1.0.4",
@@ -37,7 +42,6 @@
     "events": "^3.3.0",
     "flexlayout-react": "^0.5.5",
     "i18next": "^19.8.4",
-    "is_js": "^0.9.0",
     "isomorphic-git": "1.3.1",
     "markdown-it": "^12.0.4",
     "mdi-material-ui": "^6.21.0",
@@ -60,9 +64,11 @@
     "twemoji": "^13.0.2",
     "typeface-noto-sans-sc": "^1.1.13",
     "typeface-roboto": "^1.1.13",
-    "unstated-next": "^1.1.0"
+    "unstated-next": "^1.1.0",
+    "yamljs": "^0.3.0"
   },
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
     "@types/codemirror": "^0.0.91",
     "@types/d3": "^6.2.0",
     "@types/emoji-mart": "^3.0.4",
@@ -76,10 +82,19 @@
     "@types/react-lazyload": "^3.0.0",
     "@types/twemoji": "^12.1.1",
     "@types/wicg-file-system-access": "^2020.9.1",
+    "@types/yamljs": "^0.2.34",
     "@vitejs/plugin-react": "^5.2.0",
-    "prettier": "^2.0.5",
-    "typescript": "^7.0.2",
+    "eslint": "^10.8.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "fake-indexeddb": "^6.2.5",
+    "globals": "^17.8.0",
+    "jsdom": "^29.1.1",
+    "prettier": "^3.9.6",
+    "typescript": "6.0.3",
+    "typescript-eslint": "^8.65.0",
     "vite": "^7.3.6",
-    "vite-plugin-static-copy": "^3.4.0"
+    "vite-plugin-static-copy": "^3.4.0",
+    "vitest": "^4.1.10"
   }
 }

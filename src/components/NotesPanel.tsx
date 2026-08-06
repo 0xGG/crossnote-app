@@ -10,14 +10,14 @@ import {
   ListItemText,
   Popover,
   Tooltip,
-  Typography
+  Typography,
 } from "@material-ui/core";
 import {
   createStyles,
   fade,
   makeStyles,
   Theme,
-  useTheme
+  useTheme,
 } from "@material-ui/core/styles";
 import useInterval from "../utilities/useInterval";
 import clsx from "clsx";
@@ -27,14 +27,14 @@ import {
   Magnify,
   SortAscending,
   SortDescending,
-  SortVariant
+  SortVariant,
 } from "mdi-material-ui";
 import React, {
   useCallback,
   useEffect,
   useMemo,
   useRef,
-  useState
+  useState,
 } from "react";
 import { useTranslation } from "react-i18next";
 import { CrossnoteContainer } from "../containers/crossnote";
@@ -46,7 +46,7 @@ import {
   EventType,
   globalEmitter,
   ModifiedMarkdownEventData,
-  PerformedGitOperationEventData
+  PerformedGitOperationEventData,
 } from "../lib/event";
 import { Note, Notes as NotesValue } from "../lib/note";
 import { Notebook } from "../lib/notebook";
@@ -154,18 +154,15 @@ export default function NotesPanel(props: Props) {
   );
   const [rawNotesMap, setRawNotesMap] = useState<NotesValue>({});
   const [notes, setNotes] = useState<Note[]>([]);
-  const [needsToRefreshRawNotes, setNeedsToRefreshRawNotes] = useState<boolean>(
-    false,
-  );
+  const [needsToRefreshRawNotes, setNeedsToRefreshRawNotes] =
+    useState<boolean>(false);
   const theme = useTheme();
   const crossnoteContainer = CrossnoteContainer.useContainer();
-  const [searchValue, setSearchValue] = useState<string>( // Search
-    props.initialSearchValue || "",
-  );
-  const [
-    searchValueInputTimeout,
-    setSearchValueInputTimeout,
-  ] = useState<NodeJS.Timeout>(null);
+  const [searchValue, setSearchValue] =
+    useState<string> // Search
+    (props.initialSearchValue || "");
+  const [searchValueInputTimeout, setSearchValueInputTimeout] =
+    useState<NodeJS.Timeout>(null);
   const [finalSearchValue, setFinalSearchValue] = useState<string>("");
   const [fixedTopPanel, setFixedTopPanel] = useState<boolean>(false);
   const [tabNodeVisible, setTabNodeVisible] = useState<boolean>(false);

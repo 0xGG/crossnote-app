@@ -1,0 +1,86 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# The workflow only reads the repository; never expose a writable token to
+# third-party actions or package install scripts.
+permissions:
+  contents: read
+
+# A newer push supersedes any in-flight run for the same ref; let runs on
+# main finish so its history stays complete.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+jobs:
+  # Prettier, ESLint and tsc verdicts do not depend on the Node major, so
+  # they run once. The lint script carries --max-warnings, which enforces
+  # the documented warning baseline as a ratchet.
+  quality:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+
+      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4.3.0
+
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Check formatting
+        run: pnpm format:check
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      # The dev/build hooks run this script on every developer machine, but the
+      # matrix job below calls vite build directly and never triggers it. The
+      # dry run covers what actually breaks - the deep import of emoji-mart
+      # internals and the sheet URL it derives - without fetching 2.5MB from a
+      # CDN on every pipeline run.
+      - name: Check the emoji sheet script
+        run: node scripts/download-emoji-sheet.mjs --dry-run
+
+  test-build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      matrix:
+        node-version: [22, 24]
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+
+      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4.3.0
+
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Test
+        run: pnpm test
+
+      # vite build directly: the quality job already owns the tsc gate that
+      # the build script would repeat, and skipping the prebuild hook keeps
+      # CI off the emoji CDN (the sheet is a picker asset, not build input).
+      - name: Build
+        run: pnpm exec vite build

@@ -1,7 +1,7 @@
 import react from "@vitejs/plugin-react";
 import { execSync } from "node:child_process";
 import { readFileSync } from "node:fs";
-import { defineConfig } from "vite";
+import { defineConfig } from "vitest/config";
 import { viteStaticCopy } from "vite-plugin-static-copy";
 
 const pkg = JSON.parse(
@@ -59,4 +59,12 @@ export default defineConfig({
   server: {
     port: 3000,
   },
-})
+  test: {
+    environment: "jsdom",
+    setupFiles: ["src/test/setup.ts"],
+    // Run in random order every time so order-independence stays an enforced
+    // invariant rather than a one-off verification; Vitest prints the seed on
+    // failure for reproduction.
+    sequence: { shuffle: true },
+  },
+});

@@ -10,12 +10,7 @@ import {
 } from "@material-ui/core";
 import { createStyles, makeStyles, Theme } from "@material-ui/core/styles";
 import clsx from "clsx";
-import {
-  BookEdit,
-  Keyboard,
-  ThemeLightDark,
-  Translate,
-} from "mdi-material-ui";
+import { BookEdit, Keyboard, ThemeLightDark, Translate } from "mdi-material-ui";
 import React, { useState } from "react";
 import { SketchPicker } from "react-color";
 import { useTranslation } from "react-i18next";
@@ -116,10 +111,8 @@ interface Props {}
 export function Settings(props: Props) {
   const classes = useStyles(props);
   const { t } = useTranslation();
-  const [
-    colorPickerAnchorElement,
-    setColorPickerAnchorElement,
-  ] = useState<HTMLElement>(null);
+  const [colorPickerAnchorElement, setColorPickerAnchorElement] =
+    useState<HTMLElement>(null);
   const displayColorPicker = Boolean(colorPickerAnchorElement);
   const settingsContainer = SettingsContainer.useContainer();
   const crossnoteContainer = CrossnoteContainer.useContainer();

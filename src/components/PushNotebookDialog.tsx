@@ -41,9 +41,8 @@ export default function PushNotebookDialog(props: Props) {
   const [gitPassword, setGitPassword] = useState<string>(notebook.gitPassword);
   const [showUsername, setShowUsername] = useState<boolean>(false);
   const [showPassword, setShowPassword] = useState<boolean>(false);
-  const [commitMessage, setCommitMessage] = useState<string>(
-    "doc: Updated docs",
-  );
+  const [commitMessage, setCommitMessage] =
+    useState<string>("doc: Updated docs");
   const { t } = useTranslation();
   const crossnoteContainer = CrossnoteContainer.useContainer();
   const settingsContainer = SettingsContainer.useContainer();

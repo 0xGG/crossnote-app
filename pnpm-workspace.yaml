@@ -7,4 +7,18 @@ allowBuilds:
   leveldown: false
   tesseract.js: false
 patchedDependencies:
-  '@0xgg/echomd@1.0.4': patches/@0xgg__echomd@1.0.4.patch
+  "@0xgg/echomd@1.0.4": patches/@0xgg__echomd@1.0.4.patch
+# Security floors, range-keyed so they only lift below-floor resolutions and
+# never hold a future consumer back:
+# - dompurify 2.5.9 is the last 2.x with the mXSS/prototype-pollution
+#   backports; sanitize-url 6.0.4 fixes the javascript: scheme bypasses.
+# What these do NOT cover: the mermaid that renders at runtime is the vendored
+# copy under public/deps (8.9.2, loaded via a script tag - echomd's powerpack
+# reads the window.mermaid global and the npm mermaid package is never
+# bundled), so upgrading that copy is the only fix for it. What they do cover
+# today is deduplicating the one bundled dompurify consumer onto the patched
+# release, and pre-patching npm mermaid's dependency graph in case it is ever
+# bundled.
+overrides:
+  "dompurify@<2.5.9": 2.5.9
+  "@braintree/sanitize-url@<6.0.4": 6.0.4

@@ -358,24 +358,20 @@ export default function NotePanel(props: Props) {
   );
   const tocElement = useRef<HTMLDivElement>(null);
   const previewElement = useRef<HTMLDivElement>(null);
-  const [previewIsPresentation, setPreviewIsPresentation] = useState<boolean>(
-    false,
-  );
+  const [previewIsPresentation, setPreviewIsPresentation] =
+    useState<boolean>(false);
   const textAreaElement = useRef<HTMLTextAreaElement>(null);
   const [cursorPosition, setCursorPosition] = useState<CursorPosition>({
     line: 0,
     ch: 0,
   });
   const mathPreviewElement = useRef<HTMLElement>(null);
-  const [editImageElement, setEditImageElement] = useState<HTMLImageElement>(
-    null,
-  );
-  const [editImageTextMarker, setEditImageTextMarker] = useState<TextMarker>(
-    null,
-  );
-  const [editImageDialogOpen, setEditImageDialogOpen] = useState<boolean>(
-    false,
-  );
+  const [editImageElement, setEditImageElement] =
+    useState<HTMLImageElement>(null);
+  const [editImageTextMarker, setEditImageTextMarker] =
+    useState<TextMarker>(null);
+  const [editImageDialogOpen, setEditImageDialogOpen] =
+    useState<boolean>(false);
   const [notePopoverElement, setNotePopoverElement] = useState<Element>(null);
   const [iconPopoverElement, setIconPopoverElement] = useState<Element>(null);
   const [gitStatus, setGitStatus] = useState<string>("");
@@ -721,9 +717,7 @@ export default function NotePanel(props: Props) {
             },
           );
         }
-      }*/ else if (
-        editor
-      ) {
+      }*/ else if (editor) {
         const lineNo = (props.reference.parentToken.map || [])[0];
         if (typeof lineNo === "number") {
           editor.setCursor({ line: editor.lastLine(), ch: 0 });
@@ -1037,8 +1031,7 @@ export default function NotePanel(props: Props) {
                   render,
                 },
                 {
-                  text:
-                    '<!-- @crossnote.kanban "v":2,"board":{"columns":[]} -->  \n',
+                  text: '<!-- @crossnote.kanban "v":2,"board":{"columns":[]} -->  \n',
                   command: "/kanban",
                   description: `${t("editor/toolbar/insert-kanban")} (beta)`,
                   icon: "mdi-developer-board",

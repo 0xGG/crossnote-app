@@ -94,9 +94,8 @@ function OCRWidget(props: WidgetArgs) {
   const [link, setLink] = useState<string>("");
   const [imageDataURL, setImageDataURL] = useState<string>("");
   const [ocrDataURL, setOCRDataURL] = useState<string>("");
-  const [imageDropAreaElement, setImageDropAreaElement] = useState<
-    HTMLInputElement
-  >(null);
+  const [imageDropAreaElement, setImageDropAreaElement] =
+    useState<HTMLInputElement>(null);
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
   const [ocrProgresses, setOCRProgresses] = useState<OCRProgress[]>([]);
   const [selectedLanguages, setSelectedLanguages] = useState<string[]>(
