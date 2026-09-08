@@ -5,8 +5,9 @@ settings:
   excludeLinksFromLockfile: false
 
 overrides:
-  dompurify@<2.5.9: 2.5.9
+  dompurify@<3.4.13: 3.4.13
   '@braintree/sanitize-url@<6.0.4': 6.0.4
+  d3-color@<3.1.0: 3.1.0
 
 patchedDependencies:
   '@0xgg/echomd@1.0.4': 6edfd01cea4c2ce2c88f815ecd43a8b03ce66a8f96a6bbf389ec8d5d8bfa07a6
@@ -1139,6 +1140,9 @@ packages:
   '@types/tern@0.23.9':
     resolution: {integrity: sha512-ypzHFE/wBzh+BlH6rrBgS5I/Z7RD21pGhZ2rltb/+ZrVM1awdZwjx7hE5XfuYgHWk9uvV5HLZN3SloevCAp3Bw==}
 
+  '@types/trusted-types@2.0.7':
+    resolution: {integrity: sha512-ScaPdn1dQczgbl0QFTeTOmVHFULt394XJgOQNoyVhZ6r2vLnMLJfBPd53SB52T/3G36VI1/g2MZaX0cwDuXsfw==}
+
   '@types/twemoji@12.1.2':
     resolution: {integrity: sha512-3eMyKenMi0R1CeKzBYtk/Z2JIHsTMQrIrTah0q54o45pHTpWVNofU2oHx0jS8tqsDRhis2TbB6238WP9oh2l2w==}
 
@@ -1583,12 +1587,6 @@ packages:
   d3-collection@1.0.7:
     resolution: {integrity: sha512-ii0/r5f4sjKNTfh84Di+DpztYwqKhEyUlKoPrzUFfeSkWxjW49xU2QzO9qrPrNkpdI0XJkfzvmTu8V2Zylln6A==}
 
-  d3-color@1.4.1:
-    resolution: {integrity: sha512-p2sTHSLCJI2QKunbGb7ocOh7DgTAn8IrLx21QRc/BSnodXM4sv6aLQlnfpvehFMLZEfBc6g9pH9SWQccFYfJ9Q==}
-
-  d3-color@2.0.0:
-    resolution: {integrity: sha512-SPXi0TSKPD4g9tw0NMZFnR95XVgUZiBH+uUTqQuDu1OsE2zomHU7ho0FISciaPvosimixwHFl3WHLGabv6dDgQ==}
-
   d3-color@3.1.0:
     resolution: {integrity: sha512-zg/chbXyeBtMQ1LbD/WSoW2DpC3I0mpmPdW+ynRTj/x2DAWYrIY7qeZIHidozwV24m4iavr15lNwIwLxRmOxhA==}
     engines: {node: '>=12'}
@@ -1931,8 +1929,8 @@ packages:
   dom-helpers@5.2.1:
     resolution: {integrity: sha512-nRCa7CK3VTrM2NmGkIy4cbK7IZlgBE/PYMn55rrXefr5xXDP0LdtfPnblFDoVdcAfslJ7or6iqAUnx0CCGIWQA==}
 
-  dompurify@2.5.9:
-    resolution: {integrity: sha512-i6mvVmWN4xo9LrhCOZrDgSs9noW6nOahbrmzjRbPF36YPyj5Ue5lgok0MHDWkG7xzpWFO2OYttXdzM7rJxHvNA==}
+  dompurify@3.4.13:
+    resolution: {integrity: sha512-2vmYIoqjze2d+kakP8S/nS5shfsl587kzwEjcGlTdiksUVgFHnFCsLYDVj/JNqJVOQZGSYBTmuycv0PodwmnMQ==}
 
   double-ended-queue@2.1.0-0:
     resolution: {integrity: sha512-+BNfZ+deCo8hMNpDqDnvT+c0XpJ5cUa6mqYq89bho2Ifze4URTqRkcwR399hWoTrTkbZ/XJYDgP6rc7pRgffEQ==}
@@ -4724,6 +4722,9 @@ snapshots:
     dependencies:
       '@types/estree': 1.0.9
 
+  '@types/trusted-types@2.0.7':
+    optional: true
+
   '@types/twemoji@12.1.2': {}
 
   '@types/wicg-file-system-access@2020.9.8': {}
@@ -5255,13 +5256,7 @@ snapshots:
   d3-collection@1.0.7:
     optional: true
 
-  d3-color@1.4.1:
-    optional: true
-
-  d3-color@2.0.0: {}
-
-  d3-color@3.1.0:
-    optional: true
+  d3-color@3.1.0: {}
 
   d3-contour@1.3.2:
     dependencies:
@@ -5413,12 +5408,12 @@ snapshots:
 
   d3-interpolate@1.4.0:
     dependencies:
-      d3-color: 1.4.1
+      d3-color: 3.1.0
     optional: true
 
   d3-interpolate@2.0.1:
     dependencies:
-      d3-color: 2.0.0
+      d3-color: 3.1.0
 
   d3-interpolate@3.0.1:
     dependencies:
@@ -5459,13 +5454,13 @@ snapshots:
 
   d3-scale-chromatic@1.5.0:
     dependencies:
-      d3-color: 1.4.1
+      d3-color: 3.1.0
       d3-interpolate: 1.4.0
     optional: true
 
   d3-scale-chromatic@2.0.0:
     dependencies:
-      d3-color: 2.0.0
+      d3-color: 3.1.0
       d3-interpolate: 2.0.1
 
   d3-scale-chromatic@3.1.0:
@@ -5559,7 +5554,7 @@ snapshots:
 
   d3-transition@1.3.2:
     dependencies:
-      d3-color: 1.4.1
+      d3-color: 3.1.0
       d3-dispatch: 1.0.6
       d3-ease: 1.0.7
       d3-interpolate: 1.4.0
@@ -5569,7 +5564,7 @@ snapshots:
 
   d3-transition@2.0.0(d3-selection@2.0.0):
     dependencies:
-      d3-color: 2.0.0
+      d3-color: 3.1.0
       d3-dispatch: 2.0.0
       d3-ease: 2.0.0
       d3-interpolate: 2.0.1
@@ -5622,7 +5617,7 @@ snapshots:
       d3-brush: 1.1.6
       d3-chord: 1.0.6
       d3-collection: 1.0.7
-      d3-color: 1.4.1
+      d3-color: 3.1.0
       d3-contour: 1.3.2
       d3-dispatch: 1.0.6
       d3-drag: 1.2.5
@@ -5656,7 +5651,7 @@ snapshots:
       d3-axis: 2.1.0
       d3-brush: 2.1.0
       d3-chord: 2.0.0
-      d3-color: 2.0.0
+      d3-color: 3.1.0
       d3-contour: 2.0.0
       d3-delaunay: 5.3.0
       d3-dispatch: 2.0.0
@@ -5792,7 +5787,9 @@ snapshots:
       '@babel/runtime': 7.29.7
       csstype: 3.2.3
 
-  dompurify@2.5.9: {}
+  dompurify@3.4.13:
+    optionalDependencies:
+      '@types/trusted-types': 2.0.7
 
   double-ended-queue@2.1.0-0: {}
 
@@ -6693,7 +6690,7 @@ snapshots:
       d3: 7.9.0
       dagre: 0.8.5
       dagre-d3: 0.6.4
-      dompurify: 2.5.9
+      dompurify: 3.4.13
       graphlib: 2.1.8
       khroma: 1.4.1
       moment-mini: 2.29.4
@@ -7323,7 +7320,7 @@ snapshots:
 
   super-react-gist@1.1.1(react@18.3.1):
     dependencies:
-      dompurify: 2.5.9
+      dompurify: 3.4.13
       react: 18.3.1
       react-dom: 18.3.1(react@18.3.1)
 

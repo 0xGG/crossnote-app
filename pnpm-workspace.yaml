@@ -10,15 +10,19 @@ patchedDependencies:
   "@0xgg/echomd@1.0.4": patches/@0xgg__echomd@1.0.4.patch
 # Security floors, range-keyed so they only lift below-floor resolutions and
 # never hold a future consumer back:
-# - dompurify 2.5.9 is the last 2.x with the mXSS/prototype-pollution
-#   backports; sanitize-url 6.0.4 fixes the javascript: scheme bypasses.
+# - dompurify: 2.5.9 was the last 2.x release and the 2026 advisories are only
+#   fixed on the 3.4 line, so this floor crosses a major. The one bundled
+#   consumer, super-react-gist, calls sanitize() with default options, which
+#   3.x kept unchanged; it declares ^2.3.6 and is verified by rendering a gist.
+# - sanitize-url 6.0.4 fixes the javascript: scheme bypasses.
+# - d3-color 3.1.0 fixes the ReDoS in the color-string parser. The direct d3 6
+#   dependency (GraphView) resolves d3-color 2.0.0, inside the affected range;
+#   3.x is API-compatible and already in the tree through mermaid's d3 7.
 # What these do NOT cover: the mermaid that renders at runtime is the vendored
-# copy under public/deps (8.9.2, loaded via a script tag - echomd's powerpack
-# reads the window.mermaid global and the npm mermaid package is never
-# bundled), so upgrading that copy is the only fix for it. What they do cover
-# today is deduplicating the one bundled dompurify consumer onto the patched
-# release, and pre-patching npm mermaid's dependency graph in case it is ever
-# bundled.
+# copy under public/deps (loaded via a script tag - echomd's powerpack reads
+# the window.mermaid global and the npm mermaid package is never bundled), so
+# upgrading that copy is the only fix for it.
 overrides:
-  "dompurify@<2.5.9": 2.5.9
+  "dompurify@<3.4.13": 3.4.13
   "@braintree/sanitize-url@<6.0.4": 6.0.4
+  "d3-color@<3.1.0": 3.1.0
