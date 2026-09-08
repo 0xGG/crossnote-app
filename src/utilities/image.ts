@@ -1,4 +1,4 @@
-import * as path from "path";
+import path from "path-browserify";
 import { pfs } from "../lib/fs";
 import { Note } from "../lib/note";
 

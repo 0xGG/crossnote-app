@@ -162,7 +162,7 @@ export default function NotesPanel(props: Props) {
     useState<string> // Search
     (props.initialSearchValue || "");
   const [searchValueInputTimeout, setSearchValueInputTimeout] =
-    useState<NodeJS.Timeout>(null);
+    useState<ReturnType<typeof setTimeout>>(null);
   const [finalSearchValue, setFinalSearchValue] = useState<string>("");
   const [fixedTopPanel, setFixedTopPanel] = useState<boolean>(false);
   const [tabNodeVisible, setTabNodeVisible] = useState<boolean>(false);

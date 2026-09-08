@@ -1,5 +1,5 @@
 import { printPreview as EchoMDPrintPreview } from "@0xgg/echomd/preview";
-import * as path from "path";
+import path from "path-browserify";
 import { globalContainers } from "../containers/global";
 import { Note } from "../lib/note";
 import { resolveNoteImageSrc } from "./image";

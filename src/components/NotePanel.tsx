@@ -35,7 +35,7 @@ import {
   TableOfContents,
 } from "mdi-material-ui";
 import Noty from "noty";
-import * as path from "path";
+import path from "path-browserify";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import SplitPaneRaw from "react-split-pane";

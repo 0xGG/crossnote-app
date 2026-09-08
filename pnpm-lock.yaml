@@ -166,6 +166,9 @@ importers:
       '@types/object-hash':
         specifier: ^1.3.4
         version: 1.3.4
+      '@types/path-browserify':
+        specifier: ^1.0.3
+        version: 1.0.3
       '@types/pouchdb':
         specifier: ^6.4.0
         version: 6.4.2
@@ -1046,6 +1049,9 @@ packages:
 
   '@types/object-hash@1.3.4':
     resolution: {integrity: sha512-xFdpkAkikBgqBdG9vIlsqffDV8GpvnPEzs0IUtr1v3BEB97ijsFQ4RXVbUZwjFThhB4MDSTUfvmxUD5PGx0wXA==}
+
+  '@types/path-browserify@1.0.3':
+    resolution: {integrity: sha512-ZmHivEbNCBtAfcrFeBCiTjdIc2dey0l7oCGNGpSuRTy8jP6UVND7oUowlvDujBy8r2Hoa8bfFUOCiPWfmtkfxw==}
 
   '@types/pouchdb-adapter-cordova-sqlite@1.0.4':
     resolution: {integrity: sha512-1MGjmAMux3OIyJ+iXfhJ5hNIzS+KjGJ05O3bF5Gen5TiJUFNK1bOp3VVV9SxXgz+hGwnBruBAWdAqhbB6ZHhSA==}
@@ -4581,6 +4587,8 @@ snapshots:
       undici-types: 6.21.0
 
   '@types/object-hash@1.3.4': {}
+
+  '@types/path-browserify@1.0.3': {}
 
   '@types/pouchdb-adapter-cordova-sqlite@1.0.4':
     dependencies:

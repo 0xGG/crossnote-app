@@ -26,13 +26,6 @@ function getGitCommit(): { logMessage: string; hash: string } {
 }
 
 export default defineConfig({
-  resolve: {
-    alias: {
-      // The data layer treats lightning-fs paths as POSIX paths via Node's
-      // path API; webpack 4 (CRA) used to polyfill it automatically.
-      path: "path-browserify",
-    },
-  },
   plugins: [
     react(),
     viteStaticCopy({

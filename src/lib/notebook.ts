@@ -2,7 +2,7 @@ import { md } from "@0xgg/echomd/preview";
 import { Mutex } from "async-mutex";
 import * as git from "isomorphic-git";
 import Token from "markdown-it/lib/token";
-import * as path from "path";
+import path from "path-browserify";
 // import { isFileAnImage } from "../utilities/image";
 import { matter, matterStringify } from "../utilities/markdown";
 import { fs, pfs } from "./fs";

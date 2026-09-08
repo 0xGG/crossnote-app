@@ -1,7 +1,5 @@
-// @ts-ignore
 import LightningFS from "@isomorphic-git/lightning-fs";
-import { Stats } from "fs";
-import * as path from "path";
+import path from "path-browserify";
 import { randomID } from "../utilities/utils";
 import LocalFileSystem, { ReadFileOptions } from "./localFileSystem";
 
@@ -21,7 +19,7 @@ class FileSystem {
   public writeFile: (path: string, data: string) => Promise<void>;
   public readdir: (path: string) => Promise<string[]>;
   public unlink: (path: string) => Promise<void>;
-  public stats: (path: string) => Promise<Stats>;
+  public stats: (path: string) => Promise<LightningFS.Stats>;
   public mkdir: (path: string) => Promise<void>;
   public exists: (path: string) => Promise<boolean>;
   public rename: (oldPath: string, newPath: string) => Promise<void>;
@@ -123,7 +121,7 @@ class FileSystem {
         return this.lfs.stats(path);
       } else {
         return new Promise((resolve, reject) => {
-          this.fs.stat(path, (error: Error, stats: Stats) => {
+          this.fs.stat(path, (error: Error, stats: LightningFS.Stats) => {
             if (error) {
               return reject(error);
             } else {
@@ -153,7 +151,7 @@ class FileSystem {
         return this.lfs.exists(path);
       } else {
         return new Promise((resolve, reject) => {
-          this.fs.stat(path, (error: Error, stats: Stats) => {
+          this.fs.stat(path, (error: Error, stats: LightningFS.Stats) => {
             if (error) {
               return resolve(false);
             } else {
@@ -187,7 +185,7 @@ class FileSystem {
     };
     this.rename = async (oldPath: string, newPath: string) => {
       const oldPathStat = await this.stats(oldPath);
-      let newPathStat: Stats;
+      let newPathStat: LightningFS.Stats;
       if (await this.exists(newPath)) {
         newPathStat = await this.stats(newPath);
       } else {

@@ -16,7 +16,7 @@
     "strict": true,
     "strictNullChecks": false,
     "noFallthroughCasesInSwitch": true,
-    "types": ["node", "vite/client", "wicg-file-system-access"]
+    "types": ["vite/client", "wicg-file-system-access"]
   },
   "include": ["src"]
 }

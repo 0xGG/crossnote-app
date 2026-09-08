@@ -1,6 +1,6 @@
 // Local File System API
 
-import { Stats } from "fs";
+import type LightningFS from "@isomorphic-git/lightning-fs";
 import { randomID } from "../utilities/utils";
 
 export interface ReadFileOptions {
@@ -144,7 +144,7 @@ export default class LocalFileSystem {
     }
   }
 
-  public async stats(path: string): Promise<Stats> {
+  public async stats(path: string): Promise<LightningFS.Stats> {
     let [directoryHandle, pathArr] = await this.helper(path, "read");
     if (!directoryHandle) {
       throw new Error(`${path} is not valid`);

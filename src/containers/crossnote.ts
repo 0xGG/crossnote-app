@@ -8,7 +8,7 @@ import FlexLayout, {
   TabSetNode,
 } from "flexlayout-react";
 import moment from "moment";
-import * as path from "path";
+import path from "path-browserify";
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { createContainer } from "unstated-next";
