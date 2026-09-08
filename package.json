@@ -84,17 +84,17 @@
     "@types/wicg-file-system-access": "^2020.9.1",
     "@types/yamljs": "^0.2.34",
     "@vitejs/plugin-react": "^5.2.0",
-    "eslint": "^10.8.0",
+    "eslint": "^10.10.0",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-react-hooks": "^7.1.1",
     "fake-indexeddb": "^6.2.5",
-    "globals": "^17.8.0",
-    "jsdom": "^29.1.1",
+    "globals": "^17.12.0",
+    "jsdom": "^30.0.1",
     "prettier": "^3.9.6",
     "typescript": "6.0.3",
-    "typescript-eslint": "^8.65.0",
+    "typescript-eslint": "^8.70.0",
     "vite": "^7.3.6",
     "vite-plugin-static-copy": "^3.4.0",
-    "vitest": "^4.1.10"
+    "vitest": "^5.0.0"
   }
 }
