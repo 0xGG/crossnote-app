@@ -42,15 +42,6 @@ export interface SelectedSection {
   path?: string;
 }
 
-export enum HomeSection {
-  Notebooks = "Notebooks",
-  Explore = "Explore",
-  Settings = "Settings",
-  Notifications = "Notifications",
-  Privacy = "Privacy",
-  Unknown = "Unknown",
-}
-
 /**
  * The note to open
  */
@@ -111,9 +102,6 @@ function useCrossnoteContainer(initialState: InitialState) {
   const [isPullingNotebook, setIsPullingNotebook] = useState<boolean>(false);
   const [isPerformingAutoFetch, setIsPerformingAutoFetch] =
     useState<boolean>(false);
-  const [homeSection, setHomeSection] = useState<HomeSection>(
-    HomeSection.Unknown,
-  );
   const [layoutModel, setLayoutModel] = useState<Model>(
     FlexLayout.Model.fromJson(getlayoutModelFromLocalStrorage()),
   );
@@ -924,8 +912,6 @@ please download and read the [Welcome notebook](${window.location.origin}/?repo=
     getNote,
     openNoteAtPath,
     openTodayNote,
-    homeSection,
-    setHomeSection,
     layoutModel,
     setLayoutModel,
     splitNoteHorizontally,
