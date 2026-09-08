@@ -426,7 +426,7 @@ export function Home(props: Props) {
           </Fab>
         </Hidden>
       </nav>
-      <MainPanel toggleDrawer={toggleDrawer}></MainPanel>
+      <MainPanel></MainPanel>
       <AddNotebookDialog
         open={addNotebookDialogOpen}
         onClose={() => {

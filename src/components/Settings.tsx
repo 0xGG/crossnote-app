@@ -14,7 +14,6 @@ import { BookEdit, Keyboard, ThemeLightDark, Translate } from "mdi-material-ui";
 import React, { useState } from "react";
 import { SketchPicker } from "react-color";
 import { useTranslation } from "react-i18next";
-import { CrossnoteContainer } from "../containers/crossnote";
 import { SettingsContainer } from "../containers/settings";
 import { EditorMode } from "../lib/editorMode";
 import { KeyMap } from "../lib/keymap";
@@ -115,7 +114,6 @@ export function Settings(props: Props) {
     useState<HTMLElement>(null);
   const displayColorPicker = Boolean(colorPickerAnchorElement);
   const settingsContainer = SettingsContainer.useContainer();
-  const crossnoteContainer = CrossnoteContainer.useContainer();
 
   return (
     <Box className={clsx(classes.settingsPanel)}>
@@ -354,7 +352,7 @@ export function Settings(props: Props) {
           </Link>
           <br></br>
           <Link
-            href={`https://github.com/0xGG/crossnote/issues`}
+            href={"https://github.com/0xGG/crossnote-app/issues"}
             target={"_blank"}
           >
             <Typography variant={"caption"}>
@@ -363,31 +361,12 @@ export function Settings(props: Props) {
           </Link>
           <br></br>
           <Link
-            href={`https://github.com/0xGG/crossnote/commit/${GitCommit.hash}`}
+            href={`https://github.com/0xGG/crossnote-app/commit/${GitCommit.hash}`}
             target={"_blank"}
           >
             <Typography variant={"caption"}>
               {"🛠 Build " + GitCommit.logMessage}
             </Typography>
-          </Link>
-          <br></br>
-          <Link
-            onClick={(event: any) => {
-              event.preventDefault();
-              crossnoteContainer.addTabNode({
-                type: "tab",
-                name: "🔏 Privacy policy",
-                component: "Privacy",
-                id: "Privacy",
-                config: {
-                  component: "Privacy",
-                  singleton: true,
-                },
-              });
-            }}
-            href=""
-          >
-            <Typography variant={"caption"}>{"🔏 Privacy policy"}</Typography>
           </Link>
         </Box>
       </Card>
