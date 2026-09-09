@@ -18,6 +18,7 @@ import Crossnote, {
 } from "../lib/crossnote";
 import { EventType, globalEmitter } from "../lib/event";
 import { pfs } from "../lib/fs";
+import { pruneUnknownTabs } from "../lib/layout";
 import { Note, NoteConfig, getNoteIcon } from "../lib/note";
 import { Notebook } from "../lib/notebook";
 import { CrossnoteTabNode, TabHeight } from "../lib/tabNode";
@@ -83,7 +84,7 @@ const getlayoutModelFromLocalStrorage = () => {
   try {
     const layoutModelString = localStorage.getItem("layoutModel");
     if (layoutModelString) {
-      return JSON.parse(layoutModelString);
+      return pruneUnknownTabs(JSON.parse(layoutModelString));
     } else {
       return defaultLayoutModel;
     }
