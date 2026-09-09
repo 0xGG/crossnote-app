@@ -14,6 +14,9 @@ export default tseslint.config(
       // --max-warnings ceiling) while staying invisible to git status.
       "build/",
       "coverage/",
+      // Same reason: local review tooling drops its scripts and captures
+      // under .cache/ (gitignored), and they are not part of the code base.
+      ".cache/",
       "public/",
       "patches/",
       ".pr-docs/",
