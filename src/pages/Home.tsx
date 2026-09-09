@@ -34,7 +34,7 @@ import AddNotebookDialog from "../components/AddNotebookDialog";
 import LanguageSelectorDialog from "../components/LanguageSelectorDialog";
 import { MainPanel } from "../components/MainPanel";
 import NotebookTreeView from "../components/NotebookTreeView";
-import { CrossnoteContainer, HomeSection } from "../containers/crossnote";
+import { CrossnoteContainer } from "../containers/crossnote";
 import { globalContainers } from "../containers/global";
 import { SettingsContainer } from "../containers/settings";
 import { getNoteIcon } from "../lib/note";
@@ -181,7 +181,6 @@ interface QueryParams {
 }
 
 interface Props {
-  section: HomeSection;
   queryParams: QueryParams;
 }
 
@@ -215,90 +214,84 @@ export function Home(props: Props) {
     if (!crossnoteContainer.initialized) {
       return;
     }
-    if (props.section === HomeSection.Notebooks) {
-      if (props.queryParams) {
-        if (props.queryParams.repo && props.queryParams.branch) {
-          // The query values are already percent-decoded by URLSearchParams;
-          // decoding again would corrupt values containing a literal "%" and
-          // throw URIError on malformed sequences.
-          const repo = props.queryParams.repo || "";
-          const branch = props.queryParams.branch || "";
-          const filePath = props.queryParams.filePath || "";
-          const notebook = crossnoteContainer.notebooks.find(
-            (nb) => nb.gitURL === repo && nb.gitBranch === branch,
-          );
-          if (notebook) {
-            notebook
-              .refreshNotesIfNotLoaded({
-                dir: "./",
-                includeSubdirectories: true,
-              })
-              .then((notes) => {
-                if (filePath) {
-                  const note = notes[filePath];
-                  if (note) {
-                    crossnoteContainer.addTabNode({
-                      type: "tab",
+    if (props.queryParams) {
+      if (props.queryParams.repo && props.queryParams.branch) {
+        // The query values are already percent-decoded by URLSearchParams;
+        // decoding again would corrupt values containing a literal "%" and
+        // throw URIError on malformed sequences.
+        const repo = props.queryParams.repo || "";
+        const branch = props.queryParams.branch || "";
+        const filePath = props.queryParams.filePath || "";
+        const notebook = crossnoteContainer.notebooks.find(
+          (nb) => nb.gitURL === repo && nb.gitBranch === branch,
+        );
+        if (notebook) {
+          notebook
+            .refreshNotesIfNotLoaded({
+              dir: "./",
+              includeSubdirectories: true,
+            })
+            .then((notes) => {
+              if (filePath) {
+                const note = notes[filePath];
+                if (note) {
+                  crossnoteContainer.addTabNode({
+                    type: "tab",
+                    component: "Note",
+                    config: {
                       component: "Note",
-                      config: {
-                        component: "Note",
 
-                        singleton: false,
-                        noteFilePath: note.filePath,
-                        notebookPath: note.notebookPath,
-                        icon: getNoteIcon(note),
-                      },
-                      name: note.title,
-                    });
-                  } else {
-                    //note not found
-                    crossnoteContainer.addTabNode({
-                      type: "tab",
-                      component: "Notes",
-                      id: "Notes: " + notebook.dir,
-                      name: notebook.name,
-                      config: {
-                        component: "Note",
-
-                        singleton: true,
-                        notebookPath: notebook.dir,
-                        icon: ":notebook_with_decorative_cover:",
-                      },
-                    });
-                  }
+                      singleton: false,
+                      noteFilePath: note.filePath,
+                      notebookPath: note.notebookPath,
+                      icon: getNoteIcon(note),
+                    },
+                    name: note.title,
+                  });
                 } else {
+                  //note not found
                   crossnoteContainer.addTabNode({
                     type: "tab",
                     component: "Notes",
                     id: "Notes: " + notebook.dir,
                     name: notebook.name,
                     config: {
-                      component: "Notes",
+                      component: "Note",
+
                       singleton: true,
                       notebookPath: notebook.dir,
                       icon: ":notebook_with_decorative_cover:",
                     },
                   });
                 }
-              })
-              .catch((error) => {
-                console.error(error);
-              });
-          } else {
-            // Show dialog
-            setAddNotebookRepo(repo);
-            setAddNotebookBranch(branch);
-            setAddNotebookDialogHideOpeningLocal(true);
-            setAddNotebookDialogOpen(true);
-          }
+              } else {
+                crossnoteContainer.addTabNode({
+                  type: "tab",
+                  component: "Notes",
+                  id: "Notes: " + notebook.dir,
+                  name: notebook.name,
+                  config: {
+                    component: "Notes",
+                    singleton: true,
+                    notebookPath: notebook.dir,
+                    icon: ":notebook_with_decorative_cover:",
+                  },
+                });
+              }
+            })
+            .catch((error) => {
+              console.error(error);
+            });
+        } else {
+          // Show dialog
+          setAddNotebookRepo(repo);
+          setAddNotebookBranch(branch);
+          setAddNotebookDialogHideOpeningLocal(true);
+          setAddNotebookDialogOpen(true);
         }
       }
     }
-  }, [props.section, props.queryParams, crossnoteContainer.initialized]);
-
-  useEffect(() => {
-    crossnoteContainer.setHomeSection(props.section);
-  }, [props.section]);
+  }, [props.queryParams, crossnoteContainer.initialized]);
 
   const drawer = (
     <React.Fragment>
@@ -426,7 +419,7 @@ export function Home(props: Props) {
           </Fab>
         </Hidden>
       </nav>
-      <MainPanel toggleDrawer={toggleDrawer}></MainPanel>
+      <MainPanel></MainPanel>
       <AddNotebookDialog
         open={addNotebookDialogOpen}
         onClose={() => {

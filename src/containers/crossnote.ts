@@ -8,7 +8,7 @@ import FlexLayout, {
   TabSetNode,
 } from "flexlayout-react";
 import moment from "moment";
-import * as path from "path";
+import path from "path-browserify";
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { createContainer } from "unstated-next";
@@ -18,6 +18,7 @@ import Crossnote, {
 } from "../lib/crossnote";
 import { EventType, globalEmitter } from "../lib/event";
 import { pfs } from "../lib/fs";
+import { pruneUnknownTabs } from "../lib/layout";
 import { Note, NoteConfig, getNoteIcon } from "../lib/note";
 import { Notebook } from "../lib/notebook";
 import { CrossnoteTabNode, TabHeight } from "../lib/tabNode";
@@ -40,15 +41,6 @@ export enum SelectedSectionType {
 export interface SelectedSection {
   type: SelectedSectionType;
   path?: string;
-}
-
-export enum HomeSection {
-  Notebooks = "Notebooks",
-  Explore = "Explore",
-  Settings = "Settings",
-  Notifications = "Notifications",
-  Privacy = "Privacy",
-  Unknown = "Unknown",
 }
 
 /**
@@ -92,7 +84,7 @@ const getlayoutModelFromLocalStrorage = () => {
   try {
     const layoutModelString = localStorage.getItem("layoutModel");
     if (layoutModelString) {
-      return JSON.parse(layoutModelString);
+      return pruneUnknownTabs(JSON.parse(layoutModelString));
     } else {
       return defaultLayoutModel;
     }
@@ -111,9 +103,6 @@ function useCrossnoteContainer(initialState: InitialState) {
   const [isPullingNotebook, setIsPullingNotebook] = useState<boolean>(false);
   const [isPerformingAutoFetch, setIsPerformingAutoFetch] =
     useState<boolean>(false);
-  const [homeSection, setHomeSection] = useState<HomeSection>(
-    HomeSection.Unknown,
-  );
   const [layoutModel, setLayoutModel] = useState<Model>(
     FlexLayout.Model.fromJson(getlayoutModelFromLocalStrorage()),
   );
@@ -924,8 +913,6 @@ please download and read the [Welcome notebook](${window.location.origin}/?repo=
     getNote,
     openNoteAtPath,
     openTodayNote,
-    homeSection,
-    setHomeSection,
     layoutModel,
     setLayoutModel,
     splitNoteHorizontally,

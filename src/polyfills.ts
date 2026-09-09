@@ -9,5 +9,10 @@ import "events";
 // injected a Buffer global automatically; its index serialization (git.add
 // and friends) dereferences the bare `Buffer` identifier. Vite provides no
 // Node globals, so supply the userland implementation explicitly. This
-// module must stay the first import of the application entry.
-globalThis.Buffer = globalThis.Buffer || Buffer;
+// module must stay the first import of the application entry. The global is
+// installed without declaring it to TypeScript on purpose: browser code that
+// reaches for `Buffer` should fail to compile rather than quietly depend on
+// this shim (Node's own Buffer stays in place under Vitest).
+if (!("Buffer" in globalThis)) {
+  Object.assign(globalThis, { Buffer });
+}

@@ -14,6 +14,9 @@ export default tseslint.config(
       // --max-warnings ceiling) while staying invisible to git status.
       "build/",
       "coverage/",
+      // Same reason: local review tooling drops its scripts and captures
+      // under .cache/ (gitignored), and they are not part of the code base.
+      ".cache/",
       "public/",
       "patches/",
       ".pr-docs/",
@@ -41,6 +44,20 @@ export default tseslint.config(
       "react-hooks/immutability": "warn",
       "react-hooks/refs": "warn",
       "react-hooks/purity": "warn",
+      // tsconfig no longer loads @types/node for src, so these fail to type
+      // check as well; the lint rule names the reason at the use site and
+      // keeps guarding should a dependency's declarations ever pull the Node
+      // globals back in (see the Buffer P1 of PR #283 for what a silent
+      // dependency on a Node global costs in a browser bundle).
+      "no-restricted-globals": [
+        "error",
+        ...["Buffer", "process", "global", "__dirname", "__filename"].map(
+          (name) => ({
+            name,
+            message: `${name} is a Node global; browser code must not depend on it.`,
+          }),
+        ),
+      ],
     },
   },
   {

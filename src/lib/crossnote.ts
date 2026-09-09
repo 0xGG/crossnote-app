@@ -3,7 +3,7 @@ import { DEFAULT_CORS_PROXY } from "../config";
 import diff3Merge from "diff3";
 import * as git from "isomorphic-git";
 import http from "isomorphic-git/http/web";
-import * as path from "path";
+import path from "path-browserify";
 import PouchDB from "pouchdb";
 import PouchdbFind from "pouchdb-find";
 import { randomID } from "../utilities/utils";

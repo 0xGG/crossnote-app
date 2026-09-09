@@ -11,7 +11,7 @@ import { ChevronDown, ChevronRight } from "mdi-material-ui";
 import Noty from "noty";
 import React, { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { CrossnoteContainer, HomeSection } from "../containers/crossnote";
+import { CrossnoteContainer } from "../containers/crossnote";
 import {
   ChangedNoteFilePathEventData,
   DeletedNoteEventData,
@@ -204,12 +204,6 @@ export default function NotebookTreeView(props: Props) {
       }
     };
   }, [props.notebook, refreshQuickAccessNotes, favoritedNotes]);
-
-  useEffect(() => {
-    if (crossnoteContainer.homeSection !== HomeSection.Notebooks) {
-      setExpanded([]);
-    }
-  }, [crossnoteContainer.homeSection]);
 
   useEffect(() => {
     refreshQuickAccessNotes(props.notebook.notes);

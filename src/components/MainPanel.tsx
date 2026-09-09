@@ -23,7 +23,6 @@ import { CrossnoteContainer } from "../containers/crossnote";
 import { SettingsContainer } from "../containers/settings";
 import { pfs } from "../lib/fs";
 import { TabNodeComponent, TabNodeConfig } from "../lib/tabNode";
-import { PrivacyPolicy } from "../pages/Privacy";
 import { Emoji } from "./EmojiWrapper";
 import GraphView from "./GraphView";
 import { Loading } from "./Loading";
@@ -90,11 +89,7 @@ const useStyles = makeStyles((theme: Theme) =>
   }),
 );
 
-interface Props {
-  toggleDrawer: () => void;
-}
-
-export function MainPanel(props: Props) {
+export function MainPanel() {
   const classes = useStyles();
   const theme = useTheme();
   const container = useRef<HTMLDivElement>(null);
@@ -139,10 +134,6 @@ export function MainPanel(props: Props) {
             ></NotesPanel>
           );
         }
-      } else if (component === "Privacy") {
-        renderElement = (
-          <PrivacyPolicy toggleDrawer={props.toggleDrawer}></PrivacyPolicy>
-        );
       } else if (component === "Note") {
         const notebook = crossnoteContainer.getNotebookAtPath(
           config.notebookPath,
@@ -178,7 +169,6 @@ export function MainPanel(props: Props) {
     },
     [
       ready,
-      props.toggleDrawer,
       t,
       settingsContainer.theme.muiTheme,
       crossnoteContainer.initialized,

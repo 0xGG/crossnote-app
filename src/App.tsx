@@ -1,7 +1,6 @@
 import { ThemeProvider } from "@material-ui/styles";
 import React, { FC } from "react";
 import "./App.css";
-import { HomeSection } from "./containers/crossnote";
 import { SettingsContainer } from "./containers/settings";
 import "./editor";
 import { Home } from "./pages/Home";
@@ -19,7 +18,7 @@ const App: FC = () => {
   return (
     <ThemeProvider theme={settingsContainer.theme.muiTheme}>
       <div className="App">
-        <Home section={HomeSection.Notebooks} queryParams={queryParams}></Home>
+        <Home queryParams={queryParams}></Home>
       </div>
     </ThemeProvider>
   );
