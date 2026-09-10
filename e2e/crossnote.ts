@@ -1,0 +1,88 @@
+import { expect, type Locator, type Page } from "@playwright/test";
+
+/**
+ * Drives the app the way a user does: through roles, visible text and the few
+ * global class names the app itself relies on (its print stylesheet targets
+ * them), never through generated MUI class names, so the specs survive the
+ * UI-stack migration.
+ */
+export class CrossnoteApp {
+  readonly sidebar: Locator;
+  readonly notesPanel: Locator;
+  readonly editor: Locator;
+  readonly preview: Locator;
+
+  constructor(readonly page: Page) {
+    this.sidebar = page.getByRole("navigation");
+    // The note editor embeds a second notes panel for back references; the
+    // notebook's own list is the one headed "Notes".
+    this.notesPanel = page
+      .locator(".notes-panel")
+      .filter({ has: page.getByRole("heading", { name: "Notes" }) });
+    this.editor = page.locator(".CodeMirror");
+    // The preview pane is rendered next to the editor's textarea; other
+    // components (cards, widgets) reuse the class name elsewhere.
+    this.preview = page.locator(".editor-textarea ~ .preview");
+  }
+
+  async open() {
+    await this.page.goto("/");
+    await this.waitUntilReady();
+  }
+
+  // The notebook tree renders only once the browser file system is up and
+  // the default notebook exists; on a fresh origin that includes creating it.
+  async waitUntilReady() {
+    await expect(this.notebook("Drafts")).toBeVisible();
+  }
+
+  notebook(name: string): Locator {
+    return this.sidebar.getByRole("treeitem", { name: new RegExp(name) });
+  }
+
+  async openNotes(notebookName = "Drafts") {
+    const notebook = this.notebook(notebookName);
+    // Only the chevron expands a notebook; clicking its label refreshes it.
+    await notebook.getByRole("button").first().click();
+    await notebook
+      .getByRole("group")
+      .getByRole("treeitem", { name: /Notes/ })
+      .click();
+    await expect(this.notesPanel).toBeVisible();
+  }
+
+  // FlexLayout renders its tab strip without ARIA roles; the class names
+  // are the library's public styling contract.
+  async selectTab(name: string) {
+    await this.page
+      .locator(".flexlayout__tab_button")
+      .filter({ hasText: name })
+      .click();
+  }
+
+  get searchBox(): Locator {
+    return this.notesPanel.getByRole("textbox", { name: "search" });
+  }
+
+  get noteCards(): Locator {
+    return this.notesPanel.locator(".note-card");
+  }
+
+  async createNote() {
+    // The tooltip title sits on the icon inside the (otherwise unnamed)
+    // button, so the icon is the element that carries the name.
+    await this.notesPanel.getByTitle("New note").click();
+    await expect(this.editor).toBeVisible();
+  }
+
+  async typeInEditor(text: string) {
+    await this.editor.click();
+    await this.page.keyboard.type(text);
+  }
+
+  modeButton(name: "Preview" | "Edit" | "Source code"): Locator {
+    return this.page
+      .getByRole("group", { name: "editor mode" })
+      .getByRole("button", { name });
+  }
+}

@@ -15,6 +15,10 @@ public/assets/emoji/
 coverage/
 .nyc_output/
 
+# Playwright
+test-results/
+playwright-report/
+
 # Logs
 logs/
 *.log

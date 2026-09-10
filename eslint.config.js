@@ -1,5 +1,6 @@
 import js from "@eslint/js";
 import prettierConfig from "eslint-config-prettier";
+import playwright from "eslint-plugin-playwright";
 import reactHooks from "eslint-plugin-react-hooks";
 import globals from "globals";
 import tseslint from "typescript-eslint";
@@ -14,6 +15,9 @@ export default tseslint.config(
       // --max-warnings ceiling) while staying invisible to git status.
       "build/",
       "coverage/",
+      // Playwright's run artifacts (gitignored as well).
+      "test-results/",
+      "playwright-report/",
       // Same reason: local review tooling drops its scripts and captures
       // under .cache/ (gitignored), and they are not part of the code base.
       ".cache/",
@@ -61,10 +65,22 @@ export default tseslint.config(
     },
   },
   {
-    files: ["scripts/**/*.mjs", "*.config.js", "vite.config.ts"],
+    files: [
+      "scripts/**/*.mjs",
+      "*.config.js",
+      "vite.config.ts",
+      "playwright.config.ts",
+    ],
     languageOptions: {
       globals: globals.node,
     },
+  },
+  {
+    // The end-to-end specs run under Playwright in Node, but their
+    // page.evaluate callbacks execute in the browser; the preset ships the
+    // globals shared by both environments along with its rules.
+    ...playwright.configs["flat/recommended"],
+    files: ["e2e/**/*.ts"],
   },
   prettierConfig,
   {
