@@ -55,6 +55,10 @@ export default defineConfig({
   test: {
     environment: "jsdom",
     setupFiles: ["src/test/setup.ts"],
+    // Unit tests sit next to the module they cover. The default glob would
+    // also collect the Playwright specs under e2e/, which need a real
+    // browser and run under their own runner.
+    include: ["src/**/*.test.{ts,tsx}"],
     // Run in random order every time so order-independence stays an enforced
     // invariant rather than a one-off verification; Vitest prints the seed on
     // failure for reproduction.

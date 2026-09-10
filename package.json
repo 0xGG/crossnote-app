@@ -14,13 +14,14 @@
     "prebuild": "node scripts/download-emoji-sheet.mjs",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc --noEmit && tsc --noEmit -p e2e",
     "lint": "eslint . --max-warnings 138",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "test:e2e": "vite build && playwright test"
   },
   "dependencies": {
     "@0xgg/echomd": "^1.0.4",
@@ -68,6 +69,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
+    "@playwright/test": "^1.63.0",
     "@types/codemirror": "^0.0.91",
     "@types/d3": "^6.2.0",
     "@types/emoji-mart": "^3.0.4",
@@ -86,6 +88,7 @@
     "@vitejs/plugin-react": "^5.2.0",
     "eslint": "^10.10.0",
     "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-playwright": "^2.11.0",
     "eslint-plugin-react-hooks": "^7.1.1",
     "fake-indexeddb": "^6.2.5",
     "globals": "^17.12.0",
