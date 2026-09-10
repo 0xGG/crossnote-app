@@ -3,6 +3,7 @@
 // Essential
 import "@0xgg/echomd"; // ESSENTIAL
 import { setTwemojiOptions } from "@0xgg/echomd/addon/emoji";
+import { wrapTexts } from "@0xgg/echomd/keymap/hypermd";
 import "@0xgg/echomd/powerpack/fold-code-with-echarts";
 import "@0xgg/echomd/powerpack/fold-code-with-mermaid";
 import "@0xgg/echomd/powerpack/fold-code-with-plantuml";
@@ -29,10 +30,12 @@ import "codemirror/mode/markdown/markdown";
 import "codemirror/mode/python/python";
 import "codemirror/mode/stex/stex"; // for Math TeX Formular
 import "codemirror/mode/yaml/yaml"; // for Front Matters
+import "codemirror/mode/yaml-frontmatter/yaml-frontmatter"; // plain text source code
 import { Emoji } from "emoji-mart";
 import EmojiData from "emoji-mart/data/all.json";
 import twemoji from "twemoji";
 import { EmojiBackgroundImageFn } from "../components/EmojiWrapper";
+import { withPlainTextFallback } from "../lib/editorMode";
 import { AudioWidgetCreator } from "./widgets/audio";
 import { BilibiliWidgetCreator } from "./widgets/bilibili";
 import { GitHubGistWidgetCreator } from "./widgets/github_gist";
@@ -60,18 +63,35 @@ registerWidgetCreator("crossnote.github_gist", GitHubGistWidgetCreator);
 import packageJSON from "../../package.json";
 export const EchoMDVersion: string = packageJSON.dependencies["@0xgg/echomd"];
 
-// Hack the keymap for sublime
+// Hack the keymap for sublime: HyperMD's editing commands, each with the
+// plain CodeMirror behavior for the plain text source code mode.
 const hypermdKeyMap = window["CodeMirror"].keyMap["hypermd"] || {};
+const hyperMDKey = (
+  key: string,
+  plain: (editor: CodeMirror.Editor) => unknown,
+) => hypermdKeyMap[key] && withPlainTextFallback(hypermdKeyMap[key], plain);
+const wrapSelection = (bracket: string) => (editor: CodeMirror.Editor) =>
+  wrapTexts(editor, bracket);
 window["CodeMirror"].keyMap["sublime"] = Object.assign(
   window["CodeMirror"].keyMap["sublime"],
   {
-    "Ctrl-B": hypermdKeyMap["Ctrl-B"],
-    "Ctrl-D": hypermdKeyMap["Ctrl-D"],
-    "Ctrl-I": hypermdKeyMap["Ctrl-I"],
-    "Enter": hypermdKeyMap["Enter"],
-    "Shift-Enter": hypermdKeyMap["Shift-Enter"],
-    "Shift-Tab": hypermdKeyMap["Shift-Tab"],
-    "Tab": hypermdKeyMap["Tab"],
+    "Ctrl-B": hyperMDKey("Ctrl-B", wrapSelection("**")),
+    "Ctrl-D": hyperMDKey("Ctrl-D", wrapSelection("~~")),
+    "Ctrl-I": hyperMDKey("Ctrl-I", wrapSelection("*")),
+    "Enter": hyperMDKey("Enter", (editor) =>
+      editor.execCommand("newlineAndIndent"),
+    ),
+    "Shift-Enter": hyperMDKey("Shift-Enter", (editor) =>
+      editor.execCommand("newlineAndIndent"),
+    ),
+    "Shift-Tab": hyperMDKey("Shift-Tab", (editor) =>
+      editor.execCommand("indentLess"),
+    ),
+    "Tab": hyperMDKey("Tab", (editor) =>
+      editor.execCommand(
+        editor.somethingSelected() ? "indentMore" : "insertSoftTab",
+      ),
+    ),
   },
 );
 

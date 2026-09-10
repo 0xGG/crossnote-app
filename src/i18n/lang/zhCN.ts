@@ -113,6 +113,7 @@ export const zhCN = {
     "settings/issues-and-feature-requests": "发现了问题或者有功能请求？",
     "settings/editor-cursor-color": "编辑器光标颜色",
     "settings/default-editor-mode": "默认编辑器模式",
+    "settings/plain-text-source-code": "源代码模式显示纯文本",
     "settings/hello": "你好，",
     "settings/world": "世界！",
     "settings/author-name": "作者姓名",

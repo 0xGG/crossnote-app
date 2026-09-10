@@ -34,6 +34,9 @@ function useSettingsContainer(initialState: InitialState) {
   const [keyMap, setKeyMap] = useState<KeyMap>(
     getKeyMap(localStorage.getItem("settings/keyMap")) || KeyMap.DEFAULT,
   );
+  const [plainTextSourceCode, setPlainTextSourceCode] = useState<boolean>(
+    localStorage.getItem("settings/plainTextSourceCode") === "true",
+  );
 
   const { t, i18n } = useTranslation();
 
@@ -89,6 +92,11 @@ function useSettingsContainer(initialState: InitialState) {
     setKeyMap(keyMap);
   }, []);
 
+  const _setPlainTextSourceCode = useCallback((enabled: boolean) => {
+    localStorage.setItem("settings/plainTextSourceCode", String(enabled));
+    setPlainTextSourceCode(enabled);
+  }, []);
+
   useEffect(() => {
     const themeName = localStorage.getItem("settings/theme") as ThemeName;
     if (themeName) {
@@ -111,6 +119,8 @@ function useSettingsContainer(initialState: InitialState) {
     setTheme: _setTheme,
     keyMap,
     setKeyMap: _setKeyMap,
+    plainTextSourceCode,
+    setPlainTextSourceCode: _setPlainTextSourceCode,
   };
 }
 

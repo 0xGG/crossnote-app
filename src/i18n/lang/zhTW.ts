@@ -113,6 +113,7 @@ export const zhTW = {
     "settings/issues-and-feature-requests": "發現左問題或者有功能請求?",
     "settings/editor-cursor-color": "編輯器光標顏色",
     "settings/default-editor-mode": "默认编辑器模式",
+    "settings/plain-text-source-code": "原始碼模式顯示純文字",
     "settings/hello": "你好，",
     "settings/world": "世界！",
     "settings/author-name": "作者姓名",
