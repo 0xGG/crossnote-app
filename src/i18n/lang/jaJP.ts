@@ -117,6 +117,8 @@ export const jaJP = {
       "問題を発見したか、機能要求がありますか？",
     "settings/editor-cursor-color": "エディターのカーソルの色",
     "settings/default-editor-mode": "既定のエディター モード",
+    "settings/plain-text-source-code":
+      "ソースコードモードでプレーンテキスト表示",
     "settings/hello": "こんにちは，",
     "settings/world": "世界！",
     "settings/author-name": "著者名",

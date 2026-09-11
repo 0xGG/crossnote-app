@@ -45,7 +45,12 @@ const SplitPane = SplitPaneRaw as any;
 import { CrossnoteContainer } from "../containers/crossnote";
 import { SettingsContainer } from "../containers/settings";
 import { initMathPreview } from "../editor/views/math-preview";
-import { EditorMode } from "../lib/editorMode";
+import {
+  applyCodeMirrorMode,
+  EditorMode,
+  HYPERMD_MODE,
+  markdownState,
+} from "../lib/editorMode";
 import {
   ChangedNoteFilePathEventData,
   DeletedNotebookEventData,
@@ -591,10 +596,7 @@ export default function NotePanel(props: Props) {
       const editor: CodeMirrorEditor = EchoMD.fromTextArea(
         textAreaElement.current,
         {
-          mode: {
-            name: "hypermd",
-            hashtag: true,
-          },
+          mode: HYPERMD_MODE,
           // inputStyle: "textarea", // Break mobile device paste functionality
           hmdFold: HMDFold,
           keyMap: settingsContainer.keyMap,
@@ -733,18 +735,30 @@ export default function NotePanel(props: Props) {
   useEffect(() => {
     if (!editor || !note) return;
     if (editorMode === EditorMode.EchoMD) {
+      applyCodeMirrorMode(
+        editor,
+        editorMode,
+        settingsContainer.plainTextSourceCode,
+      );
       EchoMD.switchToHyperMD(editor);
       editor.setOption("hmdFold" as any, HMDFold);
       editor.getWrapperElement().style.display = "block";
       editor.refresh();
     } else if (editorMode === EditorMode.SourceCode) {
+      // Styled source by default: HyperMD keeps laying the lines out and
+      // only the folding goes. The plain text setting swaps the mode as well.
+      applyCodeMirrorMode(
+        editor,
+        editorMode,
+        settingsContainer.plainTextSourceCode,
+      );
       EchoMD.switchToNormal(editor);
       editor.getWrapperElement().style.display = "block";
       editor.refresh();
     } else if (editorMode === EditorMode.Preview) {
       editor.getWrapperElement().style.display = "none";
     }
-  }, [editorMode, editor, note]);
+  }, [editorMode, editor, note, settingsContainer.plainTextSourceCode]);
 
   // Change markdown
   useEffect(() => {
@@ -1295,7 +1309,13 @@ export default function NotePanel(props: Props) {
         const tmp = /^(#+)\s+(.+)(?:\s+\1)?$/.exec(line.text);
         if (!tmp) return;
         const lineNo = (line as any).lineNo();
-        if (!editor.getStateAfter(lineNo).header) return; // double check but is not header
+        // Double check with the parser at the markdown level: a fenced code
+        // block runs its own mode, and a heading inside one is not the note's.
+        const state = markdownState(
+          editor.getMode(),
+          editor.getStateAfter(lineNo),
+        );
+        if (!state.header) return;
         const level = tmp[1].length;
         let title = tmp[2];
         title = title.replace(/([*_]{1,2}|~~|`+)(.+?)\1/g, "$2"); // em / bold / del / code
@@ -1404,6 +1424,13 @@ export default function NotePanel(props: Props) {
     }
     tabNode.setEventListener("visibility", function (params) {
       if (params.visible) {
+        // Options that changed while the tab was in the background (a mode
+        // swap made from the settings tab, say) are not drawn yet: CodeMirror
+        // skips hidden editors. FlexLayout fires this event while it is still
+        // rendering, so redraw once the tab has been committed to the DOM.
+        if (editor) {
+          setTimeout(() => editor.refresh(), 0);
+        }
         globalEmitter.emit(EventType.FocusedOnNote, {
           notebookPath: note.notebookPath,
           noteFilePath: note.filePath,
@@ -1413,7 +1440,7 @@ export default function NotePanel(props: Props) {
     return () => {
       tabNode.removeEventListener("visibility");
     };
-  }, [tabNode, note]);
+  }, [tabNode, note, editor]);
 
   if (!note) {
     return <Loading></Loading>;

@@ -1,10 +1,12 @@
 import {
   Box,
   Card,
+  FormControlLabel,
   Link,
   MenuItem,
   Popover,
   Select,
+  Switch,
   TextField,
   Typography,
 } from "@material-ui/core";
@@ -312,6 +314,23 @@ export function Settings(props: Props) {
               {t("editor/note-control/source-code") as string}
             </MenuItem>
           </Select>
+        </Box>
+
+        <Box className={clsx(classes.section)}>
+          <FormControlLabel
+            control={
+              <Switch
+                color="primary"
+                checked={settingsContainer.plainTextSourceCode}
+                onChange={(event) => {
+                  settingsContainer.setPlainTextSourceCode(
+                    event.target.checked,
+                  );
+                }}
+              />
+            }
+            label={t("settings/plain-text-source-code")}
+          />
         </Box>
 
         <Box className={clsx(classes.section)}>

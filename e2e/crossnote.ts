@@ -53,11 +53,30 @@ export class CrossnoteApp {
 
   // FlexLayout renders its tab strip without ARIA roles; the class names
   // are the library's public styling contract.
-  async selectTab(name: string) {
-    await this.page
+  tab(name: string): Locator {
+    return this.page
       .locator(".flexlayout__tab_button")
-      .filter({ hasText: name })
-      .click();
+      .filter({ hasText: name });
+  }
+
+  async selectTab(name: string) {
+    await this.tab(name).click();
+  }
+
+  async openSettings() {
+    await this.sidebar.getByRole("button", { name: "Settings" }).click();
+    await expect(this.plainTextSourceCodeSwitch).toBeVisible();
+  }
+
+  // The title box in the note header; a new note is named after its file.
+  get noteTitle(): Locator {
+    return this.page.getByRole("textbox", { name: "Title" });
+  }
+
+  get plainTextSourceCodeSwitch(): Locator {
+    return this.page.getByRole("checkbox", {
+      name: "Plain text in source code mode",
+    });
   }
 
   get searchBox(): Locator {
@@ -78,6 +97,11 @@ export class CrossnoteApp {
   async typeInEditor(text: string) {
     await this.editor.click();
     await this.page.keyboard.type(text);
+  }
+
+  // The element that holds the caret while typing.
+  get editorInput(): Locator {
+    return this.editor.locator("[contenteditable=true]");
   }
 
   modeButton(name: "Preview" | "Edit" | "Source code"): Locator {
