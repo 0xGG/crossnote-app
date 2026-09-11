@@ -26,7 +26,7 @@ interface Props {
 }
 
 export default function IconPopover(props: Props) {
-  const classes = useStyles(props);
+  const classes = useStyles();
   const crossnoteContainer = CrossnoteContainer.useContainer();
   const note = props.note;
 

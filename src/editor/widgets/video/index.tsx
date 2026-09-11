@@ -55,7 +55,7 @@ const useStyles = makeStyles((theme: Theme) =>
 
 function VideoWidget(props: WidgetArgs) {
   const attributes = props.attributes;
-  const classes = useStyles(props);
+  const classes = useStyles();
   const { t } = useTranslation();
   const [source, setSource] = useState<string>(attributes["source"] || "");
   const [autoplay, setAutoplay] = useState<boolean>(

@@ -140,7 +140,7 @@ interface Props {
 }
 
 export default function NoteCard(props: Props) {
-  const classes = useStyles(props);
+  const classes = useStyles();
   const theme = useTheme();
   const crossnoteContainer = CrossnoteContainer.useContainer();
   const settingsContainer = SettingsContainer.useContainer();

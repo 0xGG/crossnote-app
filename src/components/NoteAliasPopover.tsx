@@ -35,7 +35,7 @@ interface Props {
   aliases: string[];
 }
 export function NoteAliasPopover(props: Props) {
-  const classes = useStyles(props);
+  const classes = useStyles();
   const { t } = useTranslation();
   const [alias, setAlias] = useState<string>("");
 

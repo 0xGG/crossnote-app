@@ -59,7 +59,7 @@ const useStyles = makeStyles((theme: Theme) =>
 
 function YoutubeWidget(props: WidgetArgs) {
   const attributes = props.attributes;
-  const classes = useStyles(props);
+  const classes = useStyles();
   const { t } = useTranslation();
   const [url, setURL] = useState<string>("");
   const [error, setError] = useState<string>("");

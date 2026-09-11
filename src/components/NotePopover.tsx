@@ -68,7 +68,7 @@ interface Props {
 }
 
 export default function NotePopover(props: Props) {
-  const classes = useStyles(props);
+  const classes = useStyles();
   const note = props.note;
   const [deleteNoteDialogOpen, setDeleteNoteDialogOpen] =
     useState<boolean>(false);

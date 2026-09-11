@@ -185,7 +185,7 @@ interface Props {
 }
 
 export function Home(props: Props) {
-  const classes = useStyles(props);
+  const classes = useStyles();
   const theme = useTheme();
   // const isMobile = useMediaQuery(theme.breakpoints.down("xs"));
   const [addNotebookDialogOpen, setAddNotebookDialogOpen] =

@@ -35,7 +35,7 @@ interface Props {
 }
 
 export default function PushNotebookDialog(props: Props) {
-  const classes = useStyles(props);
+  const classes = useStyles();
   const notebook = props.notebook;
   const [gitUsername, setGitUsername] = useState<string>(notebook.gitUsername);
   const [gitPassword, setGitPassword] = useState<string>(notebook.gitPassword);

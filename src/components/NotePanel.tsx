@@ -349,7 +349,7 @@ interface Props {
   reference?: Reference;
 }
 export default function NotePanel(props: Props) {
-  const classes = useStyles(props);
+  const classes = useStyles();
   const tabNode = props.tabNode;
   const crossnoteContainer = CrossnoteContainer.useContainer();
   const settingsContainer = SettingsContainer.useContainer();

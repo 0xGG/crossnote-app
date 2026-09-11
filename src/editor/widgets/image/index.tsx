@@ -54,7 +54,7 @@ const useStyles = makeStyles((theme: Theme) =>
 );
 
 function ImageWidget(props: WidgetArgs) {
-  const classes = useStyles(props);
+  const classes = useStyles();
   const { t } = useTranslation();
   const [url, setURL] = useState<string>("");
   const [imageUploaderElement, setImageUploaderElement] =

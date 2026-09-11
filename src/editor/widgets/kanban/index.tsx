@@ -106,7 +106,7 @@ interface KanbanColumnHeaderProps {
 }
 
 function KanbanColumnHeaderDisplay(props: KanbanColumnHeaderProps) {
-  const classes = useStyles(props);
+  const classes = useStyles();
   const { t } = useTranslation();
   const column = props.column;
   const board = props.board;
@@ -193,7 +193,7 @@ interface KanbanCardProps {
   isPreview: boolean;
 }
 function KanbanCardDisplay(props: KanbanCardProps) {
-  const classes = useStyles(props);
+  const classes = useStyles();
   const board = props.board;
   const card = props.card;
   const isPreview = props.isPreview;
@@ -392,7 +392,7 @@ function KanbanCardDisplay(props: KanbanCardProps) {
 }
 
 function KanbanWidget(props: WidgetArgs) {
-  const classes = useStyles(props);
+  const classes = useStyles();
   const { t } = useTranslation();
   const [board, setBoard] = useState<KanbanBoard>(
     props.attributes["board"] || {

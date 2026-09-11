@@ -87,7 +87,7 @@ function getInitialLanguages() {
 }
 
 function OCRWidget(props: WidgetArgs) {
-  const classes = useStyles(props);
+  const classes = useStyles();
   const { t } = useTranslation();
   const [canvas, setCanvas] = useState<HTMLCanvasElement>(null);
   // https://github.com/tesseract-ocr/tesseract/wiki/Data-Files#data-files-for-version-400-november-29-2016
