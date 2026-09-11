@@ -88,9 +88,7 @@ export class CrossnoteApp {
   }
 
   async createNote() {
-    // The tooltip title sits on the icon inside the (otherwise unnamed)
-    // button, so the icon is the element that carries the name.
-    await this.notesPanel.getByTitle("New note").click();
+    await this.notesPanel.getByRole("button", { name: "New note" }).click();
     await expect(this.editor).toBeVisible();
   }
 

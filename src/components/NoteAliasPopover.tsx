@@ -92,7 +92,10 @@ export function NoteAliasPopover(props: Props) {
                   }}
                 >
                   <Typography>{alias}</Typography>
-                  <IconButton onClick={() => props.deleteAlias(alias)}>
+                  <IconButton
+                    aria-label={t("general/Delete")}
+                    onClick={() => props.deleteAlias(alias)}
+                  >
                     <TrashCan></TrashCan>
                   </IconButton>
                 </Box>

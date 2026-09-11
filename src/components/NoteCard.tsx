@@ -331,6 +331,7 @@ export default function NoteCard(props: Props) {
                 ></Chip>
               )}
               <IconButton
+                aria-label={t("general/note-menu")}
                 size={"small"}
                 style={{
                   marginLeft: theme.spacing(1),

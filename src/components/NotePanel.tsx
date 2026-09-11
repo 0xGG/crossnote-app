@@ -1458,6 +1458,7 @@ export default function NotePanel(props: Props) {
         <Box className={clsx(classes.row)} style={{ width: "100%" }}>
           <Box>
             <IconButton
+              aria-label={t("general/change-note-icon")}
               color={"primary"}
               onClick={(event) => setIconPopoverElement(event.currentTarget)}
             >
@@ -1489,6 +1490,7 @@ export default function NotePanel(props: Props) {
           >
             <Tooltip title={t("editor/note-control/preview")}>
               <Button
+                aria-label={t("editor/note-control/preview")}
                 className={clsx(
                   classes.controlBtn,
                   editorMode === EditorMode.Preview &&
@@ -1504,6 +1506,7 @@ export default function NotePanel(props: Props) {
             </Tooltip>
             <Tooltip title={t("general/echomd")}>
               <Button
+                aria-label={t("general/echomd")}
                 className={clsx(
                   classes.controlBtn,
                   editorMode === EditorMode.EchoMD &&
@@ -1517,6 +1520,7 @@ export default function NotePanel(props: Props) {
             </Tooltip>
             <Tooltip title={t("editor/note-control/source-code")}>
               <Button
+                aria-label={t("editor/note-control/source-code")}
                 className={clsx(
                   classes.controlBtn,
                   editorMode === EditorMode.SourceCode &&
@@ -1538,6 +1542,7 @@ export default function NotePanel(props: Props) {
             size="small"
           >
             <Button
+              aria-label={t("general/note-menu")}
               className={clsx(classes.controlBtn)}
               onClick={(event) => setNotePopoverElement(event.currentTarget)}
             >
@@ -1553,6 +1558,7 @@ export default function NotePanel(props: Props) {
               className={clsx(classes.tocButtonGroup)}
             >
               <Button
+                aria-label={t("general/table-of-contents")}
                 className={clsx(
                   classes.controlBtn,
                   tocEnabled ? classes.controlBtnSelected : null,
@@ -1695,6 +1701,7 @@ export default function NotePanel(props: Props) {
       >
         <Box className={clsx(classes.floatWinTitle, "float-win-title")}>
           <IconButton
+            aria-label={t("general/close")}
             className={clsx(classes.floatWinClose, "float-win-close")}
           >
             <Close></Close>

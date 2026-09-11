@@ -385,7 +385,9 @@ export default function NotePopover(props: Props) {
                 );
               }}
             >
-              <IconButton>
+              <IconButton
+                aria-label={t("editor/note-control/copy-to-clipboard")}
+              >
                 <ContentCopy></ContentCopy>
               </IconButton>
             </Tooltip>

@@ -65,7 +65,10 @@ function GitHubGistWidget(props: WidgetArgs) {
         <Gist url={props.attributes["url"]}></Gist>
         {!props.isPreview && (
           <Box className={clsx(classes.actionButtonsGroup)}>
-            <IconButton onClick={() => props.removeSelf()}>
+            <IconButton
+              aria-label={t("general/Delete")}
+              onClick={() => props.removeSelf()}
+            >
               <TrashCanOutline></TrashCanOutline>
             </IconButton>
           </Box>
@@ -97,7 +100,10 @@ function GitHubGistWidget(props: WidgetArgs) {
       ></TextField>
       <Box className={clsx(classes.actionButtonsGroup)}>
         <Tooltip title={t("general/Delete")}>
-          <IconButton onClick={() => props.removeSelf()}>
+          <IconButton
+            aria-label={t("general/Delete")}
+            onClick={() => props.removeSelf()}
+          >
             <TrashCan></TrashCan>
           </IconButton>
         </Tooltip>

@@ -311,6 +311,7 @@ export function Home(props: Props) {
               {crossnoteContainer.initialized && (
                 <Tooltip title={t("general/add-a-notebook")}>
                   <IconButton
+                    aria-label={t("general/add-a-notebook")}
                     className={clsx(classes.listItemIcon)}
                     onClick={() => {
                       setAddNotebookDialogHideOpeningLocal(false);
@@ -410,6 +411,7 @@ export function Home(props: Props) {
         </Hidden>
         <Hidden smUp implementation="css">
           <Fab
+            aria-label={t("general/open-menu")}
             color="primary"
             size="small"
             onClick={toggleDrawer}
