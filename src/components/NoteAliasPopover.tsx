@@ -35,7 +35,7 @@ interface Props {
   aliases: string[];
 }
 export function NoteAliasPopover(props: Props) {
-  const classes = useStyles(props);
+  const classes = useStyles();
   const { t } = useTranslation();
   const [alias, setAlias] = useState<string>("");
 
@@ -92,7 +92,10 @@ export function NoteAliasPopover(props: Props) {
                   }}
                 >
                   <Typography>{alias}</Typography>
-                  <IconButton onClick={() => props.deleteAlias(alias)}>
+                  <IconButton
+                    aria-label={t("general/Delete")}
+                    onClick={() => props.deleteAlias(alias)}
+                  >
                     <TrashCan></TrashCan>
                   </IconButton>
                 </Box>

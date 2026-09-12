@@ -63,7 +63,7 @@ interface Props {
 }
 
 export default function Notes(props: Props) {
-  const classes = useStyles(props);
+  const classes = useStyles();
   const { t } = useTranslation();
   const theme = useTheme();
   const crossnoteContainer = CrossnoteContainer.useContainer();

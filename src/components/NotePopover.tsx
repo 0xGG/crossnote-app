@@ -68,7 +68,7 @@ interface Props {
 }
 
 export default function NotePopover(props: Props) {
-  const classes = useStyles(props);
+  const classes = useStyles();
   const note = props.note;
   const [deleteNoteDialogOpen, setDeleteNoteDialogOpen] =
     useState<boolean>(false);
@@ -385,7 +385,9 @@ export default function NotePopover(props: Props) {
                 );
               }}
             >
-              <IconButton>
+              <IconButton
+                aria-label={t("editor/note-control/copy-to-clipboard")}
+              >
                 <ContentCopy></ContentCopy>
               </IconButton>
             </Tooltip>

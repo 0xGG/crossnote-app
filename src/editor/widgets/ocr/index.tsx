@@ -87,7 +87,7 @@ function getInitialLanguages() {
 }
 
 function OCRWidget(props: WidgetArgs) {
-  const classes = useStyles(props);
+  const classes = useStyles();
   const { t } = useTranslation();
   const [canvas, setCanvas] = useState<HTMLCanvasElement>(null);
   // https://github.com/tesseract-ocr/tesseract/wiki/Data-Files#data-files-for-version-400-november-29-2016
@@ -347,7 +347,10 @@ function OCRWidget(props: WidgetArgs) {
       <Typography variant={"h5"}>{t("widget/crossnote.ocr/ocr")}</Typography>
       <Box className={clsx(classes.actionButtons)}>
         <Tooltip title={t("general/Delete")}>
-          <IconButton onClick={() => props.removeSelf()}>
+          <IconButton
+            aria-label={t("general/Delete")}
+            onClick={() => props.removeSelf()}
+          >
             <TrashCan></TrashCan>
           </IconButton>
         </Tooltip>

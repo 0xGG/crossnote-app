@@ -44,7 +44,7 @@ const useStyles = makeStyles((theme: Theme) =>
 
 function AudioWidget(props: WidgetArgs) {
   const attributes = props.attributes;
-  const classes = useStyles(props);
+  const classes = useStyles();
   const { t } = useTranslation();
   const [source, setSource] = useState<string>(attributes["source"] || "");
   const [autoplay, setAutoplay] = useState<boolean>(
@@ -83,7 +83,10 @@ function AudioWidget(props: WidgetArgs) {
       <Typography variant={"h5"}>{t("general/Audio")}</Typography>
       <Box className={clsx(classes.actionButtons)}>
         <Tooltip title={t("general/Delete")}>
-          <IconButton onClick={() => props.removeSelf()}>
+          <IconButton
+            aria-label={t("general/Delete")}
+            onClick={() => props.removeSelf()}
+          >
             <TrashCan></TrashCan>
           </IconButton>
         </Tooltip>

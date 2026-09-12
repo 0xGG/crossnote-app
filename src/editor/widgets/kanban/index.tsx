@@ -106,7 +106,7 @@ interface KanbanColumnHeaderProps {
 }
 
 function KanbanColumnHeaderDisplay(props: KanbanColumnHeaderProps) {
-  const classes = useStyles(props);
+  const classes = useStyles();
   const { t } = useTranslation();
   const column = props.column;
   const board = props.board;
@@ -158,6 +158,7 @@ function KanbanColumnHeaderDisplay(props: KanbanColumnHeaderProps) {
       {!isPreview && (
         <Box>
           <IconButton
+            aria-label={t("widget/crossnote.kanban/add-card")}
             onClick={() => {
               const card: KanbanCard = {
                 id: Date.now(),
@@ -173,6 +174,7 @@ function KanbanColumnHeaderDisplay(props: KanbanColumnHeaderProps) {
             <CardPlus></CardPlus>
           </IconButton>
           <IconButton
+            aria-label={t("widget/crossnote.kanban/delete-column")}
             onClick={() => {
               board.columns = board.columns.filter((l) => column.id !== l.id);
               props.refreshBoard(board);
@@ -193,7 +195,7 @@ interface KanbanCardProps {
   isPreview: boolean;
 }
 function KanbanCardDisplay(props: KanbanCardProps) {
-  const classes = useStyles(props);
+  const classes = useStyles();
   const board = props.board;
   const card = props.card;
   const isPreview = props.isPreview;
@@ -322,10 +324,14 @@ function KanbanCardDisplay(props: KanbanCardProps) {
       ></div>
       {!isPreview && (
         <Box style={{ position: "absolute", top: "0", right: "0", zIndex: 99 }}>
-          <IconButton onClick={() => setEditDialogOpen(true)}>
+          <IconButton
+            aria-label={t("widget/crossnote.kanban/edit-card")}
+            onClick={() => setEditDialogOpen(true)}
+          >
             <Pencil></Pencil>
           </IconButton>
           <IconButton
+            aria-label={t("widget/crossnote.kanban/delete-card")}
             onClick={() => {
               board.columns.forEach((column) => {
                 column.cards = column.cards.filter((c) => c.id !== card.id);
@@ -357,6 +363,7 @@ function KanbanCardDisplay(props: KanbanCardProps) {
         </DialogContent>
         <DialogActions>
           <IconButton
+            aria-label={t("general/Save")}
             onClick={() => {
               card.description = description;
               props.refreshBoard(props.board);
@@ -366,6 +373,7 @@ function KanbanCardDisplay(props: KanbanCardProps) {
             <ContentSave></ContentSave>
           </IconButton>
           <IconButton
+            aria-label={t("general/cancel")}
             onClick={() => {
               if (editor) {
                 editor.setValue(card.description);
@@ -392,7 +400,7 @@ function KanbanCardDisplay(props: KanbanCardProps) {
 }
 
 function KanbanWidget(props: WidgetArgs) {
-  const classes = useStyles(props);
+  const classes = useStyles();
   const { t } = useTranslation();
   const [board, setBoard] = useState<KanbanBoard>(
     props.attributes["board"] || {
@@ -452,7 +460,11 @@ function KanbanWidget(props: WidgetArgs) {
                 <Plus></Plus>
                 {t("widget/crossnote.kanban/add-column")}
               </Button>
-              <Button color={"primary"} onClick={() => props.removeSelf()}>
+              <Button
+                aria-label={t("general/Delete")}
+                color={"primary"}
+                onClick={() => props.removeSelf()}
+              >
                 <TrashCan></TrashCan>
               </Button>
             </Box>

@@ -54,7 +54,7 @@ const useStyles = makeStyles((theme: Theme) =>
 );
 
 function ImageWidget(props: WidgetArgs) {
-  const classes = useStyles(props);
+  const classes = useStyles();
   const { t } = useTranslation();
   const [url, setURL] = useState<string>("");
   const [imageUploaderElement, setImageUploaderElement] =
@@ -110,7 +110,10 @@ function ImageWidget(props: WidgetArgs) {
       </Typography>
       <Box className={clsx(classes.actionButtons)}>
         <Tooltip title={t("general/Delete")}>
-          <IconButton onClick={() => props.removeSelf()}>
+          <IconButton
+            aria-label={t("general/Delete")}
+            onClick={() => props.removeSelf()}
+          >
             <TrashCan></TrashCan>
           </IconButton>
         </Tooltip>

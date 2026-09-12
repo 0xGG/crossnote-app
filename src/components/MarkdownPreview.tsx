@@ -36,7 +36,7 @@ const useStyles = makeStyles((theme: Theme) =>
 );
 
 export default function MarkdownPreview(props: Props) {
-  const classes = useStyles(props);
+  const classes = useStyles();
   const [previewElement, setPreviewElement] = useState<HTMLElement>(null);
 
   const postprocessPreview = useCallback(

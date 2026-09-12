@@ -110,7 +110,7 @@ function getRGBA(inputStr: string = ""): RGBA {
 
 interface Props {}
 export function Settings(props: Props) {
-  const classes = useStyles(props);
+  const classes = useStyles();
   const { t } = useTranslation();
   const [colorPickerAnchorElement, setColorPickerAnchorElement] =
     useState<HTMLElement>(null);

@@ -144,7 +144,7 @@ interface Props {
 }
 
 export default function NotesPanel(props: Props) {
-  const classes = useStyles(props);
+  const classes = useStyles();
   const { t } = useTranslation();
   const [sortMenuAnchorEl, setSortMenuAnchorEl] = useState<HTMLElement>(null);
   const [isCreatingNote, setIsCreatingNote] = useState<boolean>(false);
@@ -447,6 +447,7 @@ export default function NotesPanel(props: Props) {
               />
             </div>
             <IconButton
+              aria-label={t("general/new-note")}
               onClick={createNewNote}
               disabled={!crossnoteContainer.initialized || isCreatingNote}
             >
@@ -455,6 +456,7 @@ export default function NotesPanel(props: Props) {
               </Tooltip>
             </IconButton>
             <IconButton
+              aria-label={t("general/sort-notes")}
               onClick={(event) => setSortMenuAnchorEl(event.currentTarget)}
             >
               <SortVariant></SortVariant>

@@ -55,7 +55,7 @@ const useStyles = makeStyles((theme: Theme) =>
 
 function VideoWidget(props: WidgetArgs) {
   const attributes = props.attributes;
-  const classes = useStyles(props);
+  const classes = useStyles();
   const { t } = useTranslation();
   const [source, setSource] = useState<string>(attributes["source"] || "");
   const [autoplay, setAutoplay] = useState<boolean>(
@@ -98,7 +98,10 @@ function VideoWidget(props: WidgetArgs) {
       <Typography variant={"h5"}>{t("general/Video")}</Typography>
       <Box className={clsx(classes.actionButtons)}>
         <Tooltip title={t("general/Delete")}>
-          <IconButton onClick={() => props.removeSelf()}>
+          <IconButton
+            aria-label={t("general/Delete")}
+            onClick={() => props.removeSelf()}
+          >
             <TrashCan></TrashCan>
           </IconButton>
         </Tooltip>

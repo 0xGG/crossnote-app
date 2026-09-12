@@ -222,6 +222,7 @@ export default function NotebookTreeView(props: Props) {
       <TreeView
         defaultExpandIcon={
           <IconButton
+            aria-label={t("general/expand")}
             disableFocusRipple={true}
             disableRipple={true}
             size={"medium"}
@@ -231,6 +232,7 @@ export default function NotebookTreeView(props: Props) {
         }
         defaultCollapseIcon={
           <IconButton
+            aria-label={t("general/collapse")}
             disableFocusRipple={true}
             disableRipple={true}
             size={"medium"}

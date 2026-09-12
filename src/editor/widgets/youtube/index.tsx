@@ -59,7 +59,7 @@ const useStyles = makeStyles((theme: Theme) =>
 
 function YoutubeWidget(props: WidgetArgs) {
   const attributes = props.attributes;
-  const classes = useStyles(props);
+  const classes = useStyles();
   const { t } = useTranslation();
   const [url, setURL] = useState<string>("");
   const [error, setError] = useState<string>("");
@@ -111,7 +111,10 @@ function YoutubeWidget(props: WidgetArgs) {
       <Typography variant={"h5"}>{t("Youtube")}</Typography>
       <Box className={clsx(classes.actionButtons)}>
         <Tooltip title={t("general/Delete")}>
-          <IconButton onClick={() => props.removeSelf()}>
+          <IconButton
+            aria-label={t("general/Delete")}
+            onClick={() => props.removeSelf()}
+          >
             <TrashCan></TrashCan>
           </IconButton>
         </Tooltip>

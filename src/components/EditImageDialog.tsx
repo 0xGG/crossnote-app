@@ -37,7 +37,7 @@ const useStyles = makeStyles((theme: Theme) =>
 );
 
 export default function EditImageDialog(props: Props) {
-  const classes = useStyles(props);
+  const classes = useStyles();
   const { t } = useTranslation();
   const editor = props.editor;
   const marker = props.marker;

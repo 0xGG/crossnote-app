@@ -59,7 +59,7 @@ const useStyles = makeStyles((theme: Theme) =>
 
 function BilibiliWidget(props: WidgetArgs) {
   const attributes = props.attributes;
-  const classes = useStyles(props);
+  const classes = useStyles();
   const { t } = useTranslation();
   const [url, setURL] = useState<string>("");
   const [error, setError] = useState<string>("");
@@ -108,7 +108,10 @@ function BilibiliWidget(props: WidgetArgs) {
       </Typography>
       <Box className={clsx(classes.actionButtons)}>
         <Tooltip title={t("general/Delete")}>
-          <IconButton onClick={() => props.removeSelf()}>
+          <IconButton
+            aria-label={t("general/Delete")}
+            onClick={() => props.removeSelf()}
+          >
             <TrashCan></TrashCan>
           </IconButton>
         </Tooltip>
