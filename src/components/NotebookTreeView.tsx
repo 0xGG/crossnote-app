@@ -1,11 +1,7 @@
-import { Box, Chip, IconButton, Tooltip, Typography } from "@material-ui/core";
-import {
-  createStyles,
-  darken,
-  makeStyles,
-  Theme,
-} from "@material-ui/core/styles";
-import { TreeItem, TreeView } from "@material-ui/lab";
+import { Box, Chip, IconButton, Tooltip, Typography } from "@mui/material";
+import { Theme, darken } from "@mui/material/styles";
+import { SimpleTreeView, TreeItem } from "@mui/x-tree-view";
+import { makeStyles } from "tss-react/mui";
 import clsx from "clsx";
 import { ChevronDown, ChevronRight } from "mdi-material-ui";
 import Noty from "noty";
@@ -26,68 +22,98 @@ import ConfigureNotebookDialog from "./ConfigureNotebookDialog";
 import { Emoji } from "./EmojiWrapper";
 import PushNotebookDialog from "./PushNotebookDialog";
 
-const useStyles = makeStyles((theme: Theme) =>
-  createStyles({
-    treeItemRoot: {
-      "paddingLeft": "4px",
-      // color: theme.palette.text.secondary,
-      "&:focus > $treeItemContent": {
-        color: theme.palette.text.primary,
-        backgroundColor: darken(theme.palette.background.paper, 0.05),
-      },
-      "&:focus > $treeItemLabelIcon": {
-        color: theme.palette.text.primary,
-      },
+const useStyles = makeStyles()((theme: Theme) => ({
+  treeItemRoot: {
+    "paddingLeft": "4px",
+    // color: theme.palette.text.secondary,
+    "&:focus > $treeItemContent": {
+      color: theme.palette.text.primary,
+      backgroundColor: darken(theme.palette.background.paper, 0.05),
     },
-    treeItemContent: {
-      "cursor": "default",
-      "color": theme.palette.text.primary,
-      // paddingLeft: theme.spacing(1),
-      // paddingRight: theme.spacing(1),
-      "userSelect": "none",
-      "fontWeight": theme.typography.fontWeightMedium as any,
-      "$treeItemExpanded > &": {
-        fontWeight: theme.typography.fontWeightRegular as any,
-      },
+    "&:focus > $treeItemLabelIcon": {
+      color: theme.palette.text.primary,
     },
-    treeItemGroup: {
-      "marginLeft": 0,
-      "& $treeItemContent": {
-        // paddingLeft: theme.spacing(2)
-      },
+  },
+  treeItemContent: {
+    "cursor": "default",
+    "color": theme.palette.text.primary,
+    // paddingLeft: theme.spacing(1),
+    // paddingRight: theme.spacing(1),
+    "userSelect": "none",
+    "fontWeight": theme.typography.fontWeightMedium as any,
+    "$treeItemExpanded > &": {
+      fontWeight: theme.typography.fontWeightRegular as any,
     },
-    treeItemExpanded: {},
-    treeItemLabel: {
-      fontWeight: "inherit",
-      color: "inherit",
-      backgroundColor: "transparent !important",
+  },
+  treeItemGroup: {
+    "marginLeft": 0,
+    "& $treeItemContent": {
+      // paddingLeft: theme.spacing(2)
     },
-    treeItemLabelRoot: {
-      display: "flex",
-      alignItems: "center",
-      padding: theme.spacing(1, 0),
-    },
-    treeItemLabelIcon: {},
-    treeItemLabelText: {
-      paddingLeft: "12px",
-      flexGrow: 1,
-    },
-    disabled: {
-      color: theme.palette.text.disabled,
-    },
-    emojiIcon: {
-      top: "2px",
-      position: "relative",
-    },
-  }),
-);
+  },
+  treeItemExpanded: {},
+  treeItemLabel: {
+    fontWeight: "inherit",
+    color: "inherit",
+    backgroundColor: "transparent !important",
+  },
+  treeItemLabelRoot: {
+    display: "flex",
+    alignItems: "center",
+    padding: theme.spacing(1, 0),
+  },
+  treeItemLabelIcon: {},
+  treeItemLabelText: {
+    paddingLeft: "12px",
+    flexGrow: 1,
+  },
+  disabled: {
+    color: theme.palette.text.disabled,
+  },
+  emojiIcon: {
+    top: "2px",
+    position: "relative",
+  },
+}));
 
 interface Props {
   notebook: Notebook;
   onCloseDrawer: () => void;
 }
+function ExpandIcon() {
+  const { t } = useTranslation();
+  return (
+    <IconButton
+      aria-label={t("general/expand")}
+      disableFocusRipple={true}
+      disableRipple={true}
+      size={"medium"}
+    >
+      <ChevronRight></ChevronRight>
+    </IconButton>
+  );
+}
+
+function CollapseIcon() {
+  const { t } = useTranslation();
+  return (
+    <IconButton
+      aria-label={t("general/collapse")}
+      disableFocusRipple={true}
+      disableRipple={true}
+      size={"medium"}
+    >
+      <ChevronDown></ChevronDown>
+    </IconButton>
+  );
+}
+
+function EndIcon() {
+  return <div style={{ width: 24 }} />;
+}
+
 export default function NotebookTreeView(props: Props) {
-  const classes = useStyles();
+  const { classes } = useStyles();
   const [expanded, setExpanded] = useState<string[]>([]);
   const [notebookConfigurationDialogOpen, setNotebookConfigurationDialogOpen] =
     useState<boolean>(false);
@@ -109,7 +135,10 @@ export default function NotebookTreeView(props: Props) {
   }, []);
 
   const handleChange = useCallback(
-    (event: React.ChangeEvent<{}>, nodes: string[]) => {
+    (event: React.SyntheticEvent | null, nodes: string[]) => {
+      if (!event) {
+        return;
+      }
       event.stopPropagation();
       const element = event.target as HTMLElement;
       if (
@@ -219,39 +248,22 @@ export default function NotebookTreeView(props: Props) {
 
   return (
     <React.Fragment>
-      <TreeView
-        defaultExpandIcon={
-          <IconButton
-            aria-label={t("general/expand")}
-            disableFocusRipple={true}
-            disableRipple={true}
-            size={"medium"}
-          >
-            <ChevronRight></ChevronRight>
-          </IconButton>
-        }
-        defaultCollapseIcon={
-          <IconButton
-            aria-label={t("general/collapse")}
-            disableFocusRipple={true}
-            disableRipple={true}
-            size={"medium"}
-          >
-            <ChevronDown></ChevronDown>
-          </IconButton>
-        }
-        defaultEndIcon={<div style={{ width: 24 }} />}
-        expanded={expanded}
-        onNodeToggle={handleChange}
+      <SimpleTreeView
+        slots={{
+          expandIcon: ExpandIcon,
+          collapseIcon: CollapseIcon,
+          endIcon: EndIcon,
+        }}
+        expandedItems={expanded}
+        onExpandedItemsChange={handleChange}
         style={{ width: "100%" }}
       >
         <TreeItem
-          nodeId={"notes"}
+          itemId={"notes"}
           classes={{
             root: classes.treeItemRoot,
             content: classes.treeItemContent,
-            expanded: classes.treeItemExpanded,
-            group: classes.treeItemGroup,
+            groupTransition: classes.treeItemGroup,
             label: classes.treeItemLabel,
           }}
           label={
@@ -299,12 +311,11 @@ export default function NotebookTreeView(props: Props) {
           }
         >
           <TreeItem
-            nodeId={"today-notes"}
+            itemId={"today-notes"}
             classes={{
               root: classes.treeItemRoot,
               content: classes.treeItemContent,
-              expanded: classes.treeItemExpanded,
-              group: classes.treeItemGroup,
+              groupTransition: classes.treeItemGroup,
               label: classes.treeItemLabel,
             }}
             label={
@@ -329,12 +340,11 @@ export default function NotebookTreeView(props: Props) {
             }
           ></TreeItem>
           <TreeItem
-            nodeId={"graph-view"}
+            itemId={"graph-view"}
             classes={{
               root: classes.treeItemRoot,
               content: classes.treeItemContent,
-              expanded: classes.treeItemExpanded,
-              group: classes.treeItemGroup,
+              groupTransition: classes.treeItemGroup,
               label: classes.treeItemLabel,
             }}
             label={
@@ -370,12 +380,11 @@ export default function NotebookTreeView(props: Props) {
             }
           ></TreeItem>
           <TreeItem
-            nodeId={"all-notes"}
+            itemId={"all-notes"}
             classes={{
               root: classes.treeItemRoot,
               content: classes.treeItemContent,
-              expanded: classes.treeItemExpanded,
-              group: classes.treeItemGroup,
+              groupTransition: classes.treeItemGroup,
               label: classes.treeItemLabel,
             }}
             label={
@@ -417,12 +426,11 @@ export default function NotebookTreeView(props: Props) {
             return (
               <TreeItem
                 key={`${note.notebookPath}/${note.filePath}`}
-                nodeId={`${note.notebookPath}/${note.filePath}`}
+                itemId={`${note.notebookPath}/${note.filePath}`}
                 classes={{
                   root: classes.treeItemRoot,
                   content: classes.treeItemContent,
-                  expanded: classes.treeItemExpanded,
-                  group: classes.treeItemGroup,
+                  groupTransition: classes.treeItemGroup,
                   label: classes.treeItemLabel,
                 }}
                 label={
@@ -468,12 +476,11 @@ export default function NotebookTreeView(props: Props) {
             );
           })}
           <TreeItem
-            nodeId={"settings"}
+            itemId={"settings"}
             classes={{
               root: classes.treeItemRoot,
               content: classes.treeItemContent,
-              expanded: classes.treeItemExpanded,
-              group: classes.treeItemGroup,
+              groupTransition: classes.treeItemGroup,
               label: classes.treeItemLabel,
             }}
             label={
@@ -496,12 +503,11 @@ export default function NotebookTreeView(props: Props) {
           ></TreeItem>
           {props.notebook.gitURL && (
             <TreeItem
-              nodeId={"upload"}
+              itemId={"upload"}
               classes={{
                 root: classes.treeItemRoot,
                 content: classes.treeItemContent,
-                expanded: classes.treeItemExpanded,
-                group: classes.treeItemGroup,
+                groupTransition: classes.treeItemGroup,
                 label: classes.treeItemLabel,
               }}
               label={
@@ -527,12 +533,11 @@ export default function NotebookTreeView(props: Props) {
           )}
           {props.notebook.isLocal && (
             <TreeItem
-              nodeId={"reload"}
+              itemId={"reload"}
               classes={{
                 root: classes.treeItemRoot,
                 content: classes.treeItemContent,
-                expanded: classes.treeItemExpanded,
-                group: classes.treeItemGroup,
+                groupTransition: classes.treeItemGroup,
                 label: classes.treeItemLabel,
               }}
               label={
@@ -563,12 +568,11 @@ export default function NotebookTreeView(props: Props) {
           )}
           {props.notebook.gitURL && (
             <TreeItem
-              nodeId={"download"}
+              itemId={"download"}
               classes={{
                 root: classes.treeItemRoot,
                 content: classes.treeItemContent,
-                expanded: classes.treeItemExpanded,
-                group: classes.treeItemGroup,
+                groupTransition: classes.treeItemGroup,
                 label: classes.treeItemLabel,
               }}
               label={
@@ -638,12 +642,11 @@ export default function NotebookTreeView(props: Props) {
             ></TreeItem>
           )}
           {/*<TreeItem
-          nodeId={"conflicted-notes"}
+          itemId={"conflicted-notes"}
           classes={{
             root: classes.treeItemRoot,
             content: classes.treeItemContent,
-            expanded: classes.treeItemExpanded,
-            group: classes.treeItemGroup,
+            groupTransition: classes.treeItemGroup,
             label: classes.treeItemLabel,
           }}
           label={
@@ -673,7 +676,7 @@ export default function NotebookTreeView(props: Props) {
         ></TreeItem>
         */}
         </TreeItem>
-      </TreeView>
+      </SimpleTreeView>
       <ConfigureNotebookDialog
         open={notebookConfigurationDialogOpen}
         onClose={() => setNotebookConfigurationDialogOpen(false)}

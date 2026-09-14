@@ -5,7 +5,7 @@ import {
   DialogContent,
   DialogContentText,
   DialogTitle,
-} from "@material-ui/core";
+} from "@mui/material";
 import { TabNode } from "flexlayout-react";
 import React, { useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";

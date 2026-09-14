@@ -9,8 +9,9 @@ import {
   Switch,
   TextField,
   Typography,
-} from "@material-ui/core";
-import { createStyles, makeStyles, Theme } from "@material-ui/core/styles";
+} from "@mui/material";
+import { Theme } from "@mui/material/styles";
+import { makeStyles } from "tss-react/mui";
 import clsx from "clsx";
 import { BookEdit, Keyboard, ThemeLightDark, Translate } from "mdi-material-ui";
 import React, { useState } from "react";
@@ -22,54 +23,52 @@ import { KeyMap } from "../lib/keymap";
 import { themeManager } from "../themes/manager";
 const GitCommit = __GIT_COMMIT__;
 
-const useStyles = makeStyles((theme: Theme) =>
-  createStyles({
-    settingsPanel: {
+const useStyles = makeStyles()((theme: Theme) => ({
+  settingsPanel: {
+    height: "100%",
+    overflow: "auto",
+    backgroundColor: theme.palette.background.default,
+  },
+  settingsCard: {
+    padding: theme.spacing(2),
+    width: "600px",
+    maxWidth: "100%",
+    position: "relative",
+    margin: `${theme.spacing(4)}px auto`,
+    height: "fit-content",
+    [theme.breakpoints.down("sm")]: {
+      top: "0",
+      margin: "0 auto",
       height: "100%",
       overflow: "auto",
-      backgroundColor: theme.palette.background.default,
     },
-    settingsCard: {
-      padding: theme.spacing(2),
-      width: "600px",
-      maxWidth: "100%",
-      position: "relative",
-      margin: `${theme.spacing(4)}px auto`,
-      height: "fit-content",
-      [theme.breakpoints.down("sm")]: {
-        top: "0",
-        margin: "0 auto",
-        height: "100%",
-        overflow: "auto",
-      },
-    },
-    section: {
-      marginTop: theme.spacing(4),
-    },
-    swatch: {
-      padding: "4px",
-      backgroundColor: "#fff",
-      borderRadius: "1px",
-      boxShadow: "0 0 0 1px rgba(0,0,0,0.1)",
-      display: "inline-block",
-      cursor: "pointer",
-    },
-    color: {
-      width: "36px",
-      height: "18px",
-      borderRadius: "2px",
-    },
-    editorText: {
-      marginLeft: theme.spacing(4),
-    },
-    editorCursor: {
-      borderLeftStyle: "solid",
-      borderLeftWidth: "2px",
-      padding: "0",
-      position: "relative",
-    },
-  }),
-);
+  },
+  section: {
+    marginTop: theme.spacing(4),
+  },
+  swatch: {
+    padding: "4px",
+    backgroundColor: "#fff",
+    borderRadius: "1px",
+    boxShadow: "0 0 0 1px rgba(0,0,0,0.1)",
+    display: "inline-block",
+    cursor: "pointer",
+  },
+  color: {
+    width: "36px",
+    height: "18px",
+    borderRadius: "2px",
+  },
+  editorText: {
+    marginLeft: theme.spacing(4),
+  },
+  editorCursor: {
+    borderLeftStyle: "solid",
+    borderLeftWidth: "2px",
+    padding: "0",
+    position: "relative",
+  },
+}));
 
 interface RGBA {
   r: number;
@@ -110,7 +109,7 @@ function getRGBA(inputStr: string = ""): RGBA {
 
 interface Props {}
 export function Settings(props: Props) {
-  const classes = useStyles();
+  const { classes } = useStyles();
   const { t } = useTranslation();
   const [colorPickerAnchorElement, setColorPickerAnchorElement] =
     useState<HTMLElement>(null);
@@ -159,8 +158,10 @@ export function Settings(props: Props) {
             placeholder={t("account/Anonymous")}
             fullWidth
             margin="normal"
-            InputLabelProps={{
-              shrink: true,
+            slotProps={{
+              inputLabel: {
+                shrink: true,
+              },
             }}
             value={settingsContainer.authorName}
             onChange={(event) =>
@@ -178,8 +179,10 @@ export function Settings(props: Props) {
             placeholder={"anonymous@example.com"}
             fullWidth
             margin="normal"
-            InputLabelProps={{
-              shrink: true,
+            slotProps={{
+              inputLabel: {
+                shrink: true,
+              },
             }}
             value={settingsContainer.authorEmail}
             onChange={(event) =>

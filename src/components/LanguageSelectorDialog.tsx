@@ -3,10 +3,10 @@ import {
   DialogContent,
   DialogTitle,
   List,
-  ListItem,
+  ListItemButton,
   ListItemText,
   Typography,
-} from "@material-ui/core";
+} from "@mui/material";
 import useInterval from "../utilities/useInterval";
 import { ChevronDown, Translate } from "mdi-material-ui";
 import React, { useCallback, useState } from "react";
@@ -76,22 +76,22 @@ export default function LanguageSelectorDialog(props: Props) {
           <ChevronDown></ChevronDown>
         </Typography>
         <List>
-          <ListItem button onClick={() => chooseLanguage("en-US")}>
+          <ListItemButton onClick={() => chooseLanguage("en-US")}>
             <ListItemText style={{ textAlign: "center" }}>English</ListItemText>
-          </ListItem>
-          <ListItem button onClick={() => chooseLanguage("zh-CN")}>
+          </ListItemButton>
+          <ListItemButton onClick={() => chooseLanguage("zh-CN")}>
             <ListItemText style={{ textAlign: "center" }}>
               简体中文
             </ListItemText>
-          </ListItem>
-          <ListItem button onClick={() => chooseLanguage("zh-TW")}>
+          </ListItemButton>
+          <ListItemButton onClick={() => chooseLanguage("zh-TW")}>
             <ListItemText style={{ textAlign: "center" }}>
               繁体中文
             </ListItemText>
-          </ListItem>
-          <ListItem button onClick={() => chooseLanguage("ja-JP")}>
+          </ListItemButton>
+          <ListItemButton onClick={() => chooseLanguage("ja-JP")}>
             <ListItemText style={{ textAlign: "center" }}>日本語</ListItemText>
-          </ListItem>
+          </ListItemButton>
         </List>
       </DialogContent>
     </Dialog>

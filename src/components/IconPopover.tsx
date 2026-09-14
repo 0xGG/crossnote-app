@@ -1,22 +1,21 @@
-import { Popover } from "@material-ui/core";
-import { createStyles, makeStyles, Theme } from "@material-ui/core/styles";
+import { Popover } from "@mui/material";
+import { Theme } from "@mui/material/styles";
+import { makeStyles } from "tss-react/mui";
 import { TabNode } from "flexlayout-react";
 import { CrossnoteContainer } from "../containers/crossnote";
 import { Note } from "../lib/note";
 import { EmojiPicker } from "./EmojiWrapper";
 
-const useStyles = makeStyles((theme: Theme) =>
-  createStyles({
-    secondaryColor: {
-      color: theme.palette.secondary.main,
-    },
-    row: {
-      display: "flex",
-      flexDirection: "row",
-      alignItems: "center",
-    },
-  }),
-);
+const useStyles = makeStyles()((theme: Theme) => ({
+  secondaryColor: {
+    color: theme.palette.secondary.main,
+  },
+  row: {
+    display: "flex",
+    flexDirection: "row",
+    alignItems: "center",
+  },
+}));
 
 interface Props {
   tabNode: TabNode;
@@ -26,7 +25,7 @@ interface Props {
 }
 
 export default function IconPopover(props: Props) {
-  const classes = useStyles();
+  const { classes } = useStyles();
   const crossnoteContainer = CrossnoteContainer.useContainer();
   const note = props.note;
 

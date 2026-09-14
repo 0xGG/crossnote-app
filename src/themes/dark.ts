@@ -1,11 +1,11 @@
-import { lighten } from "@material-ui/core";
+import { lighten } from "@mui/material/styles";
 import { CrossnoteTheme } from "./theme";
 
 export const DarkTheme: CrossnoteTheme = new CrossnoteTheme({
   name: "dark",
   muiThemeOptions: {
     palette: {
-      type: "dark",
+      mode: "dark",
       common: { black: "#000", white: "#fff" },
       background: {
         paper: lighten("#1e1e1e", 0.05),

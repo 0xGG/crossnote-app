@@ -6,8 +6,9 @@ import {
   DialogContent,
   DialogTitle,
   TextField,
-} from "@material-ui/core";
-import { createStyles, makeStyles, Theme } from "@material-ui/core/styles";
+} from "@mui/material";
+import { Theme } from "@mui/material/styles";
+import { makeStyles } from "tss-react/mui";
 import clsx from "clsx";
 import { Editor as CodeMirrorEditor, TextMarker } from "codemirror";
 import React, { useCallback, useEffect, useState } from "react";
@@ -24,20 +25,18 @@ interface Props {
   note: Note;
 }
 
-const useStyles = makeStyles((theme: Theme) =>
-  createStyles({
-    imageWrapper: {
-      textAlign: "center",
-    },
-    imagePreview: {
-      maxWidth: "100%",
-      maxHeight: "400px",
-    },
-  }),
-);
+const useStyles = makeStyles()((theme: Theme) => ({
+  imageWrapper: {
+    textAlign: "center",
+  },
+  imagePreview: {
+    maxWidth: "100%",
+    maxHeight: "400px",
+  },
+}));
 
 export default function EditImageDialog(props: Props) {
-  const classes = useStyles();
+  const { classes } = useStyles();
   const { t } = useTranslation();
   const editor = props.editor;
   const marker = props.marker;

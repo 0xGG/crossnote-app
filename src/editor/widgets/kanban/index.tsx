@@ -13,13 +13,9 @@ import {
   IconButton,
   TextField,
   Typography,
-} from "@material-ui/core";
-import {
-  createStyles,
-  makeStyles,
-  Theme,
-  ThemeProvider,
-} from "@material-ui/core/styles";
+} from "@mui/material";
+import { Theme, ThemeProvider } from "@mui/material/styles";
+import { makeStyles } from "tss-react/mui";
 import clsx from "clsx";
 import { Editor as CodeMirrorEditor, TextMarker } from "codemirror";
 import {
@@ -43,43 +39,41 @@ import { openURL, postprocessPreview } from "../../../utilities/preview";
 
 import * as EchoMD from "@0xgg/echomd/core";
 
-const useStyles = makeStyles((theme: Theme) =>
-  createStyles({
-    columnHeader: {
-      width: "256px",
-      maxWidth: "100%",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "space-between",
-      color: "#000", // BUG: TODO: Wait for react-kanban styling support
+const useStyles = makeStyles()((theme: Theme) => ({
+  columnHeader: {
+    width: "256px",
+    maxWidth: "100%",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    color: "#000", // BUG: TODO: Wait for react-kanban styling support
+  },
+  kanbanCard: {
+    width: "256px",
+    maxWidth: "100%",
+    position: "relative",
+    backgroundColor: theme.palette.background.paper,
+    color: theme.palette.text.primary,
+    [theme.breakpoints.down("sm")]: {
+      marginTop: "4px",
+      marginBottom: "4px",
     },
-    kanbanCard: {
-      width: "256px",
-      maxWidth: "100%",
-      position: "relative",
-      backgroundColor: theme.palette.background.paper,
-      color: theme.palette.text.primary,
-      [theme.breakpoints.down("sm")]: {
-        marginTop: "4px",
-        marginBottom: "4px",
-      },
+  },
+  editorWrapper: {
+    // height: "160px",
+    // border: "2px solid #96c3e6",
+    "& .CodeMirror-gutters": {
+      display: "none",
     },
-    editorWrapper: {
-      // height: "160px",
-      // border: "2px solid #96c3e6",
-      "& .CodeMirror-gutters": {
-        display: "none",
-      },
-    },
-    textarea: {
-      width: "100%",
-      height: "100%",
-    },
-    preview: {
-      padding: theme.spacing(2),
-    },
-  }),
-);
+  },
+  textarea: {
+    width: "100%",
+    height: "100%",
+  },
+  preview: {
+    padding: theme.spacing(2),
+  },
+}));
 
 interface KanbanCard {
   id: number;
@@ -106,7 +100,7 @@ interface KanbanColumnHeaderProps {
 }
 
 function KanbanColumnHeaderDisplay(props: KanbanColumnHeaderProps) {
-  const classes = useStyles();
+  const { classes } = useStyles();
   const { t } = useTranslation();
   const column = props.column;
   const board = props.board;
@@ -195,7 +189,7 @@ interface KanbanCardProps {
   isPreview: boolean;
 }
 function KanbanCardDisplay(props: KanbanCardProps) {
-  const classes = useStyles();
+  const { classes } = useStyles();
   const board = props.board;
   const card = props.card;
   const isPreview = props.isPreview;
@@ -400,7 +394,7 @@ function KanbanCardDisplay(props: KanbanCardProps) {
 }
 
 function KanbanWidget(props: WidgetArgs) {
-  const classes = useStyles();
+  const { classes } = useStyles();
   const { t } = useTranslation();
   const [board, setBoard] = useState<KanbanBoard>(
     props.attributes["board"] || {

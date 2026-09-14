@@ -16,14 +16,9 @@ import {
   Switch,
   Tooltip,
   Typography,
-} from "@material-ui/core";
-import {
-  createStyles,
-  darken,
-  makeStyles,
-  Theme,
-  ThemeProvider,
-} from "@material-ui/core/styles";
+} from "@mui/material";
+import { Theme, ThemeProvider, darken } from "@mui/material/styles";
+import { makeStyles } from "tss-react/mui";
 import clsx from "clsx";
 import { TrashCan } from "mdi-material-ui";
 import React, { useEffect, useState } from "react";
@@ -32,43 +27,41 @@ import { useTranslation } from "react-i18next";
 import { createWorker } from "tesseract.js";
 import { globalContainers } from "../../../containers/global";
 
-const useStyles = makeStyles((theme: Theme) =>
-  createStyles({
-    card: {
-      padding: theme.spacing(2),
-      position: "relative",
+const useStyles = makeStyles()((theme: Theme) => ({
+  card: {
+    padding: theme.spacing(2),
+    position: "relative",
+  },
+  actionButtons: {
+    position: "absolute",
+    top: "0",
+    right: "0",
+  },
+  section: {
+    marginTop: theme.spacing(2),
+  },
+  dropArea: {
+    "textAlign": "center",
+    "padding": "24px",
+    "border": "4px dotted #c7c7c7",
+    "backgroundColor": darken(theme.palette.background.paper, 0.01),
+    "cursor": "pointer",
+    "&:hover": {
+      backgroundColor: darken(theme.palette.background.paper, 0.2),
     },
-    actionButtons: {
-      position: "absolute",
-      top: "0",
-      right: "0",
-    },
-    section: {
-      marginTop: theme.spacing(2),
-    },
-    dropArea: {
-      "textAlign": "center",
-      "padding": "24px",
-      "border": "4px dotted #c7c7c7",
-      "backgroundColor": darken(theme.palette.background.paper, 0.01),
-      "cursor": "pointer",
-      "&:hover": {
-        backgroundColor: darken(theme.palette.background.paper, 0.2),
-      },
-    },
-    canvasWrapper: {
-      marginTop: theme.spacing(2),
-      // height: 0,
-      // paddingTop: "56.25%" // 16:9
-    },
-    canvas: {
-      maxWidth: "100%",
-    },
-    disabled: {
-      cursor: "not-allowed",
-    },
-  }),
-);
+  },
+  canvasWrapper: {
+    marginTop: theme.spacing(2),
+    // height: 0,
+    // paddingTop: "56.25%" // 16:9
+  },
+  canvas: {
+    maxWidth: "100%",
+  },
+  disabled: {
+    cursor: "not-allowed",
+  },
+}));
 
 interface OCRProgress {
   status: string;
@@ -87,7 +80,7 @@ function getInitialLanguages() {
 }
 
 function OCRWidget(props: WidgetArgs) {
-  const classes = useStyles();
+  const { classes } = useStyles();
   const { t } = useTranslation();
   const [canvas, setCanvas] = useState<HTMLCanvasElement>(null);
   // https://github.com/tesseract-ocr/tesseract/wiki/Data-Files#data-files-for-version-400-november-29-2016

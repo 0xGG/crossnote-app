@@ -1,11 +1,6 @@
-import { Box, Chip, IconButton, Tooltip, Typography } from "@material-ui/core";
-import {
-  createStyles,
-  darken,
-  makeStyles,
-  Theme,
-  useTheme,
-} from "@material-ui/core/styles";
+import { Box, Chip, IconButton, Tooltip, Typography } from "@mui/material";
+import { Theme, darken, useTheme } from "@mui/material/styles";
+import { makeStyles } from "tss-react/mui";
 import clsx from "clsx";
 import { formatRelative } from "date-fns";
 import { formatDistanceStrict } from "date-fns/esm";
@@ -30,108 +25,106 @@ import NotePopover from "./NotePopover";
 
 export const NoteCardMargin = 4;
 
-const useStyles = makeStyles((theme: Theme) =>
-  createStyles({
-    noteCard: {
-      maxWidth: "100%",
-      display: "flex",
-      flexDirection: "row",
-      alignItems: "flex-start",
-      padding: theme.spacing(2, 0.5, 0),
-      textAlign: "left",
-      // backgroundColor: theme.palette.background.paper,
-      margin: `${NoteCardMargin}px auto`,
-      [theme.breakpoints.down("sm")]: {
-        marginLeft: 0,
-        marginRight: 0,
-      },
+const useStyles = makeStyles()((theme: Theme) => ({
+  noteCard: {
+    maxWidth: "100%",
+    display: "flex",
+    flexDirection: "row",
+    alignItems: "flex-start",
+    padding: theme.spacing(2, 0.5, 0),
+    textAlign: "left",
+    // backgroundColor: theme.palette.background.paper,
+    margin: `${NoteCardMargin}px auto`,
+    [theme.breakpoints.down("sm")]: {
+      marginLeft: 0,
+      marginRight: 0,
     },
-    selected: {
-      borderLeft: `4px solid ${theme.palette.primary.main}`,
+  },
+  selected: {
+    borderLeft: `4px solid ${theme.palette.primary.main}`,
+  },
+  unselected: {
+    borderLeft: `4px solid rgba(0, 0, 0, 0)`,
+  },
+  leftPanel: {
+    width: "48px",
+    paddingLeft: theme.spacing(0.5),
+  },
+  duration: {
+    color: theme.palette.text.secondary,
+  },
+  rightPanel: {
+    width: "calc(100% - 48px)",
+    borderBottom: `1px solid ${theme.palette.divider}`,
+  },
+  header: {
+    "color": theme.palette.text.primary,
+    "marginBottom": theme.spacing(1),
+    "wordBreak": "break-all",
+    "&:hover": {
+      backgroundColor: darken(theme.palette.background.paper, 0.08),
+      cursor: "pointer",
     },
-    unselected: {
-      borderLeft: `4px solid rgba(0, 0, 0, 0)`,
+    "flex": 1,
+    "display": "flex",
+    "alignItems": "center",
+  },
+  summary: {
+    "color": theme.palette.text.secondary,
+    "marginBottom": theme.spacing(1),
+    "paddingRight": theme.spacing(2),
+    "display": "-webkit-box",
+    "lineHeight": "1.3rem !important",
+    "textOverflow": "ellipsis !important",
+    "overflow": "hidden !important",
+    "maxWidth": "100%",
+    "maxHeight": "2.6rem", // lineHeight x -website-line-clamp
+    "-webkit-line-clamp": 2,
+    "-webkit-box-orient": "vertical",
+    "wordBreak": "break-all",
+    "&:hover": {
+      backgroundColor: darken(theme.palette.background.paper, 0.08),
+      cursor: "pointer",
     },
-    leftPanel: {
-      width: "48px",
-      paddingLeft: theme.spacing(0.5),
+  },
+  filePath: {
+    wordBreak: "break-all",
+    color: theme.palette.text.primary,
+  },
+  images: {
+    display: "flex",
+    width: "100%",
+    overflow: "hidden",
+    position: "relative",
+    marginBottom: theme.spacing(1),
+  },
+  imagesWrapper: {
+    display: "flex",
+    alignItems: "center",
+    flexDirection: "row",
+  },
+  image: {
+    width: "128px",
+    height: "80px",
+    marginRight: theme.spacing(1),
+    position: "relative",
+    backgroundSize: "cover",
+    backgroundPosition: "center",
+    display: "block",
+    borderRadius: "6px",
+  },
+  pin: {
+    color: theme.palette.secondary.main,
+    marginTop: theme.spacing(1),
+  },
+  markdownPreview: {
+    "width": "calc(100% - 32px)",
+    "&:hover": {
+      backgroundColor: darken(theme.palette.background.paper, 0.08),
+      cursor: "pointer",
     },
-    duration: {
-      color: theme.palette.text.secondary,
-    },
-    rightPanel: {
-      width: "calc(100% - 48px)",
-      borderBottom: `1px solid ${theme.palette.divider}`,
-    },
-    header: {
-      "color": theme.palette.text.primary,
-      "marginBottom": theme.spacing(1),
-      "wordBreak": "break-all",
-      "&:hover": {
-        backgroundColor: darken(theme.palette.background.paper, 0.08),
-        cursor: "pointer",
-      },
-      "flex": 1,
-      "display": "flex",
-      "alignItems": "center",
-    },
-    summary: {
-      "color": theme.palette.text.secondary,
-      "marginBottom": theme.spacing(1),
-      "paddingRight": theme.spacing(2),
-      "display": "-webkit-box",
-      "lineHeight": "1.3rem !important",
-      "textOverflow": "ellipsis !important",
-      "overflow": "hidden !important",
-      "maxWidth": "100%",
-      "maxHeight": "2.6rem", // lineHeight x -website-line-clamp
-      "-webkit-line-clamp": 2,
-      "-webkit-box-orient": "vertical",
-      "wordBreak": "break-all",
-      "&:hover": {
-        backgroundColor: darken(theme.palette.background.paper, 0.08),
-        cursor: "pointer",
-      },
-    },
-    filePath: {
-      wordBreak: "break-all",
-      color: theme.palette.text.primary,
-    },
-    images: {
-      display: "flex",
-      width: "100%",
-      overflow: "hidden",
-      position: "relative",
-      marginBottom: theme.spacing(1),
-    },
-    imagesWrapper: {
-      display: "flex",
-      alignItems: "center",
-      flexDirection: "row",
-    },
-    image: {
-      width: "128px",
-      height: "80px",
-      marginRight: theme.spacing(1),
-      position: "relative",
-      backgroundSize: "cover",
-      backgroundPosition: "center",
-      display: "block",
-      borderRadius: "6px",
-    },
-    pin: {
-      color: theme.palette.secondary.main,
-      marginTop: theme.spacing(1),
-    },
-    markdownPreview: {
-      "width": "calc(100% - 32px)",
-      "&:hover": {
-        backgroundColor: darken(theme.palette.background.paper, 0.08),
-        cursor: "pointer",
-      },
-    },
-  }),
-);
+  },
+}));
 
 interface Props {
   tabNode: TabNode;
@@ -140,7 +133,7 @@ interface Props {
 }
 
 export default function NoteCard(props: Props) {
-  const classes = useStyles();
+  const { classes } = useStyles();
   const theme = useTheme();
   const crossnoteContainer = CrossnoteContainer.useContainer();
   const settingsContainer = SettingsContainer.useContainer();

@@ -4,7 +4,7 @@
 // DESCRIPTION: This widget displays time related information
 import { WidgetArgs, WidgetCreator } from "@0xgg/echomd/widget";
 import { ErrorWidget } from "@0xgg/echomd/widget/error/error";
-import { ThemeProvider, useTheme } from "@material-ui/core";
+import { ThemeProvider, useTheme } from "@mui/material/styles";
 import React from "react";
 import { renderWidget } from "../../../utilities/widgetRender";
 import { globalContainers } from "../../../containers/global";

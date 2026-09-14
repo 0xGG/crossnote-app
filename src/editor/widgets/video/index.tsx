@@ -8,13 +8,9 @@ import {
   Switch,
   Tooltip,
   Typography,
-} from "@material-ui/core";
-import {
-  createStyles,
-  makeStyles,
-  Theme,
-  ThemeProvider,
-} from "@material-ui/core/styles";
+} from "@mui/material";
+import { Theme, ThemeProvider } from "@mui/material/styles";
+import { makeStyles } from "tss-react/mui";
 import clsx from "clsx";
 import { TrashCan } from "mdi-material-ui";
 import React, { useState } from "react";
@@ -22,40 +18,38 @@ import { renderWidget } from "../../../utilities/widgetRender";
 import { useTranslation } from "react-i18next";
 import { globalContainers } from "../../../containers/global";
 
-const useStyles = makeStyles((theme: Theme) =>
-  createStyles({
-    card: {
-      padding: theme.spacing(2),
-      position: "relative",
-    },
-    actionButtons: {
-      position: "absolute",
-      top: "0",
-      right: "0",
-    },
-    section: {
-      marginTop: theme.spacing(2),
-    },
-    videoWrapper: {
-      cursor: "default",
-      position: "relative",
-      width: "100%",
-      height: "0",
-      paddingTop: "56.25%",
-    },
-    video: {
-      position: "absolute",
-      left: "0",
-      top: "0",
-      width: "100%",
-      height: "100%",
-    },
-  }),
-);
+const useStyles = makeStyles()((theme: Theme) => ({
+  card: {
+    padding: theme.spacing(2),
+    position: "relative",
+  },
+  actionButtons: {
+    position: "absolute",
+    top: "0",
+    right: "0",
+  },
+  section: {
+    marginTop: theme.spacing(2),
+  },
+  videoWrapper: {
+    cursor: "default",
+    position: "relative",
+    width: "100%",
+    height: "0",
+    paddingTop: "56.25%",
+  },
+  video: {
+    position: "absolute",
+    left: "0",
+    top: "0",
+    width: "100%",
+    height: "100%",
+  },
+}));
 
 function VideoWidget(props: WidgetArgs) {
   const attributes = props.attributes;
-  const classes = useStyles();
+  const { classes } = useStyles();
   const { t } = useTranslation();
   const [source, setSource] = useState<string>(attributes["source"] || "");
   const [autoplay, setAutoplay] = useState<boolean>(

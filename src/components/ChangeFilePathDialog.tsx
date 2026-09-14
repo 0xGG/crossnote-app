@@ -5,7 +5,7 @@ import {
   DialogContent,
   DialogTitle,
   TextField,
-} from "@material-ui/core";
+} from "@mui/material";
 import { TabNode } from "flexlayout-react";
 import Noty from "noty";
 import React, { useCallback, useEffect, useState } from "react";

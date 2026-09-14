@@ -1,5 +1,5 @@
 import { ThemeName } from "@0xgg/echomd/theme";
-import { createMuiTheme, Theme, ThemeOptions } from "@material-ui/core";
+import { Theme, ThemeOptions, createTheme } from "@mui/material/styles";
 
 interface CrossnoteThemeProps {
   name: ThemeName;
@@ -11,6 +11,6 @@ export class CrossnoteTheme {
   public muiTheme: Theme;
   constructor({ name, muiThemeOptions }: CrossnoteThemeProps) {
     this.name = name;
-    this.muiTheme = createMuiTheme(muiThemeOptions);
+    this.muiTheme = createTheme(muiThemeOptions);
   }
 }

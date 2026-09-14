@@ -5,20 +5,15 @@ import {
   IconButton,
   InputBase,
   List,
-  ListItem,
+  ListItemButton,
   ListItemIcon,
   ListItemText,
   Popover,
   Tooltip,
   Typography,
-} from "@material-ui/core";
-import {
-  createStyles,
-  fade,
-  makeStyles,
-  Theme,
-  useTheme,
-} from "@material-ui/core/styles";
+} from "@mui/material";
+import { Theme, alpha, useTheme } from "@mui/material/styles";
+import { makeStyles } from "tss-react/mui";
 import useInterval from "../utilities/useInterval";
 import clsx from "clsx";
 import { TabNode } from "flexlayout-react";
@@ -54,86 +49,84 @@ import { OrderBy, OrderDirection } from "../lib/order";
 import { TabNodeConfig } from "../lib/tabNode";
 import Notes from "./Notes";
 
-const useStyles = makeStyles((theme: Theme) =>
-  createStyles({
-    notesPanel: {
-      backgroundColor: theme.palette.background.paper,
-      width: "800px",
-      maxWidth: "100%",
-      margin: "0 auto",
+const useStyles = makeStyles()((theme: Theme) => ({
+  notesPanel: {
+    backgroundColor: theme.palette.background.paper,
+    width: "800px",
+    maxWidth: "100%",
+    margin: "0 auto",
+  },
+  topPanel: {
+    padding: theme.spacing(0, 1),
+    borderRadius: 0,
+    backgroundColor: theme.palette.background.paper,
+    zIndex: 9,
+  },
+  fixedTopPanel: {
+    position: "sticky",
+    top: `0`,
+    width: "100%",
+  },
+  row: {
+    display: "flex",
+    alignItems: "center",
+  },
+  sectionName: {
+    marginLeft: theme.spacing(1),
+  },
+  search: {
+    "color": theme.palette.text.secondary,
+    "position": "relative",
+    "borderRadius": theme.shape.borderRadius,
+    "backgroundColor": alpha(theme.palette.common.white, 0.15),
+    "&:hover": {
+      backgroundColor: alpha(theme.palette.common.white, 0.25),
     },
-    topPanel: {
-      padding: theme.spacing(0, 1),
-      borderRadius: 0,
-      backgroundColor: theme.palette.background.paper,
-      zIndex: 9,
+    "marginRight": 0, // theme.spacing(2),
+    "marginLeft": 0,
+    "width": "100%",
+    [theme.breakpoints.up("sm")]: {
+      // marginLeft: theme.spacing(3),
+      // width: "auto"
     },
-    fixedTopPanel: {
-      position: "sticky",
-      top: `0`,
-      width: "100%",
+  },
+  searchIcon: {
+    width: theme.spacing(7),
+    height: "100%",
+    position: "absolute",
+    pointerEvents: "none",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    color: theme.palette.text.primary,
+  },
+  inputRoot: {
+    color: "inherit",
+    border: "1px solid #bbb",
+    borderRadius: "4px",
+    width: "100%",
+  },
+  inputInput: {
+    padding: theme.spacing(1, 1, 1, 7),
+    transition: theme.transitions.create("width"),
+    width: "100%",
+    [theme.breakpoints.up("md")]: {
+      // width: 200
     },
-    row: {
-      display: "flex",
-      alignItems: "center",
+  },
+  loading: {
+    position: "absolute",
+    top: "40%",
+    left: "50%",
+    transform: "translateX(-50%)",
+  },
+  sortSelected: {
+    "color": theme.palette.primary.main,
+    "& svg": {
+      color: theme.palette.primary.main,
     },
-    sectionName: {
-      marginLeft: theme.spacing(1),
-    },
-    search: {
-      "color": theme.palette.text.secondary,
-      "position": "relative",
-      "borderRadius": theme.shape.borderRadius,
-      "backgroundColor": fade(theme.palette.common.white, 0.15),
-      "&:hover": {
-        backgroundColor: fade(theme.palette.common.white, 0.25),
-      },
-      "marginRight": 0, // theme.spacing(2),
-      "marginLeft": 0,
-      "width": "100%",
-      [theme.breakpoints.up("sm")]: {
-        // marginLeft: theme.spacing(3),
-        // width: "auto"
-      },
-    },
-    searchIcon: {
-      width: theme.spacing(7),
-      height: "100%",
-      position: "absolute",
-      pointerEvents: "none",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      color: theme.palette.text.primary,
-    },
-    inputRoot: {
-      color: "inherit",
-      border: "1px solid #bbb",
-      borderRadius: "4px",
-      width: "100%",
-    },
-    inputInput: {
-      padding: theme.spacing(1, 1, 1, 7),
-      transition: theme.transitions.create("width"),
-      width: "100%",
-      [theme.breakpoints.up("md")]: {
-        // width: 200
-      },
-    },
-    loading: {
-      position: "absolute",
-      top: "40%",
-      left: "50%",
-      transform: "translateX(-50%)",
-    },
-    sortSelected: {
-      "color": theme.palette.primary.main,
-      "& svg": {
-        color: theme.palette.primary.main,
-      },
-    },
-  }),
-);
+  },
+}));
 
 interface Props {
   tabNode: TabNode;
@@ -144,7 +137,7 @@ interface Props {
 }
 
 export default function NotesPanel(props: Props) {
-  const classes = useStyles();
+  const { classes } = useStyles();
   const { t } = useTranslation();
   const [sortMenuAnchorEl, setSortMenuAnchorEl] = useState<HTMLElement>(null);
   const [isCreatingNote, setIsCreatingNote] = useState<boolean>(false);
@@ -471,36 +464,32 @@ export default function NotesPanel(props: Props) {
           onClose={() => setSortMenuAnchorEl(null)}
         >
           <List>
-            <ListItem
-              button
+            <ListItemButton
               onClick={() => setOrderBy(OrderBy.ModifiedAt)}
               className={clsx(
                 orderBy === OrderBy.ModifiedAt && classes.sortSelected,
               )}
             >
               <ListItemText primary={t("general/date-modified")}></ListItemText>
-            </ListItem>
-            <ListItem
-              button
+            </ListItemButton>
+            <ListItemButton
               onClick={() => setOrderBy(OrderBy.CreatedAt)}
               className={clsx(
                 orderBy === OrderBy.CreatedAt && classes.sortSelected,
               )}
             >
               <ListItemText primary={t("general/date-created")}></ListItemText>
-            </ListItem>
-            <ListItem
-              button
+            </ListItemButton>
+            <ListItemButton
               onClick={() => setOrderBy(OrderBy.Title)}
               className={clsx(
                 orderBy === OrderBy.Title && classes.sortSelected,
               )}
             >
               <ListItemText primary={t("general/title")}></ListItemText>
-            </ListItem>
+            </ListItemButton>
             <Divider></Divider>
-            <ListItem
-              button
+            <ListItemButton
               onClick={() => setOrderDirection(OrderDirection.DESC)}
               className={clsx(
                 orderDirection === OrderDirection.DESC && classes.sortSelected,
@@ -510,9 +499,8 @@ export default function NotesPanel(props: Props) {
               <ListItemIcon style={{ marginLeft: "8px" }}>
                 <SortDescending></SortDescending>
               </ListItemIcon>
-            </ListItem>
-            <ListItem
-              button
+            </ListItemButton>
+            <ListItemButton
               onClick={() => setOrderDirection(OrderDirection.ASC)}
               className={clsx(
                 orderDirection === OrderDirection.ASC && classes.sortSelected,
@@ -522,7 +510,7 @@ export default function NotesPanel(props: Props) {
               <ListItemIcon style={{ marginLeft: "8px" }}>
                 <SortAscending></SortAscending>
               </ListItemIcon>
-            </ListItem>
+            </ListItemButton>
           </List>
         </Popover>
 
