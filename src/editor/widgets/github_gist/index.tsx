@@ -6,13 +6,9 @@ import {
   TextField,
   Tooltip,
   Typography,
-} from "@material-ui/core";
-import {
-  createStyles,
-  makeStyles,
-  Theme,
-  ThemeProvider,
-} from "@material-ui/core/styles";
+} from "@mui/material";
+import { Theme, ThemeProvider } from "@mui/material/styles";
+import { makeStyles } from "tss-react/mui";
 import clsx from "clsx";
 import { TrashCan, TrashCanOutline } from "mdi-material-ui";
 import React, { useCallback, useState } from "react";
@@ -22,24 +18,22 @@ import { useTranslation } from "react-i18next";
 import Gist from "super-react-gist"; // <-- import the library
 import { globalContainers } from "../../../containers/global";
 
-const useStyles = makeStyles((theme: Theme) =>
-  createStyles({
-    card: {
-      padding: theme.spacing(2),
-      position: "relative",
-    },
-    actionButtonsGroup: {
-      position: "absolute",
-      top: "0",
-      right: "0",
-      display: "flex",
-      alignItems: "center",
-    },
-  }),
-);
+const useStyles = makeStyles()((theme: Theme) => ({
+  card: {
+    padding: theme.spacing(2),
+    position: "relative",
+  },
+  actionButtonsGroup: {
+    position: "absolute",
+    top: "0",
+    right: "0",
+    display: "flex",
+    alignItems: "center",
+  },
+}));
 
 function GitHubGistWidget(props: WidgetArgs) {
-  const classes = useStyles();
+  const { classes } = useStyles();
   const { t } = useTranslation();
   const [url, setURL] = useState<string>("");
 

@@ -4,20 +4,16 @@ import {
   Divider,
   IconButton,
   List,
-  ListItem,
+  ListItemButton,
   ListItemIcon,
   ListItemText,
   Popover,
   TextField,
   Tooltip,
   Typography,
-} from "@material-ui/core";
-import {
-  createStyles,
-  makeStyles,
-  Theme,
-  useTheme,
-} from "@material-ui/core/styles";
+} from "@mui/material";
+import { Theme, useTheme } from "@mui/material/styles";
+import { makeStyles } from "tss-react/mui";
 import clsx from "clsx";
 import { TabNode } from "flexlayout-react";
 import {
@@ -47,18 +43,16 @@ import ChangeFilePathDialog from "./ChangeFilePathDialog";
 import { DeleteNoteDialog } from "./DeleteNoteDialog";
 import { NoteAliasPopover } from "./NoteAliasPopover";
 
-const useStyles = makeStyles((theme: Theme) =>
-  createStyles({
-    secondaryColor: {
-      color: theme.palette.secondary.main,
-    },
-    row: {
-      display: "flex",
-      flexDirection: "row",
-      alignItems: "center",
-    },
-  }),
-);
+const useStyles = makeStyles()((theme: Theme) => ({
+  secondaryColor: {
+    color: theme.palette.secondary.main,
+  },
+  row: {
+    display: "flex",
+    flexDirection: "row",
+    alignItems: "center",
+  },
+}));
 
 interface Props {
   tabNode: TabNode;
@@ -68,7 +62,7 @@ interface Props {
 }
 
 export default function NotePopover(props: Props) {
-  const classes = useStyles();
+  const { classes } = useStyles();
   const note = props.note;
   const [deleteNoteDialogOpen, setDeleteNoteDialogOpen] =
     useState<boolean>(false);
@@ -160,8 +154,7 @@ export default function NotePopover(props: Props) {
         onClose={props.onClose}
       >
         <List>
-          <ListItem
-            button
+          <ListItemButton
             onClick={() => {
               crossnoteContainer.togglePin(
                 props.tabNode,
@@ -183,9 +176,8 @@ export default function NotePopover(props: Props) {
                   : t("general/pin-the-note")
               }
             ></ListItemText>
-          </ListItem>
-          <ListItem
-            button
+          </ListItemButton>
+          <ListItemButton
             onClick={() => {
               crossnoteContainer.toggleFavorite(
                 props.tabNode,
@@ -211,10 +203,9 @@ export default function NotePopover(props: Props) {
                   : t("general/add-to-quick-access")
               }
             ></ListItemText>
-          </ListItem>
+          </ListItemButton>
           <Divider></Divider>
-          <ListItem
-            button
+          <ListItemButton
             onClick={() => {
               crossnoteContainer.splitNoteVertically(note);
               props.onClose();
@@ -224,9 +215,8 @@ export default function NotePopover(props: Props) {
               <ViewSplitVertical></ViewSplitVertical>
             </ListItemIcon>
             <ListItemText>{t("editor/split-vertically")}</ListItemText>
-          </ListItem>
-          <ListItem
-            button
+          </ListItemButton>
+          <ListItemButton
             onClick={() => {
               crossnoteContainer.splitNoteHorizontally(note, props.tabNode);
               props.onClose();
@@ -236,10 +226,9 @@ export default function NotePopover(props: Props) {
               <ViewSplitHorizontal></ViewSplitHorizontal>
             </ListItemIcon>
             <ListItemText>{t("editor/split-horizontally")}</ListItemText>
-          </ListItem>
+          </ListItemButton>
           <Divider></Divider>
-          <ListItem
-            button
+          <ListItemButton
             onClick={() => {
               setChangeNoteFilePathDialogOpen(true);
               props.onClose();
@@ -251,18 +240,16 @@ export default function NotePopover(props: Props) {
             <ListItemText
               primary={t("general/change-file-path")}
             ></ListItemText>
-          </ListItem>
-          <ListItem
-            button
+          </ListItemButton>
+          <ListItemButton
             onClick={(event) => setNoteAliasAnchorEl(event.currentTarget)}
           >
             <ListItemIcon>
               <TooltipEdit></TooltipEdit>
             </ListItemIcon>
             <ListItemText primary={t("general/edit-note-alias")}></ListItemText>
-          </ListItem>
-          <ListItem
-            button
+          </ListItemButton>
+          <ListItemButton
             onClick={() => {
               setDeleteNoteDialogOpen(true);
               props.onClose();
@@ -272,10 +259,9 @@ export default function NotePopover(props: Props) {
               <Delete></Delete>
             </ListItemIcon>
             <ListItemText primary={t("general/Delete")}></ListItemText>
-          </ListItem>
+          </ListItemButton>
           {!isLocal && (
-            <ListItem
-              button
+            <ListItemButton
               onClick={() => {
                 crossnoteContainer.checkoutNote(note);
                 props.onClose();
@@ -287,22 +273,20 @@ export default function NotePopover(props: Props) {
               <ListItemText
                 primary={t("general/restore-checkout")}
               ></ListItemText>
-            </ListItem>
+            </ListItemButton>
           )}
           <Divider></Divider>
           {!isLocal && notebook && notebook.gitURL && (
-            <ListItem
-              button
+            <ListItemButton
               onClick={(event) => setShareAnchorEl(event.currentTarget)}
             >
               <ListItemIcon>
                 <ShareVariant></ShareVariant>
               </ListItemIcon>
               <ListItemText primary={t("general/Share")}></ListItemText>
-            </ListItem>
+            </ListItemButton>
           )}
-          <ListItem
-            button
+          <ListItemButton
             onClick={() => {
               setNeedsToPrint(true);
               props.onClose();
@@ -312,7 +296,7 @@ export default function NotePopover(props: Props) {
               <Printer></Printer>
             </ListItemIcon>
             <ListItemText primary={t("general/Print")}></ListItemText>
-          </ListItem>
+          </ListItemButton>
         </List>
       </Popover>
       <DeleteNoteDialog

@@ -5,15 +5,9 @@ import {
   DialogActions,
   DialogContent,
   DialogContentText,
-} from "@material-ui/core";
-import {
-  createStyles,
-  darken,
-  makeStyles,
-  Theme,
-  ThemeProvider,
-  useTheme,
-} from "@material-ui/core/styles";
+} from "@mui/material";
+import { Theme, ThemeProvider, darken, useTheme } from "@mui/material/styles";
+import { makeStyles } from "tss-react/mui";
 import clsx from "clsx";
 import FlexLayout, { TabNode } from "flexlayout-react";
 import "flexlayout-react/style/light.css";
@@ -30,67 +24,63 @@ import NotePanel from "./NotePanel";
 import NotesPanel from "./NotesPanel";
 import { Settings } from "./Settings";
 
-const useStyles = makeStyles((theme: Theme) =>
-  createStyles({
-    mainPanel: {
-      "position": "relative",
-      "display": "flex",
-      "flexDirection": "row",
-      "flexGrow": 1,
-      "overflow": "auto",
-      // overright the flexlayout style
-      "& .flexlayout__tabset": {
-        "backgroundColor": theme.palette.background.paper,
-        "&::before": {
-          content: '"📖"',
-          top: "50%",
-          left: "50%",
-          position: "absolute",
-          transform: "translate(-50%, -50%)",
-          color: theme.palette.text.hint,
-          fontSize: "1.6rem",
-        },
-      },
-      "& .flexlayout__tabset_tabbar_outer.flexlayout__tabset_tabbar_outer_top":
-        {
-          backgroundColor: darken(theme.palette.background.default, 0.04),
-          borderColor: theme.palette.divider,
-          border: "none",
-        },
-      "& .flexlayout__tab_button": {
-        color: theme.palette.text.primary,
-      },
-      "& .flexlayout__tab_button.flexlayout__tab_button--selected": {
-        backgroundColor: theme.palette.background.paper,
-      },
-      "& .flexlayout__tab_button:hover": {
-        backgroundColor: theme.palette.background.paper,
-      },
-      "& .flexlayout__splitter": {
-        backgroundColor: darken(theme.palette.background.default, 0.04),
-      },
-      "& .flexlayout__tab": {
-        backgroundColor: theme.palette.background.paper,
-      },
-      "& .flexlayout__popup_menu_container": {
-        color: theme.palette.text.primary,
-        backgroundColor: theme.palette.background.paper,
-        borderColor: theme.palette.divider,
-      },
-      "& .flexlayout__popup_menu_container .flexlayout__popup_menu_item:hover":
-        {
-          backgroundColor: darken(theme.palette.background.paper, 0.1),
-          cursor: "pointer",
-        },
-      "& .flexlayout__outline_rect": {
-        borderColor: theme.palette.primary.main,
+const useStyles = makeStyles()((theme: Theme) => ({
+  mainPanel: {
+    "position": "relative",
+    "display": "flex",
+    "flexDirection": "row",
+    "flexGrow": 1,
+    "overflow": "auto",
+    // overright the flexlayout style
+    "& .flexlayout__tabset": {
+      "backgroundColor": theme.palette.background.paper,
+      "&::before": {
+        content: '"📖"',
+        top: "50%",
+        left: "50%",
+        position: "absolute",
+        transform: "translate(-50%, -50%)",
+        color: theme.palette.text.disabled,
+        fontSize: "1.6rem",
       },
     },
-  }),
-);
+    "& .flexlayout__tabset_tabbar_outer.flexlayout__tabset_tabbar_outer_top": {
+      backgroundColor: darken(theme.palette.background.default, 0.04),
+      borderColor: theme.palette.divider,
+      border: "none",
+    },
+    "& .flexlayout__tab_button": {
+      color: theme.palette.text.primary,
+    },
+    "& .flexlayout__tab_button.flexlayout__tab_button--selected": {
+      backgroundColor: theme.palette.background.paper,
+    },
+    "& .flexlayout__tab_button:hover": {
+      backgroundColor: theme.palette.background.paper,
+    },
+    "& .flexlayout__splitter": {
+      backgroundColor: darken(theme.palette.background.default, 0.04),
+    },
+    "& .flexlayout__tab": {
+      backgroundColor: theme.palette.background.paper,
+    },
+    "& .flexlayout__popup_menu_container": {
+      color: theme.palette.text.primary,
+      backgroundColor: theme.palette.background.paper,
+      borderColor: theme.palette.divider,
+    },
+    "& .flexlayout__popup_menu_container .flexlayout__popup_menu_item:hover": {
+      backgroundColor: darken(theme.palette.background.paper, 0.1),
+      cursor: "pointer",
+    },
+    "& .flexlayout__outline_rect": {
+      borderColor: theme.palette.primary.main,
+    },
+  },
+}));
 
 export function MainPanel() {
-  const classes = useStyles();
+  const { classes } = useStyles();
   const theme = useTheme();
   const container = useRef<HTMLDivElement>(null);
   const [dialogOpen, setDialogOpen] = useState<boolean>(false);

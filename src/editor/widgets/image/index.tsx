@@ -6,14 +6,9 @@ import {
   Input,
   Tooltip,
   Typography,
-} from "@material-ui/core";
-import {
-  createStyles,
-  darken,
-  makeStyles,
-  Theme,
-  ThemeProvider,
-} from "@material-ui/core/styles";
+} from "@mui/material";
+import { Theme, ThemeProvider, darken } from "@mui/material/styles";
+import { makeStyles } from "tss-react/mui";
 import clsx from "clsx";
 import { TrashCan } from "mdi-material-ui";
 import Noty from "noty";
@@ -23,38 +18,36 @@ import { useTranslation } from "react-i18next";
 import { globalContainers } from "../../../containers/global";
 import { smmsUploadImages } from "../../../utilities/image_uploader";
 
-const useStyles = makeStyles((theme: Theme) =>
-  createStyles({
-    card: {
-      padding: theme.spacing(2),
-      position: "relative",
+const useStyles = makeStyles()((theme: Theme) => ({
+  card: {
+    padding: theme.spacing(2),
+    position: "relative",
+  },
+  actionButtons: {
+    position: "absolute",
+    top: "0",
+    right: "0",
+  },
+  section: {
+    marginTop: theme.spacing(2),
+  },
+  dropArea: {
+    "textAlign": "center",
+    "padding": "24px",
+    "border": "4px dotted #c7c7c7",
+    "backgroundColor": darken(theme.palette.background.paper, 0.01),
+    "cursor": "pointer",
+    "&:hover": {
+      backgroundColor: darken(theme.palette.background.paper, 0.2),
     },
-    actionButtons: {
-      position: "absolute",
-      top: "0",
-      right: "0",
-    },
-    section: {
-      marginTop: theme.spacing(2),
-    },
-    dropArea: {
-      "textAlign": "center",
-      "padding": "24px",
-      "border": "4px dotted #c7c7c7",
-      "backgroundColor": darken(theme.palette.background.paper, 0.01),
-      "cursor": "pointer",
-      "&:hover": {
-        backgroundColor: darken(theme.palette.background.paper, 0.2),
-      },
-    },
-    disabled: {
-      cursor: "not-allowed",
-    },
-  }),
-);
+  },
+  disabled: {
+    cursor: "not-allowed",
+  },
+}));
 
 function ImageWidget(props: WidgetArgs) {
-  const classes = useStyles();
+  const { classes } = useStyles();
   const { t } = useTranslation();
   const [url, setURL] = useState<string>("");
   const [imageUploaderElement, setImageUploaderElement] =

@@ -1,11 +1,11 @@
-import { blue, orange } from "@material-ui/core/colors";
+import { blue, orange } from "@mui/material/colors";
 import { CrossnoteTheme } from "./theme";
 
 export const LightTheme: CrossnoteTheme = new CrossnoteTheme({
   name: "light",
   muiThemeOptions: {
     palette: {
-      type: "light",
+      mode: "light",
       primary: blue,
       secondary: orange,
     },

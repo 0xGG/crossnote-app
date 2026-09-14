@@ -1,11 +1,7 @@
 import { debounce } from "@0xgg/echomd";
-import { Box, Typography } from "@material-ui/core";
-import {
-  createStyles,
-  makeStyles,
-  Theme,
-  useTheme,
-} from "@material-ui/core/styles";
+import { Box, Typography } from "@mui/material";
+import { Theme, useTheme } from "@mui/material/styles";
+import { makeStyles } from "tss-react/mui";
 import clsx from "clsx";
 import * as d3 from "d3";
 import { TabNode } from "flexlayout-react";
@@ -34,16 +30,15 @@ import { TabNodeConfig } from "../lib/tabNode";
 
 const bottomPanelHeight = 20;
 const defaultFillColor = `#aaa`;
-const useStyles = makeStyles((theme: Theme) =>
-  createStyles({
-    graphViewPanel: {
-      width: "100%",
-      height: "100%",
-      /*
+const useStyles = makeStyles()((theme: Theme) => ({
+  graphViewPanel: {
+    width: "100%",
+    height: "100%",
+    /*
       "& .tooltip": {
         position: "absolute",
         width: "200px",
-        backgroundColor: fade(theme.palette.grey[700], 0.9),
+        backgroundColor: alpha(theme.palette.grey[700], 0.9),
         borderRadius: theme.shape.borderRadius,
         color: theme.palette.common.white,
         fontFamily: theme.typography.fontFamily,
@@ -55,44 +50,43 @@ const useStyles = makeStyles((theme: Theme) =>
         fontWeight: theme.typography.fontWeightMedium,
       },
       */
+  },
+  graphView: {
+    "position": "relative",
+    "height": `calc(100% - ${bottomPanelHeight}px)`,
+    "display": "block",
+    "& .nodes": {
+      zIndex: 10,
     },
-    graphView: {
-      "position": "relative",
-      "height": `calc(100% - ${bottomPanelHeight}px)`,
-      "display": "block",
-      "& .nodes": {
-        zIndex: 10,
-      },
-      "& .nodes > circle": {
-        cursor: "pointer",
-        zIndex: 10,
-      },
-      "& .arrows": {
-        zIndex: 5,
-        pointerEvents: "none",
-      },
-      "& .arrows > circle": {
-        zIndex: 5,
-        pointerEvents: "none",
-      },
+    "& .nodes > circle": {
+      cursor: "pointer",
+      zIndex: 10,
     },
-    bottomPanel: {
-      position: "absolute",
-      bottom: "0",
-      width: "100%",
-      padding: theme.spacing(0.5, 1),
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "space-between",
-      maxHeight: `${bottomPanelHeight}px`,
-      backgroundColor: theme.palette.primary.main,
-      color: theme.palette.getContrastText(theme.palette.primary.main),
+    "& .arrows": {
+      zIndex: 5,
+      pointerEvents: "none",
     },
-    filePath: {
-      wordBreak: "break-all",
+    "& .arrows > circle": {
+      zIndex: 5,
+      pointerEvents: "none",
     },
-  }),
-);
+  },
+  bottomPanel: {
+    position: "absolute",
+    bottom: "0",
+    width: "100%",
+    padding: theme.spacing(0.5, 1),
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    maxHeight: `${bottomPanelHeight}px`,
+    backgroundColor: theme.palette.primary.main,
+    color: theme.palette.getContrastText(theme.palette.primary.main),
+  },
+  filePath: {
+    wordBreak: "break-all",
+  },
+}));
 
 interface Props {
   notebook: Notebook;
@@ -100,7 +94,7 @@ interface Props {
 }
 
 export default function GraphView(props: Props) {
-  const classes = useStyles();
+  const { classes } = useStyles();
   const [graphViewData, setGraphViewData] = useState<GraphViewData>({
     hash: "",
     nodes: [],

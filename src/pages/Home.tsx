@@ -5,22 +5,18 @@ import {
   Divider,
   Drawer,
   Fab,
-  Hidden,
   IconButton,
   List,
   ListItem,
+  ListItemButton,
   ListItemIcon,
   ListItemSecondaryAction,
   ListItemText,
   Tooltip,
-} from "@material-ui/core";
-import {
-  createStyles,
-  fade,
-  makeStyles,
-  Theme,
-  useTheme,
-} from "@material-ui/core/styles";
+} from "@mui/material";
+import { Theme, alpha, useTheme } from "@mui/material/styles";
+import { CSSObject } from "tss-react";
+import { makeStyles } from "tss-react/mui";
 import clsx from "clsx";
 import {
   Cog as SettingsIcon,
@@ -43,135 +39,133 @@ const drawerWidth = 200;
 const notesPanelWidth = 350;
 const notesPanelMinWidth = 220;
 const notesPanelMaxWidth = 400;
-const useStyles = makeStyles((theme: Theme) =>
-  createStyles({
-    page: {
-      display: "flex",
-      width: "100%",
-      height: "100%",
+const useStyles = makeStyles()((theme: Theme) => ({
+  page: {
+    display: "flex",
+    width: "100%",
+    height: "100%",
+  },
+  appBar: {
+    zIndex: theme.zIndex.drawer + 1,
+    boxShadow: "none",
+  },
+  toolBar: {
+    display: "flex",
+    flexDirection: "row",
+    justifyContent: "space-between",
+  },
+  search: {
+    "position": "relative",
+    "borderRadius": theme.shape.borderRadius,
+    "backgroundColor": alpha(theme.palette.common.white, 0.15),
+    "&:hover": {
+      backgroundColor: alpha(theme.palette.common.white, 0.25),
     },
-    appBar: {
-      zIndex: theme.zIndex.drawer + 1,
-      boxShadow: "none",
+    "marginRight": theme.spacing(2),
+    "marginLeft": 0,
+    "width": "100%",
+    [theme.breakpoints.up("sm")]: {
+      marginLeft: theme.spacing(3),
+      width: "auto",
     },
-    toolBar: {
-      display: "flex",
-      flexDirection: "row",
-      justifyContent: "space-between",
+  },
+  searchIcon: {
+    width: theme.spacing(7),
+    height: "100%",
+    position: "absolute",
+    pointerEvents: "none",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  inputRoot: {
+    color: "inherit",
+  },
+  inputInput: {
+    padding: theme.spacing(1, 1, 1, 7),
+    transition: theme.transitions.create("width"),
+    width: "100%",
+    [theme.breakpoints.up("md")]: {
+      width: 200,
     },
-    search: {
-      "position": "relative",
-      "borderRadius": theme.shape.borderRadius,
-      "backgroundColor": fade(theme.palette.common.white, 0.15),
-      "&:hover": {
-        backgroundColor: fade(theme.palette.common.white, 0.25),
-      },
-      "marginRight": theme.spacing(2),
-      "marginLeft": 0,
-      "width": "100%",
-      [theme.breakpoints.up("sm")]: {
-        marginLeft: theme.spacing(3),
-        width: "auto",
-      },
-    },
-    searchIcon: {
-      width: theme.spacing(7),
-      height: "100%",
-      position: "absolute",
-      pointerEvents: "none",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-    },
-    inputRoot: {
-      color: "inherit",
-    },
-    inputInput: {
-      padding: theme.spacing(1, 1, 1, 7),
-      transition: theme.transitions.create("width"),
-      width: "100%",
-      [theme.breakpoints.up("md")]: {
-        width: 200,
-      },
-    },
-    displayNone: {
-      display: "none",
-    },
-    drawer: {
-      [theme.breakpoints.up("sm")]: {
-        width: drawerWidth,
-        flexShrink: 0,
-      },
-    },
-    drawerPaper: {
+  },
+  displayNone: {
+    display: "none",
+  },
+  drawer: {
+    [theme.breakpoints.up("sm")]: {
       width: drawerWidth,
-      backgroundColor: theme.palette.background.default,
-      display: "flex",
-      flexDirection: "column",
-      justifyContent: "space-between",
-      overflow: "hidden",
+      flexShrink: 0,
     },
-    notebooksSection: {
-      overflowY: "auto",
-    },
-    controllersSection: {
-      // flex: 1,
-    },
-    listItemIcon: {
-      color: theme.palette.text.secondary,
-    },
-    selectedSection: {
-      backgroundColor: "#ccc",
-    },
-    left: {
-      display: "flex",
-      flexDirection: "row",
-      alignItems: "center",
-    },
-    menuButton: {
-      marginRight: theme.spacing(2),
-      /*
+  },
+  drawerPaper: {
+    width: drawerWidth,
+    backgroundColor: theme.palette.background.default,
+    display: "flex",
+    flexDirection: "column",
+    justifyContent: "space-between",
+    overflow: "hidden",
+  },
+  notebooksSection: {
+    overflowY: "auto",
+  },
+  controllersSection: {
+    // flex: 1,
+  },
+  listItemIcon: {
+    color: theme.palette.text.secondary,
+  },
+  selectedSection: {
+    backgroundColor: "#ccc",
+  },
+  left: {
+    display: "flex",
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  menuButton: {
+    marginRight: theme.spacing(2),
+    /*
       [theme.breakpoints.up("sm")]: {
         display: "none"
       }
       */
+  },
+  notesPanel: {
+    maxWidth: "100%",
+    height: "100%",
+    borderRadius: 0,
+    backgroundColor: theme.palette.background.default,
+    [theme.breakpoints.down("sm")]: {
+      width: "100%",
     },
-    notesPanel: {
-      maxWidth: "100%",
-      height: "100%",
-      borderRadius: 0,
-      backgroundColor: theme.palette.background.default,
-      [theme.breakpoints.down("xs")]: {
-        width: "100%",
-      },
+  },
+  editorPanel: {
+    position: "absolute",
+    width: "100%",
+    height: "100%",
+    borderRadius: 0,
+    backgroundColor: theme.palette.background.default,
+    [theme.breakpoints.down("lg")]: {
+      // width: `calc(100% - ${notesPanelWidth}px)`,
+      // left: `${notesPanelWidth}px`
     },
-    editorPanel: {
-      position: "absolute",
+    [theme.breakpoints.down("sm")]: {
+      display: "none",
+      top: "0",
+      left: "0",
       width: "100%",
       height: "100%",
-      borderRadius: 0,
-      backgroundColor: theme.palette.background.default,
-      [theme.breakpoints.down("md")]: {
-        // width: `calc(100% - ${notesPanelWidth}px)`,
-        // left: `${notesPanelWidth}px`
-      },
-      [theme.breakpoints.down("xs")]: {
-        display: "none",
-        top: "0",
-        left: "0",
-        width: "100%",
-        height: "100%",
-      },
     },
-    toolBarSpace: theme.mixins.toolbar,
-    fab: {
-      position: "fixed",
-      bottom: theme.spacing(2),
-      right: theme.spacing(2),
-      zIndex: 999,
-    },
-  }),
-);
+  },
+  toolBarSpace: theme.mixins.toolbar as CSSObject,
+  fab: {
+    position: "fixed",
+    bottom: theme.spacing(2),
+    right: theme.spacing(2),
+    zIndex: 999,
+  },
+}));
 
 interface QueryParams {
   notebookID?: string;
@@ -185,9 +179,9 @@ interface Props {
 }
 
 export function Home(props: Props) {
-  const classes = useStyles();
+  const { classes } = useStyles();
   const theme = useTheme();
-  // const isMobile = useMediaQuery(theme.breakpoints.down("xs"));
+  // const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const [addNotebookDialogOpen, setAddNotebookDialogOpen] =
     useState<boolean>(false);
   const [addNotebookRepo, setAddNotebookRepo] = useState<string>("");
@@ -351,8 +345,7 @@ export function Home(props: Props) {
       <Box className={clsx(classes.controllersSection)}>
         <Divider></Divider>
         <List disablePadding={true}>
-          <ListItem
-            button
+          <ListItemButton
             onClick={() => {
               crossnoteContainer.addTabNode({
                 type: "tab",
@@ -372,7 +365,7 @@ export function Home(props: Props) {
               <SettingsIcon></SettingsIcon>
             </ListItemIcon>
             <ListItemText primary={t("general/Settings")}></ListItemText>
-          </ListItem>
+          </ListItemButton>
         </List>
       </Box>
     </React.Fragment>
@@ -382,8 +375,7 @@ export function Home(props: Props) {
     <Box className={clsx(classes.page)}>
       <CssBaseline></CssBaseline>
       <nav className={clsx(classes.drawer, "drawer")}>
-        {/* The implementation can be swapped with js to avoid SEO duplication of links. */}
-        <Hidden smUp implementation="css">
+        <Box sx={{ display: { xs: "block", sm: "none" } }}>
           <Drawer
             variant="temporary"
             open={drawerOpen}
@@ -397,8 +389,8 @@ export function Home(props: Props) {
           >
             {drawer}
           </Drawer>
-        </Hidden>
-        <Hidden xsDown implementation="css">
+        </Box>
+        <Box sx={{ display: { xs: "none", sm: "block" } }}>
           <Drawer
             classes={{
               paper: classes.drawerPaper,
@@ -408,8 +400,8 @@ export function Home(props: Props) {
           >
             {drawer}
           </Drawer>
-        </Hidden>
-        <Hidden smUp implementation="css">
+        </Box>
+        <Box sx={{ display: { xs: "block", sm: "none" } }}>
           <Fab
             aria-label={t("general/open-menu")}
             color="primary"
@@ -419,7 +411,7 @@ export function Home(props: Props) {
           >
             <Menu></Menu>
           </Fab>
-        </Hidden>
+        </Box>
       </nav>
       <MainPanel></MainPanel>
       <AddNotebookDialog

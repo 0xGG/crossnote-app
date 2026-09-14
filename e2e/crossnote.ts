@@ -73,8 +73,10 @@ export class CrossnoteApp {
     return this.page.getByRole("textbox", { name: "Title" });
   }
 
+  // MUI gives Switch the ARIA switch role; a plain checkbox role would be the
+  // wrong thing to look for now, and a wrong name would still fail here.
   get plainTextSourceCodeSwitch(): Locator {
-    return this.page.getByRole("checkbox", {
+    return this.page.getByRole("switch", {
       name: "Plain text in source code mode",
     });
   }

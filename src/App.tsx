@@ -1,4 +1,4 @@
-import { ThemeProvider } from "@material-ui/core/styles";
+import { ThemeProvider } from "@mui/material/styles";
 import React, { FC } from "react";
 import "./App.css";
 import { SettingsContainer } from "./containers/settings";

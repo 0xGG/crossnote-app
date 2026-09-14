@@ -6,27 +6,26 @@ import {
   Popover,
   TextField,
   Typography,
-} from "@material-ui/core";
-import { createStyles, makeStyles, Theme } from "@material-ui/core/styles";
+} from "@mui/material";
+import { Theme } from "@mui/material/styles";
+import { makeStyles } from "tss-react/mui";
 import clsx from "clsx";
 import { TrashCan } from "mdi-material-ui";
 import React, { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 
-const useStyles = makeStyles((theme: Theme) =>
-  createStyles({
-    menuItemOverride: {
-      "cursor": "default",
-      "padding": `0 0 0 ${theme.spacing(2)}px`,
-      "&:hover": {
-        backgroundColor: "inherit",
-      },
+const useStyles = makeStyles()((theme: Theme) => ({
+  menuItemOverride: {
+    "cursor": "default",
+    "padding": `0 0 0 ${theme.spacing(2)}`,
+    "&:hover": {
+      backgroundColor: "inherit",
     },
-    menuItemTextField: {
-      paddingRight: theme.spacing(2),
-    },
-  }),
-);
+  },
+  menuItemTextField: {
+    paddingRight: theme.spacing(2),
+  },
+}));
 interface Props {
   anchorElement: HTMLElement;
   onClose: () => void;
@@ -35,7 +34,7 @@ interface Props {
   aliases: string[];
 }
 export function NoteAliasPopover(props: Props) {
-  const classes = useStyles();
+  const { classes } = useStyles();
   const { t } = useTranslation();
   const [alias, setAlias] = useState<string>("");
 

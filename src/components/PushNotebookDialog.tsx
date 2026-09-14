@@ -9,8 +9,9 @@ import {
   InputAdornment,
   TextField,
   Typography,
-} from "@material-ui/core";
-import { createStyles, makeStyles, Theme } from "@material-ui/core/styles";
+} from "@mui/material";
+import { Theme } from "@mui/material/styles";
+import { makeStyles } from "tss-react/mui";
 import clsx from "clsx";
 import { Eye, EyeOff } from "mdi-material-ui";
 import Noty from "noty";
@@ -20,13 +21,11 @@ import { CrossnoteContainer } from "../containers/crossnote";
 import { SettingsContainer } from "../containers/settings";
 import { Notebook } from "../lib/notebook";
 
-const useStyles = makeStyles((theme: Theme) =>
-  createStyles({
-    textField: {
-      marginBottom: theme.spacing(2),
-    },
-  }),
-);
+const useStyles = makeStyles()((theme: Theme) => ({
+  textField: {
+    marginBottom: theme.spacing(2),
+  },
+}));
 
 interface Props {
   open: boolean;
@@ -35,7 +34,7 @@ interface Props {
 }
 
 export default function PushNotebookDialog(props: Props) {
-  const classes = useStyles();
+  const { classes } = useStyles();
   const notebook = props.notebook;
   const [gitUsername, setGitUsername] = useState<string>(notebook.gitUsername);
   const [gitPassword, setGitPassword] = useState<string>(notebook.gitPassword);
@@ -170,18 +169,20 @@ export default function PushNotebookDialog(props: Props) {
           fullWidth={true}
           value={gitUsername}
           onChange={(event) => setGitUsername(event.target.value)}
-          InputProps={{
-            endAdornment: (
-              <InputAdornment position={"end"}>
-                <IconButton
-                  aria-label="toggle username visibility"
-                  onClick={() => setShowUsername(!showUsername)}
-                >
-                  {" "}
-                  {showUsername ? <Eye></Eye> : <EyeOff></EyeOff>}{" "}
-                </IconButton>
-              </InputAdornment>
-            ),
+          slotProps={{
+            input: {
+              endAdornment: (
+                <InputAdornment position={"end"}>
+                  <IconButton
+                    aria-label="toggle username visibility"
+                    onClick={() => setShowUsername(!showUsername)}
+                  >
+                    {" "}
+                    {showUsername ? <Eye></Eye> : <EyeOff></EyeOff>}{" "}
+                  </IconButton>
+                </InputAdornment>
+              ),
+            },
           }}
         ></TextField>
         <TextField
@@ -196,18 +197,20 @@ export default function PushNotebookDialog(props: Props) {
           fullWidth={true}
           value={gitPassword}
           onChange={(event) => setGitPassword(event.target.value)}
-          InputProps={{
-            endAdornment: (
-              <InputAdornment position={"end"}>
-                <IconButton
-                  aria-label="toggle password visibility"
-                  onClick={() => setShowPassword(!showPassword)}
-                >
-                  {" "}
-                  {showPassword ? <Eye></Eye> : <EyeOff></EyeOff>}{" "}
-                </IconButton>
-              </InputAdornment>
-            ),
+          slotProps={{
+            input: {
+              endAdornment: (
+                <InputAdornment position={"end"}>
+                  <IconButton
+                    aria-label="toggle password visibility"
+                    onClick={() => setShowPassword(!showPassword)}
+                  >
+                    {" "}
+                    {showPassword ? <Eye></Eye> : <EyeOff></EyeOff>}{" "}
+                  </IconButton>
+                </InputAdornment>
+              ),
+            },
           }}
         ></TextField>
       </DialogContent>

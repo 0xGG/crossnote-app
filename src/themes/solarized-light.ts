@@ -1,12 +1,12 @@
-import { lighten } from "@material-ui/core";
-import { amber, orange } from "@material-ui/core/colors";
+import { lighten } from "@mui/material/styles";
+import { amber, orange } from "@mui/material/colors";
 import { CrossnoteTheme } from "./theme";
 
 export const SolarizedLight: CrossnoteTheme = new CrossnoteTheme({
   name: "solarized-light",
   muiThemeOptions: {
     palette: {
-      type: "light",
+      mode: "light",
       primary: orange,
       secondary: amber,
       background: {

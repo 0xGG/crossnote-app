@@ -11,13 +11,9 @@ import {
   InputBase,
   Tooltip,
   Typography,
-} from "@material-ui/core";
-import {
-  createStyles,
-  darken,
-  makeStyles,
-  Theme,
-} from "@material-ui/core/styles";
+} from "@mui/material";
+import { Theme, darken } from "@mui/material/styles";
+import { makeStyles } from "tss-react/mui";
 import clsx from "clsx";
 import {
   Editor as CodeMirrorEditor,
@@ -118,97 +114,96 @@ const codeMirrorSelectCss = {
   color: `#fff !important`,
 };
 
-const useStyles = makeStyles((theme: Theme) =>
-  createStyles({
-    row: {
-      display: "flex",
-      flexDirection: "row",
-      alignItems: "center",
+const useStyles = makeStyles()((theme: Theme) => ({
+  row: {
+    display: "flex",
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  notePanel: {
+    "height": "100%",
+    "overflow": "hidden",
+    "backgroundColor": theme.palette.background.paper,
+    "& .reference-highlight": {
+      backgroundColor: `${theme.palette.warning.light} !important`,
     },
-    notePanel: {
-      "height": "100%",
-      "overflow": "hidden",
-      "backgroundColor": theme.palette.background.paper,
-      "& .reference-highlight": {
-        backgroundColor: `${theme.palette.warning.light} !important`,
-      },
-    },
-    topPanel: {
-      display: "flex",
-      flexDirection: "column",
-      padding: "4px 0 0",
-      position: "relative",
-      backgroundColor: "inherit",
-      [theme.breakpoints.down("sm")]: {
-        padding: "0",
-      },
-    },
-    contentPanel: {
-      position: "relative",
-      height: `calc(100% - 48px - ${bottomPanelHeight}px)`,
-      display: "block",
-    },
-    editorContentPanel: {
-      display: "block",
-      overflow: "auto",
-      height: "100%",
-    },
-    tocPanel: {
-      height: "100%",
+  },
+  topPanel: {
+    display: "flex",
+    flexDirection: "column",
+    padding: "4px 0 0",
+    position: "relative",
+    backgroundColor: "inherit",
+    [theme.breakpoints.down("md")]: {
       padding: "0",
-      overflow: "auto",
-      borderLeft: `1px solid ${theme.palette.divider}`,
-      paddingTop: "32px",
     },
-    toc: {
-      "& .toc-item": {
-        cursor: "pointer",
-        // borderBottom: `1px solid ${theme.palette.divider}`,
-        color: theme.palette.text.primary,
-        padding: ".5em",
-      },
-      "& .toc-item:hover": {
-        backgroundColor: darken(theme.palette.background.paper, 0.06),
-      },
-      "& .emoji": {
-        height: "1rem",
-        top: "2px",
-        position: "relative",
+  },
+  contentPanel: {
+    position: "relative",
+    height: `calc(100% - 48px - ${bottomPanelHeight}px)`,
+    display: "block",
+  },
+  editorContentPanel: {
+    display: "block",
+    overflow: "auto",
+    height: "100%",
+  },
+  tocPanel: {
+    height: "100%",
+    padding: "0",
+    overflow: "auto",
+    borderLeft: `1px solid ${theme.palette.divider}`,
+    paddingTop: "32px",
+  },
+  toc: {
+    "& .toc-item": {
+      cursor: "pointer",
+      // borderBottom: `1px solid ${theme.palette.divider}`,
+      color: theme.palette.text.primary,
+      padding: ".5em",
+    },
+    "& .toc-item:hover": {
+      backgroundColor: darken(theme.palette.background.paper, 0.06),
+    },
+    "& .emoji": {
+      height: "1rem",
+      top: "2px",
+      position: "relative",
+    },
+  },
+  editorWrapper: {
+    "position": "relative",
+    "flex": 1,
+    "overflow": "auto",
+    "backgroundColor": "inherit",
+    // "width": "800px",
+    // "margin": "0 auto",
+    // "maxWidth": "100%",
+    "& .CodeMirror-gutters": {
+      display: "none",
+    },
+    "& .CodeMirror-code": {
+      width: "100%",
+    },
+    "& .CodeMirror": {
+      // width: "800px",
+      width: "100%",
+      maxWidth: "100%",
+      margin: "0 auto",
+      height: "100%",
+      padding: theme.spacing(0, 1),
+      backgroundColor: `${theme.palette.background.paper} !important`,
+      [theme.breakpoints.down("md")]: {
+        padding: theme.spacing(1),
       },
     },
-    editorWrapper: {
-      "position": "relative",
-      "flex": 1,
-      "overflow": "auto",
-      "backgroundColor": "inherit",
-      // "width": "800px",
-      // "margin": "0 auto",
-      // "maxWidth": "100%",
-      "& .CodeMirror-gutters": {
-        display: "none",
-      },
-      "& .CodeMirror-code": {
-        width: "100%",
-      },
-      "& .CodeMirror": {
-        // width: "800px",
-        width: "100%",
-        maxWidth: "100%",
-        margin: "0 auto",
-        height: "100%",
-        padding: theme.spacing(0, 1),
-        backgroundColor: `${theme.palette.background.paper} !important`,
-        [theme.breakpoints.down("sm")]: {
-          padding: theme.spacing(1),
-        },
-      },
-      "& .CodeMirror-vscrollbar": {
-        // display: "none !important",
-      },
-      "& .CodeMirror-placeholder": {
-        color: `${theme.palette.text.hint} !important`,
-      },
-      /*
+    "& .CodeMirror-vscrollbar": {
+      // display: "none !important",
+    },
+    "& .CodeMirror-placeholder": {
+      color: `${theme.palette.text.disabled} !important`,
+    },
+    /*
       CodeMirror selected text css:
         .CodeMirror-selected { background: red; }
         .CodeMirror-focused .CodeMirror-selected { background: blue; }
@@ -216,131 +211,130 @@ const useStyles = makeStyles((theme: Theme) =>
         .CodeMirror-line::selection, .CodeMirror-line > span::selection, .CodeMirror-line > span > span::selection { background: #yellow; }
         .CodeMirror-line::-moz-selection, .CodeMirror-line > span::-moz-selection, .CodeMirror-line > span > span::-moz-selection { background: #purple; }
       */
-      "& .CodeMirror-selected": codeMirrorSelectCss,
-      "& .CodeMirror-focused .CodeMirror-selected": codeMirrorSelectCss,
-      "& .CodeMirror-line::selection": codeMirrorSelectCss,
-      "& .CodeMirror-line > span::selection": codeMirrorSelectCss,
-      "& .CodeMirror-line > span > span::selection ": codeMirrorSelectCss,
-      "& .CodeMirror-line::-moz-selection": codeMirrorSelectCss,
-      "& .CodeMirror-line > span::-moz-selection": codeMirrorSelectCss,
-      "& .CodeMirror-line > span > span::-moz-selection": codeMirrorSelectCss,
-      /*
-      [theme.breakpoints.down("sm")]: {
+    "& .CodeMirror-selected": codeMirrorSelectCss,
+    "& .CodeMirror-focused .CodeMirror-selected": codeMirrorSelectCss,
+    "& .CodeMirror-line::selection": codeMirrorSelectCss,
+    "& .CodeMirror-line > span::selection": codeMirrorSelectCss,
+    "& .CodeMirror-line > span > span::selection ": codeMirrorSelectCss,
+    "& .CodeMirror-line::-moz-selection": codeMirrorSelectCss,
+    "& .CodeMirror-line > span::-moz-selection": codeMirrorSelectCss,
+    "& .CodeMirror-line > span > span::-moz-selection": codeMirrorSelectCss,
+    /*
+      [theme.breakpoints.down("md")]: {
         padding: theme.spacing(1),
       },
       */
 
-      "& .CodeMirror span.emoji": {
-        height: "1.2em !important",
-        width: "1.2em !important",
-        top: ".2em !important",
-        position: "relative",
-      },
+    "& .CodeMirror span.emoji": {
+      height: "1.2em !important",
+      width: "1.2em !important",
+      top: ".2em !important",
+      position: "relative",
     },
-    editor: {
-      width: "100%",
-      height: "100%",
-      backgroundColor: "inherit",
-      border: "none",
+  },
+  editor: {
+    width: "100%",
+    height: "100%",
+    backgroundColor: "inherit",
+    border: "none",
+  },
+  preview: {
+    "position": "relative",
+    "left": "0",
+    "top": "0",
+    // width: "800px",
+    "width": "100%",
+    "maxWidth": "100%",
+    "margin": "0 auto",
+    "height": "100%",
+    "border": "none",
+    "overflow": "auto !important",
+    "padding": theme.spacing(1, 2),
+    "zIndex": previewZIndex,
+    "backgroundColor": `${theme.palette.background.paper} !important`,
+    [theme.breakpoints.down("md")]: {
+      padding: theme.spacing(1),
     },
-    preview: {
-      "position": "relative",
-      "left": "0",
-      "top": "0",
-      // width: "800px",
-      "width": "100%",
-      "maxWidth": "100%",
-      "margin": "0 auto",
-      "height": "100%",
-      "border": "none",
-      "overflow": "auto !important",
-      "padding": theme.spacing(1, 2),
-      "zIndex": previewZIndex,
-      "backgroundColor": `${theme.palette.background.paper} !important`,
-      [theme.breakpoints.down("sm")]: {
-        padding: theme.spacing(1),
-      },
-      "& span.emoji": {
-        height: "1.2em !important",
-        width: "1.2em !important",
-        top: ".2em !important",
-        position: "relative",
-      },
+    "& span.emoji": {
+      height: "1.2em !important",
+      width: "1.2em !important",
+      top: ".2em !important",
+      position: "relative",
     },
-    tocButtonGroup: {
-      position: "absolute",
-      top: "60px",
-      right: "8px",
-      zIndex: previewZIndex + 1,
-    },
-    presentation: {
-      padding: "0 !important",
-      overflow: "hidden !important",
-    },
-    editorPresentation: {
-      height: "100%",
-    },
-    controlBtn: {
-      padding: theme.spacing(0.5, 0),
-      color: theme.palette.text.secondary,
-    },
-    controlBtnSelected: {
-      color: theme.palette.primary.main,
-    },
-    controlBtnSelectedSecondary: {
-      color: theme.palette.secondary.main,
-    },
-    // math
-    floatWin: {
-      position: "fixed",
-      zIndex: 100,
-      background: theme.palette.background.paper,
-      borderRadius: "5px",
-      overflow: "hidden",
-      minWidth: "200px",
-      maxWidth: "70%",
-    },
-    floatWinHidden: {
-      display: "none",
-    },
-    floatWinTitle: {
-      display: "flex",
-      alignItems: "center",
-      background: "#579",
-      color: "#eee",
-    },
-    floatWinContent: {
-      maxHeight: "80vh",
-      overflow: "auto",
-      padding: "10px 20px",
-    },
-    floatWinClose: {
-      color: "#eee",
-    },
-    bottomPanel: {
-      position: "absolute",
-      bottom: "0",
-      width: "100%",
-      padding: theme.spacing(0.5, 1),
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "space-between",
-      maxHeight: `${bottomPanelHeight}px`,
-      backgroundColor: theme.palette.primary.main,
-      color: theme.palette.getContrastText(theme.palette.primary.main),
-      zIndex: previewZIndex + 1,
-    },
-    filePath: {
-      wordBreak: "break-all",
-    },
-    cursorPositionInfo: {
-      // position: "absolute",
-      // right: "16px",
-      // bottom: "16px",
-      zIndex: 150,
-    },
-  }),
-);
+  },
+  tocButtonGroup: {
+    position: "absolute",
+    top: "60px",
+    right: "8px",
+    zIndex: previewZIndex + 1,
+  },
+  presentation: {
+    padding: "0 !important",
+    overflow: "hidden !important",
+  },
+  editorPresentation: {
+    height: "100%",
+  },
+  controlBtn: {
+    padding: theme.spacing(0.5, 0),
+    color: theme.palette.text.secondary,
+  },
+  controlBtnSelected: {
+    color: theme.palette.primary.main,
+  },
+  controlBtnSelectedSecondary: {
+    color: theme.palette.secondary.main,
+  },
+  // math
+  floatWin: {
+    position: "fixed",
+    zIndex: 100,
+    background: theme.palette.background.paper,
+    borderRadius: "5px",
+    overflow: "hidden",
+    minWidth: "200px",
+    maxWidth: "70%",
+  },
+  floatWinHidden: {
+    display: "none",
+  },
+  floatWinTitle: {
+    display: "flex",
+    alignItems: "center",
+    background: "#579",
+    color: "#eee",
+  },
+  floatWinContent: {
+    maxHeight: "80vh",
+    overflow: "auto",
+    padding: "10px 20px",
+  },
+  floatWinClose: {
+    color: "#eee",
+  },
+  bottomPanel: {
+    position: "absolute",
+    bottom: "0",
+    width: "100%",
+    padding: theme.spacing(0.5, 1),
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    maxHeight: `${bottomPanelHeight}px`,
+    backgroundColor: theme.palette.primary.main,
+    color: theme.palette.getContrastText(theme.palette.primary.main),
+    zIndex: previewZIndex + 1,
+  },
+  filePath: {
+    wordBreak: "break-all",
+  },
+  cursorPositionInfo: {
+    // position: "absolute",
+    // right: "16px",
+    // bottom: "16px",
+    zIndex: 150,
+  },
+}));
 
 interface Props {
   notebook: Notebook;
@@ -349,7 +343,7 @@ interface Props {
   reference?: Reference;
 }
 export default function NotePanel(props: Props) {
-  const classes = useStyles();
+  const { classes } = useStyles();
   const tabNode = props.tabNode;
   const crossnoteContainer = CrossnoteContainer.useContainer();
   const settingsContainer = SettingsContainer.useContainer();
@@ -370,7 +364,7 @@ export default function NotePanel(props: Props) {
     line: 0,
     ch: 0,
   });
-  const mathPreviewElement = useRef<HTMLElement>(null);
+  const mathPreviewElement = useRef<HTMLDivElement>(null);
   const [editImageElement, setEditImageElement] =
     useState<HTMLImageElement>(null);
   const [editImageTextMarker, setEditImageTextMarker] =
@@ -1484,7 +1478,7 @@ export default function NotePanel(props: Props) {
           ></InputBase>
           <ButtonGroup
             variant="text"
-            color="default"
+            color="inherit"
             aria-label="editor mode"
             size="small"
           >
@@ -1497,7 +1491,7 @@ export default function NotePanel(props: Props) {
                     classes.controlBtnSelected,
                 )}
                 color={
-                  editorMode === EditorMode.Preview ? "primary" : "default"
+                  editorMode === EditorMode.Preview ? "primary" : "inherit"
                 }
                 onClick={() => setEditorMode(EditorMode.Preview)}
               >
@@ -1512,7 +1506,7 @@ export default function NotePanel(props: Props) {
                   editorMode === EditorMode.EchoMD &&
                     classes.controlBtnSelected,
                 )}
-                color={editorMode === EditorMode.EchoMD ? "primary" : "default"}
+                color={editorMode === EditorMode.EchoMD ? "primary" : "inherit"}
                 onClick={() => setEditorMode(EditorMode.EchoMD)}
               >
                 <Pencil></Pencil>
@@ -1527,7 +1521,7 @@ export default function NotePanel(props: Props) {
                     classes.controlBtnSelected,
                 )}
                 color={
-                  editorMode === EditorMode.SourceCode ? "primary" : "default"
+                  editorMode === EditorMode.SourceCode ? "primary" : "inherit"
                 }
                 onClick={() => setEditorMode(EditorMode.SourceCode)}
               >
@@ -1537,7 +1531,7 @@ export default function NotePanel(props: Props) {
           </ButtonGroup>
           <ButtonGroup
             variant="text"
-            color="default"
+            color="inherit"
             aria-label="actions"
             size="small"
           >
@@ -1552,7 +1546,7 @@ export default function NotePanel(props: Props) {
           {!(previewIsPresentation && editorMode === EditorMode.Preview) && (
             <ButtonGroup
               variant="text"
-              color="default"
+              color="inherit"
               aria-label="table of contents"
               size="small"
               className={clsx(classes.tocButtonGroup)}

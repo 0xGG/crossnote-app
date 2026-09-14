@@ -1,5 +1,6 @@
 import { renderPreview } from "@0xgg/echomd/preview";
-import { createStyles, makeStyles, Theme } from "@material-ui/core/styles";
+import { Theme } from "@mui/material/styles";
+import { makeStyles } from "tss-react/mui";
 import clsx from "clsx";
 import { useCallback, useEffect, useState } from "react";
 import { Note } from "../lib/note";
@@ -11,32 +12,30 @@ interface Props {
 }
 
 const previewZIndex = 99;
-const useStyles = makeStyles((theme: Theme) =>
-  createStyles({
-    preview: {
-      position: "relative",
-      left: "0",
-      top: "0",
-      width: "800px",
-      maxWidth: "100%",
-      margin: "0 auto",
-      height: "100%",
-      border: "none",
-      overflow: "auto !important",
-      paddingLeft: theme.spacing(1),
-      paddingRight: theme.spacing(1),
-      // padding: theme.spacing(1, 2),
-      zIndex: previewZIndex,
-      backgroundColor: "inherit !important",
-      [theme.breakpoints.down("sm")]: {
-        padding: theme.spacing(1),
-      },
+const useStyles = makeStyles()((theme: Theme) => ({
+  preview: {
+    position: "relative",
+    left: "0",
+    top: "0",
+    width: "800px",
+    maxWidth: "100%",
+    margin: "0 auto",
+    height: "100%",
+    border: "none",
+    overflow: "auto !important",
+    paddingLeft: theme.spacing(1),
+    paddingRight: theme.spacing(1),
+    // padding: theme.spacing(1, 2),
+    zIndex: previewZIndex,
+    backgroundColor: "inherit !important",
+    [theme.breakpoints.down("md")]: {
+      padding: theme.spacing(1),
     },
-  }),
-);
+  },
+}));
 
 export default function MarkdownPreview(props: Props) {
-  const classes = useStyles();
+  const { classes } = useStyles();
   const [previewElement, setPreviewElement] = useState<HTMLElement>(null);
 
   const postprocessPreview = useCallback(

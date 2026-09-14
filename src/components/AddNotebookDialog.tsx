@@ -17,8 +17,8 @@ import {
   Link,
   TextField,
   Typography,
-} from "@material-ui/core";
-import { useTheme } from "@material-ui/core/styles";
+} from "@mui/material";
+import { useTheme } from "@mui/material/styles";
 import { ChevronDown, Eye, EyeOff, FolderOpen } from "mdi-material-ui";
 import Noty from "noty";
 import { useCallback, useEffect, useState } from "react";
@@ -137,8 +137,8 @@ export default function AddNotebookDialog(props: Props) {
           <Box>
             <Button
               style={{
-                margin: `${theme.spacing(2)}px auto`,
-                padding: `${theme.spacing(2)}px 0`,
+                margin: `${theme.spacing(2)} auto`,
+                padding: `${theme.spacing(2)} 0`,
                 width: "100%",
               }}
               color={"primary"}
@@ -169,7 +169,7 @@ export default function AddNotebookDialog(props: Props) {
               </Typography>
               <Divider
                 style={{
-                  margin: `${theme.spacing(3)}px auto`,
+                  margin: `${theme.spacing(3)} auto`,
                   width: "100%",
                 }}
               ></Divider>
@@ -227,18 +227,20 @@ export default function AddNotebookDialog(props: Props) {
                 fullWidth={true}
                 value={gitUsername}
                 onChange={(event) => setGitUsername(event.target.value)}
-                InputProps={{
-                  endAdornment: (
-                    <InputAdornment position={"end"}>
-                      <IconButton
-                        aria-label="toggle username visibility"
-                        onClick={() => setShowUsername(!showUsername)}
-                      >
-                        {" "}
-                        {showUsername ? <Eye></Eye> : <EyeOff></EyeOff>}{" "}
-                      </IconButton>
-                    </InputAdornment>
-                  ),
+                slotProps={{
+                  input: {
+                    endAdornment: (
+                      <InputAdornment position={"end"}>
+                        <IconButton
+                          aria-label="toggle username visibility"
+                          onClick={() => setShowUsername(!showUsername)}
+                        >
+                          {" "}
+                          {showUsername ? <Eye></Eye> : <EyeOff></EyeOff>}{" "}
+                        </IconButton>
+                      </InputAdornment>
+                    ),
+                  },
                 }}
               ></TextField>
               <TextField
@@ -250,18 +252,20 @@ export default function AddNotebookDialog(props: Props) {
                 fullWidth={true}
                 value={gitPassword}
                 onChange={(event) => setGitPassword(event.target.value)}
-                InputProps={{
-                  endAdornment: (
-                    <InputAdornment position={"end"}>
-                      <IconButton
-                        aria-label="toggle password visibility"
-                        onClick={() => setShowPassword(!showPassword)}
-                      >
-                        {" "}
-                        {showPassword ? <Eye></Eye> : <EyeOff></EyeOff>}{" "}
-                      </IconButton>
-                    </InputAdornment>
-                  ),
+                slotProps={{
+                  input: {
+                    endAdornment: (
+                      <InputAdornment position={"end"}>
+                        <IconButton
+                          aria-label="toggle password visibility"
+                          onClick={() => setShowPassword(!showPassword)}
+                        >
+                          {" "}
+                          {showPassword ? <Eye></Eye> : <EyeOff></EyeOff>}{" "}
+                        </IconButton>
+                      </InputAdornment>
+                    ),
+                  },
                 }}
               ></TextField>
               <FormControlLabel

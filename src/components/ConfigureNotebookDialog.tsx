@@ -15,7 +15,7 @@ import {
   Link,
   TextField,
   Typography,
-} from "@material-ui/core";
+} from "@mui/material";
 import { ChevronDown, Eye, EyeOff } from "mdi-material-ui";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -191,18 +191,24 @@ export default function ConfigureNotebookDialog(props: Props) {
                   fullWidth={true}
                   value={gitUsername}
                   onChange={(event) => setGitUsername(event.target.value)}
-                  InputProps={{
-                    endAdornment: (
-                      <InputAdornment position={"end"}>
-                        <IconButton
-                          aria-label="toggle username visibility"
-                          onClick={() => setShowUsername(!showUsername)}
-                        >
-                          {" "}
-                          {showUsername ? <Eye></Eye> : <EyeOff></EyeOff>}{" "}
-                        </IconButton>
-                      </InputAdornment>
-                    ),
+                  slotProps={{
+                    input: {
+                      endAdornment: (
+                        <InputAdornment position={"end"}>
+                          <IconButton
+                            aria-label="toggle username visibility"
+                            onClick={() => setShowUsername(!showUsername)}
+                          >
+                            {" "}
+                            {showUsername ? (
+                              <Eye></Eye>
+                            ) : (
+                              <EyeOff></EyeOff>
+                            )}{" "}
+                          </IconButton>
+                        </InputAdornment>
+                      ),
+                    },
                   }}
                 ></TextField>
                 <TextField
@@ -214,18 +220,24 @@ export default function ConfigureNotebookDialog(props: Props) {
                   fullWidth={true}
                   value={gitPassword}
                   onChange={(event) => setGitPassword(event.target.value)}
-                  InputProps={{
-                    endAdornment: (
-                      <InputAdornment position={"end"}>
-                        <IconButton
-                          aria-label="toggle password visibility"
-                          onClick={() => setShowPassword(!showPassword)}
-                        >
-                          {" "}
-                          {showPassword ? <Eye></Eye> : <EyeOff></EyeOff>}{" "}
-                        </IconButton>
-                      </InputAdornment>
-                    ),
+                  slotProps={{
+                    input: {
+                      endAdornment: (
+                        <InputAdornment position={"end"}>
+                          <IconButton
+                            aria-label="toggle password visibility"
+                            onClick={() => setShowPassword(!showPassword)}
+                          >
+                            {" "}
+                            {showPassword ? (
+                              <Eye></Eye>
+                            ) : (
+                              <EyeOff></EyeOff>
+                            )}{" "}
+                          </IconButton>
+                        </InputAdornment>
+                      ),
+                    },
                   }}
                 ></TextField>
                 <TextField
