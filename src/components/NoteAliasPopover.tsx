@@ -17,7 +17,7 @@ import { useTranslation } from "react-i18next";
 const useStyles = makeStyles()((theme: Theme) => ({
   menuItemOverride: {
     "cursor": "default",
-    "padding": `0 0 0 ${theme.spacing(2)}px`,
+    "padding": `0 0 0 ${theme.spacing(2)}`,
     "&:hover": {
       backgroundColor: "inherit",
     },

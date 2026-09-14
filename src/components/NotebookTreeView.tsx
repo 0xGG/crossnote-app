@@ -22,59 +22,57 @@ import ConfigureNotebookDialog from "./ConfigureNotebookDialog";
 import { Emoji } from "./EmojiWrapper";
 import PushNotebookDialog from "./PushNotebookDialog";
 
-const useStyles = makeStyles()((theme: Theme) => ({
-  treeItemRoot: {
-    "paddingLeft": "4px",
-    // color: theme.palette.text.secondary,
-    "&:focus > $treeItemContent": {
-      color: theme.palette.text.primary,
-      backgroundColor: darken(theme.palette.background.paper, 0.05),
+const useStyles = makeStyles<void, "treeItemContent">()(
+  (theme: Theme, _params, classes) => ({
+    treeItemRoot: {
+      paddingLeft: "4px",
+      // color: theme.palette.text.secondary,
+      [`&:focus > .${classes.treeItemContent}`]: {
+        color: theme.palette.text.primary,
+        backgroundColor: darken(theme.palette.background.paper, 0.05),
+      },
     },
-    "&:focus > $treeItemLabelIcon": {
-      color: theme.palette.text.primary,
+    treeItemContent: {
+      // v4 carried the indentation on each group's margin, which this file
+      // zeroed out so every row sits flush in the 200px drawer. v9 moved the
+      // indentation, the padding and a gap onto the content element itself,
+      // which costs the label 33px and clips whatever sits at its end.
+      "padding": 0,
+      "gap": 0,
+      "cursor": "default",
+      "color": theme.palette.text.primary,
+      "userSelect": "none",
+      "fontWeight": theme.typography.fontWeightMedium as any,
+      "&[data-expanded]": {
+        fontWeight: theme.typography.fontWeightRegular as any,
+      },
     },
-  },
-  treeItemContent: {
-    "cursor": "default",
-    "color": theme.palette.text.primary,
-    // paddingLeft: theme.spacing(1),
-    // paddingRight: theme.spacing(1),
-    "userSelect": "none",
-    "fontWeight": theme.typography.fontWeightMedium as any,
-    "$treeItemExpanded > &": {
-      fontWeight: theme.typography.fontWeightRegular as any,
+    treeItemGroup: {
+      marginLeft: 0,
     },
-  },
-  treeItemGroup: {
-    "marginLeft": 0,
-    "& $treeItemContent": {
-      // paddingLeft: theme.spacing(2)
+    treeItemLabel: {
+      fontWeight: "inherit",
+      color: "inherit",
+      backgroundColor: "transparent !important",
     },
-  },
-  treeItemExpanded: {},
-  treeItemLabel: {
-    fontWeight: "inherit",
-    color: "inherit",
-    backgroundColor: "transparent !important",
-  },
-  treeItemLabelRoot: {
-    display: "flex",
-    alignItems: "center",
-    padding: theme.spacing(1, 0),
-  },
-  treeItemLabelIcon: {},
-  treeItemLabelText: {
-    paddingLeft: "12px",
-    flexGrow: 1,
-  },
-  disabled: {
-    color: theme.palette.text.disabled,
-  },
-  emojiIcon: {
-    top: "2px",
-    position: "relative",
-  },
-}));
+    treeItemLabelRoot: {
+      display: "flex",
+      alignItems: "center",
+      padding: theme.spacing(1, 0),
+    },
+    treeItemLabelText: {
+      paddingLeft: "12px",
+      flexGrow: 1,
+    },
+    disabled: {
+      color: theme.palette.text.disabled,
+    },
+    emojiIcon: {
+      top: "2px",
+      position: "relative",
+    },
+  }),
+);
 
 interface Props {
   notebook: Notebook;

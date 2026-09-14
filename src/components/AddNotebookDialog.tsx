@@ -137,8 +137,8 @@ export default function AddNotebookDialog(props: Props) {
           <Box>
             <Button
               style={{
-                margin: `${theme.spacing(2)}px auto`,
-                padding: `${theme.spacing(2)}px 0`,
+                margin: `${theme.spacing(2)} auto`,
+                padding: `${theme.spacing(2)} 0`,
                 width: "100%",
               }}
               color={"primary"}
@@ -169,7 +169,7 @@ export default function AddNotebookDialog(props: Props) {
               </Typography>
               <Divider
                 style={{
-                  margin: `${theme.spacing(3)}px auto`,
+                  margin: `${theme.spacing(3)} auto`,
                   width: "100%",
                 }}
               ></Divider>

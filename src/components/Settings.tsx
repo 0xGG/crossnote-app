@@ -34,7 +34,7 @@ const useStyles = makeStyles()((theme: Theme) => ({
     width: "600px",
     maxWidth: "100%",
     position: "relative",
-    margin: `${theme.spacing(4)}px auto`,
+    margin: `${theme.spacing(4)} auto`,
     height: "fit-content",
     [theme.breakpoints.down("md")]: {
       top: "0",
