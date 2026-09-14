@@ -35,7 +35,7 @@ const useStyles = makeStyles()((theme: Theme) => ({
     textAlign: "left",
     // backgroundColor: theme.palette.background.paper,
     margin: `${NoteCardMargin}px auto`,
-    [theme.breakpoints.down("sm")]: {
+    [theme.breakpoints.down("md")]: {
       marginLeft: 0,
       marginRight: 0,
     },

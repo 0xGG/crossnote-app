@@ -28,7 +28,7 @@ const useStyles = makeStyles()((theme: Theme) => ({
     // padding: theme.spacing(1, 2),
     zIndex: previewZIndex,
     backgroundColor: "inherit !important",
-    [theme.breakpoints.down("sm")]: {
+    [theme.breakpoints.down("md")]: {
       padding: theme.spacing(1),
     },
   },

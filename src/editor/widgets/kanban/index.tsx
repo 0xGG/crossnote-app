@@ -54,7 +54,7 @@ const useStyles = makeStyles()((theme: Theme) => ({
     position: "relative",
     backgroundColor: theme.palette.background.paper,
     color: theme.palette.text.primary,
-    [theme.breakpoints.down("sm")]: {
+    [theme.breakpoints.down("md")]: {
       marginTop: "4px",
       marginBottom: "4px",
     },

@@ -136,7 +136,7 @@ const useStyles = makeStyles()((theme: Theme) => ({
     height: "100%",
     borderRadius: 0,
     backgroundColor: theme.palette.background.default,
-    [theme.breakpoints.down("xs")]: {
+    [theme.breakpoints.down("sm")]: {
       width: "100%",
     },
   },
@@ -146,11 +146,11 @@ const useStyles = makeStyles()((theme: Theme) => ({
     height: "100%",
     borderRadius: 0,
     backgroundColor: theme.palette.background.default,
-    [theme.breakpoints.down("md")]: {
+    [theme.breakpoints.down("lg")]: {
       // width: `calc(100% - ${notesPanelWidth}px)`,
       // left: `${notesPanelWidth}px`
     },
-    [theme.breakpoints.down("xs")]: {
+    [theme.breakpoints.down("sm")]: {
       display: "none",
       top: "0",
       left: "0",
@@ -181,7 +181,7 @@ interface Props {
 export function Home(props: Props) {
   const { classes } = useStyles();
   const theme = useTheme();
-  // const isMobile = useMediaQuery(theme.breakpoints.down("xs"));
+  // const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const [addNotebookDialogOpen, setAddNotebookDialogOpen] =
     useState<boolean>(false);
   const [addNotebookRepo, setAddNotebookRepo] = useState<string>("");

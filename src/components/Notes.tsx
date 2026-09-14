@@ -23,7 +23,7 @@ const useStyles = makeStyles()((theme: Theme) => ({
     "paddingLeft": theme.spacing(2),
     "paddingRight": theme.spacing(2),
     "paddingBottom": theme.spacing(12),
-    [theme.breakpoints.down("sm")]: {
+    [theme.breakpoints.down("md")]: {
       paddingLeft: theme.spacing(0.5),
       paddingRight: theme.spacing(0.5),
     },
@@ -32,7 +32,7 @@ const useStyles = makeStyles()((theme: Theme) => ({
       // width: `${NoteCardWidth + 2 * NoteCardMargin}px`,
       maxWidth: "100%",
       /*
-        [theme.breakpoints.down("xs")]: {
+        [theme.breakpoints.down("sm")]: {
           width: "100%",
         },
         */

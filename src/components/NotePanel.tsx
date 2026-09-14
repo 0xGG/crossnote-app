@@ -134,7 +134,7 @@ const useStyles = makeStyles()((theme: Theme) => ({
     padding: "4px 0 0",
     position: "relative",
     backgroundColor: "inherit",
-    [theme.breakpoints.down("sm")]: {
+    [theme.breakpoints.down("md")]: {
       padding: "0",
     },
   },
@@ -193,7 +193,7 @@ const useStyles = makeStyles()((theme: Theme) => ({
       height: "100%",
       padding: theme.spacing(0, 1),
       backgroundColor: `${theme.palette.background.paper} !important`,
-      [theme.breakpoints.down("sm")]: {
+      [theme.breakpoints.down("md")]: {
         padding: theme.spacing(1),
       },
     },
@@ -220,7 +220,7 @@ const useStyles = makeStyles()((theme: Theme) => ({
     "& .CodeMirror-line > span::-moz-selection": codeMirrorSelectCss,
     "& .CodeMirror-line > span > span::-moz-selection": codeMirrorSelectCss,
     /*
-      [theme.breakpoints.down("sm")]: {
+      [theme.breakpoints.down("md")]: {
         padding: theme.spacing(1),
       },
       */
@@ -252,7 +252,7 @@ const useStyles = makeStyles()((theme: Theme) => ({
     "padding": theme.spacing(1, 2),
     "zIndex": previewZIndex,
     "backgroundColor": `${theme.palette.background.paper} !important`,
-    [theme.breakpoints.down("sm")]: {
+    [theme.breakpoints.down("md")]: {
       padding: theme.spacing(1),
     },
     "& span.emoji": {

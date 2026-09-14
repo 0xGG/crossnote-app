@@ -36,7 +36,7 @@ const useStyles = makeStyles()((theme: Theme) => ({
     position: "relative",
     margin: `${theme.spacing(4)}px auto`,
     height: "fit-content",
-    [theme.breakpoints.down("sm")]: {
+    [theme.breakpoints.down("md")]: {
       top: "0",
       margin: "0 auto",
       height: "100%",

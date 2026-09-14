@@ -21,7 +21,7 @@ export default function LanguageSelectorDialog(props: Props) {
   const crossnoteContainer = CrossnoteContainer.useContainer();
   const settingsContainer = SettingsContainer.useContainer();
   const languages = ["en-US", "zh-CN", "zh-TW", "ja-JP"];
-  // const fullScreen = useMediaQuery(theme.breakpoints.down("xs"));
+  // const fullScreen = useMediaQuery(theme.breakpoints.down("sm"));
 
   const [open, setOpen] = useState<boolean>(
     crossnoteContainer.notebooks.length <= 1 &&
