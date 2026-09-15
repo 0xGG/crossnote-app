@@ -12,9 +12,7 @@ import {
   Tooltip,
   Typography,
 } from "@mui/material";
-import { Theme, darken } from "@mui/material/styles";
-import { makeStyles } from "tss-react/mui";
-import clsx from "clsx";
+import { darken, styled } from "@mui/material/styles";
 import {
   Editor as CodeMirrorEditor,
   EditorChangeLinkedList,
@@ -114,227 +112,238 @@ const codeMirrorSelectCss = {
   color: `#fff !important`,
 };
 
-const useStyles = makeStyles()((theme: Theme) => ({
-  row: {
-    display: "flex",
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  notePanel: {
-    "height": "100%",
-    "overflow": "hidden",
-    "backgroundColor": theme.palette.background.paper,
-    "& .reference-highlight": {
-      backgroundColor: `${theme.palette.warning.light} !important`,
-    },
-  },
-  topPanel: {
-    display: "flex",
-    flexDirection: "column",
-    padding: "4px 0 0",
-    position: "relative",
-    backgroundColor: "inherit",
-    [theme.breakpoints.down("md")]: {
-      padding: "0",
-    },
-  },
-  contentPanel: {
-    position: "relative",
-    height: `calc(100% - 48px - ${bottomPanelHeight}px)`,
-    display: "block",
-  },
-  editorContentPanel: {
-    display: "block",
-    overflow: "auto",
-    height: "100%",
-  },
-  tocPanel: {
-    height: "100%",
-    padding: "0",
-    overflow: "auto",
-    borderLeft: `1px solid ${theme.palette.divider}`,
-    paddingTop: "32px",
-  },
-  toc: {
-    "& .toc-item": {
-      cursor: "pointer",
-      // borderBottom: `1px solid ${theme.palette.divider}`,
-      color: theme.palette.text.primary,
-      padding: ".5em",
-    },
-    "& .toc-item:hover": {
-      backgroundColor: darken(theme.palette.background.paper, 0.06),
-    },
-    "& .emoji": {
-      height: "1rem",
-      top: "2px",
-      position: "relative",
-    },
-  },
-  editorWrapper: {
-    "position": "relative",
-    "flex": 1,
-    "overflow": "auto",
-    "backgroundColor": "inherit",
-    // "width": "800px",
-    // "margin": "0 auto",
-    // "maxWidth": "100%",
-    "& .CodeMirror-gutters": {
-      display: "none",
-    },
-    "& .CodeMirror-code": {
-      width: "100%",
-    },
-    "& .CodeMirror": {
-      // width: "800px",
-      width: "100%",
-      maxWidth: "100%",
-      margin: "0 auto",
-      height: "100%",
-      padding: theme.spacing(0, 1),
-      backgroundColor: `${theme.palette.background.paper} !important`,
-      [theme.breakpoints.down("md")]: {
-        padding: theme.spacing(1),
-      },
-    },
-    "& .CodeMirror-vscrollbar": {
-      // display: "none !important",
-    },
-    "& .CodeMirror-placeholder": {
-      color: `${theme.palette.text.disabled} !important`,
-    },
-    /*
-      CodeMirror selected text css:
-        .CodeMirror-selected { background: red; }
-        .CodeMirror-focused .CodeMirror-selected { background: blue; }
-        .CodeMirror-crosshair { cursor: crosshair; }
-        .CodeMirror-line::selection, .CodeMirror-line > span::selection, .CodeMirror-line > span > span::selection { background: #yellow; }
-        .CodeMirror-line::-moz-selection, .CodeMirror-line > span::-moz-selection, .CodeMirror-line > span > span::-moz-selection { background: #purple; }
-      */
-    "& .CodeMirror-selected": codeMirrorSelectCss,
-    "& .CodeMirror-focused .CodeMirror-selected": codeMirrorSelectCss,
-    "& .CodeMirror-line::selection": codeMirrorSelectCss,
-    "& .CodeMirror-line > span::selection": codeMirrorSelectCss,
-    "& .CodeMirror-line > span > span::selection ": codeMirrorSelectCss,
-    "& .CodeMirror-line::-moz-selection": codeMirrorSelectCss,
-    "& .CodeMirror-line > span::-moz-selection": codeMirrorSelectCss,
-    "& .CodeMirror-line > span > span::-moz-selection": codeMirrorSelectCss,
-    /*
-      [theme.breakpoints.down("md")]: {
-        padding: theme.spacing(1),
-      },
-      */
+const Row = styled(Box)({
+  display: "flex",
+  flexDirection: "row",
+  alignItems: "center",
+});
 
-    "& .CodeMirror span.emoji": {
-      height: "1.2em !important",
-      width: "1.2em !important",
-      top: ".2em !important",
-      position: "relative",
-    },
+const NotePanelRoot = styled(Box)(({ theme }) => ({
+  "height": "100%",
+  "overflow": "hidden",
+  "backgroundColor": theme.palette.background.paper,
+  "& .reference-highlight": {
+    backgroundColor: `${theme.palette.warning.light} !important`,
   },
-  editor: {
+}));
+
+const TopPanel = styled(Box)(({ theme }) => ({
+  display: "flex",
+  flexDirection: "column",
+  padding: "4px 0 0",
+  position: "relative",
+  backgroundColor: "inherit",
+  [theme.breakpoints.down("md")]: {
+    padding: "0",
+  },
+}));
+
+const ContentPanel = styled(Box)({
+  position: "relative",
+  height: `calc(100% - 48px - ${bottomPanelHeight}px)`,
+  display: "block",
+});
+
+const EditorContentPanel = styled(Box)({
+  display: "block",
+  overflow: "auto",
+  height: "100%",
+});
+
+const TocPanel = styled(Box)(({ theme }) => ({
+  height: "100%",
+  padding: "0",
+  overflow: "auto",
+  borderLeft: `1px solid ${theme.palette.divider}`,
+  paddingTop: "32px",
+}));
+
+const Toc = styled("div")(({ theme }) => ({
+  "& .toc-item": {
+    cursor: "pointer",
+    // borderBottom: `1px solid ${theme.palette.divider}`,
+    color: theme.palette.text.primary,
+    padding: ".5em",
+  },
+  "& .toc-item:hover": {
+    backgroundColor: darken(theme.palette.background.paper, 0.06),
+  },
+  "& .emoji": {
+    height: "1rem",
+    top: "2px",
+    position: "relative",
+  },
+}));
+
+// Carried over verbatim: R3 replaces CodeMirror 5, and none of these
+// class names survive that, so they all get rewritten then anyway.
+const EditorWrapper = styled(Box)(({ theme }) => ({
+  "position": "relative",
+  "flex": 1,
+  "overflow": "auto",
+  "backgroundColor": "inherit",
+  // "width": "800px",
+  // "margin": "0 auto",
+  // "maxWidth": "100%",
+  "& .CodeMirror-gutters": {
+    display: "none",
+  },
+  "& .CodeMirror-code": {
     width: "100%",
-    height: "100%",
-    backgroundColor: "inherit",
-    border: "none",
   },
-  preview: {
-    "position": "relative",
-    "left": "0",
-    "top": "0",
+  "& .CodeMirror": {
     // width: "800px",
-    "width": "100%",
-    "maxWidth": "100%",
-    "margin": "0 auto",
-    "height": "100%",
-    "border": "none",
-    "overflow": "auto !important",
-    "padding": theme.spacing(1, 2),
-    "zIndex": previewZIndex,
-    "backgroundColor": `${theme.palette.background.paper} !important`,
+    width: "100%",
+    maxWidth: "100%",
+    margin: "0 auto",
+    height: "100%",
+    padding: theme.spacing(0, 1),
+    backgroundColor: `${theme.palette.background.paper} !important`,
     [theme.breakpoints.down("md")]: {
       padding: theme.spacing(1),
     },
-    "& span.emoji": {
-      height: "1.2em !important",
-      width: "1.2em !important",
-      top: ".2em !important",
-      position: "relative",
+  },
+  "& .CodeMirror-vscrollbar": {
+    // display: "none !important",
+  },
+  "& .CodeMirror-placeholder": {
+    color: `${theme.palette.text.disabled} !important`,
+  },
+  /*
+    CodeMirror selected text css:
+      .CodeMirror-selected { background: red; }
+      .CodeMirror-focused .CodeMirror-selected { background: blue; }
+      .CodeMirror-crosshair { cursor: crosshair; }
+      .CodeMirror-line::selection, .CodeMirror-line > span::selection, .CodeMirror-line > span > span::selection { background: #yellow; }
+      .CodeMirror-line::-moz-selection, .CodeMirror-line > span::-moz-selection, .CodeMirror-line > span > span::-moz-selection { background: #purple; }
+    */
+  "& .CodeMirror-selected": codeMirrorSelectCss,
+  "& .CodeMirror-focused .CodeMirror-selected": codeMirrorSelectCss,
+  "& .CodeMirror-line::selection": codeMirrorSelectCss,
+  "& .CodeMirror-line > span::selection": codeMirrorSelectCss,
+  "& .CodeMirror-line > span > span::selection ": codeMirrorSelectCss,
+  "& .CodeMirror-line::-moz-selection": codeMirrorSelectCss,
+  "& .CodeMirror-line > span::-moz-selection": codeMirrorSelectCss,
+  "& .CodeMirror-line > span > span::-moz-selection": codeMirrorSelectCss,
+  /*
+    [theme.breakpoints.down("md")]: {
+      padding: theme.spacing(1),
     },
-  },
-  tocButtonGroup: {
-    position: "absolute",
-    top: "60px",
-    right: "8px",
-    zIndex: previewZIndex + 1,
-  },
-  presentation: {
-    padding: "0 !important",
-    overflow: "hidden !important",
-  },
-  editorPresentation: {
-    height: "100%",
-  },
-  controlBtn: {
-    padding: theme.spacing(0.5, 0),
-    color: theme.palette.text.secondary,
-  },
-  controlBtnSelected: {
-    color: theme.palette.primary.main,
-  },
-  controlBtnSelectedSecondary: {
-    color: theme.palette.secondary.main,
-  },
-  // math
-  floatWin: {
-    position: "fixed",
-    zIndex: 100,
-    background: theme.palette.background.paper,
-    borderRadius: "5px",
-    overflow: "hidden",
-    minWidth: "200px",
-    maxWidth: "70%",
-  },
-  floatWinHidden: {
-    display: "none",
-  },
-  floatWinTitle: {
-    display: "flex",
-    alignItems: "center",
-    background: "#579",
-    color: "#eee",
-  },
-  floatWinContent: {
-    maxHeight: "80vh",
-    overflow: "auto",
-    padding: "10px 20px",
-  },
-  floatWinClose: {
-    color: "#eee",
-  },
-  bottomPanel: {
-    position: "absolute",
-    bottom: "0",
-    width: "100%",
-    padding: theme.spacing(0.5, 1),
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between",
-    maxHeight: `${bottomPanelHeight}px`,
-    backgroundColor: theme.palette.primary.main,
-    color: theme.palette.getContrastText(theme.palette.primary.main),
-    zIndex: previewZIndex + 1,
-  },
-  filePath: {
-    wordBreak: "break-all",
-  },
-  cursorPositionInfo: {
-    // position: "absolute",
-    // right: "16px",
-    // bottom: "16px",
-    zIndex: 150,
+    */
+
+  "& .CodeMirror span.emoji": {
+    height: "1.2em !important",
+    width: "1.2em !important",
+    top: ".2em !important",
+    position: "relative",
   },
 }));
+
+const EditorTextArea = styled("textarea")({
+  width: "100%",
+  height: "100%",
+  backgroundColor: "inherit",
+  border: "none",
+});
+
+const Preview = styled("div")(({ theme }) => ({
+  "position": "relative",
+  "left": "0",
+  "top": "0",
+  // width: "800px",
+  "width": "100%",
+  "maxWidth": "100%",
+  "margin": "0 auto",
+  "height": "100%",
+  "border": "none",
+  "overflow": "auto !important",
+  "padding": theme.spacing(1, 2),
+  "zIndex": previewZIndex,
+  "backgroundColor": `${theme.palette.background.paper} !important`,
+  [theme.breakpoints.down("md")]: {
+    padding: theme.spacing(1),
+  },
+  "& span.emoji": {
+    height: "1.2em !important",
+    width: "1.2em !important",
+    top: ".2em !important",
+    position: "relative",
+  },
+}));
+
+const TocButtonGroup = styled(ButtonGroup)({
+  position: "absolute",
+  top: "60px",
+  right: "8px",
+  zIndex: previewZIndex + 1,
+});
+
+const ControlButton = styled(Button)(({ theme }) => ({
+  padding: theme.spacing(0.5, 0),
+  color: theme.palette.text.secondary,
+}));
+
+const FloatWin = styled(Card)(({ theme }) => ({
+  position: "fixed",
+  zIndex: 100,
+  background: theme.palette.background.paper,
+  borderRadius: "5px",
+  overflow: "hidden",
+  minWidth: "200px",
+  maxWidth: "70%",
+}));
+
+const FloatWinTitle = styled(Box)({
+  display: "flex",
+  alignItems: "center",
+  background: "#579",
+  color: "#eee",
+});
+
+const FloatWinContent = styled(Box)({
+  maxHeight: "80vh",
+  overflow: "auto",
+  padding: "10px 20px",
+});
+
+const FloatWinClose = styled(IconButton)({
+  color: "#eee",
+});
+
+const BottomPanel = styled(Box)(({ theme }) => ({
+  position: "absolute",
+  bottom: "0",
+  width: "100%",
+  padding: theme.spacing(0.5, 1),
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "space-between",
+  maxHeight: `${bottomPanelHeight}px`,
+  backgroundColor: theme.palette.primary.main,
+  color: theme.palette.getContrastText(theme.palette.primary.main),
+  zIndex: previewZIndex + 1,
+}));
+
+const FilePath = styled(Typography)({
+  wordBreak: "break-all",
+});
+
+const CursorPositionInfo = styled(Box)({
+  // position: "absolute",
+  // right: "16px",
+  // bottom: "16px",
+  zIndex: 150,
+});
+
+// The three conditional rules; sx keeps the condition at the call site.
+const controlBtnSelectedSx = { color: "primary.main" } as const;
+
+const presentationSx = {
+  padding: "0 !important",
+  overflow: "hidden !important",
+} as const;
+
+const editorPresentationSx = { height: "100%" } as const;
 
 interface Props {
   notebook: Notebook;
@@ -343,7 +352,6 @@ interface Props {
   reference?: Reference;
 }
 export default function NotePanel(props: Props) {
-  const { classes } = useStyles();
   const tabNode = props.tabNode;
   const crossnoteContainer = CrossnoteContainer.useContainer();
   const settingsContainer = SettingsContainer.useContainer();
@@ -1441,15 +1449,15 @@ export default function NotePanel(props: Props) {
   }
 
   return (
-    <Box className={clsx(classes.notePanel)}>
-      <Box
-        className={clsx(classes.topPanel, "editor-toolbar")}
+    <NotePanelRoot>
+      <TopPanel
+        className={"editor-toolbar"}
         style={{
           backgroundColor:
             settingsContainer.theme.name === "light" ? "#fff" : "inherit",
         }}
       >
-        <Box className={clsx(classes.row)} style={{ width: "100%" }}>
+        <Row style={{ width: "100%" }}>
           <Box>
             <IconButton
               aria-label={t("general/change-note-icon")}
@@ -1483,50 +1491,50 @@ export default function NotePanel(props: Props) {
             size="small"
           >
             <Tooltip title={t("editor/note-control/preview")}>
-              <Button
+              <ControlButton
                 aria-label={t("editor/note-control/preview")}
-                className={clsx(
-                  classes.controlBtn,
-                  editorMode === EditorMode.Preview &&
-                    classes.controlBtnSelected,
-                )}
+                sx={
+                  editorMode === EditorMode.Preview
+                    ? controlBtnSelectedSx
+                    : undefined
+                }
                 color={
                   editorMode === EditorMode.Preview ? "primary" : "inherit"
                 }
                 onClick={() => setEditorMode(EditorMode.Preview)}
               >
                 <FilePresentationBox></FilePresentationBox>
-              </Button>
+              </ControlButton>
             </Tooltip>
             <Tooltip title={t("general/echomd")}>
-              <Button
+              <ControlButton
                 aria-label={t("general/echomd")}
-                className={clsx(
-                  classes.controlBtn,
-                  editorMode === EditorMode.EchoMD &&
-                    classes.controlBtnSelected,
-                )}
+                sx={
+                  editorMode === EditorMode.EchoMD
+                    ? controlBtnSelectedSx
+                    : undefined
+                }
                 color={editorMode === EditorMode.EchoMD ? "primary" : "inherit"}
                 onClick={() => setEditorMode(EditorMode.EchoMD)}
               >
                 <Pencil></Pencil>
-              </Button>
+              </ControlButton>
             </Tooltip>
             <Tooltip title={t("editor/note-control/source-code")}>
-              <Button
+              <ControlButton
                 aria-label={t("editor/note-control/source-code")}
-                className={clsx(
-                  classes.controlBtn,
-                  editorMode === EditorMode.SourceCode &&
-                    classes.controlBtnSelected,
-                )}
+                sx={
+                  editorMode === EditorMode.SourceCode
+                    ? controlBtnSelectedSx
+                    : undefined
+                }
                 color={
                   editorMode === EditorMode.SourceCode ? "primary" : "inherit"
                 }
                 onClick={() => setEditorMode(EditorMode.SourceCode)}
               >
                 <CodeTags></CodeTags>
-              </Button>
+              </ControlButton>
             </Tooltip>
           </ButtonGroup>
           <ButtonGroup
@@ -1535,38 +1543,33 @@ export default function NotePanel(props: Props) {
             aria-label="actions"
             size="small"
           >
-            <Button
+            <ControlButton
               aria-label={t("general/note-menu")}
-              className={clsx(classes.controlBtn)}
               onClick={(event) => setNotePopoverElement(event.currentTarget)}
             >
               <DotsVertical></DotsVertical>
-            </Button>
+            </ControlButton>
           </ButtonGroup>
           {!(previewIsPresentation && editorMode === EditorMode.Preview) && (
-            <ButtonGroup
+            <TocButtonGroup
               variant="text"
               color="inherit"
               aria-label="table of contents"
               size="small"
-              className={clsx(classes.tocButtonGroup)}
             >
-              <Button
+              <ControlButton
                 aria-label={t("general/table-of-contents")}
-                className={clsx(
-                  classes.controlBtn,
-                  tocEnabled ? classes.controlBtnSelected : null,
-                )}
+                sx={tocEnabled ? controlBtnSelectedSx : undefined}
                 onClick={() => setTocEnabled(!tocEnabled)}
               >
                 <TableOfContents></TableOfContents>
-              </Button>
-            </ButtonGroup>
+              </ControlButton>
+            </TocButtonGroup>
           )}
-        </Box>
+        </Row>
         <Divider></Divider>
-      </Box>
-      <Box className={clsx(classes.contentPanel)}>
+      </TopPanel>
+      <ContentPanel>
         <SplitPane
           defaultSize={tocPanelWidth}
           minSize={tocPanelMinWidth}
@@ -1594,31 +1597,27 @@ export default function NotePanel(props: Props) {
             localStorage.setItem("toc-panel-width", `${tocPanelWidth}`);
           }}
         >
-          <Box className={clsx(classes.editorContentPanel)}>
-            <Box
-              className={clsx(
-                classes.editorWrapper,
+          <EditorContentPanel>
+            <EditorWrapper
+              sx={
                 previewIsPresentation && editorMode === EditorMode.Preview
-                  ? classes.editorPresentation
-                  : null,
-              )}
+                  ? editorPresentationSx
+                  : undefined
+              }
             >
-              <textarea
-                className={clsx(classes.editor, "editor-textarea")}
+              <EditorTextArea
+                className={"editor-textarea"}
                 placeholder={t("editor/placeholder")}
                 ref={textAreaElement}
-              ></textarea>
+              ></EditorTextArea>
               {editorMode === EditorMode.Preview && editor ? (
-                <div
-                  className={clsx(
-                    classes.preview,
-                    "preview",
-                    previewIsPresentation ? classes.presentation : null,
-                  )}
+                <Preview
+                  className={"preview"}
+                  sx={previewIsPresentation ? presentationSx : undefined}
                   ref={previewElement}
-                ></div>
+                ></Preview>
               ) : null}
-            </Box>
+            </EditorWrapper>
             {!(editorMode === EditorMode.Preview && previewIsPresentation) && (
               <React.Fragment>
                 <Box style={{ marginTop: "32px" }}></Box>
@@ -1630,9 +1629,8 @@ export default function NotePanel(props: Props) {
                 ></NotesPanel>
               </React.Fragment>
             )}
-          </Box>
-          <Box
-            className={clsx(classes.tocPanel)}
+          </EditorContentPanel>
+          <TocPanel
             style={{
               display:
                 tocEnabled &&
@@ -1641,29 +1639,29 @@ export default function NotePanel(props: Props) {
                   : "none",
             }}
           >
-            <div className={clsx(classes.toc)} ref={tocElement}></div>
-          </Box>
+            <Toc ref={tocElement}></Toc>
+          </TocPanel>
         </SplitPane>
-      </Box>
-      <Box className={clsx(classes.bottomPanel, "editor-bottom-panel")}>
-        <Box className={clsx(classes.row)}>
-          <Typography variant={"caption"} className={clsx(classes.filePath)}>
+      </ContentPanel>
+      <BottomPanel className={"editor-bottom-panel"}>
+        <Row>
+          <FilePath variant={"caption"}>
             {props.notebook.name +
               ": " +
               note.filePath +
               (gitStatus ? " - " + t(`git/status/${gitStatus}`) : "")}
-          </Typography>
-        </Box>
+          </FilePath>
+        </Row>
         {editorMode !== EditorMode.Preview && (
-          <Box className={clsx(classes.cursorPositionInfo)}>
+          <CursorPositionInfo>
             <Typography variant={"caption"}>
               {`${t("editor/ln")} ${cursorPosition.line + 1}, ${t(
                 "editor/col",
               )} ${cursorPosition.ch}`}
             </Typography>
-          </Box>
+          </CursorPositionInfo>
         )}
-      </Box>
+      </BottomPanel>
 
       <EditImageDialog
         open={editImageDialogOpen}
@@ -1688,25 +1686,25 @@ export default function NotePanel(props: Props) {
         onClose={() => setIconPopoverElement(null)}
       ></IconPopover>
 
-      <Card
+      <FloatWin
         id="math-preview"
-        className={clsx(classes.floatWin, "float-win", "float-win-hidden")}
+        className={"float-win float-win-hidden"}
         ref={mathPreviewElement}
       >
-        <Box className={clsx(classes.floatWinTitle, "float-win-title")}>
-          <IconButton
+        <FloatWinTitle className={"float-win-title"}>
+          <FloatWinClose
             aria-label={t("general/close")}
-            className={clsx(classes.floatWinClose, "float-win-close")}
+            className={"float-win-close"}
           >
             <Close></Close>
-          </IconButton>
+          </FloatWinClose>
           <Typography>{t("general/math-preview")}</Typography>
-        </Box>
-        <Box
-          className={clsx(classes.floatWinContent, "float-win-content")}
+        </FloatWinTitle>
+        <FloatWinContent
+          className={"float-win-content"}
           id="math-preview-content"
-        ></Box>
-      </Card>
-    </Box>
+        ></FloatWinContent>
+      </FloatWin>
+    </NotePanelRoot>
   );
 }
