@@ -1,8 +1,6 @@
 import { Box, Chip, IconButton, Tooltip, Typography } from "@mui/material";
-import { Theme, darken } from "@mui/material/styles";
-import { SimpleTreeView, TreeItem } from "@mui/x-tree-view";
-import { makeStyles } from "tss-react/mui";
-import clsx from "clsx";
+import { darken, styled } from "@mui/material/styles";
+import { SimpleTreeView, TreeItem, treeItemClasses } from "@mui/x-tree-view";
 import { ChevronDown, ChevronRight } from "mdi-material-ui";
 import Noty from "noty";
 import React, { useCallback, useEffect, useState } from "react";
@@ -22,57 +20,55 @@ import ConfigureNotebookDialog from "./ConfigureNotebookDialog";
 import { Emoji } from "./EmojiWrapper";
 import PushNotebookDialog from "./PushNotebookDialog";
 
-const useStyles = makeStyles<void, "treeItemContent">()(
-  (theme: Theme, _params, classes) => ({
-    treeItemRoot: {
-      paddingLeft: "4px",
-      // color: theme.palette.text.secondary,
-      [`&:focus > .${classes.treeItemContent}`]: {
-        color: theme.palette.text.primary,
-        backgroundColor: darken(theme.palette.background.paper, 0.05),
-      },
+// Every tree item here passed the same four slot classes, so those four rules
+// move onto one styled component and address the slots by their own names.
+const NotebookTreeItem = styled(TreeItem)(({ theme }) => ({
+  paddingLeft: "4px",
+  // color: theme.palette.text.secondary,
+  [`&:focus > .${treeItemClasses.content}`]: {
+    color: theme.palette.text.primary,
+    backgroundColor: darken(theme.palette.background.paper, 0.05),
+  },
+  [`& > .${treeItemClasses.content}`]: {
+    // v4 carried the indentation on each group's margin, which this file
+    // zeroed out so every row sits flush in the 200px drawer. v9 moved the
+    // indentation, the padding and a gap onto the content element itself,
+    // which costs the label 33px and clips whatever sits at its end.
+    "padding": 0,
+    "gap": 0,
+    "cursor": "default",
+    "color": theme.palette.text.primary,
+    "userSelect": "none",
+    "fontWeight": theme.typography.fontWeightMedium,
+    "&[data-expanded]": {
+      fontWeight: theme.typography.fontWeightRegular,
     },
-    treeItemContent: {
-      // v4 carried the indentation on each group's margin, which this file
-      // zeroed out so every row sits flush in the 200px drawer. v9 moved the
-      // indentation, the padding and a gap onto the content element itself,
-      // which costs the label 33px and clips whatever sits at its end.
-      "padding": 0,
-      "gap": 0,
-      "cursor": "default",
-      "color": theme.palette.text.primary,
-      "userSelect": "none",
-      "fontWeight": theme.typography.fontWeightMedium as any,
-      "&[data-expanded]": {
-        fontWeight: theme.typography.fontWeightRegular as any,
-      },
-    },
-    treeItemGroup: {
-      marginLeft: 0,
-    },
-    treeItemLabel: {
-      fontWeight: "inherit",
-      color: "inherit",
-      backgroundColor: "transparent !important",
-    },
-    treeItemLabelRoot: {
-      display: "flex",
-      alignItems: "center",
-      padding: theme.spacing(1, 0),
-    },
-    treeItemLabelText: {
-      paddingLeft: "12px",
-      flexGrow: 1,
-    },
-    disabled: {
-      color: theme.palette.text.disabled,
-    },
-    emojiIcon: {
-      top: "2px",
-      position: "relative",
-    },
-  }),
-);
+  },
+  [`& > .${treeItemClasses.groupTransition}`]: {
+    marginLeft: 0,
+  },
+  [`& > .${treeItemClasses.content} > .${treeItemClasses.label}`]: {
+    fontWeight: "inherit",
+    color: "inherit",
+    backgroundColor: "transparent !important",
+  },
+}));
+
+const LabelRoot = styled(Box)(({ theme }) => ({
+  display: "flex",
+  alignItems: "center",
+  padding: theme.spacing(1, 0),
+}));
+
+const LabelText = styled(Typography)({
+  paddingLeft: "12px",
+  flexGrow: 1,
+});
+
+const EmojiIcon = styled("span")({
+  top: "2px",
+  position: "relative",
+});
 
 interface Props {
   notebook: Notebook;
@@ -111,7 +107,6 @@ function EndIcon() {
 }
 
 export default function NotebookTreeView(props: Props) {
-  const { classes } = useStyles();
   const [expanded, setExpanded] = useState<string[]>([]);
   const [notebookConfigurationDialogOpen, setNotebookConfigurationDialogOpen] =
     useState<boolean>(false);
@@ -256,16 +251,10 @@ export default function NotebookTreeView(props: Props) {
         onExpandedItemsChange={handleChange}
         style={{ width: "100%" }}
       >
-        <TreeItem
+        <NotebookTreeItem
           itemId={"notes"}
-          classes={{
-            root: classes.treeItemRoot,
-            content: classes.treeItemContent,
-            groupTransition: classes.treeItemGroup,
-            label: classes.treeItemLabel,
-          }}
           label={
-            <Box
+            <LabelRoot
               onClick={() => {
                 props.notebook
                   .refreshNotesIfNotLoaded({
@@ -282,19 +271,13 @@ export default function NotebookTreeView(props: Props) {
                     console.error(error);
                   });
               }}
-              className={clsx(classes.treeItemLabelRoot)}
             >
-              <Typography
+              <LabelText
                 color={"inherit"}
                 variant={"body1"}
-                className={clsx(classes.treeItemLabelText)}
                 style={{ paddingLeft: "4px" }}
               >
-                <span
-                  role="img"
-                  className={clsx(classes.emojiIcon)}
-                  style={{ paddingRight: "8px" }}
-                >
+                <EmojiIcon role="img" style={{ paddingRight: "8px" }}>
                   {props.notebook.isLocal ? (
                     <Emoji emoji={":card_index_dividers:"} size={16}></Emoji>
                   ) : props.notebook.localSha === props.notebook.remoteSha ? (
@@ -302,51 +285,32 @@ export default function NotebookTreeView(props: Props) {
                   ) : (
                     <Emoji emoji={":bell:"} size={16}></Emoji>
                   )}
-                </span>
+                </EmojiIcon>
                 {props.notebook.name}
-              </Typography>
-            </Box>
+              </LabelText>
+            </LabelRoot>
           }
         >
-          <TreeItem
+          <NotebookTreeItem
             itemId={"today-notes"}
-            classes={{
-              root: classes.treeItemRoot,
-              content: classes.treeItemContent,
-              groupTransition: classes.treeItemGroup,
-              label: classes.treeItemLabel,
-            }}
             label={
-              <Box
+              <LabelRoot
                 onClick={() => {
                   crossnoteContainer.openTodayNote(props.notebook);
                   props.onCloseDrawer();
                 }}
-                className={clsx(classes.treeItemLabelRoot)}
               >
-                <span
-                  role="img"
-                  className={clsx(classes.emojiIcon)}
-                  aria-label="today-notes"
-                >
+                <EmojiIcon role="img" aria-label="today-notes">
                   <Emoji emoji={":calendar:"} size={16}></Emoji>
-                </span>
-                <Typography className={clsx(classes.treeItemLabelText)}>
-                  {t("general/today")}
-                </Typography>
-              </Box>
+                </EmojiIcon>
+                <LabelText>{t("general/today")}</LabelText>
+              </LabelRoot>
             }
-          ></TreeItem>
-          <TreeItem
+          ></NotebookTreeItem>
+          <NotebookTreeItem
             itemId={"graph-view"}
-            classes={{
-              root: classes.treeItemRoot,
-              content: classes.treeItemContent,
-              groupTransition: classes.treeItemGroup,
-              label: classes.treeItemLabel,
-            }}
             label={
-              <Box
+              <LabelRoot
                 onClick={() => {
                   crossnoteContainer.addTabNode({
                     type: "tab",
@@ -362,31 +326,18 @@ export default function NotebookTreeView(props: Props) {
                   });
                   props.onCloseDrawer();
                 }}
-                className={clsx(classes.treeItemLabelRoot)}
               >
-                <span
-                  role="img"
-                  className={clsx(classes.emojiIcon)}
-                  aria-label="todo-notes"
-                >
+                <EmojiIcon role="img" aria-label="todo-notes">
                   <Emoji emoji={":spider_web:"} size={16}></Emoji>
-                </span>
-                <Typography className={clsx(classes.treeItemLabelText)}>
-                  {t("general/graph-view")}
-                </Typography>
-              </Box>
+                </EmojiIcon>
+                <LabelText>{t("general/graph-view")}</LabelText>
+              </LabelRoot>
             }
-          ></TreeItem>
-          <TreeItem
+          ></NotebookTreeItem>
+          <NotebookTreeItem
             itemId={"all-notes"}
-            classes={{
-              root: classes.treeItemRoot,
-              content: classes.treeItemContent,
-              groupTransition: classes.treeItemGroup,
-              label: classes.treeItemLabel,
-            }}
             label={
-              <Box
+              <LabelRoot
                 onClick={() => {
                   crossnoteContainer.addTabNode({
                     type: "tab",
@@ -402,37 +353,24 @@ export default function NotebookTreeView(props: Props) {
                   });
                   props.onCloseDrawer();
                 }}
-                className={clsx(classes.treeItemLabelRoot)}
               >
-                <span
-                  role="img"
-                  className={clsx(classes.emojiIcon)}
-                  aria-label="Notes"
-                >
+                <EmojiIcon role="img" aria-label="Notes">
                   <Emoji
                     emoji={":notebook_with_decorative_cover:"}
                     size={16}
                   ></Emoji>
-                </span>
-                <Typography className={clsx(classes.treeItemLabelText)}>
-                  {t("general/notes")}
-                </Typography>
-              </Box>
+                </EmojiIcon>
+                <LabelText>{t("general/notes")}</LabelText>
+              </LabelRoot>
             }
-          ></TreeItem>
+          ></NotebookTreeItem>
           {Object.values(favoritedNotes).map((note) => {
             return (
-              <TreeItem
+              <NotebookTreeItem
                 key={`${note.notebookPath}/${note.filePath}`}
                 itemId={`${note.notebookPath}/${note.filePath}`}
-                classes={{
-                  root: classes.treeItemRoot,
-                  content: classes.treeItemContent,
-                  groupTransition: classes.treeItemGroup,
-                  label: classes.treeItemLabel,
-                }}
                 label={
-                  <Box
+                  <LabelRoot
                     onClick={() => {
                       crossnoteContainer.addTabNode({
                         type: "tab",
@@ -448,18 +386,11 @@ export default function NotebookTreeView(props: Props) {
                       });
                       props.onCloseDrawer();
                     }}
-                    className={clsx(classes.treeItemLabelRoot)}
                   >
-                    <span
-                      role="img"
-                      className={clsx(classes.emojiIcon)}
-                      aria-label="quick-access"
-                    >
+                    <EmojiIcon role="img" aria-label="quick-access">
                       <Emoji emoji={getNoteIcon(note)} size={16}></Emoji>
-                    </span>
-                    <Typography className={clsx(classes.treeItemLabelText)}>
-                      {note.title}
-                    </Typography>
+                    </EmojiIcon>
+                    <LabelText>{note.title}</LabelText>
                     <Chip
                       size={"small"}
                       variant={"outlined"}
@@ -468,113 +399,66 @@ export default function NotebookTreeView(props: Props) {
                         note.filePath,
                       )}
                     ></Chip>
-                  </Box>
+                  </LabelRoot>
                 }
-              ></TreeItem>
+              ></NotebookTreeItem>
             );
           })}
-          <TreeItem
+          <NotebookTreeItem
             itemId={"settings"}
-            classes={{
-              root: classes.treeItemRoot,
-              content: classes.treeItemContent,
-              groupTransition: classes.treeItemGroup,
-              label: classes.treeItemLabel,
-            }}
             label={
-              <Box
+              <LabelRoot
                 onClick={() => setNotebookConfigurationDialogOpen(true)}
-                className={clsx(classes.treeItemLabelRoot)}
               >
-                <span
-                  role="img"
-                  className={clsx(classes.emojiIcon)}
-                  aria-label={t("general/Settings")}
-                >
+                <EmojiIcon role="img" aria-label={t("general/Settings")}>
                   <Emoji emoji={":gear:"} size={16}></Emoji>
-                </span>
-                <Typography className={clsx(classes.treeItemLabelText)}>
-                  {t("general/Settings")}
-                </Typography>
-              </Box>
+                </EmojiIcon>
+                <LabelText>{t("general/Settings")}</LabelText>
+              </LabelRoot>
             }
-          ></TreeItem>
+          ></NotebookTreeItem>
           {props.notebook.gitURL && (
-            <TreeItem
+            <NotebookTreeItem
               itemId={"upload"}
-              classes={{
-                root: classes.treeItemRoot,
-                content: classes.treeItemContent,
-                groupTransition: classes.treeItemGroup,
-                label: classes.treeItemLabel,
-              }}
               label={
-                <Box
-                  onClick={() => setPushNotebookDialogOpen(true)}
-                  className={clsx(classes.treeItemLabelRoot)}
-                >
-                  <span
-                    role="img"
-                    className={clsx(classes.emojiIcon)}
-                    aria-label={t("general/Upload")}
-                  >
+                <LabelRoot onClick={() => setPushNotebookDialogOpen(true)}>
+                  <EmojiIcon role="img" aria-label={t("general/Upload")}>
                     <Emoji emoji={":outbox_tray:"} size={16}></Emoji>
-                  </span>
+                  </EmojiIcon>
                   <Tooltip title={t("general/upload-push")}>
-                    <Typography className={clsx(classes.treeItemLabelText)}>
-                      {t("general/Upload")}
-                    </Typography>
+                    <LabelText>{t("general/Upload")}</LabelText>
                   </Tooltip>
-                </Box>
+                </LabelRoot>
               }
-            ></TreeItem>
+            ></NotebookTreeItem>
           )}
           {props.notebook.isLocal && (
-            <TreeItem
+            <NotebookTreeItem
               itemId={"reload"}
-              classes={{
-                root: classes.treeItemRoot,
-                content: classes.treeItemContent,
-                groupTransition: classes.treeItemGroup,
-                label: classes.treeItemLabel,
-              }}
               label={
-                <Box
+                <LabelRoot
                   onClick={() =>
                     crossnoteContainer.refreshNotebook(props.notebook)
                   }
-                  className={clsx(classes.treeItemLabelRoot)}
                 >
-                  <span
-                    role="img"
-                    className={clsx(classes.emojiIcon)}
-                    aria-label={t("general/refresh")}
-                  >
+                  <EmojiIcon role="img" aria-label={t("general/refresh")}>
                     <Emoji
                       emoji={":arrows_counterclockwise:"}
                       size={16}
                     ></Emoji>
-                  </span>
+                  </EmojiIcon>
                   <Tooltip title={t("general/refresh")}>
-                    <Typography className={clsx(classes.treeItemLabelText)}>
-                      {t("general/refresh")}
-                    </Typography>
+                    <LabelText>{t("general/refresh")}</LabelText>
                   </Tooltip>
-                </Box>
+                </LabelRoot>
               }
-            ></TreeItem>
+            ></NotebookTreeItem>
           )}
           {props.notebook.gitURL && (
-            <TreeItem
+            <NotebookTreeItem
               itemId={"download"}
-              classes={{
-                root: classes.treeItemRoot,
-                content: classes.treeItemContent,
-                groupTransition: classes.treeItemGroup,
-                label: classes.treeItemLabel,
-              }}
               label={
-                <Box
+                <LabelRoot
                   onClick={() => {
                     if (
                       crossnoteContainer.isPullingNotebook ||
@@ -615,40 +499,27 @@ export default function NotebookTreeView(props: Props) {
                         }).show();
                       });
                   }}
-                  className={clsx(
-                    classes.treeItemLabelRoot,
+                  sx={
                     crossnoteContainer.isPullingNotebook ||
-                      crossnoteContainer.isPushingNotebook
-                      ? classes.disabled
-                      : null,
-                  )}
+                    crossnoteContainer.isPushingNotebook
+                      ? { color: "text.disabled" }
+                      : undefined
+                  }
                 >
-                  <span
-                    role="img"
-                    className={clsx(classes.emojiIcon)}
-                    aria-label={t("general/Download")}
-                  >
+                  <EmojiIcon role="img" aria-label={t("general/Download")}>
                     <Emoji emoji={":inbox_tray:"} size={16}></Emoji>
-                  </span>
+                  </EmojiIcon>
                   <Tooltip title={t("general/download-pull")}>
-                    <Typography className={clsx(classes.treeItemLabelText)}>
-                      {t("general/Download")}
-                    </Typography>
+                    <LabelText>{t("general/Download")}</LabelText>
                   </Tooltip>
-                </Box>
+                </LabelRoot>
               }
-            ></TreeItem>
+            ></NotebookTreeItem>
           )}
-          {/*<TreeItem
+          {/*<NotebookTreeItem
           itemId={"conflicted-notes"}
-          classes={{
-            root: classes.treeItemRoot,
-            content: classes.treeItemContent,
-            groupTransition: classes.treeItemGroup,
-            label: classes.treeItemLabel,
-          }}
           label={
-            <Box
+            <LabelRoot
               onClick={() => {
                 crossnoteContainer.addTabNode({
                   type: "tab",
@@ -661,19 +532,18 @@ export default function NotebookTreeView(props: Props) {
                   },
                 });
               }}
-              className={clsx(classes.treeItemLabelRoot)}
             >
               <span role="img" aria-label="conflicted-notes">
                 {"⚠️"}
               </span>
-              <Typography className={clsx(classes.treeItemLabelText)}>
+              <LabelText>
                 {t("general/conflicted")}
-              </Typography>
-            </Box>
+              </LabelText>
+            </LabelRoot>
           }
-        ></TreeItem>
+        ></NotebookTreeItem>
         */}
-        </TreeItem>
+        </NotebookTreeItem>
       </SimpleTreeView>
       <ConfigureNotebookDialog
         open={notebookConfigurationDialogOpen}
