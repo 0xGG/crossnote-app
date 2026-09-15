@@ -12,9 +12,7 @@ import {
   Tooltip,
   Typography,
 } from "@mui/material";
-import { Theme, useTheme } from "@mui/material/styles";
-import { makeStyles } from "tss-react/mui";
-import clsx from "clsx";
+import { styled, useTheme } from "@mui/material/styles";
 import { TabNode } from "flexlayout-react";
 import {
   ContentCopy,
@@ -43,16 +41,11 @@ import ChangeFilePathDialog from "./ChangeFilePathDialog";
 import { DeleteNoteDialog } from "./DeleteNoteDialog";
 import { NoteAliasPopover } from "./NoteAliasPopover";
 
-const useStyles = makeStyles()((theme: Theme) => ({
-  secondaryColor: {
-    color: theme.palette.secondary.main,
-  },
-  row: {
-    display: "flex",
-    flexDirection: "row",
-    alignItems: "center",
-  },
-}));
+const Row = styled(Box)({
+  display: "flex",
+  flexDirection: "row",
+  alignItems: "center",
+});
 
 interface Props {
   tabNode: TabNode;
@@ -62,7 +55,6 @@ interface Props {
 }
 
 export default function NotePopover(props: Props) {
-  const { classes } = useStyles();
   const note = props.note;
   const [deleteNoteDialogOpen, setDeleteNoteDialogOpen] =
     useState<boolean>(false);
@@ -165,7 +157,7 @@ export default function NotePopover(props: Props) {
             }}
           >
             <ListItemIcon
-              className={clsx(note.config.pinned && classes.secondaryColor)}
+              sx={{ ...(note.config.pinned && { color: "secondary.main" }) }}
             >
               {note.config.pinned ? <Pin></Pin> : <PinOutline></PinOutline>}
             </ListItemIcon>
@@ -188,7 +180,7 @@ export default function NotePopover(props: Props) {
             }}
           >
             <ListItemIcon
-              className={clsx(note.config.favorited && classes.secondaryColor)}
+              sx={{ ...(note.config.favorited && { color: "secondary.main" }) }}
             >
               {note.config.favorited ? (
                 <Star></Star>
@@ -352,7 +344,7 @@ export default function NotePopover(props: Props) {
           <Typography variant={"subtitle2"}>
             {t("editor/note-control/shareable-link")}
           </Typography>
-          <Box className={clsx(classes.row)}>
+          <Row>
             <Tooltip
               title={t("editor/note-control/copy-to-clipboard")}
               onClick={() => {
@@ -401,7 +393,7 @@ export default function NotePopover(props: Props) {
                 }
               }}
             ></TextField>
-          </Box>
+          </Row>
         </Box>
       </Popover>
     </React.Fragment>

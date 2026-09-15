@@ -10,9 +10,7 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
-import { Theme } from "@mui/material/styles";
-import { makeStyles } from "tss-react/mui";
-import clsx from "clsx";
+import { styled } from "@mui/material/styles";
 import { Eye, EyeOff } from "mdi-material-ui";
 import Noty from "noty";
 import React, { useCallback, useEffect, useState } from "react";
@@ -21,10 +19,8 @@ import { CrossnoteContainer } from "../containers/crossnote";
 import { SettingsContainer } from "../containers/settings";
 import { Notebook } from "../lib/notebook";
 
-const useStyles = makeStyles()((theme: Theme) => ({
-  textField: {
-    marginBottom: theme.spacing(2),
-  },
+const SpacedTextField = styled(TextField)(({ theme }) => ({
+  marginBottom: theme.spacing(2),
 }));
 
 interface Props {
@@ -34,7 +30,6 @@ interface Props {
 }
 
 export default function PushNotebookDialog(props: Props) {
-  const { classes } = useStyles();
   const notebook = props.notebook;
   const [gitUsername, setGitUsername] = useState<string>(notebook.gitUsername);
   const [gitPassword, setGitPassword] = useState<string>(notebook.gitPassword);
@@ -132,33 +127,29 @@ export default function PushNotebookDialog(props: Props) {
         </Box>
       </DialogTitle>
       <DialogContent>
-        <TextField
-          className={clsx(classes.textField)}
+        <SpacedTextField
           label={t("settings/author-name")}
           fullWidth={true}
           value={settingsContainer.authorName}
           onChange={(event) =>
             settingsContainer.setAuthorName(event.target.value)
           }
-        ></TextField>
-        <TextField
-          className={clsx(classes.textField)}
+        ></SpacedTextField>
+        <SpacedTextField
           label={t("settings/author-email")}
           fullWidth={true}
           value={settingsContainer.authorEmail}
           onChange={(event) =>
             settingsContainer.setAuthorEmail(event.target.value)
           }
-        ></TextField>
-        <TextField
-          className={clsx(classes.textField)}
+        ></SpacedTextField>
+        <SpacedTextField
           label={t("general/commit-message")}
           fullWidth={true}
           value={commitMessage}
           onChange={(event) => setCommitMessage(event.target.value)}
-        ></TextField>
-        <TextField
-          className={clsx(classes.textField)}
+        ></SpacedTextField>
+        <SpacedTextField
           label={`${t("general/git-repository")} ${t("general/Username")} (${t(
             "general/optional",
           )})`}
@@ -184,9 +175,8 @@ export default function PushNotebookDialog(props: Props) {
               ),
             },
           }}
-        ></TextField>
-        <TextField
-          className={clsx(classes.textField)}
+        ></SpacedTextField>
+        <SpacedTextField
           label={`${t("general/git-repository")} ${t("general/Password")} (${t(
             "general/optional",
           )})`}
@@ -212,7 +202,7 @@ export default function PushNotebookDialog(props: Props) {
               ),
             },
           }}
-        ></TextField>
+        ></SpacedTextField>
       </DialogContent>
       <DialogActions>
         <Button
