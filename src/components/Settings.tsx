@@ -10,9 +10,7 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
-import { Theme } from "@mui/material/styles";
-import { makeStyles } from "tss-react/mui";
-import clsx from "clsx";
+import { styled } from "@mui/material/styles";
 import { BookEdit, Keyboard, ThemeLightDark, Translate } from "mdi-material-ui";
 import React, { useState } from "react";
 import { SketchPicker } from "react-color";
@@ -23,52 +21,56 @@ import { KeyMap } from "../lib/keymap";
 import { themeManager } from "../themes/manager";
 const GitCommit = __GIT_COMMIT__;
 
-const useStyles = makeStyles()((theme: Theme) => ({
-  settingsPanel: {
+const SettingsPanel = styled(Box)(({ theme }) => ({
+  height: "100%",
+  overflow: "auto",
+  backgroundColor: theme.palette.background.default,
+}));
+
+const SettingsCard = styled(Card)(({ theme }) => ({
+  padding: theme.spacing(2),
+  width: "600px",
+  maxWidth: "100%",
+  position: "relative",
+  margin: `${theme.spacing(4)} auto`,
+  height: "fit-content",
+  [theme.breakpoints.down("md")]: {
+    top: "0",
+    margin: "0 auto",
     height: "100%",
     overflow: "auto",
-    backgroundColor: theme.palette.background.default,
-  },
-  settingsCard: {
-    padding: theme.spacing(2),
-    width: "600px",
-    maxWidth: "100%",
-    position: "relative",
-    margin: `${theme.spacing(4)} auto`,
-    height: "fit-content",
-    [theme.breakpoints.down("md")]: {
-      top: "0",
-      margin: "0 auto",
-      height: "100%",
-      overflow: "auto",
-    },
-  },
-  section: {
-    marginTop: theme.spacing(4),
-  },
-  swatch: {
-    padding: "4px",
-    backgroundColor: "#fff",
-    borderRadius: "1px",
-    boxShadow: "0 0 0 1px rgba(0,0,0,0.1)",
-    display: "inline-block",
-    cursor: "pointer",
-  },
-  color: {
-    width: "36px",
-    height: "18px",
-    borderRadius: "2px",
-  },
-  editorText: {
-    marginLeft: theme.spacing(4),
-  },
-  editorCursor: {
-    borderLeftStyle: "solid",
-    borderLeftWidth: "2px",
-    padding: "0",
-    position: "relative",
   },
 }));
+
+const Section = styled(Box)(({ theme }) => ({
+  marginTop: theme.spacing(4),
+}));
+
+const Swatch = styled(Box)({
+  padding: "4px",
+  backgroundColor: "#fff",
+  borderRadius: "1px",
+  boxShadow: "0 0 0 1px rgba(0,0,0,0.1)",
+  display: "inline-block",
+  cursor: "pointer",
+});
+
+const ColorPreview = styled(Box)({
+  width: "36px",
+  height: "18px",
+  borderRadius: "2px",
+});
+
+const EditorText = styled("div")(({ theme }) => ({
+  marginLeft: theme.spacing(4),
+}));
+
+const EditorCursor = styled("span")({
+  borderLeftStyle: "solid",
+  borderLeftWidth: "2px",
+  padding: "0",
+  position: "relative",
+});
 
 interface RGBA {
   r: number;
@@ -109,7 +111,6 @@ function getRGBA(inputStr: string = ""): RGBA {
 
 interface Props {}
 export function Settings(props: Props) {
-  const { classes } = useStyles();
   const { t } = useTranslation();
   const [colorPickerAnchorElement, setColorPickerAnchorElement] =
     useState<HTMLElement>(null);
@@ -117,8 +118,8 @@ export function Settings(props: Props) {
   const settingsContainer = SettingsContainer.useContainer();
 
   return (
-    <Box className={clsx(classes.settingsPanel)}>
-      <Card className={clsx(classes.settingsCard)}>
+    <SettingsPanel>
+      <SettingsCard>
         <Box
           style={{
             display: "flex",
@@ -128,7 +129,7 @@ export function Settings(props: Props) {
         >
           <Typography variant={"h6"}>{t("general/Settings")}</Typography>
         </Box>
-        <Box className={clsx(classes.section)}>
+        <Section>
           <Typography
             variant={"body2"}
             style={{
@@ -151,8 +152,8 @@ export function Settings(props: Props) {
             <MenuItem value={"zh-TW"}>繁体中文</MenuItem>
             <MenuItem value={"ja-JP"}>日本語</MenuItem>
           </Select>
-        </Box>
-        <Box className={clsx(classes.section)}>
+        </Section>
+        <Section>
           <TextField
             label={t("settings/author-name")}
             placeholder={t("account/Anonymous")}
@@ -172,8 +173,8 @@ export function Settings(props: Props) {
               marginBottom: "0",
             }}
           ></TextField>
-        </Box>
-        <Box className={clsx(classes.section)}>
+        </Section>
+        <Section>
           <TextField
             label={t("settings/author-email")}
             placeholder={"anonymous@example.com"}
@@ -193,8 +194,8 @@ export function Settings(props: Props) {
               marginBottom: "0",
             }}
           ></TextField>
-        </Box>
-        <Box className={clsx(classes.section)}>
+        </Section>
+        <Section>
           <Typography
             variant={"body2"}
             style={{
@@ -220,8 +221,8 @@ export function Settings(props: Props) {
               );
             })}
           </Select>
-        </Box>
-        <Box className={clsx(classes.section)}>
+        </Section>
+        <Section>
           <Typography
             variant={"body2"}
             style={{
@@ -239,28 +240,25 @@ export function Settings(props: Props) {
               alignItems: "center",
             }}
           >
-            <Box
-              className={clsx(classes.swatch)}
+            <Swatch
               onClick={(event: React.MouseEvent<HTMLElement>) =>
                 setColorPickerAnchorElement(event.currentTarget)
               }
             >
-              <Box
-                className={clsx(classes.color)}
+              <ColorPreview
                 style={{ backgroundColor: settingsContainer.editorCursorColor }}
-              ></Box>
-            </Box>
-            <div className={clsx(classes.editorText)}>
+              ></ColorPreview>
+            </Swatch>
+            <EditorText>
               {t("settings/hello")}
-              <span
-                className={clsx(classes.editorCursor)}
+              <EditorCursor
                 style={{
                   borderLeftColor:
                     settingsContainer.editorCursorColor || "#4A90E2",
                 }}
-              ></span>
+              ></EditorCursor>
               {t("settings/world")}
-            </div>
+            </EditorText>
           </Box>
           <Popover
             open={displayColorPicker}
@@ -285,9 +283,9 @@ export function Settings(props: Props) {
               }}
             ></SketchPicker>
           </Popover>
-        </Box>
+        </Section>
 
-        <Box className={clsx(classes.section)}>
+        <Section>
           <Typography
             variant={"body2"}
             style={{
@@ -317,9 +315,9 @@ export function Settings(props: Props) {
               {t("editor/note-control/source-code") as string}
             </MenuItem>
           </Select>
-        </Box>
+        </Section>
 
-        <Box className={clsx(classes.section)}>
+        <Section>
           <FormControlLabel
             control={
               <Switch
@@ -334,9 +332,9 @@ export function Settings(props: Props) {
             }
             label={t("settings/plain-text-source-code")}
           />
-        </Box>
+        </Section>
 
-        <Box className={clsx(classes.section)}>
+        <Section>
           <Typography
             variant={"body2"}
             style={{
@@ -362,8 +360,8 @@ export function Settings(props: Props) {
               {t("general/Emacs") as string}
             </MenuItem>
           </Select>
-        </Box>
-        <Box className={clsx(classes.section)} style={{ marginTop: "32px" }}>
+        </Section>
+        <Section style={{ marginTop: "32px" }}>
           <Link
             href={"https://github.com/0xGG/crossnote-app"}
             target={"_blank"}
@@ -390,8 +388,8 @@ export function Settings(props: Props) {
               {"🛠 Build " + GitCommit.logMessage}
             </Typography>
           </Link>
-        </Box>
-      </Card>
-    </Box>
+        </Section>
+      </SettingsCard>
+    </SettingsPanel>
   );
 }

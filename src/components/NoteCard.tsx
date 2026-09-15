@@ -1,7 +1,5 @@
 import { Box, Chip, IconButton, Tooltip, Typography } from "@mui/material";
-import { Theme, darken, useTheme } from "@mui/material/styles";
-import { makeStyles } from "tss-react/mui";
-import clsx from "clsx";
+import { darken, styled, useTheme } from "@mui/material/styles";
 import { formatRelative } from "date-fns";
 import { formatDistanceStrict } from "date-fns/esm";
 import { TabNode } from "flexlayout-react";
@@ -25,104 +23,107 @@ import NotePopover from "./NotePopover";
 
 export const NoteCardMargin = 4;
 
-const useStyles = makeStyles()((theme: Theme) => ({
-  noteCard: {
-    maxWidth: "100%",
-    display: "flex",
-    flexDirection: "row",
-    alignItems: "flex-start",
-    padding: theme.spacing(2, 0.5, 0),
-    textAlign: "left",
-    // backgroundColor: theme.palette.background.paper,
-    margin: `${NoteCardMargin}px auto`,
-    [theme.breakpoints.down("md")]: {
-      marginLeft: 0,
-      marginRight: 0,
-    },
+const NoteCardRoot = styled(Box)(({ theme }) => ({
+  maxWidth: "100%",
+  display: "flex",
+  flexDirection: "row",
+  alignItems: "flex-start",
+  padding: theme.spacing(2, 0.5, 0),
+  textAlign: "left",
+  // backgroundColor: theme.palette.background.paper,
+  margin: `${NoteCardMargin}px auto`,
+  [theme.breakpoints.down("md")]: {
+    marginLeft: 0,
+    marginRight: 0,
   },
-  selected: {
-    borderLeft: `4px solid ${theme.palette.primary.main}`,
+}));
+
+const LeftPanel = styled(Box)(({ theme }) => ({
+  width: "48px",
+  paddingLeft: theme.spacing(0.5),
+}));
+
+const Duration = styled(Typography)(({ theme }) => ({
+  color: theme.palette.text.secondary,
+}));
+
+const RightPanel = styled(Box)(({ theme }) => ({
+  width: "calc(100% - 48px)",
+  borderBottom: `1px solid ${theme.palette.divider}`,
+}));
+
+const Header = styled(Box)(({ theme }) => ({
+  "color": theme.palette.text.primary,
+  "marginBottom": theme.spacing(1),
+  "wordBreak": "break-all",
+  "&:hover": {
+    backgroundColor: darken(theme.palette.background.paper, 0.08),
+    cursor: "pointer",
   },
-  unselected: {
-    borderLeft: `4px solid rgba(0, 0, 0, 0)`,
+  "flex": 1,
+  "display": "flex",
+  "alignItems": "center",
+}));
+
+const SummaryText = styled(Typography)(({ theme }) => ({
+  "color": theme.palette.text.secondary,
+  "marginBottom": theme.spacing(1),
+  "paddingRight": theme.spacing(2),
+  "display": "-webkit-box",
+  "lineHeight": "1.3rem !important",
+  "textOverflow": "ellipsis !important",
+  "overflow": "hidden !important",
+  "maxWidth": "100%",
+  "maxHeight": "2.6rem", // lineHeight x -website-line-clamp
+  "-webkit-line-clamp": 2,
+  "-webkit-box-orient": "vertical",
+  "wordBreak": "break-all",
+  "&:hover": {
+    backgroundColor: darken(theme.palette.background.paper, 0.08),
+    cursor: "pointer",
   },
-  leftPanel: {
-    width: "48px",
-    paddingLeft: theme.spacing(0.5),
-  },
-  duration: {
-    color: theme.palette.text.secondary,
-  },
-  rightPanel: {
-    width: "calc(100% - 48px)",
-    borderBottom: `1px solid ${theme.palette.divider}`,
-  },
-  header: {
-    "color": theme.palette.text.primary,
-    "marginBottom": theme.spacing(1),
-    "wordBreak": "break-all",
-    "&:hover": {
-      backgroundColor: darken(theme.palette.background.paper, 0.08),
-      cursor: "pointer",
-    },
-    "flex": 1,
-    "display": "flex",
-    "alignItems": "center",
-  },
-  summary: {
-    "color": theme.palette.text.secondary,
-    "marginBottom": theme.spacing(1),
-    "paddingRight": theme.spacing(2),
-    "display": "-webkit-box",
-    "lineHeight": "1.3rem !important",
-    "textOverflow": "ellipsis !important",
-    "overflow": "hidden !important",
-    "maxWidth": "100%",
-    "maxHeight": "2.6rem", // lineHeight x -website-line-clamp
-    "-webkit-line-clamp": 2,
-    "-webkit-box-orient": "vertical",
-    "wordBreak": "break-all",
-    "&:hover": {
-      backgroundColor: darken(theme.palette.background.paper, 0.08),
-      cursor: "pointer",
-    },
-  },
-  filePath: {
-    wordBreak: "break-all",
-    color: theme.palette.text.primary,
-  },
-  images: {
-    display: "flex",
-    width: "100%",
-    overflow: "hidden",
-    position: "relative",
-    marginBottom: theme.spacing(1),
-  },
-  imagesWrapper: {
-    display: "flex",
-    alignItems: "center",
-    flexDirection: "row",
-  },
-  image: {
-    width: "128px",
-    height: "80px",
-    marginRight: theme.spacing(1),
-    position: "relative",
-    backgroundSize: "cover",
-    backgroundPosition: "center",
-    display: "block",
-    borderRadius: "6px",
-  },
-  pin: {
-    color: theme.palette.secondary.main,
-    marginTop: theme.spacing(1),
-  },
-  markdownPreview: {
-    "width": "calc(100% - 32px)",
-    "&:hover": {
-      backgroundColor: darken(theme.palette.background.paper, 0.08),
-      cursor: "pointer",
-    },
+}));
+
+const FilePath = styled(Typography)(({ theme }) => ({
+  wordBreak: "break-all",
+  color: theme.palette.text.primary,
+}));
+
+const Images = styled(Box)(({ theme }) => ({
+  display: "flex",
+  width: "100%",
+  overflow: "hidden",
+  position: "relative",
+  marginBottom: theme.spacing(1),
+}));
+
+const ImagesWrapper = styled(Box)({
+  display: "flex",
+  alignItems: "center",
+  flexDirection: "row",
+});
+
+const ImageTile = styled("div")(({ theme }) => ({
+  width: "128px",
+  height: "80px",
+  marginRight: theme.spacing(1),
+  position: "relative",
+  backgroundSize: "cover",
+  backgroundPosition: "center",
+  display: "block",
+  borderRadius: "6px",
+}));
+
+const PinIcon = styled(Pin)(({ theme }) => ({
+  color: theme.palette.secondary.main,
+  marginTop: theme.spacing(1),
+}));
+
+const ReferencePreview = styled(Box)(({ theme }) => ({
+  "width": "calc(100% - 32px)",
+  "&:hover": {
+    backgroundColor: darken(theme.palette.background.paper, 0.08),
+    cursor: "pointer",
   },
 }));
 
@@ -133,7 +134,6 @@ interface Props {
 }
 
 export default function NoteCard(props: Props) {
-  const { classes } = useStyles();
   const theme = useTheme();
   const crossnoteContainer = CrossnoteContainer.useContainer();
   const settingsContainer = SettingsContainer.useContainer();
@@ -247,8 +247,8 @@ export default function NoteCard(props: Props) {
 
   return (
     <React.Fragment>
-      <Box className={clsx(classes.noteCard, "note-card")}>
-        <Box className={clsx(classes.leftPanel)}>
+      <NoteCardRoot className={"note-card"}>
+        <LeftPanel>
           <Tooltip
             title={
               <>
@@ -282,14 +282,12 @@ export default function NoteCard(props: Props) {
             }
             arrow
           >
-            <Typography className={clsx(classes.duration)}>
-              {duration}
-            </Typography>
+            <Duration>{duration}</Duration>
           </Tooltip>
 
-          {note.config.pinned && <Pin className={clsx(classes.pin)}></Pin>}
-        </Box>
-        <Box className={clsx(classes.rightPanel)}>
+          {note.config.pinned && <PinIcon></PinIcon>}
+        </LeftPanel>
+        <RightPanel>
           <Box
             style={{
               display: "flex",
@@ -298,7 +296,7 @@ export default function NoteCard(props: Props) {
               justifyContent: "space-between",
             }}
           >
-            <Box className={clsx(classes.header)} onClick={openNote}>
+            <Header onClick={openNote}>
               <Emoji emoji={getNoteIcon(note)} size={16}></Emoji>
               <Typography
                 style={{
@@ -310,7 +308,7 @@ export default function NoteCard(props: Props) {
               >
                 {header}
               </Typography>
-            </Box>
+            </Header>
             <Box style={{ display: "flex", alignItems: "center" }}>
               {props.referredNote && (
                 <Chip
@@ -341,24 +339,23 @@ export default function NoteCard(props: Props) {
             </Box>
           </Box>
           {summary && summary.summary.trim().length > 0 && (
-            <Typography className={clsx(classes.summary)} onClick={openNote}>
+            <SummaryText onClick={openNote}>
               {summary && summary.summary.slice(0, 200)}
-            </Typography>
+            </SummaryText>
           )}
           {images.length > 0 && (
-            <Box className={clsx(classes.images)}>
-              <Box className={clsx(classes.imagesWrapper)}>
+            <Images>
+              <ImagesWrapper>
                 {images.map((image, offset) => (
-                  <div
+                  <ImageTile
                     key={`${image}-${offset}`}
-                    className={clsx(classes.image)}
                     style={{
                       backgroundImage: `url(${image})`,
                     }}
-                  ></div>
+                  ></ImageTile>
                 ))}
-              </Box>
-            </Box>
+              </ImagesWrapper>
+            </Images>
           )}
           {references.map((reference, offset) => {
             return (
@@ -378,8 +375,7 @@ export default function NoteCard(props: Props) {
                     {reference.parentToken.map[0] + 1}:
                   </Typography>
                 </Box>
-                <Box
-                  className={clsx(classes.markdownPreview)}
+                <ReferencePreview
                   onClick={() => {
                     if (note) {
                       crossnoteContainer.addTabNode({
@@ -407,16 +403,16 @@ export default function NoteCard(props: Props) {
                   <Typography style={{ color: theme.palette.text.secondary }}>
                     {reference.parentToken.content}
                   </Typography>
-                </Box>
+                </ReferencePreview>
               </Box>
             );
           })}
-          <Typography variant={"caption"} className={clsx(classes.filePath)}>
+          <FilePath variant={"caption"}>
             {note.filePath +
               (gitStatus ? " - " + t(`git/status/${gitStatus}`) : "")}
-          </Typography>
-        </Box>
-      </Box>
+          </FilePath>
+        </RightPanel>
+      </NoteCardRoot>
       <NotePopover
         tabNode={props.tabNode}
         note={note}
