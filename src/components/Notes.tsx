@@ -1,7 +1,5 @@
 import { Box, Chip, Skeleton, Typography } from "@mui/material";
-import { Theme, useTheme } from "@mui/material/styles";
-import { makeStyles } from "tss-react/mui";
-import clsx from "clsx";
+import { styled, useTheme } from "@mui/material/styles";
 import { TabNode } from "flexlayout-react";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -14,35 +12,27 @@ import NoteCard, { NoteCardMargin } from "./NoteCard";
 
 const lazyLoadPlaceholderHeight = 92 + 2 * NoteCardMargin;
 
-const useStyles = makeStyles()((theme: Theme) => ({
-  notesList: {
-    "position": "relative",
-    // "flex": "1",
-    // "overflowY": "auto",
-    "paddingTop": theme.spacing(2),
-    "paddingLeft": theme.spacing(2),
-    "paddingRight": theme.spacing(2),
-    "paddingBottom": theme.spacing(12),
-    [theme.breakpoints.down("md")]: {
-      paddingLeft: theme.spacing(0.5),
-      paddingRight: theme.spacing(0.5),
-    },
-
-    "& .note-card-sizer": {
-      // width: `${NoteCardWidth + 2 * NoteCardMargin}px`,
-      maxWidth: "100%",
-      /*
-        [theme.breakpoints.down("sm")]: {
-          width: "100%",
-        },
-        */
-    },
+const NotesList = styled("div")(({ theme }) => ({
+  "position": "relative",
+  // "flex": "1",
+  // "overflowY": "auto",
+  "paddingTop": theme.spacing(2),
+  "paddingLeft": theme.spacing(2),
+  "paddingRight": theme.spacing(2),
+  "paddingBottom": theme.spacing(12),
+  [theme.breakpoints.down("md")]: {
+    paddingLeft: theme.spacing(0.5),
+    paddingRight: theme.spacing(0.5),
   },
-  updatePanel: {
-    padding: theme.spacing(2),
-    textAlign: "center",
-    borderBottom: `1px solid ${theme.palette.divider}`,
-    backgroundColor: theme.palette.background.paper,
+
+  "& .note-card-sizer": {
+    // width: `${NoteCardWidth + 2 * NoteCardMargin}px`,
+    maxWidth: "100%",
+    /*
+      [theme.breakpoints.down("sm")]: {
+        width: "100%",
+      },
+      */
   },
 }));
 
@@ -56,7 +46,6 @@ interface Props {
 }
 
 export default function Notes(props: Props) {
-  const { classes } = useStyles();
   const { t } = useTranslation();
   const theme = useTheme();
   const crossnoteContainer = CrossnoteContainer.useContainer();
@@ -207,7 +196,7 @@ export default function Notes(props: Props) {
           label={`${Object.keys(notes).length} ${t("profile-card/notes")}`}
         ></Chip>
       </Box>
-      <div className={clsx(classes.notesList)}>
+      <NotesList>
         {notesComponent}
         {crossnoteContainer.initialized &&
           props.notebook.hasLoadedNotes &&
@@ -223,7 +212,7 @@ export default function Notes(props: Props) {
               {"🧐 " + t("general/no-notes-found")}
             </Typography>
           )}
-      </div>
+      </NotesList>
     </React.Fragment>
   );
 }

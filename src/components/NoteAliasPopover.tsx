@@ -7,24 +7,23 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
-import { Theme } from "@mui/material/styles";
-import { makeStyles } from "tss-react/mui";
-import clsx from "clsx";
+import { styled } from "@mui/material/styles";
 import { TrashCan } from "mdi-material-ui";
 import React, { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 
-const useStyles = makeStyles()((theme: Theme) => ({
-  menuItemOverride: {
-    "cursor": "default",
-    "padding": `0 0 0 ${theme.spacing(2)}`,
-    "&:hover": {
-      backgroundColor: "inherit",
-    },
+const AliasItem = styled(ListItem)(({ theme }) => ({
+  "cursor": "default",
+  "padding": `0 0 0 ${theme.spacing(2)}`,
+  "&:hover": {
+    backgroundColor: "inherit",
   },
-  menuItemTextField: {
-    paddingRight: theme.spacing(2),
-  },
+}));
+
+// The text field row carried both rules, with the second one injected later so
+// its right padding won. Stacking the styled components keeps that order.
+const AliasTextFieldItem = styled(AliasItem)(({ theme }) => ({
+  paddingRight: theme.spacing(2),
 }));
 interface Props {
   anchorElement: HTMLElement;
@@ -34,7 +33,6 @@ interface Props {
   aliases: string[];
 }
 export function NoteAliasPopover(props: Props) {
-  const { classes } = useStyles();
   const { t } = useTranslation();
   const [alias, setAlias] = useState<string>("");
 
@@ -61,9 +59,7 @@ export function NoteAliasPopover(props: Props) {
       onClose={props.onClose}
     >
       <List>
-        <ListItem
-          className={clsx(classes.menuItemOverride, classes.menuItemTextField)}
-        >
+        <AliasTextFieldItem>
           <TextField
             placeholder={t("general/add-an-alias")}
             fullWidth={true}
@@ -76,11 +72,11 @@ export function NoteAliasPopover(props: Props) {
             onChange={(event) => setAlias(event.target.value)}
             value={alias}
           ></TextField>
-        </ListItem>
+        </AliasTextFieldItem>
         {props.aliases.length > 0 ? (
           props.aliases.map((alias) => {
             return (
-              <ListItem key={alias} className={clsx(classes.menuItemOverride)}>
+              <AliasItem key={alias}>
                 <Box
                   style={{
                     display: "flex",
@@ -98,15 +94,15 @@ export function NoteAliasPopover(props: Props) {
                     <TrashCan></TrashCan>
                   </IconButton>
                 </Box>
-              </ListItem>
+              </AliasItem>
             );
           })
         ) : (
-          <ListItem className={clsx(classes.menuItemOverride)}>
+          <AliasItem>
             <Typography style={{ margin: "8px 0" }}>
               {t("general/no-aliases")}
             </Typography>
-          </ListItem>
+          </AliasItem>
         )}
       </List>
     </Popover>

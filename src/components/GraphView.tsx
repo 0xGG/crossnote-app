@@ -1,8 +1,6 @@
 import { debounce } from "@0xgg/echomd";
 import { Box, Typography } from "@mui/material";
-import { Theme, useTheme } from "@mui/material/styles";
-import { makeStyles } from "tss-react/mui";
-import clsx from "clsx";
+import { styled, useTheme } from "@mui/material/styles";
 import * as d3 from "d3";
 import { TabNode } from "flexlayout-react";
 import React, { useCallback, useEffect, useRef, useState } from "react";
@@ -30,63 +28,66 @@ import { TabNodeConfig } from "../lib/tabNode";
 
 const bottomPanelHeight = 20;
 const defaultFillColor = `#aaa`;
-const useStyles = makeStyles()((theme: Theme) => ({
-  graphViewPanel: {
-    width: "100%",
-    height: "100%",
-    /*
-      "& .tooltip": {
-        position: "absolute",
-        width: "200px",
-        backgroundColor: alpha(theme.palette.grey[700], 0.9),
-        borderRadius: theme.shape.borderRadius,
-        color: theme.palette.common.white,
-        fontFamily: theme.typography.fontFamily,
-        padding: "4px 8px",
-        fontSize: theme.typography.pxToRem(10),
-        lineHeight: `${round(14 / 10)}em`,
-        maxWidth: 300,
-        wordWrap: "break-word",
-        fontWeight: theme.typography.fontWeightMedium,
-      },
-      */
-  },
-  graphView: {
-    "position": "relative",
-    "height": `calc(100% - ${bottomPanelHeight}px)`,
-    "display": "block",
-    "& .nodes": {
-      zIndex: 10,
+const GraphViewPanel = styled(Box)({
+  width: "100%",
+  height: "100%",
+  /*
+    "& .tooltip": {
+      position: "absolute",
+      width: "200px",
+      backgroundColor: alpha(theme.palette.grey[700], 0.9),
+      borderRadius: theme.shape.borderRadius,
+      color: theme.palette.common.white,
+      fontFamily: theme.typography.fontFamily,
+      padding: "4px 8px",
+      fontSize: theme.typography.pxToRem(10),
+      lineHeight: `${round(14 / 10)}em`,
+      maxWidth: 300,
+      wordWrap: "break-word",
+      fontWeight: theme.typography.fontWeightMedium,
     },
-    "& .nodes > circle": {
-      cursor: "pointer",
-      zIndex: 10,
-    },
-    "& .arrows": {
-      zIndex: 5,
-      pointerEvents: "none",
-    },
-    "& .arrows > circle": {
-      zIndex: 5,
-      pointerEvents: "none",
-    },
+    */
+});
+
+// The nodes and arrows are drawn by d3, not by React; styled keeps the class on
+// the same container, so these selectors reach the same elements.
+const GraphViewCanvas = styled("div")({
+  "position": "relative",
+  "height": `calc(100% - ${bottomPanelHeight}px)`,
+  "display": "block",
+  "& .nodes": {
+    zIndex: 10,
   },
-  bottomPanel: {
-    position: "absolute",
-    bottom: "0",
-    width: "100%",
-    padding: theme.spacing(0.5, 1),
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between",
-    maxHeight: `${bottomPanelHeight}px`,
-    backgroundColor: theme.palette.primary.main,
-    color: theme.palette.getContrastText(theme.palette.primary.main),
+  "& .nodes > circle": {
+    cursor: "pointer",
+    zIndex: 10,
   },
-  filePath: {
-    wordBreak: "break-all",
+  "& .arrows": {
+    zIndex: 5,
+    pointerEvents: "none",
   },
+  "& .arrows > circle": {
+    zIndex: 5,
+    pointerEvents: "none",
+  },
+});
+
+const BottomPanel = styled(Box)(({ theme }) => ({
+  position: "absolute",
+  bottom: "0",
+  width: "100%",
+  padding: theme.spacing(0.5, 1),
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "space-between",
+  maxHeight: `${bottomPanelHeight}px`,
+  backgroundColor: theme.palette.primary.main,
+  color: theme.palette.getContrastText(theme.palette.primary.main),
 }));
+
+const FilePath = styled(Typography)({
+  wordBreak: "break-all",
+});
 
 interface Props {
   notebook: Notebook;
@@ -94,7 +95,6 @@ interface Props {
 }
 
 export default function GraphView(props: Props) {
-  const { classes } = useStyles();
   const [graphViewData, setGraphViewData] = useState<GraphViewData>({
     hash: "",
     nodes: [],
@@ -624,21 +624,21 @@ export default function GraphView(props: Props) {
   }, [focusedNoteFilePath, unfocus, focus, graphViewData.nodes]);
 
   return (
-    <Box className={clsx(classes.graphViewPanel)}>
-      <div className={clsx(classes.graphView)} ref={graphView}></div>
+    <GraphViewPanel>
+      <GraphViewCanvas ref={graphView}></GraphViewCanvas>
       {graphViewData && (
-        <Box className={clsx(classes.bottomPanel, "editor-bottom-panel")}>
-          <Typography variant={"caption"} className={clsx(classes.filePath)}>
+        <BottomPanel className={"editor-bottom-panel"}>
+          <FilePath variant={"caption"}>
             {props.notebook.name +
               (hoveredGraphViewNode ? ": " + hoveredGraphViewNode.id : "")}
-          </Typography>
-          <Typography variant={"caption"} className={clsx(classes.filePath)}>
+          </FilePath>
+          <FilePath variant={"caption"}>
             {`${graphViewData.nodes.length} ${t("graph-view/node")}, ${
               graphViewData.links.length
             } ${t("graph-view/link")} `}
-          </Typography>
-        </Box>
+          </FilePath>
+        </BottomPanel>
       )}
-    </Box>
+    </GraphViewPanel>
   );
 }

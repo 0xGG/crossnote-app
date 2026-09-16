@@ -14,10 +14,8 @@ import {
   ListItemText,
   Tooltip,
 } from "@mui/material";
-import { Theme, alpha, useTheme } from "@mui/material/styles";
-import { CSSObject } from "tss-react";
-import { makeStyles } from "tss-react/mui";
-import clsx from "clsx";
+import { styled, useTheme } from "@mui/material/styles";
+import { drawerClasses } from "@mui/material/Drawer";
 import {
   Cog as SettingsIcon,
   Menu,
@@ -39,66 +37,22 @@ const drawerWidth = 200;
 const notesPanelWidth = 350;
 const notesPanelMinWidth = 220;
 const notesPanelMaxWidth = 400;
-const useStyles = makeStyles()((theme: Theme) => ({
-  page: {
-    display: "flex",
-    width: "100%",
-    height: "100%",
+const Page = styled(Box)({
+  display: "flex",
+  width: "100%",
+  height: "100%",
+});
+
+const DrawerNav = styled("nav")(({ theme }) => ({
+  [theme.breakpoints.up("sm")]: {
+    width: drawerWidth,
+    flexShrink: 0,
   },
-  appBar: {
-    zIndex: theme.zIndex.drawer + 1,
-    boxShadow: "none",
-  },
-  toolBar: {
-    display: "flex",
-    flexDirection: "row",
-    justifyContent: "space-between",
-  },
-  search: {
-    "position": "relative",
-    "borderRadius": theme.shape.borderRadius,
-    "backgroundColor": alpha(theme.palette.common.white, 0.15),
-    "&:hover": {
-      backgroundColor: alpha(theme.palette.common.white, 0.25),
-    },
-    "marginRight": theme.spacing(2),
-    "marginLeft": 0,
-    "width": "100%",
-    [theme.breakpoints.up("sm")]: {
-      marginLeft: theme.spacing(3),
-      width: "auto",
-    },
-  },
-  searchIcon: {
-    width: theme.spacing(7),
-    height: "100%",
-    position: "absolute",
-    pointerEvents: "none",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  inputRoot: {
-    color: "inherit",
-  },
-  inputInput: {
-    padding: theme.spacing(1, 1, 1, 7),
-    transition: theme.transitions.create("width"),
-    width: "100%",
-    [theme.breakpoints.up("md")]: {
-      width: 200,
-    },
-  },
-  displayNone: {
-    display: "none",
-  },
-  drawer: {
-    [theme.breakpoints.up("sm")]: {
-      width: drawerWidth,
-      flexShrink: 0,
-    },
-  },
-  drawerPaper: {
+}));
+
+// The width and the hidden overflow used to arrive as the paper slot's class.
+const SideDrawer = styled(Drawer)(({ theme }) => ({
+  [`& .${drawerClasses.paper}`]: {
     width: drawerWidth,
     backgroundColor: theme.palette.background.default,
     display: "flex",
@@ -106,65 +60,25 @@ const useStyles = makeStyles()((theme: Theme) => ({
     justifyContent: "space-between",
     overflow: "hidden",
   },
-  notebooksSection: {
-    overflowY: "auto",
-  },
-  controllersSection: {
-    // flex: 1,
-  },
-  listItemIcon: {
-    color: theme.palette.text.secondary,
-  },
-  selectedSection: {
-    backgroundColor: "#ccc",
-  },
-  left: {
-    display: "flex",
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  menuButton: {
-    marginRight: theme.spacing(2),
-    /*
-      [theme.breakpoints.up("sm")]: {
-        display: "none"
-      }
-      */
-  },
-  notesPanel: {
-    maxWidth: "100%",
-    height: "100%",
-    borderRadius: 0,
-    backgroundColor: theme.palette.background.default,
-    [theme.breakpoints.down("sm")]: {
-      width: "100%",
-    },
-  },
-  editorPanel: {
-    position: "absolute",
-    width: "100%",
-    height: "100%",
-    borderRadius: 0,
-    backgroundColor: theme.palette.background.default,
-    [theme.breakpoints.down("lg")]: {
-      // width: `calc(100% - ${notesPanelWidth}px)`,
-      // left: `${notesPanelWidth}px`
-    },
-    [theme.breakpoints.down("sm")]: {
-      display: "none",
-      top: "0",
-      left: "0",
-      width: "100%",
-      height: "100%",
-    },
-  },
-  toolBarSpace: theme.mixins.toolbar as CSSObject,
-  fab: {
-    position: "fixed",
-    bottom: theme.spacing(2),
-    right: theme.spacing(2),
-    zIndex: 999,
-  },
+}));
+
+const NotebooksSection = styled(Box)({
+  overflowY: "auto",
+});
+
+const ControllersSection = styled(Box)({
+  // flex: 1,
+});
+
+const SectionIcon = styled(ListItemIcon)(({ theme }) => ({
+  color: theme.palette.text.secondary,
+}));
+
+const MenuFab = styled(Fab)(({ theme }) => ({
+  position: "fixed",
+  bottom: theme.spacing(2),
+  right: theme.spacing(2),
+  zIndex: 999,
 }));
 
 interface QueryParams {
@@ -179,7 +93,6 @@ interface Props {
 }
 
 export function Home(props: Props) {
-  const { classes } = useStyles();
   const theme = useTheme();
   // const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const [addNotebookDialogOpen, setAddNotebookDialogOpen] =
@@ -289,24 +202,23 @@ export function Home(props: Props) {
 
   const drawer = (
     <React.Fragment>
-      <Box
-        className={clsx(classes.notebooksSection)}
+      <NotebooksSection
         style={{
           overflowY: crossnoteContainer.initialized ? "auto" : "hidden",
         }}
       >
         <List disablePadding={true}>
           <ListItem>
-            <ListItemIcon className={clsx(classes.listItemIcon)}>
+            <SectionIcon>
               <Notebook></Notebook>
-            </ListItemIcon>
+            </SectionIcon>
             <ListItemText primary={t("general/Notebooks")}></ListItemText>
             <ListItemSecondaryAction style={{ right: "0" }}>
               {crossnoteContainer.initialized && (
                 <Tooltip title={t("general/add-a-notebook")}>
                   <IconButton
                     aria-label={t("general/add-a-notebook")}
-                    className={clsx(classes.listItemIcon)}
+                    sx={{ color: "text.secondary" }}
                     onClick={() => {
                       setAddNotebookDialogHideOpeningLocal(false);
                       setAddNotebookDialogOpen(true);
@@ -340,9 +252,9 @@ export function Home(props: Props) {
             </ListItem>
           )}
         </List>
-      </Box>
+      </NotebooksSection>
 
-      <Box className={clsx(classes.controllersSection)}>
+      <ControllersSection>
         <Divider></Divider>
         <List disablePadding={true}>
           <ListItemButton
@@ -361,58 +273,48 @@ export function Home(props: Props) {
               setDrawerOpen(false);
             }}
           >
-            <ListItemIcon className={clsx(classes.listItemIcon)}>
+            <SectionIcon>
               <SettingsIcon></SettingsIcon>
-            </ListItemIcon>
+            </SectionIcon>
             <ListItemText primary={t("general/Settings")}></ListItemText>
           </ListItemButton>
         </List>
-      </Box>
+      </ControllersSection>
     </React.Fragment>
   );
 
   return (
-    <Box className={clsx(classes.page)}>
+    <Page>
       <CssBaseline></CssBaseline>
-      <nav className={clsx(classes.drawer, "drawer")}>
+      <DrawerNav className={"drawer"}>
         <Box sx={{ display: { xs: "block", sm: "none" } }}>
-          <Drawer
+          <SideDrawer
             variant="temporary"
             open={drawerOpen}
             onClose={toggleDrawer}
-            classes={{
-              paper: classes.drawerPaper,
-            }}
             ModalProps={{
               keepMounted: true, // Better open performance on mobile.
             }}
           >
             {drawer}
-          </Drawer>
+          </SideDrawer>
         </Box>
         <Box sx={{ display: { xs: "none", sm: "block" } }}>
-          <Drawer
-            classes={{
-              paper: classes.drawerPaper,
-            }}
-            variant="permanent"
-            open
-          >
+          <SideDrawer variant="permanent" open>
             {drawer}
-          </Drawer>
+          </SideDrawer>
         </Box>
         <Box sx={{ display: { xs: "block", sm: "none" } }}>
-          <Fab
+          <MenuFab
             aria-label={t("general/open-menu")}
             color="primary"
             size="small"
             onClick={toggleDrawer}
-            className={clsx(classes.fab)}
           >
             <Menu></Menu>
-          </Fab>
+          </MenuFab>
         </Box>
-      </nav>
+      </DrawerNav>
       <MainPanel></MainPanel>
       <AddNotebookDialog
         open={addNotebookDialogOpen}
@@ -426,6 +328,6 @@ export function Home(props: Props) {
         hideOpeningLocal={addNotebookDialogHideOpeningLocal}
       ></AddNotebookDialog>
       <LanguageSelectorDialog></LanguageSelectorDialog>
-    </Box>
+    </Page>
   );
 }

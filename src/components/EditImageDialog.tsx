@@ -7,9 +7,7 @@ import {
   DialogTitle,
   TextField,
 } from "@mui/material";
-import { Theme } from "@mui/material/styles";
-import { makeStyles } from "tss-react/mui";
-import clsx from "clsx";
+import { styled } from "@mui/material/styles";
 import { Editor as CodeMirrorEditor, TextMarker } from "codemirror";
 import React, { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -25,18 +23,16 @@ interface Props {
   note: Note;
 }
 
-const useStyles = makeStyles()((theme: Theme) => ({
-  imageWrapper: {
-    textAlign: "center",
-  },
-  imagePreview: {
-    maxWidth: "100%",
-    maxHeight: "400px",
-  },
-}));
+const ImageWrapper = styled(Box)({
+  textAlign: "center",
+});
+
+const ImagePreview = styled("img")({
+  maxWidth: "100%",
+  maxHeight: "400px",
+});
 
 export default function EditImageDialog(props: Props) {
-  const { classes } = useStyles();
   const { t } = useTranslation();
   const editor = props.editor;
   const marker = props.marker;
@@ -111,14 +107,13 @@ export default function EditImageDialog(props: Props) {
     <Dialog open={props.open} onClose={props.onClose} style={{ zIndex: 3001 }}>
       <DialogTitle>{t("edit-image-dialog/title")}</DialogTitle>
       <DialogContent style={{ width: "400px", maxWidth: "100%" }}>
-        <Box className={clsx(classes.imageWrapper)}>
-          <img
-            className={clsx(classes.imagePreview)}
+        <ImageWrapper>
+          <ImagePreview
             src={finalImageSrc}
             alt={imageAlt}
             title={imageTitle}
-          ></img>{" "}
-        </Box>
+          ></ImagePreview>{" "}
+        </ImageWrapper>
         <TextField
           autoFocus={true}
           value={imageSrc}

@@ -12,10 +12,9 @@ import {
   Tooltip,
   Typography,
 } from "@mui/material";
-import { Theme, alpha, useTheme } from "@mui/material/styles";
-import { makeStyles } from "tss-react/mui";
+import { alpha, styled, useTheme } from "@mui/material/styles";
+import { inputBaseClasses } from "@mui/material/InputBase";
 import useInterval from "../utilities/useInterval";
-import clsx from "clsx";
 import { TabNode } from "flexlayout-react";
 import {
   FileEditOutline,
@@ -49,64 +48,68 @@ import { OrderBy, OrderDirection } from "../lib/order";
 import { TabNodeConfig } from "../lib/tabNode";
 import Notes from "./Notes";
 
-const useStyles = makeStyles()((theme: Theme) => ({
-  notesPanel: {
-    backgroundColor: theme.palette.background.paper,
-    width: "800px",
-    maxWidth: "100%",
-    margin: "0 auto",
+const NotesPanelRoot = styled("div")(({ theme }) => ({
+  backgroundColor: theme.palette.background.paper,
+  width: "800px",
+  maxWidth: "100%",
+  margin: "0 auto",
+}));
+
+const TopPanel = styled(Box)(({ theme }) => ({
+  padding: theme.spacing(0, 1),
+  borderRadius: 0,
+  backgroundColor: theme.palette.background.paper,
+  zIndex: 9,
+}));
+
+// Applied on top of TopPanel only while the panel is pinned to the top.
+const fixedTopPanelSx = {
+  position: "sticky",
+  top: `0`,
+  width: "100%",
+} as const;
+
+const Row = styled(Box)({
+  display: "flex",
+  alignItems: "center",
+});
+
+const SearchBox = styled("div")(({ theme }) => ({
+  "color": theme.palette.text.secondary,
+  "position": "relative",
+  "borderRadius": theme.shape.borderRadius,
+  "backgroundColor": alpha(theme.palette.common.white, 0.15),
+  "&:hover": {
+    backgroundColor: alpha(theme.palette.common.white, 0.25),
   },
-  topPanel: {
-    padding: theme.spacing(0, 1),
-    borderRadius: 0,
-    backgroundColor: theme.palette.background.paper,
-    zIndex: 9,
+  "marginRight": 0, // theme.spacing(2),
+  "marginLeft": 0,
+  "width": "100%",
+  [theme.breakpoints.up("sm")]: {
+    // marginLeft: theme.spacing(3),
+    // width: "auto"
   },
-  fixedTopPanel: {
-    position: "sticky",
-    top: `0`,
-    width: "100%",
-  },
-  row: {
-    display: "flex",
-    alignItems: "center",
-  },
-  sectionName: {
-    marginLeft: theme.spacing(1),
-  },
-  search: {
-    "color": theme.palette.text.secondary,
-    "position": "relative",
-    "borderRadius": theme.shape.borderRadius,
-    "backgroundColor": alpha(theme.palette.common.white, 0.15),
-    "&:hover": {
-      backgroundColor: alpha(theme.palette.common.white, 0.25),
-    },
-    "marginRight": 0, // theme.spacing(2),
-    "marginLeft": 0,
-    "width": "100%",
-    [theme.breakpoints.up("sm")]: {
-      // marginLeft: theme.spacing(3),
-      // width: "auto"
-    },
-  },
-  searchIcon: {
-    width: theme.spacing(7),
-    height: "100%",
-    position: "absolute",
-    pointerEvents: "none",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    color: theme.palette.text.primary,
-  },
-  inputRoot: {
-    color: "inherit",
-    border: "1px solid #bbb",
-    borderRadius: "4px",
-    width: "100%",
-  },
-  inputInput: {
+}));
+
+const SearchIconWrapper = styled("div")(({ theme }) => ({
+  width: theme.spacing(7),
+  height: "100%",
+  position: "absolute",
+  pointerEvents: "none",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  color: theme.palette.text.primary,
+}));
+
+// The two rules used to arrive as InputBase's root and input slot classes; the
+// slot is now addressed by its own class name from the same styled component.
+const SearchInput = styled(InputBase)(({ theme }) => ({
+  color: "inherit",
+  border: "1px solid #bbb",
+  borderRadius: "4px",
+  width: "100%",
+  [`& .${inputBaseClasses.input}`]: {
     padding: theme.spacing(1, 1, 1, 7),
     transition: theme.transitions.create("width"),
     width: "100%",
@@ -114,19 +117,21 @@ const useStyles = makeStyles()((theme: Theme) => ({
       // width: 200
     },
   },
-  loading: {
-    position: "absolute",
-    top: "40%",
-    left: "50%",
-    transform: "translateX(-50%)",
-  },
-  sortSelected: {
-    "color": theme.palette.primary.main,
-    "& svg": {
-      color: theme.palette.primary.main,
-    },
-  },
 }));
+
+const Loading = styled(CircularProgress)({
+  position: "absolute",
+  top: "40%",
+  left: "50%",
+  transform: "translateX(-50%)",
+});
+
+const sortSelectedSx = {
+  "color": "primary.main",
+  "& svg": {
+    color: "primary.main",
+  },
+} as const;
 
 interface Props {
   tabNode: TabNode;
@@ -137,7 +142,6 @@ interface Props {
 }
 
 export default function NotesPanel(props: Props) {
-  const { classes } = useStyles();
   const { t } = useTranslation();
   const [sortMenuAnchorEl, setSortMenuAnchorEl] = useState<HTMLElement>(null);
   const [isCreatingNote, setIsCreatingNote] = useState<boolean>(false);
@@ -403,13 +407,8 @@ export default function NotesPanel(props: Props) {
 
   const rootComponent = useMemo(() => {
     return (
-      <div className={clsx(classes.notesPanel, "notes-panel")} ref={container}>
-        <Box
-          className={clsx(
-            classes.topPanel,
-            fixedTopPanel ? classes.fixedTopPanel : "",
-          )}
-        >
+      <NotesPanelRoot className={"notes-panel"} ref={container}>
+        <TopPanel sx={fixedTopPanel ? fixedTopPanelSx : undefined}>
           {props.title && (
             <Typography
               variant={"h6"}
@@ -421,24 +420,20 @@ export default function NotesPanel(props: Props) {
               {props.title}
             </Typography>
           )}
-          <Box className={clsx(classes.row)}>
-            <div className={classes.search}>
-              <div className={classes.searchIcon}>
+          <Row>
+            <SearchBox>
+              <SearchIconWrapper>
                 <Magnify />
-              </div>
-              <InputBase
+              </SearchIconWrapper>
+              <SearchInput
                 placeholder={t("search/notes")}
-                classes={{
-                  root: classes.inputRoot,
-                  input: classes.inputInput,
-                }}
                 value={searchValue}
                 inputProps={{ "aria-label": "search" }}
                 onChange={onChangeSearchValue}
                 autoComplete={"off"}
                 autoCorrect={"off"}
               />
-            </div>
+            </SearchBox>
             <IconButton
               aria-label={t("general/new-note")}
               onClick={createNewNote}
@@ -454,8 +449,8 @@ export default function NotesPanel(props: Props) {
             >
               <SortVariant></SortVariant>
             </IconButton>
-          </Box>
-        </Box>
+          </Row>
+        </TopPanel>
 
         <Popover
           anchorEl={sortMenuAnchorEl}
@@ -466,34 +461,30 @@ export default function NotesPanel(props: Props) {
           <List>
             <ListItemButton
               onClick={() => setOrderBy(OrderBy.ModifiedAt)}
-              className={clsx(
-                orderBy === OrderBy.ModifiedAt && classes.sortSelected,
-              )}
+              sx={orderBy === OrderBy.ModifiedAt ? sortSelectedSx : undefined}
             >
               <ListItemText primary={t("general/date-modified")}></ListItemText>
             </ListItemButton>
             <ListItemButton
               onClick={() => setOrderBy(OrderBy.CreatedAt)}
-              className={clsx(
-                orderBy === OrderBy.CreatedAt && classes.sortSelected,
-              )}
+              sx={orderBy === OrderBy.CreatedAt ? sortSelectedSx : undefined}
             >
               <ListItemText primary={t("general/date-created")}></ListItemText>
             </ListItemButton>
             <ListItemButton
               onClick={() => setOrderBy(OrderBy.Title)}
-              className={clsx(
-                orderBy === OrderBy.Title && classes.sortSelected,
-              )}
+              sx={orderBy === OrderBy.Title ? sortSelectedSx : undefined}
             >
               <ListItemText primary={t("general/title")}></ListItemText>
             </ListItemButton>
             <Divider></Divider>
             <ListItemButton
               onClick={() => setOrderDirection(OrderDirection.DESC)}
-              className={clsx(
-                orderDirection === OrderDirection.DESC && classes.sortSelected,
-              )}
+              sx={
+                orderDirection === OrderDirection.DESC
+                  ? sortSelectedSx
+                  : undefined
+              }
             >
               <ListItemText primary={t("general/Desc")}></ListItemText>
               <ListItemIcon style={{ marginLeft: "8px" }}>
@@ -502,9 +493,11 @@ export default function NotesPanel(props: Props) {
             </ListItemButton>
             <ListItemButton
               onClick={() => setOrderDirection(OrderDirection.ASC)}
-              className={clsx(
-                orderDirection === OrderDirection.ASC && classes.sortSelected,
-              )}
+              sx={
+                orderDirection === OrderDirection.ASC
+                  ? sortSelectedSx
+                  : undefined
+              }
             >
               <ListItemText primary={t("general/Asc")}></ListItemText>
               <ListItemIcon style={{ marginLeft: "8px" }}>
@@ -526,11 +519,9 @@ export default function NotesPanel(props: Props) {
             }
           ></Notes>
         ) : (
-          <CircularProgress
-            className={clsx(classes.loading)}
-          ></CircularProgress>
+          <Loading></Loading>
         )}
-      </div>
+      </NotesPanelRoot>
     );
   }, [
     props.tabNode,

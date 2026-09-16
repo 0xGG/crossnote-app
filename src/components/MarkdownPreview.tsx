@@ -1,7 +1,5 @@
 import { renderPreview } from "@0xgg/echomd/preview";
-import { Theme } from "@mui/material/styles";
-import { makeStyles } from "tss-react/mui";
-import clsx from "clsx";
+import { styled } from "@mui/material/styles";
 import { useCallback, useEffect, useState } from "react";
 import { Note } from "../lib/note";
 import { postprocessPreview as previewPostprocessPreview } from "../utilities/preview";
@@ -12,30 +10,27 @@ interface Props {
 }
 
 const previewZIndex = 99;
-const useStyles = makeStyles()((theme: Theme) => ({
-  preview: {
-    position: "relative",
-    left: "0",
-    top: "0",
-    width: "800px",
-    maxWidth: "100%",
-    margin: "0 auto",
-    height: "100%",
-    border: "none",
-    overflow: "auto !important",
-    paddingLeft: theme.spacing(1),
-    paddingRight: theme.spacing(1),
-    // padding: theme.spacing(1, 2),
-    zIndex: previewZIndex,
-    backgroundColor: "inherit !important",
-    [theme.breakpoints.down("md")]: {
-      padding: theme.spacing(1),
-    },
+const Preview = styled("div")(({ theme }) => ({
+  position: "relative",
+  left: "0",
+  top: "0",
+  width: "800px",
+  maxWidth: "100%",
+  margin: "0 auto",
+  height: "100%",
+  border: "none",
+  overflow: "auto !important",
+  paddingLeft: theme.spacing(1),
+  paddingRight: theme.spacing(1),
+  // padding: theme.spacing(1, 2),
+  zIndex: previewZIndex,
+  backgroundColor: "inherit !important",
+  [theme.breakpoints.down("md")]: {
+    padding: theme.spacing(1),
   },
 }));
 
 export default function MarkdownPreview(props: Props) {
-  const { classes } = useStyles();
   const [previewElement, setPreviewElement] = useState<HTMLElement>(null);
 
   const postprocessPreview = useCallback(
@@ -59,11 +54,11 @@ export default function MarkdownPreview(props: Props) {
   }, [props.markdown, props.note, previewElement, postprocessPreview]);
 
   return (
-    <div
-      className={clsx(classes.preview, "preview")}
+    <Preview
+      className={"preview"}
       ref={(element: HTMLElement) => {
         setPreviewElement(element);
       }}
-    ></div>
+    ></Preview>
   );
 }
