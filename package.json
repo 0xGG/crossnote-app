@@ -57,7 +57,6 @@
     "react-dom": "^18.3.1",
     "react-i18next": "^11.8.5",
     "react-lazyload": "^3.1.0",
-    "react-split-pane": "^0.1.92",
     "super-react-gist": "^1.0.4",
     "tesseract.js": "^2.1.4",
     "tss-react": "^4.9.21",
