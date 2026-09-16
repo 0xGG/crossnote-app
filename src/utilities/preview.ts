@@ -20,7 +20,6 @@ export function printPreview(
   .CodeMirror,
   .editor-textarea,
   .editor-toolbar,
-  .Pane.vertical.Pane1,
   .notes-panel,
   .control-panel-wrapper {
     display: none;

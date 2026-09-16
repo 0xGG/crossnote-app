@@ -32,10 +32,6 @@ import Noty from "noty";
 import path from "path-browserify";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import SplitPaneRaw from "react-split-pane";
-// react-split-pane's typings predate React 18 and reject children;
-// the component works fine at runtime.
-const SplitPane = SplitPaneRaw as any;
 import { CrossnoteContainer } from "../containers/crossnote";
 import { SettingsContainer } from "../containers/settings";
 import { initMathPreview } from "../editor/views/math-preview";
@@ -70,10 +66,18 @@ import IconPopover from "./IconPopover";
 import { Loading } from "./Loading";
 import NotePopover from "./NotePopover";
 import NotesPanel from "./NotesPanel";
+import SplitPane from "./SplitPane";
 import * as EchoMD from "@0xgg/echomd/core";
 
 const previewZIndex = 99;
-let tocPanelWidth = parseInt(localStorage.getItem("toc-panel-width") || "300");
+// A missing or hand-edited entry parses to NaN, which would otherwise reach
+// the panel as `width: NaNpx`.
+const storedTocPanelWidth = parseInt(
+  localStorage.getItem("toc-panel-width") || "",
+);
+let tocPanelWidth = Number.isFinite(storedTocPanelWidth)
+  ? storedTocPanelWidth
+  : 300;
 const tocPanelMinWidth = 150;
 const tocPanelMaxWidth = 350;
 const bottomPanelHeight = 20;
@@ -150,13 +154,14 @@ const EditorContentPanel = styled(Box)({
   height: "100%",
 });
 
-const TocPanel = styled(Box)(({ theme }) => ({
+// The divider between the two panes is drawn by the split pane itself, so the
+// border this used to carry would be a second hairline right beside it.
+const TocPanel = styled(Box)({
   height: "100%",
   padding: "0",
   overflow: "auto",
-  borderLeft: `1px solid ${theme.palette.divider}`,
   paddingTop: "32px",
-}));
+});
 
 const Toc = styled("div")(({ theme }) => ({
   "& .toc-item": {
@@ -1448,6 +1453,9 @@ export default function NotePanel(props: Props) {
     return <Loading></Loading>;
   }
 
+  const tocVisible =
+    tocEnabled && !(previewIsPresentation && editorMode === EditorMode.Preview);
+
   return (
     <NotePanelRoot>
       <TopPanel
@@ -1571,28 +1579,13 @@ export default function NotePanel(props: Props) {
       </TopPanel>
       <ContentPanel>
         <SplitPane
+          primary={"second"}
           defaultSize={tocPanelWidth}
           minSize={tocPanelMinWidth}
           maxSize={tocPanelMaxWidth}
-          primary={"second"}
-          pane1Style={{
-            overflow: "auto",
-          }}
-          resizerStyle={{
-            display:
-              tocEnabled &&
-              !(previewIsPresentation && editorMode === EditorMode.Preview)
-                ? "block"
-                : "none",
-          }}
-          pane2Style={{
-            display:
-              tocEnabled &&
-              !(previewIsPresentation && editorMode === EditorMode.Preview)
-                ? "block"
-                : "none",
-          }}
-          onDragFinished={(newSize: number) => {
+          sizedPaneHidden={!tocVisible}
+          label={t("general/table-of-contents")}
+          onResizeEnd={(newSize: number) => {
             tocPanelWidth = newSize;
             localStorage.setItem("toc-panel-width", `${tocPanelWidth}`);
           }}
@@ -1630,15 +1623,7 @@ export default function NotePanel(props: Props) {
               </React.Fragment>
             )}
           </EditorContentPanel>
-          <TocPanel
-            style={{
-              display:
-                tocEnabled &&
-                !(previewIsPresentation && editorMode === EditorMode.Preview)
-                  ? "block"
-                  : "none",
-            }}
-          >
+          <TocPanel>
             <Toc ref={tocElement}></Toc>
           </TocPanel>
         </SplitPane>

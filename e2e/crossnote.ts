@@ -104,6 +104,36 @@ export class CrossnoteApp {
     return this.editor.locator("[contenteditable=true]");
   }
 
+  // The divider between the note and its table of contents. It reports the
+  // panel's width as aria-valuenow, which is the value that gets persisted.
+  get tocDivider(): Locator {
+    return this.page.getByRole("separator", { name: "Table of contents" });
+  }
+
+  // The pane the divider sizes is the element right after it.
+  get tocPane(): Locator {
+    return this.page.locator(
+      '[role="separator"][aria-label="Table of contents"] + div',
+    );
+  }
+
+  // Drags the divider by dx pixels; a negative dx widens the table of
+  // contents, which sits on the right.
+  async dragTocDivider(dx: number) {
+    const box = await this.tocDivider.boundingBox();
+    if (!box) {
+      throw new Error("the table of contents divider is not on screen");
+    }
+    const x = box.x + box.width / 2;
+    const y = box.y + box.height / 2;
+    await this.page.mouse.move(x, y);
+    await this.page.mouse.down();
+    // Several moves rather than one: a drag a user makes is a stream of
+    // them, and the divider has to answer each one.
+    await this.page.mouse.move(x + dx, y, { steps: 8 });
+    await this.page.mouse.up();
+  }
+
   modeButton(name: "Preview" | "Edit" | "Source code"): Locator {
     return this.page
       .getByRole("group", { name: "editor mode" })
