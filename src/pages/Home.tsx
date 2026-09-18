@@ -34,9 +34,6 @@ import { SettingsContainer } from "../containers/settings";
 import { getNoteIcon } from "../lib/note";
 
 const drawerWidth = 200;
-const notesPanelWidth = 350;
-const notesPanelMinWidth = 220;
-const notesPanelMaxWidth = 400;
 const Page = styled(Box)({
   display: "flex",
   width: "100%",

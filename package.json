@@ -15,7 +15,7 @@
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit && tsc --noEmit -p e2e",
-    "lint": "eslint . --max-warnings 136",
+    "lint": "eslint . --max-warnings 125",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
