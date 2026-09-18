@@ -7,9 +7,7 @@ import {
   Tooltip,
   Typography,
 } from "@mui/material";
-import { Theme, ThemeProvider, darken } from "@mui/material/styles";
-import { makeStyles } from "tss-react/mui";
-import clsx from "clsx";
+import { ThemeProvider, darken, styled } from "@mui/material/styles";
 import { TrashCan } from "mdi-material-ui";
 import Noty from "noty";
 import React, { useState } from "react";
@@ -18,36 +16,37 @@ import { useTranslation } from "react-i18next";
 import { globalContainers } from "../../../containers/global";
 import { smmsUploadImages } from "../../../utilities/image_uploader";
 
-const useStyles = makeStyles()((theme: Theme) => ({
-  card: {
-    padding: theme.spacing(2),
-    position: "relative",
-  },
-  actionButtons: {
-    position: "absolute",
-    top: "0",
-    right: "0",
-  },
-  section: {
-    marginTop: theme.spacing(2),
-  },
-  dropArea: {
-    "textAlign": "center",
-    "padding": "24px",
-    "border": "4px dotted #c7c7c7",
-    "backgroundColor": darken(theme.palette.background.paper, 0.01),
-    "cursor": "pointer",
-    "&:hover": {
-      backgroundColor: darken(theme.palette.background.paper, 0.2),
-    },
-  },
-  disabled: {
-    cursor: "not-allowed",
+const WidgetCard = styled(Card)(({ theme }) => ({
+  padding: theme.spacing(2),
+  position: "relative",
+}));
+
+const ActionButtons = styled(Box)({
+  position: "absolute",
+  top: "0",
+  right: "0",
+});
+
+const Section = styled(Box)(({ theme }) => ({
+  marginTop: theme.spacing(2),
+}));
+
+const DropArea = styled(Box)(({ theme }) => ({
+  "textAlign": "center",
+  "padding": "24px",
+  "border": "4px dotted #c7c7c7",
+  "backgroundColor": darken(theme.palette.background.paper, 0.01),
+  "cursor": "pointer",
+  "&:hover": {
+    backgroundColor: darken(theme.palette.background.paper, 0.2),
   },
 }));
 
+// The drop area stops taking clicks while an upload runs, which is a state of
+// this one element rather than a rule of its own.
+const uploadingSx = { cursor: "not-allowed" } as const;
+
 function ImageWidget(props: WidgetArgs) {
-  const { classes } = useStyles();
   const { t } = useTranslation();
   const [url, setURL] = useState<string>("");
   const [imageUploaderElement, setImageUploaderElement] =
@@ -97,11 +96,11 @@ function ImageWidget(props: WidgetArgs) {
   }
 
   return (
-    <Card elevation={2} className={clsx(classes.card)}>
+    <WidgetCard elevation={2}>
       <Typography variant={"h5"}>
         {t("widget/crossnote.image/image-helper")}
       </Typography>
-      <Box className={clsx(classes.actionButtons)}>
+      <ActionButtons>
         <Tooltip title={t("general/Delete")}>
           <IconButton
             aria-label={t("general/Delete")}
@@ -110,9 +109,9 @@ function ImageWidget(props: WidgetArgs) {
             <TrashCan></TrashCan>
           </IconButton>
         </Tooltip>
-      </Box>
+      </ActionButtons>
       {!uploadingImages && (
-        <Box className={clsx(classes.section)}>
+        <Section>
           <Typography variant={"subtitle1"} style={{ marginBottom: "8px" }}>
             {"URL"}
           </Typography>
@@ -130,17 +129,14 @@ function ImageWidget(props: WidgetArgs) {
             }}
             fullWidth={true}
           ></Input>
-        </Box>
+        </Section>
       )}
-      <Box className={clsx(classes.section)}>
+      <Section>
         <Typography variant={"subtitle1"} style={{ marginBottom: "8px" }}>
           {t("general/Upload")}
         </Typography>
-        <Box
-          className={clsx(
-            classes.dropArea,
-            uploadingImages ? classes.disabled : null,
-          )}
+        <DropArea
+          sx={uploadingImages ? uploadingSx : undefined}
           onClick={clickDropArea}
         >
           <Typography>
@@ -148,13 +144,13 @@ function ImageWidget(props: WidgetArgs) {
               ? t("utils/uploading-image")
               : t("widget/crossnote.image/click-here-to-browse-image-file")}
           </Typography>
-        </Box>
-      </Box>
-      <Box className={clsx(classes.section)}>
+        </DropArea>
+      </Section>
+      <Section>
         <Typography variant={"caption"}>
           {t("widget/crossnote.image/thanks_sm_ms")}
         </Typography>
-      </Box>
+      </Section>
       <input
         type="file"
         multiple
@@ -163,7 +159,7 @@ function ImageWidget(props: WidgetArgs) {
           setImageUploaderElement(element);
         }}
       ></input>
-    </Card>
+    </WidgetCard>
   );
 }
 
