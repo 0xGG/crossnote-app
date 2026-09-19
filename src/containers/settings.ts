@@ -7,7 +7,7 @@ import { getKeyMap, KeyMap } from "../lib/keymap";
 import { themeManager } from "../themes/manager";
 import { CrossnoteTheme } from "../themes/theme";
 
-interface InitialState {}
+type InitialState = object;
 
 function useSettingsContainer(initialState: InitialState) {
   const [language, setLanguage] = useState<string>(
@@ -38,7 +38,7 @@ function useSettingsContainer(initialState: InitialState) {
     localStorage.getItem("settings/plainTextSourceCode") === "true",
   );
 
-  const { t, i18n } = useTranslation();
+  const { i18n } = useTranslation();
 
   const _setLanguage = useCallback(
     (language: string) => {

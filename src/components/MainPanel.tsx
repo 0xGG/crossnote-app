@@ -6,7 +6,7 @@ import {
   DialogContent,
   DialogContentText,
 } from "@mui/material";
-import { ThemeProvider, darken, styled, useTheme } from "@mui/material/styles";
+import { ThemeProvider, darken, styled } from "@mui/material/styles";
 import FlexLayout, { TabNode } from "flexlayout-react";
 import "flexlayout-react/style/light.css";
 import React, { useCallback, useEffect, useRef, useState } from "react";
@@ -78,7 +78,6 @@ const MainPanelRoot = styled("div")(({ theme }) => ({
 }));
 
 export function MainPanel() {
-  const theme = useTheme();
   const container = useRef<HTMLDivElement>(null);
   const [dialogOpen, setDialogOpen] = useState<boolean>(false);
   const [ready, setReady] = useState<boolean>(false);

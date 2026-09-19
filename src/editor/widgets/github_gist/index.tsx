@@ -7,9 +7,7 @@ import {
   Tooltip,
   Typography,
 } from "@mui/material";
-import { Theme, ThemeProvider } from "@mui/material/styles";
-import { makeStyles } from "tss-react/mui";
-import clsx from "clsx";
+import { styled, ThemeProvider } from "@mui/material/styles";
 import { TrashCan, TrashCanOutline } from "mdi-material-ui";
 import React, { useCallback, useState } from "react";
 import { renderWidget } from "../../../utilities/widgetRender";
@@ -18,22 +16,20 @@ import { useTranslation } from "react-i18next";
 import Gist from "super-react-gist"; // <-- import the library
 import { globalContainers } from "../../../containers/global";
 
-const useStyles = makeStyles()((theme: Theme) => ({
-  card: {
-    padding: theme.spacing(2),
-    position: "relative",
-  },
-  actionButtonsGroup: {
-    position: "absolute",
-    top: "0",
-    right: "0",
-    display: "flex",
-    alignItems: "center",
-  },
+const WidgetCard = styled(Card)(({ theme }) => ({
+  padding: theme.spacing(2),
+  position: "relative",
 }));
 
+const ActionButtonsGroup = styled(Box)({
+  position: "absolute",
+  top: "0",
+  right: "0",
+  display: "flex",
+  alignItems: "center",
+});
+
 function GitHubGistWidget(props: WidgetArgs) {
-  const { classes } = useStyles();
   const { t } = useTranslation();
   const [url, setURL] = useState<string>("");
 
@@ -58,14 +54,14 @@ function GitHubGistWidget(props: WidgetArgs) {
       <Box className={"preview github-gist"} style={{ whiteSpace: "normal" }}>
         <Gist url={props.attributes["url"]}></Gist>
         {!props.isPreview && (
-          <Box className={clsx(classes.actionButtonsGroup)}>
+          <ActionButtonsGroup>
             <IconButton
               aria-label={t("general/Delete")}
               onClick={() => props.removeSelf()}
             >
               <TrashCanOutline></TrashCanOutline>
             </IconButton>
-          </Box>
+          </ActionButtonsGroup>
         )}
       </Box>
     );
@@ -76,7 +72,7 @@ function GitHubGistWidget(props: WidgetArgs) {
   }
 
   return (
-    <Card elevation={2} className={clsx(classes.card)}>
+    <WidgetCard elevation={2}>
       <Typography variant={"h5"}>
         {t("widget/crossnote.github_gist/title")}
       </Typography>
@@ -92,7 +88,7 @@ function GitHubGistWidget(props: WidgetArgs) {
           }
         }}
       ></TextField>
-      <Box className={clsx(classes.actionButtonsGroup)}>
+      <ActionButtonsGroup>
         <Tooltip title={t("general/Delete")}>
           <IconButton
             aria-label={t("general/Delete")}
@@ -101,8 +97,8 @@ function GitHubGistWidget(props: WidgetArgs) {
             <TrashCan></TrashCan>
           </IconButton>
         </Tooltip>
-      </Box>
-    </Card>
+      </ActionButtonsGroup>
+    </WidgetCard>
   );
 }
 

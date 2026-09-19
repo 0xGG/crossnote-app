@@ -14,8 +14,7 @@ import { useTranslation } from "react-i18next";
 import { CrossnoteContainer } from "../containers/crossnote";
 import { SettingsContainer } from "../containers/settings";
 
-interface Props {}
-export default function LanguageSelectorDialog(props: Props) {
+export default function LanguageSelectorDialog() {
   const { t } = useTranslation();
   // const theme = useTheme();
   const crossnoteContainer = CrossnoteContainer.useContainer();

@@ -17,9 +17,7 @@ import {
   Tooltip,
   Typography,
 } from "@mui/material";
-import { Theme, ThemeProvider, darken } from "@mui/material/styles";
-import { makeStyles } from "tss-react/mui";
-import clsx from "clsx";
+import { ThemeProvider, darken, styled } from "@mui/material/styles";
 import { TrashCan } from "mdi-material-ui";
 import React, { useEffect, useState } from "react";
 import { renderWidget } from "../../../utilities/widgetRender";
@@ -27,41 +25,45 @@ import { useTranslation } from "react-i18next";
 import { createWorker } from "tesseract.js";
 import { globalContainers } from "../../../containers/global";
 
-const useStyles = makeStyles()((theme: Theme) => ({
-  card: {
-    padding: theme.spacing(2),
-    position: "relative",
-  },
-  actionButtons: {
-    position: "absolute",
-    top: "0",
-    right: "0",
-  },
-  section: {
-    marginTop: theme.spacing(2),
-  },
-  dropArea: {
-    "textAlign": "center",
-    "padding": "24px",
-    "border": "4px dotted #c7c7c7",
-    "backgroundColor": darken(theme.palette.background.paper, 0.01),
-    "cursor": "pointer",
-    "&:hover": {
-      backgroundColor: darken(theme.palette.background.paper, 0.2),
-    },
-  },
-  canvasWrapper: {
-    marginTop: theme.spacing(2),
-    // height: 0,
-    // paddingTop: "56.25%" // 16:9
-  },
-  canvas: {
-    maxWidth: "100%",
-  },
-  disabled: {
-    cursor: "not-allowed",
+const WidgetCard = styled(Card)(({ theme }) => ({
+  padding: theme.spacing(2),
+  position: "relative",
+}));
+
+const ActionButtons = styled(Box)({
+  position: "absolute",
+  top: "0",
+  right: "0",
+});
+
+const Section = styled(Box)(({ theme }) => ({
+  marginTop: theme.spacing(2),
+}));
+
+const DropArea = styled(Box)(({ theme }) => ({
+  "textAlign": "center",
+  "padding": "24px",
+  "border": "4px dotted #c7c7c7",
+  "backgroundColor": darken(theme.palette.background.paper, 0.01),
+  "cursor": "pointer",
+  "&:hover": {
+    backgroundColor: darken(theme.palette.background.paper, 0.2),
   },
 }));
+
+const CanvasWrapper = styled(Box)(({ theme }) => ({
+  marginTop: theme.spacing(2),
+  // height: 0,
+  // paddingTop: "56.25%" // 16:9
+}));
+
+const ImageCanvas = styled("canvas")({
+  maxWidth: "100%",
+});
+
+// The drop area stops taking clicks while recognition runs, which is a state
+// of this one element rather than a rule of its own.
+const processingSx = { cursor: "not-allowed" } as const;
 
 interface OCRProgress {
   status: string;
@@ -80,7 +82,6 @@ function getInitialLanguages() {
 }
 
 function OCRWidget(props: WidgetArgs) {
-  const { classes } = useStyles();
   const { t } = useTranslation();
   const [canvas, setCanvas] = useState<HTMLCanvasElement>(null);
   // https://github.com/tesseract-ocr/tesseract/wiki/Data-Files#data-files-for-version-400-november-29-2016
@@ -210,7 +211,7 @@ function OCRWidget(props: WidgetArgs) {
 
   if (isProcessing) {
     return (
-      <Card elevation={2} className={clsx(classes.card)}>
+      <WidgetCard elevation={2}>
         <Typography variant={"h5"}>{t("general/Processing")}</Typography>
         {/*<Typography variant={"body1"}>{t("general/please-wait")}</Typography>*/}
         <List>
@@ -229,14 +230,14 @@ function OCRWidget(props: WidgetArgs) {
             </ListItem>
           )}
         </List>
-      </Card>
+      </WidgetCard>
     );
   }
 
   if (imageDataURL) {
     return (
-      <Card elevation={2} className={clsx(classes.card)}>
-        <Box className={clsx(classes.section)}>
+      <WidgetCard elevation={2}>
+        <Section>
           <Typography variant={"subtitle1"} style={{ marginBottom: "8px" }}>
             {t("widget/crossnote.ocr/recognize-text-in-languages")}
           </Typography>
@@ -282,8 +283,8 @@ function OCRWidget(props: WidgetArgs) {
               label="日本語"
             />
           </FormGroup>
-        </Box>
-        <Box className={clsx(classes.section)}>
+        </Section>
+        <Section>
           <Typography variant={"subtitle1"} style={{ marginBottom: "8px" }}>
             {t("widget/crossnote.ocr/extra-settings")}
           </Typography>
@@ -307,13 +308,10 @@ function OCRWidget(props: WidgetArgs) {
             }
             label={t("widget/crossnote.ocr/grayscale")}
           ></FormControlLabel>
-        </Box>
-        <Box className={clsx(classes.canvasWrapper)}>
-          <canvas
-            className={clsx(classes.canvas)}
-            ref={(element) => setCanvas(element)}
-          ></canvas>
-        </Box>
+        </Section>
+        <CanvasWrapper>
+          <ImageCanvas ref={(element) => setCanvas(element)}></ImageCanvas>
+        </CanvasWrapper>
         <ButtonGroup>
           <Button
             onClick={() => {
@@ -331,14 +329,14 @@ function OCRWidget(props: WidgetArgs) {
             {t("widget/crossnote.ocr/start-ocr")}
           </Button>
         </ButtonGroup>
-      </Card>
+      </WidgetCard>
     );
   }
 
   return (
-    <Card elevation={2} className={clsx(classes.card)}>
+    <WidgetCard elevation={2}>
       <Typography variant={"h5"}>{t("widget/crossnote.ocr/ocr")}</Typography>
-      <Box className={clsx(classes.actionButtons)}>
+      <ActionButtons>
         <Tooltip title={t("general/Delete")}>
           <IconButton
             aria-label={t("general/Delete")}
@@ -347,8 +345,8 @@ function OCRWidget(props: WidgetArgs) {
             <TrashCan></TrashCan>
           </IconButton>
         </Tooltip>
-      </Box>
-      <Box className={clsx(classes.section)}>
+      </ActionButtons>
+      <Section>
         <Typography variant={"subtitle1"} style={{ marginBottom: "8px" }}>
           {t("general/Link")}
         </Typography>
@@ -366,22 +364,19 @@ function OCRWidget(props: WidgetArgs) {
           }}
           fullWidth={true}
         ></Input>
-      </Box>
+      </Section>
       <Typography
         variant={"subtitle1"}
         style={{ marginTop: "16px", textAlign: "center" }}
       >
         {t("widget/crossnote.auth/Or")}
       </Typography>
-      <Box className={clsx(classes.section)}>
+      <Section>
         <Typography variant={"subtitle1"} style={{ marginBottom: "8px" }}>
           {t("widget/crossnote.ocr/local-image")}
         </Typography>
-        <Box
-          className={clsx(
-            classes.dropArea,
-            isProcessing ? classes.disabled : null,
-          )}
+        <DropArea
+          sx={isProcessing ? processingSx : undefined}
           onClick={clickDropArea}
         >
           <Typography>
@@ -389,8 +384,8 @@ function OCRWidget(props: WidgetArgs) {
               ? t("utils/uploading-image")
               : t("widget/crossnote.image/click-here-to-browse-image-file")}
           </Typography>
-        </Box>
-      </Box>
+        </DropArea>
+      </Section>
       <input
         type="file"
         // multiple
@@ -399,7 +394,7 @@ function OCRWidget(props: WidgetArgs) {
           setImageDropAreaElement(element);
         }}
       ></input>
-    </Card>
+    </WidgetCard>
   );
 }
 

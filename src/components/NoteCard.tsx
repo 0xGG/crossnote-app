@@ -394,12 +394,6 @@ export default function NoteCard(props: Props) {
                     }
                   }}
                 >
-                  {/*
-                  <MarkdownPreview
-                    note={note}
-                    markdown={reference.parentToken.content}
-                  ></MarkdownPreview>
-                  */}
                   <Typography style={{ color: theme.palette.text.secondary }}>
                     {reference.parentToken.content}
                   </Typography>

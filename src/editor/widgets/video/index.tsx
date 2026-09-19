@@ -9,47 +9,46 @@ import {
   Tooltip,
   Typography,
 } from "@mui/material";
-import { Theme, ThemeProvider } from "@mui/material/styles";
-import { makeStyles } from "tss-react/mui";
-import clsx from "clsx";
+import { styled, ThemeProvider } from "@mui/material/styles";
 import { TrashCan } from "mdi-material-ui";
 import React, { useState } from "react";
 import { renderWidget } from "../../../utilities/widgetRender";
 import { useTranslation } from "react-i18next";
 import { globalContainers } from "../../../containers/global";
 
-const useStyles = makeStyles()((theme: Theme) => ({
-  card: {
-    padding: theme.spacing(2),
-    position: "relative",
-  },
-  actionButtons: {
-    position: "absolute",
-    top: "0",
-    right: "0",
-  },
-  section: {
-    marginTop: theme.spacing(2),
-  },
-  videoWrapper: {
-    cursor: "default",
-    position: "relative",
-    width: "100%",
-    height: "0",
-    paddingTop: "56.25%",
-  },
-  video: {
-    position: "absolute",
-    left: "0",
-    top: "0",
-    width: "100%",
-    height: "100%",
-  },
+const WidgetCard = styled(Card)(({ theme }) => ({
+  padding: theme.spacing(2),
+  position: "relative",
 }));
+
+const ActionButtons = styled(Box)({
+  position: "absolute",
+  top: "0",
+  right: "0",
+});
+
+const Section = styled(Box)(({ theme }) => ({
+  marginTop: theme.spacing(2),
+}));
+
+const VideoWrapper = styled(Box)({
+  cursor: "default",
+  position: "relative",
+  width: "100%",
+  height: "0",
+  paddingTop: "56.25%",
+});
+
+const VideoPlayer = styled("video")({
+  position: "absolute",
+  left: "0",
+  top: "0",
+  width: "100%",
+  height: "100%",
+});
 
 function VideoWidget(props: WidgetArgs) {
   const attributes = props.attributes;
-  const { classes } = useStyles();
   const { t } = useTranslation();
   const [source, setSource] = useState<string>(attributes["source"] || "");
   const [autoplay, setAutoplay] = useState<boolean>(
@@ -65,9 +64,8 @@ function VideoWidget(props: WidgetArgs) {
   if (attributes["src"]) {
     return (
       <span style={{ cursor: "default" }}>
-        <Box className={clsx(classes.videoWrapper)}>
-          <video
-            className={clsx(classes.video)}
+        <VideoWrapper>
+          <VideoPlayer
             autoPlay={attributes["autoplay"] || attributes["autoPlay"]}
             controls={attributes["controls"]}
             loop={attributes["loop"]}
@@ -77,8 +75,8 @@ function VideoWidget(props: WidgetArgs) {
           >
             {t("widget/crossnote.video/video_element_fail")}
             <source src={attributes["src"]} type={attributes["type"]}></source>
-          </video>
-        </Box>
+          </VideoPlayer>
+        </VideoWrapper>
       </span>
     );
   }
@@ -88,9 +86,9 @@ function VideoWidget(props: WidgetArgs) {
   }
 
   return (
-    <Card elevation={2} className={clsx(classes.card)}>
+    <WidgetCard elevation={2}>
       <Typography variant={"h5"}>{t("general/Video")}</Typography>
-      <Box className={clsx(classes.actionButtons)}>
+      <ActionButtons>
         <Tooltip title={t("general/Delete")}>
           <IconButton
             aria-label={t("general/Delete")}
@@ -99,8 +97,8 @@ function VideoWidget(props: WidgetArgs) {
             <TrashCan></TrashCan>
           </IconButton>
         </Tooltip>
-      </Box>
-      <Box className={clsx(classes.section)}>
+      </ActionButtons>
+      <Section>
         <Typography variant={"subtitle1"} style={{ marginBottom: "8px" }}>
           {t("general/source-url")}
         </Typography>
@@ -128,8 +126,8 @@ function VideoWidget(props: WidgetArgs) {
           }}
           fullWidth={true}
         ></Input>
-      </Box>
-      <Box className={clsx(classes.section)}>
+      </Section>
+      <Section>
         <Typography variant={"subtitle1"} style={{ marginBottom: "8px" }}>
           {t("widget/crossnote.video/poster-url")}
         </Typography>
@@ -142,8 +140,8 @@ function VideoWidget(props: WidgetArgs) {
           }}
           fullWidth={true}
         ></Input>
-      </Box>
-      <Box className={clsx(classes.section)}>
+      </Section>
+      <Section>
         <FormControlLabel
           label={t("widget/autoplay")}
           control={
@@ -184,8 +182,8 @@ function VideoWidget(props: WidgetArgs) {
             ></Switch>
           }
         ></FormControlLabel>
-      </Box>
-    </Card>
+      </Section>
+    </WidgetCard>
   );
 }
 

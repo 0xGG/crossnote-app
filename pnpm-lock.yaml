@@ -32,8 +32,8 @@ importers:
         specifier: ^2.1.0
         version: 2.1.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@mdi/font':
-        specifier: ^5.9.55
-        version: 5.9.55
+        specifier: ^7.4.47
+        version: 7.4.47
       '@mui/material':
         specifier: ^9.4.0
         version: 9.4.0(@emotion/react@11.14.0(@types/react@18.3.31)(react@18.3.1)(supports-color@5.5.0))(@emotion/styled@11.14.1(@emotion/react@11.14.0(@types/react@18.3.31)(react@18.3.1)(supports-color@5.5.0))(@types/react@18.3.31)(react@18.3.1)(supports-color@5.5.0))(@types/react@18.3.31)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
@@ -46,9 +46,6 @@ importers:
       buffer:
         specifier: ^6.0.3
         version: 6.0.3
-      clsx:
-        specifier: ^1.1.0
-        version: 1.2.1
       codemirror:
         specifier: ^5.59.4
         version: 5.65.21
@@ -121,9 +118,6 @@ importers:
       tesseract.js:
         specifier: ^2.1.4
         version: 2.1.5
-      tss-react:
-        specifier: ^4.9.21
-        version: 4.9.21(@emotion/react@11.14.0(@types/react@18.3.31)(react@18.3.1)(supports-color@5.5.0))(@mui/material@9.4.0(@emotion/react@11.14.0(@types/react@18.3.31)(react@18.3.1)(supports-color@5.5.0))(@emotion/styled@11.14.1(@emotion/react@11.14.0(@types/react@18.3.31)(react@18.3.1)(supports-color@5.5.0))(@types/react@18.3.31)(react@18.3.1)(supports-color@5.5.0))(@types/react@18.3.31)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(@types/react@18.3.31)(react@18.3.1)
       twemoji:
         specifier: ^13.0.2
         version: 13.1.1
@@ -718,8 +712,8 @@ packages:
       react: ^16.8.0 || ^17.0.0
       react-dom: ^16.8.0 || ^17.0.0
 
-  '@mdi/font@5.9.55':
-    resolution: {integrity: sha512-jswRF6q3eq8NWpWiqct6q+6Fg/I7nUhrxYJfiEM8JJpap0wVJLQdbKtyS65GdlK7S7Ytnx3TTi/bmw+tBhkGmg==}
+  '@mdi/font@7.4.47':
+    resolution: {integrity: sha512-43MtGpd585SNzHZPcYowu/84Vz2a2g31TvPMTm9uTiCSWzaheQySUcSyUH/46fPnuPQWof2yd0pGBtzee/IQWw==}
 
   '@mixmark-io/domino@2.2.0':
     resolution: {integrity: sha512-Y28PR25bHXUg88kCV7nivXrP2Nj2RueZ3/l/jdx6J9f8J4nsEGcgX0Qe6lt7Pa+J79+kPiJU3LguR6O/6zrLOw==}
@@ -1511,6 +1505,7 @@ packages:
 
   cf-blob.js@0.0.1:
     resolution: {integrity: sha512-KkUmNT/rgVK+KehG7cSvbLwMb+OS5Qby6ADB4LP12jtx6rfVvHCdyqFUjAeQnDpGpQNNwvpi0R/tluT2J6P99Q==}
+    deprecated: 'This package is deprecated and no longer maintained. Please use blob-polyfill instead: https://www.npmjs.com/package/blob-polyfill'
 
   chai@6.2.2:
     resolution: {integrity: sha512-NUPRluOfOiTKBKvWPtSD4PhFvWCqOi0BGStNWs57X9js7XGTprSmFoz5F0tWhR4WPjNeR9jXqdC7/UpSJTnlRg==}
@@ -1530,10 +1525,6 @@ packages:
   clone-buffer@1.0.0:
     resolution: {integrity: sha512-KLLTJWrvwIP+OPfMn0x2PheDEP20RPUcGXj/ERegTgdmPEZylALQldygiqrPPu8P45uNuPs7ckmReLY6v/iA5g==}
     engines: {node: '>= 0.10'}
-
-  clsx@1.2.1:
-    resolution: {integrity: sha512-EcR6r5a8bj6pu3ycsa/E/cKVGuTgZJZdsyUYHOksG/UHIiKfjxzRxYJpyVBwYaQeOvghal9fcc4PidlgzugAQg==}
-    engines: {node: '>=6'}
 
   clsx@2.1.1:
     resolution: {integrity: sha512-eYm0QWBtUrBWZWG0d386OGAw16Z995PiOVo2B7bjWSbHedGl5e0ZWaq65kOGgUSNesEIDkB9ISbTg/JK9dhCZA==}
@@ -3478,20 +3469,6 @@ packages:
   tslib@2.8.1:
     resolution: {integrity: sha512-oJFu94HQb+KVduSUQL7wnpmqnfmLsOA/nAh6b6EH0wCEoK0/mPeXU6c3wKDV83MkOuHPRHtSXKKU99IBazS/2w==}
 
-  tss-react@4.9.21:
-    resolution: {integrity: sha512-3jAEzeU1i4ve3PiqEqjIgcHY2geIF8Cqo6w0SBqVPDwH2KeGGNVaWcKyFZjxL/xg2cIACg17PllggCU4AAHCdQ==}
-    peerDependencies:
-      '@emotion/react': ^11.4.1
-      '@emotion/server': ^11.4.0
-      '@mui/material': ^5.0.0 || ^6.0.0 || ^7.0.0 || ^9.0.0
-      '@types/react': ^16.8.0 || ^17.0.2 || ^18.0.0 || ^19.0.0
-      react: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
-    peerDependenciesMeta:
-      '@emotion/server':
-        optional: true
-      '@mui/material':
-        optional: true
-
   tunnel-agent@0.6.0:
     resolution: {integrity: sha512-McnNiV1l8RYeY8tBgEpuodCC1mLUdbSN+CYBL7kJsJNInOP8UjDDEwdk6Mw60vdLLrr5NHKZhMAOSrR2NZuQ+w==}
 
@@ -4438,7 +4415,7 @@ snapshots:
     transitivePeerDependencies:
       - react-native
 
-  '@mdi/font@5.9.55': {}
+  '@mdi/font@7.4.47': {}
 
   '@mixmark-io/domino@2.2.0':
     optional: true
@@ -5323,8 +5300,6 @@ snapshots:
     optional: true
 
   clone-buffer@1.0.0: {}
-
-  clsx@1.2.1: {}
 
   clsx@2.1.1: {}
 
@@ -7634,17 +7609,6 @@ snapshots:
     optional: true
 
   tslib@2.8.1: {}
-
-  tss-react@4.9.21(@emotion/react@11.14.0(@types/react@18.3.31)(react@18.3.1)(supports-color@5.5.0))(@mui/material@9.4.0(@emotion/react@11.14.0(@types/react@18.3.31)(react@18.3.1)(supports-color@5.5.0))(@emotion/styled@11.14.1(@emotion/react@11.14.0(@types/react@18.3.31)(react@18.3.1)(supports-color@5.5.0))(@types/react@18.3.31)(react@18.3.1)(supports-color@5.5.0))(@types/react@18.3.31)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(@types/react@18.3.31)(react@18.3.1):
-    dependencies:
-      '@emotion/cache': 11.14.0
-      '@emotion/react': 11.14.0(@types/react@18.3.31)(react@18.3.1)(supports-color@5.5.0)
-      '@emotion/serialize': 1.3.3
-      '@emotion/utils': 1.4.2
-      '@types/react': 18.3.31
-      react: 18.3.1
-    optionalDependencies:
-      '@mui/material': 9.4.0(@emotion/react@11.14.0(@types/react@18.3.31)(react@18.3.1)(supports-color@5.5.0))(@emotion/styled@11.14.1(@emotion/react@11.14.0(@types/react@18.3.31)(react@18.3.1)(supports-color@5.5.0))(@types/react@18.3.31)(react@18.3.1)(supports-color@5.5.0))(@types/react@18.3.31)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
 
   tunnel-agent@0.6.0:
     dependencies:
