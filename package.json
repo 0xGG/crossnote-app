@@ -46,7 +46,6 @@
     "mdi-material-ui": "^8.0.0",
     "minisearch": "^3.0.2",
     "moment": "^2.29.1",
-    "noty": "^3.2.0-beta",
     "object-hash": "^2.1.1",
     "path-browserify": "^1.0.1",
     "pouchdb": "^7.2.2",

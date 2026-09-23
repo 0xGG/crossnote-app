@@ -82,9 +82,6 @@ importers:
       moment:
         specifier: ^2.29.1
         version: 2.30.1
-      noty:
-        specifier: ^3.2.0-beta
-        version: 3.2.0-beta-deprecated
       object-hash:
         specifier: ^2.1.1
         version: 2.2.0
@@ -2891,10 +2888,6 @@ packages:
   normalize-path@3.0.0:
     resolution: {integrity: sha512-6eZs5Ls3WtCisHWp9S2GUy8dqkpGi4BVSz3GaqiE6ezub0512ESztXUwUB6C6IKbQkY2Pnb/mD4WYojCRwcwLA==}
     engines: {node: '>=0.10.0'}
-
-  noty@3.2.0-beta-deprecated:
-    resolution: {integrity: sha512-ntRbHuQ9SnnnVFZm/oq5L1DBCaHQUvsU24AwZH3PGjAWx2YqR/IhOadMk11vmJovYiQo00oqTj6Hp+D6PGtmLA==}
-    deprecated: no longer supported
 
   nwmatcher@1.4.4:
     resolution: {integrity: sha512-3iuY4N5dhgMpCUrOVnuAdGrgxVqV2cJpM+XNccjR2DKOB1RUP0aA+wGXEiNziG/UKboFyGBIoKOaNlJxx8bciQ==}
@@ -6926,8 +6919,6 @@ snapshots:
   node-releases@2.0.51: {}
 
   normalize-path@3.0.0: {}
-
-  noty@3.2.0-beta-deprecated: {}
 
   nwmatcher@1.4.4:
     optional: true
