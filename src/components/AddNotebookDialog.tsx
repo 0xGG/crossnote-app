@@ -20,10 +20,10 @@ import {
 } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import { ChevronDown, Eye, EyeOff, FolderOpen } from "mdi-material-ui";
-import Noty from "noty";
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { CrossnoteContainer } from "../containers/crossnote";
+import { notify } from "../lib/notifications";
 
 interface Props {
   open: boolean;
@@ -71,13 +71,7 @@ export default function AddNotebookDialog(props: Props) {
   const addNotebook = useCallback(async () => {
     try {
       if (gitURL.trim().length) {
-        new Noty({
-          type: "info",
-          text: t("info/downloading-notebook"),
-          layout: "topRight",
-          theme: "relax",
-          timeout: 2000,
-        }).show();
+        notify({ severity: "info", message: t("info/downloading-notebook") });
       }
       close();
       await crossnoteContainer.addNotebook(
@@ -90,13 +84,10 @@ export default function AddNotebookDialog(props: Props) {
         gitCorsProxy,
       );
     } catch (error) {
-      new Noty({
-        type: "error",
-        text: error instanceof Error ? error.message : String(error),
-        layout: "topRight",
-        theme: "relax",
-        timeout: 2000,
-      }).show();
+      notify({
+        severity: "error",
+        message: error instanceof Error ? error.message : String(error),
+      });
       close();
     }
   }, [
