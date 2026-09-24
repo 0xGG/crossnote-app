@@ -12,12 +12,12 @@ import {
 } from "@mui/material";
 import { styled } from "@mui/material/styles";
 import { Eye, EyeOff } from "mdi-material-ui";
-import Noty from "noty";
 import React, { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { CrossnoteContainer } from "../containers/crossnote";
 import { SettingsContainer } from "../containers/settings";
 import { Notebook } from "../lib/notebook";
+import { notify } from "../lib/notifications";
 
 const SpacedTextField = styled(TextField)(({ theme }) => ({
   marginBottom: theme.spacing(2),
@@ -57,37 +57,29 @@ export default function PushNotebookDialog(props: Props) {
         password: gitPassword,
         message: commitMessage,
         onAuthFailure: () => {
-          new Noty({
-            type: "error",
-            text: t("error/authentication-failed"),
-            layout: "topRight",
-            theme: "relax",
-            timeout: 5000,
-          }).show();
+          notify({
+            severity: "error",
+            message: t("error/authentication-failed"),
+            duration: 5000,
+          });
         },
       })
       .then(() => {
         close();
-        new Noty({
-          type: "success",
-          text: t("success/notebook-uploaded"),
-          layout: "topRight",
-          theme: "relax",
-          timeout: 2000,
-        }).show();
+        notify({
+          severity: "success",
+          message: t("success/notebook-uploaded"),
+        });
       })
       .catch((error: Error) => {
         console.log(error);
         close();
-        new Noty({
-          type: "error",
-          text: error.message.match(/^error\//)
+        notify({
+          severity: "error",
+          message: error.message.match(/^error\//)
             ? t(error.message)
             : t("error/failed-to-upload-notebook"),
-          layout: "topRight",
-          theme: "relax",
-          timeout: 2000,
-        }).show();
+        });
       });
   }, [
     settingsContainer.authorName,

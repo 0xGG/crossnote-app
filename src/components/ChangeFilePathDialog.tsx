@@ -7,11 +7,11 @@ import {
   TextField,
 } from "@mui/material";
 import { TabNode } from "flexlayout-react";
-import Noty from "noty";
 import React, { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { CrossnoteContainer } from "../containers/crossnote";
 import { Note } from "../lib/note";
+import { notify } from "../lib/notifications";
 
 interface Props {
   open: boolean;
@@ -46,13 +46,11 @@ export default function ChangeFilePathDialog(props: Props) {
               newFilePath,
             );
           } catch (error) {
-            new Noty({
-              type: "error",
-              text: t("error/failed-to-change-file-path"),
-              layout: "topRight",
-              theme: "relax",
-              timeout: 5000,
-            }).show();
+            notify({
+              severity: "error",
+              message: t("error/failed-to-change-file-path"),
+              duration: 5000,
+            });
           }
         }
         props.onClose();

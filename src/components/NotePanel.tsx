@@ -28,7 +28,6 @@ import {
   Pencil,
   TableOfContents,
 } from "mdi-material-ui";
-import Noty from "noty";
 import path from "path-browserify";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -52,6 +51,7 @@ import {
 } from "../lib/event";
 import { Note } from "../lib/note";
 import { Notebook } from "../lib/notebook";
+import { notify } from "../lib/notifications";
 import { Reference } from "../lib/reference";
 import { TabNodeConfig } from "../lib/tabNode";
 import { setTheme } from "../themes/manager";
@@ -412,13 +412,11 @@ export default function NotePanel(props: Props) {
         setNote(note);
       })
       .catch((error) => {
-        new Noty({
-          type: "error",
-          text: t("error/failed-to-change-file-path"),
-          layout: "topRight",
-          theme: "relax",
-          timeout: 5000,
-        }).show();
+        notify({
+          severity: "error",
+          message: t("error/failed-to-change-file-path"),
+          duration: 5000,
+        });
         setNoteTitle(note.title);
       });
   }, [noteTitle, note, tabNode, t]);

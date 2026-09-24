@@ -2,7 +2,6 @@ import { Box, Chip, IconButton, Tooltip, Typography } from "@mui/material";
 import { darken, styled } from "@mui/material/styles";
 import { SimpleTreeView, TreeItem, treeItemClasses } from "@mui/x-tree-view";
 import { ChevronDown, ChevronRight } from "mdi-material-ui";
-import Noty from "noty";
 import React, { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { CrossnoteContainer } from "../containers/crossnote";
@@ -16,6 +15,7 @@ import {
 } from "../lib/event";
 import { getNoteIcon, Notes } from "../lib/note";
 import { Notebook } from "../lib/notebook";
+import { notify } from "../lib/notifications";
 import ConfigureNotebookDialog from "./ConfigureNotebookDialog";
 import { Emoji } from "./EmojiWrapper";
 import PushNotebookDialog from "./PushNotebookDialog";
@@ -470,33 +470,25 @@ export default function NotebookTreeView(props: Props) {
                       .pullNotebook({
                         notebook: props.notebook,
                         onAuthFailure: () => {
-                          new Noty({
-                            type: "error",
-                            text: t("error/authentication-failed"),
-                            layout: "topRight",
-                            theme: "relax",
-                            timeout: 5000,
-                          }).show();
+                          notify({
+                            severity: "error",
+                            message: t("error/authentication-failed"),
+                            duration: 5000,
+                          });
                         },
                       })
                       .then(() => {
-                        new Noty({
-                          type: "success",
-                          text: t("success/notebook-downloaded"),
-                          layout: "topRight",
-                          theme: "relax",
-                          timeout: 2000,
-                        }).show();
+                        notify({
+                          severity: "success",
+                          message: t("success/notebook-downloaded"),
+                        });
                       })
                       .catch((error) => {
                         console.log(error);
-                        new Noty({
-                          type: "error",
-                          text: t("error/failed-to-download-notebook"),
-                          layout: "topRight",
-                          theme: "relax",
-                          timeout: 2000,
-                        }).show();
+                        notify({
+                          severity: "error",
+                          message: t("error/failed-to-download-notebook"),
+                        });
                       });
                   }}
                   sx={

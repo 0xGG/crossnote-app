@@ -1,6 +1,7 @@
 import { ThemeProvider } from "@mui/material/styles";
 import React, { FC } from "react";
 import "./App.css";
+import Notifications from "./components/Notifications";
 import { SettingsContainer } from "./containers/settings";
 import "./editor";
 import { Home } from "./pages/Home";
@@ -19,6 +20,7 @@ const App: FC = () => {
     <ThemeProvider theme={settingsContainer.theme.muiTheme}>
       <div className="App">
         <Home queryParams={queryParams}></Home>
+        <Notifications></Notifications>
       </div>
     </ThemeProvider>
   );

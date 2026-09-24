@@ -9,11 +9,11 @@ import {
 } from "@mui/material";
 import { ThemeProvider, darken, styled } from "@mui/material/styles";
 import { TrashCan } from "mdi-material-ui";
-import Noty from "noty";
 import React, { useState } from "react";
 import { renderWidget } from "../../../utilities/widgetRender";
 import { useTranslation } from "react-i18next";
 import { globalContainers } from "../../../containers/global";
+import { notify } from "../../../lib/notifications";
 import { smmsUploadImages } from "../../../utilities/image_uploader";
 
 const WidgetCard = styled(Card)(({ theme }) => ({
@@ -60,13 +60,7 @@ function ImageWidget(props: WidgetArgs) {
     imageUploaderElement.onchange = function (event) {
       const target = event.target as any;
       const files = target.files || [];
-      new Noty({
-        type: "info",
-        text: t("utils/uploading-image"),
-        layout: "topRight",
-        theme: "relax",
-        timeout: 2000,
-      }).show();
+      notify({ severity: "info", message: t("utils/uploading-image") });
       setUploadingImages(true);
       smmsUploadImages(files)
         .then((urls) => {
@@ -79,13 +73,10 @@ function ImageWidget(props: WidgetArgs) {
         .catch((error: any) => {
           // console.log(error);
           setUploadingImages(false);
-          new Noty({
-            type: "error",
-            text: t("utils/upload-image-failure"),
-            layout: "topRight",
-            theme: "relax",
-            timeout: 2000,
-          }).show();
+          notify({
+            severity: "error",
+            message: t("utils/upload-image-failure"),
+          });
         });
     };
     imageUploaderElement.click();
