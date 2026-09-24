@@ -16,6 +16,15 @@ export const noteTab = (id: string, name = id) => ({
   },
 });
 
+// The settings: a pane with text fields to drag text between.
+export const settingsTab = {
+  type: "tab",
+  id: "Settings",
+  name: "Settings",
+  component: "Settings",
+  config: { component: "Settings", singleton: true },
+};
+
 export const tabset = (...children: object[]) => ({
   type: "tabset",
   children,

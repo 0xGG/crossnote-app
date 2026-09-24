@@ -607,6 +607,10 @@ export default function NotePanel(props: Props) {
           keyMap: settingsContainer.keyMap,
           showCursorWhenSelecting: true,
           inputStyle: "contenteditable",
+          // The insert-file add-on gets no file handler here, so it inserts
+          // nothing; left on for drops, it still moves the caret to wherever
+          // anything is dropped, a dragged tab included.
+          hmdInsertFile: { byPaste: true, byDrop: false },
           hmdClick: (info: any, cm: CodeMirrorEditor) => {
             let { text, url } = info;
             if (info.type === "link" || info.type === "url") {

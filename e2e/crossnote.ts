@@ -47,6 +47,48 @@ export class CrossnoteApp {
     await expect(this.notebook("Drafts")).toBeVisible();
   }
 
+  // The browser file system keeps its directory tree in memory and writes it
+  // to IndexedDB half a second after the last change, so a reload right after
+  // creating files can come back without them. Waits until the stored tree
+  // holds the path.
+  async waitUntilStored(filePath: string) {
+    await expect
+      .poll(() =>
+        this.page.evaluate(
+          (parts) =>
+            new Promise<boolean>((resolve) => {
+              const open = indexedDB.open("fs");
+              // Only asked when the database does not exist yet: creating it
+              // here would leave out the store the file system adds when it
+              // creates it, so it is left to the file system.
+              open.onupgradeneeded = () => open.transaction!.abort();
+              open.onerror = () => resolve(false);
+              open.onsuccess = () => {
+                const db = open.result;
+                const read = db
+                  .transaction("fs_files")
+                  .objectStore("fs_files")
+                  .get("!root");
+                read.onerror = () => {
+                  db.close();
+                  resolve(false);
+                };
+                read.onsuccess = () => {
+                  let node = read.result?.get("/");
+                  for (const part of parts) {
+                    node = node?.get(part);
+                  }
+                  db.close();
+                  resolve(node !== undefined);
+                };
+              };
+            }),
+          filePath.split("/").filter(Boolean),
+        ),
+      )
+      .toBe(true);
+  }
+
   notebook(name: string): Locator {
     return this.sidebar.getByRole("treeitem", { name: new RegExp(name) });
   }
@@ -62,12 +104,9 @@ export class CrossnoteApp {
     await expect(this.notesPanel).toBeVisible();
   }
 
-  // FlexLayout renders its tab strip without ARIA roles; the class names
-  // are the library's public styling contract.
+  // FlexLayout gives each tab the ARIA tab role, named after the tab.
   tab(name: string): Locator {
-    return this.page
-      .locator(".flexlayout__tab_button")
-      .filter({ hasText: name });
+    return this.page.getByRole("tab", { name, exact: true });
   }
 
   async selectTab(name: string) {

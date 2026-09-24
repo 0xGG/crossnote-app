@@ -32,5 +32,3 @@ export interface CrossnoteTabNode {
   config: TabNodeConfig;
   id?: string;
 }
-
-export const TabHeight = 24;

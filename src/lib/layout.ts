@@ -1,11 +1,12 @@
-import type { IJsonModel, IJsonTabNode } from "flexlayout-react";
+import type {
+  IJsonBorderNode,
+  IJsonModel,
+  IJsonRowNode,
+  IJsonTabGroupNode,
+  IJsonTabNode,
+  IJsonTabSetNode,
+} from "flexlayout-react";
 import { isTabNodeComponent } from "./tabNode";
-
-// flexlayout-react only re-exports the model and tab node shapes; derive the
-// container shapes from them instead of reaching into its declarations dir.
-type RowNode = IJsonModel["layout"];
-type TabSetNode = Exclude<RowNode["children"][number], RowNode>;
-type BorderNode = NonNullable<IJsonModel["borders"]>[number];
 
 // The layout persisted in localStorage outlives the components it names: a
 // tab saved by an earlier build keeps being restored after the component
@@ -22,7 +23,7 @@ export function pruneUnknownTabs(model: IJsonModel): IJsonModel {
   return pruned;
 }
 
-function pruneRow(row: RowNode): RowNode {
+function pruneRow(row: IJsonRowNode): IJsonRowNode {
   return {
     ...row,
     children: row.children.map((child) =>
@@ -31,18 +32,27 @@ function pruneRow(row: RowNode): RowNode {
   };
 }
 
-function isRow(node: RowNode | TabSetNode): node is RowNode {
-  // toJson() stamps every node with its type; the attribute interfaces just
-  // do not declare the field for rows and tabsets.
-  return (node as { type?: string }).type === "row";
+function isRow(node: IJsonRowNode | IJsonTabSetNode): node is IJsonRowNode {
+  // toJson() stamps every node with its type.
+  return node.type === "row";
 }
 
-function pruneTabs<T extends TabSetNode | BorderNode>(
+// Tab groups are off (tabSetEnableTabGroups defaults to false) and the app
+// never creates one, so a saved layout holds none; one would be kept as is.
+function isGroup(
+  node: IJsonTabNode | IJsonTabGroupNode,
+): node is IJsonTabGroupNode {
+  return node.type === "tabgroup";
+}
+
+function pruneTabs<T extends IJsonTabSetNode | IJsonBorderNode>(
   node: T,
   emptySelection: number,
 ): T {
-  const children: IJsonTabNode[] = node.children ?? [];
-  const kept = children.filter((tab) => isTabNodeComponent(tab.component));
+  const children = node.children ?? [];
+  const kept = children.filter(
+    (child) => isGroup(child) || isTabNodeComponent(child.component),
+  );
   if (kept.length === children.length) {
     return node;
   }

@@ -1,8 +1,9 @@
 import { DEFAULT_CORS_PROXY } from "../config";
 import useInterval from "../utilities/useInterval";
-import FlexLayout, {
+import {
   Actions,
   DockLocation,
+  type IJsonModel,
   Model,
   TabNode,
   TabSetNode,
@@ -21,7 +22,7 @@ import { pfs } from "../lib/fs";
 import { pruneUnknownTabs } from "../lib/layout";
 import { Note, NoteConfig, getNoteIcon } from "../lib/note";
 import { Notebook } from "../lib/notebook";
-import { CrossnoteTabNode, TabHeight } from "../lib/tabNode";
+import { CrossnoteTabNode } from "../lib/tabNode";
 import { tabsetForNewTab } from "../lib/tabset";
 import { getTodayName } from "../utilities/utils";
 
@@ -58,12 +59,9 @@ interface InitialState {
   crossnote: Crossnote;
 }
 
-const defaultLayoutModel: any = {
+const defaultLayoutModel: IJsonModel = {
   global: {
-    splitterSize: 4,
     tabSetEnableMaximize: false,
-    tabSetHeaderHeight: TabHeight,
-    tabSetTabStripHeight: TabHeight,
     tabEnableRename: false,
   },
   borders: [],
@@ -104,8 +102,8 @@ function useCrossnoteContainer(initialState: InitialState) {
   const [isPullingNotebook, setIsPullingNotebook] = useState<boolean>(false);
   const [isPerformingAutoFetch, setIsPerformingAutoFetch] =
     useState<boolean>(false);
-  const [layoutModel, setLayoutModel] = useState<Model>(
-    FlexLayout.Model.fromJson(getlayoutModelFromLocalStrorage()),
+  const [layoutModel, setLayoutModel] = useState<Model>(() =>
+    Model.fromJson(getlayoutModelFromLocalStrorage()),
   );
 
   const getNotebookAtPath = useCallback(
@@ -134,9 +132,10 @@ function useCrossnoteContainer(initialState: InitialState) {
       if (tabNode.component === "Note") {
         const notebookPath = tabNode.config.notebookPath;
         const noteFilePath = tabNode.config.noteFilePath;
-        const tabs = activeTabset.getChildren();
+        // Tabs only: a tabset can also hold groups of tabs.
+        const tabs = activeTabset.getTabNodes();
         for (let i = 0; i < tabs.length; i++) {
-          const eTabNode = tabs[i] as TabNode;
+          const eTabNode = tabs[i];
           const eNotebookpath: string = eTabNode.getConfig().notebookPath;
           const eNoteFilePath: string = eTabNode.getConfig().noteFilePath;
           if (
@@ -159,7 +158,7 @@ function useCrossnoteContainer(initialState: InitialState) {
         return;
       }
       layoutModel.doAction(
-        Actions.addNode(tabNode, activeTabset.getId(), DockLocation.CENTER, 0),
+        Actions.addTab(tabNode, activeTabset.getId(), DockLocation.CENTER, 0),
       );
     },
     [layoutModel],
@@ -745,7 +744,7 @@ function useCrossnoteContainer(initialState: InitialState) {
           },
         };
         layoutModel.doAction(
-          Actions.addNode(
+          Actions.addTab(
             newTabNode,
             activeTabset.getId(),
             DockLocation.BOTTOM,
@@ -777,7 +776,7 @@ function useCrossnoteContainer(initialState: InitialState) {
           },
         };
         layoutModel.doAction(
-          Actions.addNode(
+          Actions.addTab(
             newTabNode,
             activeTabset.getId(),
             DockLocation.RIGHT,

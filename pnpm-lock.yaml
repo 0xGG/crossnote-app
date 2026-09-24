@@ -65,8 +65,8 @@ importers:
         specifier: ^3.3.0
         version: 3.3.0
       flexlayout-react:
-        specifier: ^0.5.5
-        version: 0.5.21(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+        specifier: ^0.11.0
+        version: 0.11.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       i18next:
         specifier: ^26.4.2
         version: 26.4.2(typescript@6.0.3)
@@ -2229,11 +2229,12 @@ packages:
   flatted@3.4.4:
     resolution: {integrity: sha512-5+ybhBZANEJxaH3X5evAFatUxLfEHSr7n6kYJ+1Qd0mUqr4eu9gIf6GDbWHf8RJijHrjjO8G+la14SlL2SeS1Q==}
 
-  flexlayout-react@0.5.21:
-    resolution: {integrity: sha512-H42iOL9IxidgWP8T1eQLPTzYrBXMFSDitV+yowVPr1inKB7XTb+fm3yZXR/Qt2BZiZF0/BMI+lpjXFtgFLvfJg==}
+  flexlayout-react@0.11.0:
+    resolution: {integrity: sha512-aP9bLZIaZTXApS7zQZMZ5/ExlUpghwNEpeQDiPSHYyHO5lz01G5vOnbFxmqn/kU0pSBw2eA9uioXVQHjRuYjkA==}
+    engines: {node: '>=20'}
     peerDependencies:
-      react: ^17.0.2
-      react-dom: ^17.0.2
+      react: ^18.0.0 || ^19.0.0
+      react-dom: ^18.0.0 || ^19.0.0
 
   flowchart.js@1.13.0:
     resolution: {integrity: sha512-kr+XrH9WSE40ufAec/hs8kbAvSxFx4Fgyf/mjkJwTxWea5USuQAjZt0j9cZJO4ZayWkin9OkWxH4ovLF/5KZFA==}
@@ -6247,11 +6248,10 @@ snapshots:
 
   flatted@3.4.4: {}
 
-  flexlayout-react@0.5.21(react-dom@18.3.1(react@18.3.1))(react@18.3.1):
+  flexlayout-react@0.11.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1):
     dependencies:
       react: 18.3.1
       react-dom: 18.3.1(react@18.3.1)
-      uuid: 8.3.2
 
   flowchart.js@1.13.0:
     dependencies:

@@ -1,0 +1,106 @@
+{
+  "global": {
+    "splitterSize": 4,
+    "tabEnableRename": false,
+    "tabSetEnableMaximize": false,
+    "tabSetHeaderHeight": 24,
+    "tabSetTabStripHeight": 24
+  },
+  "borders": [],
+  "layout": {
+    "type": "row",
+    "id": "#e4c4c20b-32ea-4d57-846e-1964baedf22e",
+    "children": [
+      {
+        "type": "tabset",
+        "id": "#edfe7de2-704d-4b89-bc4c-af3d0ac78d13",
+        "weight": 50,
+        "children": [
+          {
+            "type": "tab",
+            "id": "#20ab14ca-be48-4a8d-a3cf-2f3fec30605e",
+            "name": "README",
+            "component": "Note",
+            "config": {
+              "component": "Note",
+              "singleton": false,
+              "noteFilePath": "README.md",
+              "notebookPath": "/notebooks/fixture-drafts",
+              "icon": ":memo:"
+            }
+          },
+          {
+            "type": "tab",
+            "id": "Notes: /notebooks/fixture-drafts",
+            "name": "Drafts",
+            "component": "Notes",
+            "config": {
+              "component": "Notes",
+              "singleton": true,
+              "notebookPath": "/notebooks/fixture-drafts",
+              "icon": ":notebook_with_decorative_cover:"
+            }
+          }
+        ]
+      },
+      {
+        "type": "row",
+        "id": "#24911e72-0512-4600-9005-1af340c7ca7b",
+        "weight": 50,
+        "children": [
+          {
+            "type": "tabset",
+            "id": "#95dcd274-069c-48aa-ba99-0a756eb80420",
+            "weight": 50,
+            "children": [
+              {
+                "type": "tab",
+                "id": "Settings",
+                "name": "Settings",
+                "component": "Settings",
+                "config": {
+                  "component": "Settings",
+                  "singleton": true,
+                  "icon": ":gear:"
+                }
+              },
+              {
+                "type": "tab",
+                "id": "#345807c7-9253-4995-8252-322bfd0a5402",
+                "name": "README",
+                "component": "Note",
+                "config": {
+                  "component": "Note",
+                  "singleton": false,
+                  "noteFilePath": "README.md",
+                  "notebookPath": "/notebooks/fixture-drafts",
+                  "icon": ":memo:"
+                }
+              }
+            ]
+          },
+          {
+            "type": "tabset",
+            "id": "#a75bb5f7-9cd0-4d1b-8e06-10c8f8375014",
+            "weight": 50,
+            "children": [
+              {
+                "type": "tab",
+                "id": "Graph: /notebooks/fixture-drafts",
+                "name": "Graph view",
+                "component": "Graph",
+                "config": {
+                  "component": "Graph",
+                  "singleton": true,
+                  "notebookPath": "/notebooks/fixture-drafts",
+                  "icon": ":spider_web:"
+                }
+              }
+            ],
+            "active": true
+          }
+        ]
+      }
+    ]
+  }
+}
