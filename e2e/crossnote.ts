@@ -30,6 +30,17 @@ export class CrossnoteApp {
     await this.waitUntilReady();
   }
 
+  // Has the page start from this saved layout, as a returning user's does.
+  // It is put back on every load of the page, reloads included.
+  async seedLayout(layout: object | string) {
+    await this.page.addInitScript(
+      (saved) => {
+        localStorage.setItem("layoutModel", saved);
+      },
+      typeof layout === "string" ? layout : JSON.stringify(layout),
+    );
+  }
+
   // The notebook tree renders only once the browser file system is up and
   // the default notebook exists; on a fresh origin that includes creating it.
   async waitUntilReady() {

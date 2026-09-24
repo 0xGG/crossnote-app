@@ -22,6 +22,7 @@ import { pruneUnknownTabs } from "../lib/layout";
 import { Note, NoteConfig, getNoteIcon } from "../lib/note";
 import { Notebook } from "../lib/notebook";
 import { CrossnoteTabNode, TabHeight } from "../lib/tabNode";
+import { tabsetForNewTab } from "../lib/tabset";
 import { getTodayName } from "../utilities/utils";
 
 export enum SelectedSectionType {
@@ -119,27 +120,10 @@ function useCrossnoteContainer(initialState: InitialState) {
       if (!layoutModel) {
         return;
       }
-      let activeTabset: TabSetNode = layoutModel.getActiveTabset();
-      if (!activeTabset) {
-        const modelChildren = layoutModel.getRoot().getChildren();
-        let needsToCreateNewTabSet = true;
-        if (modelChildren.length) {
-          modelChildren.forEach((child) => {
-            if (child.getType() === "tabset") {
-              needsToCreateNewTabSet = false;
-              layoutModel.doAction(Actions.setActiveTabset(child.getId()));
-            }
-          });
-        }
-
-        if (needsToCreateNewTabSet) {
-          activeTabset = new FlexLayout.TabSetNode();
-          (layoutModel.getRoot() as any)._addChild(activeTabset);
-          layoutModel.doAction(Actions.setActiveTabset(activeTabset.getId()));
-        } else {
-          activeTabset = layoutModel.getActiveTabset();
-        }
-      }
+      // Adding or selecting a tab makes its tabset the active one, so the
+      // fallback need not be made active first.
+      const activeTabset: TabSetNode =
+        layoutModel.getActiveTabset() ?? tabsetForNewTab(layoutModel);
 
       if (tabNode.config.singleton) {
         const node = layoutModel.getNodeById(tabNode.id);
@@ -152,11 +136,9 @@ function useCrossnoteContainer(initialState: InitialState) {
         const noteFilePath = tabNode.config.noteFilePath;
         const tabs = activeTabset.getChildren();
         for (let i = 0; i < tabs.length; i++) {
-          const eTabNode: any = tabs[i];
-          const eNotebookpath: string =
-            eTabNode._attributes.config.notebookPath;
-          const eNoteFilePath: string =
-            eTabNode._attributes.config.noteFilePath;
+          const eTabNode = tabs[i] as TabNode;
+          const eNotebookpath: string = eTabNode.getConfig().notebookPath;
+          const eNoteFilePath: string = eTabNode.getConfig().noteFilePath;
           if (
             notebookPath &&
             noteFilePath &&
