@@ -265,5 +265,13 @@ export const enUS = {
     // graph view
     "graph-view/node": "Node(s)",
     "graph-view/link": "Link(s)",
+
+    // Layout (flexlayout-react's own labels)
+    "layout/hidden-tabs": "Hidden tabs",
+    "layout/resize": "Resize",
+    "layout/move-tabs": "Move tabs (?)",
+    "layout/move-tabset": "Move tabset",
+    "layout/error-rendering-component": "Error rendering component",
+    "layout/retry": "Retry",
   },
 };

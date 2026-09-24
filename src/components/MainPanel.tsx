@@ -21,6 +21,7 @@ import { CrossnoteContainer } from "../containers/crossnote";
 import { SettingsContainer } from "../containers/settings";
 import { pfs } from "../lib/fs";
 import { guardLayoutDrags } from "../lib/layoutDrag";
+import { translateLayoutLabel } from "../lib/layoutLabels";
 import { TabNodeComponent, TabNodeConfig } from "../lib/tabNode";
 import { Emoji } from "./EmojiWrapper";
 import GraphView from "./GraphView";
@@ -134,7 +135,7 @@ export function MainPanel() {
   const [ready, setReady] = useState<boolean>(false);
   const crossnoteContainer = CrossnoteContainer.useContainer();
   const settingsContainer = SettingsContainer.useContainer();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
 
   const factory = useCallback(
     (node: TabNode) => {
@@ -213,6 +214,15 @@ export function MainPanel() {
     ],
   );
 
+  // FlexLayout hands the translator to its model after a render, so one
+  // bound to a single language, as `t` is, would leave the labels a render
+  // behind each change of language. This one stays the same function and
+  // looks labels up in the language the app is in when the layout draws.
+  const i18nTranslator = useCallback(
+    (key: string) => translateLayoutLabel((k) => i18n.t(k), key),
+    [i18n],
+  );
+
   // Tabs are dragged with the same events the panes use for their own drag
   // and drop, a note's editor among them.
   useEffect(() => guardLayoutDrags(container.current), []);
@@ -277,6 +287,7 @@ export function MainPanel() {
         // when tabs are slow to draw, as editors and the graph are.
         realtimeResize={false}
         keyMap={layoutKeyMap}
+        i18nTranslator={i18nTranslator}
       ></Layout>
       {/*
         The dialog here is useful for file system access API requestPermission from user interaction.

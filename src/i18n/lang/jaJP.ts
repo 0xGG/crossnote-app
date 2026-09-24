@@ -267,5 +267,14 @@ export const jaJP = {
     // graph view
     "graph-view/node": "ノード",
     "graph-view/link": "リンク",
+
+    // Layout (flexlayout-react's own labels)
+    "layout/hidden-tabs": "非表示のタブ",
+    "layout/resize": "サイズ変更",
+    "layout/move-tabs": "? 個のタブを移動",
+    "layout/move-tabset": "パネルを移動",
+    "layout/error-rendering-component":
+      "コンポーネントの描画中にエラーが発生しました",
+    "layout/retry": "再試行",
   },
 };
