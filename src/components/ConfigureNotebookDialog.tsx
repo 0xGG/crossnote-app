@@ -66,9 +66,12 @@ export default function ConfigureNotebookDialog(props: Props) {
     setClickHardResetCount(MaxClickDeleteCount);
   }, [props.open]);
 
+  // Filled from the notebook each time the dialog opens. It stays mounted, so
+  // whatever a cancelled edit left in the fields would otherwise show, and be
+  // saved, the next time.
   useEffect(() => {
     const notebook = props.notebook;
-    if (!notebook) {
+    if (!notebook || !props.open) {
       return;
     }
     setNotebookName(notebook.name);
@@ -80,7 +83,7 @@ export default function ConfigureNotebookDialog(props: Props) {
     setAutoFetchPeriod(notebook.autoFetchPeriod / 60000);
     setShowUsername(false);
     setShowPassword(false);
-  }, [props.notebook]);
+  }, [props.notebook, props.open]);
 
   const updateNotebook = useCallback(async () => {
     const notebook = props.notebook;

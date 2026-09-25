@@ -33,3 +33,36 @@ test("shows a favourite's whole title and its reference count however long the t
     )
     .toBe(true);
 });
+
+test("forgets edits to a notebook's settings that were cancelled", async ({
+  app,
+  page,
+}) => {
+  await app.open();
+  const drafts = app.notebook("Drafts");
+  await drafts.getByRole("button").first().click();
+  // The favourites come in once the notes are read, above Settings, and push
+  // it down a row: a click aimed at Settings before then can land on the
+  // favourite that moves into its place.
+  await expect(
+    drafts.getByRole("treeitem", { name: /quick-access README/ }),
+  ).toBeVisible();
+  const openSettings = () =>
+    drafts
+      .getByRole("group")
+      .getByRole("treeitem", { name: /Settings/ })
+      .click();
+  const dialog = page.getByRole("dialog");
+  const name = dialog.getByRole("textbox", { name: "Notebook name" });
+
+  await openSettings();
+  await expect(name).toHaveValue("Drafts");
+  await name.fill("Not saved");
+  await dialog.getByRole("button", { name: "Cancel" }).click();
+  await expect(dialog).toBeHidden();
+
+  // The dialog stays mounted between openings; what it shows next time is
+  // the notebook, not the cancelled edit.
+  await openSettings();
+  await expect(name).toHaveValue("Drafts");
+});
