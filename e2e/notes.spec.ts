@@ -107,6 +107,26 @@ test("saves an edit that takes a note back to how it was", async ({
   await expect(card).toContainText("This note is empty");
 });
 
+test("names a new note in the language the app is in now", async ({
+  app,
+  page,
+}) => {
+  // With today's note made, the next one is named Untitled, in words.
+  await app.createNote();
+  await app.openSettings();
+  await page.getByRole("combobox").filter({ hasText: "English" }).click();
+  await page.getByRole("option", { name: "简体中文" }).click();
+
+  // The same list as before, now headed in Chinese.
+  await app.selectTab("Drafts");
+  await page
+    .locator(".notes-panel")
+    .filter({ visible: true })
+    .getByRole("button", { name: "新的笔记" })
+    .click();
+  await expect(app.tab("无标题")).toBeVisible();
+});
+
 test("keeps notes across a reload", async ({ app, page }) => {
   await app.createNote();
   await expect(app.noteTitle).not.toHaveValue("");

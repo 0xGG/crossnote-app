@@ -180,7 +180,14 @@ function NotesPanel(props: Props) {
       .catch(() => {
         setIsCreatingNote(false);
       });
-  }, [props.notebook, props.note]);
+    // The container's functions change with the language, which names a new
+    // note Untitled in the words of the moment.
+  }, [
+    props.notebook,
+    props.note,
+    crossnoteContainer.createNewNote,
+    crossnoteContainer.openNoteAtPath,
+  ]);
 
   const onChangeSearchValue = useCallback(
     (event: React.ChangeEvent<HTMLTextAreaElement | HTMLInputElement>) => {
