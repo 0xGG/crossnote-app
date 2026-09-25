@@ -40,7 +40,9 @@ export default function ConfigureNotebookDialog(props: Props) {
   const [gitCorsProxy, setGitCorsProxy] = useState<string>(DEFAULT_CORS_PROXY);
   const [showUsername, setShowUsername] = useState<boolean>(false);
   const [showPassword, setShowPassword] = useState<boolean>(false);
-  const [autoFetchPeriod, setAutoFetchPeriod] = useState<number>(0);
+  // Minutes as typed, so that a decimal point can be typed; read as a number
+  // when the notebook is saved.
+  const [autoFetchPeriod, setAutoFetchPeriod] = useState<string>("0");
   const [clickDeleteCount, setClickDeleteCount] =
     useState<number>(MaxClickDeleteCount);
   const [clickHardResetCount, setClickHardResetCount] =
@@ -80,7 +82,7 @@ export default function ConfigureNotebookDialog(props: Props) {
     setGitUsername(notebook.gitUsername);
     setGitPassword(notebook.gitPassword);
     setGitCorsProxy(notebook.gitCorsProxy);
-    setAutoFetchPeriod(notebook.autoFetchPeriod / 60000);
+    setAutoFetchPeriod(String(notebook.autoFetchPeriod / 60000));
     setShowUsername(false);
     setShowPassword(false);
   }, [props.notebook, props.open]);
@@ -97,7 +99,10 @@ export default function ConfigureNotebookDialog(props: Props) {
     notebook.gitUsername = gitUsername.trim();
     notebook.gitPassword = gitPassword;
     notebook.gitCorsProxy = gitCorsProxy.trim();
-    notebook.autoFetchPeriod = Math.max(autoFetchPeriod * 60000, 0);
+    // The field takes only digits and a decimal point, so the one thing it
+    // can hold that is no number is nothing at all, or the point alone: no
+    // checks, as an empty field has always meant.
+    notebook.autoFetchPeriod = (parseFloat(autoFetchPeriod) || 0) * 60000;
     try {
       await crossnoteContainer.updateNotebook(notebook);
     } catch (error) {}
@@ -265,13 +270,12 @@ export default function ConfigureNotebookDialog(props: Props) {
                     </Typography>
                     <Input
                       value={autoFetchPeriod}
+                      // Kept as typed, so that 1. can become 1.5, and only
+                      // when it is a number or on its way to one.
                       onChange={(event) => {
-                        try {
-                          const value = parseFloat(event.target.value || "0");
-                          if (!isNaN(value)) {
-                            setAutoFetchPeriod(value);
-                          }
-                        } catch (error) {}
+                        if (/^\d*\.?\d*$/.test(event.target.value)) {
+                          setAutoFetchPeriod(event.target.value);
+                        }
                       }}
                       endAdornment={
                         <InputAdornment position="end">
