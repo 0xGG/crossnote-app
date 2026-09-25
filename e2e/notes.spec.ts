@@ -127,6 +127,43 @@ test("names a new note in the language the app is in now", async ({
   await expect(app.tab("无标题")).toBeVisible();
 });
 
+test("never gives a new note the name of one that exists", async ({
+  app,
+  page,
+}) => {
+  const newNote = async () => {
+    await app.notesPanel.getByRole("button", { name: "New note" }).click();
+    // The title box is the new note's once its tab is up.
+    await expect(app.noteTitle).not.toHaveValue("");
+    return app.noteTitle.inputValue();
+  };
+  // Today's note, then Untitled, Untitled 1 and Untitled 2.
+  for (let i = 0; i < 3; i++) {
+    await newNote();
+    await app.selectTab("Drafts");
+  }
+  expect(await newNote()).toBe("Untitled 2");
+  await page.locator(".CodeMirror").filter({ visible: true }).click();
+  await page.keyboard.type("Worth keeping");
+  await app.selectTab("Drafts");
+  const kept = app.noteCards.filter({ hasText: "Untitled 2.md" });
+  await expect(kept).toContainText("Worth keeping");
+
+  // With Untitled 1 renamed, two notes are called Untitled-something, and
+  // the next new note must not be named Untitled 2 over the one above.
+  await app.selectTab("Untitled 1");
+  await app.noteTitle.fill("Renamed");
+  await app.noteTitle.press("Enter");
+  await expect(app.tab("Renamed")).toBeVisible();
+  await app.selectTab("Drafts");
+  const next = await newNote();
+  expect(next).not.toBe("Untitled 2");
+  await app.selectTab("Drafts");
+  // Once the list shows the new note, it has been written.
+  await expect(app.noteCards.filter({ hasText: `${next}.md` })).toBeVisible();
+  await expect(kept).toContainText("Worth keeping");
+});
+
 test("keeps notes across a reload", async ({ app, page }) => {
   await app.createNote();
   await expect(app.noteTitle).not.toHaveValue("");
