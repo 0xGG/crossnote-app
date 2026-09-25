@@ -84,9 +84,12 @@ export default function AddNotebookDialog(props: Props) {
         gitCorsProxy,
       );
     } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
       notify({
         severity: "error",
-        message: error instanceof Error ? error.message : String(error),
+        // The app's own errors carry a key of the language packs; the rest,
+        // such as a git server's reply, are shown as they come.
+        message: /^error\//.test(message) ? t(message) : message,
       });
       close();
     }
