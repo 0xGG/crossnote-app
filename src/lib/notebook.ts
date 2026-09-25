@@ -223,28 +223,38 @@ export class Notebook {
     oldFilePath: string,
     newFilePath: string,
   ): Promise<Note> {
-    newFilePath = newFilePath.replace(/^\/+/, "");
+    // Written plainly, relative to the notebook, which is the only form git
+    // takes: notes//a.md or ./a.md would be moved and then fail.
+    newFilePath = path.relative(
+      this.dir,
+      path.resolve(this.dir, newFilePath.replace(/^\/+/, "")),
+    );
     if (!newFilePath.endsWith(".md")) {
       newFilePath = newFilePath + ".md";
     }
+    if (newFilePath.startsWith("../")) {
+      throw new Error("error/target-file-outside-notebook");
+    }
 
-    await this.removeNoteRelations(oldFilePath);
-    this.search.remove(oldFilePath);
-
-    // git related works
-    const newDirPath = path.dirname(path.resolve(this.dir, newFilePath));
-    await pfs.mkdirp(newDirPath);
-
-    // TODO: Check if newFilePath already exists. If so don't overwrite
+    // Checked before anything changes: a rename that cannot happen has to
+    // leave the note listed, searchable and linked.
     const exists = await pfs.exists(path.resolve(this.dir, newFilePath));
     if (exists) {
       throw new Error("error/target-file-already-exists");
     }
 
+    // The file moves first, for the same reason: a folder on the user's disk
+    // can still refuse a name it does not allow.
+    const newDirPath = path.dirname(path.resolve(this.dir, newFilePath));
+    await pfs.mkdirp(newDirPath);
     await pfs.rename(
       path.resolve(this.dir, oldFilePath),
       path.resolve(this.dir, newFilePath),
     );
+
+    await this.removeNoteRelations(oldFilePath);
+    this.search.remove(oldFilePath);
+
     if (!this.isLocal) {
       await git.remove({
         fs: fs,

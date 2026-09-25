@@ -267,7 +267,8 @@ function useCrossnoteContainer(initialState: InitialState) {
           tabId: tabNode.getId(),
           notebookPath: note.notebookPath,
           oldNoteFilePath: oldNoteFilePath,
-          newNoteFilePath: newFilePath,
+          // As the notebook wrote it, which is not always as it was asked.
+          newNoteFilePath: newNote.filePath,
         });
         return newNote;
       } else {
