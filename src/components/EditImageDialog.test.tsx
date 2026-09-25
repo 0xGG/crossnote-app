@@ -139,3 +139,9 @@ it("shows nothing of the image opened before while the next is looked up", async
   await endLookup("data:image/png;base64,Yg==");
   expect(preview()).toBe("data:image/png;base64,Yg==");
 });
+
+it("previews the image of a kanban card, which has no note", async () => {
+  await show(false, null, null);
+  await show(true, image("https://example.com/a.png"), null);
+  expect(preview()).toBe("https://example.com/a.png");
+});
