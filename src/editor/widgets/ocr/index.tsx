@@ -113,13 +113,26 @@ function OCRWidget(props: WidgetArgs) {
         context.drawImage(imageObject, 0, 0);
         setOCRDataURL(canvas.toDataURL());
       };
-      imageObject.onerror = (error) => {
-        throw error;
+      // A file that is no image, or an image whose server does not allow
+      // other pages to read it, cannot be drawn: say so and go back.
+      imageObject.onerror = () => {
+        notify({
+          severity: "error",
+          message: t("widget/crossnote.ocr/image-failed"),
+        });
+        setImageDataURL("");
       };
       imageObject.setAttribute("crossOrigin", "anonymous");
       imageObject.src = imageDataURL;
+      // An image still loading when the widget moves on, to another image or
+      // the other grayscale setting, is no longer this widget's to draw or
+      // to report.
+      return () => {
+        imageObject.onload = null;
+        imageObject.onerror = null;
+      };
     }
-  }, [canvas, imageDataURL, grayscaleChecked]);
+  }, [canvas, imageDataURL, grayscaleChecked, t]);
 
   function clickDropArea(e: any) {
     e.preventDefault();

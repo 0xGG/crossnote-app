@@ -217,6 +217,7 @@ export const enUS = {
     "widget/crossnote.ocr/extra-settings": "Extra settings",
     "widget/crossnote.ocr/grayscale": "Grayscale",
     "widget/crossnote.ocr/failed": "Failed to recognize the text",
+    "widget/crossnote.ocr/image-failed": "The image could not be loaded",
     "widget/crossnote.kanban/add-column": "Add new column",
     "widget/crossnote.kanban/add-card": "Add new card",
     "widget/crossnote.kanban/delete-column": "Delete column",

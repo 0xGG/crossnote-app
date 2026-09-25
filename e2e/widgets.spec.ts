@@ -168,3 +168,76 @@ test("brings the OCR widget back when the recognition worker cannot be loaded", 
   await context.route("https://unpkg.com/**", (route) => route.abort());
   await expectRecognitionToFail(app, page);
 });
+
+test("brings the OCR widget back when the chosen file is no image", async ({
+  app,
+  page,
+}) => {
+  await app.open();
+  await app.openNotes();
+  await app.createNote();
+  await app.modeButton("Edit").click();
+  await app.typeInEditor("<!-- @crossnote.ocr -->\n");
+  // The file input takes any file.
+  const chooser = page.waitForEvent("filechooser");
+  await page.getByText("Click here to browse image file").click();
+  await (
+    await chooser
+  ).setFiles({
+    name: "notes.txt",
+    mimeType: "text/plain",
+    buffer: Buffer.from("Not an image"),
+  });
+
+  await expect(
+    page
+      .getByRole("alert")
+      .filter({ hasText: "The image could not be loaded" }),
+  ).toBeVisible();
+  await expect(page.getByText("Click here to browse image file")).toBeVisible();
+});
+
+test("keeps the OCR widget's image when one chosen before it fails to load", async ({
+  app,
+  page,
+}) => {
+  // A linked image whose server keeps the widget waiting, and answers only
+  // once another image has been chosen.
+  const requested = new Promise<() => Promise<void>>((resolve) => {
+    void page.route("https://example.com/slow.png", (route) => {
+      resolve(() => route.abort());
+    });
+  });
+  await app.open();
+  await app.openNotes();
+  await app.createNote();
+  await app.modeButton("Edit").click();
+  await app.typeInEditor("<!-- @crossnote.ocr -->\n");
+  const messages = await app.recordMessages();
+  const link = page.getByPlaceholder(
+    "Enter image URL here, then press 'Enter' to insert.",
+  );
+  await link.fill("https://example.com/slow.png");
+  await link.press("Enter");
+  const fail = await requested;
+  await page.getByRole("button", { name: "Go back" }).click();
+
+  const chooser = page.waitForEvent("filechooser");
+  await page.getByText("Click here to browse image file").click();
+  await (await chooser).setFiles(picture);
+  const start = page.getByRole("button", { name: "Start OCR" });
+  await expect(start).toBeEnabled();
+
+  const failed = page.waitForEvent("requestfailed");
+  await fail();
+  await failed;
+  // Two frames on, the image's error has been handled and drawn, if at all.
+  await page.evaluate(
+    () =>
+      new Promise((resolve) =>
+        requestAnimationFrame(() => requestAnimationFrame(resolve)),
+      ),
+  );
+  await expect(start).toBeEnabled();
+  expect(await messages()).toEqual([]);
+});

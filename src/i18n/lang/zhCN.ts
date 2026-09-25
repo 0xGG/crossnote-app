@@ -214,6 +214,7 @@ export const zhCN = {
     "widget/crossnote.ocr/extra-settings": "额外设定",
     "widget/crossnote.ocr/grayscale": "灰度",
     "widget/crossnote.ocr/failed": "文字识别失败",
+    "widget/crossnote.ocr/image-failed": "图片无法加载",
     "widget/crossnote.kanban/add-column": "添加新的列",
     "widget/crossnote.kanban/add-card": "添加新的卡片",
     "widget/crossnote.kanban/delete-column": "删除列",
