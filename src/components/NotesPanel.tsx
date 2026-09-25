@@ -23,13 +23,7 @@ import {
   SortDescending,
   SortVariant,
 } from "mdi-material-ui";
-import React, {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { CrossnoteContainer } from "../containers/crossnote";
 import {
@@ -49,25 +43,26 @@ import { TabNodeConfig } from "../lib/tabNode";
 import Notes from "./Notes";
 
 const NotesPanelRoot = styled("div")(({ theme }) => ({
-  backgroundColor: theme.palette.background.paper,
-  width: "800px",
-  maxWidth: "100%",
-  margin: "0 auto",
+  "backgroundColor": theme.palette.background.paper,
+  "width": "800px",
+  "maxWidth": "100%",
+  "margin": "0 auto",
+  // Moving the focus to a card's controls scrolls them clear of the search
+  // bar pinned above the list, not merely into the pane, where it hides them.
+  "& .note-card *": {
+    scrollMarginTop: theme.spacing(12),
+  },
 }));
 
+// Stays at the top of the scrolling pane once the list scrolls under it.
 const TopPanel = styled(Box)(({ theme }) => ({
+  position: "sticky",
+  top: 0,
   padding: theme.spacing(0, 1),
   borderRadius: 0,
   backgroundColor: theme.palette.background.paper,
   zIndex: 9,
 }));
-
-// Applied on top of TopPanel only while the panel is pinned to the top.
-const fixedTopPanelSx = {
-  position: "sticky",
-  top: `0`,
-  width: "100%",
-} as const;
 
 const Row = styled(Box)({
   display: "flex",
@@ -141,7 +136,7 @@ interface Props {
   title?: string;
 }
 
-export default function NotesPanel(props: Props) {
+function NotesPanel(props: Props) {
   const { t } = useTranslation();
   const [sortMenuAnchorEl, setSortMenuAnchorEl] = useState<HTMLElement>(null);
   const [isCreatingNote, setIsCreatingNote] = useState<boolean>(false);
@@ -161,10 +156,8 @@ export default function NotesPanel(props: Props) {
   const [searchValueInputTimeout, setSearchValueInputTimeout] =
     useState<ReturnType<typeof setTimeout>>(null);
   const [finalSearchValue, setFinalSearchValue] = useState<string>("");
-  const [fixedTopPanel, setFixedTopPanel] = useState<boolean>(false);
   const [tabNodeVisible, setTabNodeVisible] = useState<boolean>(false);
   const container = useRef<HTMLDivElement>(null);
-  const topPanel = useRef<HTMLElement>(null);
   const isMounted = useRef<boolean>(false);
 
   const createNewNote = useCallback(() => {
@@ -378,26 +371,6 @@ export default function NotesPanel(props: Props) {
     setNotes(newNotes);
   }, [rawNotesMap, orderBy, orderDirection]);
 
-  useEffect(() => {
-    if (!container || !topPanel || !container.current || !topPanel.current) {
-      return;
-    }
-    const containerElement = container.current;
-    const scrollElement = containerElement.parentElement;
-    const scrollEvent = function () {
-      if (scrollElement.scrollTop >= containerElement.offsetTop) {
-        setFixedTopPanel(true);
-      } else {
-        setFixedTopPanel(false);
-      }
-    };
-    scrollEvent();
-    scrollElement.addEventListener("scroll", scrollEvent);
-    return () => {
-      scrollElement.removeEventListener("scroll", scrollEvent);
-    };
-  }, [container, topPanel]);
-
   useInterval(() => {
     if (needsToRefreshRawNotes) {
       refreshRawNotes();
@@ -405,137 +378,128 @@ export default function NotesPanel(props: Props) {
     }
   }, 15000);
 
-  const rootComponent = useMemo(() => {
-    return (
-      <NotesPanelRoot className={"notes-panel"} ref={container}>
-        <TopPanel sx={fixedTopPanel ? fixedTopPanelSx : undefined}>
-          {props.title && (
-            <Typography
-              variant={"h6"}
-              style={{
-                padding: "6px 0 7px",
-                color: theme.palette.text.primary,
-              }}
-            >
-              {props.title}
-            </Typography>
-          )}
-          <Row>
-            <SearchBox>
-              <SearchIconWrapper>
-                <Magnify />
-              </SearchIconWrapper>
-              <SearchInput
-                placeholder={t("search/notes")}
-                value={searchValue}
-                inputProps={{ "aria-label": "search" }}
-                onChange={onChangeSearchValue}
-                autoComplete={"off"}
-                autoCorrect={"off"}
-              />
-            </SearchBox>
-            <IconButton
-              aria-label={t("general/new-note")}
-              onClick={createNewNote}
-              disabled={!crossnoteContainer.initialized || isCreatingNote}
-            >
-              <Tooltip title={t("general/new-note")}>
-                <FileEditOutline></FileEditOutline>
-              </Tooltip>
-            </IconButton>
-            <IconButton
-              aria-label={t("general/sort-notes")}
-              onClick={(event) => setSortMenuAnchorEl(event.currentTarget)}
-            >
-              <SortVariant></SortVariant>
-            </IconButton>
-          </Row>
-        </TopPanel>
-
-        <Popover
-          anchorEl={sortMenuAnchorEl}
-          keepMounted
-          open={Boolean(sortMenuAnchorEl)}
-          onClose={() => setSortMenuAnchorEl(null)}
-        >
-          <List>
-            <ListItemButton
-              onClick={() => setOrderBy(OrderBy.ModifiedAt)}
-              sx={orderBy === OrderBy.ModifiedAt ? sortSelectedSx : undefined}
-            >
-              <ListItemText primary={t("general/date-modified")}></ListItemText>
-            </ListItemButton>
-            <ListItemButton
-              onClick={() => setOrderBy(OrderBy.CreatedAt)}
-              sx={orderBy === OrderBy.CreatedAt ? sortSelectedSx : undefined}
-            >
-              <ListItemText primary={t("general/date-created")}></ListItemText>
-            </ListItemButton>
-            <ListItemButton
-              onClick={() => setOrderBy(OrderBy.Title)}
-              sx={orderBy === OrderBy.Title ? sortSelectedSx : undefined}
-            >
-              <ListItemText primary={t("general/title")}></ListItemText>
-            </ListItemButton>
-            <Divider></Divider>
-            <ListItemButton
-              onClick={() => setOrderDirection(OrderDirection.DESC)}
-              sx={
-                orderDirection === OrderDirection.DESC
-                  ? sortSelectedSx
-                  : undefined
-              }
-            >
-              <ListItemText primary={t("general/Desc")}></ListItemText>
-              <ListItemIcon style={{ marginLeft: "8px" }}>
-                <SortDescending></SortDescending>
-              </ListItemIcon>
-            </ListItemButton>
-            <ListItemButton
-              onClick={() => setOrderDirection(OrderDirection.ASC)}
-              sx={
-                orderDirection === OrderDirection.ASC
-                  ? sortSelectedSx
-                  : undefined
-              }
-            >
-              <ListItemText primary={t("general/Asc")}></ListItemText>
-              <ListItemIcon style={{ marginLeft: "8px" }}>
-                <SortAscending></SortAscending>
-              </ListItemIcon>
-            </ListItemButton>
-          </List>
-        </Popover>
-
-        {props.notebook.hasLoadedNotes ? (
-          <Notes
-            tabNode={props.tabNode}
-            notebook={props.notebook}
-            notes={notes}
-            referredNote={props.note}
-            searchValue={finalSearchValue}
-            scrollElement={
-              container && container.current && container.current.parentElement
-            }
-          ></Notes>
-        ) : (
-          <Loading></Loading>
-        )}
-      </NotesPanelRoot>
-    );
-  }, [
-    props.tabNode,
-    props.note,
-    props.notebook,
-    props.notebook.hasLoadedNotes,
-    notes,
-    searchValue,
-    finalSearchValue,
-  ]);
-
   if (props.note && !notes.length) {
     return <Box></Box>;
   }
 
-  return rootComponent;
+  return (
+    <NotesPanelRoot className={"notes-panel"} ref={container}>
+      <TopPanel>
+        {props.title && (
+          <Typography
+            variant={"h6"}
+            style={{
+              padding: "6px 0 7px",
+              color: theme.palette.text.primary,
+            }}
+          >
+            {props.title}
+          </Typography>
+        )}
+        <Row>
+          <SearchBox>
+            <SearchIconWrapper>
+              <Magnify />
+            </SearchIconWrapper>
+            <SearchInput
+              placeholder={t("search/notes")}
+              value={searchValue}
+              inputProps={{ "aria-label": "search" }}
+              onChange={onChangeSearchValue}
+              autoComplete={"off"}
+              autoCorrect={"off"}
+            />
+          </SearchBox>
+          <IconButton
+            aria-label={t("general/new-note")}
+            onClick={createNewNote}
+            disabled={!crossnoteContainer.initialized || isCreatingNote}
+          >
+            <Tooltip title={t("general/new-note")}>
+              <FileEditOutline></FileEditOutline>
+            </Tooltip>
+          </IconButton>
+          <IconButton
+            aria-label={t("general/sort-notes")}
+            onClick={(event) => setSortMenuAnchorEl(event.currentTarget)}
+          >
+            <SortVariant></SortVariant>
+          </IconButton>
+        </Row>
+      </TopPanel>
+
+      <Popover
+        anchorEl={sortMenuAnchorEl}
+        keepMounted
+        open={Boolean(sortMenuAnchorEl)}
+        onClose={() => setSortMenuAnchorEl(null)}
+      >
+        <List>
+          <ListItemButton
+            onClick={() => setOrderBy(OrderBy.ModifiedAt)}
+            sx={orderBy === OrderBy.ModifiedAt ? sortSelectedSx : undefined}
+          >
+            <ListItemText primary={t("general/date-modified")}></ListItemText>
+          </ListItemButton>
+          <ListItemButton
+            onClick={() => setOrderBy(OrderBy.CreatedAt)}
+            sx={orderBy === OrderBy.CreatedAt ? sortSelectedSx : undefined}
+          >
+            <ListItemText primary={t("general/date-created")}></ListItemText>
+          </ListItemButton>
+          <ListItemButton
+            onClick={() => setOrderBy(OrderBy.Title)}
+            sx={orderBy === OrderBy.Title ? sortSelectedSx : undefined}
+          >
+            <ListItemText primary={t("general/title")}></ListItemText>
+          </ListItemButton>
+          <Divider></Divider>
+          <ListItemButton
+            onClick={() => setOrderDirection(OrderDirection.DESC)}
+            sx={
+              orderDirection === OrderDirection.DESC
+                ? sortSelectedSx
+                : undefined
+            }
+          >
+            <ListItemText primary={t("general/Desc")}></ListItemText>
+            <ListItemIcon style={{ marginLeft: "8px" }}>
+              <SortDescending></SortDescending>
+            </ListItemIcon>
+          </ListItemButton>
+          <ListItemButton
+            onClick={() => setOrderDirection(OrderDirection.ASC)}
+            sx={
+              orderDirection === OrderDirection.ASC ? sortSelectedSx : undefined
+            }
+          >
+            <ListItemText primary={t("general/Asc")}></ListItemText>
+            <ListItemIcon style={{ marginLeft: "8px" }}>
+              <SortAscending></SortAscending>
+            </ListItemIcon>
+          </ListItemButton>
+        </List>
+      </Popover>
+
+      {props.notebook.hasLoadedNotes ? (
+        <Notes
+          tabNode={props.tabNode}
+          notebook={props.notebook}
+          notes={notes}
+          referredNote={props.note}
+          searchValue={finalSearchValue}
+          scrollElement={
+            container && container.current && container.current.parentElement
+          }
+        ></Notes>
+      ) : (
+        <Loading></Loading>
+      )}
+    </NotesPanelRoot>
+  );
 }
+
+// Drawn again only when its props change, or its own state or the app's
+// does: a note panel draws its references with the same props on every
+// keystroke, and the layout redraws every open list after each save.
+export default React.memo(NotesPanel);
