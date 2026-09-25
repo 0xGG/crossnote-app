@@ -5,6 +5,7 @@ import {
   IconButton,
   InputBase,
   List,
+  ListItem,
   ListItemButton,
   ListItemIcon,
   ListItemText,
@@ -435,49 +436,63 @@ function NotesPanel(props: Props) {
         onClose={() => setSortMenuAnchorEl(null)}
       >
         <List>
-          <ListItemButton
-            onClick={() => setOrderBy(OrderBy.ModifiedAt)}
-            sx={orderBy === OrderBy.ModifiedAt ? sortSelectedSx : undefined}
-          >
-            <ListItemText primary={t("general/date-modified")}></ListItemText>
-          </ListItemButton>
-          <ListItemButton
-            onClick={() => setOrderBy(OrderBy.CreatedAt)}
-            sx={orderBy === OrderBy.CreatedAt ? sortSelectedSx : undefined}
-          >
-            <ListItemText primary={t("general/date-created")}></ListItemText>
-          </ListItemButton>
-          <ListItemButton
-            onClick={() => setOrderBy(OrderBy.Title)}
-            sx={orderBy === OrderBy.Title ? sortSelectedSx : undefined}
-          >
-            <ListItemText primary={t("general/title")}></ListItemText>
-          </ListItemButton>
-          <Divider></Divider>
-          <ListItemButton
-            onClick={() => setOrderDirection(OrderDirection.DESC)}
-            sx={
-              orderDirection === OrderDirection.DESC
-                ? sortSelectedSx
-                : undefined
-            }
-          >
-            <ListItemText primary={t("general/Desc")}></ListItemText>
-            <ListItemIcon style={{ marginLeft: "8px" }}>
-              <SortDescending></SortDescending>
-            </ListItemIcon>
-          </ListItemButton>
-          <ListItemButton
-            onClick={() => setOrderDirection(OrderDirection.ASC)}
-            sx={
-              orderDirection === OrderDirection.ASC ? sortSelectedSx : undefined
-            }
-          >
-            <ListItemText primary={t("general/Asc")}></ListItemText>
-            <ListItemIcon style={{ marginLeft: "8px" }}>
-              <SortAscending></SortAscending>
-            </ListItemIcon>
-          </ListItemButton>
+          <ListItem disablePadding>
+            <ListItemButton
+              onClick={() => setOrderBy(OrderBy.ModifiedAt)}
+              sx={orderBy === OrderBy.ModifiedAt ? sortSelectedSx : undefined}
+            >
+              <ListItemText primary={t("general/date-modified")}></ListItemText>
+            </ListItemButton>
+          </ListItem>
+          <ListItem disablePadding>
+            <ListItemButton
+              onClick={() => setOrderBy(OrderBy.CreatedAt)}
+              sx={orderBy === OrderBy.CreatedAt ? sortSelectedSx : undefined}
+            >
+              <ListItemText primary={t("general/date-created")}></ListItemText>
+            </ListItemButton>
+          </ListItem>
+          <ListItem disablePadding>
+            <ListItemButton
+              onClick={() => setOrderBy(OrderBy.Title)}
+              sx={orderBy === OrderBy.Title ? sortSelectedSx : undefined}
+            >
+              <ListItemText primary={t("general/title")}></ListItemText>
+            </ListItemButton>
+          </ListItem>
+          {/* A line between groups, hidden from assistive technology: as an li,
+              MUI gives it the separator role, which a list may not hold. */}
+          <Divider component="li" aria-hidden></Divider>
+          <ListItem disablePadding>
+            <ListItemButton
+              onClick={() => setOrderDirection(OrderDirection.DESC)}
+              sx={
+                orderDirection === OrderDirection.DESC
+                  ? sortSelectedSx
+                  : undefined
+              }
+            >
+              <ListItemText primary={t("general/Desc")}></ListItemText>
+              <ListItemIcon style={{ marginLeft: "8px" }}>
+                <SortDescending></SortDescending>
+              </ListItemIcon>
+            </ListItemButton>
+          </ListItem>
+          <ListItem disablePadding>
+            <ListItemButton
+              onClick={() => setOrderDirection(OrderDirection.ASC)}
+              sx={
+                orderDirection === OrderDirection.ASC
+                  ? sortSelectedSx
+                  : undefined
+              }
+            >
+              <ListItemText primary={t("general/Asc")}></ListItemText>
+              <ListItemIcon style={{ marginLeft: "8px" }}>
+                <SortAscending></SortAscending>
+              </ListItemIcon>
+            </ListItemButton>
+          </ListItem>
         </List>
       </Popover>
 

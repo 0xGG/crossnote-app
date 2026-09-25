@@ -254,27 +254,29 @@ export function Home(props: Props) {
       <ControllersSection>
         <Divider></Divider>
         <List disablePadding={true}>
-          <ListItemButton
-            onClick={() => {
-              crossnoteContainer.addTabNode({
-                type: "tab",
-                component: "Settings",
-                name: t("general/Settings"),
-                id: "Settings",
-                config: {
+          <ListItem disablePadding>
+            <ListItemButton
+              onClick={() => {
+                crossnoteContainer.addTabNode({
+                  type: "tab",
                   component: "Settings",
-                  singleton: true,
-                  icon: ":gear:",
-                },
-              });
-              setDrawerOpen(false);
-            }}
-          >
-            <SectionIcon>
-              <SettingsIcon></SettingsIcon>
-            </SectionIcon>
-            <ListItemText primary={t("general/Settings")}></ListItemText>
-          </ListItemButton>
+                  name: t("general/Settings"),
+                  id: "Settings",
+                  config: {
+                    component: "Settings",
+                    singleton: true,
+                    icon: ":gear:",
+                  },
+                });
+                setDrawerOpen(false);
+              }}
+            >
+              <SectionIcon>
+                <SettingsIcon></SettingsIcon>
+              </SectionIcon>
+              <ListItemText primary={t("general/Settings")}></ListItemText>
+            </ListItemButton>
+          </ListItem>
         </List>
       </ControllersSection>
     </React.Fragment>

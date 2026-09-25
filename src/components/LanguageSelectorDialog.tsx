@@ -3,6 +3,7 @@ import {
   DialogContent,
   DialogTitle,
   List,
+  ListItem,
   ListItemButton,
   ListItemText,
   Typography,
@@ -13,6 +14,7 @@ import React, { useCallback, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { CrossnoteContainer } from "../containers/crossnote";
 import { SettingsContainer } from "../containers/settings";
+import { languageCodeToLanguageName } from "../i18n/i18n";
 
 export default function LanguageSelectorDialog() {
   const { t } = useTranslation();
@@ -75,22 +77,15 @@ export default function LanguageSelectorDialog() {
           <ChevronDown></ChevronDown>
         </Typography>
         <List>
-          <ListItemButton onClick={() => chooseLanguage("en-US")}>
-            <ListItemText style={{ textAlign: "center" }}>English</ListItemText>
-          </ListItemButton>
-          <ListItemButton onClick={() => chooseLanguage("zh-CN")}>
-            <ListItemText style={{ textAlign: "center" }}>
-              简体中文
-            </ListItemText>
-          </ListItemButton>
-          <ListItemButton onClick={() => chooseLanguage("zh-TW")}>
-            <ListItemText style={{ textAlign: "center" }}>
-              繁体中文
-            </ListItemText>
-          </ListItemButton>
-          <ListItemButton onClick={() => chooseLanguage("ja-JP")}>
-            <ListItemText style={{ textAlign: "center" }}>日本語</ListItemText>
-          </ListItemButton>
+          {languages.map((language) => (
+            <ListItem key={language} disablePadding>
+              <ListItemButton onClick={() => chooseLanguage(language)}>
+                <ListItemText style={{ textAlign: "center" }}>
+                  {languageCodeToLanguageName(language)}
+                </ListItemText>
+              </ListItemButton>
+            </ListItem>
+          ))}
         </List>
       </DialogContent>
     </Dialog>
