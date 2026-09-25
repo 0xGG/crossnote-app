@@ -451,10 +451,6 @@ export default function NotePanel(props: Props) {
       return () => {
         setEditor(null);
       };
-    } else {
-      if (note.markdown.length === 0) {
-        setEditorMode(EditorMode.EchoMD);
-      }
     }
   }, [note]);
 
@@ -593,7 +589,14 @@ export default function NotePanel(props: Props) {
         includeSubdirectories: true,
       })
       .then((notes) => {
-        setNote(notes[props.noteFilePath]);
+        const loaded = notes[props.noteFilePath];
+        // An empty note opens in the editor rather than the preview. Decided
+        // when the note is loaded, not each time the note is replaced, as a
+        // rename or a pull does, which would undo a mode chosen since.
+        if (loaded && loaded.markdown.length === 0) {
+          setEditorMode(EditorMode.EchoMD);
+        }
+        setNote(loaded);
       })
       .catch((error) => {
         console.error(error);

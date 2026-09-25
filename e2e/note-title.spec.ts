@@ -55,6 +55,29 @@ test("puts the note's name back when the title box is left empty", async ({
   await expect(app.noteTitle).toHaveValue(name);
 });
 
+test("keeps the mode an empty note was switched to when it is renamed", async ({
+  app,
+}) => {
+  // The buttons show the mode that is on in the theme's primary colour; read
+  // once their colour transition has ended.
+  const colour = (name: "Edit" | "Source code") =>
+    app.modeButton(name).evaluate(async (button) => {
+      await Promise.all(button.getAnimations().map((a) => a.finished));
+      return getComputedStyle(button).color;
+    });
+  // A new note is empty, so it opens in Edit.
+  await app.modeButton("Source code").click();
+  const on = await colour("Source code");
+  const off = await colour("Edit");
+  expect(on).not.toBe(off);
+
+  await app.noteTitle.fill("Renamed");
+  await app.noteTitle.press("Enter");
+  await expect(app.tab("Renamed")).toBeVisible();
+  await expect.poll(() => colour("Source code")).toBe(on);
+  await expect.poll(() => colour("Edit")).toBe(off);
+});
+
 test("leaves an Enter that confirms an input method's candidate to the title", async ({
   app,
 }) => {
