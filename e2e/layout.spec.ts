@@ -20,12 +20,7 @@ test("restores a layout saved by the previous layout engine", async ({
   await app.open();
   // Opening the notes list saves a layout that names the notebook's folder.
   await app.openNotes();
-  const folder = await page.evaluate(
-    () =>
-      localStorage
-        .getItem("layoutModel")!
-        .match(/"notebookPath":"([^"]+)"/)![1],
-  );
+  const folder = await app.notebookFolder();
   await app.seedLayout(
     savedByOldEngine.replaceAll("/notebooks/fixture-drafts", folder),
   );
@@ -98,6 +93,13 @@ test("goes to the reference a note already open is opened at", async ({
 
   // The note goes behind the notes list, and README opens in the same pane.
   await app.selectTab("Drafts");
+  // The editor writes the note a moment after the change, and README reads
+  // its references when it opens; a list opened before the write catches up
+  // only on its next refresh, 15 seconds on. The note's card shows the new
+  // text once the write is done.
+  await expect(app.noteCards.filter({ hasText: `${title}.md` })).toContainText(
+    "Intro line.",
+  );
   await app.noteCards
     .filter({ hasText: "README.md" })
     .getByText("README", { exact: true })

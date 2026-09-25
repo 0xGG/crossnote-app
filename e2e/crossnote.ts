@@ -89,6 +89,17 @@ export class CrossnoteApp {
       .toBe(true);
   }
 
+  // The folder a notebook lives in, as the saved layout names it once one of
+  // its tabs is open.
+  async notebookFolder(): Promise<string> {
+    return this.page.evaluate(
+      () =>
+        localStorage
+          .getItem("layoutModel")!
+          .match(/"notebookPath":"([^"]+)"/)![1],
+    );
+  }
+
   notebook(name: string): Locator {
     return this.sidebar.getByRole("treeitem", { name: new RegExp(name) });
   }

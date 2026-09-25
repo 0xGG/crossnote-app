@@ -28,6 +28,9 @@ test("resizes the table of contents and remembers the width", async ({
     await page.evaluate(() => localStorage.getItem("toc-panel-width")),
   ).toBe("340");
 
+  // A note created moments ago may not have reached the disk yet, and a
+  // reload before it does comes back without it.
+  await app.waitUntilStored(`${await app.notebookFolder()}/${noteName}.md`);
   await page.reload();
   await app.waitUntilReady();
   await app.selectTab(noteName);

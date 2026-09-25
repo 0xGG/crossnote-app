@@ -20,13 +20,17 @@ test("creates a note that joins the notebook's list", async ({ app }) => {
 
 test("keeps notes across a reload", async ({ app, page }) => {
   await app.createNote();
+  await expect(app.noteTitle).not.toHaveValue("");
+  const name = await app.noteTitle.inputValue();
   await app.typeInEditor("Stored in the browser file system");
   await app.selectTab("Drafts");
   const card = app.noteCards.filter({ hasText: "Stored in the browser" });
   await expect(card).toBeVisible();
 
   // Nothing survives a reload except what reached IndexedDB (notes) and
-  // localStorage (the layout).
+  // localStorage (the layout). The file system stores its directory tree
+  // half a second after the last write, so the note may not be listed yet.
+  await app.waitUntilStored(`${await app.notebookFolder()}/${name}.md`);
   await page.reload();
   await app.waitUntilReady();
   await expect(card).toBeVisible();
