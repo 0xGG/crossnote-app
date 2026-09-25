@@ -95,8 +95,9 @@ function OCRWidget(props: WidgetArgs) {
   const [selectedLanguages, setSelectedLanguages] = useState<string[]>(
     getInitialLanguages(),
   );
+  // On unless it was turned off, which is stored as "false".
   const [grayscaleChecked, setGrayscaleChecked] = useState<boolean>(
-    !!localStorage.getItem("widget/crossnote.ocr/grayscale") || true,
+    localStorage.getItem("widget/crossnote.ocr/grayscale") !== "false",
   );
 
   useEffect(() => {
@@ -293,14 +294,10 @@ function OCRWidget(props: WidgetArgs) {
               <Switch
                 checked={grayscaleChecked}
                 onChange={() => {
-                  if (grayscaleChecked) {
-                    localStorage.removeItem("widget/crossnote.ocr/grayscale");
-                  } else {
-                    localStorage.setItem(
-                      "widget/crossnote.ocr/grayscale",
-                      "true",
-                    );
-                  }
+                  localStorage.setItem(
+                    "widget/crossnote.ocr/grayscale",
+                    String(!grayscaleChecked),
+                  );
                   setGrayscaleChecked(!grayscaleChecked);
                 }}
                 color={"primary"}

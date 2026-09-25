@@ -80,3 +80,37 @@ test("lets the image widget take the same file again after a failed upload", asy
     await input.evaluate((element) => (element as HTMLInputElement).value),
   ).toBe("");
 });
+
+test("remembers turning the OCR widget's grayscale off", async ({
+  app,
+  page,
+}) => {
+  await app.open();
+  await app.openNotes();
+  await app.createNote();
+  await app.modeButton("Edit").click();
+  await app.typeInEditor("<!-- @crossnote.ocr -->\n");
+  // The switch shows once there is an image to work on.
+  const grayscale = page.getByRole("switch", { name: "Grayscale" });
+  const chooseImage = async () => {
+    const chooser = page.waitForEvent("filechooser");
+    await page.getByText("Click here to browse image file").click();
+    await (await chooser).setFiles(picture);
+  };
+  await chooseImage();
+  await expect(grayscale).toBeChecked();
+  await grayscale.click();
+  await expect(grayscale).not.toBeChecked();
+
+  // Setting the text again builds the widget anew, as opening the note
+  // another time would; the new one starts from the choice.
+  await app.editor.evaluate(
+    (element, text) =>
+      (
+        element as HTMLElement & { CodeMirror: CodeMirror.Editor }
+      ).CodeMirror.setValue(text),
+    "\n<!-- @crossnote.ocr -->\n",
+  );
+  await chooseImage();
+  await expect(grayscale).not.toBeChecked();
+});
