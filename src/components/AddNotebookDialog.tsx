@@ -24,6 +24,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { CrossnoteContainer } from "../containers/crossnote";
 import { notify } from "../lib/notifications";
+import { notebookNameFromGitURL } from "../utilities/utils";
 
 interface Props {
   open: boolean;
@@ -107,10 +108,7 @@ export default function AddNotebookDialog(props: Props) {
   ]);
 
   useEffect(() => {
-    const i = props.gitURL.lastIndexOf("/");
-    const name = props.gitURL.slice(i + 1).replace(/\.git/, "");
-
-    setNotebookName(props.notebookName || name);
+    setNotebookName(props.notebookName || notebookNameFromGitURL(props.gitURL));
     setGitURL(props.gitURL);
     setGitBranch(props.gitBranch);
     setExpanded(true);

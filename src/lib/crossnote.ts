@@ -6,7 +6,7 @@ import http from "isomorphic-git/http/web";
 import path from "path-browserify";
 import PouchDB from "pouchdb";
 import PouchdbFind from "pouchdb-find";
-import { randomID } from "../utilities/utils";
+import { notebookNameFromGitURL, randomID } from "../utilities/utils";
 import { fs, pfs } from "./fs";
 import { Notebook } from "./notebook";
 
@@ -271,7 +271,7 @@ export default class Crossnote {
     const notebook: Notebook = new Notebook();
     notebook._id = _id;
     notebook.dir = dir;
-    notebook.name = name || this.getDefaultNotebookNameFromGitURL(gitURL);
+    notebook.name = name || notebookNameFromGitURL(gitURL);
     notebook.gitURL = gitURL;
     notebook.gitBranch = branch.trim() || "master";
     notebook.gitCorsProxy = corsProxy;
@@ -945,11 +945,6 @@ export default class Crossnote {
     return attachments;
   }
   */
-
-  private getDefaultNotebookNameFromGitURL(gitURL: string) {
-    const i = gitURL.lastIndexOf("/");
-    return gitURL.slice(i + 1).replace(/\.git/, "");
-  }
 
   public async getStatus(notebookPath: string, filePath: string) {
     return await git.status({
