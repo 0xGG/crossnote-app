@@ -79,6 +79,9 @@ function ImageWidget(props: WidgetArgs) {
           });
         });
     };
+    // Cleared first: a browser may not report choosing the file already in
+    // the input again, which is what a retry after a failure does.
+    imageUploaderElement.value = "";
     imageUploaderElement.click();
   }
 

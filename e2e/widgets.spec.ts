@@ -40,3 +40,43 @@ test("turns an audio widget into a player once it has a source", async ({
     "https://example.com/sound.mp3",
   );
 });
+
+// A one-pixel PNG, for the widgets that take an image file.
+const picture = {
+  name: "picture.png",
+  mimeType: "image/png",
+  buffer: Buffer.from(
+    "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==",
+    "base64",
+  ),
+};
+
+test("lets the image widget take the same file again after a failed upload", async ({
+  app,
+  page,
+}) => {
+  // The upload service is out of reach, so the upload fails.
+  await page.route("https://sm.ms/**", (route) => route.abort());
+  await app.open();
+  await app.openNotes();
+  await app.createNote();
+  await app.modeButton("Edit").click();
+  await app.typeInEditor("<!-- @crossnote.image -->\n");
+  const dropArea = page.getByText("Click here to browse image file");
+
+  const first = page.waitForEvent("filechooser");
+  await dropArea.click();
+  await (await first).setFiles(picture);
+  await expect(
+    page.getByRole("alert").filter({ hasText: "Failed to upload image" }),
+  ).toBeVisible({ timeout: 10000 });
+
+  // A browser may not report choosing the file already in the input, so the
+  // input has to be empty again by the time the picker opens.
+  const again = page.waitForEvent("filechooser");
+  await dropArea.click();
+  const input = (await again).element();
+  expect(
+    await input.evaluate((element) => (element as HTMLInputElement).value),
+  ).toBe("");
+});
