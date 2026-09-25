@@ -5,8 +5,27 @@ import type {
   IJsonTabGroupNode,
   IJsonTabNode,
   IJsonTabSetNode,
+  Model,
+  TabNode,
 } from "flexlayout-react";
 import { isTabNodeComponent } from "./tabNode";
+
+// Whether any tab of the layout shows a notebook the test picks out, however
+// deep the tab sits in rows or whether it sits in a border.
+export function layoutShowsNotebook(
+  model: Model,
+  test: (notebookPath: string) => boolean,
+): boolean {
+  let found = false;
+  model.visitNodes((node) => {
+    if (!found && node.getType() === "tab") {
+      const notebookPath: string | undefined = (node as TabNode).getConfig()
+        ?.notebookPath;
+      found = Boolean(notebookPath) && test(notebookPath);
+    }
+  });
+  return found;
+}
 
 // The layout persisted in localStorage outlives the components it names: a
 // tab saved by an earlier build keeps being restored after the component

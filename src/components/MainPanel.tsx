@@ -20,6 +20,7 @@ import { useTranslation } from "react-i18next";
 import { CrossnoteContainer } from "../containers/crossnote";
 import { SettingsContainer } from "../containers/settings";
 import { pfs } from "../lib/fs";
+import { layoutShowsNotebook } from "../lib/layout";
 import { guardLayoutDrags } from "../lib/layoutDrag";
 import { translateLayoutLabel } from "../lib/layoutLabels";
 import { TabNodeComponent, TabNodeConfig } from "../lib/tabNode";
@@ -234,26 +235,11 @@ export function MainPanel() {
 
   useEffect(() => {
     if (crossnoteContainer.layoutModel) {
-      const data = crossnoteContainer.layoutModel.toJson();
-      let hasLocalDirectory = false;
-      const layout: any = data.layout || {};
-      const children = layout.children || [];
-      for (let i = 0; i < children.length; i++) {
-        const children2 = children[i].children || [];
-        for (let j = 0; j < children2.length; j++) {
-          const child = children2[j];
-          if (child && child.config && child.config.notebookPath) {
-            if (pfs.isPathOfLocalFileSystem(child.config.notebookPath)) {
-              hasLocalDirectory = true;
-              break;
-            }
-          }
-        }
-        if (hasLocalDirectory) {
-          break;
-        }
-      }
-      if (hasLocalDirectory) {
+      if (
+        layoutShowsNotebook(crossnoteContainer.layoutModel, (notebookPath) =>
+          pfs.isPathOfLocalFileSystem(notebookPath),
+        )
+      ) {
         setDialogOpen(true);
       } else {
         setReady(true);
