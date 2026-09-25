@@ -65,11 +65,16 @@ export default function ChangeFilePathDialog(props: Props) {
     };
   }, []);
 
+  // Reset to the note's path when the dialog opens or the path changes. The
+  // note object itself is replaced by every reload of its notebook, a pull
+  // finishing while the dialog is open among them, which is no reason to
+  // throw away what is being typed.
+  const filePath = note ? note.filePath : "";
   useEffect(() => {
-    if (note) {
-      setNewFilePath(note.filePath);
+    if (filePath) {
+      setNewFilePath(filePath);
     }
-  }, [note, props.open]);
+  }, [filePath, props.open]);
 
   useEffect(() => {
     if (!inputEl) return;
