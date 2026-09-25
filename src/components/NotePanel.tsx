@@ -51,6 +51,7 @@ import {
 } from "../lib/event";
 import { Note } from "../lib/note";
 import { Notebook } from "../lib/notebook";
+import { isFinishingEnter } from "../lib/keys";
 import { notify } from "../lib/notifications";
 import { Reference } from "../lib/reference";
 import { TabNodeConfig } from "../lib/tabNode";
@@ -391,17 +392,24 @@ export default function NotePanel(props: Props) {
     false, // props.tabNode.getTabRect().width >= 500,
   );
   const isMounted = useRef<boolean>(false);
+  // The file a rename is moving the note away from, until the note shown has
+  // moved off it. Enter renames the note and so does leaving the box, which
+  // Tab straight after Enter does; neither may start a second rename of a
+  // file the first is still moving, or has moved before the panel shows it.
+  const renamingFrom = useRef<string>(null);
 
   const confirmNoteTitle = useCallback(() => {
     const finalNoteTitle = noteTitle.trim().replace(/\//g, "-");
     if (
       !note ||
+      note.filePath === renamingFrom.current ||
       !finalNoteTitle.length ||
       note.title.trim() === finalNoteTitle
     ) {
       return;
     }
 
+    renamingFrom.current = note.filePath;
     crossnoteContainer
       .changeNoteFilePath(
         tabNode,
@@ -412,6 +420,7 @@ export default function NotePanel(props: Props) {
         setNote(note);
       })
       .catch((error) => {
+        renamingFrom.current = null;
         notify({
           severity: "error",
           message: t("error/failed-to-change-file-path"),
@@ -452,6 +461,9 @@ export default function NotePanel(props: Props) {
   useEffect(() => {
     if (!note || !crossnoteContainer.layoutModel || !tabNode) {
       return;
+    }
+    if (note.filePath !== renamingFrom.current) {
+      renamingFrom.current = null;
     }
     setNoteTitle(note.title);
     crossnoteContainer.layoutModel.doAction(
@@ -1487,9 +1499,12 @@ export default function NotePanel(props: Props) {
             placeholder={t("general/title")}
             fullWidth={true}
             onChange={(event) => setNoteTitle(event.currentTarget.value)}
+            // Enter renames the note, and so does leaving the box. An Enter
+            // that confirms an input method's candidate is part of typing the
+            // title.
             onBlur={confirmNoteTitle}
-            onKeyUp={(event) => {
-              if (event.which === 13) {
+            onKeyDown={(event) => {
+              if (isFinishingEnter(event.nativeEvent)) {
                 confirmNoteTitle();
               }
             }}
