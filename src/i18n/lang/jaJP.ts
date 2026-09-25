@@ -220,6 +220,7 @@ export const jaJP = {
     "widget/crossnote.ocr/start-ocr": "開始文字識別",
     "widget/crossnote.ocr/extra-settings": "追加設定",
     "widget/crossnote.ocr/grayscale": "グレースケール",
+    "widget/crossnote.ocr/failed": "文字を認識できませんでした",
     "widget/crossnote.kanban/add-column": "新しい列を追加する",
     "widget/crossnote.kanban/add-card": "新しいカードを追加する",
     "widget/crossnote.kanban/delete-column": "列を削除する",

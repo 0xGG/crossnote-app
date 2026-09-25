@@ -1,3 +1,6 @@
+import type { Page } from "@playwright/test";
+import path from "node:path";
+import type { CrossnoteApp } from "./crossnote";
 import { expect, test } from "./fixtures";
 
 // The editor widgets render into DOM the editor owns, through their own React
@@ -113,4 +116,55 @@ test("remembers turning the OCR widget's grayscale off", async ({
   );
   await chooseImage();
   await expect(grayscale).not.toBeChecked();
+});
+
+// Runs recognition on the one-pixel picture and expects the widget back with
+// its message, and no error left uncaught on the way.
+async function expectRecognitionToFail(app: CrossnoteApp, page: Page) {
+  const errors: string[] = [];
+  page.on("pageerror", (error) => errors.push(error.message));
+  await app.open();
+  await app.openNotes();
+  await app.createNote();
+  await app.modeButton("Edit").click();
+  await app.typeInEditor("<!-- @crossnote.ocr -->\n");
+  const chooser = page.waitForEvent("filechooser");
+  await page.getByText("Click here to browse image file").click();
+  await (await chooser).setFiles(picture);
+  const start = page.getByRole("button", { name: "Start OCR" });
+  await start.click();
+
+  await expect(
+    page.getByRole("alert").filter({ hasText: "Failed to recognize the text" }),
+  ).toBeVisible({ timeout: 15000 });
+  await expect(start).toBeVisible();
+  expect(errors).toEqual([]);
+}
+
+test("brings the OCR widget back with a message when recognition fails", async ({
+  app,
+  page,
+  context,
+}) => {
+  // The recognition engine comes from a CDN: its worker is served here from
+  // the installed package, and the engine's core cannot be fetched.
+  await context.route("https://unpkg.com/**", (route) =>
+    route.request().url().endsWith("/dist/worker.min.js")
+      ? route.fulfill({
+          path: path.resolve("node_modules/tesseract.js/dist/worker.min.js"),
+          contentType: "application/javascript",
+        })
+      : route.abort(),
+  );
+  await expectRecognitionToFail(app, page);
+});
+
+test("brings the OCR widget back when the recognition worker cannot be loaded", async ({
+  app,
+  page,
+  context,
+}) => {
+  // Offline, say: not even the worker's own script comes.
+  await context.route("https://unpkg.com/**", (route) => route.abort());
+  await expectRecognitionToFail(app, page);
 });

@@ -21,6 +21,7 @@ import { ThemeProvider, darken, styled } from "@mui/material/styles";
 import { TrashCan } from "mdi-material-ui";
 import React, { useEffect, useState } from "react";
 import { renderWidget } from "../../../utilities/widgetRender";
+import { notify } from "../../../lib/notifications";
 import { useTranslation } from "react-i18next";
 import { createWorker } from "tesseract.js";
 import { globalContainers } from "../../../containers/global";
@@ -156,6 +157,9 @@ function OCRWidget(props: WidgetArgs) {
 
   function ocr(input: File | string | HTMLCanvasElement) {
     const worker = createWorker({
+      // A failure also rejects the step it happened in, which is handled
+      // below; without a handler of its own, tesseract.js throws it again.
+      errorHandler: () => {},
       logger: (m: OCRProgress) => {
         setOCRProgresses((ocrProgresses) => {
           if (
@@ -177,15 +181,40 @@ function OCRWidget(props: WidgetArgs) {
         languagesArr = ["eng"];
       }
 
-      await worker.load();
-      await worker.loadLanguage(languagesArr.join("+"));
-      await worker.initialize(languagesArr.join("+"));
-      const {
-        data: { text },
-      } = await worker.recognize(input);
-      props.replaceSelf("\n" + text);
-      await worker.terminate();
-      setIsProcessing(false);
+      // The worker's own script comes from a CDN as well. When it cannot be
+      // had, tesseract.js never settles a step, but the worker it wraps
+      // reports an error.
+      const workerFailed = new Promise<never>((_, reject) => {
+        (worker as unknown as { worker: Worker }).worker.addEventListener(
+          "error",
+          reject,
+          { once: true },
+        );
+      });
+      try {
+        const {
+          data: { text },
+        } = await Promise.race([
+          (async () => {
+            await worker.load();
+            await worker.loadLanguage(languagesArr.join("+"));
+            await worker.initialize(languagesArr.join("+"));
+            return await worker.recognize(input);
+          })(),
+          workerFailed,
+        ]);
+        props.replaceSelf("\n" + text);
+      } catch (error) {
+        // The engine and its language data come over the network; when they
+        // cannot be had, say so and go back to the image.
+        notify({
+          severity: "error",
+          message: t("widget/crossnote.ocr/failed"),
+        });
+      } finally {
+        await worker.terminate();
+        setIsProcessing(false);
+      }
     })();
   }
 
