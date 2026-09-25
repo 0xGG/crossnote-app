@@ -85,6 +85,28 @@ test("keeps the search box in view while the list scrolls", async ({
   expect(button!.y).toBeGreaterThanOrEqual(bar!.y + bar!.height);
 });
 
+test("saves an edit that takes a note back to how it was", async ({
+  app,
+  page,
+}) => {
+  await app.createNote();
+  await expect(app.noteTitle).not.toHaveValue("");
+  const name = await app.noteTitle.inputValue();
+  // A note's card follows each save of the note.
+  const card = app.noteCards.filter({ hasText: `${name}.md` });
+  await app.typeInEditor("Typed and then taken back");
+  await app.selectTab("Drafts");
+  await expect(card).toContainText("Typed and then taken back");
+
+  // Emptied again, the note is as it was when its tab opened.
+  await app.selectTab(name);
+  await app.editor.click();
+  await page.keyboard.press("Control+a");
+  await page.keyboard.press("Delete");
+  await app.selectTab("Drafts");
+  await expect(card).toContainText("This note is empty");
+});
+
 test("keeps notes across a reload", async ({ app, page }) => {
   await app.createNote();
   await expect(app.noteTitle).not.toHaveValue("");

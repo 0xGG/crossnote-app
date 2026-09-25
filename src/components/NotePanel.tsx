@@ -790,10 +790,9 @@ export default function NotePanel(props: Props) {
           return;
         }
         const markdown = editor.getValue();
-
-        if (markdown === note.markdown) {
-          return;
-        }
+        // Not compared with the note the tab opened with, which saving does
+        // not replace: a change back to that text would never be saved.
+        // updateNoteMarkdown skips text the notebook already holds.
         setTimeout(() => {
           if (markdown === editor.getValue()) {
             crossnoteContainer.updateNoteMarkdown(
