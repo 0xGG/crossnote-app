@@ -164,6 +164,38 @@ test("never gives a new note the name of one that exists", async ({
   await expect(kept).toContainText("Worth keeping");
 });
 
+test("lists a note's aliases in each of its menus", async ({ app, page }) => {
+  const aliasPopover = page
+    .getByRole("presentation")
+    .filter({ has: page.getByPlaceholder("Add an alias") });
+  // README opens from its card, and its menu in the note adds an alias.
+  await app.noteCards
+    .filter({ hasText: "README.md" })
+    .getByText("README", { exact: true })
+    .click();
+  await expect(app.tab("README")).toHaveAttribute("aria-selected", "true");
+  await page.getByRole("button", { name: "Note menu" }).click();
+  await page.getByRole("button", { name: "Edit note alias" }).click();
+  await aliasPopover.getByPlaceholder("Add an alias").fill("Welcome");
+  await aliasPopover.getByPlaceholder("Add an alias").press("Enter");
+  await expect(
+    aliasPopover.getByText("Welcome", { exact: true }),
+  ).toBeVisible();
+  await page.keyboard.press("Escape");
+  await page.keyboard.press("Escape");
+
+  // The card's menu was made before the alias was added.
+  await app.selectTab("Drafts");
+  await app.noteCards
+    .filter({ hasText: "README.md" })
+    .getByRole("button", { name: "Note menu" })
+    .click();
+  await page.getByRole("button", { name: "Edit note alias" }).click();
+  await expect(
+    aliasPopover.getByText("Welcome", { exact: true }),
+  ).toBeVisible();
+});
+
 test("keeps notes across a reload", async ({ app, page }) => {
   await app.createNote();
   await expect(app.noteTitle).not.toHaveValue("");

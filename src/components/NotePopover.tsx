@@ -250,7 +250,18 @@ export default function NotePopover(props: Props) {
           </ListItem>
           <ListItem disablePadding>
             <ListItemButton
-              onClick={(event) => setNoteAliasAnchorEl(event.currentTarget)}
+              onClick={(event) => {
+                setNoteAliasAnchorEl(event.currentTarget);
+                // Another copy of this menu, the note panel's or a card's,
+                // may have changed the aliases since this one was made.
+                crossnoteContainer
+                  .getNote(note.notebookPath, note.filePath)
+                  .then((latest) => {
+                    if (latest) {
+                      setAliases(latest.config.aliases);
+                    }
+                  });
+              }}
             >
               <ListItemIcon>
                 <TooltipEdit></TooltipEdit>
