@@ -260,5 +260,13 @@ export const zhCN = {
     // graph view
     "graph-view/node": "节点",
     "graph-view/link": "连接",
+
+    // Layout (flexlayout-react's own labels)
+    "layout/hidden-tabs": "隐藏的标签页",
+    "layout/resize": "调整大小",
+    "layout/move-tabs": "移动 ? 个标签页",
+    "layout/move-tabset": "移动面板",
+    "layout/error-rendering-component": "渲染组件时出错",
+    "layout/retry": "重试",
   },
 };

@@ -40,7 +40,7 @@
     "diff3": "^0.0.3",
     "emoji-mart": "^3.0.0",
     "events": "^3.3.0",
-    "flexlayout-react": "^0.5.5",
+    "flexlayout-react": "^0.11.0",
     "i18next": "^26.4.2",
     "isomorphic-git": "1.3.1",
     "mdi-material-ui": "^8.0.0",

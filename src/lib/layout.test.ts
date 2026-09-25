@@ -1,11 +1,15 @@
-import type { IJsonModel, IJsonTabNode } from "flexlayout-react";
+import {
+  Model,
+  TabSetNode,
+  type IJsonBorderNode,
+  type IJsonModel,
+  type IJsonRowNode,
+  type IJsonTabNode,
+  type IJsonTabSetNode,
+} from "flexlayout-react";
 import { describe, expect, it } from "vitest";
 import { pruneUnknownTabs } from "./layout";
-
-type TabSetJson = Exclude<
-  IJsonModel["layout"]["children"][number],
-  IJsonModel["layout"]
->;
+import savedByOldEngine from "./layout-0.5.21.json";
 
 const tab = (component: string, id = component): IJsonTabNode => ({
   type: "tab",
@@ -15,7 +19,7 @@ const tab = (component: string, id = component): IJsonTabNode => ({
   config: { component, singleton: true },
 });
 
-const tabset = (children: IJsonTabNode[], selected = 0): TabSetJson => ({
+const tabset = (children: IJsonTabNode[], selected = 0): IJsonTabSetNode => ({
   type: "tabset",
   weight: 50,
   selected,
@@ -29,10 +33,11 @@ const model = (children: IJsonTabNode[], selected = 0): IJsonModel => ({
 });
 
 // The row's children are rows or tabsets; the tests only build tabsets.
-const tabsetAt = (result: IJsonModel, index = 0): TabSetJson =>
-  result.layout.children[index] as TabSetJson;
-const componentsOf = (node: { children: IJsonTabNode[] }) =>
-  node.children.map((t) => t.component);
+const tabsetAt = (result: IJsonModel, index = 0): IJsonTabSetNode =>
+  result.layout.children[index] as IJsonTabSetNode;
+// Only used on containers that hold tabs, not tab groups.
+const componentsOf = (node: IJsonTabSetNode | IJsonBorderNode) =>
+  (node.children as IJsonTabNode[]).map((t) => t.component);
 
 describe("pruneUnknownTabs", () => {
   it("drops a tab whose component no longer exists and keeps the rest", () => {
@@ -112,11 +117,56 @@ describe("pruneUnknownTabs", () => {
     expect(borders[0].selected).toBe(-1);
     expect(componentsOf(borders[1])).toEqual(["Graph"]);
     expect(borders[1].selected).toBe(-1);
-    const nested = result.layout.children[0] as IJsonModel["layout"];
-    expect(componentsOf(nested.children[0] as TabSetJson)).toEqual([
+    const nested = result.layout.children[0] as IJsonRowNode;
+    expect(componentsOf(nested.children[0] as IJsonTabSetNode)).toEqual([
       "Settings",
     ]);
-    expect((nested.children[0] as TabSetJson).selected).toBe(0);
+    expect((nested.children[0] as IJsonTabSetNode).selected).toBe(0);
     expect(componentsOf(tabsetAt(result, 1))).toEqual(["Notes"]);
+  });
+
+  it("keeps a tab group as it is", () => {
+    const group = { type: "tabgroup", children: [tab("Privacy", "grouped")] };
+    const input = model([tab("Privacy"), tab("Settings")]);
+    tabsetAt(input).children.push(group);
+    const result = pruneUnknownTabs(input);
+    expect(tabsetAt(result).children).toEqual([tab("Settings"), group]);
+    expect(tabsetAt(result).children[1]).toBe(group);
+  });
+});
+
+// layout-0.5.21.json is what the app saved under flexlayout-react 0.5.21:
+// that version's Model, driven through the app's own actions (a notebook's
+// notes, a note split to the right, the settings, the graph dropped below),
+// serialised with toJson() as saveCurrentLayoutModel does.
+describe("a layout saved by flexlayout-react 0.5.21", () => {
+  const saved = savedByOldEngine as IJsonModel;
+  const restored = Model.fromJson(pruneUnknownTabs(saved));
+
+  it("comes back with every split, size and tab as it was saved", () => {
+    // In order, with the ids, names and configs of the tabs and which
+    // tabset is active.
+    expect(restored.toJson().layout).toMatchObject(saved.layout);
+  });
+
+  it("keeps what each tabset shows and which one is active", () => {
+    const shown: string[] = [];
+    restored.visitNodes((node) => {
+      if (node instanceof TabSetNode) {
+        shown.push(node.getSelectedNode()!.getName());
+      }
+    });
+    // Nothing was saved as selected, so each tabset shows its first tab.
+    expect(shown).toEqual(["README", "Settings", "Graph view"]);
+    expect(restored.getActiveTabset()!.getChildren()[0].getId()).toBe(
+      "Graph: /notebooks/fixture-drafts",
+    );
+  });
+
+  it("forgets the sizes that moved to CSS and keeps its other settings", () => {
+    expect(restored.toJson().global).toEqual({
+      tabEnableRename: false,
+      tabSetEnableMaximize: false,
+    });
   });
 });

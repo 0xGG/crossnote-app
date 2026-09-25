@@ -260,5 +260,13 @@ export const zhTW = {
     // graph view
     "graph-view/node": "節點",
     "graph-view/link": "連接",
+
+    // Layout (flexlayout-react's own labels)
+    "layout/hidden-tabs": "隱藏的分頁",
+    "layout/resize": "調整大小",
+    "layout/move-tabs": "移動 ? 個分頁",
+    "layout/move-tabset": "移動面板",
+    "layout/error-rendering-component": "渲染元件時發生錯誤",
+    "layout/retry": "重試",
   },
 };
