@@ -62,10 +62,6 @@ const ImageCanvas = styled("canvas")({
   maxWidth: "100%",
 });
 
-// The drop area stops taking clicks while recognition runs, which is a state
-// of this one element rather than a rule of its own.
-const processingSx = { cursor: "not-allowed" } as const;
-
 interface OCRProgress {
   status: string;
   progress: number;
@@ -128,7 +124,7 @@ function OCRWidget(props: WidgetArgs) {
   function clickDropArea(e: any) {
     e.preventDefault();
     e.stopPropagation();
-    if (!imageDropAreaElement || isProcessing) return;
+    if (!imageDropAreaElement) return;
     imageDropAreaElement.onchange = function (event) {
       const target = event.target as any;
       const files = target.files || [];
@@ -401,14 +397,9 @@ function OCRWidget(props: WidgetArgs) {
         <Typography variant={"subtitle1"} style={{ marginBottom: "8px" }}>
           {t("widget/crossnote.ocr/local-image")}
         </Typography>
-        <DropArea
-          sx={isProcessing ? processingSx : undefined}
-          onClick={clickDropArea}
-        >
+        <DropArea onClick={clickDropArea}>
           <Typography>
-            {isProcessing
-              ? t("utils/uploading-image")
-              : t("widget/crossnote.image/click-here-to-browse-image-file")}
+            {t("widget/crossnote.image/click-here-to-browse-image-file")}
           </Typography>
         </DropArea>
       </Section>
