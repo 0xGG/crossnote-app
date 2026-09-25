@@ -45,6 +45,16 @@ test("keeps the title box focused when Enter renames the note", async ({
   await expect(app.noteTitle).toBeFocused();
 });
 
+test("puts the note's name back when the title box is left empty", async ({
+  app,
+}) => {
+  const name = await app.noteTitle.inputValue();
+  await app.noteTitle.fill("");
+  await app.noteTitle.press("Enter");
+  // No name to rename to: the box shows the one the note still has.
+  await expect(app.noteTitle).toHaveValue(name);
+});
+
 test("leaves an Enter that confirms an input method's candidate to the title", async ({
   app,
 }) => {

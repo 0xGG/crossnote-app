@@ -400,12 +400,12 @@ export default function NotePanel(props: Props) {
 
   const confirmNoteTitle = useCallback(() => {
     const finalNoteTitle = noteTitle.trim().replace(/\//g, "-");
-    if (
-      !note ||
-      note.filePath === renamingFrom.current ||
-      !finalNoteTitle.length ||
-      note.title.trim() === finalNoteTitle
-    ) {
+    if (!note || note.filePath === renamingFrom.current) {
+      return;
+    }
+    if (!finalNoteTitle.length || note.title.trim() === finalNoteTitle) {
+      // Nothing to rename to: show the name the note has.
+      setNoteTitle(note.title);
       return;
     }
 
