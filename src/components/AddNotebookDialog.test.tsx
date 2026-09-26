@@ -62,3 +62,13 @@ it("names a notebook from a link after its repository", async () => {
   expect(addNotebook).toHaveBeenCalledTimes(1);
   expect(addNotebook.mock.calls[0][0]).toBe("alice.github.io");
 });
+
+it("opens with no repository to name the notebook after", () => {
+  // The URL is one of the props a caller may leave out.
+  act(() =>
+    root.render(
+      <AddNotebookDialog open={true} onClose={() => {}} canCancel={true} />,
+    ),
+  );
+  expect(document.querySelector('[role="dialog"]')).not.toBeNull();
+});

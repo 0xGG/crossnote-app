@@ -107,10 +107,12 @@ export default function AddNotebookDialog(props: Props) {
     t,
   ]);
 
+  // A caller may leave the repository out, as its props allow.
   useEffect(() => {
-    setNotebookName(props.notebookName || notebookNameFromGitURL(props.gitURL));
-    setGitURL(props.gitURL);
-    setGitBranch(props.gitBranch);
+    const gitURL = props.gitURL ?? "";
+    setNotebookName(props.notebookName || notebookNameFromGitURL(gitURL));
+    setGitURL(gitURL);
+    setGitBranch(props.gitBranch ?? "");
     setExpanded(true);
   }, [props.gitURL, props.gitBranch, props.notebookName]);
 
