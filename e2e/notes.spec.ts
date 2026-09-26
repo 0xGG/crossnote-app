@@ -1,3 +1,4 @@
+import type CodeMirror from "codemirror";
 import { expect, test } from "./fixtures";
 
 test.beforeEach(async ({ app }) => {
@@ -240,4 +241,29 @@ test("filters the list by content and reports when nothing matches", async ({
   await app.searchBox.fill("xyzzy");
   await expect(app.noteCards).toHaveCount(0);
   await expect(app.notesPanel).toContainText("No more notes found");
+});
+
+test("says so, and opens nothing, when a link leads outside the notebook", async ({
+  app,
+  page,
+}) => {
+  await app.createNote();
+  // Through CodeMirror: typed, the brackets would be closed for us.
+  await app.editor.evaluate(
+    (element, text) =>
+      (
+        element as HTMLElement & { CodeMirror: CodeMirror.Editor }
+      ).CodeMirror.setValue(text),
+    "[Next door](../next-door/Kept.md)\n",
+  );
+  await app.modeButton("Preview").click();
+  const tabs = await page.getByRole("tab").count();
+
+  await app.preview.getByRole("link", { name: "Next door" }).click();
+  await expect(
+    page
+      .getByRole("alert")
+      .filter({ hasText: "The link leads outside the notebook" }),
+  ).toBeVisible();
+  await expect(page.getByRole("tab")).toHaveCount(tabs);
 });

@@ -107,6 +107,7 @@ export const zhTW = {
     "error/invalid-git-url-prefix": "無效的 git URL 前綴",
     "error/please-resolve-conflicts": "請先解決沖突",
     "error/failed-to-change-file-path": "更改文件路徑失敗",
+    "error/link-outside-notebook": "連結指向筆記本之外",
 
     // Success
     "success/notebook-uploaded": "筆記本已上傳",

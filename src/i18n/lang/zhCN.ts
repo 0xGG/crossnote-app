@@ -107,6 +107,7 @@ export const zhCN = {
     "error/invalid-git-url-prefix": "无效的 git URL 前缀",
     "error/please-resolve-conflicts": "请先解决冲突",
     "error/failed-to-change-file-path": "更改文件路径失败",
+    "error/link-outside-notebook": "链接指向笔记本之外",
 
     // Success
     "success/notebook-uploaded": "笔记本已上传",
