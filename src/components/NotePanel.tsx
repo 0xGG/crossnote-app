@@ -582,6 +582,7 @@ export default function NotePanel(props: Props) {
   ]);
 
   // get note
+  const modeChosen = useRef<boolean>(false);
   useEffect(() => {
     props.notebook
       .refreshNotesIfNotLoaded({
@@ -591,10 +592,14 @@ export default function NotePanel(props: Props) {
       .then((notes) => {
         const loaded = notes[props.noteFilePath];
         // An empty note opens in the editor rather than the preview. Decided
-        // when the note is loaded, not each time the note is replaced, as a
-        // rename or a pull does, which would undo a mode chosen since.
-        if (loaded && loaded.markdown.length === 0) {
-          setEditorMode(EditorMode.EchoMD);
+        // once, with the first note the panel loads: a rename loads the note
+        // again from its new path, and that, like a pull replacing the note,
+        // would undo a mode chosen since.
+        if (loaded && !modeChosen.current) {
+          modeChosen.current = true;
+          if (loaded.markdown.length === 0) {
+            setEditorMode(EditorMode.EchoMD);
+          }
         }
         setNote(loaded);
       })

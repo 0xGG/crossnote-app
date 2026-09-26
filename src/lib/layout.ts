@@ -8,7 +8,7 @@ import type {
   Model,
   TabNode,
 } from "flexlayout-react";
-import { isTabNodeComponent } from "./tabNode";
+import { isTabNodeComponent, type TabNodeConfig } from "./tabNode";
 
 // Whether any tab of the layout shows a notebook the test picks out, however
 // deep the tab sits in rows or whether it sits in a border.
@@ -25,6 +25,27 @@ export function layoutShowsNotebook(
     }
   });
   return found;
+}
+
+// The tabs that show a note, wherever they sit in the layout.
+export function tabsShowingNote(
+  model: Model,
+  notebookPath: string,
+  noteFilePath: string,
+): TabNode[] {
+  const tabs: TabNode[] = [];
+  model.visitNodes((node) => {
+    if (node.getType() === "tab") {
+      const config: TabNodeConfig | undefined = (node as TabNode).getConfig();
+      if (
+        config?.notebookPath === notebookPath &&
+        config?.noteFilePath === noteFilePath
+      ) {
+        tabs.push(node as TabNode);
+      }
+    }
+  });
+  return tabs;
 }
 
 // The layout persisted in localStorage outlives the components it names: a

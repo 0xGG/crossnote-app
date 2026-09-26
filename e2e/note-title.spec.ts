@@ -78,6 +78,31 @@ test("keeps the mode an empty note was switched to when it is renamed", async ({
   await expect.poll(() => colour("Edit")).toBe(off);
 });
 
+test("opens a renamed note in the tab it has, and after a reload", async ({
+  app,
+  page,
+}) => {
+  await app.noteTitle.fill("Renamed");
+  await app.noteTitle.press("Enter");
+  await expect(app.tab("Renamed")).toBeVisible();
+
+  // Opening the note from its card goes to its tab.
+  await app.selectTab("Drafts");
+  await app.noteCards
+    .filter({ hasText: "Renamed.md" })
+    .getByText("Renamed", { exact: true })
+    .click();
+  await expect(app.tab("Renamed")).toHaveCount(1);
+  await expect(app.tab("Renamed")).toHaveAttribute("aria-selected", "true");
+
+  // The saved layout opens the note from its new file.
+  await app.waitUntilStored(`${await app.notebookFolder()}/Renamed.md`);
+  await page.reload();
+  await app.waitUntilReady();
+  await app.selectTab("Renamed");
+  await expect(app.noteTitle).toHaveValue("Renamed");
+});
+
 test("leaves an Enter that confirms an input method's candidate to the title", async ({
   app,
 }) => {

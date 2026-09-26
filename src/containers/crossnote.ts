@@ -19,7 +19,7 @@ import Crossnote, {
 } from "../lib/crossnote";
 import { EventType, globalEmitter } from "../lib/event";
 import { pfs } from "../lib/fs";
-import { pruneUnknownTabs } from "../lib/layout";
+import { pruneUnknownTabs, tabsShowingNote } from "../lib/layout";
 import { Note, NoteConfig, getNoteIcon } from "../lib/note";
 import { Notebook } from "../lib/notebook";
 import { CrossnoteTabNode } from "../lib/tabNode";
@@ -270,12 +270,29 @@ function useCrossnoteContainer(initialState: InitialState) {
           // As the notebook wrote it, which is not always as it was asked.
           newNoteFilePath: newNote.filePath,
         });
+        // A tab keeps the path of the note it shows, which the saved layout
+        // opens it at again and which opening the note looks for; every tab
+        // of the note follows it.
+        if (layoutModel) {
+          const tabs = tabsShowingNote(
+            layoutModel,
+            note.notebookPath,
+            oldNoteFilePath,
+          );
+          for (const tab of tabs) {
+            layoutModel.doAction(
+              Actions.updateNodeAttributes(tab.getId(), {
+                config: { ...tab.getConfig(), noteFilePath: newNote.filePath },
+              }),
+            );
+          }
+        }
         return newNote;
       } else {
         throw new Error("Notebook " + note.notebookPath + " not found");
       }
     },
-    [notebooks],
+    [notebooks, layoutModel],
   );
 
   const createNewNote = useCallback(
