@@ -56,14 +56,14 @@ afterEach(() => {
   container.remove();
 });
 
-function show(notes: Note[]) {
+function show(notes: Note[], searchValue = "") {
   act(() =>
     root.render(
       <Notes
         tabNode={null}
         notebook={notebook}
         notes={notes}
-        searchValue={""}
+        searchValue={searchValue}
         scrollElement={null}
       />,
     ),
@@ -90,4 +90,20 @@ it("draws again only the card whose note changed", () => {
   show([a, note("B, edited", "b.md")]);
   expect(container.textContent).toContain("B, edited");
   expect(drawn).toEqual(["b.md"]);
+});
+
+it("searches for text that a pattern would read as more than text", () => {
+  const notes = [
+    note("Why? Because.", "why.md"),
+    note("C:\\Users", "path.md"),
+    note("Nothing to see", "other.md"),
+  ];
+  // Each word is looked for as typed, question mark and backslash included.
+  show(notes, "why ?");
+  expect(container.textContent).toContain("Why? Because.");
+  expect(container.textContent).not.toContain("Nothing to see");
+
+  show(notes, "C:\\");
+  expect(container.textContent).toContain("C:\\Users");
+  expect(container.textContent).not.toContain("Why? Because.");
 });

@@ -103,7 +103,8 @@ export default function Notes(props: Props) {
             searchValue
               .trim()
               .split(/\s+/g)
-              .map((s) => s.replace(/[.!@#$%^&*()_+\-=[\]]/g, (x) => `\\${x}`)) // escape special regexp characters
+              // Every character a pattern reads as more than itself.
+              .map((s) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"))
               .join("|") +
             ")",
           "i",
