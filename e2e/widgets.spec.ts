@@ -203,11 +203,13 @@ test("keeps the OCR widget's image when one chosen before it fails to load", asy
 }) => {
   // A linked image whose server keeps the widget waiting, and answers only
   // once another image has been chosen.
-  const requested = new Promise<() => Promise<void>>((resolve) => {
-    void page.route("https://example.com/slow.png", (route) => {
-      resolve(() => route.abort());
-    });
-  });
+  let hold!: (fail: () => Promise<void>) => void;
+  const requested = new Promise<() => Promise<void>>(
+    (resolve) => (hold = resolve),
+  );
+  await page.route("https://example.com/slow.png", (route) =>
+    hold(() => route.abort()),
+  );
   await app.open();
   await app.openNotes();
   await app.createNote();

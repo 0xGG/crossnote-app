@@ -96,7 +96,10 @@ export class CrossnoteApp {
   async recordMessages(): Promise<() => Promise<string[]>> {
     await this.page.evaluate(() => {
       const kept: string[] = [];
-      const seen = new WeakSet<Element>();
+      // Those already on screen were put up before, by something else.
+      const seen = new WeakSet<Element>(
+        document.querySelectorAll('[role="alert"]'),
+      );
       (window as unknown as { keptMessages: string[] }).keptMessages = kept;
       new MutationObserver(() => {
         for (const message of document.querySelectorAll('[role="alert"]')) {
