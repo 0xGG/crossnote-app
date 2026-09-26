@@ -95,9 +95,10 @@ it("takes a period between checks for updates with a decimal point", async () =>
 it("takes nothing but a number for the period between checks", async () => {
   const { notebook, minutes } = openGitNotebook();
 
-  // A decimal comma, full-width digits from a Japanese input method, words:
-  // the field keeps the period it shows, so what it shows is what is saved.
-  for (const value of ["1,5", "１．５", "abc", "-5"]) {
+  // A decimal comma, full-width digits from a Japanese input method, words,
+  // digits past what a number can hold: the field keeps the period it shows,
+  // so what it shows is what is saved.
+  for (const value of ["1,5", "１．５", "abc", "-5", "9".repeat(400)]) {
     act(() => type(minutes, value));
     expect(minutes.value).toBe("60");
   }

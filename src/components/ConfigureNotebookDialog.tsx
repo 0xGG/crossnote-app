@@ -271,10 +271,15 @@ export default function ConfigureNotebookDialog(props: Props) {
                     <Input
                       value={autoFetchPeriod}
                       // Kept as typed, so that 1. can become 1.5, and only
-                      // when it is a number or on its way to one.
+                      // when it is a number or on its way to one, and one the
+                      // notebook can keep in milliseconds.
                       onChange={(event) => {
-                        if (/^\d*\.?\d*$/.test(event.target.value)) {
-                          setAutoFetchPeriod(event.target.value);
+                        const text = event.target.value;
+                        if (
+                          /^\d*\.?\d*$/.test(text) &&
+                          Number.isFinite((parseFloat(text) || 0) * 60000)
+                        ) {
+                          setAutoFetchPeriod(text);
                         }
                       }}
                       endAdornment={
