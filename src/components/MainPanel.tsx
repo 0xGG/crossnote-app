@@ -11,6 +11,7 @@ import {
   Actions,
   type IKeyMap,
   type ILayoutApi,
+  type ITabRenderValues,
   Layout,
   TabNode,
 } from "flexlayout-react";
@@ -20,6 +21,7 @@ import { useTranslation } from "react-i18next";
 import { CrossnoteContainer } from "../containers/crossnote";
 import { SettingsContainer } from "../containers/settings";
 import { pfs } from "../lib/fs";
+import { layoutShowsNotebook } from "../lib/layout";
 import { guardLayoutDrags } from "../lib/layoutDrag";
 import { translateLayoutLabel } from "../lib/layoutLabels";
 import { TabNodeComponent, TabNodeConfig } from "../lib/tabNode";
@@ -122,6 +124,14 @@ const MainPanelRoot = styled("div")(({ theme }) => ({
     borderColor: theme.palette.primary.main,
   },
 }));
+
+// Tabs named after what they show rather than after a note or a notebook.
+// The name a tab is saved with is in the language it was opened under, so
+// these are named afresh each time they are drawn.
+const builtInTabLabels: Partial<Record<TabNodeComponent, string>> = {
+  Settings: "general/Settings",
+  Graph: "general/graph-view",
+};
 
 // The app has no borders to close with Escape, and the layout listens for it
 // on the whole page with a handler that throws on key events without a key,
@@ -234,26 +244,11 @@ export function MainPanel() {
 
   useEffect(() => {
     if (crossnoteContainer.layoutModel) {
-      const data = crossnoteContainer.layoutModel.toJson();
-      let hasLocalDirectory = false;
-      const layout: any = data.layout || {};
-      const children = layout.children || [];
-      for (let i = 0; i < children.length; i++) {
-        const children2 = children[i].children || [];
-        for (let j = 0; j < children2.length; j++) {
-          const child = children2[j];
-          if (child && child.config && child.config.notebookPath) {
-            if (pfs.isPathOfLocalFileSystem(child.config.notebookPath)) {
-              hasLocalDirectory = true;
-              break;
-            }
-          }
-        }
-        if (hasLocalDirectory) {
-          break;
-        }
-      }
-      if (hasLocalDirectory) {
+      if (
+        layoutShowsNotebook(crossnoteContainer.layoutModel, (notebookPath) =>
+          pfs.isPathOfLocalFileSystem(notebookPath),
+        )
+      ) {
         setDialogOpen(true);
       } else {
         setReady(true);
@@ -281,6 +276,16 @@ export function MainPanel() {
           const config: TabNodeConfig = node.getConfig();
           const emoji = config.icon || ":memo:";
           renderValues.leading = <Emoji size={16} emoji={emoji}></Emoji>;
+          const label =
+            builtInTabLabels[node.getComponent() as TabNodeComponent];
+          if (label) {
+            // The tab shows the content. Its accessible name, and its entry
+            // in the menu of hidden tabs, come from the name, which the
+            // render values carry although their type leaves it out.
+            const name = t(label);
+            renderValues.content = name;
+            (renderValues as ITabRenderValues & { name: string }).name = name;
+          }
         }}
         // Resize the panes once the splitter is dropped, as before. 0.11
         // resizes while dragging by default and warns that this turns choppy

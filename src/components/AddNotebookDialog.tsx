@@ -24,6 +24,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { CrossnoteContainer } from "../containers/crossnote";
 import { notify } from "../lib/notifications";
+import { notebookNameFromGitURL } from "../utilities/utils";
 
 interface Props {
   open: boolean;
@@ -84,9 +85,12 @@ export default function AddNotebookDialog(props: Props) {
         gitCorsProxy,
       );
     } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
       notify({
         severity: "error",
-        message: error instanceof Error ? error.message : String(error),
+        // The app's own errors carry a key of the language packs; the rest,
+        // such as a git server's reply, are shown as they come.
+        message: /^error\//.test(message) ? t(message) : message,
       });
       close();
     }
@@ -103,13 +107,12 @@ export default function AddNotebookDialog(props: Props) {
     t,
   ]);
 
+  // A caller may leave the repository out, as its props allow.
   useEffect(() => {
-    const i = props.gitURL.lastIndexOf("/");
-    const name = props.gitURL.slice(i + 1).replace(/\.git/, "");
-
-    setNotebookName(props.notebookName || name);
-    setGitURL(props.gitURL);
-    setGitBranch(props.gitBranch);
+    const gitURL = props.gitURL ?? "";
+    setNotebookName(props.notebookName || notebookNameFromGitURL(gitURL));
+    setGitURL(gitURL);
+    setGitBranch(props.gitBranch ?? "");
     setExpanded(true);
   }, [props.gitURL, props.gitBranch, props.notebookName]);
 

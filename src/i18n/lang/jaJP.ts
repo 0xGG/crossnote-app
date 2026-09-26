@@ -110,6 +110,7 @@ export const jaJP = {
     "error/invalid-git-url-prefix": "無効な git URL プレフィックス",
     "error/please-resolve-conflicts": "最初に競合を解決してください",
     "error/failed-to-change-file-path": "ファイル パスの変更に失敗しました",
+    "error/link-outside-notebook": "リンク先がノートブックの外にあります",
 
     // Success
     "success/notebook-uploaded": "ノートブックがアップロードされます",
@@ -220,6 +221,8 @@ export const jaJP = {
     "widget/crossnote.ocr/start-ocr": "開始文字識別",
     "widget/crossnote.ocr/extra-settings": "追加設定",
     "widget/crossnote.ocr/grayscale": "グレースケール",
+    "widget/crossnote.ocr/failed": "文字を認識できませんでした",
+    "widget/crossnote.ocr/image-failed": "画像を読み込めませんでした",
     "widget/crossnote.kanban/add-column": "新しい列を追加する",
     "widget/crossnote.kanban/add-card": "新しいカードを追加する",
     "widget/crossnote.kanban/delete-column": "列を削除する",

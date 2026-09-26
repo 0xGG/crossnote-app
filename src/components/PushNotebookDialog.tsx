@@ -51,7 +51,9 @@ export default function PushNotebookDialog(props: Props) {
     crossnoteContainer
       .pushNotebook({
         notebook,
-        authorName: settingsContainer.authorEmail,
+        // Git makes no commit without an author name, and a cleared one
+        // stands for the name the settings start with.
+        authorName: settingsContainer.authorName || "Anonymous",
         authorEmail: settingsContainer.authorEmail,
         username: gitUsername,
         password: gitPassword,

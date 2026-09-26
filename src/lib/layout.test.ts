@@ -8,7 +8,11 @@ import {
   type IJsonTabSetNode,
 } from "flexlayout-react";
 import { describe, expect, it } from "vitest";
-import { pruneUnknownTabs } from "./layout";
+import {
+  layoutShowsNotebook,
+  pruneUnknownTabs,
+  tabsShowingNote,
+} from "./layout";
 import savedByOldEngine from "./layout-0.5.21.json";
 
 const tab = (component: string, id = component): IJsonTabNode => ({
@@ -168,5 +172,91 @@ describe("a layout saved by flexlayout-react 0.5.21", () => {
       tabEnableRename: false,
       tabSetEnableMaximize: false,
     });
+  });
+});
+
+describe("layoutShowsNotebook", () => {
+  const noteIn = (notebookPath: string, id: string): IJsonTabNode => ({
+    type: "tab",
+    id,
+    component: "Note",
+    config: { component: "Note", notebookPath, noteFilePath: "a.md" },
+  });
+  const inFolder = (path: string) => path.startsWith("/lfs/");
+  const modelOf = (layout: IJsonRowNode, borders: IJsonBorderNode[] = []) =>
+    Model.fromJson({ global: {}, borders, layout });
+
+  it("finds a tab in the lower half of a split, a row inside the root row", () => {
+    const layout: IJsonRowNode = {
+      type: "row",
+      children: [
+        {
+          type: "row",
+          children: [
+            tabset([noteIn("/notebooks/a", "upper")]),
+            tabset([noteIn("/lfs/b", "lower")]),
+          ],
+        },
+      ],
+    };
+    expect(layoutShowsNotebook(modelOf(layout), inFolder)).toBe(true);
+  });
+
+  it("finds a tab in a border", () => {
+    const layout: IJsonRowNode = {
+      type: "row",
+      children: [tabset([noteIn("/notebooks/a", "main")])],
+    };
+    const border: IJsonBorderNode = {
+      type: "border",
+      location: "left",
+      children: [noteIn("/lfs/b", "side")],
+    };
+    expect(layoutShowsNotebook(modelOf(layout, [border]), inFolder)).toBe(true);
+  });
+
+  it("answers no when no tab shows such a notebook, tabs without one included", () => {
+    const layout: IJsonRowNode = {
+      type: "row",
+      children: [tabset([noteIn("/notebooks/a", "note"), tab("Settings")])],
+    };
+    expect(layoutShowsNotebook(modelOf(layout), inFolder)).toBe(false);
+  });
+});
+
+describe("tabsShowingNote", () => {
+  const noteTab = (
+    notebookPath: string,
+    noteFilePath: string,
+    id: string,
+  ): IJsonTabNode => ({
+    type: "tab",
+    id,
+    component: "Note",
+    config: { component: "Note", notebookPath, noteFilePath },
+  });
+
+  it("finds every tab of a note, borders included, and no other", () => {
+    const layout: IJsonRowNode = {
+      type: "row",
+      children: [
+        tabset([
+          noteTab("/notebooks/a", "a.md", "first"),
+          noteTab("/notebooks/a", "b.md", "other note"),
+        ]),
+        tabset([
+          noteTab("/notebooks/b", "a.md", "other notebook"),
+          tab("Notes", "list"),
+        ]),
+      ],
+    };
+    const border: IJsonBorderNode = {
+      type: "border",
+      location: "left",
+      children: [noteTab("/notebooks/a", "a.md", "side")],
+    };
+    const model = Model.fromJson({ global: {}, borders: [border], layout });
+    const found = tabsShowingNote(model, "/notebooks/a", "a.md");
+    expect(found.map((node) => node.getId()).sort()).toEqual(["first", "side"]);
   });
 });

@@ -41,7 +41,7 @@ export function languageCodeToDateFNSLocale(code: string) {
     return zhCN;
   } else if (code === "en-US") {
     return enUS;
-  } else if (code === "zh-HK") {
+  } else if (code === "zh-TW") {
     return zhTW;
   } else if (code === "ja-JP") {
     return ja;

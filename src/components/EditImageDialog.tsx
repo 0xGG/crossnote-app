@@ -40,7 +40,13 @@ export default function EditImageDialog(props: Props) {
   const [imageSrc, setImageSrc] = useState<string>("");
   const [imageAlt, setImageAlt] = useState<string>("");
   const [imageTitle, setImageTitle] = useState<string>("");
-  const [finalImageSrc, setFinalImageSrc] = useState<string>("");
+  // What the preview shows, with the source and the note it was looked up
+  // for: a source relative to the note is resolved against its folder.
+  const [preview, setPreview] = useState<{
+    src: string;
+    note: Note;
+    url: string;
+  }>({ src: "", note: null, url: "" });
 
   const deleteImage = useCallback(() => {
     if (!imageElement || !editor || !marker) {
@@ -75,28 +81,35 @@ export default function EditImageDialog(props: Props) {
     props.onClose();
   }, [imageElement, editor, marker, props, imageAlt, imageSrc, imageTitle]);
 
+  // Filled from the image each time the dialog opens: the image clicked may
+  // be the one a cancelled edit left its values behind for. The preview
+  // follows the source, which another image may share.
   useEffect(() => {
-    if (imageElement && marker && editor) {
-      setFinalImageSrc("");
+    if (props.open && imageElement && marker && editor) {
       setImageSrc(
         imageElement.getAttribute("data-src") || imageElement.src || "",
       );
       setImageTitle(imageElement.title || "");
       setImageAlt(imageElement.alt || "");
     }
-  }, [imageElement, marker, editor]);
+  }, [props.open, imageElement, marker, editor]);
 
+  // A kanban card's images have no note to be resolved against; the lookup
+  // hands such sources back as they are.
   useEffect(() => {
-    if (!props.note) {
-      return;
-    }
+    // A lookup can end after the source has moved on, a local file being read
+    // more slowly than a web address is resolved; only the latest one counts.
+    let latest = true;
     resolveNoteImageSrc(props.note, imageSrc)
-      .then((finalImageSrc) => {
-        setFinalImageSrc(finalImageSrc);
-      })
-      .catch((error) => {
-        setFinalImageSrc("");
+      .catch(() => "")
+      .then((url) => {
+        if (latest) {
+          setPreview({ src: imageSrc, note: props.note, url });
+        }
       });
+    return () => {
+      latest = false;
+    };
   }, [imageSrc, props.note]);
 
   if (!editor || !marker || !imageElement) {
@@ -109,7 +122,13 @@ export default function EditImageDialog(props: Props) {
       <DialogContent style={{ width: "400px", maxWidth: "100%" }}>
         <ImageWrapper>
           <ImagePreview
-            src={finalImageSrc}
+            // Nothing until the source in the field has been looked up for
+            // this note, rather than the image looked up before it.
+            src={
+              preview.src === imageSrc && preview.note === props.note
+                ? preview.url
+                : ""
+            }
             alt={imageAlt}
             title={imageTitle}
           ></ImagePreview>{" "}

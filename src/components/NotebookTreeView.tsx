@@ -65,6 +65,19 @@ const LabelText = styled(Typography)({
   flexGrow: 1,
 });
 
+// A favourite's title makes room for the reference count after it: a long
+// one breaks inside a word where it has to, as it breaks between words,
+// instead of pushing the count out of the row.
+const FavouriteTitle = styled(LabelText)({
+  minWidth: 0,
+  overflowWrap: "anywhere",
+});
+
+const ReferenceCount = styled(Chip)({
+  flexShrink: 0,
+  marginRight: "4px",
+});
+
 const EmojiIcon = styled("span")({
   top: "2px",
   position: "relative",
@@ -390,15 +403,14 @@ export default function NotebookTreeView(props: Props) {
                     <EmojiIcon role="img" aria-label="quick-access">
                       <Emoji emoji={getNoteIcon(note)} size={16}></Emoji>
                     </EmojiIcon>
-                    <LabelText>{note.title}</LabelText>
-                    <Chip
+                    <FavouriteTitle>{note.title}</FavouriteTitle>
+                    <ReferenceCount
                       size={"small"}
                       variant={"outlined"}
-                      style={{ marginRight: "4px" }}
                       label={props.notebook.referenceMap.getReferredByNotesCount(
                         note.filePath,
                       )}
-                    ></Chip>
+                    ></ReferenceCount>
                   </LabelRoot>
                 }
               ></NotebookTreeItem>

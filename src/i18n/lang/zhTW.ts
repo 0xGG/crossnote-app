@@ -107,6 +107,7 @@ export const zhTW = {
     "error/invalid-git-url-prefix": "無效的 git URL 前綴",
     "error/please-resolve-conflicts": "請先解決沖突",
     "error/failed-to-change-file-path": "更改文件路徑失敗",
+    "error/link-outside-notebook": "連結指向筆記本之外",
 
     // Success
     "success/notebook-uploaded": "筆記本已上傳",
@@ -213,6 +214,8 @@ export const zhTW = {
     "widget/crossnote.ocr/start-ocr": "開始文字識別",
     "widget/crossnote.ocr/extra-settings": "額外設定",
     "widget/crossnote.ocr/grayscale": "灰度",
+    "widget/crossnote.ocr/failed": "文字識別失敗",
+    "widget/crossnote.ocr/image-failed": "圖片無法載入",
     "widget/crossnote.kanban/add-column": "添加新的列",
     "widget/crossnote.kanban/add-card": "添加新的卡片",
     "widget/crossnote.kanban/delete-column": "刪除列",

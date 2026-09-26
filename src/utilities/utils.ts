@@ -127,6 +127,15 @@ export class RandomColorGenerator {
 
 export const randomColorGenerator = new RandomColorGenerator();
 
+// A notebook cloned from git is named after its repository: the last part of
+// the URL, a slash at its end aside, without its .git ending. Only the ending
+// goes, so a repository named like a host, such as alice.github.io, keeps its
+// name.
+export function notebookNameFromGitURL(gitURL: string): string {
+  const url = gitURL.trim().replace(/\/+$/, "");
+  return url.slice(url.lastIndexOf("/") + 1).replace(/\.git$/, "");
+}
+
 export function randomID() {
   return Math.random().toString(36).substr(2, 9);
 }

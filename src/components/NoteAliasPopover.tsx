@@ -11,6 +11,7 @@ import { styled } from "@mui/material/styles";
 import { TrashCan } from "mdi-material-ui";
 import React, { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { isFinishingEnter } from "../lib/keys";
 
 const AliasItem = styled(ListItem)(({ theme }) => ({
   "cursor": "default",
@@ -64,8 +65,10 @@ export function NoteAliasPopover(props: Props) {
             placeholder={t("general/add-an-alias")}
             fullWidth={true}
             autoFocus={true}
-            onKeyUp={(event) => {
-              if (event.which === 13) {
+            // Read on keydown: an Enter that confirms an input method's
+            // candidate ends in a keyup like any other Enter.
+            onKeyDown={(event) => {
+              if (isFinishingEnter(event.nativeEvent)) {
                 addAlias(alias);
               }
             }}

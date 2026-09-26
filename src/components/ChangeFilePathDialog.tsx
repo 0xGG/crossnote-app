@@ -7,10 +7,11 @@ import {
   TextField,
 } from "@mui/material";
 import { TabNode } from "flexlayout-react";
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { CrossnoteContainer } from "../containers/crossnote";
 import { Note } from "../lib/note";
+import { isFinishingEnter } from "../lib/keys";
 import { notify } from "../lib/notifications";
 
 interface Props {
@@ -29,10 +30,15 @@ export default function ChangeFilePathDialog(props: Props) {
     (note && note.filePath) || "",
   );
   const { t } = useTranslation();
+  // One move at a time. The dialog stays open until the move has finished,
+  // and Enter pressed again or Save clicked meanwhile would start another
+  // from the path the note is leaving.
+  const moving = useRef<boolean>(false);
 
   const changeFilePath = useCallback(
     (newFilePath: string) => {
-      if (!note) return;
+      if (!note || moving.current) return;
+      moving.current = true;
       (async () => {
         newFilePath = newFilePath.replace(/^\/+/, "");
         if (!newFilePath.endsWith(".md")) {
@@ -53,6 +59,7 @@ export default function ChangeFilePathDialog(props: Props) {
             });
           }
         }
+        moving.current = false;
         props.onClose();
       })();
     },
@@ -65,11 +72,16 @@ export default function ChangeFilePathDialog(props: Props) {
     };
   }, []);
 
+  // Reset to the note's path when the dialog opens or the path changes. The
+  // note object itself is replaced by every reload of its notebook, a pull
+  // finishing while the dialog is open among them, which is no reason to
+  // throw away what is being typed.
+  const filePath = note ? note.filePath : "";
   useEffect(() => {
-    if (note) {
-      setNewFilePath(note.filePath);
+    if (filePath) {
+      setNewFilePath(filePath);
     }
-  }, [note, props.open]);
+  }, [filePath, props.open]);
 
   useEffect(() => {
     if (!inputEl) return;
@@ -92,8 +104,8 @@ export default function ChangeFilePathDialog(props: Props) {
           value={newFilePath}
           autoFocus={true}
           onChange={(event) => setNewFilePath(event.target.value)}
-          onKeyUp={(event) => {
-            if (event.which === 13) {
+          onKeyDown={(event) => {
+            if (isFinishingEnter(event.nativeEvent)) {
               changeFilePath(newFilePath);
             }
           }}

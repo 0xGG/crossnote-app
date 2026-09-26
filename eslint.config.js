@@ -82,6 +82,16 @@ export default tseslint.config(
     ...playwright.configs["flat/recommended"],
     files: ["e2e/**/*.ts"],
   },
+  {
+    files: ["e2e/**/*.ts"],
+    rules: {
+      // A spec may assert through a helper of its own, named expect...
+      "playwright/expect-expect": [
+        "warn",
+        { assertFunctionPatterns: ["^expect[A-Z]"] },
+      ],
+    },
+  },
   prettierConfig,
   {
     // Pragmatic relaxations for the legacy (2021-era) code base. Tighten

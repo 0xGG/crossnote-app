@@ -1,5 +1,10 @@
 import { describe, expect, it, vi } from "vitest";
-import { formatDate, RandomColorGenerator, randomID } from "./utils";
+import {
+  formatDate,
+  notebookNameFromGitURL,
+  RandomColorGenerator,
+  randomID,
+} from "./utils";
 
 describe("formatDate", () => {
   it("returns an empty string for empty input", () => {
@@ -55,5 +60,29 @@ describe("RandomColorGenerator", () => {
 describe("randomID", () => {
   it("produces short alphanumeric ids", () => {
     expect(randomID()).toMatch(/^[a-z0-9]{1,9}$/);
+  });
+});
+
+describe("notebookNameFromGitURL", () => {
+  it("names a notebook after the repository in its git URL", () => {
+    expect(
+      notebookNameFromGitURL("https://github.com/0xGG/crossnote-app.git"),
+    ).toBe("crossnote-app");
+    expect(notebookNameFromGitURL("https://example.com/notes")).toBe("notes");
+  });
+
+  it("keeps .git that is part of the repository's name", () => {
+    expect(
+      notebookNameFromGitURL("https://github.com/alice/alice.github.io.git"),
+    ).toBe("alice.github.io");
+  });
+
+  it("looks past a slash at the end of the URL", () => {
+    expect(notebookNameFromGitURL("https://example.com/alice/notes/")).toBe(
+      "notes",
+    );
+    expect(notebookNameFromGitURL("https://example.com/alice/notes.git/")).toBe(
+      "notes",
+    );
   });
 });

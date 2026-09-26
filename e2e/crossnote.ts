@@ -89,6 +89,44 @@ export class CrossnoteApp {
       .toBe(true);
   }
 
+  // Keeps every message the app puts up from now on, one gone again before a
+  // test looks included. A test that expects none waits for its change to
+  // land and then reads what was kept, which an absence check made at one
+  // moment cannot do.
+  async recordMessages(): Promise<() => Promise<string[]>> {
+    await this.page.evaluate(() => {
+      const kept: string[] = [];
+      // Those already on screen were put up before, by something else.
+      const seen = new WeakSet<Element>(
+        document.querySelectorAll('[role="alert"]'),
+      );
+      (window as unknown as { keptMessages: string[] }).keptMessages = kept;
+      new MutationObserver(() => {
+        for (const message of document.querySelectorAll('[role="alert"]')) {
+          if (!seen.has(message)) {
+            seen.add(message);
+            kept.push(message.textContent ?? "");
+          }
+        }
+      }).observe(document.body, { childList: true, subtree: true });
+    });
+    return () =>
+      this.page.evaluate(
+        () => (window as unknown as { keptMessages: string[] }).keptMessages,
+      );
+  }
+
+  // The folder a notebook lives in, as the saved layout names it once one of
+  // its tabs is open.
+  async notebookFolder(): Promise<string> {
+    return this.page.evaluate(
+      () =>
+        localStorage
+          .getItem("layoutModel")!
+          .match(/"notebookPath":"([^"]+)"/)![1],
+    );
+  }
+
   notebook(name: string): Locator {
     return this.sidebar.getByRole("treeitem", { name: new RegExp(name) });
   }

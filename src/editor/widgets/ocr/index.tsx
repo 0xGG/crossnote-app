@@ -21,6 +21,7 @@ import { ThemeProvider, darken, styled } from "@mui/material/styles";
 import { TrashCan } from "mdi-material-ui";
 import React, { useEffect, useState } from "react";
 import { renderWidget } from "../../../utilities/widgetRender";
+import { notify } from "../../../lib/notifications";
 import { useTranslation } from "react-i18next";
 import { createWorker } from "tesseract.js";
 import { globalContainers } from "../../../containers/global";
@@ -61,10 +62,6 @@ const ImageCanvas = styled("canvas")({
   maxWidth: "100%",
 });
 
-// The drop area stops taking clicks while recognition runs, which is a state
-// of this one element rather than a rule of its own.
-const processingSx = { cursor: "not-allowed" } as const;
-
 interface OCRProgress {
   status: string;
   progress: number;
@@ -95,8 +92,9 @@ function OCRWidget(props: WidgetArgs) {
   const [selectedLanguages, setSelectedLanguages] = useState<string[]>(
     getInitialLanguages(),
   );
+  // On unless it was turned off, which is stored as "false".
   const [grayscaleChecked, setGrayscaleChecked] = useState<boolean>(
-    !!localStorage.getItem("widget/crossnote.ocr/grayscale") || true,
+    localStorage.getItem("widget/crossnote.ocr/grayscale") !== "false",
   );
 
   useEffect(() => {
@@ -115,18 +113,31 @@ function OCRWidget(props: WidgetArgs) {
         context.drawImage(imageObject, 0, 0);
         setOCRDataURL(canvas.toDataURL());
       };
-      imageObject.onerror = (error) => {
-        throw error;
+      // A file that is no image, or an image whose server does not allow
+      // other pages to read it, cannot be drawn: say so and go back.
+      imageObject.onerror = () => {
+        notify({
+          severity: "error",
+          message: t("widget/crossnote.ocr/image-failed"),
+        });
+        setImageDataURL("");
       };
       imageObject.setAttribute("crossOrigin", "anonymous");
       imageObject.src = imageDataURL;
+      // An image still loading when the widget moves on, to another image or
+      // the other grayscale setting, is no longer this widget's to draw or
+      // to report.
+      return () => {
+        imageObject.onload = null;
+        imageObject.onerror = null;
+      };
     }
-  }, [canvas, imageDataURL, grayscaleChecked]);
+  }, [canvas, imageDataURL, grayscaleChecked, t]);
 
   function clickDropArea(e: any) {
     e.preventDefault();
     e.stopPropagation();
-    if (!imageDropAreaElement || isProcessing) return;
+    if (!imageDropAreaElement) return;
     imageDropAreaElement.onchange = function (event) {
       const target = event.target as any;
       const files = target.files || [];
@@ -155,6 +166,9 @@ function OCRWidget(props: WidgetArgs) {
 
   function ocr(input: File | string | HTMLCanvasElement) {
     const worker = createWorker({
+      // A failure also rejects the step it happened in, which is handled
+      // below; without a handler of its own, tesseract.js throws it again.
+      errorHandler: () => {},
       logger: (m: OCRProgress) => {
         setOCRProgresses((ocrProgresses) => {
           if (
@@ -176,15 +190,40 @@ function OCRWidget(props: WidgetArgs) {
         languagesArr = ["eng"];
       }
 
-      await worker.load();
-      await worker.loadLanguage(languagesArr.join("+"));
-      await worker.initialize(languagesArr.join("+"));
-      const {
-        data: { text },
-      } = await worker.recognize(input);
-      props.replaceSelf("\n" + text);
-      await worker.terminate();
-      setIsProcessing(false);
+      // The worker's own script comes from a CDN as well. When it cannot be
+      // had, tesseract.js never settles a step, but the worker it wraps
+      // reports an error.
+      const workerFailed = new Promise<never>((_, reject) => {
+        (worker as unknown as { worker: Worker }).worker.addEventListener(
+          "error",
+          reject,
+          { once: true },
+        );
+      });
+      try {
+        const {
+          data: { text },
+        } = await Promise.race([
+          (async () => {
+            await worker.load();
+            await worker.loadLanguage(languagesArr.join("+"));
+            await worker.initialize(languagesArr.join("+"));
+            return await worker.recognize(input);
+          })(),
+          workerFailed,
+        ]);
+        props.replaceSelf("\n" + text);
+      } catch (error) {
+        // The engine and its language data come over the network; when they
+        // cannot be had, say so and go back to the image.
+        notify({
+          severity: "error",
+          message: t("widget/crossnote.ocr/failed"),
+        });
+      } finally {
+        await worker.terminate();
+        setIsProcessing(false);
+      }
     })();
   }
 
@@ -293,14 +332,10 @@ function OCRWidget(props: WidgetArgs) {
               <Switch
                 checked={grayscaleChecked}
                 onChange={() => {
-                  if (grayscaleChecked) {
-                    localStorage.removeItem("widget/crossnote.ocr/grayscale");
-                  } else {
-                    localStorage.setItem(
-                      "widget/crossnote.ocr/grayscale",
-                      "true",
-                    );
-                  }
+                  localStorage.setItem(
+                    "widget/crossnote.ocr/grayscale",
+                    String(!grayscaleChecked),
+                  );
                   setGrayscaleChecked(!grayscaleChecked);
                 }}
                 color={"primary"}
@@ -375,14 +410,9 @@ function OCRWidget(props: WidgetArgs) {
         <Typography variant={"subtitle1"} style={{ marginBottom: "8px" }}>
           {t("widget/crossnote.ocr/local-image")}
         </Typography>
-        <DropArea
-          sx={isProcessing ? processingSx : undefined}
-          onClick={clickDropArea}
-        >
+        <DropArea onClick={clickDropArea}>
           <Typography>
-            {isProcessing
-              ? t("utils/uploading-image")
-              : t("widget/crossnote.image/click-here-to-browse-image-file")}
+            {t("widget/crossnote.image/click-here-to-browse-image-file")}
           </Typography>
         </DropArea>
       </Section>

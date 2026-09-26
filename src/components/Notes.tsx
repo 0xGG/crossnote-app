@@ -12,6 +12,11 @@ import NoteCard, { NoteCardMargin } from "./NoteCard";
 
 const lazyLoadPlaceholderHeight = 92 + 2 * NoteCardMargin;
 
+// A card is drawn again only when it is handed a note of its own that is
+// new: a refresh after a save hands the list one new note and the others as
+// they were, and every card ever scrolled into view would draw again.
+const MemoizedNoteCard = React.memo(NoteCard);
+
 const NotesList = styled("div")(({ theme }) => ({
   "position": "relative",
   // "flex": "1",
@@ -98,7 +103,8 @@ export default function Notes(props: Props) {
             searchValue
               .trim()
               .split(/\s+/g)
-              .map((s) => s.replace(/[.!@#$%^&*()_+\-=[\]]/g, (x) => `\\${x}`)) // escape special regexp characters
+              // Every character a pattern reads as more than itself.
+              .map((s) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"))
               .join("|") +
             ")",
           "i",
@@ -122,19 +128,15 @@ export default function Notes(props: Props) {
 
     const mergedNotes = [...pinned, ...unpinned];
 
-    if (mergedNotes.length !== notes.length) {
+    // Compared as objects: a reload of the notebook hands out new notes for
+    // the same files, and a card only follows its note when handed the new
+    // one.
+    if (
+      mergedNotes.length !== notes.length ||
+      mergedNotes.some((mergedNote, index) => mergedNote !== notes[index])
+    ) {
       setNotes(mergedNotes);
-      return;
     }
-
-    mergedNotes.some((mergedNote, index) => {
-      const note = notes[index];
-      if (mergedNote.filePath !== note.filePath) {
-        setNotes(mergedNotes);
-        return true;
-      }
-      return false;
-    });
   }, [props.notes, props.searchValue]);
 
   useEffect(() => {
@@ -173,12 +175,12 @@ export default function Notes(props: Props) {
           scrollContainer={props.scrollElement}
           resize={true}
         >
-          <NoteCard
+          <MemoizedNoteCard
             key={"note-card-" + note.filePath}
             tabNode={props.tabNode}
             note={note}
             referredNote={props.referredNote}
-          ></NoteCard>
+          ></MemoizedNoteCard>
         </LazyLoad>
 
         //   <NoteCard key={"note-card-" + note.filePath} note={note}></NoteCard>

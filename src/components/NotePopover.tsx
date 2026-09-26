@@ -4,6 +4,7 @@ import {
   Divider,
   IconButton,
   List,
+  ListItem,
   ListItemButton,
   ListItemIcon,
   ListItemText,
@@ -146,149 +147,186 @@ export default function NotePopover(props: Props) {
         onClose={props.onClose}
       >
         <List>
-          <ListItemButton
-            onClick={() => {
-              crossnoteContainer.togglePin(
-                props.tabNode,
-                note.notebookPath,
-                note.filePath,
-              );
-              props.onClose();
-            }}
-          >
-            <ListItemIcon
-              sx={{ ...(note.config.pinned && { color: "secondary.main" }) }}
-            >
-              {note.config.pinned ? <Pin></Pin> : <PinOutline></PinOutline>}
-            </ListItemIcon>
-            <ListItemText
-              primary={
-                note.config.pinned
-                  ? t("general/unpin-the-note")
-                  : t("general/pin-the-note")
-              }
-            ></ListItemText>
-          </ListItemButton>
-          <ListItemButton
-            onClick={() => {
-              crossnoteContainer.toggleFavorite(
-                props.tabNode,
-                note.notebookPath,
-                note.filePath,
-              );
-              props.onClose();
-            }}
-          >
-            <ListItemIcon
-              sx={{ ...(note.config.favorited && { color: "secondary.main" }) }}
-            >
-              {note.config.favorited ? (
-                <Star></Star>
-              ) : (
-                <StarOutline></StarOutline>
-              )}
-            </ListItemIcon>
-            <ListItemText
-              primary={
-                note.config.favorited
-                  ? t("general/remove-from-quick-access")
-                  : t("general/add-to-quick-access")
-              }
-            ></ListItemText>
-          </ListItemButton>
-          <Divider></Divider>
-          <ListItemButton
-            onClick={() => {
-              crossnoteContainer.splitNoteVertically(note);
-              props.onClose();
-            }}
-          >
-            <ListItemIcon>
-              <ViewSplitVertical></ViewSplitVertical>
-            </ListItemIcon>
-            <ListItemText>{t("editor/split-vertically")}</ListItemText>
-          </ListItemButton>
-          <ListItemButton
-            onClick={() => {
-              crossnoteContainer.splitNoteHorizontally(note, props.tabNode);
-              props.onClose();
-            }}
-          >
-            <ListItemIcon>
-              <ViewSplitHorizontal></ViewSplitHorizontal>
-            </ListItemIcon>
-            <ListItemText>{t("editor/split-horizontally")}</ListItemText>
-          </ListItemButton>
-          <Divider></Divider>
-          <ListItemButton
-            onClick={() => {
-              setChangeNoteFilePathDialogOpen(true);
-              props.onClose();
-            }}
-          >
-            <ListItemIcon>
-              <RenameBox></RenameBox>
-            </ListItemIcon>
-            <ListItemText
-              primary={t("general/change-file-path")}
-            ></ListItemText>
-          </ListItemButton>
-          <ListItemButton
-            onClick={(event) => setNoteAliasAnchorEl(event.currentTarget)}
-          >
-            <ListItemIcon>
-              <TooltipEdit></TooltipEdit>
-            </ListItemIcon>
-            <ListItemText primary={t("general/edit-note-alias")}></ListItemText>
-          </ListItemButton>
-          <ListItemButton
-            onClick={() => {
-              setDeleteNoteDialogOpen(true);
-              props.onClose();
-            }}
-          >
-            <ListItemIcon>
-              <Delete></Delete>
-            </ListItemIcon>
-            <ListItemText primary={t("general/Delete")}></ListItemText>
-          </ListItemButton>
-          {!isLocal && (
+          <ListItem disablePadding>
             <ListItemButton
               onClick={() => {
-                crossnoteContainer.checkoutNote(note);
+                crossnoteContainer.togglePin(
+                  props.tabNode,
+                  note.notebookPath,
+                  note.filePath,
+                );
+                props.onClose();
+              }}
+            >
+              <ListItemIcon
+                sx={{ ...(note.config.pinned && { color: "secondary.main" }) }}
+              >
+                {note.config.pinned ? <Pin></Pin> : <PinOutline></PinOutline>}
+              </ListItemIcon>
+              <ListItemText
+                primary={
+                  note.config.pinned
+                    ? t("general/unpin-the-note")
+                    : t("general/pin-the-note")
+                }
+              ></ListItemText>
+            </ListItemButton>
+          </ListItem>
+          <ListItem disablePadding>
+            <ListItemButton
+              onClick={() => {
+                crossnoteContainer.toggleFavorite(
+                  props.tabNode,
+                  note.notebookPath,
+                  note.filePath,
+                );
+                props.onClose();
+              }}
+            >
+              <ListItemIcon
+                sx={{
+                  ...(note.config.favorited && { color: "secondary.main" }),
+                }}
+              >
+                {note.config.favorited ? (
+                  <Star></Star>
+                ) : (
+                  <StarOutline></StarOutline>
+                )}
+              </ListItemIcon>
+              <ListItemText
+                primary={
+                  note.config.favorited
+                    ? t("general/remove-from-quick-access")
+                    : t("general/add-to-quick-access")
+                }
+              ></ListItemText>
+            </ListItemButton>
+          </ListItem>
+          {/* A line between groups, hidden from assistive technology: as an li,
+              MUI gives it the separator role, which a list may not hold. */}
+          <Divider component="li" aria-hidden></Divider>
+          <ListItem disablePadding>
+            <ListItemButton
+              onClick={() => {
+                crossnoteContainer.splitNoteVertically(note);
                 props.onClose();
               }}
             >
               <ListItemIcon>
-                <Restore></Restore>
+                <ViewSplitVertical></ViewSplitVertical>
               </ListItemIcon>
-              <ListItemText
-                primary={t("general/restore-checkout")}
-              ></ListItemText>
+              <ListItemText>{t("editor/split-vertically")}</ListItemText>
             </ListItemButton>
-          )}
-          <Divider></Divider>
-          {!isLocal && notebook && notebook.gitURL && (
+          </ListItem>
+          <ListItem disablePadding>
             <ListItemButton
-              onClick={(event) => setShareAnchorEl(event.currentTarget)}
+              onClick={() => {
+                crossnoteContainer.splitNoteHorizontally(note, props.tabNode);
+                props.onClose();
+              }}
             >
               <ListItemIcon>
-                <ShareVariant></ShareVariant>
+                <ViewSplitHorizontal></ViewSplitHorizontal>
               </ListItemIcon>
-              <ListItemText primary={t("general/Share")}></ListItemText>
+              <ListItemText>{t("editor/split-horizontally")}</ListItemText>
             </ListItemButton>
+          </ListItem>
+          <Divider component="li" aria-hidden></Divider>
+          <ListItem disablePadding>
+            <ListItemButton
+              onClick={() => {
+                setChangeNoteFilePathDialogOpen(true);
+                props.onClose();
+              }}
+            >
+              <ListItemIcon>
+                <RenameBox></RenameBox>
+              </ListItemIcon>
+              <ListItemText
+                primary={t("general/change-file-path")}
+              ></ListItemText>
+            </ListItemButton>
+          </ListItem>
+          <ListItem disablePadding>
+            <ListItemButton
+              onClick={(event) => {
+                setNoteAliasAnchorEl(event.currentTarget);
+                // Another copy of this menu, the note panel's or a card's,
+                // may have changed the aliases since this one was made.
+                crossnoteContainer
+                  .getNote(note.notebookPath, note.filePath)
+                  .then((latest) => {
+                    if (latest) {
+                      setAliases(latest.config.aliases);
+                    }
+                  });
+              }}
+            >
+              <ListItemIcon>
+                <TooltipEdit></TooltipEdit>
+              </ListItemIcon>
+              <ListItemText
+                primary={t("general/edit-note-alias")}
+              ></ListItemText>
+            </ListItemButton>
+          </ListItem>
+          <ListItem disablePadding>
+            <ListItemButton
+              onClick={() => {
+                setDeleteNoteDialogOpen(true);
+                props.onClose();
+              }}
+            >
+              <ListItemIcon>
+                <Delete></Delete>
+              </ListItemIcon>
+              <ListItemText primary={t("general/Delete")}></ListItemText>
+            </ListItemButton>
+          </ListItem>
+          {!isLocal && (
+            <ListItem disablePadding>
+              <ListItemButton
+                onClick={() => {
+                  crossnoteContainer.checkoutNote(note);
+                  props.onClose();
+                }}
+              >
+                <ListItemIcon>
+                  <Restore></Restore>
+                </ListItemIcon>
+                <ListItemText
+                  primary={t("general/restore-checkout")}
+                ></ListItemText>
+              </ListItemButton>
+            </ListItem>
           )}
-          <ListItemButton
-            onClick={() => {
-              setNeedsToPrint(true);
-              props.onClose();
-            }}
-          >
-            <ListItemIcon>
-              <Printer></Printer>
-            </ListItemIcon>
-            <ListItemText primary={t("general/Print")}></ListItemText>
-          </ListItemButton>
+          <Divider component="li" aria-hidden></Divider>
+          {!isLocal && notebook && notebook.gitURL && (
+            <ListItem disablePadding>
+              <ListItemButton
+                onClick={(event) => setShareAnchorEl(event.currentTarget)}
+              >
+                <ListItemIcon>
+                  <ShareVariant></ShareVariant>
+                </ListItemIcon>
+                <ListItemText primary={t("general/Share")}></ListItemText>
+              </ListItemButton>
+            </ListItem>
+          )}
+          <ListItem disablePadding>
+            <ListItemButton
+              onClick={() => {
+                setNeedsToPrint(true);
+                props.onClose();
+              }}
+            >
+              <ListItemIcon>
+                <Printer></Printer>
+              </ListItemIcon>
+              <ListItemText primary={t("general/Print")}></ListItemText>
+            </ListItemButton>
+          </ListItem>
         </List>
       </Popover>
       <DeleteNoteDialog
