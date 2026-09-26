@@ -40,11 +40,13 @@ export default function EditImageDialog(props: Props) {
   const [imageSrc, setImageSrc] = useState<string>("");
   const [imageAlt, setImageAlt] = useState<string>("");
   const [imageTitle, setImageTitle] = useState<string>("");
-  // What the preview shows, with the source it was looked up for.
-  const [preview, setPreview] = useState<{ src: string; url: string }>({
-    src: "",
-    url: "",
-  });
+  // What the preview shows, with the source and the note it was looked up
+  // for: a source relative to the note is resolved against its folder.
+  const [preview, setPreview] = useState<{
+    src: string;
+    note: Note;
+    url: string;
+  }>({ src: "", note: null, url: "" });
 
   const deleteImage = useCallback(() => {
     if (!imageElement || !editor || !marker) {
@@ -102,7 +104,7 @@ export default function EditImageDialog(props: Props) {
       .catch(() => "")
       .then((url) => {
         if (latest) {
-          setPreview({ src: imageSrc, url });
+          setPreview({ src: imageSrc, note: props.note, url });
         }
       });
     return () => {
@@ -120,9 +122,13 @@ export default function EditImageDialog(props: Props) {
       <DialogContent style={{ width: "400px", maxWidth: "100%" }}>
         <ImageWrapper>
           <ImagePreview
-            // Nothing until the source in the field has been looked up,
-            // rather than the image looked up before it.
-            src={preview.src === imageSrc ? preview.url : ""}
+            // Nothing until the source in the field has been looked up for
+            // this note, rather than the image looked up before it.
+            src={
+              preview.src === imageSrc && preview.note === props.note
+                ? preview.url
+                : ""
+            }
             alt={imageAlt}
             title={imageTitle}
           ></ImagePreview>{" "}

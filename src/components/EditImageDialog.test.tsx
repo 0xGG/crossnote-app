@@ -140,6 +140,25 @@ it("shows nothing of the image opened before while the next is looked up", async
   expect(preview()).toBe("data:image/png;base64,Yg==");
 });
 
+it("shows nothing of another note's picture while this note's is looked up", async () => {
+  // A source relative to the note is resolved against its folder, so the
+  // same source can be a different picture in another note.
+  const other = { notebookPath: "/notebooks/a", filePath: "sub/b.md" } as Note;
+  await show(false, null);
+  const endFirstLookup = holdNextLookup();
+  await show(true, image("./p.png"), note);
+  await endFirstLookup("data:image/png;base64,QQ==");
+  expect(preview()).toBe("data:image/png;base64,QQ==");
+  await show(false, image("./p.png"), note);
+
+  const endLookup = holdNextLookup();
+  await show(true, image("./p.png"), other);
+  expect(preview()).toBe("");
+
+  await endLookup("data:image/png;base64,Qg==");
+  expect(preview()).toBe("data:image/png;base64,Qg==");
+});
+
 it("previews the image of a kanban card, which has no note", async () => {
   await show(false, null, null);
   await show(true, image("https://example.com/a.png"), null);
