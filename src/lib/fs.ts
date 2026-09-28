@@ -77,6 +77,19 @@ class FileSystem {
       }
     };
 
+    // Makes a folder on the browser file system whose parent is known to be
+    // a folder.
+    const makeFolder = (folderPath: string) =>
+      new Promise<void>((resolve, reject) => {
+        this.fs.mkdir(folderPath, "0777", (error: Error) => {
+          if (error) {
+            return reject(error);
+          } else {
+            return resolve();
+          }
+        });
+      });
+
     this.readFile = (path: string, opts?: any) => {
       if (this.lfs.isPathOfLocalFileSystem(path)) {
         return this.lfs.readFile(path, opts);
@@ -167,15 +180,7 @@ class FileSystem {
         return this.lfs.mkdir(path);
       } else {
         await parentMustBeAFolder(path);
-        return new Promise((resolve, reject) => {
-          this.fs.mkdir(path, "0777", (error: Error) => {
-            if (error) {
-              return reject(error);
-            } else {
-              return resolve();
-            }
-          });
-        });
+        return makeFolder(path);
       }
     };
     this.exists = (path: string) => {
@@ -281,18 +286,24 @@ class FileSystem {
     this.mkdirp = async (dirPath: string) => {
       if (this.lfs.isPathOfLocalFileSystem(dirPath)) {
         return this.lfs.mkdir(dirPath);
-      } else {
-        if (await this.exists(dirPath)) {
-          // A file of that name is no folder to put anything in.
-          if (!(await this.stats(dirPath)).isDirectory()) {
-            throw notAFolder(dirPath);
-          }
-          return;
-        } else {
-          await this.mkdirp(path.dirname(dirPath));
-          await this.mkdir(dirPath);
-        }
       }
+      let stats: LightningFS.Stats | null = null;
+      try {
+        stats = await this.stats(dirPath);
+      } catch (error) {
+        // Not there yet: made below.
+      }
+      if (stats) {
+        // A file of that name is no folder to put anything in.
+        if (!stats.isDirectory()) {
+          throw notAFolder(dirPath);
+        }
+        return;
+      }
+      // The parent is made, or found to be a folder, first, so the folder
+      // itself needs no second look at it.
+      await this.mkdirp(path.dirname(dirPath));
+      await makeFolder(dirPath);
     };
 
     // The browser file system writes a file's content at once, but its
