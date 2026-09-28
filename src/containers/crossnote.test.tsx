@@ -1,3 +1,4 @@
+import type { TabNode } from "flexlayout-react";
 import moment from "moment";
 import React, { act, useEffect } from "react";
 import { createRoot, Root } from "react-dom/client";
@@ -116,4 +117,33 @@ it("opens no note a link leads to outside the notebook, and says so", async () =
   expect(
     await pfs.readFile("/notebooks/next-door/Kept.md", { encoding: "utf8" }),
   ).toBe("# Kept");
+});
+
+// A tab as the container's functions use it: they only ask for its id.
+const tab = { getId: () => "tab" } as unknown as TabNode;
+
+// An editor saves its text a moment after the last keystroke; by then the
+// notebook, or the note, can be gone.
+it("saves nothing into a notebook that is gone, and does not fail", async () => {
+  await notebookAt("/notebooks/saving");
+
+  await expect(
+    crossnote.updateNoteMarkdown(tab, "/notebooks/deleted", "a.md", "Typed"),
+  ).resolves.toBeUndefined();
+});
+
+it("saves nothing for a note that is gone, and does not fail", async () => {
+  const notebook = await notebookAt("/notebooks/saving-gone");
+
+  await expect(
+    crossnote.updateNoteMarkdown(tab, notebook.dir, "moved.md", "Typed"),
+  ).resolves.toBeUndefined();
+  await expect(
+    crossnote.updateNoteConfig(tab, notebook.dir, "moved.md", {
+      createdAt: new Date(),
+      modifiedAt: new Date(),
+      pinned: true,
+    }),
+  ).resolves.toBeUndefined();
+  expect(await pfs.exists(`${notebook.dir}/moved.md`)).toBe(false);
 });

@@ -182,9 +182,14 @@ function useCrossnoteContainer(initialState: InitialState) {
       filePath: string,
       markdown: string,
     ) => {
+      // The save comes a moment after the last keystroke, by when the
+      // notebook, or the note, may have been deleted or the note renamed.
       const notebook = getNotebookAtPath(notebookPath);
-      const note = await notebook.getNote(filePath);
       if (!notebook) {
+        return;
+      }
+      const note = await notebook.getNote(filePath);
+      if (!note) {
         return;
       }
       if (note.markdown !== markdown) {
@@ -217,6 +222,9 @@ function useCrossnoteContainer(initialState: InitialState) {
         return;
       }
       const note = await notebook.getNote(filePath);
+      if (!note) {
+        return;
+      }
       if (JSON.stringify(note.config) !== JSON.stringify(noteConfig)) {
         const newNote = await notebook.writeNote(
           note.filePath,
