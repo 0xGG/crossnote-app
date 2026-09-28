@@ -109,6 +109,7 @@ export const enUS = {
     "error/please-resolve-conflicts": "Please resolve conflicts first",
     "error/failed-to-change-file-path": "Failed to change file path",
     "error/link-outside-notebook": "The link leads outside the notebook",
+    "error/link-inside-note": "The link leads inside a note, not a folder",
 
     // Success
     "success/notebook-uploaded": "Notebook uploaded",

@@ -1,3 +1,4 @@
+import type { TabNode } from "flexlayout-react";
 import moment from "moment";
 import React, { act, useEffect } from "react";
 import { createRoot, Root } from "react-dom/client";
@@ -116,4 +117,74 @@ it("opens no note a link leads to outside the notebook, and says so", async () =
   expect(
     await pfs.readFile("/notebooks/next-door/Kept.md", { encoding: "utf8" }),
   ).toBe("# Kept");
+});
+
+// Two notes asked for at once would both find a name free, and the second
+// would be written over the first.
+it("gives two new notes asked for at once names of their own", async () => {
+  const notebook = await notebookAt("/notebooks/at-once");
+
+  const [a, b] = await Promise.all([
+    crossnote.createNewNote(notebook, "", "[[From A]]"),
+    crossnote.createNewNote(notebook, "", "[[From B]]"),
+  ]);
+  expect(a.filePath).not.toBe(b.filePath);
+  expect(await read(notebook, a.filePath)).toContain("[[From A]]");
+  expect(await read(notebook, b.filePath)).toContain("[[From B]]");
+});
+
+it("writes no new note over one asked for by name at the same time", async () => {
+  const notebook = await notebookAt("/notebooks/at-once-named");
+  const today = `${moment().format("YYYY-MM-DD")}.md`;
+
+  // A new note, which is named after the day, and the day's note opened
+  // from the sidebar.
+  await Promise.all([
+    crossnote.createNewNote(notebook, "", "[[Back link]]"),
+    crossnote.createNewNote(notebook, today, ""),
+  ]);
+  expect(await read(notebook, today)).toContain("[[Back link]]");
+});
+
+it("opens no note a link leads to inside another note, and says so", async () => {
+  const notebook = await notebookAt("/notebooks/linking-under");
+  await pfs.writeFile(`${notebook.dir}/Kept.md`, "# Kept");
+  resetNotifications();
+
+  // What clicking [[Kept.md/child]] in one of its notes does.
+  await crossnote.openNoteAtPath(notebook, "Kept.md/child");
+  expect(getNotificationState().current?.message).toBe(
+    "The link leads inside a note, not a folder",
+  );
+  expect(await pfs.exists(`${notebook.dir}/Kept.md/child.md`)).toBe(false);
+  expect(await read(notebook, "Kept.md")).toBe("# Kept");
+});
+
+// A tab as the container's functions use it: they only ask for its id.
+const tab = { getId: () => "tab" } as unknown as TabNode;
+
+// An editor saves its text a moment after the last keystroke; by then the
+// notebook, or the note, can be gone.
+it("saves nothing into a notebook that is gone, and does not fail", async () => {
+  await notebookAt("/notebooks/saving");
+
+  await expect(
+    crossnote.updateNoteMarkdown(tab, "/notebooks/deleted", "a.md", "Typed"),
+  ).resolves.toBeUndefined();
+});
+
+it("saves nothing for a note that is gone, and does not fail", async () => {
+  const notebook = await notebookAt("/notebooks/saving-gone");
+
+  await expect(
+    crossnote.updateNoteMarkdown(tab, notebook.dir, "moved.md", "Typed"),
+  ).resolves.toBeUndefined();
+  await expect(
+    crossnote.updateNoteConfig(tab, notebook.dir, "moved.md", {
+      createdAt: new Date(),
+      modifiedAt: new Date(),
+      pinned: true,
+    }),
+  ).resolves.toBeUndefined();
+  expect(await pfs.exists(`${notebook.dir}/moved.md`)).toBe(false);
 });

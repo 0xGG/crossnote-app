@@ -8,6 +8,13 @@ interface AttachLocalDirectory {
   directoryHandle: FileSystemDirectoryHandle;
 }
 
+// What the browser file system gives for a path that goes through something
+// other than a folder, had it the check (a folder on the user's disk gives a
+// TypeMismatchError).
+function notAFolder(filePath: string): Error {
+  return Object.assign(new Error(`ENOTDIR: ${filePath}`), { code: "ENOTDIR" });
+}
+
 class FileSystem {
   private fs: any;
   private lfs: LocalFileSystem;
@@ -25,6 +32,7 @@ class FileSystem {
   public rename: (oldPath: string, newPath: string) => Promise<void>;
   public rmdir: (path: string) => Promise<void>;
   public mkdirp: (path: string) => Promise<void>;
+  public storeTree: (path: string) => Promise<void>;
 
   constructor(fs: any) {
     this.fs = fs;
@@ -51,6 +59,37 @@ class FileSystem {
   }
 
   private setUpFSMethods() {
+    // The browser file system puts an entry under whatever its path names, a
+    // note's file included, where the entry is out of sight of every listing
+    // and of git. A folder on the user's disk refuses such a path, and so
+    // does this.
+    const parentMustBeAFolder = async (filePath: string) => {
+      const parent = path.dirname(filePath);
+      let stats: LightningFS.Stats;
+      try {
+        stats = await this.stats(parent);
+      } catch (error) {
+        // No parent at all, which the file system reports itself.
+        return;
+      }
+      if (!stats.isDirectory()) {
+        throw notAFolder(parent);
+      }
+    };
+
+    // Makes a folder on the browser file system whose parent is known to be
+    // a folder.
+    const makeFolder = (folderPath: string) =>
+      new Promise<void>((resolve, reject) => {
+        this.fs.mkdir(folderPath, "0777", (error: Error) => {
+          if (error) {
+            return reject(error);
+          } else {
+            return resolve();
+          }
+        });
+      });
+
     this.readFile = (path: string, opts?: any) => {
       if (this.lfs.isPathOfLocalFileSystem(path)) {
         return this.lfs.readFile(path, opts);
@@ -66,10 +105,15 @@ class FileSystem {
         });
       }
     };
-    this.writeFile = (path: string, data: string) => {
+    this.writeFile = async (path: string, data: string) => {
       if (this.lfs.isPathOfLocalFileSystem(path)) {
         return this.lfs.writeFile(path, data);
       } else {
+        // Only a new entry can end up under a file. One already there, as an
+        // earlier version of the app could leave a note, is written over.
+        if (!(await this.exists(path))) {
+          await parentMustBeAFolder(path);
+        }
         return new Promise((resolve, reject) => {
           this.fs.writeFile(
             path,
@@ -131,19 +175,12 @@ class FileSystem {
         });
       }
     };
-    this.mkdir = (path: string) => {
+    this.mkdir = async (path: string) => {
       if (this.lfs.isPathOfLocalFileSystem(path)) {
         return this.lfs.mkdir(path);
       } else {
-        return new Promise((resolve, reject) => {
-          this.fs.mkdir(path, "0777", (error: Error) => {
-            if (error) {
-              return reject(error);
-            } else {
-              return resolve();
-            }
-          });
-        });
+        await parentMustBeAFolder(path);
+        return makeFolder(path);
       }
     };
     this.exists = (path: string) => {
@@ -249,13 +286,36 @@ class FileSystem {
     this.mkdirp = async (dirPath: string) => {
       if (this.lfs.isPathOfLocalFileSystem(dirPath)) {
         return this.lfs.mkdir(dirPath);
-      } else {
-        if (await this.exists(dirPath)) {
-          return;
-        } else {
-          await this.mkdirp(path.dirname(dirPath));
-          await this.mkdir(dirPath);
+      }
+      let stats: LightningFS.Stats | null = null;
+      try {
+        stats = await this.stats(dirPath);
+      } catch (error) {
+        // Not there yet: made below.
+      }
+      if (stats) {
+        // A file of that name is no folder to put anything in.
+        if (!stats.isDirectory()) {
+          throw notAFolder(dirPath);
         }
+        return;
+      }
+      // The parent is made, or found to be a folder, first, so the folder
+      // itself needs no second look at it.
+      await this.mkdirp(path.dirname(dirPath));
+      await makeFolder(dirPath);
+    };
+
+    // The browser file system writes a file's content at once, but its
+    // directory tree only half a second after the last change to it, and a
+    // page loaded in that time comes back without the files just created,
+    // moved or deleted. Writing it out when the page goes away does not
+    // help: a reload does not wait for it. So whatever changes the files
+    // under a path writes the tree out with this before it reports done. A
+    // folder on the user's disk has no such tree.
+    this.storeTree = async (filePath: string) => {
+      if (!this.lfs.isPathOfLocalFileSystem(filePath)) {
+        await this.fs.promises.flush();
       }
     };
   }

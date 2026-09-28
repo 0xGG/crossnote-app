@@ -108,6 +108,7 @@ export const zhCN = {
     "error/please-resolve-conflicts": "请先解决冲突",
     "error/failed-to-change-file-path": "更改文件路径失败",
     "error/link-outside-notebook": "链接指向笔记本之外",
+    "error/link-inside-note": "链接指向笔记内部，而不是文件夹",
 
     // Success
     "success/notebook-uploaded": "笔记本已上传",

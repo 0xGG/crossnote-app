@@ -48,45 +48,44 @@ export class CrossnoteApp {
   }
 
   // The browser file system keeps its directory tree in memory and writes it
-  // to IndexedDB half a second after the last change, so a reload right after
-  // creating files can come back without them. Waits until the stored tree
-  // holds the path.
-  async waitUntilStored(filePath: string) {
-    await expect
-      .poll(() =>
-        this.page.evaluate(
-          (parts) =>
-            new Promise<boolean>((resolve) => {
-              const open = indexedDB.open("fs");
-              // Only asked when the database does not exist yet: creating it
-              // here would leave out the store the file system adds when it
-              // creates it, so it is left to the file system.
-              open.onupgradeneeded = () => open.transaction!.abort();
-              open.onerror = () => resolve(false);
-              open.onsuccess = () => {
-                const db = open.result;
-                const read = db
-                  .transaction("fs_files")
-                  .objectStore("fs_files")
-                  .get("!root");
-                read.onerror = () => {
-                  db.close();
-                  resolve(false);
-                };
-                read.onsuccess = () => {
-                  let node = read.result?.get("/");
-                  for (const part of parts) {
-                    node = node?.get(part);
-                  }
-                  db.close();
-                  resolve(node !== undefined);
-                };
-              };
-            }),
-          filePath.split("/").filter(Boolean),
-        ),
-      )
-      .toBe(true);
+  // to IndexedDB half a second after the last change on its own; the app
+  // writes it before it shows a change as done, so that a reload straight
+  // afterwards finds the change. Checks, without waiting, that the stored
+  // tree holds the path, as the next page load would read it. The unit tests
+  // read the same storage (src/test/storedTree.ts); the two change together.
+  async expectStored(filePath: string) {
+    const stored = await this.page.evaluate(
+      (parts) =>
+        new Promise<boolean>((resolve) => {
+          const open = indexedDB.open("fs");
+          // Only asked when the database does not exist yet: creating it
+          // here would leave out the store the file system adds when it
+          // creates it, so it is left to the file system.
+          open.onupgradeneeded = () => open.transaction!.abort();
+          open.onerror = () => resolve(false);
+          open.onsuccess = () => {
+            const db = open.result;
+            const read = db
+              .transaction("fs_files")
+              .objectStore("fs_files")
+              .get("!root");
+            read.onerror = () => {
+              db.close();
+              resolve(false);
+            };
+            read.onsuccess = () => {
+              let node = read.result?.get("/");
+              for (const part of parts) {
+                node = node?.get(part);
+              }
+              db.close();
+              resolve(node !== undefined);
+            };
+          };
+        }),
+      filePath.split("/").filter(Boolean),
+    );
+    expect(stored, `${filePath} is in the stored directory tree`).toBe(true);
   }
 
   // Keeps every message the app puts up from now on, one gone again before a

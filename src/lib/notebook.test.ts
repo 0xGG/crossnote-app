@@ -1,7 +1,8 @@
 import * as git from "isomorphic-git";
 import { beforeAll, describe, expect, it, vi } from "vitest";
+import { isStored } from "../test/storedTree";
 import { fs, pfs } from "./fs";
-import { Notebook } from "./notebook";
+import { Notebook, sameNoteText } from "./notebook";
 
 // Integration test of the data layer: lightning-fs running on
 // fake-indexeddb, exercising note write/read, directory scanning and the
@@ -165,5 +166,176 @@ describe("Notebook", () => {
     expect(await pfs.exists("/notebooks/outside.md")).toBe(false);
     expect(await pfs.exists("/notebooks/test/inside.md")).toBe(true);
     expect(notebook.notes["inside.md"]).toBeDefined();
+  });
+
+  // A note is a file, and nothing goes under a file: on the browser file
+  // system a note put there would be out of sight of every listing and of
+  // git, as a folder on the user's disk refuses the same.
+  it("will not move a note under another note", async () => {
+    await notebook.writeNote("under-target.md", "# Target", {
+      createdAt: new Date(),
+      modifiedAt: new Date(),
+    });
+    await notebook.writeNote("under-moving.md", "# Moving", {
+      createdAt: new Date(),
+      modifiedAt: new Date(),
+    });
+
+    await expect(
+      notebook.changeNoteFilePath("under-moving.md", "under-target.md/child"),
+    ).rejects.toThrow("ENOTDIR");
+    expect(await pfs.exists("/notebooks/test/under-moving.md")).toBe(true);
+    expect(notebook.notes["under-moving.md"]).toBeDefined();
+    expect(await pfs.exists("/notebooks/test/under-target.md/child.md")).toBe(
+      false,
+    );
+  });
+
+  it("will not write a note under another note", async () => {
+    await notebook.writeNote("under-linked.md", "# Linked", {
+      createdAt: new Date(),
+      modifiedAt: new Date(),
+    });
+
+    await expect(
+      notebook.writeNote("under-linked.md/new.md", "", {
+        createdAt: new Date(),
+        modifiedAt: new Date(),
+      }),
+    ).rejects.toThrow("ENOTDIR");
+    expect(await pfs.exists("/notebooks/test/under-linked.md/new.md")).toBe(
+      false,
+    );
+  });
+
+  // The browser file system writes a file's content at once but its
+  // directory tree only half a second after the last change, and a page
+  // loaded next finds only what that tree says. A change to a note has to be
+  // in the stored tree by the time it is reported done.
+  describe("keeps the stored directory tree in step", () => {
+    const config = () => ({ createdAt: new Date(), modifiedAt: new Date() });
+
+    it("with a note it has just written", async () => {
+      await notebook.writeNote("stored-new.md", "# New", config());
+      expect(await isStored("/notebooks/test/stored-new.md")).toBe(true);
+    });
+
+    it("with the object git keeps for a note it has just saved", async () => {
+      await notebook.writeNote("stored-saved.md", "# First", config());
+      await fs.promises.flush();
+
+      // Saving the note again stages it, which writes the new text as a new
+      // object file; the staging area, already there, points at it at once.
+      await notebook.writeNote("stored-saved.md", "# Second", config());
+      const { oid } = await git.hashBlob({
+        object: (await pfs.readFile("/notebooks/test/stored-saved.md", {
+          encoding: "utf8",
+        })) as string,
+      });
+      expect(
+        await isStored(
+          `/notebooks/test/.git/objects/${oid.slice(0, 2)}/${oid.slice(2)}`,
+        ),
+      ).toBe(true);
+    });
+
+    it("with a note it has just renamed", async () => {
+      await notebook.writeNote("stored-before.md", "# Moving", config());
+      await fs.promises.flush();
+
+      await notebook.changeNoteFilePath("stored-before.md", "stored-after.md");
+      expect(await isStored("/notebooks/test/stored-after.md")).toBe(true);
+      expect(await isStored("/notebooks/test/stored-before.md")).toBe(false);
+    });
+
+    it("with a note it has just deleted", async () => {
+      await notebook.writeNote("stored-deleted.md", "# Deleted", config());
+      await fs.promises.flush();
+
+      await notebook.deleteNote("stored-deleted.md");
+      expect(await isStored("/notebooks/test/stored-deleted.md")).toBe(false);
+    });
+
+    it("with a note it has just brought back from git", async () => {
+      const note = await notebook.writeNote(
+        "stored-restored.md",
+        "# Restored",
+        config(),
+      );
+      await git.commit({
+        fs,
+        dir: notebook.dir,
+        message: "Restored",
+        author: { name: "Test", email: "test@example.com" },
+      });
+      await pfs.unlink("/notebooks/test/stored-restored.md");
+      await fs.promises.flush();
+
+      await notebook.checkoutNote(note);
+      expect(await pfs.exists("/notebooks/test/stored-restored.md")).toBe(true);
+      expect(await isStored("/notebooks/test/stored-restored.md")).toBe(true);
+    });
+  });
+
+  // An editor keeps the text as it was typed; the notebook, once it has read
+  // its notes again from disk, hands the note out as it wrote it.
+  describe("sameNoteText", () => {
+    const written: Record<string, string> = {
+      "a flow list": "---\ntags: [a, b]\n---\n\nBody",
+      "quotes and a date":
+        '---\ntitle: "Quoted: yes"\ndate: 2026-09-28\n---\nBody',
+      "a comment": "---\n# kept in mind\ntags:\n  - a\n---\nBody",
+      "a setting typed by hand": "---\npinned: true\ncolor: red\n---\nBody",
+      "the older settings key": "---\nnote:\n  pinned: true\nx: 1\n---\nBody",
+      "aliases in a line": "---\naliases: x, y\n---\nBody",
+      "front matter YAML cannot read": "---\nbroken: [unclosed\n---\nBody",
+      "empty front matter": "---\n---\nBody",
+      "no front matter": "Body only",
+    };
+
+    it("takes the text a save and a new reading hand back as the same", async () => {
+      // Settings that are off are written as `false` and read back as part
+      // of the front matter, which the notebook otherwise takes out.
+      const settings = [{}, { pinned: false, favorited: false }];
+      let i = 0;
+      for (const setting of settings) {
+        for (const [layout, text] of Object.entries(written)) {
+          i++;
+          await notebook.writeNote(`same-${i}.md`, text, {
+            createdAt: new Date(),
+            modifiedAt: new Date(),
+            ...setting,
+          });
+          await notebook.refreshNotes({
+            dir: "./",
+            includeSubdirectories: true,
+          });
+          const readBack = notebook.notes[`same-${i}.md`].markdown;
+          expect(
+            sameNoteText(text, readBack),
+            `${layout}, ${JSON.stringify(setting)}`,
+          ).toBe(true);
+        }
+      }
+    });
+
+    it("tells a change from a new layout", () => {
+      const typed = "---\ntags: [a, b]\n---\n\nBody";
+      expect(
+        sameNoteText(typed, "---\ntags:\n    - a\n    - b\n---\n\nBody"),
+      ).toBe(true);
+      // A value of the writer's own changed.
+      expect(
+        sameNoteText(typed, "---\ntags:\n    - a\n    - c\n---\n\nBody"),
+      ).toBe(false);
+      // The body changed.
+      expect(
+        sameNoteText(
+          typed,
+          "---\ntags:\n    - a\n    - b\n---\n\nBody, edited",
+        ),
+      ).toBe(false);
+      expect(sameNoteText("Body", "Body only")).toBe(false);
+    });
   });
 });

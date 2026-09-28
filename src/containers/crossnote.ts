@@ -8,6 +8,7 @@ import {
   TabNode,
   TabSetNode,
 } from "flexlayout-react";
+import { Mutex } from "async-mutex";
 import moment from "moment";
 import path from "path-browserify";
 import { useCallback, useEffect, useState } from "react";
@@ -92,6 +93,10 @@ const getlayoutModelFromLocalStrorage = () => {
     return defaultLayoutModel;
   }
 };
+
+// Keeps the new notes this page asks for from being named and written at the
+// same time. Another tab of the app, with its own, is not kept out.
+const creatingNote = new Mutex();
 
 function useCrossnoteContainer(initialState: InitialState) {
   const { t } = useTranslation();
@@ -182,9 +187,14 @@ function useCrossnoteContainer(initialState: InitialState) {
       filePath: string,
       markdown: string,
     ) => {
+      // The save comes a moment after the last keystroke, by when the
+      // notebook, or the note, may have been deleted or the note renamed.
       const notebook = getNotebookAtPath(notebookPath);
-      const note = await notebook.getNote(filePath);
       if (!notebook) {
+        return;
+      }
+      const note = await notebook.getNote(filePath);
+      if (!note) {
         return;
       }
       if (note.markdown !== markdown) {
@@ -217,6 +227,9 @@ function useCrossnoteContainer(initialState: InitialState) {
         return;
       }
       const note = await notebook.getNote(filePath);
+      if (!note) {
+        return;
+      }
       if (JSON.stringify(note.config) !== JSON.stringify(noteConfig)) {
         const newNote = await notebook.writeNote(
           note.filePath,
@@ -296,7 +309,7 @@ function useCrossnoteContainer(initialState: InitialState) {
     [notebooks, layoutModel],
   );
 
-  const createNewNote = useCallback(
+  const nameAndWriteNote = useCallback(
     async (
       notebook: Notebook,
       fileName: string = "",
@@ -388,6 +401,16 @@ function useCrossnoteContainer(initialState: InitialState) {
     [t],
   );
 
+  // One new note at a time: two asked for at once would both find the same
+  // name free, and the second would be written over the first.
+  const createNewNote = useCallback(
+    (notebook: Notebook, fileName: string = "", markdown: string = "") =>
+      creatingNote.runExclusive(() =>
+        nameAndWriteNote(notebook, fileName, markdown),
+      ),
+    [nameAndWriteNote],
+  );
+
   const openNoteAtPath = useCallback(
     async (notebook: Notebook, filePath: string) => {
       if (!filePath.endsWith(".md")) {
@@ -416,7 +439,20 @@ function useCrossnoteContainer(initialState: InitialState) {
       if (filePath in notebook.notes) {
         note = notebook.notes[filePath];
       } else {
-        note = await createNewNote(notebook, filePath, "");
+        try {
+          note = await createNewNote(notebook, filePath, "");
+        } catch (error) {
+          // A link to a path under another note: a note is a file, and
+          // nothing goes under a file.
+          if ((error as { code?: string }).code === "ENOTDIR") {
+            notify({
+              severity: "error",
+              message: t("error/link-inside-note"),
+            });
+            return;
+          }
+          throw error;
+        }
       }
       addTabNode({
         type: "tab",
@@ -883,6 +919,7 @@ If you want to know more about this project,
 please download and read the [Welcome notebook](${window.location.origin}/?repo=https%3A%2F%2Fgithub.com%2F0xGG%2Fwelcome-notebook.git&branch=master&filePath=README.md).
 `,
         );
+        await pfs.storeTree(notebook.dir);
         setNotebooks([notebook]);
         setInitialized(true);
         // TODO: create empty note and add `We suggest you to add [Welcome to crossnote]() notebook ;)`

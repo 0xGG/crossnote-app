@@ -50,7 +50,7 @@ import {
   PerformedGitOperationEventData,
 } from "../lib/event";
 import { Note } from "../lib/note";
-import { Notebook } from "../lib/notebook";
+import { Notebook, sameNoteText } from "../lib/notebook";
 import { isFinishingEnter } from "../lib/keys";
 import { notify } from "../lib/notifications";
 import { Reference } from "../lib/reference";
@@ -467,6 +467,18 @@ export default function NotePanel(props: Props) {
     );
   }, [note, crossnoteContainer.layoutModel, tabNode]);
 
+  // The note's text as this editor last had it from the notebook or gave it
+  // to it, and the text of the save it started last. The notebook, read
+  // again, brings back one of them whenever nothing has changed the note
+  // meanwhile, if in its own layout of the front matter once it has read
+  // its notes again from disk; putting that in the editor would drop
+  // whatever was typed since, before it is saved, and send the caret to the
+  // start. Once the text has been replaced from elsewhere, that save no
+  // longer stands for what the editor holds, and the notebook bringing it
+  // back is a change like any other.
+  const synced = useRef<string>(null);
+  const saving = useRef<string>(null);
+
   // Emitter
   useEffect(() => {
     if (!globalEmitter || !tabNode || !editor || !note) {
@@ -485,6 +497,7 @@ export default function NotePanel(props: Props) {
         );
       };
       if (data.tabId === tabNode.getId()) {
+        synced.current = data.markdown;
         return updateNoteIcon();
       }
       if (
@@ -495,6 +508,8 @@ export default function NotePanel(props: Props) {
         if (editor.getValue() !== data.markdown) {
           editor.setValue(data.markdown);
         }
+        synced.current = data.markdown;
+        saving.current = null;
         return updateNoteIcon();
       }
     };
@@ -533,9 +548,18 @@ export default function NotePanel(props: Props) {
         );
         if (newNote) {
           setNote(newNote);
+          if (
+            [synced.current, saving.current].some(
+              (text) => text !== null && sameNoteText(newNote.markdown, text),
+            )
+          ) {
+            return;
+          }
           if (editor.getValue() !== newNote.markdown) {
             editor.setValue(newNote.markdown);
           }
+          synced.current = newNote.markdown;
+          saving.current = null;
         } else {
           crossnoteContainer.closeTabNode(tabNode.getId());
         }
@@ -656,6 +680,7 @@ export default function NotePanel(props: Props) {
       editor.setOption("lineNumbers", false);
       editor.setOption("foldGutter", false);
       editor.setValue(note.markdown || "");
+      synced.current = note.markdown || "";
       editor.on("cursorActivity", (instance) => {
         const cursor = instance.getCursor();
         if (cursor) {
@@ -803,6 +828,7 @@ export default function NotePanel(props: Props) {
         // updateNoteMarkdown skips text the notebook already holds.
         setTimeout(() => {
           if (markdown === editor.getValue()) {
+            saving.current = markdown;
             crossnoteContainer.updateNoteMarkdown(
               tabNode,
               note.notebookPath,

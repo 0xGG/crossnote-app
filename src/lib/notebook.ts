@@ -26,6 +26,49 @@ function formatNoteConfig(noteConfig: NoteConfig) {
   return newObject;
 }
 
+// The keys a note's own settings take in its front matter: `writeNote` puts
+// them there, `getNote` takes them out again, and `note` is the older form
+// `writeNote` still reads.
+const NOTE_SETTINGS = [
+  "created",
+  "modified",
+  "pinned",
+  "favorited",
+  "icon",
+  "aliases",
+  "note",
+];
+
+/**
+ * Whether two texts of a note say the same to the notebook: the same body,
+ * and the same front matter of the writer's own, however its YAML is laid
+ * out and whatever the note's settings in it. Saving writes the front matter
+ * out in the notebook's own layout with the settings added, so a note read
+ * back from its file differs from the text an editor gave it; this tells
+ * that apart from a change.
+ */
+export function sameNoteText(a: string, b: string): boolean {
+  if (a === b) {
+    return true;
+  }
+  // Read and written out again as the notebook does, less the settings.
+  const comparable = (text: string) => {
+    const data = matter(text);
+    // Front matter that reads as nothing, such as an empty block, is no
+    // front matter to `writeNote`: it keeps the whole text as the body, and
+    // puts its own front matter in front of it.
+    if (!data.data || typeof data.data !== "object") {
+      return text;
+    }
+    const own = Object.assign({}, data.data);
+    for (const key of NOTE_SETTINGS) {
+      delete own[key];
+    }
+    return matterStringify(data.content, own);
+  };
+  return comparable(a) === comparable(b);
+}
+
 interface RefreshNotesArgs {
   dir: string;
   includeSubdirectories?: boolean;
@@ -267,6 +310,7 @@ export class Notebook {
         filepath: newFilePath,
       });
     }
+    await pfs.storeTree(this.dir);
 
     return await this.getNote(newFilePath, true);
   }
@@ -289,6 +333,7 @@ export class Notebook {
           filepath: note.filePath,
         });
       }
+      await pfs.storeTree(this.dir);
       return await this.getNote(note.filePath, true);
     } catch (error) {
       return null;
@@ -500,12 +545,14 @@ export class Notebook {
 
     await pfs.writeFile(path.resolve(this.dir, filePath), markdown);
     if (!this.isLocal) {
+      // Stages the note, which writes its text as a new object file.
       await git.add({
         fs: fs,
         dir: this.dir,
         filepath: filePath,
       });
     }
+    await pfs.storeTree(this.dir);
 
     const note = await this.getNote(filePath, true);
     note.markdown = oMarkdown;
@@ -534,6 +581,7 @@ export class Notebook {
           filepath: filePath,
         });
       }
+      await pfs.storeTree(this.dir);
       await this.removeNoteRelations(filePath);
       this.search.remove(filePath);
     }

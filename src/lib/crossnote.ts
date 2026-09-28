@@ -191,6 +191,9 @@ export default class Crossnote {
           dir,
         });
       }
+      // Before the record: a notebook recorded without its folder could
+      // never take a note.
+      await pfs.storeTree(dir);
 
       // Save to DB
       try {
@@ -267,6 +270,8 @@ export default class Crossnote {
       dir,
       `origin/${branch.trim() || "master"}`,
     );
+    // Before the record, as for a notebook made here.
+    await pfs.storeTree(dir);
 
     const notebook: Notebook = new Notebook();
     notebook._id = _id;
@@ -305,10 +310,16 @@ export default class Crossnote {
 
   public async deleteNotebook(notebookID: string) {
     const notebook = await this.notebookDB.get(notebookID);
+    // The record goes first. Removing the folder first could leave a record
+    // whose folder is gone, a notebook that can take no notes, whenever the
+    // record fails to go: the file system stores its tree on its own half a
+    // second after the last change. The other way round, a failure leaves at
+    // most a folder nothing lists.
+    await this.notebookDB.remove(notebook);
     if (!notebook.directoryHandle) {
       await pfs.rmdir(notebook.dir);
     }
-    await this.notebookDB.remove(notebook);
+    await pfs.storeTree(notebook.dir);
   }
   public async updateNotebook(notebook: Notebook) {
     const nb = await this.notebookDB.get(notebook._id);
@@ -493,6 +504,8 @@ export default class Crossnote {
     if (pushResult.error) {
       restoreSHA();
     }
+    // The commit is made here whether or not the push went through.
+    await pfs.storeTree(notebook.dir);
 
     if (pushResult.ok) {
       // Update notebook
@@ -533,6 +546,7 @@ export default class Crossnote {
       fs: fs,
       ref: notebook.gitBranch || "master",
     });
+    await pfs.storeTree(notebook.dir);
   }
 
   private async restoreFilesFromCache(
@@ -707,6 +721,8 @@ export default class Crossnote {
       }
     }
 
+    await pfs.storeTree(notebook.dir);
+
     // Update notebook
     notebook.fetchedAt = new Date();
     notebook.localSha = remoteSha;
@@ -750,6 +766,8 @@ export default class Crossnote {
       onAuthSuccess,
       onMessage,
     });
+
+    await pfs.storeTree(notebook.dir);
 
     // Update notebook
     notebook.fetchedAt = new Date();
@@ -873,6 +891,7 @@ export default class Crossnote {
               filepath: ".",
             });
           }
+          await pfs.storeTree(notebook.dir);
         } catch (error) {
           notebooks[i] = null;
         }

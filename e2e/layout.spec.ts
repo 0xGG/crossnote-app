@@ -24,8 +24,8 @@ test("restores a layout saved by the previous layout engine", async ({
   await app.seedLayout(
     savedByOldEngine.replaceAll("/notebooks/fixture-drafts", folder),
   );
-  // The note the layout opens has to have reached the disk.
-  await app.waitUntilStored(`${folder}/README.md`);
+  // The note the layout opens is stored along with its notebook.
+  await app.expectStored(`${folder}/README.md`);
   await page.reload();
   await app.waitUntilReady();
 
