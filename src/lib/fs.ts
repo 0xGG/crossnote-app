@@ -96,7 +96,11 @@ class FileSystem {
       if (this.lfs.isPathOfLocalFileSystem(path)) {
         return this.lfs.writeFile(path, data);
       } else {
-        await parentMustBeAFolder(path);
+        // Only a new entry can end up under a file. One already there, as an
+        // earlier version of the app could leave a note, is written over.
+        if (!(await this.exists(path))) {
+          await parentMustBeAFolder(path);
+        }
         return new Promise((resolve, reject) => {
           this.fs.writeFile(
             path,
