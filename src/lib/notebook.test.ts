@@ -168,6 +168,46 @@ describe("Notebook", () => {
     expect(notebook.notes["inside.md"]).toBeDefined();
   });
 
+  // A note is a file, and nothing goes under a file: on the browser file
+  // system a note put there would be out of sight of every listing and of
+  // git, as a folder on the user's disk refuses the same.
+  it("will not move a note under another note", async () => {
+    await notebook.writeNote("under-target.md", "# Target", {
+      createdAt: new Date(),
+      modifiedAt: new Date(),
+    });
+    await notebook.writeNote("under-moving.md", "# Moving", {
+      createdAt: new Date(),
+      modifiedAt: new Date(),
+    });
+
+    await expect(
+      notebook.changeNoteFilePath("under-moving.md", "under-target.md/child"),
+    ).rejects.toThrow("ENOTDIR");
+    expect(await pfs.exists("/notebooks/test/under-moving.md")).toBe(true);
+    expect(notebook.notes["under-moving.md"]).toBeDefined();
+    expect(await pfs.exists("/notebooks/test/under-target.md/child.md")).toBe(
+      false,
+    );
+  });
+
+  it("will not write a note under another note", async () => {
+    await notebook.writeNote("under-linked.md", "# Linked", {
+      createdAt: new Date(),
+      modifiedAt: new Date(),
+    });
+
+    await expect(
+      notebook.writeNote("under-linked.md/new.md", "", {
+        createdAt: new Date(),
+        modifiedAt: new Date(),
+      }),
+    ).rejects.toThrow("ENOTDIR");
+    expect(await pfs.exists("/notebooks/test/under-linked.md/new.md")).toBe(
+      false,
+    );
+  });
+
   // The browser file system writes a file's content at once but its
   // directory tree only half a second after the last change, and a page
   // loaded next finds only what that tree says. A change to a note has to be

@@ -266,3 +266,32 @@ test("says so, and opens nothing, when a link leads outside the notebook", async
   ).toBeVisible();
   await expect(page.getByRole("tab")).toHaveCount(tabs);
 });
+
+test("says so, and keeps the note where it was, when it is moved under another note", async ({
+  app,
+  page,
+}) => {
+  await app.createNote();
+  await expect(app.noteTitle).not.toHaveValue("");
+  const name = await app.noteTitle.inputValue();
+  const messages = await app.recordMessages();
+
+  // A note is a file: nothing goes under it.
+  await page.getByRole("button", { name: "Note menu" }).click();
+  await page.getByRole("button", { name: "Change file path" }).click();
+  const dialog = page.getByRole("dialog");
+  await dialog.getByRole("textbox").fill("README.md/child");
+  // Saved with the button rather than Enter: a move that fails at once
+  // closes the dialog before the key is done with, and the rest of the
+  // Enter goes to the note's menu button, which has the focus back by then,
+  // and opens the menu again over the message.
+  await dialog.getByRole("button", { name: "Save" }).click();
+
+  await expect(
+    page.getByRole("alert").filter({ hasText: "Failed to change file path" }),
+  ).toBeVisible();
+  expect(await messages()).toEqual(["Failed to change file path"]);
+  await expect(app.tab(name)).toBeVisible();
+  await app.selectTab("Drafts");
+  await expect(app.noteCards.filter({ hasText: `${name}.md` })).toBeVisible();
+});

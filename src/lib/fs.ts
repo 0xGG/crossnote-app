@@ -8,6 +8,13 @@ interface AttachLocalDirectory {
   directoryHandle: FileSystemDirectoryHandle;
 }
 
+// What the browser file system gives for a path that goes through something
+// other than a folder, had it the check (a folder on the user's disk gives a
+// TypeMismatchError).
+function notAFolder(filePath: string): Error {
+  return Object.assign(new Error(`ENOTDIR: ${filePath}`), { code: "ENOTDIR" });
+}
+
 class FileSystem {
   private fs: any;
   private lfs: LocalFileSystem;
@@ -52,6 +59,24 @@ class FileSystem {
   }
 
   private setUpFSMethods() {
+    // The browser file system puts an entry under whatever its path names, a
+    // note's file included, where the entry is out of sight of every listing
+    // and of git. A folder on the user's disk refuses such a path, and so
+    // does this.
+    const parentMustBeAFolder = async (filePath: string) => {
+      const parent = path.dirname(filePath);
+      let stats: LightningFS.Stats;
+      try {
+        stats = await this.stats(parent);
+      } catch (error) {
+        // No parent at all, which the file system reports itself.
+        return;
+      }
+      if (!stats.isDirectory()) {
+        throw notAFolder(parent);
+      }
+    };
+
     this.readFile = (path: string, opts?: any) => {
       if (this.lfs.isPathOfLocalFileSystem(path)) {
         return this.lfs.readFile(path, opts);
@@ -67,10 +92,11 @@ class FileSystem {
         });
       }
     };
-    this.writeFile = (path: string, data: string) => {
+    this.writeFile = async (path: string, data: string) => {
       if (this.lfs.isPathOfLocalFileSystem(path)) {
         return this.lfs.writeFile(path, data);
       } else {
+        await parentMustBeAFolder(path);
         return new Promise((resolve, reject) => {
           this.fs.writeFile(
             path,
@@ -132,10 +158,11 @@ class FileSystem {
         });
       }
     };
-    this.mkdir = (path: string) => {
+    this.mkdir = async (path: string) => {
       if (this.lfs.isPathOfLocalFileSystem(path)) {
         return this.lfs.mkdir(path);
       } else {
+        await parentMustBeAFolder(path);
         return new Promise((resolve, reject) => {
           this.fs.mkdir(path, "0777", (error: Error) => {
             if (error) {
@@ -252,6 +279,10 @@ class FileSystem {
         return this.lfs.mkdir(dirPath);
       } else {
         if (await this.exists(dirPath)) {
+          // A file of that name is no folder to put anything in.
+          if (!(await this.stats(dirPath)).isDirectory()) {
+            throw notAFolder(dirPath);
+          }
           return;
         } else {
           await this.mkdirp(path.dirname(dirPath));

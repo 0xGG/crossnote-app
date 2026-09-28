@@ -424,7 +424,20 @@ function useCrossnoteContainer(initialState: InitialState) {
       if (filePath in notebook.notes) {
         note = notebook.notes[filePath];
       } else {
-        note = await createNewNote(notebook, filePath, "");
+        try {
+          note = await createNewNote(notebook, filePath, "");
+        } catch (error) {
+          // A link to a path under another note: a note is a file, and
+          // nothing goes under a file.
+          if ((error as { code?: string }).code === "ENOTDIR") {
+            notify({
+              severity: "error",
+              message: t("error/link-inside-note"),
+            });
+            return;
+          }
+          throw error;
+        }
       }
       addTabNode({
         type: "tab",

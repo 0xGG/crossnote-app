@@ -119,6 +119,20 @@ it("opens no note a link leads to outside the notebook, and says so", async () =
   ).toBe("# Kept");
 });
 
+it("opens no note a link leads to inside another note, and says so", async () => {
+  const notebook = await notebookAt("/notebooks/linking-under");
+  await pfs.writeFile(`${notebook.dir}/Kept.md`, "# Kept");
+  resetNotifications();
+
+  // What clicking [[Kept.md/child]] in one of its notes does.
+  await crossnote.openNoteAtPath(notebook, "Kept.md/child");
+  expect(getNotificationState().current?.message).toBe(
+    "The link leads inside a note, not a folder",
+  );
+  expect(await pfs.exists(`${notebook.dir}/Kept.md/child.md`)).toBe(false);
+  expect(await read(notebook, "Kept.md")).toBe("# Kept");
+});
+
 // A tab as the container's functions use it: they only ask for its id.
 const tab = { getId: () => "tab" } as unknown as TabNode;
 
