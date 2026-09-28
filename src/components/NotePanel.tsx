@@ -473,7 +473,9 @@ export default function NotePanel(props: Props) {
   // meanwhile, if in its own layout of the front matter once it has read
   // its notes again from disk; putting that in the editor would drop
   // whatever was typed since, before it is saved, and send the caret to the
-  // start.
+  // start. Once the text has been replaced from elsewhere, that save no
+  // longer stands for what the editor holds, and the notebook bringing it
+  // back is a change like any other.
   const synced = useRef<string>(null);
   const saving = useRef<string>(null);
 
@@ -507,6 +509,7 @@ export default function NotePanel(props: Props) {
           editor.setValue(data.markdown);
         }
         synced.current = data.markdown;
+        saving.current = null;
         return updateNoteIcon();
       }
     };
@@ -556,6 +559,7 @@ export default function NotePanel(props: Props) {
             editor.setValue(newNote.markdown);
           }
           synced.current = newNote.markdown;
+          saving.current = null;
         } else {
           crossnoteContainer.closeTabNode(tabNode.getId());
         }
