@@ -207,9 +207,8 @@ test("keeps notes across a reload", async ({ app, page }) => {
   await expect(card).toBeVisible();
 
   // Nothing survives a reload except what reached IndexedDB (notes) and
-  // localStorage (the layout). The file system stores its directory tree
-  // half a second after the last write, so the note may not be listed yet.
-  await app.waitUntilStored(`${await app.notebookFolder()}/${name}.md`);
+  // localStorage (the layout). The note is stored by the time it shows.
+  await app.expectStored(`${await app.notebookFolder()}/${name}.md`);
   await page.reload();
   await app.waitUntilReady();
   await expect(card).toBeVisible();

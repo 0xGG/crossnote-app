@@ -29,9 +29,10 @@ test("renames once when Enter is followed by leaving the box", async ({
   await expect(app.tab("Renamed")).toBeVisible();
   await expect(app.noteTitle).toHaveValue("Renamed");
   // A second rename, started by leaving the box while the first was under
-  // way, would fail on the file the first one had just moved and report it,
-  // well before the renamed note is stored.
-  await app.waitUntilStored(`${await app.notebookFolder()}/Renamed.md`);
+  // way, would fail on the file the first one had just moved and report it
+  // while the first was still staging the note, before its tab took the
+  // new name.
+  await app.expectStored(`${await app.notebookFolder()}/Renamed.md`);
   expect(await messages()).toEqual([]);
 });
 
@@ -96,7 +97,7 @@ test("opens a renamed note in the tab it has, and after a reload", async ({
   await expect(app.tab("Renamed")).toHaveAttribute("aria-selected", "true");
 
   // The saved layout opens the note from its new file.
-  await app.waitUntilStored(`${await app.notebookFolder()}/Renamed.md`);
+  await app.expectStored(`${await app.notebookFolder()}/Renamed.md`);
   await page.reload();
   await app.waitUntilReady();
   await app.selectTab("Renamed");
@@ -127,10 +128,10 @@ test("leaves an Enter that confirms an input method's candidate to the title", a
   await expect(app.noteTitle).toHaveValue("README");
 
   // The title is still being typed. A rename started by that Enter would
-  // have failed, and said so, long before this one is stored.
+  // have failed, and said so, before this one had even begun.
   await app.noteTitle.fill("Renamed");
   await app.noteTitle.press("Enter");
   await expect(app.tab("Renamed")).toBeVisible();
-  await app.waitUntilStored(`${await app.notebookFolder()}/Renamed.md`);
+  await app.expectStored(`${await app.notebookFolder()}/Renamed.md`);
   expect(await messages()).toEqual([]);
 });

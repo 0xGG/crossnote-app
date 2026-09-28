@@ -267,6 +267,7 @@ export class Notebook {
         filepath: newFilePath,
       });
     }
+    await pfs.storeTree(this.dir);
 
     return await this.getNote(newFilePath, true);
   }
@@ -289,6 +290,7 @@ export class Notebook {
           filepath: note.filePath,
         });
       }
+      await pfs.storeTree(this.dir);
       return await this.getNote(note.filePath, true);
     } catch (error) {
       return null;
@@ -500,12 +502,14 @@ export class Notebook {
 
     await pfs.writeFile(path.resolve(this.dir, filePath), markdown);
     if (!this.isLocal) {
+      // Stages the note, which writes its text as a new object file.
       await git.add({
         fs: fs,
         dir: this.dir,
         filepath: filePath,
       });
     }
+    await pfs.storeTree(this.dir);
 
     const note = await this.getNote(filePath, true);
     note.markdown = oMarkdown;
@@ -534,6 +538,7 @@ export class Notebook {
           filepath: filePath,
         });
       }
+      await pfs.storeTree(this.dir);
       await this.removeNoteRelations(filePath);
       this.search.remove(filePath);
     }

@@ -25,6 +25,7 @@ class FileSystem {
   public rename: (oldPath: string, newPath: string) => Promise<void>;
   public rmdir: (path: string) => Promise<void>;
   public mkdirp: (path: string) => Promise<void>;
+  public storeTree: (path: string) => Promise<void>;
 
   constructor(fs: any) {
     this.fs = fs;
@@ -256,6 +257,19 @@ class FileSystem {
           await this.mkdirp(path.dirname(dirPath));
           await this.mkdir(dirPath);
         }
+      }
+    };
+
+    // The browser file system writes a file's content at once, but its
+    // directory tree only half a second after the last change to it, and a
+    // page loaded in that time comes back without the files just created,
+    // moved or deleted. Writing it out when the page goes away does not
+    // help: a reload does not wait for it. So whatever changes the files
+    // under a path writes the tree out with this before it reports done. A
+    // folder on the user's disk has no such tree.
+    this.storeTree = async (filePath: string) => {
+      if (!this.lfs.isPathOfLocalFileSystem(filePath)) {
+        await this.fs.promises.flush();
       }
     };
   }

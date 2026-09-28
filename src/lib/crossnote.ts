@@ -191,6 +191,9 @@ export default class Crossnote {
           dir,
         });
       }
+      // Before the record: a notebook recorded without its folder could
+      // never take a note.
+      await pfs.storeTree(dir);
 
       // Save to DB
       try {
@@ -309,6 +312,9 @@ export default class Crossnote {
       await pfs.rmdir(notebook.dir);
     }
     await this.notebookDB.remove(notebook);
+    // After the record, so that nothing between the two can leave a record
+    // whose folder is gone.
+    await pfs.storeTree(notebook.dir);
   }
   public async updateNotebook(notebook: Notebook) {
     const nb = await this.notebookDB.get(notebook._id);
@@ -533,6 +539,7 @@ export default class Crossnote {
       fs: fs,
       ref: notebook.gitBranch || "master",
     });
+    await pfs.storeTree(notebook.dir);
   }
 
   private async restoreFilesFromCache(
