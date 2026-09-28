@@ -310,12 +310,15 @@ export default class Crossnote {
 
   public async deleteNotebook(notebookID: string) {
     const notebook = await this.notebookDB.get(notebookID);
+    // The record goes first. Removing the folder first could leave a record
+    // whose folder is gone, a notebook that can take no notes, whenever the
+    // record fails to go: the file system stores its tree on its own half a
+    // second after the last change. The other way round, a failure leaves at
+    // most a folder nothing lists.
+    await this.notebookDB.remove(notebook);
     if (!notebook.directoryHandle) {
       await pfs.rmdir(notebook.dir);
     }
-    await this.notebookDB.remove(notebook);
-    // After the record, so that nothing between the two can leave a record
-    // whose folder is gone.
     await pfs.storeTree(notebook.dir);
   }
   public async updateNotebook(notebook: Notebook) {

@@ -65,6 +65,26 @@ describe("Crossnote keeps the stored directory tree in step", () => {
     expect(await isStored(notebook.dir)).toBe(false);
   });
 
+  // A folder removed while the record stays would be a notebook that can
+  // take no notes, and the file system stores its tree on its own, half a
+  // second after the last change, whether or not the record went.
+  it("keeps a notebook whole when its record cannot be removed", async () => {
+    const notebook = await crossnote.addNotebook({
+      name: "Kept whole",
+      corsProxy: "",
+      gitURL: "",
+    });
+    const removing = vi
+      .spyOn(crossnote["notebookDB"], "remove")
+      .mockRejectedValueOnce(new Error("Document update conflict"));
+
+    await expect(crossnote.deleteNotebook(notebook._id)).rejects.toThrow(
+      "Document update conflict",
+    );
+    removing.mockRestore();
+    expect(await pfs.exists(`${notebook.dir}/.git/HEAD`)).toBe(true);
+  });
+
   it("with the staging area as a hard reset leaves it", async () => {
     const notebook = await crossnote.addNotebook({
       name: "Reset",
