@@ -51,7 +51,8 @@ export class CrossnoteApp {
   // to IndexedDB half a second after the last change on its own; the app
   // writes it before it shows a change as done, so that a reload straight
   // afterwards finds the change. Checks, without waiting, that the stored
-  // tree holds the path, as the next page load would read it.
+  // tree holds the path, as the next page load would read it. The unit tests
+  // read the same storage (src/test/storedTree.ts); the two change together.
   async expectStored(filePath: string) {
     const stored = await this.page.evaluate(
       (parts) =>

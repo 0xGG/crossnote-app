@@ -3,13 +3,24 @@
 // last wrote out, as opposed to the one it keeps in memory and writes out
 // only half a second after the last change to it, and the contents that tree
 // points at.
+//
+// This reads lightning-fs's own storage: the "fs" database, its "fs_files"
+// store and the tree under "!root". The end-to-end page object reads the same
+// in the browser (`expectStored` in e2e/crossnote.ts); the two change
+// together.
+//
+// When there is no tree to read where it should be, the checks fail rather
+// than report every path as missing: a test that expects a path to be gone
+// would otherwise pass however wrong the reading had gone.
 
 type Node = Map<string | number, unknown>;
 
 // The file system keeps each entry's details under this key of its node.
 const STAT = 0;
 
-async function withStore<T>(read: (files: IDBObjectStore) => Promise<T>) {
+async function withStore<T>(
+  read: (files: IDBObjectStore) => Promise<T>,
+): Promise<T> {
   const db = await new Promise<IDBDatabase | null>((resolve) => {
     const open = indexedDB.open("fs");
     // Only asked when the database does not exist yet: creating it here
@@ -19,9 +30,12 @@ async function withStore<T>(read: (files: IDBObjectStore) => Promise<T>) {
     open.onsuccess = () => resolve(open.result);
   });
   if (!db) {
-    return undefined;
+    throw new Error('The browser file system has no "fs" database to read');
   }
   try {
+    if (!db.objectStoreNames.contains("fs_files")) {
+      throw new Error('The browser file system has no "fs_files" store');
+    }
     return await read(db.transaction("fs_files").objectStore("fs_files"));
   } finally {
     db.close();
@@ -37,7 +51,11 @@ function get(files: IDBObjectStore, key: IDBValidKey): Promise<unknown> {
 }
 
 async function storedNode(files: IDBObjectStore, filePath: string) {
-  let node = ((await get(files, "!root")) as Node | undefined)?.get("/");
+  const root = (await get(files, "!root")) as Node | undefined;
+  if (typeof root?.get !== "function" || !root.get("/")) {
+    throw new Error('The browser file system has no tree stored at "!root"');
+  }
+  let node = root.get("/");
   for (const part of filePath.split("/").filter(Boolean)) {
     node = (node as Node | undefined)?.get(part);
   }
