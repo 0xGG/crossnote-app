@@ -119,6 +119,33 @@ it("opens no note a link leads to outside the notebook, and says so", async () =
   ).toBe("# Kept");
 });
 
+// Two notes asked for at once would both find a name free, and the second
+// would be written over the first.
+it("gives two new notes asked for at once names of their own", async () => {
+  const notebook = await notebookAt("/notebooks/at-once");
+
+  const [a, b] = await Promise.all([
+    crossnote.createNewNote(notebook, "", "[[From A]]"),
+    crossnote.createNewNote(notebook, "", "[[From B]]"),
+  ]);
+  expect(a.filePath).not.toBe(b.filePath);
+  expect(await read(notebook, a.filePath)).toContain("[[From A]]");
+  expect(await read(notebook, b.filePath)).toContain("[[From B]]");
+});
+
+it("writes no new note over one asked for by name at the same time", async () => {
+  const notebook = await notebookAt("/notebooks/at-once-named");
+  const today = `${moment().format("YYYY-MM-DD")}.md`;
+
+  // A new note, which is named after the day, and the day's note opened
+  // from the sidebar.
+  await Promise.all([
+    crossnote.createNewNote(notebook, "", "[[Back link]]"),
+    crossnote.createNewNote(notebook, today, ""),
+  ]);
+  expect(await read(notebook, today)).toContain("[[Back link]]");
+});
+
 it("opens no note a link leads to inside another note, and says so", async () => {
   const notebook = await notebookAt("/notebooks/linking-under");
   await pfs.writeFile(`${notebook.dir}/Kept.md`, "# Kept");

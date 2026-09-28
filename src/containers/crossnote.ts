@@ -8,6 +8,7 @@ import {
   TabNode,
   TabSetNode,
 } from "flexlayout-react";
+import { Mutex } from "async-mutex";
 import moment from "moment";
 import path from "path-browserify";
 import { useCallback, useEffect, useState } from "react";
@@ -92,6 +93,10 @@ const getlayoutModelFromLocalStrorage = () => {
     return defaultLayoutModel;
   }
 };
+
+// Keeps the new notes this page asks for from being named and written at the
+// same time. Another tab of the app, with its own, is not kept out.
+const creatingNote = new Mutex();
 
 function useCrossnoteContainer(initialState: InitialState) {
   const { t } = useTranslation();
@@ -304,7 +309,7 @@ function useCrossnoteContainer(initialState: InitialState) {
     [notebooks, layoutModel],
   );
 
-  const createNewNote = useCallback(
+  const nameAndWriteNote = useCallback(
     async (
       notebook: Notebook,
       fileName: string = "",
@@ -394,6 +399,16 @@ function useCrossnoteContainer(initialState: InitialState) {
       return note;
     },
     [t],
+  );
+
+  // One new note at a time: two asked for at once would both find the same
+  // name free, and the second would be written over the first.
+  const createNewNote = useCallback(
+    (notebook: Notebook, fileName: string = "", markdown: string = "") =>
+      creatingNote.runExclusive(() =>
+        nameAndWriteNote(notebook, fileName, markdown),
+      ),
+    [nameAndWriteNote],
   );
 
   const openNoteAtPath = useCallback(
