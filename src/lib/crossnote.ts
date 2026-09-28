@@ -270,6 +270,8 @@ export default class Crossnote {
       dir,
       `origin/${branch.trim() || "master"}`,
     );
+    // Before the record, as for a notebook made here.
+    await pfs.storeTree(dir);
 
     const notebook: Notebook = new Notebook();
     notebook._id = _id;
@@ -499,6 +501,8 @@ export default class Crossnote {
     if (pushResult.error) {
       restoreSHA();
     }
+    // The commit is made here whether or not the push went through.
+    await pfs.storeTree(notebook.dir);
 
     if (pushResult.ok) {
       // Update notebook
@@ -714,6 +718,8 @@ export default class Crossnote {
       }
     }
 
+    await pfs.storeTree(notebook.dir);
+
     // Update notebook
     notebook.fetchedAt = new Date();
     notebook.localSha = remoteSha;
@@ -757,6 +763,8 @@ export default class Crossnote {
       onAuthSuccess,
       onMessage,
     });
+
+    await pfs.storeTree(notebook.dir);
 
     // Update notebook
     notebook.fetchedAt = new Date();
@@ -880,6 +888,7 @@ export default class Crossnote {
               filepath: ".",
             });
           }
+          await pfs.storeTree(notebook.dir);
         } catch (error) {
           notebooks[i] = null;
         }
