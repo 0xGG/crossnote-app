@@ -50,7 +50,7 @@ import {
   PerformedGitOperationEventData,
 } from "../lib/event";
 import { Note } from "../lib/note";
-import { Notebook } from "../lib/notebook";
+import { Notebook, sameNoteText } from "../lib/notebook";
 import { isFinishingEnter } from "../lib/keys";
 import { notify } from "../lib/notifications";
 import { Reference } from "../lib/reference";
@@ -470,8 +470,10 @@ export default function NotePanel(props: Props) {
   // The note's text as this editor last had it from the notebook or gave it
   // to it, and the text of the save it started last. The notebook, read
   // again, brings back one of them whenever nothing has changed the note
-  // meanwhile; putting that in the editor would drop whatever was typed
-  // since, before it is saved, and send the caret to the start.
+  // meanwhile, if in its own layout of the front matter once it has read
+  // its notes again from disk; putting that in the editor would drop
+  // whatever was typed since, before it is saved, and send the caret to the
+  // start.
   const synced = useRef<string>(null);
   const saving = useRef<string>(null);
 
@@ -544,8 +546,9 @@ export default function NotePanel(props: Props) {
         if (newNote) {
           setNote(newNote);
           if (
-            newNote.markdown === synced.current ||
-            newNote.markdown === saving.current
+            [synced.current, saving.current].some(
+              (text) => text !== null && sameNoteText(newNote.markdown, text),
+            )
           ) {
             return;
           }

@@ -2,7 +2,7 @@ import * as git from "isomorphic-git";
 import { beforeAll, describe, expect, it, vi } from "vitest";
 import { isStored } from "../test/storedTree";
 import { fs, pfs } from "./fs";
-import { Notebook } from "./notebook";
+import { Notebook, sameNoteText } from "./notebook";
 
 // Integration test of the data layer: lightning-fs running on
 // fake-indexeddb, exercising note write/read, directory scanning and the
@@ -274,6 +274,68 @@ describe("Notebook", () => {
       await notebook.checkoutNote(note);
       expect(await pfs.exists("/notebooks/test/stored-restored.md")).toBe(true);
       expect(await isStored("/notebooks/test/stored-restored.md")).toBe(true);
+    });
+  });
+
+  // An editor keeps the text as it was typed; the notebook, once it has read
+  // its notes again from disk, hands the note out as it wrote it.
+  describe("sameNoteText", () => {
+    const written: Record<string, string> = {
+      "a flow list": "---\ntags: [a, b]\n---\n\nBody",
+      "quotes and a date":
+        '---\ntitle: "Quoted: yes"\ndate: 2026-09-28\n---\nBody',
+      "a comment": "---\n# kept in mind\ntags:\n  - a\n---\nBody",
+      "a setting typed by hand": "---\npinned: true\ncolor: red\n---\nBody",
+      "the older settings key": "---\nnote:\n  pinned: true\nx: 1\n---\nBody",
+      "aliases in a line": "---\naliases: x, y\n---\nBody",
+      "front matter YAML cannot read": "---\nbroken: [unclosed\n---\nBody",
+      "empty front matter": "---\n---\nBody",
+      "no front matter": "Body only",
+    };
+
+    it("takes the text a save and a new reading hand back as the same", async () => {
+      // Settings that are off are written as `false` and read back as part
+      // of the front matter, which the notebook otherwise takes out.
+      const settings = [{}, { pinned: false, favorited: false }];
+      let i = 0;
+      for (const setting of settings) {
+        for (const [layout, text] of Object.entries(written)) {
+          i++;
+          await notebook.writeNote(`same-${i}.md`, text, {
+            createdAt: new Date(),
+            modifiedAt: new Date(),
+            ...setting,
+          });
+          await notebook.refreshNotes({
+            dir: "./",
+            includeSubdirectories: true,
+          });
+          const readBack = notebook.notes[`same-${i}.md`].markdown;
+          expect(
+            sameNoteText(text, readBack),
+            `${layout}, ${JSON.stringify(setting)}`,
+          ).toBe(true);
+        }
+      }
+    });
+
+    it("tells a change from a new layout", () => {
+      const typed = "---\ntags: [a, b]\n---\n\nBody";
+      expect(
+        sameNoteText(typed, "---\ntags:\n    - a\n    - b\n---\n\nBody"),
+      ).toBe(true);
+      // A value of the writer's own changed.
+      expect(
+        sameNoteText(typed, "---\ntags:\n    - a\n    - c\n---\n\nBody"),
+      ).toBe(false);
+      // The body changed.
+      expect(
+        sameNoteText(
+          typed,
+          "---\ntags:\n    - a\n    - b\n---\n\nBody, edited",
+        ),
+      ).toBe(false);
+      expect(sameNoteText("Body", "Body only")).toBe(false);
     });
   });
 });
