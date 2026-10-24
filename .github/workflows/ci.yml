@@ -16,6 +16,13 @@ concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
+# Set for the whole workflow so that every build in it, the published one
+# included, uses the same configuration as the builds the checks run on. The
+# default CORS proxy is a self-hosted instance (see .env.example); notebooks
+# can still set their own in the UI.
+env:
+  VITE_DEFAULT_CORS_PROXY: https://isomorphic-git-cors-proxy.huaji.store
+
 jobs:
   # Prettier, ESLint and tsc verdicts do not depend on the Node major, so
   # they run once. The lint script carries --max-warnings, which enforces
