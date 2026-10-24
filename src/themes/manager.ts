@@ -17,9 +17,7 @@ export function setTheme({
   return EchoMDSetTheme({
     editor,
     themeName,
-    baseUri: `${
-      window.location.origin.match(/0xgg\./i) ? "/crossnote" : ""
-    }/styles/echomd@${EchoMDVersion}/`,
+    baseUri: `/styles/echomd@${EchoMDVersion}/`,
   });
 }
 

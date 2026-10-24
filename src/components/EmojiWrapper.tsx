@@ -5,9 +5,7 @@ import {
 } from "emoji-mart";
 
 export const EmojiBackgroundImageFn = (set: string, sheetSize: number) => {
-  return `${
-    window.location.origin.match(/0xgg\./i) ? "/crossnote" : ""
-  }/assets/emoji/twitter/64.png`;
+  return "/assets/emoji/twitter/64.png";
 };
 
 interface EmojiProps {

@@ -409,11 +409,7 @@ export default function NotePopover(props: Props) {
               onChange={(event) => event.preventDefault()}
               value={
                 notebook.gitURL
-                  ? `${window.location.origin}${
-                      window.location.origin.match(/0xgg\./i)
-                        ? "/crossnote"
-                        : "/"
-                    }?repo=${encodeURIComponent(
+                  ? `${window.location.origin}/?repo=${encodeURIComponent(
                       notebook.gitURL,
                     )}&branch=${encodeURIComponent(
                       notebook.gitBranch || "master",
