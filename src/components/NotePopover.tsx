@@ -71,6 +71,15 @@ export default function NotePopover(props: Props) {
   const settingsContainer = SettingsContainer.useContainer();
   const notebook = crossnoteContainer.getNotebookAtPath(note.notebookPath);
   const isLocal = notebook && notebook.isLocal;
+  const shareableLink = notebook.gitURL
+    ? `${window.location.origin}/?repo=${encodeURIComponent(
+        notebook.gitURL,
+      )}&branch=${encodeURIComponent(
+        notebook.gitBranch || "master",
+      )}&filePath=${encodeURIComponent(note.filePath)}`
+    : `${window.location.origin}/?notebookID=${
+        notebook._id
+      }&filePath=${encodeURIComponent(note.filePath)}`;
 
   // Print preview
   useEffect(() => {
@@ -386,17 +395,7 @@ export default function NotePopover(props: Props) {
             <Tooltip
               title={t("editor/note-control/copy-to-clipboard")}
               onClick={() => {
-                copyToClipboard(
-                  notebook.gitURL
-                    ? `${window.location.origin}/?repo=${encodeURIComponent(
-                        notebook.gitURL,
-                      )}&branch=${encodeURIComponent(
-                        notebook.gitBranch || "master",
-                      )}&filePath=${encodeURIComponent(note.filePath)}`
-                    : `${window.location.origin}/?notebookID=${
-                        notebook._id
-                      }&filePath=${encodeURIComponent(note.filePath)}`,
-                );
+                copyToClipboard(shareableLink);
               }}
             >
               <IconButton
@@ -407,17 +406,7 @@ export default function NotePopover(props: Props) {
             </Tooltip>
             <TextField
               onChange={(event) => event.preventDefault()}
-              value={
-                notebook.gitURL
-                  ? `${window.location.origin}/?repo=${encodeURIComponent(
-                      notebook.gitURL,
-                    )}&branch=${encodeURIComponent(
-                      notebook.gitBranch || "master",
-                    )}&filePath=${encodeURIComponent(note.filePath)}`
-                  : `${window.location.origin}/?notebookID=${
-                      notebook._id
-                    }&filePath=${encodeURIComponent(note.filePath)}`
-              }
+              value={shareableLink}
               inputRef={(input: HTMLInputElement) => {
                 if (input) {
                   input.focus();
