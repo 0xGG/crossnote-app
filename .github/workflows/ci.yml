@@ -220,18 +220,6 @@ jobs:
       group: deploy-production
       cancel-in-progress: false
     steps:
-      # check-head's output may come from an earlier attempt of this run, and
-      # main may have moved on since. Refusing here fails the deployment
-      # instead of recording one that never reached the site.
-      - name: Check again that this commit is still the head of main
-        run: |
-          head=$(git ls-remote --exit-code "https://github.com/$GITHUB_REPOSITORY" refs/heads/main)
-          head=${head%%[[:space:]]*}
-          if [ "$head" != "$GITHUB_SHA" ]; then
-            echo "::error::main is at $head now, so $GITHUB_SHA is not published"
-            exit 1
-          fi
-
       # Only the manifest and lockfile that pin Wrangler, straight from the
       # repository rather than from the build-site artifact, which this job
       # trusts no further than the site it publishes.
@@ -258,6 +246,20 @@ jobs:
       # has none.
       - name: Install Wrangler
         run: npm ci --prefix .github/wrangler --no-audit --no-fund --ignore-scripts
+
+      # check-head's output may come from an earlier attempt of this run, and
+      # main may have moved on since, during the setup above included. Looking
+      # right before the upload leaves only the upload itself in between;
+      # refusing here fails the deployment instead of recording one that never
+      # reached the site.
+      - name: Check again that this commit is still the head of main
+        run: |
+          head=$(git ls-remote --exit-code "https://github.com/$GITHUB_REPOSITORY" refs/heads/main)
+          head=${head%%[[:space:]]*}
+          if [ "$head" != "$GITHUB_SHA" ]; then
+            echo "::error::main is at $head now, so $GITHUB_SHA is not published"
+            exit 1
+          fi
 
       - name: Publish to Cloudflare Pages
         env:
