@@ -9,11 +9,13 @@ allowBuilds:
 patchedDependencies:
   "@0xgg/echomd@1.0.4": patches/@0xgg__echomd@1.0.4.patch
 # Security floors, range-keyed so they only lift below-floor resolutions and
-# never hold a future consumer back:
+# never hold a future consumer back. The replacements are ranges as well, so
+# a lifted consumer still takes later releases within the floor's major:
 # - dompurify: 2.5.9 was the last 2.x release and the 2026 advisories are only
-#   fixed on the 3.4 line, so this floor crosses a major. The one bundled
-#   consumer, super-react-gist, calls sanitize() with default options, which
-#   3.x kept unchanged; it declares ^2.3.6 and is verified by rendering a gist.
+#   fixed on the 3.4 line (3.4.17 for the latest ones), so this floor crosses
+#   a major. The one bundled consumer, super-react-gist, calls sanitize() with
+#   default options, which 3.x kept unchanged; it declares ^2.3.6 and is
+#   verified by rendering a gist.
 # - sanitize-url 6.0.4 fixes the javascript: scheme bypasses.
 # - d3-color 3.1.0 fixes the ReDoS in the color-string parser. The direct d3 6
 #   dependency (GraphView) resolves d3-color 2.0.0, inside the affected range;
@@ -23,6 +25,6 @@ patchedDependencies:
 # the window.mermaid global and the npm mermaid package is never bundled), so
 # upgrading that copy is the only fix for it.
 overrides:
-  "dompurify@<3.4.13": 3.4.13
-  "@braintree/sanitize-url@<6.0.4": 6.0.4
-  "d3-color@<3.1.0": 3.1.0
+  "dompurify@<3.4.17": ^3.4.17
+  "@braintree/sanitize-url@<6.0.4": ^6.0.4
+  "d3-color@<3.1.0": ^3.1.0

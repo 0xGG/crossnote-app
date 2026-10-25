@@ -5,9 +5,9 @@ settings:
   excludeLinksFromLockfile: false
 
 overrides:
-  dompurify@<3.4.13: 3.4.13
-  '@braintree/sanitize-url@<6.0.4': 6.0.4
-  d3-color@<3.1.0: 3.1.0
+  dompurify@<3.4.17: ^3.4.17
+  '@braintree/sanitize-url@<6.0.4': ^6.0.4
+  d3-color@<3.1.0: ^3.1.0
 
 patchedDependencies:
   '@0xgg/echomd@1.0.4': 6edfd01cea4c2ce2c88f815ecd43a8b03ce66a8f96a6bbf389ec8d5d8bfa07a6
@@ -1522,6 +1522,7 @@ packages:
   clone-buffer@1.0.0:
     resolution: {integrity: sha512-KLLTJWrvwIP+OPfMn0x2PheDEP20RPUcGXj/ERegTgdmPEZylALQldygiqrPPu8P45uNuPs7ckmReLY6v/iA5g==}
     engines: {node: '>= 0.10'}
+    deprecated: Package no longer supported. Contact Support at https://www.npmjs.com/support for more info.
 
   clsx@2.1.1:
     resolution: {integrity: sha512-eYm0QWBtUrBWZWG0d386OGAw16Z995PiOVo2B7bjWSbHedGl5e0ZWaq65kOGgUSNesEIDkB9ISbTg/JK9dhCZA==}
@@ -1988,8 +1989,8 @@ packages:
   dom-helpers@5.2.1:
     resolution: {integrity: sha512-nRCa7CK3VTrM2NmGkIy4cbK7IZlgBE/PYMn55rrXefr5xXDP0LdtfPnblFDoVdcAfslJ7or6iqAUnx0CCGIWQA==}
 
-  dompurify@3.4.13:
-    resolution: {integrity: sha512-2vmYIoqjze2d+kakP8S/nS5shfsl587kzwEjcGlTdiksUVgFHnFCsLYDVj/JNqJVOQZGSYBTmuycv0PodwmnMQ==}
+  dompurify@3.4.17:
+    resolution: {integrity: sha512-B/pSlYVHQ58kqISD/yDjuJ1yfzI34m1gF4lAod2bwSRhiN4K5Cl3H8Af7hqB2PmTL911tdEudnnXn5FnhRoz0w==}
 
   double-ended-queue@2.1.0-0:
     resolution: {integrity: sha512-+BNfZ+deCo8hMNpDqDnvT+c0XpJ5cUa6mqYq89bho2Ifze4URTqRkcwR399hWoTrTkbZ/XJYDgP6rc7pRgffEQ==}
@@ -5972,7 +5973,7 @@ snapshots:
       '@babel/runtime': 7.29.7
       csstype: 3.2.3
 
-  dompurify@3.4.13:
+  dompurify@3.4.17:
     optionalDependencies:
       '@types/trusted-types': 2.0.7
 
@@ -6860,7 +6861,7 @@ snapshots:
       d3: 7.9.0
       dagre: 0.8.5
       dagre-d3: 0.6.4
-      dompurify: 3.4.13
+      dompurify: 3.4.17
       graphlib: 2.1.8
       khroma: 1.4.1
       moment-mini: 2.29.4
@@ -7494,7 +7495,7 @@ snapshots:
 
   super-react-gist@1.1.1(react@18.3.1):
     dependencies:
-      dompurify: 3.4.13
+      dompurify: 3.4.17
       react: 18.3.1
       react-dom: 18.3.1(react@18.3.1)
 
