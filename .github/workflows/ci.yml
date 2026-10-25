@@ -16,6 +16,13 @@ concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
+# Set for the whole workflow so that every build in it, the published one
+# included, uses the same configuration as the builds the checks run on. The
+# default CORS proxy is a self-hosted instance (see .env.example); notebooks
+# can still set their own in the UI.
+env:
+  VITE_DEFAULT_CORS_PROXY: https://isomorphic-git-cors-proxy.huaji.store
+
 jobs:
   # Prettier, ESLint and tsc verdicts do not depend on the Node major, so
   # they run once. The lint script carries --max-warnings, which enforces
@@ -128,3 +135,137 @@ jobs:
           name: playwright-report
           path: playwright-report/
           retention-days: 14
+
+  # Builds the site the deploy job publishes, on main only, alongside the
+  # checks. It declares no environment, so the project's dependencies and
+  # build tools never run where the Cloudflare secrets are. It goes through
+  # the build script so that the prebuild hook fetches the emoji sheet the
+  # other jobs skip.
+  build-site:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build
+        run: pnpm build
+
+      # The download script only warns when the CDN fails. The picker and every
+      # emoji icon draw from this sheet, so do not publish a build without it.
+      - name: Check that the emoji sheet is in the build
+        run: test "$(file --brief --mime-type dist/assets/emoji/twitter/64.png)" = image/png
+
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: site
+          path: dist/
+          if-no-files-found: error
+          # Long enough to re-run a failed upload on its own a few days later.
+          retention-days: 7
+
+  # Re-running an older run's failed jobs re-runs the jobs after them too, with
+  # that older commit. Only the commit main points at now is published; roll
+  # back from the Pages dashboard instead. This is a job of its own, without
+  # the environment, because a job that names an environment records a
+  # deployment whenever it runs, whether or not it publishes anything. The
+  # deploy job looks again before uploading, since re-running it on its own
+  # reuses this job's output from the earlier attempt.
+  check-head:
+    if: github.ref == 'refs/heads/main'
+    needs: [quality, test-build, e2e, build-site]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      current: ${{ steps.head.outputs.current }}
+    steps:
+      - name: Check that this commit is still the head of main
+        id: head
+        run: |
+          head=$(git ls-remote --exit-code "https://github.com/$GITHUB_REPOSITORY" refs/heads/main)
+          head=${head%%[[:space:]]*}
+          if [ "$head" = "$GITHUB_SHA" ]; then
+            echo "current=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::notice::main is at $head now, so $GITHUB_SHA is not published"
+          fi
+
+  # Publishes the site to Cloudflare Pages (Direct Upload) once every check
+  # has passed and the commit is still the head of main. This is the only job
+  # with the production environment, which holds the Cloudflare secrets and
+  # which only main may deploy to, and it runs no project code: only the built
+  # site and Wrangler.
+  deploy:
+    needs: check-head
+    if: needs.check-head.outputs.current == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment:
+      name: production
+      url: https://crossnote.huaji.store
+    # Never cut an upload short; a newer one waits for it instead.
+    concurrency:
+      group: deploy-production
+      cancel-in-progress: false
+    steps:
+      # Only the manifest and lockfile that pin Wrangler, straight from the
+      # repository rather than from the build-site artifact, which this job
+      # trusts no further than the site it publishes.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          sparse-checkout: .github/wrangler
+          sparse-checkout-cone-mode: false
+
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: site
+          path: dist
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+
+      # Wrangler and everything under it come from the lockfile in
+      # .github/wrangler, apart from the app's devDependencies, which would put
+      # its native workerd binary into every install for the sake of this one
+      # job. Install scripts stay off: they set up the esbuild and workerd
+      # binaries, which Wrangler only runs to build Functions, and this site
+      # has none.
+      - name: Install Wrangler
+        run: npm ci --prefix .github/wrangler --no-audit --no-fund --ignore-scripts
+
+      # check-head's output may come from an earlier attempt of this run, and
+      # main may have moved on since, during the setup above included. Looking
+      # right before the upload leaves only the upload itself in between;
+      # refusing here fails the deployment instead of recording one that never
+      # reached the site.
+      - name: Check again that this commit is still the head of main
+        run: |
+          head=$(git ls-remote --exit-code "https://github.com/$GITHUB_REPOSITORY" refs/heads/main)
+          head=${head%%[[:space:]]*}
+          if [ "$head" != "$GITHUB_SHA" ]; then
+            echo "::error::main is at $head now, so $GITHUB_SHA is not published"
+            exit 1
+          fi
+
+      - name: Publish to Cloudflare Pages
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          WRANGLER_SEND_METRICS: "false"
+        run: >-
+          .github/wrangler/node_modules/.bin/wrangler pages deploy dist
+          --project-name=crossnote --branch=main --commit-hash="$GITHUB_SHA"

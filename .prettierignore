@@ -1,5 +1,6 @@
 # Lockfiles and generated output
 pnpm-lock.yaml
+.github/wrangler/package-lock.json
 dist/
 coverage/
 
