@@ -232,6 +232,15 @@ jobs:
             exit 1
           fi
 
+      # Only the manifest and lockfile that pin Wrangler, straight from the
+      # repository rather than from the build-site artifact, which this job
+      # trusts no further than the site it publishes.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          sparse-checkout: .github/wrangler
+          sparse-checkout-cone-mode: false
+
       - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           name: site
@@ -241,13 +250,14 @@ jobs:
         with:
           node-version: 24
 
-      # Wrangler comes from an exact version, installed outside the project
-      # rather than as a devDependency, which would put its native workerd
-      # binary into every install for the sake of this one job. Install scripts
-      # stay off: they set up the esbuild and workerd binaries, which Wrangler
-      # only runs to build Functions, and this site has none.
+      # Wrangler and everything under it come from the lockfile in
+      # .github/wrangler, apart from the app's devDependencies, which would put
+      # its native workerd binary into every install for the sake of this one
+      # job. Install scripts stay off: they set up the esbuild and workerd
+      # binaries, which Wrangler only runs to build Functions, and this site
+      # has none.
       - name: Install Wrangler
-        run: npm install --prefix "$RUNNER_TEMP/wrangler" --no-save --no-audit --no-fund --ignore-scripts wrangler@4.149.0
+        run: npm ci --prefix .github/wrangler --no-audit --no-fund --ignore-scripts
 
       - name: Publish to Cloudflare Pages
         env:
@@ -255,5 +265,5 @@ jobs:
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           WRANGLER_SEND_METRICS: "false"
         run: >-
-          "$RUNNER_TEMP/wrangler/node_modules/.bin/wrangler" pages deploy dist
+          .github/wrangler/node_modules/.bin/wrangler pages deploy dist
           --project-name=crossnote --branch=main --commit-hash="$GITHUB_SHA"

@@ -1,0 +1,8 @@
+{
+  "name": "crossnote-deploy-tools",
+  "private": true,
+  "description": "Wrangler for the deploy job in .github/workflows/ci.yml, pinned with its whole dependency tree and kept apart from the app's dependencies.",
+  "dependencies": {
+    "wrangler": "4.149.0"
+  }
+}
