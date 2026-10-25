@@ -20,6 +20,12 @@ import CodeMirror from "codemirror";
 import "codemirror/addon/dialog/dialog.css";
 import "codemirror/addon/display/placeholder";
 import "codemirror/addon/hint/show-hint";
+// Several of the language modes loaded at runtime (rst, django, rust, gfm and
+// others) are built with these; a mode script finds them on the CodeMirror
+// set on window below.
+import "codemirror/addon/mode/multiplex";
+import "codemirror/addon/mode/overlay";
+import "codemirror/addon/mode/simple";
 import "codemirror/keymap/emacs";
 import "codemirror/keymap/sublime";
 import "codemirror/keymap/vim";

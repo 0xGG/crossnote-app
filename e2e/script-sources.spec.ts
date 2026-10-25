@@ -27,6 +27,30 @@ test("loads the language of a code block from the site", async ({
   ).toBeVisible();
 });
 
+test("loads a language built on CodeMirror's mode addons", async ({
+  app,
+  page,
+}) => {
+  // reStructuredText lays its markup over another mode with the overlay
+  // addon, which a mode script loaded from the site finds only if the bundle
+  // has it. Without it the mode throws while the editor draws the block, and
+  // the editor stops taking what is typed.
+  const errors: string[] = [];
+  page.on("pageerror", (error) => errors.push(error.message));
+  await app.open();
+  await app.openNotes();
+  await app.createNote();
+  const rstMode = page.waitForResponse(/\/mode\/rst\/rst\.js$/);
+  await app.typeInEditor("```rst\n**bold**\n```\n\nafter");
+  await rstMode;
+  await expect(
+    app.editor.locator(".cm-strong", { hasText: "bold" }),
+  ).toBeVisible();
+  await page.keyboard.type(" typed");
+  await expect(app.editor).toContainText("after typed");
+  expect(errors).toEqual([]);
+});
+
 test("loads the language of a code block without rewriting the note", async ({
   app,
   page,
