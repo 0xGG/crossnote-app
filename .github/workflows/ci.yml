@@ -180,7 +180,9 @@ jobs:
   # that older commit. Only the commit main points at now is published; roll
   # back from the Pages dashboard instead. This is a job of its own, without
   # the environment, because a job that names an environment records a
-  # deployment whenever it runs, whether or not it publishes anything.
+  # deployment whenever it runs, whether or not it publishes anything. The
+  # deploy job looks again before uploading, since re-running it on its own
+  # reuses this job's output from the earlier attempt.
   check-head:
     if: github.ref == 'refs/heads/main'
     needs: [quality, test-build, e2e, build-site]
@@ -218,6 +220,18 @@ jobs:
       group: deploy-production
       cancel-in-progress: false
     steps:
+      # check-head's output may come from an earlier attempt of this run, and
+      # main may have moved on since. Refusing here fails the deployment
+      # instead of recording one that never reached the site.
+      - name: Check again that this commit is still the head of main
+        run: |
+          head=$(git ls-remote --exit-code "https://github.com/$GITHUB_REPOSITORY" refs/heads/main)
+          head=${head%%[[:space:]]*}
+          if [ "$head" != "$GITHUB_SHA" ]; then
+            echo "::error::main is at $head now, so $GITHUB_SHA is not published"
+            exit 1
+          fi
+
       - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           name: site
