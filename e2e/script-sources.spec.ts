@@ -27,6 +27,45 @@ test("loads the language of a code block from the site", async ({
   ).toBeVisible();
 });
 
+test("loads the language of a code block without rewriting the note", async ({
+  app,
+  page,
+}) => {
+  // A note with Windows line endings, as one cloned from a repository written
+  // on Windows has. The editor joins lines with \n, so any change it reports
+  // makes the app save the note converted; loading a language for one of its
+  // code blocks, with nothing typed, must not be such a change.
+  const text = "# Windows\r\n\r\n```bash\r\necho $HOME\r\n```\r\n";
+  await app.open();
+  await app.openNotes();
+  await app.noteCards.filter({ hasText: "README" }).click();
+  const readme = `${await app.notebookFolder()}/README.md`;
+  await app.storedText(readme, text);
+  await page.reload();
+  await app.waitUntilReady();
+  await app.openNotes();
+  await app.noteCards.filter({ hasText: "README" }).click();
+  await app.modeButton("Edit").click();
+  await expect(
+    app.editor.locator(".cm-builtin", { hasText: "echo" }),
+  ).toBeVisible();
+  // The app saves a change 300 ms after it. A change typed into another note
+  // now is saved after any the language set off, and its write to the same
+  // storage lands after that one, so once it is stored the README has been
+  // saved, if it was going to be.
+  // The README stays open behind the new note, so only what is on screen is
+  // the new note's.
+  await app.selectTab("Drafts");
+  await app.notesPanel.getByRole("button", { name: "New note" }).click();
+  const title = app.noteTitle.filter({ visible: true });
+  await expect(title).not.toHaveValue("");
+  const other = `${await app.notebookFolder()}/${await title.inputValue()}.md`;
+  await app.editor.filter({ visible: true }).click();
+  await page.keyboard.type("x");
+  await expect.poll(() => app.storedText(other)).toContain("x");
+  expect(await app.storedText(readme)).toBe(text);
+});
+
 test("loads mermaid for a slide from the site", async ({ app, page }) => {
   await app.open();
   await app.openNotes();

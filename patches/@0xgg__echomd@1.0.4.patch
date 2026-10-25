@@ -14,6 +14,30 @@ index e290cf6ca26dbe2179ca6a4369f9dc4197db006f..df3650b402eaf6c224e374efab0742e1
              }
          }
          if (type === "todo") {
+diff --git a/addon/mode-loader.js b/addon/mode-loader.js
+index 24d5fc56d82f342d29ed80fe5502a19d9b23a40b..e165812f73fcb13e3fbd72296d9a3de9d2772d3e 100644
+--- a/addon/mode-loader.js
++++ b/addon/mode-loader.js
+@@ -118,12 +118,13 @@ var __importStar = (this && this.__importStar) || function (mod) {
+                 if (window["ECHOMD_DEBUG"]) {
+                     console.log("[HyperMD] mode-loader loaded " + mode);
+                 }
+-                var lines = linesWaiting[mode];
+-                self.cm.operation(function () {
+-                    for (var i = 0; i < lines.length; i++) {
+-                        self.touchLine(lines[i]);
+-                    }
+-                });
++                // [crossnote patch] Setting the mode again has CodeMirror
++                // highlight every line anew, the waiting code blocks with the
++                // mode just loaded. touchLine did it by replacing a character
++                // of each waiting line with itself: a change to the document,
++                // which the app saves, so only opening a note rewrote it (with
++                // Windows line endings turned into \n) and left a step to undo.
++                self.cm.setOption("mode", self.cm.getOption("mode"));
+                 delete linesWaiting[mode];
+             };
+             var errorCb = function () {
 diff --git a/emoji/index.js b/emoji/index.js
 index 4736cbb03137d151f9b485fb1c2707ad6087a53c..bd5246bb21ab083d1575962e8a4f95acfdf8acd3 100644
 --- a/emoji/index.js

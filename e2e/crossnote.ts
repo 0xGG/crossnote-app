@@ -88,6 +88,55 @@ export class CrossnoteApp {
     expect(stored, `${filePath} is in the stored directory tree`).toBe(true);
   }
 
+  // Reads a stored file's bytes as text straight from the same storage, or,
+  // given text, puts it there in their place: for content the app itself
+  // would not write, such as Windows line endings from another machine. The
+  // file has to exist; the app reads the new bytes on its next load.
+  async storedText(filePath: string, replacement?: string): Promise<string> {
+    return this.page.evaluate(
+      ({ parts, text }) =>
+        new Promise<string>((resolve, reject) => {
+          const open = indexedDB.open("fs");
+          open.onerror = () => reject(open.error);
+          open.onsuccess = () => {
+            const db = open.result;
+            const files = db
+              .transaction(
+                "fs_files",
+                text === undefined ? "readonly" : "readwrite",
+              )
+              .objectStore("fs_files");
+            const root = files.get("!root");
+            root.onsuccess = () => {
+              let node = root.result?.get("/");
+              for (const part of parts) {
+                node = node?.get(part);
+              }
+              // A file's own entry under the key 0 holds its stat.
+              const ino = node?.get(0)?.ino;
+              if (ino === undefined) {
+                db.close();
+                reject(new Error(`${parts.join("/")} is not stored`));
+              } else if (text === undefined) {
+                const read = files.get(ino);
+                read.onsuccess = () => {
+                  db.close();
+                  resolve(new TextDecoder().decode(read.result));
+                };
+              } else {
+                const write = files.put(new TextEncoder().encode(text), ino);
+                write.onsuccess = () => {
+                  db.close();
+                  resolve(text);
+                };
+              }
+            };
+          };
+        }),
+      { parts: filePath.split("/").filter(Boolean), text: replacement },
+    );
+  }
+
   // Keeps every message the app puts up from now on, one gone again before a
   // test looks included. A test that expects none waits for its change to
   // land and then reads what was kept, which an absence check made at one
