@@ -91,15 +91,25 @@ export class CrossnoteApp {
   // Reads a stored file's bytes as text straight from the same storage, or,
   // given text, puts it there in their place: for content the app itself
   // would not write, such as Windows line endings from another machine. The
-  // file has to exist; the app reads the new bytes on its next load.
-  async storedText(filePath: string, replacement?: string): Promise<string> {
+  // app reads the new bytes on its next load. A file not stored yet reads as
+  // undefined, so a poll can wait for it. Like expectStored, this knows how
+  // the browser file system lays out its storage: the tree under "!root",
+  // each file's stat under the key 0 of its entry, its bytes under its inode.
+  async storedText(
+    filePath: string,
+    replacement?: string,
+  ): Promise<string | undefined> {
     return this.page.evaluate(
       ({ parts, text }) =>
-        new Promise<string>((resolve, reject) => {
+        new Promise<string | undefined>((resolve, reject) => {
           const open = indexedDB.open("fs");
           open.onerror = () => reject(open.error);
           open.onsuccess = () => {
             const db = open.result;
+            const fail = (request: IDBRequest) => () => {
+              db.close();
+              reject(request.error);
+            };
             const files = db
               .transaction(
                 "fs_files",
@@ -107,24 +117,30 @@ export class CrossnoteApp {
               )
               .objectStore("fs_files");
             const root = files.get("!root");
+            root.onerror = fail(root);
             root.onsuccess = () => {
               let node = root.result?.get("/");
               for (const part of parts) {
                 node = node?.get(part);
               }
-              // A file's own entry under the key 0 holds its stat.
               const ino = node?.get(0)?.ino;
               if (ino === undefined) {
                 db.close();
-                reject(new Error(`${parts.join("/")} is not stored`));
+                if (text === undefined) {
+                  resolve(undefined);
+                } else {
+                  reject(new Error(`${parts.join("/")} is not stored`));
+                }
               } else if (text === undefined) {
                 const read = files.get(ino);
+                read.onerror = fail(read);
                 read.onsuccess = () => {
                   db.close();
                   resolve(new TextDecoder().decode(read.result));
                 };
               } else {
                 const write = files.put(new TextEncoder().encode(text), ino);
+                write.onerror = fail(write);
                 write.onsuccess = () => {
                   db.close();
                   resolve(text);

@@ -73,12 +73,12 @@ test("loads the language of a code block without rewriting the note", async ({
   await expect(
     app.editor.locator(".cm-builtin", { hasText: "echo" }),
   ).toBeVisible();
-  // The app saves a change 300 ms after it. A change typed into another note
-  // now is saved after any the language set off, and its write to the same
-  // storage lands after that one, so once it is stored the README has been
-  // saved, if it was going to be.
-  // The README stays open behind the new note, so only what is on screen is
-  // the new note's.
+  // The app saves a change 300 ms after it. A change the language set off
+  // would come no later than the highlighting just seen, so one typed into
+  // another note now is saved after it, and its write to the same storage
+  // lands after that one: once it is stored, the README has been saved, if it
+  // was going to be. The README stays open behind the new note, so only what
+  // is on screen is the new note's.
   await app.selectTab("Drafts");
   await app.notesPanel.getByRole("button", { name: "New note" }).click();
   const title = app.noteTitle.filter({ visible: true });
@@ -88,6 +88,22 @@ test("loads the language of a code block without rewriting the note", async ({
   await page.keyboard.type("x");
   await expect.poll(() => app.storedText(other)).toContain("x");
   expect(await app.storedText(readme)).toBe(text);
+});
+
+test("keeps folded widgets when a language loads", async ({ app, page }) => {
+  // A language arriving has the editor highlight the whole note again; what
+  // it had folded into widgets has to stay folded.
+  await app.open();
+  await app.openNotes();
+  await app.createNote();
+  await app.typeInEditor('<!-- @crossnote.youtube "videoID":"abc" -->\n\n');
+  const thumbnail = app.editor.getByRole("img", { name: "Youtube: abc" });
+  await expect(thumbnail).toBeVisible();
+  await page.keyboard.type("```bash\necho $HOME\n```\n");
+  await expect(
+    app.editor.locator(".cm-builtin", { hasText: "echo" }),
+  ).toBeVisible();
+  await expect(thumbnail).toBeVisible();
 });
 
 test("loads mermaid for a slide from the site", async ({ app, page }) => {
