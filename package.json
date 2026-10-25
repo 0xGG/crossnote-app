@@ -27,7 +27,7 @@
     "@0xgg/echomd": "^1.0.4",
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.1",
-    "@isomorphic-git/lightning-fs": "^4.4.1",
+    "@isomorphic-git/lightning-fs": "~4.7.0",
     "@lourenci/react-kanban": "^2.1.0",
     "@mdi/font": "^7.4.47",
     "@mui/material": "^9.5.0",
