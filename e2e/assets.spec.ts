@@ -25,8 +25,9 @@ test("loads each theme stylesheet from the root as CSS", async ({
   }
 });
 
-// Only the address is checked here: CI builds without downloading the sheet
-// itself, and the deploy job checks that the file it publishes is a PNG.
+// Only the address is checked here: the CI builds these tests run on skip
+// downloading the sheet itself, and the job that builds the site for
+// publishing checks that the sheet in its build is a PNG.
 test("draws emoji from the sheet at the root", async ({ app, page }) => {
   await app.open();
   const emoji = page.locator(".emoji-mart-emoji > span").first();
