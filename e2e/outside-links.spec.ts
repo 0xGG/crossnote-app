@@ -23,10 +23,9 @@ test("opens a link in the preview without a way back to the app", async ({
 
   const opened = context.waitForEvent("page");
   await app.preview.getByRole("link", { name: "outside" }).click();
-  const page = await opened;
-  await page.waitForLoadState();
-  expect(page.url()).toBe("https://example.org/");
-  expect(await page.evaluate(() => window.opener === null)).toBe(true);
+  const popup = await opened;
+  await expect(popup).toHaveURL("https://example.org/");
+  expect(await popup.evaluate(() => window.opener === null)).toBe(true);
 });
 
 test("opens a YouTube video without a way back to the app", async ({
@@ -42,47 +41,37 @@ test("opens a YouTube video without a way back to the app", async ({
 
   const opened = context.waitForEvent("page");
   await app.editor.getByRole("img", { name: "Youtube: abc" }).click();
-  const page = await opened;
-  await page.waitForLoadState();
-  expect(page.url()).toBe("https://www.youtube.com/watch?v=abc");
-  expect(await page.evaluate(() => window.opener === null)).toBe(true);
+  const popup = await opened;
+  await expect(popup).toHaveURL("https://www.youtube.com/watch?v=abc");
+  expect(await popup.evaluate(() => window.opener === null)).toBe(true);
 });
 
 test("opens a link in a kanban card without a way back to the app", async ({
   app,
-  page: appPage,
+  page,
   context,
 }) => {
+  // The board is typed into the editor a key at a time, which takes most of
+  // the default timeout on a busy machine.
+  test.slow();
   await app.open();
   await app.openNotes();
   await app.createNote();
-  // A kanban widget with one card whose description is a link. Each slash
-  // typed opens the editor's command menu, which the Enter that leaves the
-  // line would pick from, so the menu is closed first.
-  const card = {
-    id: 2,
-    title: "Card",
-    description: "[outside](https://example.org/)",
-  };
-  const board = {
-    columns: [{ id: 1, title: "To do", wip: false, cards: [card] }],
-  };
+  // A kanban widget with one card whose description is a link.
+  const card = { id: 2, title: "C", description: "[outside](https://a.b/)" };
+  const board = { columns: [{ id: 1, title: "A", cards: [card] }] };
   await app.typeInEditor(
-    `<!-- @crossnote.kanban "board":${JSON.stringify(board)} -->`,
+    `<!-- @crossnote.kanban "board":${JSON.stringify(board)} -->\n`,
   );
-  await appPage.keyboard.press("Escape");
-  await appPage.keyboard.press("Enter");
 
   // The card's own editor has no click handler of the app's, so a link in
   // it is opened by echomd's.
-  await appPage.getByRole("button", { name: "Edit card", exact: true }).click();
-  const cardEditor = appPage.getByRole("dialog").locator(".CodeMirror");
+  await page.getByRole("button", { name: "Edit card", exact: true }).click();
   const opened = context.waitForEvent("page");
-  await cardEditor
+  await app.cardEditor
     .getByText("outside", { exact: true })
     .click({ modifiers: ["Control"] });
-  const page = await opened;
-  await page.waitForLoadState();
-  expect(page.url()).toBe("https://example.org/");
-  expect(await page.evaluate(() => window.opener === null)).toBe(true);
+  const popup = await opened;
+  await expect(popup).toHaveURL("https://a.b/");
+  expect(await popup.evaluate(() => window.opener === null)).toBe(true);
 });

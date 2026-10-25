@@ -186,6 +186,11 @@ export class CrossnoteApp {
     await this.page.keyboard.type(text);
   }
 
+  // The editor in the dialog a kanban card is edited in.
+  get cardEditor(): Locator {
+    return this.page.getByRole("dialog").locator(".CodeMirror");
+  }
+
   // The element that holds the caret while typing.
   get editorInput(): Locator {
     return this.editor.locator("[contenteditable=true]");
