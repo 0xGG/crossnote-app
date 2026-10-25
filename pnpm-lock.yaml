@@ -10,7 +10,7 @@ overrides:
   d3-color@<3.1.0: ^3.1.0
 
 patchedDependencies:
-  '@0xgg/echomd@1.0.4': 21b69204996e65cd6a72df0a2ef68241a86463c8c2aa5acc33b55f36a2164de9
+  '@0xgg/echomd@1.0.4': f9713f184ba0a87b19ed12a7db4bd55ba4411418a775edf75054a0f951476a14
 
 importers:
 
@@ -18,7 +18,7 @@ importers:
     dependencies:
       '@0xgg/echomd':
         specifier: ^1.0.4
-        version: 1.0.4(patch_hash=21b69204996e65cd6a72df0a2ef68241a86463c8c2aa5acc33b55f36a2164de9)
+        version: 1.0.4(patch_hash=f9713f184ba0a87b19ed12a7db4bd55ba4411418a775edf75054a0f951476a14)
       '@emotion/react':
         specifier: ^11.14.0
         version: 11.14.0(@types/react@18.3.31)(react@18.3.1)(supports-color@5.5.0)
@@ -3931,7 +3931,7 @@ packages:
 
 snapshots:
 
-  '@0xgg/echomd@1.0.4(patch_hash=21b69204996e65cd6a72df0a2ef68241a86463c8c2aa5acc33b55f36a2164de9)':
+  '@0xgg/echomd@1.0.4(patch_hash=f9713f184ba0a87b19ed12a7db4bd55ba4411418a775edf75054a0f951476a14)':
     optionalDependencies:
       echarts: 5.6.0
       emojione: 4.5.0

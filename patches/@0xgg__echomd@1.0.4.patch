@@ -1,3 +1,19 @@
+diff --git a/addon/click.js b/addon/click.js
+index e290cf6ca26dbe2179ca6a4369f9dc4197db006f..df3650b402eaf6c224e374efab0742e1ff6d4e81 100644
+--- a/addon/click.js
++++ b/addon/click.js
+@@ -50,7 +50,10 @@ var __importStar = (this && this.__importStar) || function (mod) {
+             }
+             else if ((info.ctrlKey || info.altKey) && url) {
+                 // just open URL
+-                window.open(url, "_blank");
++                // [crossnote patch] noopener keeps window.opener, a handle on
++                // the app's tab, from the page opened. Editors with no click
++                // handler of their own, a kanban card's for one, end up here.
++                window.open(url, "_blank", "noopener");
+             }
+         }
+         if (type === "todo") {
 diff --git a/emoji/index.js b/emoji/index.js
 index 4736cbb03137d151f9b485fb1c2707ad6087a53c..bd5246bb21ab083d1575962e8a4f95acfdf8acd3 100644
 --- a/emoji/index.js

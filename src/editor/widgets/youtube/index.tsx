@@ -66,9 +66,12 @@ function YoutubeWidget(props: WidgetArgs) {
             alt={"Youtube: " + attributes["videoID"]}
             src={`https://img.youtube.com/vi/${attributes["videoID"]}/0.jpg`}
             onClick={() => {
+              // noopener keeps window.opener, a handle on this tab, from
+              // the page opened.
               window.open(
                 `https://www.youtube.com/watch?v=${attributes["videoID"]}`,
                 "_blank",
+                "noopener",
               );
             }}
             style={{
