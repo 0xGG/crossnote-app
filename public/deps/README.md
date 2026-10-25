@@ -21,3 +21,8 @@ and `pnpm audit` never report their vulnerabilities.
   "vega-embed": "6.3.2"
 }
 ```
+
+The built site also has a `deps/codemirror@<version>/mode/` folder that is
+not kept here: the build copies CodeMirror's language modes from the
+installed `codemirror` package (see `vite.config.ts`), so they follow that
+package's version and npm tooling sees them.
