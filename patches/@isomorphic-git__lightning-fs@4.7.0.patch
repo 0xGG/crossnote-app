@@ -1,0 +1,40 @@
+diff --git a/src/DefaultBackend.js b/src/DefaultBackend.js
+index d0563618bc975277ee39193858534a294892e6ce..eac0cf184a533dda9f09d36112b17277db425212 100644
+--- a/src/DefaultBackend.js
++++ b/src/DefaultBackend.js
+@@ -13,7 +13,9 @@ const path = require("./path.js");
+ module.exports = class DefaultBackend {
+   constructor() {
+     this.saveSuperblock = debounce(() => {
+-      this.flush();
++      // Storage that refuses the write fails the operations that write;
++      // the tree stays in memory and goes out with the next save.
++      this.flush().catch(() => {});
+     }, 500);
+   }
+   async init (name, {
+diff --git a/src/PromisifiedFS.js b/src/PromisifiedFS.js
+index aaa6984556a2ecde5816efdd1ae280f318150312..368c9d292b328958e961f7f239fe8ed245dc4ad8 100644
+--- a/src/PromisifiedFS.js
++++ b/src/PromisifiedFS.js
+@@ -121,7 +121,7 @@ module.exports = class PromisifiedFS {
+         if (mutating) this._backend.saveSuperblock() // this is debounced
+         if (this._operations.size === 0) {
+           if (!this._deactivationTimeout) clearTimeout(this._deactivationTimeout)
+-          this._deactivationTimeout = setTimeout(this._deactivate.bind(this), 500)
++          this._deactivationTimeout = setTimeout(() => this._deactivate().catch(() => {}), 500)
+         }
+       }
+     }
+@@ -133,7 +133,10 @@ module.exports = class PromisifiedFS {
+       clearTimeout(this._deactivationTimeout)
+       this._deactivationTimeout = null
+     }
+-    if (this._deactivationPromise) await this._deactivationPromise
++    // A deactivation that failed, as saving the superblock does while the
++    // storage refuses writes, left the backend active: go on with it rather
++    // than fail every operation from now on.
++    if (this._deactivationPromise) await this._deactivationPromise.catch(() => {})
+     this._deactivationPromise = null
+     if (!this._activationPromise) {
+       this._activationPromise = this._backend.activate ? this._backend.activate() : Promise.resolve();

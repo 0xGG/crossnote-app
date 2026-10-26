@@ -44,3 +44,37 @@ it("still saves a note an earlier version put under a file", async () => {
     pfs.writeFile("/notebooks/fs-earlier/parent.md/new.md", ""),
   ).rejects.toThrow("ENOTDIR");
 });
+
+// The browser file system goes idle half a second after its last operation,
+// writing its directory tree out as it does. Storage that refuses writes, as
+// a full disk does, refuses that too; once it takes writes again, the file
+// system has to save a note as before, not fail until the page is reloaded.
+it("works again once the storage takes writes after refusing them", async () => {
+  await pfs.mkdirp("/notebooks/fs-refused");
+  await pfs.writeFile("/notebooks/fs-refused/note.md", "# First");
+  const store = IDBObjectStore.prototype;
+  const put = store.put;
+  store.put = function (this: IDBObjectStore, ...args) {
+    if (this.name === "fs_files") {
+      throw new DOMException(
+        "The quota has been exceeded.",
+        "QuotaExceededError",
+      );
+    }
+    return put.apply(this, args);
+  } as IDBObjectStore["put"];
+  try {
+    await expect(
+      pfs.writeFile("/notebooks/fs-refused/note.md", "# Second"),
+    ).rejects.toThrow("quota");
+    // Long enough to go idle, and fail to write the tree out.
+    await new Promise((resolve) => setTimeout(resolve, 800));
+  } finally {
+    store.put = put;
+  }
+
+  await pfs.writeFile("/notebooks/fs-refused/note.md", "# Third");
+  expect(
+    await pfs.readFile("/notebooks/fs-refused/note.md", { encoding: "utf8" }),
+  ).toBe("# Third");
+});

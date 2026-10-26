@@ -8,6 +8,10 @@ allowBuilds:
   tesseract.js: false
 patchedDependencies:
   "@0xgg/echomd@1.0.4": patches/@0xgg__echomd@1.0.4.patch
+  # Once storage refuses a write of its directory tree, as a full disk does,
+  # lightning-fs fails every operation until the page is reloaded (4.10.3
+  # still does). The patch has it go on with the tree it holds in memory.
+  "@isomorphic-git/lightning-fs@4.7.0": patches/@isomorphic-git__lightning-fs@4.7.0.patch
 # Security floors, range-keyed so they only lift below-floor resolutions and
 # never hold a future consumer back. The replacements are ranges as well, so
 # a lifted consumer still takes later releases within the floor's major:
