@@ -65,12 +65,13 @@ test("opens a link in a kanban card without a way back to the app", async ({
   );
 
   // The card's own editor has no click handler of the app's, so a link in
-  // it is opened by echomd's.
+  // it is opened by echomd's, on a Ctrl or an Alt click. Alt, because on
+  // macOS a Ctrl click is the way to ask for the context menu.
   await page.getByRole("button", { name: "Edit card", exact: true }).click();
   const opened = context.waitForEvent("page");
   await app.cardEditor
     .getByText("outside", { exact: true })
-    .click({ modifiers: ["Control"] });
+    .click({ modifiers: ["Alt"] });
   const popup = await opened;
   await expect(popup).toHaveURL("https://a.b/");
   expect(await popup.evaluate(() => window.opener === null)).toBe(true);
