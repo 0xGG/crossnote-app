@@ -46,9 +46,9 @@ describe("Notebook", () => {
     expect(note.filePath).toBe("roundtrip.md");
 
     const read = await notebook.getNote("roundtrip.md", true);
-    // Exact match: front matter must be stripped, and the body must come
-    // back unmangled (getNote prepends a "Please fix front-matter" banner
-    // on YAML errors, which toContain-style assertions would let through).
+    // Exact match: the settings' front matter must be taken out, and the
+    // body must come back unmangled, which toContain-style assertions would
+    // not tell.
     expect(read.markdown).toBe("# Round Trip\n\nBody");
     expect(read.markdown).not.toContain("created:");
   });
@@ -278,28 +278,47 @@ describe("Notebook", () => {
   });
 
   // An editor keeps the text as it was typed; the notebook, once it has read
-  // its notes again from disk, hands the note out as it wrote it.
+  // its notes again from disk, hands the note out less the settings it keeps
+  // in the front matter.
   describe("sameNoteText", () => {
-    const written: Record<string, string> = {
-      "a flow list": "---\ntags: [a, b]\n---\n\nBody",
-      "quotes and a date":
+    // Each text as typed, and as a new reading hands it back.
+    const written: Record<string, [string, string]> = {
+      "a flow list": [
+        "---\ntags: [a, b]\n---\n\nBody",
+        "---\ntags: [a, b]\n---\n\nBody",
+      ],
+      "quotes and a date": [
         '---\ntitle: "Quoted: yes"\ndate: 2026-09-28\n---\nBody',
-      "a comment": "---\n# kept in mind\ntags:\n  - a\n---\nBody",
-      "a setting typed by hand": "---\npinned: true\ncolor: red\n---\nBody",
-      "the older settings key": "---\nnote:\n  pinned: true\nx: 1\n---\nBody",
-      "aliases in a line": "---\naliases: x, y\n---\nBody",
-      "front matter YAML cannot read": "---\nbroken: [unclosed\n---\nBody",
-      "empty front matter": "---\n---\nBody",
-      "no front matter": "Body only",
+        '---\ntitle: "Quoted: yes"\ndate: 2026-09-28\n---\nBody',
+      ],
+      "a comment": [
+        "---\n# kept in mind\ntags:\n  - a\n---\nBody",
+        "---\n# kept in mind\ntags:\n  - a\n---\nBody",
+      ],
+      "a setting typed by hand": [
+        "---\npinned: true\ncolor: red\n---\nBody",
+        "---\ncolor: red\n---\nBody",
+      ],
+      "the older settings key": [
+        "---\nnote:\n  pinned: true\nx: 1\n---\nBody",
+        "---\nx: 1\n---\nBody",
+      ],
+      "aliases in a line": ["---\naliases: x, y\n---\nBody", "Body"],
+      // Kept as it is, not dropped: it is the user's to put right.
+      "front matter YAML cannot read": [
+        "---\nbroken: [unclosed\n---\nBody",
+        "---\nbroken: [unclosed\n---\nBody",
+      ],
+      "empty front matter": ["---\n---\nBody", "Body"],
+      "no front matter": ["Body only", "Body only"],
     };
 
     it("takes the text a save and a new reading hand back as the same", async () => {
-      // Settings that are off are written as `false` and read back as part
-      // of the front matter, which the notebook otherwise takes out.
+      // Settings that are off are kept as `false`, out of the text as well.
       const settings = [{}, { pinned: false, favorited: false }];
       let i = 0;
       for (const setting of settings) {
-        for (const [layout, text] of Object.entries(written)) {
+        for (const [layout, [text, read]] of Object.entries(written)) {
           i++;
           await notebook.writeNote(`same-${i}.md`, text, {
             createdAt: new Date(),
@@ -311,31 +330,245 @@ describe("Notebook", () => {
             includeSubdirectories: true,
           });
           const readBack = notebook.notes[`same-${i}.md`].markdown;
-          expect(
-            sameNoteText(text, readBack),
-            `${layout}, ${JSON.stringify(setting)}`,
-          ).toBe(true);
+          const label = `${layout}, ${JSON.stringify(setting)}`;
+          expect(readBack, label).toBe(read);
+          expect(sameNoteText(text, readBack), label).toBe(true);
         }
       }
     });
 
-    it("tells a change from a new layout", () => {
+    it("tells a change from the settings the notebook keeps", () => {
       const typed = "---\ntags: [a, b]\n---\n\nBody";
+      // Settings, wherever in the front matter, are not the text.
       expect(
-        sameNoteText(typed, "---\ntags:\n    - a\n    - b\n---\n\nBody"),
+        sameNoteText(typed, "---\ntags: [a, b]\npinned: true\n---\n\nBody"),
       ).toBe(true);
-      // A value of the writer's own changed.
-      expect(
-        sameNoteText(typed, "---\ntags:\n    - a\n    - c\n---\n\nBody"),
-      ).toBe(false);
-      // The body changed.
       expect(
         sameNoteText(
           typed,
-          "---\ntags:\n    - a\n    - b\n---\n\nBody, edited",
+          "---\nmodified: 2026-01-01\ntags: [a, b]\n---\n\nBody",
         ),
+      ).toBe(true);
+      // Laid out anew, which the notebook does not do: changed elsewhere.
+      expect(
+        sameNoteText(typed, "---\ntags:\n    - a\n    - b\n---\n\nBody"),
+      ).toBe(false);
+      // The body changed.
+      expect(
+        sameNoteText(typed, "---\ntags: [a, b]\n---\n\nBody, edited"),
       ).toBe(false);
       expect(sameNoteText("Body", "Body only")).toBe(false);
+    });
+  });
+
+  // A note's front matter is the user's, but for the settings the notebook
+  // keeps in it. Opened, it shows as it is written, less those settings;
+  // saved, it is written as it was given, and the settings after it.
+  describe("keeps front matter as it was written", () => {
+    // The times a save stamps, and those a file without them is given.
+    const stamped = (text: string) =>
+      text.replace(
+        /^(created|modified): \d{4}-\d\d-\d\dT\d\d:\d\d:\d\d\.\d{3}Z(\r?)$/gm,
+        "$1: <time>$2",
+      );
+    const stored = async (filePath: string) =>
+      stamped(
+        (await pfs.readFile(`/notebooks/test/${filePath}`, {
+          encoding: "utf8",
+        })) as string,
+      );
+    // A file the notebook writes its settings in front of, the text kept.
+    const settingsBefore = (settings: string, text: string) =>
+      `---\n${settings}created: <time>\nmodified: <time>\n---\n${text}`;
+
+    const notes: {
+      layout: string;
+      file: string;
+      // As the editor gets it.
+      opened: string;
+      // Saved with "Edit" typed at the end.
+      edited: string;
+      // Saved pinned, nothing typed.
+      pinned: string;
+    }[] = [
+      {
+        layout: "values YAML reads as other types",
+        file: "---\nphone: 0123456789\nzip: 01234\nversion: 1.10\nhex: 0x1F\ndate: 2026-10-26\n---\nBody\n",
+        opened:
+          "---\nphone: 0123456789\nzip: 01234\nversion: 1.10\nhex: 0x1F\ndate: 2026-10-26\n---\nBody\n",
+        edited:
+          "---\nphone: 0123456789\nzip: 01234\nversion: 1.10\nhex: 0x1F\ndate: 2026-10-26\ncreated: <time>\nmodified: <time>\n---\nBody\nEdit",
+        pinned:
+          "---\nphone: 0123456789\nzip: 01234\nversion: 1.10\nhex: 0x1F\ndate: 2026-10-26\npinned: true\ncreated: <time>\nmodified: <time>\n---\nBody\n",
+      },
+      {
+        layout: "comments, quotes, a block of text, anchors and a flow list",
+        file: '---\n# A comment\ntitle: "a: b"\ndesc: |\n  line 1\n  line 2\nbase: &b\n  a: 1\nother: *b\ntags: [x, y]\n---\nBody\n',
+        opened:
+          '---\n# A comment\ntitle: "a: b"\ndesc: |\n  line 1\n  line 2\nbase: &b\n  a: 1\nother: *b\ntags: [x, y]\n---\nBody\n',
+        edited:
+          '---\n# A comment\ntitle: "a: b"\ndesc: |\n  line 1\n  line 2\nbase: &b\n  a: 1\nother: *b\ntags: [x, y]\ncreated: <time>\nmodified: <time>\n---\nBody\nEdit',
+        pinned:
+          '---\n# A comment\ntitle: "a: b"\ndesc: |\n  line 1\n  line 2\nbase: &b\n  a: 1\nother: *b\ntags: [x, y]\npinned: true\ncreated: <time>\nmodified: <time>\n---\nBody\n',
+      },
+      ...[
+        ["half typed", "---\ntitle: Hi\ntags: [work, r3\n---\nBody\n"],
+        ["indented with a tab", "---\ntitle: hi\n\tbad: 1\n---\nBody\n"],
+        [
+          "conflict markers in it",
+          "---\ntitle: T\n\\<<<<<<< ours\nmodified: 2026-01-01\n\\=======\nmodified: 2026-01-02\n\\>>>>>>> theirs\n---\nBody\n",
+        ],
+        // Rules around a paragraph, or a list: text, not front matter.
+        ["a paragraph between rules", "---\nIntro paragraph\n---\nBody\n"],
+        ["a list between rules", "---\n- a\n- b\n---\nBody\n"],
+        // Four dashes are a rule of the text, not the end of front matter.
+        ["four dashes", "---\ntitle: x\n----\nBody\n"],
+      ].map(([layout, file]) => ({
+        layout: `front matter YAML cannot read: ${layout}`,
+        file,
+        opened: file,
+        edited: settingsBefore("", `${file}Edit`),
+        pinned: settingsBefore("pinned: true\n", file),
+      })),
+      {
+        layout: "an empty block",
+        file: "---\n---\nBody\n",
+        opened: "Body\n",
+        edited: settingsBefore("", "Body\nEdit"),
+        pinned: settingsBefore("pinned: true\n", "Body\n"),
+      },
+      {
+        layout: "Windows line endings",
+        file: "---\r\ntitle: Hi\r\ntags: [a, b]\r\n---\r\nBody\r\nLine 2\r\n",
+        opened: "---\r\ntitle: Hi\r\ntags: [a, b]\r\n---\r\nBody\r\nLine 2\r\n",
+        edited:
+          "---\r\ntitle: Hi\r\ntags: [a, b]\r\ncreated: <time>\r\nmodified: <time>\r\n---\r\nBody\r\nLine 2\r\nEdit",
+        pinned:
+          "---\r\ntitle: Hi\r\ntags: [a, b]\r\npinned: true\r\ncreated: <time>\r\nmodified: <time>\r\n---\r\nBody\r\nLine 2\r\n",
+      },
+      {
+        layout: "a byte order mark",
+        file: "\uFEFF---\ntitle: T\n---\nBody\n",
+        opened: "\uFEFF---\ntitle: T\n---\nBody\n",
+        edited:
+          "\uFEFF---\ntitle: T\ncreated: <time>\nmodified: <time>\n---\nBody\nEdit",
+        pinned:
+          "\uFEFF---\ntitle: T\npinned: true\ncreated: <time>\nmodified: <time>\n---\nBody\n",
+      },
+      {
+        layout: "settings typed by hand",
+        file: "---\ncreated: 2026-01-01\ntitle: T\nmodified: 2026-01-02\n---\nBody\n",
+        opened: "---\ntitle: T\n---\nBody\n",
+        edited:
+          "---\ntitle: T\ncreated: 2026-01-01\nmodified: <time>\n---\nBody\nEdit",
+        pinned:
+          "---\ntitle: T\ncreated: 2026-01-01\nmodified: <time>\npinned: true\n---\nBody\n",
+      },
+      {
+        layout: "a setting that is off",
+        file: "---\ntitle: T\npinned: false\n---\nBody\n",
+        opened: "---\ntitle: T\n---\nBody\n",
+        edited:
+          "---\ntitle: T\npinned: false\ncreated: <time>\nmodified: <time>\n---\nBody\nEdit",
+        pinned:
+          "---\ntitle: T\npinned: true\ncreated: <time>\nmodified: <time>\n---\nBody\n",
+      },
+      {
+        layout: "aliases in a line",
+        file: "---\naliases: x, y\n---\nBody\n",
+        opened: "Body\n",
+        edited: settingsBefore("aliases: x, y\n", "Body\nEdit"),
+        pinned: settingsBefore("aliases: x, y\npinned: true\n", "Body\n"),
+      },
+      {
+        layout: "settings as the notebook wrote them",
+        file: "---\ntags:\n    - a\naliases:\n    - x\npinned: true\ncreated: 2026-10-01T10:00:00.000Z\nmodified: 2026-10-02T10:00:00.000Z\n---\nBody\n",
+        opened: "---\ntags:\n    - a\n---\nBody\n",
+        edited:
+          "---\ntags:\n    - a\naliases:\n    - x\npinned: true\ncreated: <time>\nmodified: <time>\n---\nBody\nEdit",
+        pinned:
+          "---\ntags:\n    - a\naliases:\n    - x\npinned: true\ncreated: <time>\nmodified: <time>\n---\nBody\n",
+      },
+      {
+        layout: "no front matter",
+        file: "Body only\n",
+        opened: "Body only\n",
+        edited: settingsBefore("", "Body only\nEdit"),
+        pinned: settingsBefore("pinned: true\n", "Body only\n"),
+      },
+    ];
+
+    notes.forEach(({ layout, file, opened, edited, pinned }, i) => {
+      it(`with ${layout}`, async () => {
+        const filePath = `kept-${i}.md`;
+        await pfs.writeFile(`/notebooks/test/${filePath}`, file);
+        const note = await notebook.getNote(filePath, true);
+        expect(note.markdown).toBe(opened);
+
+        await notebook.writeNote(filePath, `${note.markdown}Edit`, {
+          ...note.config,
+        });
+        expect(await stored(filePath)).toBe(edited);
+        const editedNote = await notebook.getNote(filePath, true);
+        expect(editedNote.markdown).toBe(`${opened}Edit`);
+        expect(sameNoteText(`${note.markdown}Edit`, editedNote.markdown)).toBe(
+          true,
+        );
+
+        await pfs.writeFile(`/notebooks/test/${filePath}`, file);
+        const unedited = await notebook.getNote(filePath, true);
+        await notebook.writeNote(filePath, unedited.markdown, {
+          ...unedited.config,
+          pinned: true,
+        });
+        expect(await stored(filePath)).toBe(pinned);
+        const pinnedNote = await notebook.getNote(filePath, true);
+        expect(pinnedNote.markdown).toBe(opened);
+        expect(pinnedNote.config.pinned).toBe(true);
+      });
+    });
+
+    it("reads the settings it keeps, however they are written", async () => {
+      await pfs.writeFile(
+        "/notebooks/test/kept-settings.md",
+        "---\ncreated: 2026-01-01\nmodified: 2026-01-02\npinned: false\nfavorited: true\nicon: ':star:'\naliases: x, y\n---\nBody\n",
+      );
+      const note = await notebook.getNote("kept-settings.md", true);
+      expect(note.config).toEqual({
+        createdAt: new Date("2026-01-01T00:00:00.000Z"),
+        modifiedAt: new Date("2026-01-02T00:00:00.000Z"),
+        pinned: false,
+        favorited: true,
+        icon: ":star:",
+        aliases: ["x", "y"],
+      });
+    });
+
+    it("keeps the settings while front matter is half typed", async () => {
+      await notebook.writeNote("half-typed.md", "---\ntitle: T\n---\nBody", {
+        createdAt: new Date(),
+        modifiedAt: new Date(),
+        pinned: true,
+      });
+      const note = await notebook.getNote("half-typed.md", true);
+
+      // Saved as typing pauses with the list not yet closed.
+      const halfTyped = "---\ntitle: T\ntags: [a\n---\nBody";
+      await notebook.writeNote("half-typed.md", halfTyped, { ...note.config });
+      const meanwhile = await notebook.getNote("half-typed.md", true);
+      expect(meanwhile.markdown).toBe(halfTyped);
+      expect(meanwhile.config.pinned).toBe(true);
+      expect(meanwhile.config.createdAt).toEqual(note.config.createdAt);
+
+      // And once it is.
+      await notebook.writeNote(
+        "half-typed.md",
+        "---\ntitle: T\ntags: [a]\n---\nBody",
+        { ...meanwhile.config },
+      );
+      expect(await stored("half-typed.md")).toBe(
+        "---\ntitle: T\ntags: [a]\npinned: true\ncreated: <time>\nmodified: <time>\n---\nBody",
+      );
     });
   });
 });

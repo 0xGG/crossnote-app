@@ -52,8 +52,8 @@ async function readNotesAgain(app: CrossnoteApp, page: Page, name: string) {
   await app.selectTab(name);
 }
 
-// Front matter as people write it. The notebook writes it out in a layout
-// of its own, and hands the note out that way once it has read its notes
+// Front matter as people write it. The notebook writes the settings it keeps
+// after it, and hands the note out less them once it has read its notes
 // again from disk.
 const frontMatter = "---\ntags: [a, b]\n---\n\n";
 
@@ -189,7 +189,7 @@ test("keeps front matter as it was written, and the caret, when the notebook is 
     .getByRole("button", { name: "Collapse" })
     .click();
 
-  // Typing on goes in where the caret is. If the notebook's layout had been
+  // Typing on goes in where the caret is. If the note as read again had been
   // put in the editor, the caret would have gone to the start, or the typing
   // would have been dropped; either way it would not be saved after the body.
   await app.editor.evaluate((element) =>

@@ -138,7 +138,13 @@ export class CrossnoteApp {
                 read.onerror = fail(read);
                 read.onsuccess = () => {
                   db.close();
-                  resolve(new TextDecoder().decode(read.result));
+                  // Every byte, a byte order mark at the start included,
+                  // which a decoder otherwise takes off.
+                  resolve(
+                    new TextDecoder("utf-8", { ignoreBOM: true }).decode(
+                      read.result,
+                    ),
+                  );
                 };
               } else {
                 files.put(new TextEncoder().encode(text), ino);

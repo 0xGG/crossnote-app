@@ -470,7 +470,7 @@ export default function NotePanel(props: Props) {
   // The note's text as this editor last had it from the notebook or gave it
   // to it, and the text of the save it started last. The notebook, read
   // again, brings back one of them whenever nothing has changed the note
-  // meanwhile, if in its own layout of the front matter once it has read
+  // meanwhile, if less settings typed into its front matter once it has read
   // its notes again from disk; putting that in the editor would drop
   // whatever was typed since, before it is saved, and send the caret to the
   // start. Once the text has been replaced from elsewhere, that save no
