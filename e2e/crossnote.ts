@@ -113,12 +113,11 @@ export class CrossnoteApp {
               db.close();
               reject(request.error);
             };
-            const files = db
-              .transaction(
-                "fs_files",
-                text === undefined ? "readonly" : "readwrite",
-              )
-              .objectStore("fs_files");
+            const transaction = db.transaction(
+              "fs_files",
+              text === undefined ? "readonly" : "readwrite",
+            );
+            const files = transaction.objectStore("fs_files");
             const root = files.get("!root");
             root.onerror = fail(root);
             root.onsuccess = () => {
@@ -142,11 +141,18 @@ export class CrossnoteApp {
                   resolve(new TextDecoder().decode(read.result));
                 };
               } else {
-                const write = files.put(new TextEncoder().encode(text), ino);
-                write.onerror = fail(write);
-                write.onsuccess = () => {
+                files.put(new TextEncoder().encode(text), ino);
+                // The bytes are stored only once the transaction commits,
+                // which comes after the write's own success; a test that
+                // reloads the page next must not leave before that. A failed
+                // write aborts the transaction.
+                transaction.oncomplete = () => {
                   db.close();
                   resolve(text);
+                };
+                transaction.onabort = () => {
+                  db.close();
+                  reject(transaction.error);
                 };
               }
             };
