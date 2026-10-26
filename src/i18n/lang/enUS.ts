@@ -118,6 +118,10 @@ export const enUS = {
     // Info
     "info/downloading-notebook": "Downloading notebook",
 
+    // Warning
+    "warning/front-matter-unreadable":
+      "The front matter of this note cannot be read. It is kept as it is.",
+
     // Settings
     "settings/about-this-project": "About this project",
     "settings/issues-and-feature-requests":

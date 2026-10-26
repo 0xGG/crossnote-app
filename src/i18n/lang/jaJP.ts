@@ -120,6 +120,10 @@ export const jaJP = {
     // Info
     "info/downloading-notebook": "ノートブックをダウンロード中",
 
+    // Warning
+    "warning/front-matter-unreadable":
+      "このノートのフロントマターを読み取れません。そのまま残します。",
+
     // Settings
     "settings/about-this-project": "このプロジェクトについて",
     "settings/issues-and-feature-requests":

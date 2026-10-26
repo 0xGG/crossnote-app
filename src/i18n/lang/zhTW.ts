@@ -117,6 +117,10 @@ export const zhTW = {
     // Info
     "info/downloading-notebook": "正在下載筆記本",
 
+    // Warning
+    "warning/front-matter-unreadable":
+      "這篇筆記的 front matter 無法讀取，已原樣保留。",
+
     // Settings
     "settings/about-this-project": "關於這個項目",
     "settings/issues-and-feature-requests": "發現左問題或者有功能請求?",

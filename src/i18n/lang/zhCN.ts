@@ -117,6 +117,10 @@ export const zhCN = {
     // Info
     "info/downloading-notebook": "正在下载笔记本",
 
+    // Warning
+    "warning/front-matter-unreadable":
+      "这篇笔记的 front matter 读不出来，已原样保留。",
+
     // Settings
     "settings/about-this-project": "关于这个项目",
     "settings/issues-and-feature-requests": "发现了问题或者有功能请求？",

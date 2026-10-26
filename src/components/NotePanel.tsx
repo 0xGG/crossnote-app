@@ -49,6 +49,7 @@ import {
   ModifiedMarkdownEventData,
   PerformedGitOperationEventData,
 } from "../lib/event";
+import { readNoteText } from "../lib/frontMatter";
 import { Note } from "../lib/note";
 import { Notebook, sameNoteText } from "../lib/notebook";
 import { isFinishingEnter } from "../lib/keys";
@@ -638,6 +639,23 @@ export default function NotePanel(props: Props) {
       setNoteIcon(note.config.icon);
     }
   }, [note]);
+
+  // Front matter YAML cannot read is kept as it is, and the note's settings
+  // are saved before it. Said once, as the note opens: front matter caught
+  // half typed later on is still being typed.
+  const frontMatterChecked = useRef<boolean>(false);
+  useEffect(() => {
+    if (note && !frontMatterChecked.current) {
+      frontMatterChecked.current = true;
+      if (readNoteText(note.markdown).unreadable) {
+        notify({
+          severity: "warning",
+          message: t("warning/front-matter-unreadable"),
+          duration: 5000,
+        });
+      }
+    }
+  }, [note, t]);
 
   // Set editor
   useEffect(() => {
