@@ -111,6 +111,7 @@ test("keeps folded widgets when a language loads", async ({ app, page }) => {
     app.editor.locator(".cm-builtin", { hasText: "echo" }),
   ).toBeVisible();
   await expect(thumbnail).toHaveAttribute("data-before", "language");
+  await expect(thumbnail).toBeVisible();
 });
 
 test("loads mermaid for a slide from the site", async ({ app, page }) => {
