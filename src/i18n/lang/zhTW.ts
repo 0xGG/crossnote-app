@@ -133,6 +133,13 @@ export const zhTW = {
     "settings/author-email": "作者郵箱",
     "settings/theme": "主題",
     "settings/key-map": "鍵盤對應",
+    "settings/persistent-storage": "持久儲存",
+    "settings/persistent-storage/persisted":
+      "已開啟：瀏覽器不會為了騰出空間清除本站儲存的筆記。",
+    "settings/persistent-storage/not-persisted":
+      "未開啟：空間不足時，瀏覽器可能清除本站儲存的筆記。",
+    "settings/persistent-storage/unsupported": "此瀏覽器不提供。",
+    "settings/ask-for-persistent-storage": "再次申請",
 
     // ProfileCard
     "profile-card/notes": "筆記",

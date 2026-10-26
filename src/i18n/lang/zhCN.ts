@@ -133,6 +133,13 @@ export const zhCN = {
     "settings/author-email": "作者邮箱",
     "settings/theme": "主题",
     "settings/key-map": "键盘映射",
+    "settings/persistent-storage": "持久存储",
+    "settings/persistent-storage/persisted":
+      "已开启：浏览器不会为了腾出空间清除本站存储的笔记。",
+    "settings/persistent-storage/not-persisted":
+      "未开启：空间不足时，浏览器可能清除本站存储的笔记。",
+    "settings/persistent-storage/unsupported": "此浏览器不提供。",
+    "settings/ask-for-persistent-storage": "再次申请",
 
     // ProfileCard
     "profile-card/notes": "笔记",

@@ -135,6 +135,13 @@ export const enUS = {
     "settings/author-email": "Author email",
     "settings/theme": "Theme",
     "settings/key-map": "Key Map",
+    "settings/persistent-storage": "Persistent storage",
+    "settings/persistent-storage/persisted":
+      "On: the browser does not clear the notes this site stores to free up space.",
+    "settings/persistent-storage/not-persisted":
+      "Off: when space runs low, the browser may clear the notes this site stores.",
+    "settings/persistent-storage/unsupported": "Not offered by this browser.",
+    "settings/ask-for-persistent-storage": "Ask again",
 
     // ProfileCard
     "profile-card/notes": "notes",

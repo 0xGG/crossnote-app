@@ -138,6 +138,14 @@ export const jaJP = {
     "settings/author-email": "著者の電子メール",
     "settings/theme": "テーマ",
     "settings/key-map": "キーマップ",
+    "settings/persistent-storage": "永続ストレージ",
+    "settings/persistent-storage/persisted":
+      "オン：ブラウザーは空き容量を確保するためにこのサイトのノートを消去しません。",
+    "settings/persistent-storage/not-persisted":
+      "オフ：空き容量が少なくなると、ブラウザーがこのサイトのノートを消去することがあります。",
+    "settings/persistent-storage/unsupported":
+      "このブラウザーでは利用できません。",
+    "settings/ask-for-persistent-storage": "もう一度申請",
 
     // ProfileCard
     "profile-card/notes": "ノート",

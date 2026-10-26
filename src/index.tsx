@@ -10,7 +10,12 @@ import "./i18n/i18n";
 import "./index.css";
 import Crossnote from "./lib/crossnote";
 import "./lib/fs";
+import { keepStorage } from "./lib/storage";
 import "./themes/manager";
+
+// The notes in the browser's storage go when the browser clears it to free
+// up space, unless it has granted the site to keep it.
+keepStorage();
 
 try {
   const crossnote = new Crossnote();
