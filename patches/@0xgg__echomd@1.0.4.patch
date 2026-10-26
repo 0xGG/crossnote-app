@@ -1,3 +1,43 @@
+diff --git a/addon/click.js b/addon/click.js
+index e290cf6ca26dbe2179ca6a4369f9dc4197db006f..df3650b402eaf6c224e374efab0742e1ff6d4e81 100644
+--- a/addon/click.js
++++ b/addon/click.js
+@@ -50,7 +50,10 @@ var __importStar = (this && this.__importStar) || function (mod) {
+             }
+             else if ((info.ctrlKey || info.altKey) && url) {
+                 // just open URL
+-                window.open(url, "_blank");
++                // [crossnote patch] noopener keeps window.opener, a handle on
++                // the app's tab, from the page opened. Editors with no click
++                // handler of their own, a kanban card's for one, end up here.
++                window.open(url, "_blank", "noopener");
+             }
+         }
+         if (type === "todo") {
+diff --git a/addon/mode-loader.js b/addon/mode-loader.js
+index 24d5fc56d82f342d29ed80fe5502a19d9b23a40b..e165812f73fcb13e3fbd72296d9a3de9d2772d3e 100644
+--- a/addon/mode-loader.js
++++ b/addon/mode-loader.js
+@@ -118,12 +118,13 @@ var __importStar = (this && this.__importStar) || function (mod) {
+                 if (window["ECHOMD_DEBUG"]) {
+                     console.log("[HyperMD] mode-loader loaded " + mode);
+                 }
+-                var lines = linesWaiting[mode];
+-                self.cm.operation(function () {
+-                    for (var i = 0; i < lines.length; i++) {
+-                        self.touchLine(lines[i]);
+-                    }
+-                });
++                // [crossnote patch] Setting the mode again has CodeMirror
++                // highlight every line anew, the waiting code blocks with the
++                // mode just loaded. touchLine did it by replacing a character
++                // of each waiting line with itself: a change to the document,
++                // which the app saves, so only opening a note rewrote it (with
++                // Windows line endings turned into \n) and left a step to undo.
++                self.cm.setOption("mode", self.cm.getOption("mode"));
+                 delete linesWaiting[mode];
+             };
+             var errorCb = function () {
 diff --git a/emoji/index.js b/emoji/index.js
 index 4736cbb03137d151f9b485fb1c2707ad6087a53c..bd5246bb21ab083d1575962e8a4f95acfdf8acd3 100644
 --- a/emoji/index.js
@@ -26,6 +66,24 @@ index 33a2f419596266e3320593abaff37893a8dd6ac9..1e4436d29d71ae5219795f5ccd66bd2f
      "use strict";
      Object.defineProperty(exports, "__esModule", { value: true });
      function isSpace(code) {
+diff --git a/preview/index.js b/preview/index.js
+index b1166b5cde5837ca30afe52f2528de7143ead014..6837dcc2343dd5d95b630e7d6c310a14d540bf78 100644
+--- a/preview/index.js
++++ b/preview/index.js
+@@ -221,8 +221,12 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
+                 var mermaidScript = "";
+                 var mermaidInitScript = "";
+                 if (html.indexOf("mermaid") >= 0) {
++                    // [crossnote patch] The default was a CDN address without a
++                    // version. The app serves the same mermaid it loads for the
++                    // editor and the preview (index.html), and every call of
++                    // this function, printPreview's own included, gets it.
+                     mermaidScript = "<script type=\"text/javascript\" src=" + (requires.MermaidJS ||
+-                        "https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js") + "></script>";
++                        "/deps/mermaid/mermaid.min.js") + "></script>";
+                     mermaidInitScript += "<script>\n        if (window['MERMAID_CONFIG']) {\n          window['MERMAID_CONFIG'].startOnLoad = false\n          window['MERMAID_CONFIG'].cloneCssStyles = false\n        }\n        mermaid.initialize(window['MERMAID_CONFIG'] || {})\n        if (typeof(window['Reveal']) !== 'undefined') {\n          function mermaidRevealHelper(event) {\n            var currentSlide = event.currentSlide\n            var diagrams = currentSlide.querySelectorAll('.mermaid')\n            for (var i = 0; i < diagrams.length; i++) {\n              var diagram = diagrams[i]\n              if (!diagram.hasAttribute('data-processed')) {\n                mermaid.init(null, diagram, ()=> {\n                  Reveal.slide(event.indexh, event.indexv)\n                })\n              }\n            }\n          }\n          Reveal.addEventListener('slidechanged', mermaidRevealHelper)\n          Reveal.addEventListener('ready', mermaidRevealHelper)\n        } else {\n          mermaid.init(null, document.getElementsByClassName('mermaid'))\n        }\n        </script>";
+                 }
+                 // reveal.js
 diff --git a/preview/toc.js b/preview/toc.js
 index 36f5a48061f241aa848edbe29214475dced87c9b..d9da301eb93f76390b58d03d38d86b50e3004050 100644
 --- a/preview/toc.js

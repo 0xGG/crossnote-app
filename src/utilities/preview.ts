@@ -49,7 +49,9 @@ export function openURL(url: string = "", note: Note) {
       // change the address bar (nothing subscribes to history changes).
       window.location.assign(url);
     } else {
-      window.open(url, "_blank"); // TODO: opener bug, check zhihu
+      // Without noopener the page opened would get window.opener, a handle
+      // on this tab that it could send elsewhere.
+      window.open(url, "_blank", "noopener");
     }
   } else if (url.startsWith("/")) {
     let filePath = path.relative(

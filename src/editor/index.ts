@@ -3,6 +3,7 @@
 // Essential
 import "@0xgg/echomd"; // ESSENTIAL
 import { setTwemojiOptions } from "@0xgg/echomd/addon/emoji";
+import { suggestedEditorConfig } from "@0xgg/echomd/core";
 import { wrapTexts } from "@0xgg/echomd/keymap/hypermd";
 import "@0xgg/echomd/powerpack/fold-code-with-echarts";
 import "@0xgg/echomd/powerpack/fold-code-with-mermaid";
@@ -19,6 +20,12 @@ import CodeMirror from "codemirror";
 import "codemirror/addon/dialog/dialog.css";
 import "codemirror/addon/display/placeholder";
 import "codemirror/addon/hint/show-hint";
+// Several of the language modes loaded at runtime (rst, django, rust, gfm and
+// others) are built with these; a mode script finds them on the CodeMirror
+// set on window below.
+import "codemirror/addon/mode/multiplex";
+import "codemirror/addon/mode/overlay";
+import "codemirror/addon/mode/simple";
 import "codemirror/keymap/emacs";
 import "codemirror/keymap/sublime";
 import "codemirror/keymap/vim";
@@ -48,6 +55,12 @@ import { YoutubeWidgetCreator } from "./widgets/youtube";
 
 // Set necessary window scope variables
 window["CodeMirror"] = CodeMirror;
+
+// A code block in a language the bundle leaves out gets its mode loaded by
+// script tag, and the script registers itself on the CodeMirror above. echomd
+// suggests a CDN address without a version for these; take them from the
+// copy of the installed package that the build puts on the site instead.
+suggestedEditorConfig.hmdModeLoader = { source: __CODEMIRROR_MODES__ };
 
 // Register widget creators
 registerWidgetCreator("timer", TimerWidgetCreator);

@@ -1,6 +1,7 @@
 import react from "@vitejs/plugin-react";
 import { execSync } from "node:child_process";
 import { readFileSync } from "node:fs";
+import { basename, dirname } from "node:path";
 import { defineConfig } from "vitest/config";
 import { viteStaticCopy } from "vite-plugin-static-copy";
 
@@ -11,6 +12,18 @@ const pkg = JSON.parse(
 // The echomd theme CSS is loaded at runtime by URL (see src/themes/manager.ts),
 // versioned by the dependency spec string, e.g. /styles/echomd@^1.0.4/...
 const echomdVersion: string = pkg.dependencies["@0xgg/echomd"];
+
+// CodeMirror's language modes are loaded at runtime, one script per language,
+// when a code block names one the bundle leaves out (see src/editor/index.ts).
+// The site serves them itself, from the installed package under its version,
+// e.g. /deps/codemirror@5.65.21/mode/shell/shell.js.
+const codemirrorVersion: string = JSON.parse(
+  readFileSync(
+    new URL("./node_modules/codemirror/package.json", import.meta.url),
+    "utf-8",
+  ),
+).version;
+const codemirrorModes = `/deps/codemirror@${codemirrorVersion}/`;
 
 // Build metadata shown in the Settings panel (replaces the legacy
 // `yarn git-info` script that generated src/_git_commit.js).
@@ -34,11 +47,20 @@ export default defineConfig({
           src: "node_modules/@0xgg/echomd/theme/*",
           dest: `styles/echomd@${echomdVersion}`,
         },
+        {
+          src: "node_modules/codemirror/mode/*/*.js",
+          dest: `${codemirrorModes.slice(1)}mode`,
+          // Each language keeps its own folder: the loader asks for
+          // mode/<name>/<name>.js.
+          rename: (name, extension, fullPath) =>
+            `${basename(dirname(fullPath))}/${name}.${extension}`,
+        },
       ],
     }),
   ],
   define: {
     __GIT_COMMIT__: JSON.stringify(getGitCommit()),
+    __CODEMIRROR_MODES__: JSON.stringify(codemirrorModes),
     // Some browser bundles (PouchDB and friends) still reference the Node
     // `global` object; map it to the standard globalThis.
     global: "globalThis",

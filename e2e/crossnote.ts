@@ -88,6 +88,80 @@ export class CrossnoteApp {
     expect(stored, `${filePath} is in the stored directory tree`).toBe(true);
   }
 
+  // Reads a stored file's bytes as text straight from the same storage, or,
+  // given text, puts it there in their place: for content the app itself
+  // would not write, such as Windows line endings from another machine. The
+  // app reads the new bytes on its next load. A file not stored yet reads as
+  // undefined, so a poll can wait for it. Like expectStored, this knows how
+  // the browser file system lays out its storage: the tree under "!root",
+  // each file's stat under the key 0 of its entry, its bytes under its inode.
+  async storedText(
+    filePath: string,
+    replacement?: string,
+  ): Promise<string | undefined> {
+    return this.page.evaluate(
+      ({ parts, text }) =>
+        new Promise<string | undefined>((resolve, reject) => {
+          const open = indexedDB.open("fs");
+          // As in expectStored: a database created here would lack the
+          // store the file system adds when it creates it.
+          open.onupgradeneeded = () => open.transaction!.abort();
+          open.onerror = () => reject(open.error);
+          open.onsuccess = () => {
+            const db = open.result;
+            const fail = (request: IDBRequest) => () => {
+              db.close();
+              reject(request.error);
+            };
+            const transaction = db.transaction(
+              "fs_files",
+              text === undefined ? "readonly" : "readwrite",
+            );
+            const files = transaction.objectStore("fs_files");
+            const root = files.get("!root");
+            root.onerror = fail(root);
+            root.onsuccess = () => {
+              let node = root.result?.get("/");
+              for (const part of parts) {
+                node = node?.get(part);
+              }
+              const ino = node?.get(0)?.ino;
+              if (ino === undefined) {
+                db.close();
+                if (text === undefined) {
+                  resolve(undefined);
+                } else {
+                  reject(new Error(`${parts.join("/")} is not stored`));
+                }
+              } else if (text === undefined) {
+                const read = files.get(ino);
+                read.onerror = fail(read);
+                read.onsuccess = () => {
+                  db.close();
+                  resolve(new TextDecoder().decode(read.result));
+                };
+              } else {
+                files.put(new TextEncoder().encode(text), ino);
+                // The bytes are stored only once the transaction commits,
+                // which comes after the write's own success; a test that
+                // reloads the page next must not leave before that. A failed
+                // write aborts the transaction.
+                transaction.oncomplete = () => {
+                  db.close();
+                  resolve(text);
+                };
+                transaction.onabort = () => {
+                  db.close();
+                  reject(transaction.error);
+                };
+              }
+            };
+          };
+        }),
+      { parts: filePath.split("/").filter(Boolean), text: replacement },
+    );
+  }
+
   // Keeps every message the app puts up from now on, one gone again before a
   // test looks included. A test that expects none waits for its change to
   // land and then reads what was kept, which an absence check made at one
@@ -184,6 +258,11 @@ export class CrossnoteApp {
   async typeInEditor(text: string) {
     await this.editor.click();
     await this.page.keyboard.type(text);
+  }
+
+  // The editor in the dialog a kanban card is edited in.
+  get cardEditor(): Locator {
+    return this.page.getByRole("dialog").locator(".CodeMirror");
   }
 
   // The element that holds the caret while typing.
