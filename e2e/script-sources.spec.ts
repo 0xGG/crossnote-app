@@ -34,7 +34,9 @@ test("loads a language built on CodeMirror's mode addons", async ({
   // reStructuredText lays its markup over another mode with the overlay
   // addon, which a mode script loaded from the site finds only if the bundle
   // has it. Without it the mode throws while the editor draws the block, and
-  // the editor stops taking what is typed.
+  // the editor may stop taking what is typed. The highlighting check catches
+  // the missing addon whatever the timing; the typing and error checks catch
+  // an editor broken some other way.
   const errors: string[] = [];
   page.on("pageerror", (error) => errors.push(error.message));
   await app.open();
@@ -92,18 +94,23 @@ test("loads the language of a code block without rewriting the note", async ({
 
 test("keeps folded widgets when a language loads", async ({ app, page }) => {
   // A language arriving has the editor highlight the whole note again; what
-  // it had folded into widgets has to stay folded.
+  // it had folded into widgets has to stay folded, as the same widgets: one
+  // built anew would lose whatever was entered into it.
   await app.open();
   await app.openNotes();
   await app.createNote();
   await app.typeInEditor('<!-- @crossnote.youtube "videoID":"abc" -->\n\n');
   const thumbnail = app.editor.getByRole("img", { name: "Youtube: abc" });
   await expect(thumbnail).toBeVisible();
+  // A mark only this element carries, which a rebuilt widget would not.
+  await thumbnail.evaluate((element) => {
+    element.dataset.before = "language";
+  });
   await page.keyboard.type("```bash\necho $HOME\n```\n");
   await expect(
     app.editor.locator(".cm-builtin", { hasText: "echo" }),
   ).toBeVisible();
-  await expect(thumbnail).toBeVisible();
+  await expect(thumbnail).toHaveAttribute("data-before", "language");
 });
 
 test("loads mermaid for a slide from the site", async ({ app, page }) => {

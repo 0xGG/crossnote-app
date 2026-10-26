@@ -103,6 +103,9 @@ export class CrossnoteApp {
       ({ parts, text }) =>
         new Promise<string | undefined>((resolve, reject) => {
           const open = indexedDB.open("fs");
+          // As in expectStored: a database created here would lack the
+          // store the file system adds when it creates it.
+          open.onupgradeneeded = () => open.transaction!.abort();
           open.onerror = () => reject(open.error);
           open.onsuccess = () => {
             const db = open.result;
