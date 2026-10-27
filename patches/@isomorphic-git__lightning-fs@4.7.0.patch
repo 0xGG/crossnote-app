@@ -1,8 +1,8 @@
 diff --git a/src/DefaultBackend.js b/src/DefaultBackend.js
-index d0563618bc975277ee39193858534a294892e6ce..6bdf02fee5d325fa537e349411e254c88d9499c5 100644
+index d0563618bc975277ee39193858534a294892e6ce..ff366b5d45d1a1688134cd80016a7ea54c07b947 100644
 --- a/src/DefaultBackend.js
 +++ b/src/DefaultBackend.js
-@@ -13,7 +13,9 @@ const path = require("./path.js");
+@@ -13,8 +13,28 @@ const path = require("./path.js");
  module.exports = class DefaultBackend {
    constructor() {
      this.saveSuperblock = debounce(() => {
@@ -11,56 +11,95 @@ index d0563618bc975277ee39193858534a294892e6ce..6bdf02fee5d325fa537e349411e254c8
 +      // the tree stays in memory and goes out with the next save.
 +      this.flush().catch(() => {});
      }, 500);
++    // For each path, the last of its writes, deletions and renames that may
++    // not have ended yet.
++    this._turns = new Map();
++  }
++  // Runs fn once the writes, deletions and renames of these paths that came
++  // before have ended, putting the tree back included. Each then finds the
++  // tree as the one before it left it, so that what a refused one puts back
++  // is what was there when it started, not what another left on its way.
++  _inTurn(paths, fn) {
++    const done = Promise.all(paths.map((p) => this._turns.get(p))).then(fn);
++    const ended = done.catch(() => {});
++    for (const p of paths) this._turns.set(p, ended);
++    ended.then(() => {
++      for (const p of paths) {
++        if (this._turns.get(p) === ended) this._turns.delete(p);
++      }
++    });
++    return done;
    }
    async init (name, {
-@@ -134,14 +136,45 @@ module.exports = class DefaultBackend {
+     wipe,
+@@ -134,15 +154,47 @@ module.exports = class DefaultBackend {
        }
        data = encode(data);
      }
+-    const stat = await this._cache.writeStat(filepath, data.byteLength, { mode });
+-    await this._idb.writeFile(stat.ino, data)
 +    // The tree takes the file before its content is stored. Should the
 +    // storage refuse the content, the tree goes back to what it was, so that
 +    // the next save of the tree does not keep a file that was never stored.
-+    const dir = this._cache._lookup(path.dirname(filepath));
-+    const name = path.basename(filepath);
-+    const before = dir.get(name);
-     const stat = await this._cache.writeStat(filepath, data.byteLength, { mode });
--    await this._idb.writeFile(stat.ino, data)
-+    try {
-+      await this._idb.writeFile(stat.ino, data)
-+    } catch (err) {
-+      // Only while the tree still has this write's entry: another write to
-+      // the same file that went through meanwhile stays.
-+      let ours = false;
++    return this._inTurn([filepath], async () => {
++      const dir = this._cache._lookup(path.dirname(filepath));
++      const name = path.basename(filepath);
++      const before = dir.get(name);
++      const stat = this._cache.writeStat(filepath, data.byteLength, { mode });
++      const entry = dir.get(name);
 +      try {
-+        ours = this._cache.lstat(filepath) === stat;
-+      } catch (e) {}
-+      if (ours) {
-+        if (before === undefined) dir.delete(name);
-+        else dir.set(name, before);
-+      }
-+      throw err;
-+    }
-   }
-   async unlink(filepath, opts) {
-     const stat = this._cache.lstat(filepath);
-+    // As with writeFile: a deletion the storage refuses leaves the file in
-+    // the tree.
-+    const dir = this._cache._lookup(path.dirname(filepath));
-+    const name = path.basename(filepath);
-+    const before = dir.get(name);
-     this._cache.unlink(filepath);
-     if (stat.type !== 'symlink') {
--      await this._idb.unlink(stat.ino)
-+      try {
-+        await this._idb.unlink(stat.ino)
++        await this._idb.writeFile(stat.ino, data)
 +      } catch (err) {
-+        // Unless something else has taken the name meanwhile.
-+        if (!dir.has(name)) dir.set(name, before);
++        // Unless something else has taken the name meanwhile. The folder
++        // goes along when it is renamed, so the entry is still found in it.
++        if (dir.get(name) === entry) {
++          if (before === undefined) dir.delete(name);
++          else dir.set(name, before);
++        }
 +        throw err;
 +      }
-     }
++    });
+   }
+   async unlink(filepath, opts) {
+-    const stat = this._cache.lstat(filepath);
+-    this._cache.unlink(filepath);
+-    if (stat.type !== 'symlink') {
+-      await this._idb.unlink(stat.ino)
+-    }
++    // As with writeFile: a deletion the storage refuses leaves the file in
++    // the tree.
++    return this._inTurn([filepath], async () => {
++      const stat = this._cache.lstat(filepath);
++      const dir = this._cache._lookup(path.dirname(filepath));
++      const name = path.basename(filepath);
++      const before = dir.get(name);
++      this._cache.unlink(filepath);
++      if (stat.type !== 'symlink') {
++        try {
++          await this._idb.unlink(stat.ino)
++        } catch (err) {
++          // Unless something else has taken the name meanwhile.
++          if (!dir.has(name)) dir.set(name, before);
++          throw err;
++        }
++      }
++    });
    }
    readdir(filepath, opts) {
+     return this._cache.readdir(filepath);
+@@ -159,7 +211,11 @@ module.exports = class DefaultBackend {
+     this._cache.rmdir(filepath);
+   }
+   rename(oldFilepath, newFilepath) {
+-    this._cache.rename(oldFilepath, newFilepath);
++    // In turn with both paths: a file whose content is still being stored
++    // is renamed once that has ended, or found gone should it be refused.
++    return this._inTurn([oldFilepath, newFilepath], () => {
++      this._cache.rename(oldFilepath, newFilepath);
++    });
+   }
+   stat(filepath, opts) {
+     return this._cache.stat(filepath);
 diff --git a/src/PromisifiedFS.js b/src/PromisifiedFS.js
 index aaa6984556a2ecde5816efdd1ae280f318150312..368c9d292b328958e961f7f239fe8ed245dc4ad8 100644
 --- a/src/PromisifiedFS.js

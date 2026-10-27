@@ -158,3 +158,210 @@ it("keeps a write that went through while another was refused", async () => {
     await pfs.readFile("/notebooks/fs-race/note.md", { encoding: "utf8" }),
   ).toBe("B");
 });
+
+const quotaExceeded = () =>
+  new DOMException("The quota has been exceeded.", "QuotaExceededError");
+
+// Content writes, unless the storage is to take them, and deletions refused,
+// as by storage that is full, while the tree still takes its own writes.
+function refuseContent({ puts = true } = {}) {
+  const store = IDBObjectStore.prototype;
+  const put = store.put;
+  const remove = store.delete;
+  store.put = function (this: IDBObjectStore, ...args) {
+    if (puts && this.name === "fs_files" && args[1] !== "!root") {
+      throw quotaExceeded();
+    }
+    return put.apply(this, args);
+  } as IDBObjectStore["put"];
+  store.delete = function (this: IDBObjectStore, ...args) {
+    if (this.name === "fs_files") {
+      throw quotaExceeded();
+    }
+    return remove.apply(this, args);
+  } as IDBObjectStore["delete"];
+  return () => {
+    store.put = put;
+    store.delete = remove;
+  };
+}
+
+// The browser file system's store of file content, reached through its
+// internals only to choose when a deletion is refused.
+function contentStore() {
+  return (
+    fs.promises as unknown as {
+      _backend: { _idb: { unlink: (ino: number) => Promise<void> } };
+    }
+  )._backend._idb;
+}
+
+// What a refused write puts back can no longer be what another refused write
+// left: two refused writes of a new file leave no file.
+it("leaves nothing behind of two refused writes to a new file", async () => {
+  await pfs.mkdirp("/notebooks/fs-turns-writes");
+  const restore = refuseContent();
+  try {
+    const first = fs.promises.writeFile(
+      "/notebooks/fs-turns-writes/new.md",
+      "A",
+    );
+    const second = fs.promises.writeFile(
+      "/notebooks/fs-turns-writes/new.md",
+      "BB",
+    );
+    await Promise.all([
+      expect(first).rejects.toThrow("quota"),
+      expect(second).rejects.toThrow("quota"),
+    ]);
+  } finally {
+    restore();
+  }
+  expect(await pfs.readdir("/notebooks/fs-turns-writes")).toEqual([]);
+});
+
+// Nor a deletion called while the write of a new file is still going on. The
+// deletion is refused only once the write has been, the order in which it put
+// the write's entry back.
+it("leaves nothing behind of a refused write and deletion of a new file", async () => {
+  await pfs.mkdirp("/notebooks/fs-turns-delete");
+  let written: Promise<void> = Promise.resolve();
+  const unlink = vi
+    .spyOn(contentStore(), "unlink")
+    .mockImplementation(async () => {
+      await written.catch(() => {});
+      throw quotaExceeded();
+    });
+  const restore = refuseContent();
+  try {
+    written = fs.promises.writeFile("/notebooks/fs-turns-delete/new.md", "A");
+    const deleted = fs.promises.unlink("/notebooks/fs-turns-delete/new.md");
+    await Promise.all([
+      expect(written).rejects.toThrow("quota"),
+      expect(deleted).rejects.toThrow(),
+    ]);
+  } finally {
+    restore();
+    unlink.mockRestore();
+  }
+  expect(await pfs.readdir("/notebooks/fs-turns-delete")).toEqual([]);
+});
+
+// A file whose deletion was refused stays, even when a write of it that was
+// refused too came right after.
+it("keeps a file whose deletion and next write were both refused", async () => {
+  await pfs.mkdirp("/notebooks/fs-turns-kept");
+  await pfs.writeFile("/notebooks/fs-turns-kept/kept.md", "# Kept");
+  const restore = refuseContent();
+  try {
+    const deleted = fs.promises.unlink("/notebooks/fs-turns-kept/kept.md");
+    const written = fs.promises.writeFile(
+      "/notebooks/fs-turns-kept/kept.md",
+      "# New",
+    );
+    await Promise.all([
+      expect(deleted).rejects.toThrow("quota"),
+      expect(written).rejects.toThrow("quota"),
+    ]);
+  } finally {
+    restore();
+  }
+  expect(await pfs.readdir("/notebooks/fs-turns-kept")).toEqual(["kept.md"]);
+  expect(
+    await pfs.readFile("/notebooks/fs-turns-kept/kept.md", {
+      encoding: "utf8",
+    }),
+  ).toBe("# Kept");
+});
+
+// A write that went through between two refused deletions of the file is
+// what the file reads. The first deletion is refused once the second has
+// taken the file away, the order in which it put the file back as it was
+// before the write, or after a while, should the second not come first. A
+// file made after the note keeps the write from getting the note's inode, the
+// highest one plus one, which would store it where the old entry points.
+it("keeps the write that went through between two refused deletions", async () => {
+  await pfs.mkdirp("/notebooks/fs-turns-between");
+  await pfs.writeFile("/notebooks/fs-turns-between/note.md", "# Old");
+  await pfs.writeFile("/notebooks/fs-turns-between/later.md", "# Later");
+  let first: Promise<void> = Promise.resolve();
+  let secondCame = () => {};
+  const second = new Promise<void>((resolve) => (secondCame = resolve));
+  let calls = 0;
+  const unlink = vi
+    .spyOn(contentStore(), "unlink")
+    .mockImplementation(async () => {
+      calls += 1;
+      if (calls === 1) {
+        await Promise.race([
+          second,
+          new Promise((resolve) => setTimeout(resolve, 50)),
+        ]);
+      } else {
+        secondCame();
+        await first.catch(() => {});
+      }
+      throw quotaExceeded();
+    });
+  try {
+    first = fs.promises.unlink("/notebooks/fs-turns-between/note.md");
+    const written = fs.promises.writeFile(
+      "/notebooks/fs-turns-between/note.md",
+      "# New",
+    );
+    const last = fs.promises.unlink("/notebooks/fs-turns-between/note.md");
+    await Promise.all([
+      expect(first).rejects.toThrow("quota"),
+      written,
+      expect(last).rejects.toThrow("quota"),
+    ]);
+  } finally {
+    unlink.mockRestore();
+  }
+  expect(
+    await pfs.readFile("/notebooks/fs-turns-between/note.md", {
+      encoding: "utf8",
+    }),
+  ).toBe("# New");
+});
+
+// A new file renamed while its content is being stored, and the content
+// refused: there is no file under either name.
+it("leaves nothing behind of a refused write to a file renamed meanwhile", async () => {
+  await pfs.mkdirp("/notebooks/fs-turns-rename");
+  const restore = refuseContent();
+  const written = fs.promises.writeFile("/notebooks/fs-turns-rename/a.md", "A");
+  const renamed = fs.promises
+    .rename(
+      "/notebooks/fs-turns-rename/a.md",
+      "/notebooks/fs-turns-rename/b.md",
+    )
+    .catch((error: unknown) => error);
+  try {
+    await Promise.all([expect(written).rejects.toThrow("quota"), renamed]);
+  } finally {
+    restore();
+  }
+  expect(await pfs.readdir("/notebooks/fs-turns-rename")).toEqual([]);
+  expect(await renamed).toHaveProperty("code", "ENOENT");
+});
+
+// The same with the folder the new file is in renamed as a whole.
+it("leaves nothing behind of a refused write in a folder renamed meanwhile", async () => {
+  await pfs.mkdirp("/notebooks/fs-turns-folder/old");
+  const restore = refuseContent();
+  try {
+    const written = fs.promises.writeFile(
+      "/notebooks/fs-turns-folder/old/new.md",
+      "A",
+    );
+    const renamed = fs.promises.rename(
+      "/notebooks/fs-turns-folder/old",
+      "/notebooks/fs-turns-folder/moved",
+    );
+    await Promise.all([expect(written).rejects.toThrow("quota"), renamed]);
+  } finally {
+    restore();
+  }
+  expect(await pfs.readdir("/notebooks/fs-turns-folder/moved")).toEqual([]);
+});
