@@ -8,12 +8,30 @@ test.beforeEach(async ({ app }) => {
   await app.openNotes();
 });
 
-test("says when a note cannot be created", async ({ app, page }) => {
+test("says when a note cannot be created, and leaves no trace of it", async ({
+  app,
+  page,
+}) => {
   await app.refuseWrites();
   await app.notesPanel.getByRole("button", { name: "New note" }).click();
   await expect(page.getByRole("alert")).toContainText(
     "Failed to create the note",
   );
+
+  // Once the storage takes writes, a new note writes the directory tree,
+  // which must not hold the note that was refused.
+  await app.refuseWrites(false);
+  await app.notesPanel.getByRole("button", { name: "New note" }).click();
+  await expect(app.noteTitle).not.toHaveValue("");
+  const file = `${await app.notebookFolder()}/${await app.noteTitle.inputValue()}.md`;
+  await app.typeInEditor("Created");
+  await expect.poll(() => app.storedText(file)).toContain("Created");
+  await page.reload();
+  await app.waitUntilReady();
+  await app.openNotes();
+  await expect(app.noteCards).toHaveCount(2);
+  await expect(app.noteCards.filter({ hasText: "README" })).toHaveCount(1);
+  await expect(app.noteCards.filter({ hasText: "Created" })).toHaveCount(1);
 });
 
 test("keeps the dialog open when a note cannot be deleted", async ({
@@ -32,6 +50,24 @@ test("keeps the dialog open when a note cannot be deleted", async ({
   );
   await expect(dialog).toBeVisible();
   await expect(dialog.getByRole("button", { name: "Delete" })).toBeEnabled();
+
+  // Tried again, it fails again rather than take the note for gone.
+  const message = page.getByRole("alert");
+  await message.getByRole("button", { name: "Close" }).click();
+  await expect(message).toHaveCount(0);
+  await dialog.getByRole("button", { name: "Delete" }).click();
+  await expect(message).toContainText("Failed to delete the note");
+  await expect(dialog).toBeVisible();
+
+  // Once the storage takes writes, it goes, for good.
+  await app.refuseWrites(false);
+  await dialog.getByRole("button", { name: "Delete" }).click();
+  await expect(dialog).toBeHidden();
+  await page.reload();
+  await app.waitUntilReady();
+  await app.openNotes();
+  await expect(app.noteCards).toHaveCount(1);
+  await expect(app.noteCards.filter({ hasText: "README" })).toHaveCount(1);
 });
 
 test("says when a note's settings cannot be saved", async ({ app, page }) => {

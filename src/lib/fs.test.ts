@@ -1,4 +1,5 @@
-import { expect, it } from "vitest";
+import { expect, it, vi } from "vitest";
+import { isStored } from "../test/storedTree";
 import { fs, pfs } from "./fs";
 
 // The browser file system would put a folder under a file, out of sight of
@@ -52,10 +53,17 @@ it("still saves a note an earlier version put under a file", async () => {
 it("works again once the storage takes writes after refusing them", async () => {
   await pfs.mkdirp("/notebooks/fs-refused");
   await pfs.writeFile("/notebooks/fs-refused/note.md", "# First");
+  await pfs.storeTree("/notebooks/fs-refused");
   const store = IDBObjectStore.prototype;
   const put = store.put;
+  // The writes of the directory tree refused: the debounced save after the
+  // write, and the one going idle makes.
+  let treesRefused = 0;
   store.put = function (this: IDBObjectStore, ...args) {
     if (this.name === "fs_files") {
+      if (args[1] === "!root") {
+        treesRefused++;
+      }
       throw new DOMException(
         "The quota has been exceeded.",
         "QuotaExceededError",
@@ -67,14 +75,56 @@ it("works again once the storage takes writes after refusing them", async () => 
     await expect(
       pfs.writeFile("/notebooks/fs-refused/note.md", "# Second"),
     ).rejects.toThrow("quota");
-    // Long enough to go idle, and fail to write the tree out.
-    await new Promise((resolve) => setTimeout(resolve, 800));
+    await vi.waitFor(() => expect(treesRefused).toBe(2), { timeout: 3000 });
   } finally {
     store.put = put;
   }
 
-  await pfs.writeFile("/notebooks/fs-refused/note.md", "# Third");
+  await pfs.writeFile("/notebooks/fs-refused/new.md", "# Third");
+  await pfs.storeTree("/notebooks/fs-refused");
   expect(
-    await pfs.readFile("/notebooks/fs-refused/note.md", { encoding: "utf8" }),
+    await pfs.readFile("/notebooks/fs-refused/new.md", { encoding: "utf8" }),
   ).toBe("# Third");
+  // And the tree it went on with is the one a page loaded next finds.
+  expect(await isStored("/notebooks/fs-refused/new.md")).toBe(true);
+});
+
+// A write the storage refuses has to leave the tree as it was: going on with
+// the tree it holds, the file system would otherwise save a file it never
+// stored, or drop one it never deleted.
+it("leaves nothing behind of the writes the storage refused", async () => {
+  await pfs.mkdirp("/notebooks/fs-left");
+  await pfs.writeFile("/notebooks/fs-left/kept.md", "# Kept");
+  const store = IDBObjectStore.prototype;
+  const put = store.put;
+  const remove = store.delete;
+  const refused = () => {
+    throw new DOMException(
+      "The quota has been exceeded.",
+      "QuotaExceededError",
+    );
+  };
+  store.put = function (this: IDBObjectStore, ...args) {
+    return this.name === "fs_files" ? refused() : put.apply(this, args);
+  } as IDBObjectStore["put"];
+  store.delete = function (this: IDBObjectStore, ...args) {
+    return this.name === "fs_files" ? refused() : remove.apply(this, args);
+  } as IDBObjectStore["delete"];
+  try {
+    await expect(
+      pfs.writeFile("/notebooks/fs-left/new.md", "# New"),
+    ).rejects.toThrow("quota");
+    await expect(pfs.unlink("/notebooks/fs-left/kept.md")).rejects.toThrow(
+      "quota",
+    );
+  } finally {
+    store.put = put;
+    store.delete = remove;
+  }
+
+  expect(await pfs.exists("/notebooks/fs-left/new.md")).toBe(false);
+  expect(
+    await pfs.readFile("/notebooks/fs-left/kept.md", { encoding: "utf8" }),
+  ).toBe("# Kept");
+  expect((await pfs.readdir("/notebooks/fs-left")).sort()).toEqual(["kept.md"]);
 });
