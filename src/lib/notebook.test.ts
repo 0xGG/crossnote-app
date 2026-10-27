@@ -430,7 +430,7 @@ describe("Notebook", () => {
         ["half typed", "---\ntitle: Hi\ntags: [work, r3\n---\nBody\n"],
         ["indented with a tab", "---\ntitle: hi\n\tbad: 1\n---\nBody\n"],
         [
-          "conflict markers in it",
+          "conflict markers as a merge writes them",
           "---\ntitle: T\n\\<<<<<<< ours\nmodified: 2026-01-01\n\\=======\nmodified: 2026-01-02\n\\>>>>>>> theirs\n---\nBody\n",
         ],
         // Rules around a paragraph, or a list: text, not front matter.

@@ -83,7 +83,7 @@ function readMapping(lines: string[]): Mapping | null | undefined {
   if (value === null || value === undefined) {
     // Nothing but blank lines and comments is an empty mapping; `~` on its
     // own is a value.
-    return lines.every((line) => /^\s*(#.*)?$/.test(line)) ? {} : null;
+    return lines.every((line) => /^\s*(#.*)?\s*$/.test(line)) ? {} : null;
   }
   if (typeof value !== "object" || Array.isArray(value)) {
     return null;
@@ -149,7 +149,9 @@ function splitSettings(
       settings.push(setting);
     } else if (setting && /^[ \t]*\r?\n?$/.test(line)) {
       blank.push(line);
-    } else if (setting && /^[ \t]/.test(line)) {
+    } else if (setting && /^([ \t]|-([ \t]|\r?\n|$))/.test(line)) {
+      // Indented, or a list item, which YAML lets start at the key's own
+      // indentation.
       setting.lines.push(...blank, line);
       blank = [];
     } else {
@@ -192,12 +194,36 @@ function splitSettings(
   return { rest, settings };
 }
 
+// The names the older form of the settings gave them.
+const OLDER_KEYS = [...NOTE_SETTINGS, "createdAt", "modifiedAt"];
+
+// Whether a `note` key holds the older form of the settings, rather than
+// something of the user's own that happens to be called that.
+function olderSettings(value: unknown): boolean {
+  return (
+    !!value &&
+    typeof value === "object" &&
+    !Array.isArray(value) &&
+    !(value instanceof Date) &&
+    Object.keys(value).every((key) => OLDER_KEYS.includes(key))
+  );
+}
+
 // The front matter a text starts with, its settings named taken out.
 function readFrontMatter(text: string, keys: string[]) {
   const bom = text.startsWith(BOM) ? BOM : "";
   const block = findBlock(text.slice(bom.length));
   const mapping = block ? readMapping(block.lines) : null;
-  const split = mapping ? splitSettings(block.lines, mapping, keys) : null;
+  const split = mapping
+    ? splitSettings(
+        block.lines,
+        mapping,
+        keys.filter(
+          (key) =>
+            key !== OLDER_SETTINGS || olderSettings(mapping[OLDER_SETTINGS]),
+        ),
+      )
+    : null;
   return { bom, block, unreadable: mapping === undefined, split };
 }
 
@@ -279,18 +305,16 @@ export function writeNoteText(
   const typed = new Map<string, Setting>();
   for (const setting of split ? split.settings : []) {
     if (setting.key === OLDER_SETTINGS) {
-      const older = setting.value;
-      if (older && typeof older === "object" && !Array.isArray(older)) {
-        for (const [key, value] of Object.entries(older)) {
-          values.set(
-            key === "createdAt"
-              ? "created"
-              : key === "modifiedAt"
-                ? "modified"
-                : key,
-            value,
-          );
-        }
+      // Taken out only when it is that form: a mapping of settings.
+      for (const [key, value] of Object.entries(setting.value as Mapping)) {
+        values.set(
+          key === "createdAt"
+            ? "created"
+            : key === "modifiedAt"
+              ? "modified"
+              : key,
+          value,
+        );
       }
     } else {
       typed.set(setting.key, setting);

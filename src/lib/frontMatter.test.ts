@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { readNoteText, writeNoteText } from "./frontMatter";
+import { NOTE_SETTINGS, readNoteText, writeNoteText } from "./frontMatter";
 
 const created = new Date("2026-10-26T00:00:00.000Z");
 const settings: [string, unknown][] = [
@@ -97,5 +97,61 @@ describe("writeNoteText", () => {
       "---\ntitle: T\n---\nBody",
     );
     expect(writeNoteText("Body", [], null)).toBe("Body");
+  });
+});
+
+describe("layouts other writers use", () => {
+  const time = "2020-01-01T00:00:00.000Z";
+
+  it("takes a list written at the start of its lines with its setting", () => {
+    const file = `---\ntitle: T\naliases:\n- a\n- b\ncreated: ${time}\n---\nBody`;
+    expect(readNoteText(file)).toEqual({
+      text: "---\ntitle: T\n---\nBody",
+      settings: { aliases: ["a", "b"], created: new Date(time) },
+      unreadable: false,
+    });
+    expect(
+      writeNoteText(
+        "---\ntitle: T\n---\nBody, edited",
+        [
+          ["aliases", ["a", "b"]],
+          ["created", new Date(time)],
+        ],
+        file,
+      ),
+    ).toBe(
+      `---\ntitle: T\naliases:\n- a\n- b\ncreated: ${time}\n---\nBody, edited`,
+    );
+  });
+
+  it("keeps a note key that is not the older form of the settings", () => {
+    for (const [file, saved] of [
+      [
+        "---\ntitle: t\nnote: remember to cite\n---\nBody",
+        `---\ntitle: t\nnote: remember to cite\npinned: true\ncreated: ${created.toISOString()}\n---\nBody`,
+      ],
+      [
+        "---\nnote:\n  source: book\n---\nBody",
+        `---\nnote:\n  source: book\npinned: true\ncreated: ${created.toISOString()}\n---\nBody`,
+      ],
+    ]) {
+      expect(readNoteText(file, [...NOTE_SETTINGS, "note"]).text).toBe(file);
+      expect(writeNoteText(file, settings, null)).toBe(saved);
+    }
+  });
+
+  it("adds settings after comments, and keeps the dashes as written", () => {
+    expect(writeNoteText("---\n# A comment\n---\nBody", settings, null)).toBe(
+      `---\n# A comment\npinned: true\ncreated: ${created.toISOString()}\n---\nBody`,
+    );
+    expect(writeNoteText("--- \ntitle: T\n---  \nBody", settings, null)).toBe(
+      `--- \ntitle: T\npinned: true\ncreated: ${created.toISOString()}\n---  \nBody`,
+    );
+  });
+
+  it("writes settings with the line endings of a note without front matter", () => {
+    expect(writeNoteText("Body\r\nMore\r\n", settings, null)).toBe(
+      `---\r\npinned: true\r\ncreated: ${created.toISOString()}\r\n---\r\nBody\r\nMore\r\n`,
+    );
   });
 });
