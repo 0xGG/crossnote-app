@@ -430,8 +430,13 @@ describe("Notebook", () => {
         ["half typed", "---\ntitle: Hi\ntags: [work, r3\n---\nBody\n"],
         ["indented with a tab", "---\ntitle: hi\n\tbad: 1\n---\nBody\n"],
         [
-          "conflict markers as a merge writes them",
+          // Each marker after a backslash (lib/crossnote.ts, pullNotebook).
+          "conflict markers as the notebook's own merge writes them",
           "---\ntitle: T\n\\<<<<<<< ours\nmodified: 2026-01-01\n\\=======\nmodified: 2026-01-02\n\\>>>>>>> theirs\n---\nBody\n",
+        ],
+        [
+          "conflict markers as git writes them",
+          "---\ntitle: T\n<<<<<<< ours\nmodified: 2026-01-01\n=======\nmodified: 2026-01-02\n>>>>>>> theirs\n---\nBody\n",
         ],
         // Rules around a paragraph, or a list: text, not front matter.
         ["a paragraph between rules", "---\nIntro paragraph\n---\nBody\n"],
