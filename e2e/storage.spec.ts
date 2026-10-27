@@ -44,4 +44,12 @@ test("asks the browser to keep the site's storage as it starts", async ({
       "On: the browser does not clear the notes this site stores to free up space.",
     ),
   ).toBeVisible();
+  // Once granted, Settings only looks, and asks no more.
+  expect(
+    await page.evaluate(
+      () =>
+        (window as unknown as { persistAsked: { count: number } }).persistAsked
+          .count,
+    ),
+  ).toBe(1);
 });
