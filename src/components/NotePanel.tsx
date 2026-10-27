@@ -482,8 +482,10 @@ export default function NotePanel(props: Props) {
 
   // Whether the last save failed, until one goes through. Said once; what
   // was typed stays in the editor for the next change to save, and the page
-  // asks before it is left with it.
+  // asks before it is left with it. Only the save started last tells: one
+  // started before it can settle after it.
   const saveFailed = useRef<boolean>(false);
+  const lastSave = useRef<number>(0);
   useEffect(() => {
     const ask = (event: BeforeUnloadEvent) => {
       if (saveFailed.current) {
@@ -865,6 +867,7 @@ export default function NotePanel(props: Props) {
         setTimeout(() => {
           if (markdown === editor.getValue()) {
             saving.current = markdown;
+            const save = ++lastSave.current;
             crossnoteContainer
               .updateNoteMarkdown(
                 tabNode,
@@ -873,9 +876,14 @@ export default function NotePanel(props: Props) {
                 markdown,
               )
               .then(() => {
-                saveFailed.current = false;
+                if (save === lastSave.current) {
+                  saveFailed.current = false;
+                }
               })
               .catch((error) => {
+                if (save !== lastSave.current) {
+                  return;
+                }
                 if (!saveFailed.current) {
                   notify({
                     severity: "error",

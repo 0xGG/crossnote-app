@@ -1,7 +1,19 @@
+import { type Page } from "@playwright/test";
 import { expect, test } from "./fixtures";
 
 // Writes the browser's storage refuses, as a full disk does, have to show,
 // and leave what was typed where it is.
+
+// Whether leaving the page now would be asked about: the app asks while a
+// save has failed and none has gone through since, which it settles only
+// once the whole save is done, after the note's text is stored.
+function asksBeforeLeaving(page: Page): Promise<boolean> {
+  return page.evaluate(() => {
+    const leaving = new Event("beforeunload", { cancelable: true });
+    window.dispatchEvent(leaving);
+    return leaving.defaultPrevented;
+  });
+}
 
 test("says when a note cannot be saved, keeps what was typed and saves it once it can", async ({
   app,
@@ -40,9 +52,20 @@ test("says when a note cannot be saved, keeps what was typed and saves it once i
   await expect
     .poll(() => app.storedText(file))
     .toContain("First second third fourth");
+  await expect.poll(() => asksBeforeLeaving(page)).toBe(false);
   expect(await messages()).toEqual([
     expect.stringContaining("Failed to save the note"),
   ]);
+
+  // Once a save has gone through, the next one to fail is said again.
+  await app.refuseWrites();
+  await page.keyboard.type(" fifth");
+  await expect
+    .poll(messages)
+    .toEqual([
+      expect.stringContaining("Failed to save the note"),
+      expect.stringContaining("Failed to save the note"),
+    ]);
 });
 
 test("asks before the page is left with a note it could not save", async ({
@@ -85,6 +108,7 @@ test("leaves the page without asking once the note is saved", async ({
   await app.refuseWrites(false);
   await page.keyboard.type(" third");
   await expect.poll(() => app.storedText(file)).toContain("First second third");
+  await expect.poll(() => asksBeforeLeaving(page)).toBe(false);
 
   let asked = false;
   page.on("dialog", (dialog) => {
