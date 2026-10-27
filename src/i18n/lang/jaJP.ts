@@ -113,6 +113,9 @@ export const jaJP = {
     "error/link-outside-notebook": "リンク先がノートブックの外にあります",
     "error/link-inside-note": "リンク先がフォルダではなくノートの中にあります",
     "error/failed-to-save-note": "ノートを保存できませんでした",
+    "error/failed-to-create-note": "ノートを作成できませんでした",
+    "error/failed-to-delete-note": "ノートを削除できませんでした",
+    "error/failed-to-save-note-settings": "ノートの設定を保存できませんでした",
 
     // Success
     "success/notebook-uploaded": "ノートブックがアップロードされます",

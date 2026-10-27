@@ -110,6 +110,9 @@ export const zhCN = {
     "error/link-outside-notebook": "链接指向笔记本之外",
     "error/link-inside-note": "链接指向笔记内部，而不是文件夹",
     "error/failed-to-save-note": "保存笔记失败",
+    "error/failed-to-create-note": "新建笔记失败",
+    "error/failed-to-delete-note": "删除笔记失败",
+    "error/failed-to-save-note-settings": "保存笔记设置失败",
 
     // Success
     "success/notebook-uploaded": "笔记本已上传",

@@ -7,10 +7,11 @@ import {
   DialogTitle,
 } from "@mui/material";
 import { TabNode } from "flexlayout-react";
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { CrossnoteContainer } from "../containers/crossnote";
 import { Note } from "../lib/note";
+import { failureMessage, notify } from "../lib/notifications";
 
 interface Props {
   open: boolean;
@@ -22,6 +23,7 @@ interface Props {
 export function DeleteNoteDialog(props: Props) {
   const { t } = useTranslation();
   const isMounted = useRef<boolean>(false);
+  const [deleting, setDeleting] = useState<boolean>(false);
   const note = props.note;
   const crossnoteContainer = CrossnoteContainer.useContainer();
 
@@ -43,14 +45,33 @@ export function DeleteNoteDialog(props: Props) {
       <DialogActions>
         <Button
           style={{ color: "red" }}
-          onClick={() => {
-            crossnoteContainer.deleteNote(
-              props.tabNode,
-              note.notebookPath,
-              note.filePath,
-            );
-            if (isMounted.current) {
-              props.onClose();
+          disabled={deleting}
+          onClick={async () => {
+            // Closed once the note is gone; a note that could not be deleted
+            // leaves the dialog open, saying so.
+            setDeleting(true);
+            try {
+              await crossnoteContainer.deleteNote(
+                props.tabNode,
+                note.notebookPath,
+                note.filePath,
+              );
+              if (isMounted.current) {
+                props.onClose();
+              }
+            } catch (error) {
+              notify({
+                severity: "error",
+                message: failureMessage(
+                  t("error/failed-to-delete-note"),
+                  error,
+                ),
+                duration: 5000,
+              });
+            } finally {
+              if (isMounted.current) {
+                setDeleting(false);
+              }
             }
           }}
         >

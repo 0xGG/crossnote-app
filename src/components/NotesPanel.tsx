@@ -39,6 +39,7 @@ import {
 } from "../lib/event";
 import { Note, Notes as NotesValue } from "../lib/note";
 import { Notebook } from "../lib/notebook";
+import { failureMessage, notify } from "../lib/notifications";
 import { OrderBy, OrderDirection } from "../lib/order";
 import { TabNodeConfig } from "../lib/tabNode";
 import Notes from "./Notes";
@@ -177,7 +178,12 @@ function NotesPanel(props: Props) {
         crossnoteContainer.openNoteAtPath(props.notebook, note.filePath);
         setIsCreatingNote(false);
       })
-      .catch(() => {
+      .catch((error) => {
+        notify({
+          severity: "error",
+          message: failureMessage(t("error/failed-to-create-note"), error),
+          duration: 5000,
+        });
         setIsCreatingNote(false);
       });
     // The container's functions change with the language, which names a new
@@ -187,6 +193,7 @@ function NotesPanel(props: Props) {
     props.note,
     crossnoteContainer.createNewNote,
     crossnoteContainer.openNoteAtPath,
+    t,
   ]);
 
   const onChangeSearchValue = useCallback(

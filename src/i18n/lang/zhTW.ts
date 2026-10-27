@@ -110,6 +110,9 @@ export const zhTW = {
     "error/link-outside-notebook": "連結指向筆記本之外",
     "error/link-inside-note": "連結指向筆記內部，而不是資料夾",
     "error/failed-to-save-note": "儲存筆記失敗",
+    "error/failed-to-create-note": "新增筆記失敗",
+    "error/failed-to-delete-note": "刪除筆記失敗",
+    "error/failed-to-save-note-settings": "儲存筆記設定失敗",
 
     // Success
     "success/notebook-uploaded": "筆記本已上傳",

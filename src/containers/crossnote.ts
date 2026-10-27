@@ -23,7 +23,7 @@ import { pfs } from "../lib/fs";
 import { pruneUnknownTabs, tabsShowingNote } from "../lib/layout";
 import { Note, NoteConfig, getNoteIcon } from "../lib/note";
 import { Notebook } from "../lib/notebook";
-import { notify } from "../lib/notifications";
+import { failureMessage, notify } from "../lib/notifications";
 import { CrossnoteTabNode } from "../lib/tabNode";
 import { tabsetForNewTab } from "../lib/tabset";
 import { getTodayName } from "../utilities/utils";
@@ -215,27 +215,42 @@ function useCrossnoteContainer(initialState: InitialState) {
     [getNotebookAtPath],
   );
 
+  // Saves a note's settings, saying so when they cannot be saved. Whether
+  // the note has them now.
   const updateNoteConfig = useCallback(
     async (
       tabNode: TabNode,
       notebookPath: string,
       filePath: string,
       noteConfig: NoteConfig,
-    ) => {
+    ): Promise<boolean> => {
       const notebook = getNotebookAtPath(notebookPath);
       if (!notebook) {
-        return;
+        return false;
       }
       const note = await notebook.getNote(filePath);
       if (!note) {
-        return;
+        return false;
       }
       if (JSON.stringify(note.config) !== JSON.stringify(noteConfig)) {
-        const newNote = await notebook.writeNote(
-          note.filePath,
-          note.markdown,
-          noteConfig,
-        );
+        let newNote: Note;
+        try {
+          newNote = await notebook.writeNote(
+            note.filePath,
+            note.markdown,
+            noteConfig,
+          );
+        } catch (error) {
+          notify({
+            severity: "error",
+            message: failureMessage(
+              t("error/failed-to-save-note-settings"),
+              error,
+            ),
+            duration: 5000,
+          });
+          return false;
+        }
         globalEmitter.emit(EventType.ModifiedMarkdown, {
           tabId: tabNode.getId(),
           markdown: newNote.markdown,
@@ -244,8 +259,9 @@ function useCrossnoteContainer(initialState: InitialState) {
           noteConfig: newNote.config,
         });
       }
+      return true;
     },
-    [getNotebookAtPath],
+    [getNotebookAtPath, t],
   );
 
   const deleteNote = useCallback(
@@ -451,7 +467,12 @@ function useCrossnoteContainer(initialState: InitialState) {
             });
             return;
           }
-          throw error;
+          notify({
+            severity: "error",
+            message: failureMessage(t("error/failed-to-create-note"), error),
+            duration: 5000,
+          });
+          return;
         }
       }
       addTabNode({
@@ -758,7 +779,16 @@ function useCrossnoteContainer(initialState: InitialState) {
       const newConfig = Object.assign({}, note.config, {
         aliases: newAliases,
       });
-      await updateNoteConfig(tabNode, notebookPath, noteFilePath, newConfig);
+      if (
+        !(await updateNoteConfig(
+          tabNode,
+          notebookPath,
+          noteFilePath,
+          newConfig,
+        ))
+      ) {
+        return aliases;
+      }
       notebook.search.addAlias(noteFilePath, alias);
       return newAliases;
     },
@@ -785,7 +815,16 @@ function useCrossnoteContainer(initialState: InitialState) {
       if (!newAliases.length) {
         delete newConfig.aliases;
       }
-      await updateNoteConfig(tabNode, notebookPath, noteFilePath, newConfig);
+      if (
+        !(await updateNoteConfig(
+          tabNode,
+          notebookPath,
+          noteFilePath,
+          newConfig,
+        ))
+      ) {
+        return aliases;
+      }
       notebook.search.deleteAlias(noteFilePath, alias);
       return newAliases;
     },

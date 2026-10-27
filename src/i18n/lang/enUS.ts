@@ -111,6 +111,9 @@ export const enUS = {
     "error/link-outside-notebook": "The link leads outside the notebook",
     "error/link-inside-note": "The link leads inside a note, not a folder",
     "error/failed-to-save-note": "Failed to save the note",
+    "error/failed-to-create-note": "Failed to create the note",
+    "error/failed-to-delete-note": "Failed to delete the note",
+    "error/failed-to-save-note-settings": "Failed to save the note's settings",
 
     // Success
     "success/notebook-uploaded": "Notebook uploaded",

@@ -179,12 +179,13 @@ it("saves nothing for a note that is gone, and does not fail", async () => {
   await expect(
     crossnote.updateNoteMarkdown(tab, notebook.dir, "moved.md", "Typed"),
   ).resolves.toBeUndefined();
+  // Not saved, as it tells its callers.
   await expect(
     crossnote.updateNoteConfig(tab, notebook.dir, "moved.md", {
       createdAt: new Date(),
       modifiedAt: new Date(),
       pinned: true,
     }),
-  ).resolves.toBeUndefined();
+  ).resolves.toBe(false);
   expect(await pfs.exists(`${notebook.dir}/moved.md`)).toBe(false);
 });
