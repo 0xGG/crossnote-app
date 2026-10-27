@@ -84,6 +84,21 @@ describe("Notebook", () => {
     expect(await notebook.getNote("missing.md")).toBeNull();
   });
 
+  // The browser file system can list a file whose content was never stored,
+  // and then reads it as nothing at all.
+  it("reads a note listed without its content as empty", async () => {
+    await pfs.writeFile("/notebooks/test/contentless.md", "# Listed");
+    const readFile = vi
+      .spyOn(pfs, "readFile")
+      .mockResolvedValueOnce(undefined as unknown as string);
+    try {
+      const note = await notebook.getNote("contentless.md", true);
+      expect(note.markdown).toBe("");
+    } finally {
+      readFile.mockRestore();
+    }
+  });
+
   it("leaves a note it cannot rename where it was", async () => {
     await notebook.writeNote("source.md", "See [[target]].", {
       createdAt: new Date(),

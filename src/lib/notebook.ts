@@ -336,10 +336,15 @@ export class Notebook {
       return null;
     }
     if (stats.isFile() && filePath.endsWith(".md")) {
-      const file = (await pfs.readFile(absFilePath, {
+      const file = await pfs.readFile(absFilePath, {
         encoding: "utf8",
-      })) as string;
-      const { text: markdown, settings } = readNoteText(file);
+      });
+      // A file the browser file system lists without its content, as an
+      // earlier refused write could leave, reads as empty rather than stop
+      // every note of the notebook from loading.
+      const { text: markdown, settings } = readNoteText(
+        typeof file === "string" ? file : "",
+      );
 
       // The file's times stand in for the settings it does not have.
       const noteConfig: NoteConfig = {
