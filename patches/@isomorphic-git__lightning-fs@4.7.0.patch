@@ -1,5 +1,5 @@
 diff --git a/src/DefaultBackend.js b/src/DefaultBackend.js
-index d0563618bc975277ee39193858534a294892e6ce..06ae8fd10174fda5fa619a10725f7d4c0e6f0fd2 100644
+index d0563618bc975277ee39193858534a294892e6ce..6bdf02fee5d325fa537e349411e254c88d9499c5 100644
 --- a/src/DefaultBackend.js
 +++ b/src/DefaultBackend.js
 @@ -13,7 +13,9 @@ const path = require("./path.js");
@@ -13,7 +13,7 @@ index d0563618bc975277ee39193858534a294892e6ce..06ae8fd10174fda5fa619a10725f7d4c
      }, 500);
    }
    async init (name, {
-@@ -134,14 +136,36 @@ module.exports = class DefaultBackend {
+@@ -134,14 +136,45 @@ module.exports = class DefaultBackend {
        }
        data = encode(data);
      }
@@ -28,8 +28,16 @@ index d0563618bc975277ee39193858534a294892e6ce..06ae8fd10174fda5fa619a10725f7d4c
 +    try {
 +      await this._idb.writeFile(stat.ino, data)
 +    } catch (err) {
-+      if (before === undefined) dir.delete(name);
-+      else dir.set(name, before);
++      // Only while the tree still has this write's entry: another write to
++      // the same file that went through meanwhile stays.
++      let ours = false;
++      try {
++        ours = this._cache.lstat(filepath) === stat;
++      } catch (e) {}
++      if (ours) {
++        if (before === undefined) dir.delete(name);
++        else dir.set(name, before);
++      }
 +      throw err;
 +    }
    }
@@ -46,7 +54,8 @@ index d0563618bc975277ee39193858534a294892e6ce..06ae8fd10174fda5fa619a10725f7d4c
 +      try {
 +        await this._idb.unlink(stat.ino)
 +      } catch (err) {
-+        dir.set(name, before);
++        // Unless something else has taken the name meanwhile.
++        if (!dir.has(name)) dir.set(name, before);
 +        throw err;
 +      }
      }

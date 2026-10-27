@@ -128,3 +128,33 @@ it("leaves nothing behind of the writes the storage refused", async () => {
   ).toBe("# Kept");
   expect((await pfs.readdir("/notebooks/fs-left")).sort()).toEqual(["kept.md"]);
 });
+
+// Putting the tree back undoes only the refused write's own change: a write
+// to the same file that went through meanwhile stays.
+it("keeps a write that went through while another was refused", async () => {
+  await pfs.mkdirp("/notebooks/fs-race");
+  const store = IDBObjectStore.prototype;
+  const put = store.put;
+  let refuseNext = true;
+  store.put = function (this: IDBObjectStore, ...args) {
+    if (this.name === "fs_files" && args[1] !== "!root" && refuseNext) {
+      refuseNext = false;
+      throw new DOMException(
+        "The quota has been exceeded.",
+        "QuotaExceededError",
+      );
+    }
+    return put.apply(this, args);
+  } as IDBObjectStore["put"];
+  try {
+    const refused = fs.promises.writeFile("/notebooks/fs-race/note.md", "A");
+    const taken = fs.promises.writeFile("/notebooks/fs-race/note.md", "B");
+    await expect(refused).rejects.toThrow("quota");
+    await taken;
+  } finally {
+    store.put = put;
+  }
+  expect(
+    await pfs.readFile("/notebooks/fs-race/note.md", { encoding: "utf8" }),
+  ).toBe("B");
+});
