@@ -168,6 +168,51 @@ export class CrossnoteApp {
     );
   }
 
+  // Has the browser's storage refuse every write to its files, as a full disk
+  // does, until this is called again with false. Reading still works,
+  // storedText's included. Each write refused is kept, as "file" for a
+  // file's content and by its key for anything else, such as "!root" for
+  // the directory tree; see refusedWrites.
+  async refuseWrites(refuse = true) {
+    await this.page.evaluate((refuse) => {
+      const store = IDBObjectStore.prototype;
+      const kept = window as unknown as {
+        allowedWrites?: Pick<IDBObjectStore, "put" | "delete">;
+        refusedWrites?: string[];
+      };
+      kept.allowedWrites ??= { put: store.put, delete: store.delete };
+      kept.refusedWrites ??= [];
+      const allowed = kept.allowedWrites;
+      const refused = (key: unknown) => {
+        kept.refusedWrites!.push(
+          typeof key === "number" ? "file" : String(key),
+        );
+        throw new DOMException(
+          "The quota has been exceeded.",
+          "QuotaExceededError",
+        );
+      };
+      store.put = function (this: IDBObjectStore, ...args) {
+        return refuse && this.name === "fs_files"
+          ? refused(args[1])
+          : allowed.put.apply(this, args);
+      } as IDBObjectStore["put"];
+      store.delete = function (this: IDBObjectStore, ...args) {
+        return refuse && this.name === "fs_files"
+          ? refused(args[0])
+          : allowed.delete.apply(this, args);
+      } as IDBObjectStore["delete"];
+    }, refuse);
+  }
+
+  // The writes refused since refuseWrites was first called, in order.
+  async refusedWrites(): Promise<string[]> {
+    return this.page.evaluate(
+      () =>
+        (window as unknown as { refusedWrites?: string[] }).refusedWrites ?? [],
+    );
+  }
+
   // Keeps every message the app puts up from now on, one gone again before a
   // test looks included. A test that expects none waits for its change to
   // land and then reads what was kept, which an absence check made at one

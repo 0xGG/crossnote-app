@@ -112,6 +112,7 @@ export const jaJP = {
     "error/failed-to-change-file-path": "ファイル パスの変更に失敗しました",
     "error/link-outside-notebook": "リンク先がノートブックの外にあります",
     "error/link-inside-note": "リンク先がフォルダではなくノートの中にあります",
+    "error/failed-to-save-note": "ノートを保存できませんでした",
 
     // Success
     "success/notebook-uploaded": "ノートブックがアップロードされます",

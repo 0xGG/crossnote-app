@@ -110,6 +110,7 @@ export const enUS = {
     "error/failed-to-change-file-path": "Failed to change file path",
     "error/link-outside-notebook": "The link leads outside the notebook",
     "error/link-inside-note": "The link leads inside a note, not a folder",
+    "error/failed-to-save-note": "Failed to save the note",
 
     // Success
     "success/notebook-uploaded": "Notebook uploaded",

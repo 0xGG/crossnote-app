@@ -53,7 +53,7 @@ import { readNoteText } from "../lib/frontMatter";
 import { Note } from "../lib/note";
 import { Notebook, sameNoteText } from "../lib/notebook";
 import { isFinishingEnter } from "../lib/keys";
-import { notify } from "../lib/notifications";
+import { failureMessage, notify } from "../lib/notifications";
 import { Reference } from "../lib/reference";
 import { TabNodeConfig } from "../lib/tabNode";
 import { setTheme } from "../themes/manager";
@@ -480,6 +480,24 @@ export default function NotePanel(props: Props) {
   const synced = useRef<string>(null);
   const saving = useRef<string>(null);
 
+  // Whether the last save failed, until one goes through. Said once; what
+  // was typed stays in the editor for the next change to save, and the page
+  // asks before it is left with it.
+  const saveFailed = useRef<boolean>(false);
+  useEffect(() => {
+    const ask = (event: BeforeUnloadEvent) => {
+      if (saveFailed.current) {
+        event.preventDefault();
+        // Older browsers ask only when this is set.
+        event.returnValue = "";
+      }
+    };
+    window.addEventListener("beforeunload", ask);
+    return () => {
+      window.removeEventListener("beforeunload", ask);
+    };
+  }, []);
+
   // Emitter
   useEffect(() => {
     if (!globalEmitter || !tabNode || !editor || !note) {
@@ -847,12 +865,29 @@ export default function NotePanel(props: Props) {
         setTimeout(() => {
           if (markdown === editor.getValue()) {
             saving.current = markdown;
-            crossnoteContainer.updateNoteMarkdown(
-              tabNode,
-              note.notebookPath,
-              note.filePath,
-              markdown,
-            );
+            crossnoteContainer
+              .updateNoteMarkdown(
+                tabNode,
+                note.notebookPath,
+                note.filePath,
+                markdown,
+              )
+              .then(() => {
+                saveFailed.current = false;
+              })
+              .catch((error) => {
+                if (!saveFailed.current) {
+                  notify({
+                    severity: "error",
+                    message: failureMessage(
+                      t("error/failed-to-save-note"),
+                      error,
+                    ),
+                    duration: 5000,
+                  });
+                }
+                saveFailed.current = true;
+              });
           }
           if (editorMode === EditorMode.Preview && previewElement.current) {
             try {
@@ -893,7 +928,15 @@ export default function NotePanel(props: Props) {
         editor.off("imageReadyToLoad", loadImage);
       };
     }
-  }, [editor, note, tabNode, editorMode, previewElement, postprocessPreview]);
+  }, [
+    editor,
+    note,
+    tabNode,
+    editorMode,
+    previewElement,
+    postprocessPreview,
+    t,
+  ]);
 
   // Command
   useEffect(() => {

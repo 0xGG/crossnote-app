@@ -109,6 +109,7 @@ export const zhTW = {
     "error/failed-to-change-file-path": "更改文件路徑失敗",
     "error/link-outside-notebook": "連結指向筆記本之外",
     "error/link-inside-note": "連結指向筆記內部，而不是資料夾",
+    "error/failed-to-save-note": "儲存筆記失敗",
 
     // Success
     "success/notebook-uploaded": "筆記本已上傳",
