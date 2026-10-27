@@ -1,3 +1,21 @@
+diff --git a/src/CacheFS.js b/src/CacheFS.js
+index 2955b8572893de75af89fc7f4f39ca37ffa33630..2d7c1f219be753b14312f7ae6b90c4e4ce803754 100644
+--- a/src/CacheFS.js
++++ b/src/CacheFS.js
+@@ -38,7 +38,12 @@ module.exports = class CacheFS {
+     return count;
+   }
+   autoinc () {
+-    let val = this._maxInode(this._root.get("/")) + 1;
++    // No number is given out twice while the page is open. A file whose
++    // deletion is still going on is out of the tree, and is put back with its
++    // number should the storage refuse the deletion; a new file must not have
++    // taken that number meanwhile, its content stored where the file points.
++    let val = Math.max(this._maxInode(this._root.get("/")), this._lastInode || 0) + 1;
++    this._lastInode = val;
+     return val;
+   }
+   _maxInode(map) {
 diff --git a/src/DefaultBackend.js b/src/DefaultBackend.js
 index d0563618bc975277ee39193858534a294892e6ce..ff366b5d45d1a1688134cd80016a7ea54c07b947 100644
 --- a/src/DefaultBackend.js

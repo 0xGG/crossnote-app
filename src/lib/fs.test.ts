@@ -365,3 +365,34 @@ it("leaves nothing behind of a refused write in a folder renamed meanwhile", asy
   }
   expect(await pfs.readdir("/notebooks/fs-turns-folder/moved")).toEqual([]);
 });
+
+// A file put back after its deletion was refused keeps its inode to itself.
+// While the deletion was going on, the file was out of the tree, and a new
+// file was given the highest inode number in the tree plus one, which was the
+// deleted file's own when it had the highest; the new file's content then
+// went where the file put back points. The deletion is refused once the new
+// file is stored.
+it("keeps the inode of a file whose deletion was refused to it alone", async () => {
+  await pfs.mkdirp("/notebooks/fs-inode");
+  await pfs.writeFile("/notebooks/fs-inode/x.md", "# X");
+  let written: Promise<void> = Promise.resolve();
+  const unlink = vi
+    .spyOn(contentStore(), "unlink")
+    .mockImplementation(async () => {
+      await written.catch(() => {});
+      throw quotaExceeded();
+    });
+  try {
+    const deleted = fs.promises.unlink("/notebooks/fs-inode/x.md");
+    written = fs.promises.writeFile("/notebooks/fs-inode/y.md", "# Y");
+    await Promise.all([expect(deleted).rejects.toThrow("quota"), written]);
+  } finally {
+    unlink.mockRestore();
+  }
+  expect(
+    await pfs.readFile("/notebooks/fs-inode/x.md", { encoding: "utf8" }),
+  ).toBe("# X");
+  expect(
+    await pfs.readFile("/notebooks/fs-inode/y.md", { encoding: "utf8" }),
+  ).toBe("# Y");
+});
