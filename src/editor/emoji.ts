@@ -1,4 +1,9 @@
 import { enableEmoji } from "@0xgg/echomd/preview";
+// emoji-mart's data comes compressed, and emoji-mart unpacks it in place as
+// it loads, its emoji index does; read before that, no emoji has an image
+// and the preview gets none. Loaded here, rather than left to whoever
+// imports emoji-mart first.
+import "emoji-mart";
 import EmojiData from "emoji-mart/data/all.json";
 import twemoji from "twemoji";
 
