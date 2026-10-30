@@ -5,8 +5,8 @@
 // links, hashtags, block references, math, emoji, widgets, diagrams, slides).
 // Each is a whole file. Tests that the notebook keeps a note as written, and
 // what it renders to, run over all of them; an editor that replaces
-// CodeMirror 5 keeps them as they are too. Front matter has its own samples
-// in frontMatter.ts.
+// CodeMirror 5 is to keep them as they are too, though no test runs one over
+// them yet. Front matter has its own samples in frontMatter.ts.
 export const syntaxSamples: { name: string; text: string }[] = [
   {
     name: "headings, one with an id and a class",

@@ -1,7 +1,7 @@
 // Front matter as people write it, a note of each kind, from the
 // notebook's tests that it keeps front matter as it was written. Each is
-// a whole file. An editor that replaces CodeMirror 5 keeps them as they
-// are too.
+// a whole file. An editor that replaces CodeMirror 5 is to keep them as
+// they are too, though no test runs one over them yet.
 export const frontMatterSamples = {
   "values YAML reads as other types":
     "---\nphone: 0123456789\nzip: 01234\nversion: 1.10\nhex: 0x1F\ndate: 2026-10-26\n---\nBody\n",
