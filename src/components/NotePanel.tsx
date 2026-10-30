@@ -33,6 +33,7 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { CrossnoteContainer } from "../containers/crossnote";
 import { SettingsContainer } from "../containers/settings";
+import { attachEditorHandle } from "../editor/handle";
 import { initMathPreview } from "../editor/views/math-preview";
 import {
   applyCodeMirrorMode,
@@ -717,6 +718,7 @@ export default function NotePanel(props: Props) {
       );
       editor.setOption("lineNumbers", false);
       editor.setOption("foldGutter", false);
+      attachEditorHandle(editor, "note-editor");
       editor.setValue(note.markdown || "");
       synced.current = note.markdown || "";
       editor.on("cursorActivity", (instance) => {
@@ -1620,6 +1622,7 @@ export default function NotePanel(props: Props) {
             <Tooltip title={t("editor/note-control/preview")}>
               <ControlButton
                 aria-label={t("editor/note-control/preview")}
+                aria-pressed={editorMode === EditorMode.Preview}
                 sx={
                   editorMode === EditorMode.Preview
                     ? controlBtnSelectedSx
@@ -1636,6 +1639,7 @@ export default function NotePanel(props: Props) {
             <Tooltip title={t("general/echomd")}>
               <ControlButton
                 aria-label={t("general/echomd")}
+                aria-pressed={editorMode === EditorMode.EchoMD}
                 sx={
                   editorMode === EditorMode.EchoMD
                     ? controlBtnSelectedSx
@@ -1650,6 +1654,7 @@ export default function NotePanel(props: Props) {
             <Tooltip title={t("editor/note-control/source-code")}>
               <ControlButton
                 aria-label={t("editor/note-control/source-code")}
+                aria-pressed={editorMode === EditorMode.SourceCode}
                 sx={
                   editorMode === EditorMode.SourceCode
                     ? controlBtnSelectedSx
@@ -1725,6 +1730,7 @@ export default function NotePanel(props: Props) {
               {editorMode === EditorMode.Preview && editor ? (
                 <Preview
                   className={"preview"}
+                  data-testid="note-preview"
                   sx={previewIsPresentation ? presentationSx : undefined}
                   ref={previewElement}
                 ></Preview>
