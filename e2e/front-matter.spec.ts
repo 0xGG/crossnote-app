@@ -1,5 +1,6 @@
 import { expect, test } from "./fixtures";
 import type { CrossnoteApp } from "./crossnote";
+import { layoutOf, row, tabset } from "./layouts";
 
 // Front matter is the user's: the notebook only adds the settings it keeps
 // after it. Each test puts a note's text in storage as another program would
@@ -92,6 +93,21 @@ test("keeps values in front matter as they were written when the note is edited"
   );
 });
 
+// Checks that a note opened and not edited is stored as it was. A change its
+// opening set off would be saved no later than one typed into another note
+// now, whose write to the same storage lands after it.
+async function expectUnwritten(app: CrossnoteApp, file: string, text: string) {
+  await app.selectTab("Drafts");
+  await app.notesPanel.getByRole("button", { name: "New note" }).click();
+  const title = app.noteTitle.filter({ visible: true });
+  await expect(title).not.toHaveValue("");
+  const other = `${await app.notebookFolder()}/${await title.inputValue()}.md`;
+  await app.editor.filter({ visible: true }).click();
+  await app.page.keyboard.type("x");
+  await expect.poll(() => app.storedText(other)).toContain("x");
+  expect(await app.storedText(file)).toBe(text);
+}
+
 // A note that opens without a message leaves nothing to close before its
 // mode is switched.
 const nothingToClose = async () => {};
@@ -125,20 +141,72 @@ for (const { layout, text, opened } of [
     await app.modeButton("Source code").click();
     await app.modeButton("Preview").click();
     await expect(app.preview).toContainText("Kept");
-    // A change the note's opening set off would be saved no later than one
-    // typed into another note now, whose write to the same storage lands
-    // after it.
-    await app.selectTab("Drafts");
-    await app.notesPanel.getByRole("button", { name: "New note" }).click();
-    const title = app.noteTitle.filter({ visible: true });
-    await expect(title).not.toHaveValue("");
-    const other = `${await app.notebookFolder()}/${await title.inputValue()}.md`;
-    await app.editor.filter({ visible: true }).click();
-    await app.page.keyboard.type("x");
-    await expect.poll(() => app.storedText(other)).toContain("x");
-    expect(await app.storedText(readme)).toBe(text);
+    await expectUnwritten(app, readme, text);
   });
 }
+
+// What an editor is most likely to change on opening a note: values YAML
+// would read as other types, Windows line endings, and a code block in a
+// language loaded only once the editor meets it.
+const touchy =
+  "---\r\nphone: 0123456789\r\ntags: [a, b]\r\n---\r\n# Kept\r\n\r\n```bash\r\necho $HOME\r\n```\r\n";
+
+// Opened in the mode a note's tab starts in, rather than in the preview and
+// switched from there.
+for (const { mode, setting } of [
+  { mode: "Edit", setting: "EchoMD" },
+  { mode: "Source code", setting: "SourceCode" },
+] as const) {
+  test(`opens a note straight in ${mode} without writing it`, async ({
+    app,
+  }) => {
+    await app.page.addInitScript((setting) => {
+      localStorage.setItem("settings/defaultEditorMode", setting);
+    }, setting);
+    const readme = await openReadme(app, touchy);
+    await expect(app.modeOn).toHaveAccessibleName(mode);
+    await expect(app.editor).toBeVisible();
+    // The language has come and the block is drawn with it.
+    await expect.poll(() => app.tokenTypes("echo")).toContain("builtin");
+    await expectUnwritten(app, readme, touchy);
+  });
+}
+
+test("opens a note whose tab the layout brings back without writing it", async ({
+  app,
+}) => {
+  await app.open();
+  await app.openNotes();
+  const folder = await app.notebookFolder();
+  const readme = `${folder}/README.md`;
+  await app.storedText(readme, touchy);
+  // The page starts with the note open in a tab of its own, as when it was
+  // left that way.
+  await app.seedLayout(
+    layoutOf(
+      row(
+        tabset({
+          type: "tab",
+          id: "README",
+          name: "README",
+          component: "Note",
+          config: {
+            component: "Note",
+            singleton: false,
+            notebookPath: folder,
+            noteFilePath: "README.md",
+          },
+        }),
+      ),
+    ),
+  );
+  await app.page.reload();
+  await app.waitUntilReady();
+  await expect(app.tab("README")).toBeVisible();
+  await expect(app.preview).toContainText("Kept");
+  await app.openNotes();
+  await expectUnwritten(app, readme, touchy);
+});
 
 test("says that front matter YAML cannot read is kept as it is", async ({
   app,
