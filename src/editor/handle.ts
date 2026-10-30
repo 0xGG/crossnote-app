@@ -9,9 +9,11 @@ export type TextPosition = { line: number; ch: number };
 // its test id names, so that the tests drive whatever editor the app has the
 // same way: an editor that replaces CodeMirror 5 hangs the same handle, and
 // the specs stay as they are. A change made through it is a change of the
-// editor's text like any other, which the app saves as it saves typing; it
-// goes in even where the editor takes no typing, such as a kanban card shown
-// read-only.
+// editor's text like any other, which the app answers as it answers typing.
+// It goes in even where the editor takes no typing, such as a kanban card
+// shown read-only: CodeMirror 5's read-only stops only what is typed. Whether
+// the app then saves it is the app's to say; a note's editor does not save
+// while it is read-only.
 export interface EditorHandle {
   // The whole text the editor holds, its lines joined with \n.
   text(): string;
@@ -33,10 +35,11 @@ export interface EditorHandle {
   focus(): void;
   // The kinds of token the editor has drawn the first piece of text that
   // holds this text with, as the editor names them ("builtin", "strong" and
-  // so on): none where it draws that piece plain, where the text runs across
-  // two tokens, or where it is not drawn as text (in a widget, or not at
-  // all). What is drawn, not what the editor would work out: a language
-  // arriving changes it only once the editor has drawn the text again.
+  // so on): none where that piece is drawn plain or inside a widget, or
+  // where no single piece holds the text (it runs across two tokens, or is
+  // not drawn). What is drawn, not what the editor would work out: a
+  // language arriving changes it only once the editor has drawn the text
+  // again.
   tokenTypes(text: string): string[];
 }
 
