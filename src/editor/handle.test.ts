@@ -96,4 +96,12 @@ describe("attachEditorHandle", () => {
     expect(handle.tokenTypes("Plain")).toEqual([]);
     expect(handle.tokenTypes("not there")).toEqual([]);
   });
+
+  it("reads the token of the first piece of text that holds the text", () => {
+    const { handle } = editorWith("Plain **Plain** and more");
+    // The first is drawn plain, though a token further on holds it too.
+    expect(handle.tokenTypes("Plain")).toEqual([]);
+    // Across a plain piece and a token, no one token holds it.
+    expect(handle.tokenTypes("Plain **")).toEqual([]);
+  });
 });

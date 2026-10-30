@@ -8,17 +8,21 @@ export type TextPosition = { line: number; ch: number };
 // The app hangs one on the root element of each editor it makes, the element
 // its test id names, so that the tests drive whatever editor the app has the
 // same way: an editor that replaces CodeMirror 5 hangs the same handle, and
-// the specs stay as they are. A change made through it goes through the
-// editor the way typing does, so the app saves it as it saves typing.
+// the specs stay as they are. A change made through it is a change of the
+// editor's text like any other, which the app saves as it saves typing; it
+// goes in even where the editor takes no typing, such as a kanban card shown
+// read-only.
 export interface EditorHandle {
   // The whole text the editor holds, its lines joined with \n.
   text(): string;
-  // Puts text in place of all of it as one change, as pasting over
-  // everything would.
+  // Puts text in place of all of it as one change. Where the caret is
+  // afterwards is up to the editor (CodeMirror 5 puts it at the start), so a
+  // test that goes on to type puts it somewhere first.
   setText(text: string): void;
-  // Puts text in place of the selection, or at the caret, as one change: what
-  // typing it gives, less the editor's typing aids (the brackets it closes,
-  // the hints it opens).
+  // Puts text in place of the selection, or at the caret, as one change: the
+  // text as given, without what the editor adds as keys are typed (the
+  // brackets it closes). The app answers it as it answers typing, a hint for
+  // a "/" included.
   insert(text: string): void;
   caret(): TextPosition;
   // Where the text ends.
@@ -29,9 +33,10 @@ export interface EditorHandle {
   focus(): void;
   // The kinds of token the editor has drawn the first piece of text that
   // holds this text with, as the editor names them ("builtin", "strong" and
-  // so on); none where it draws the text plain or not at all. What is drawn,
-  // not what the editor would work out: a language arriving changes it only
-  // once the editor has drawn the text again.
+  // so on): none where it draws that piece plain, where the text runs across
+  // two tokens, or where it is not drawn as text (in a widget, or not at
+  // all). What is drawn, not what the editor would work out: a language
+  // arriving changes it only once the editor has drawn the text again.
   tokenTypes(text: string): string[];
 }
 
@@ -59,20 +64,21 @@ export function attachEditorHandle(editor: Editor, testId: string) {
     selection: () => editor.getSelection(),
     focus: () => editor.focus(),
     tokenTypes: (text) => {
-      // The innermost token the text sits in whole, in the lines as drawn;
-      // the editor's measuring copy of a line is left out.
-      const tokens = Array.from(
-        root.querySelectorAll<HTMLElement>(".CodeMirror-code span[class]"),
-      ).filter((token) => token.textContent?.includes(text));
-      const innermost = tokens.find(
-        (token) =>
-          !tokens.some((other) => other !== token && token.contains(other)),
-      );
-      return innermost
-        ? Array.from(innermost.classList)
+      // The lines as drawn; the editor's measuring copy of a line sits
+      // beside them, not in them.
+      const lines = root.querySelector(".CodeMirror-code");
+      if (!lines) {
+        return [];
+      }
+      const walker = document.createTreeWalker(lines, NodeFilter.SHOW_TEXT);
+      for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+        if (node.textContent?.includes(text)) {
+          return Array.from(node.parentElement?.classList ?? [])
             .filter((name) => name.startsWith("cm-"))
-            .map((name) => name.slice("cm-".length))
-        : [];
+            .map((name) => name.slice("cm-".length));
+        }
+      }
+      return [];
     },
   };
 }
