@@ -216,7 +216,10 @@ test("keeps notes across a reload", async ({ app, page }) => {
   await card.getByText("Stored in the browser file system").click();
   await expect(app.preview).toContainText("Stored in the browser file system");
   await app.modeButton("Edit").click();
-  await expect(app.editor).toContainText("Stored in the browser file system");
+  await expect(app.editor).toBeVisible();
+  await expect
+    .poll(() => app.editorText())
+    .toBe("Stored in the browser file system");
 });
 
 test("filters the list by content and reports when nothing matches", async ({

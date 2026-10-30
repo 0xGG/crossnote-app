@@ -49,7 +49,7 @@ test("loads a language built on CodeMirror's mode addons", async ({
   await rstMode;
   await expect.poll(() => app.tokenTypes("bold")).toContain("strong");
   await page.keyboard.type(" typed");
-  await expect(app.editor).toContainText("after typed");
+  await expect.poll(() => app.editorText()).toMatch(/after typed$/);
   expect(errors).toEqual([]);
 });
 

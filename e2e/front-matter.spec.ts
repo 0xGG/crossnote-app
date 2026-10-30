@@ -53,7 +53,8 @@ test("keeps front matter YAML cannot read when the note is edited", async ({
   const readme = await openReadme(app, text);
   await closeFrontMatterMessage(app);
   await app.modeButton("Edit").click();
-  await expect(app.editor).toContainText("tags: [work, r3");
+  await expect(app.editor).toBeVisible();
+  await expect.poll(() => app.editorText()).toBe(text);
 
   await typeAtEnd(app, "More");
   await expect.poll(() => app.storedText(readme)).toContain("More");
@@ -68,17 +69,19 @@ test("keeps front matter YAML cannot read when the note is edited", async ({
   await app.noteCards.filter({ hasText: "README" }).click();
   await closeFrontMatterMessage(app);
   await app.modeButton("Edit").click();
-  await expect(app.editor).toContainText("tags: [work, r3");
-  await expect(app.editor).toContainText("More");
+  await expect(app.editor).toBeVisible();
+  await expect.poll(() => app.editorText()).toBe(`${text}More`);
 });
 
 test("keeps values in front matter as they were written when the note is edited", async ({
   app,
 }) => {
   const frontMatter = "phone: 0123456789\nversion: 1.10\ndate: 2026-10-26\n";
-  const readme = await openReadme(app, `---\n${frontMatter}---\n# Kept\n`);
+  const text = `---\n${frontMatter}---\n# Kept\n`;
+  const readme = await openReadme(app, text);
   await app.modeButton("Edit").click();
-  await expect(app.editor).toContainText("phone: 0123456789");
+  await expect(app.editor).toBeVisible();
+  await expect.poll(() => app.editorText()).toBe(text);
 
   await typeAtEnd(app, "More");
   await expect.poll(() => app.storedText(readme)).toContain("More");
@@ -148,12 +151,14 @@ test("says that front matter YAML cannot read is kept as it is", async ({
 
 test("says nothing of front matter YAML reads", async ({ app }) => {
   let messages: () => Promise<string[]>;
-  await openReadme(app, "---\ntags: [work, r3]\n---\n# Kept\n", async () => {
+  const text = "---\ntags: [work, r3]\n---\n# Kept\n";
+  await openReadme(app, text, async () => {
     messages = await app.recordMessages();
   });
   // A message the note's opening put up would be on screen by the time the
-  // editor it switches to is.
+  // editor it switches to is, holding the note.
   await app.modeButton("Edit").click();
-  await expect(app.editor).toContainText("tags: [work, r3]");
+  await expect(app.editor).toBeVisible();
+  await expect.poll(() => app.editorText()).toBe(text);
   expect(await messages!()).toEqual([]);
 });
