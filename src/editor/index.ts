@@ -14,7 +14,6 @@ import "@0xgg/echomd/powerpack/fold-emoji-with-twemoji";
 // Load PowerPacks if you want to utilize 3rd-party libs
 import "@0xgg/echomd/powerpack/fold-math-with-katex";
 import "@0xgg/echomd/powerpack/hover-with-marked";
-import { enableEmoji } from "@0xgg/echomd/preview";
 import { registerWidgetCreator } from "@0xgg/echomd/widget";
 import CodeMirror from "codemirror";
 import "codemirror/addon/dialog/dialog.css";
@@ -39,10 +38,10 @@ import "codemirror/mode/stex/stex"; // for Math TeX Formular
 import "codemirror/mode/yaml/yaml"; // for Front Matters
 import "codemirror/mode/yaml-frontmatter/yaml-frontmatter"; // plain text source code
 import { Emoji } from "emoji-mart";
-import EmojiData from "emoji-mart/data/all.json";
 import twemoji from "twemoji";
 import { EmojiBackgroundImageFn } from "../components/EmojiWrapper";
 import { withPlainTextFallback } from "../lib/editorMode";
+import { emojiCodePointToShortNameMap } from "./emoji";
 import { AudioWidgetCreator } from "./widgets/audio";
 import { BilibiliWidgetCreator } from "./widgets/bilibili";
 import { GitHubGistWidgetCreator } from "./widgets/github_gist";
@@ -139,40 +138,6 @@ twemoji.parse = function (what: string | HTMLElement, options: any) {
     return;
   }
 };
-const emojiCodePointToShortNameMap: { [key: string]: string } = ((data) => {
-  const m: { [key: string]: string } = {};
-  const emojiDefinitions: { [key: string]: string } = {};
-  for (const shortName in data.emojis) {
-    const emojiData: any = (data.emojis as any)[shortName];
-    if (!emojiData.has_img_twitter) {
-      continue;
-    }
-    const nonQualified: string = emojiData.non_qualified;
-    const unified: string = emojiData.unified;
-    if (unified) {
-      m[unified.toLocaleLowerCase()] = shortName;
-      const emoji = unified
-        .split("-")
-        .map((x) => twemoji.convert.fromCodePoint(x))
-        .join("");
-      if (emoji.trim()) {
-        emojiDefinitions[shortName] = emoji;
-      }
-    }
-    if (nonQualified) {
-      m[nonQualified.toLocaleLowerCase()] = shortName;
-      const emoji = nonQualified
-        .split("-")
-        .map((x) => twemoji.convert.fromCodePoint(x))
-        .join("");
-      if (emoji.trim() && !unified) {
-        emojiDefinitions[shortName] = emoji;
-      }
-    }
-  }
-  enableEmoji(emojiDefinitions);
-  return m;
-})(EmojiData);
 
 setTwemojiOptions({
   folder: "svg",
