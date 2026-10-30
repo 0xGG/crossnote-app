@@ -1,5 +1,5 @@
 import { expect, test } from "./fixtures";
-import type { CrossnoteApp } from "./crossnote";
+import type { CrossnoteApp, EditorHost } from "./crossnote";
 import { layoutOf, row, tabset } from "./layouts";
 
 // Front matter is the user's: the notebook only adds the settings it keeps
@@ -215,6 +215,30 @@ test("says that front matter YAML cannot read is kept as it is", async ({
   await expect(app.page.getByRole("alert")).toContainText(
     "The front matter of this note cannot be read. It is kept as it is.",
   );
+});
+
+test("says once that front matter YAML cannot read is kept, though the note is renamed", async ({
+  app,
+}) => {
+  await openReadme(app, "---\ntags: [work, r3\n---\n# Kept\n");
+  await closeFrontMatterMessage(app);
+  const messages = await app.recordMessages();
+  await app.noteTitle.fill("Renamed");
+  await app.noteTitle.press("Enter");
+  await expect(app.tab("Renamed")).toBeVisible();
+  // The note, read again from its new name as the tab takes it, would have
+  // put the message up again before something put into it is stored. Put in
+  // through the editor's handle, not typed: a message up again would cover
+  // the buttons that switch to the editor, and the test would fail there
+  // rather than on the message.
+  const renamed = `${await app.notebookFolder()}/Renamed.md`;
+  await app.editor.evaluate((element) => {
+    const editor = (element as EditorHost).editorHandle;
+    editor.select(editor.end());
+    editor.insert("x");
+  });
+  await expect.poll(() => app.storedText(renamed)).toContain("x");
+  expect(await messages()).toEqual([]);
 });
 
 test("says nothing of front matter YAML reads", async ({ app }) => {
