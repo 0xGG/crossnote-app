@@ -1,5 +1,10 @@
 import * as git from "isomorphic-git";
 import { beforeAll, describe, expect, it, vi } from "vitest";
+import {
+  frontMatterSamples,
+  unreadableFrontMatterSamples,
+} from "../test/corpus/frontMatter";
+import { syntaxSamples } from "../test/corpus/syntax";
 import { isStored } from "../test/storedTree";
 import { fs, pfs } from "./fs";
 import { Notebook, sameNoteText } from "./notebook";
@@ -408,7 +413,7 @@ describe("Notebook", () => {
     }[] = [
       {
         layout: "values YAML reads as other types",
-        file: "---\nphone: 0123456789\nzip: 01234\nversion: 1.10\nhex: 0x1F\ndate: 2026-10-26\n---\nBody\n",
+        file: frontMatterSamples["values YAML reads as other types"],
         opened:
           "---\nphone: 0123456789\nzip: 01234\nversion: 1.10\nhex: 0x1F\ndate: 2026-10-26\n---\nBody\n",
         edited:
@@ -418,7 +423,9 @@ describe("Notebook", () => {
       },
       {
         layout: "comments, quotes, a block of text, anchors and a flow list",
-        file: '---\n# A comment\ntitle: "a: b"\ndesc: |\n  line 1\n  line 2\nbase: &b\n  a: 1\nother: *b\ntags: [x, y]\n---\nBody\n',
+        file: frontMatterSamples[
+          "comments, quotes, a block of text, anchors and a flow list"
+        ],
         opened:
           '---\n# A comment\ntitle: "a: b"\ndesc: |\n  line 1\n  line 2\nbase: &b\n  a: 1\nother: *b\ntags: [x, y]\n---\nBody\n',
         edited:
@@ -426,24 +433,7 @@ describe("Notebook", () => {
         pinned:
           '---\n# A comment\ntitle: "a: b"\ndesc: |\n  line 1\n  line 2\nbase: &b\n  a: 1\nother: *b\ntags: [x, y]\npinned: true\ncreated: <time>\nmodified: <time>\n---\nBody\n',
       },
-      ...[
-        ["half typed", "---\ntitle: Hi\ntags: [work, r3\n---\nBody\n"],
-        ["indented with a tab", "---\ntitle: hi\n\tbad: 1\n---\nBody\n"],
-        [
-          // Each marker after a backslash (lib/crossnote.ts, pullNotebook).
-          "conflict markers as the notebook's own merge writes them",
-          "---\ntitle: T\n\\<<<<<<< ours\nmodified: 2026-01-01\n\\=======\nmodified: 2026-01-02\n\\>>>>>>> theirs\n---\nBody\n",
-        ],
-        [
-          "conflict markers as git writes them",
-          "---\ntitle: T\n<<<<<<< ours\nmodified: 2026-01-01\n=======\nmodified: 2026-01-02\n>>>>>>> theirs\n---\nBody\n",
-        ],
-        // Rules around a paragraph, or a list: text, not front matter.
-        ["a paragraph between rules", "---\nIntro paragraph\n---\nBody\n"],
-        ["a list between rules", "---\n- a\n- b\n---\nBody\n"],
-        // Four dashes are a rule of the text, not the end of front matter.
-        ["four dashes", "---\ntitle: x\n----\nBody\n"],
-      ].map(([layout, file]) => ({
+      ...unreadableFrontMatterSamples.map(([layout, file]) => ({
         layout: `front matter YAML cannot read: ${layout}`,
         file,
         opened: file,
@@ -452,14 +442,14 @@ describe("Notebook", () => {
       })),
       {
         layout: "an empty block",
-        file: "---\n---\nBody\n",
+        file: frontMatterSamples["an empty block"],
         opened: "Body\n",
         edited: settingsBefore("", "Body\nEdit"),
         pinned: settingsBefore("pinned: true\n", "Body\n"),
       },
       {
         layout: "Windows line endings",
-        file: "---\r\ntitle: Hi\r\ntags: [a, b]\r\n---\r\nBody\r\nLine 2\r\n",
+        file: frontMatterSamples["Windows line endings"],
         opened: "---\r\ntitle: Hi\r\ntags: [a, b]\r\n---\r\nBody\r\nLine 2\r\n",
         edited:
           "---\r\ntitle: Hi\r\ntags: [a, b]\r\ncreated: <time>\r\nmodified: <time>\r\n---\r\nBody\r\nLine 2\r\nEdit",
@@ -468,7 +458,7 @@ describe("Notebook", () => {
       },
       {
         layout: "a byte order mark",
-        file: "\uFEFF---\ntitle: T\n---\nBody\n",
+        file: frontMatterSamples["a byte order mark"],
         opened: "\uFEFF---\ntitle: T\n---\nBody\n",
         edited:
           "\uFEFF---\ntitle: T\ncreated: <time>\nmodified: <time>\n---\nBody\nEdit",
@@ -477,7 +467,7 @@ describe("Notebook", () => {
       },
       {
         layout: "settings typed by hand",
-        file: "---\ncreated: 2026-01-01\ntitle: T\nmodified: 2026-01-02\n---\nBody\n",
+        file: frontMatterSamples["settings typed by hand"],
         opened: "---\ntitle: T\n---\nBody\n",
         edited:
           "---\ntitle: T\ncreated: 2026-01-01\nmodified: <time>\n---\nBody\nEdit",
@@ -486,7 +476,7 @@ describe("Notebook", () => {
       },
       {
         layout: "a setting that is off",
-        file: "---\ntitle: T\npinned: false\n---\nBody\n",
+        file: frontMatterSamples["a setting that is off"],
         opened: "---\ntitle: T\n---\nBody\n",
         edited:
           "---\ntitle: T\npinned: false\ncreated: <time>\nmodified: <time>\n---\nBody\nEdit",
@@ -495,14 +485,14 @@ describe("Notebook", () => {
       },
       {
         layout: "aliases in a line",
-        file: "---\naliases: x, y\n---\nBody\n",
+        file: frontMatterSamples["aliases in a line"],
         opened: "Body\n",
         edited: settingsBefore("aliases: x, y\n", "Body\nEdit"),
         pinned: settingsBefore("aliases: x, y\npinned: true\n", "Body\n"),
       },
       {
         layout: "settings as the notebook wrote them",
-        file: "---\ntags:\n    - a\naliases:\n    - x\npinned: true\ncreated: 2026-10-01T10:00:00.000Z\nmodified: 2026-10-02T10:00:00.000Z\n---\nBody\n",
+        file: frontMatterSamples["settings as the notebook wrote them"],
         opened: "---\ntags:\n    - a\n---\nBody\n",
         edited:
           "---\ntags:\n    - a\naliases:\n    - x\npinned: true\ncreated: <time>\nmodified: <time>\n---\nBody\nEdit",
@@ -511,7 +501,7 @@ describe("Notebook", () => {
       },
       {
         layout: "no front matter",
-        file: "Body only\n",
+        file: frontMatterSamples["no front matter"],
         opened: "Body only\n",
         edited: settingsBefore("", "Body only\nEdit"),
         pinned: settingsBefore("pinned: true\n", "Body only\n"),
@@ -589,6 +579,35 @@ describe("Notebook", () => {
       expect(await stored("half-typed.md")).toBe(
         "---\ntitle: T\ntags: [a]\npinned: true\ncreated: <time>\nmodified: <time>\n---\nBody",
       );
+    });
+  });
+
+  describe("keeps each kind of note in the shared corpus as it was written", () => {
+    // The file less the times a save stamps, and less the block they had to
+    // themselves when the note had no front matter.
+    const lessStamps = (text: string) =>
+      text
+        .replace(/^(created|modified): \S+\r?\n/gm, "")
+        .replace(/^---\r?\n---\r?\n/, "");
+
+    syntaxSamples.forEach(({ name, text }, i) => {
+      it(`with ${name}`, async () => {
+        const filePath = `corpus-${i}.md`;
+        await pfs.writeFile(`/notebooks/test/${filePath}`, text);
+        const note = await notebook.getNote(filePath, true);
+        expect(note.markdown).toBe(text);
+
+        await notebook.writeNote(filePath, `${note.markdown}Edit`, {
+          ...note.config,
+        });
+        const stored = (await pfs.readFile(`/notebooks/test/${filePath}`, {
+          encoding: "utf8",
+        })) as string;
+        expect(lessStamps(stored)).toBe(`${text}Edit`);
+        expect((await notebook.getNote(filePath, true)).markdown).toBe(
+          `${text}Edit`,
+        );
+      });
     });
   });
 });
