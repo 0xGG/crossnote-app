@@ -10,6 +10,9 @@ test.beforeEach(async ({ context }) => {
   );
 });
 
+// The language is a CodeMirror 5 mode script, and the address it is asked for
+// at is CodeMirror 5's; an editor that replaces it loads languages its own
+// way, and this check changes with it.
 test("loads the language of a code block from the site", async ({
   app,
   page,
@@ -22,11 +25,10 @@ test("loads the language of a code block from the site", async ({
   const request = await shellMode;
   expect(new URL(request.url()).origin).toBe(new URL(page.url()).origin);
   // The language arrived and took effect.
-  await expect(
-    app.editor.locator(".cm-builtin", { hasText: "echo" }),
-  ).toBeVisible();
+  await expect.poll(() => app.tokenTypes("echo")).toContain("builtin");
 });
 
+// About CodeMirror 5 only: the addons are its own, and go with it.
 test("loads a language built on CodeMirror's mode addons", async ({
   app,
   page,
@@ -45,9 +47,7 @@ test("loads a language built on CodeMirror's mode addons", async ({
   const rstMode = page.waitForResponse(/\/mode\/rst\/rst\.js$/);
   await app.typeInEditor("```rst\n**bold**\n```\n\nafter");
   await rstMode;
-  await expect(
-    app.editor.locator(".cm-strong", { hasText: "bold" }),
-  ).toBeVisible();
+  await expect.poll(() => app.tokenTypes("bold")).toContain("strong");
   await page.keyboard.type(" typed");
   await expect(app.editor).toContainText("after typed");
   expect(errors).toEqual([]);
@@ -72,9 +72,7 @@ test("loads the language of a code block without rewriting the note", async ({
   await app.openNotes();
   await app.noteCards.filter({ hasText: "README" }).click();
   await app.modeButton("Edit").click();
-  await expect(
-    app.editor.locator(".cm-builtin", { hasText: "echo" }),
-  ).toBeVisible();
+  await expect.poll(() => app.tokenTypes("echo")).toContain("builtin");
   // The app saves a change 300 ms after it. A change the language set off
   // would come no later than the highlighting just seen, so one typed into
   // another note now is saved after it, and its write to the same storage
@@ -95,7 +93,9 @@ test("loads the language of a code block without rewriting the note", async ({
 test("keeps folded widgets when a language loads", async ({ app, page }) => {
   // A language arriving has the editor highlight the whole note again; what
   // it had folded into widgets has to stay folded, as the same widgets: one
-  // built anew would lose whatever was entered into it.
+  // built anew would lose whatever was entered into it. How an editor that
+  // replaces CodeMirror 5 keeps its widgets is part of its widget protocol;
+  // this check goes on for it.
   await app.open();
   await app.openNotes();
   await app.createNote();
@@ -107,9 +107,7 @@ test("keeps folded widgets when a language loads", async ({ app, page }) => {
     element.dataset.before = "language";
   });
   await page.keyboard.type("```bash\necho $HOME\n```\n");
-  await expect(
-    app.editor.locator(".cm-builtin", { hasText: "echo" }),
-  ).toBeVisible();
+  await expect.poll(() => app.tokenTypes("echo")).toContain("builtin");
   await expect(thumbnail).toHaveAttribute("data-before", "language");
   await expect(thumbnail).toBeVisible();
 });

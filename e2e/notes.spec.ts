@@ -1,4 +1,3 @@
-import type CodeMirror from "codemirror";
 import { expect, test } from "./fixtures";
 
 test.beforeEach(async ({ app }) => {
@@ -144,7 +143,7 @@ test("never gives a new note the name of one that exists", async ({
     await app.selectTab("Drafts");
   }
   expect(await newNote()).toBe("Untitled 2");
-  await page.locator(".CodeMirror").filter({ visible: true }).click();
+  await app.editor.filter({ visible: true }).click();
   await page.keyboard.type("Worth keeping");
   await app.selectTab("Drafts");
   const kept = app.noteCards.filter({ hasText: "Untitled 2.md" });
@@ -247,14 +246,8 @@ test("says so, and opens nothing, when a link leads outside the notebook", async
   page,
 }) => {
   await app.createNote();
-  // Through CodeMirror: typed, the brackets would be closed for us.
-  await app.editor.evaluate(
-    (element, text) =>
-      (
-        element as HTMLElement & { CodeMirror: CodeMirror.Editor }
-      ).CodeMirror.setValue(text),
-    "[Next door](../next-door/Kept.md)\n",
-  );
+  // Set rather than typed: typed, the brackets would be closed for us.
+  await app.setEditorText("[Next door](../next-door/Kept.md)\n");
   await app.modeButton("Preview").click();
   const tabs = await page.getByRole("tab").count();
 

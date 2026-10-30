@@ -1,5 +1,4 @@
 import { readFileSync } from "node:fs";
-import type CodeMirror from "codemirror";
 import { expect, test } from "./fixtures";
 import { layoutOf, noteTab, row, tabset } from "./layouts";
 
@@ -81,14 +80,8 @@ test("goes to the reference a note already open is opened at", async ({
   await app.createNote();
   const title = await app.noteTitle.inputValue();
   const line = "See [[README]] here.";
-  // Through CodeMirror: typing "[[" would open the wikilink hints.
-  await app.editor.evaluate(
-    (element, text) =>
-      (
-        element as HTMLElement & { CodeMirror: CodeMirror.Editor }
-      ).CodeMirror.setValue(text),
-    `Intro line.\n\n${line}\n`,
-  );
+  // Set rather than typed: typing "[[" would open the wikilink hints.
+  await app.setEditorText(`Intro line.\n\n${line}\n`);
   await app.modeButton("Preview").click();
 
   // The note goes behind the notes list, and README opens in the same pane.
@@ -114,9 +107,7 @@ test("goes to the reference a note already open is opened at", async ({
   await expect(reference).toBeVisible({ timeout: 15000 });
   await reference.click();
   await expect(app.tab(title)).toHaveAttribute("aria-selected", "true");
-  await expect(
-    app.preview.filter({ visible: true }).locator(".reference-highlight"),
-  ).toBeVisible();
+  await expect(app.highlightedReference).toBeVisible();
 });
 
 test("keeps a long tab name from scrolling the layout sideways", async ({

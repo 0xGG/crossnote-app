@@ -107,13 +107,7 @@ test("remembers turning the OCR widget's grayscale off", async ({
 
   // Setting the text again builds the widget anew, as opening the note
   // another time would; the new one starts from the choice.
-  await app.editor.evaluate(
-    (element, text) =>
-      (
-        element as HTMLElement & { CodeMirror: CodeMirror.Editor }
-      ).CodeMirror.setValue(text),
-    "\n<!-- @crossnote.ocr -->\n",
-  );
+  await app.setEditorText("\n<!-- @crossnote.ocr -->\n");
   await chooseImage();
   await expect(grayscale).not.toBeChecked();
 });

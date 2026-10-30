@@ -1,5 +1,4 @@
 import type { Locator, Page } from "@playwright/test";
-import type CodeMirror from "codemirror";
 import { expect, test } from "./fixtures";
 import { layoutOf, noteTab, row, settingsTab, tabset } from "./layouts";
 
@@ -23,28 +22,21 @@ async function dragText(page: Page, from: Locator, to: Locator) {
   await page.mouse.up();
 }
 
-const editorState = (editor: Locator) =>
-  editor.evaluate((element) => {
-    const cm = (element as HTMLElement & { CodeMirror: CodeMirror.Editor })
-      .CodeMirror;
-    return { text: cm.getValue(), selection: cm.getSelection() };
-  });
-
 test("keeps a tab dropped on a note out of the note", async ({ app }) => {
   await app.open();
   await app.openNotes();
   await app.createNote();
   await app.typeInEditor("Written before the drop");
-  await app.editor.evaluate((element) =>
-    (element as HTMLElement & { CodeMirror: CodeMirror.Editor }).CodeMirror
-      // "before"
-      .setSelection({ line: 0, ch: 8 }, { line: 0, ch: 14 }),
-  );
+  // "before"
+  await app.selectInEditor({ line: 0, ch: 8 }, { line: 0, ch: 14 });
 
   // One step from the tab strip onto the editor, so the drop lands before
   // the layout has covered the panes with its overlay.
   await app.tab("Drafts").dragTo(app.editor);
-  expect(await editorState(app.editor)).toEqual({
+  expect({
+    text: await app.editorText(),
+    selection: await app.editorSelection(),
+  }).toEqual({
     text: "Written before the drop",
     selection: "before",
   });
@@ -59,7 +51,7 @@ test("docks a tab brought back over a note's text in one sweep", async ({
   await app.createNote();
   await app.typeInEditor("One\nTwo\nThree\nFour\nFive");
   const tab = await centre(app.tab("Drafts"));
-  const text = (await app.editor.locator(".CodeMirror-scroll").boundingBox())!;
+  const text = (await app.editor.boundingBox())!;
   const lineY = text.y + 30;
 
   await page.mouse.move(tab.x, tab.y);

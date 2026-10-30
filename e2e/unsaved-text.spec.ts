@@ -1,5 +1,5 @@
 import type { Page } from "@playwright/test";
-import type { CrossnoteApp } from "./crossnote";
+import type { CrossnoteApp, EditorHost } from "./crossnote";
 import { expect, test } from "./fixtures";
 
 // An editor saves its text 300 ms after the last keystroke. Reading the
@@ -18,21 +18,28 @@ const onDisk = (page: Page, file: string) =>
     file,
   );
 
-type Editor = {
-  CodeMirror: {
-    focus(): void;
-    execCommand(command: string): void;
-    replaceSelection(text: string): void;
-    getValue(): string;
-    getCursor(): { line: number; ch: number };
-  };
-};
-
+// The text and the caret, read together.
 const editorState = (app: CrossnoteApp) =>
   app.editor.evaluate((element) => {
-    const editor = (element as HTMLElement & Editor).CodeMirror;
-    return { text: editor.getValue(), caret: editor.getCursor() };
+    const editor = (element as EditorHost).editorHandle;
+    return { text: editor.text(), caret: editor.caret() };
   });
+
+// Types at the end of the note and collapses the notebook before the text is
+// saved: in one go, so that however busy the machine is, the collapse comes
+// first.
+const typeAndCollapse = (app: CrossnoteApp, text: string) =>
+  app.editor.evaluate((element, text) => {
+    const editor = (element as EditorHost).editorHandle;
+    editor.focus();
+    editor.select(editor.end());
+    editor.insert(text);
+    (
+      document.querySelector(
+        '[role="treeitem"] button[aria-label="Collapse"]',
+      ) as HTMLElement
+    ).click();
+  }, text);
 
 // Deleting another note has the notebook read its notes again from disk.
 async function readNotesAgain(app: CrossnoteApp, page: Page, name: string) {
@@ -79,27 +86,10 @@ test("keeps what was just typed, and the caret, when the notebook is collapsed",
   await app.typeInEditor("First line");
   await expect.poll(() => onDisk(page, file)).toContain("First line");
 
-  // Typed, and the notebook collapsed before the text is saved: in one go,
-  // so that however busy the machine is, the collapse comes first.
-  await app.editor.evaluate((element) => {
-    const editor = (element as HTMLElement & Editor).CodeMirror;
-    editor.focus();
-    editor.execCommand("goDocEnd");
-    editor.replaceSelection(" and more");
-    (
-      document.querySelector(
-        '[role="treeitem"] button[aria-label="Collapse"]',
-      ) as HTMLElement
-    ).click();
-  });
+  await typeAndCollapse(app, " and more");
 
   await expect.poll(() => onDisk(page, file)).toContain("First line and more");
-  expect(
-    await app.editor.evaluate((element) => {
-      const editor = (element as HTMLElement & Editor).CodeMirror;
-      return { text: editor.getValue(), caret: editor.getCursor() };
-    }),
-  ).toMatchObject({
+  expect(await editorState(app)).toMatchObject({
     text: "First line and more",
     caret: { line: 0, ch: "First line and more".length },
   });
@@ -131,13 +121,7 @@ test("still shows a change made to the note elsewhere when the notebook is read 
     .notebook("Drafts")
     .getByRole("button", { name: "Collapse" })
     .click();
-  await expect
-    .poll(() =>
-      app.editor.evaluate((element) =>
-        (element as HTMLElement & Editor).CodeMirror.getValue(),
-      ),
-    )
-    .toBe("Changed elsewhere");
+  await expect.poll(() => app.editorText()).toBe("Changed elsewhere");
 });
 
 test("keeps what was just typed below front matter of its own when the notebook is read again", async ({
@@ -149,18 +133,7 @@ test("keeps what was just typed below front matter of its own when the notebook 
   await writeFrontMatter(app, page, file);
   await readNotesAgain(app, page, name);
 
-  // Typed, and the notebook collapsed before the text is saved, in one go.
-  await app.editor.evaluate((element) => {
-    const editor = (element as HTMLElement & Editor).CodeMirror;
-    editor.focus();
-    editor.execCommand("goDocEnd");
-    editor.replaceSelection(" and more");
-    (
-      document.querySelector(
-        '[role="treeitem"] button[aria-label="Collapse"]',
-      ) as HTMLElement
-    ).click();
-  });
+  await typeAndCollapse(app, " and more");
 
   await expect.poll(() => onDisk(page, file)).toContain("Body text and more");
   expect(await editorState(app)).toMatchObject({
@@ -180,9 +153,9 @@ test("keeps front matter as it was written, and the caret, when the notebook is 
 
   // Nothing unsaved this time: the caret at the end, the notebook collapsed.
   await app.editor.evaluate((element) => {
-    const editor = (element as HTMLElement & Editor).CodeMirror;
+    const editor = (element as EditorHost).editorHandle;
     editor.focus();
-    editor.execCommand("goDocEnd");
+    editor.select(editor.end());
   });
   await app
     .notebook("Drafts")
@@ -192,9 +165,7 @@ test("keeps front matter as it was written, and the caret, when the notebook is 
   // Typing on goes in where the caret is. If the note as read again had been
   // put in the editor, the caret would have gone to the start, or the typing
   // would have been dropped; either way it would not be saved after the body.
-  await app.editor.evaluate((element) =>
-    (element as HTMLElement & Editor).CodeMirror.focus(),
-  );
+  await app.focusEditor();
   await page.keyboard.type(" X");
   await expect.poll(() => onDisk(page, file)).toContain("Body text X");
   expect((await editorState(app)).text).toBe(`${frontMatter}Body text X`);
