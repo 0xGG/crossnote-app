@@ -386,9 +386,9 @@ export class CrossnoteApp {
     );
   }
 
-  // Whether the keys go to the editor: focus is on a place inside it that
-  // takes text, its own or a text field of a widget in it, not on an input
-  // such as the search box the editor opens.
+  // Whether the keys go to the editor: focus is on an editable area or a
+  // textarea inside it, the editor's own or a widget's, not on an input such
+  // as the search box the editor opens.
   editorHasFocus(editor = this.editor): Promise<boolean> {
     return editor.evaluate((element) => {
       const focused = document.activeElement;
