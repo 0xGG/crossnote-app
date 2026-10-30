@@ -49,10 +49,11 @@ import {
   ModifiedMarkdownEventData,
   PerformedGitOperationEventData,
 } from "../lib/event";
+import { readNoteText } from "../lib/frontMatter";
 import { Note } from "../lib/note";
 import { Notebook, sameNoteText } from "../lib/notebook";
 import { isFinishingEnter } from "../lib/keys";
-import { notify } from "../lib/notifications";
+import { failureMessage, notify } from "../lib/notifications";
 import { Reference } from "../lib/reference";
 import { TabNodeConfig } from "../lib/tabNode";
 import { setTheme } from "../themes/manager";
@@ -470,7 +471,7 @@ export default function NotePanel(props: Props) {
   // The note's text as this editor last had it from the notebook or gave it
   // to it, and the text of the save it started last. The notebook, read
   // again, brings back one of them whenever nothing has changed the note
-  // meanwhile, if in its own layout of the front matter once it has read
+  // meanwhile, if less settings typed into its front matter once it has read
   // its notes again from disk; putting that in the editor would drop
   // whatever was typed since, before it is saved, and send the caret to the
   // start. Once the text has been replaced from elsewhere, that save no
@@ -478,6 +479,26 @@ export default function NotePanel(props: Props) {
   // back is a change like any other.
   const synced = useRef<string>(null);
   const saving = useRef<string>(null);
+
+  // Whether the last save failed, until one goes through. Said once; what
+  // was typed stays in the editor for the next change to save, and the page
+  // asks before it is left with it. Only the save started last tells: one
+  // started before it can settle after it.
+  const saveFailed = useRef<boolean>(false);
+  const lastSave = useRef<number>(0);
+  useEffect(() => {
+    const ask = (event: BeforeUnloadEvent) => {
+      if (saveFailed.current) {
+        event.preventDefault();
+        // Older browsers ask only when this is set.
+        event.returnValue = "";
+      }
+    };
+    window.addEventListener("beforeunload", ask);
+    return () => {
+      window.removeEventListener("beforeunload", ask);
+    };
+  }, []);
 
   // Emitter
   useEffect(() => {
@@ -638,6 +659,23 @@ export default function NotePanel(props: Props) {
       setNoteIcon(note.config.icon);
     }
   }, [note]);
+
+  // Front matter YAML cannot read is kept as it is, and the note's settings
+  // are saved before it. Said once, as the note opens: front matter caught
+  // half typed later on is still being typed.
+  const frontMatterChecked = useRef<boolean>(false);
+  useEffect(() => {
+    if (note && !frontMatterChecked.current) {
+      frontMatterChecked.current = true;
+      if (readNoteText(note.markdown).unreadable) {
+        notify({
+          severity: "warning",
+          message: t("warning/front-matter-unreadable"),
+          duration: 5000,
+        });
+      }
+    }
+  }, [note, t]);
 
   // Set editor
   useEffect(() => {
@@ -829,12 +867,35 @@ export default function NotePanel(props: Props) {
         setTimeout(() => {
           if (markdown === editor.getValue()) {
             saving.current = markdown;
-            crossnoteContainer.updateNoteMarkdown(
-              tabNode,
-              note.notebookPath,
-              note.filePath,
-              markdown,
-            );
+            const save = ++lastSave.current;
+            crossnoteContainer
+              .updateNoteMarkdown(
+                tabNode,
+                note.notebookPath,
+                note.filePath,
+                markdown,
+              )
+              .then(() => {
+                if (save === lastSave.current) {
+                  saveFailed.current = false;
+                }
+              })
+              .catch((error) => {
+                if (save !== lastSave.current) {
+                  return;
+                }
+                if (!saveFailed.current) {
+                  notify({
+                    severity: "error",
+                    message: failureMessage(
+                      t("error/failed-to-save-note"),
+                      error,
+                    ),
+                    duration: 5000,
+                  });
+                }
+                saveFailed.current = true;
+              });
           }
           if (editorMode === EditorMode.Preview && previewElement.current) {
             try {
@@ -875,7 +936,15 @@ export default function NotePanel(props: Props) {
         editor.off("imageReadyToLoad", loadImage);
       };
     }
-  }, [editor, note, tabNode, editorMode, previewElement, postprocessPreview]);
+  }, [
+    editor,
+    note,
+    tabNode,
+    editorMode,
+    previewElement,
+    postprocessPreview,
+    t,
+  ]);
 
   // Command
   useEffect(() => {

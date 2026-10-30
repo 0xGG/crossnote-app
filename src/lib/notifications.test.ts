@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 import {
   closeNotification,
   dismissNotification,
+  failureMessage,
   getNotificationState,
   notify,
   resetNotifications,
@@ -155,5 +156,19 @@ describe("subscription", () => {
     const shown = getNotificationState();
     expect(shown).not.toBe(idle);
     expect(getNotificationState()).toBe(shown);
+  });
+});
+
+describe("failureMessage", () => {
+  it("gives the reason a failure came with", () => {
+    expect(
+      failureMessage(
+        "Failed to save the note",
+        new DOMException("The quota has been exceeded.", "QuotaExceededError"),
+      ),
+    ).toBe("Failed to save the note: The quota has been exceeded.");
+    expect(failureMessage("Failed", new Error(""))).toBe("Failed: Error");
+    expect(failureMessage("Failed", "ENOSPC")).toBe("Failed: ENOSPC");
+    expect(failureMessage("Failed", undefined)).toBe("Failed");
   });
 });

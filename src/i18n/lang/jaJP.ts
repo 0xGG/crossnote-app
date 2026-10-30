@@ -112,6 +112,10 @@ export const jaJP = {
     "error/failed-to-change-file-path": "ファイル パスの変更に失敗しました",
     "error/link-outside-notebook": "リンク先がノートブックの外にあります",
     "error/link-inside-note": "リンク先がフォルダではなくノートの中にあります",
+    "error/failed-to-save-note": "ノートを保存できませんでした",
+    "error/failed-to-create-note": "ノートを作成できませんでした",
+    "error/failed-to-delete-note": "ノートを削除できませんでした",
+    "error/failed-to-save-note-settings": "ノートの設定を保存できませんでした",
 
     // Success
     "success/notebook-uploaded": "ノートブックがアップロードされます",
@@ -119,6 +123,10 @@ export const jaJP = {
 
     // Info
     "info/downloading-notebook": "ノートブックをダウンロード中",
+
+    // Warning
+    "warning/front-matter-unreadable":
+      "このノートのフロントマターを読み取れません。そのまま残します。",
 
     // Settings
     "settings/about-this-project": "このプロジェクトについて",
@@ -134,6 +142,14 @@ export const jaJP = {
     "settings/author-email": "著者の電子メール",
     "settings/theme": "テーマ",
     "settings/key-map": "キーマップ",
+    "settings/persistent-storage": "永続ストレージ",
+    "settings/persistent-storage/persisted":
+      "オン：ブラウザーは空き容量を確保するためにこのサイトのノートを消去しません。",
+    "settings/persistent-storage/not-persisted":
+      "オフ：空き容量が少なくなると、ブラウザーがこのサイトのノートを消去することがあります。",
+    "settings/persistent-storage/unsupported":
+      "このブラウザーでは利用できません。",
+    "settings/ask-for-persistent-storage": "もう一度申請",
 
     // ProfileCard
     "profile-card/notes": "ノート",

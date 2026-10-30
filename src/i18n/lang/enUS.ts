@@ -110,6 +110,10 @@ export const enUS = {
     "error/failed-to-change-file-path": "Failed to change file path",
     "error/link-outside-notebook": "The link leads outside the notebook",
     "error/link-inside-note": "The link leads inside a note, not a folder",
+    "error/failed-to-save-note": "Failed to save the note",
+    "error/failed-to-create-note": "Failed to create the note",
+    "error/failed-to-delete-note": "Failed to delete the note",
+    "error/failed-to-save-note-settings": "Failed to save the note's settings",
 
     // Success
     "success/notebook-uploaded": "Notebook uploaded",
@@ -117,6 +121,10 @@ export const enUS = {
 
     // Info
     "info/downloading-notebook": "Downloading notebook",
+
+    // Warning
+    "warning/front-matter-unreadable":
+      "The front matter of this note cannot be read. It is kept as it is.",
 
     // Settings
     "settings/about-this-project": "About this project",
@@ -131,6 +139,13 @@ export const enUS = {
     "settings/author-email": "Author email",
     "settings/theme": "Theme",
     "settings/key-map": "Key Map",
+    "settings/persistent-storage": "Persistent storage",
+    "settings/persistent-storage/persisted":
+      "On: the browser does not clear the notes this site stores to free up space.",
+    "settings/persistent-storage/not-persisted":
+      "Off: when space runs low, the browser may clear the notes this site stores.",
+    "settings/persistent-storage/unsupported": "Not offered by this browser.",
+    "settings/ask-for-persistent-storage": "Ask again",
 
     // ProfileCard
     "profile-card/notes": "notes",

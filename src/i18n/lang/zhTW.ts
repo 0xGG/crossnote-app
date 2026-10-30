@@ -109,6 +109,10 @@ export const zhTW = {
     "error/failed-to-change-file-path": "更改文件路徑失敗",
     "error/link-outside-notebook": "連結指向筆記本之外",
     "error/link-inside-note": "連結指向筆記內部，而不是資料夾",
+    "error/failed-to-save-note": "儲存筆記失敗",
+    "error/failed-to-create-note": "新增筆記失敗",
+    "error/failed-to-delete-note": "刪除筆記失敗",
+    "error/failed-to-save-note-settings": "儲存筆記設定失敗",
 
     // Success
     "success/notebook-uploaded": "筆記本已上傳",
@@ -116,6 +120,10 @@ export const zhTW = {
 
     // Info
     "info/downloading-notebook": "正在下載筆記本",
+
+    // Warning
+    "warning/front-matter-unreadable":
+      "這篇筆記的 front matter 無法讀取，已原樣保留。",
 
     // Settings
     "settings/about-this-project": "關於這個項目",
@@ -129,6 +137,13 @@ export const zhTW = {
     "settings/author-email": "作者郵箱",
     "settings/theme": "主題",
     "settings/key-map": "鍵盤對應",
+    "settings/persistent-storage": "持久儲存",
+    "settings/persistent-storage/persisted":
+      "已開啟：瀏覽器不會為了騰出空間清除本站儲存的筆記。",
+    "settings/persistent-storage/not-persisted":
+      "未開啟：空間不足時，瀏覽器可能清除本站儲存的筆記。",
+    "settings/persistent-storage/unsupported": "此瀏覽器不提供。",
+    "settings/ask-for-persistent-storage": "再次申請",
 
     // ProfileCard
     "profile-card/notes": "筆記",

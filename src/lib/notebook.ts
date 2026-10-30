@@ -4,69 +4,50 @@ import * as git from "isomorphic-git";
 import type Token from "markdown-it/lib/token";
 import path from "path-browserify";
 // import { isFileAnImage } from "../utilities/image";
-import { matter, matterStringify } from "../utilities/markdown";
+import { NOTE_SETTINGS, readNoteText, writeNoteText } from "./frontMatter";
 import { fs, pfs } from "./fs";
 import { Mentions, Note, NoteConfig, Notes } from "./note";
 import { Reference, ReferenceMap } from "./reference";
 import Search from "./search";
 
-/**
- * Change "createdAt" to "created", and "modifiedAt" to "modified"
- * @param noteConfig
- */
-function formatNoteConfig(noteConfig: NoteConfig) {
-  const newObject: any = Object.assign({}, noteConfig);
-
-  newObject["created"] = noteConfig.createdAt;
-  delete newObject["createdAt"];
-
-  newObject["modified"] = noteConfig.modifiedAt;
-  delete newObject["modifiedAt"];
-
-  return newObject;
+// A note's settings as its front matter keeps them, in the order a new one
+// is written.
+function noteSettings(noteConfig: NoteConfig): [string, unknown][] {
+  const settings: [string, unknown][] = [];
+  if (noteConfig.aliases && noteConfig.aliases.length) {
+    settings.push(["aliases", noteConfig.aliases]);
+  }
+  for (const key of ["pinned", "favorited", "icon"] as const) {
+    if (noteConfig[key] !== undefined && noteConfig[key] !== null) {
+      settings.push([key, noteConfig[key]]);
+    }
+  }
+  settings.push(["created", noteConfig.createdAt]);
+  settings.push(["modified", noteConfig.modifiedAt]);
+  return settings;
 }
 
-// The keys a note's own settings take in its front matter: `writeNote` puts
-// them there, `getNote` takes them out again, and `note` is the older form
-// `writeNote` still reads.
-const NOTE_SETTINGS = [
-  "created",
-  "modified",
-  "pinned",
-  "favorited",
-  "icon",
-  "aliases",
-  "note",
-];
+function dateOf(value: unknown): Date | null {
+  if (value === undefined || value === null) {
+    return null;
+  }
+  const date = new Date(value as string);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
 
 /**
- * Whether two texts of a note say the same to the notebook: the same body,
- * and the same front matter of the writer's own, however its YAML is laid
- * out and whatever the note's settings in it. Saving writes the front matter
- * out in the notebook's own layout with the settings added, so a note read
- * back from its file differs from the text an editor gave it; this tells
- * that apart from a change.
+ * Whether two texts of a note say the same to the notebook: the same, but
+ * for the settings it keeps in the front matter, wherever they are, and the
+ * older form of them that saving turns into these. A note read back from its
+ * file has them taken out, while the text an editor gave may have them
+ * typed in; this tells that apart from a change.
  */
 export function sameNoteText(a: string, b: string): boolean {
   if (a === b) {
     return true;
   }
-  // Read and written out again as the notebook does, less the settings.
-  const comparable = (text: string) => {
-    const data = matter(text);
-    // Front matter that reads as nothing, such as an empty block, is no
-    // front matter to `writeNote`: it keeps the whole text as the body, and
-    // puts its own front matter in front of it.
-    if (!data.data || typeof data.data !== "object") {
-      return text;
-    }
-    const own = Object.assign({}, data.data);
-    for (const key of NOTE_SETTINGS) {
-      delete own[key];
-    }
-    return matterStringify(data.content, own);
-  };
-  return comparable(a) === comparable(b);
+  const keys = [...NOTE_SETTINGS, "note"];
+  return readNoteText(a, keys).text === readNoteText(b, keys).text;
 }
 
 interface RefreshNotesArgs {
@@ -355,59 +336,34 @@ export class Notebook {
       return null;
     }
     if (stats.isFile() && filePath.endsWith(".md")) {
-      let markdown = (await pfs.readFile(absFilePath, {
+      const file = await pfs.readFile(absFilePath, {
         encoding: "utf8",
-      })) as string;
+      });
+      // A file the browser file system lists without its content, as an
+      // earlier refused write could leave, reads as empty rather than stop
+      // every note of the notebook from loading.
+      const { text: markdown, settings } = readNoteText(
+        typeof file === "string" ? file : "",
+      );
 
-      // Read the noteConfig, which is like <!-- note {...} --> at the end of the markdown file
-      let noteConfig: NoteConfig = {
-        createdAt: new Date(stats.ctimeMs),
-        modifiedAt: new Date(stats.mtimeMs),
+      // The file's times stand in for the settings it does not have.
+      const noteConfig: NoteConfig = {
+        createdAt: dateOf(settings.created) || new Date(stats.ctimeMs),
+        modifiedAt: dateOf(settings.modified) || new Date(stats.mtimeMs),
         aliases: [],
       };
-
-      try {
-        const data = matter(markdown);
-        const frontMatter: any = Object.assign({}, data.data);
-
-        // New note config design in beta 3
-        if (data.data["created"]) {
-          noteConfig.createdAt = new Date(data.data["created"]);
-          delete frontMatter["created"];
+      for (const key of ["pinned", "favorited"] as const) {
+        if (settings[key] !== undefined && settings[key] !== null) {
+          noteConfig[key] = settings[key] as boolean;
         }
-        if (data.data["modified"]) {
-          noteConfig.modifiedAt = new Date(data.data["modified"]);
-          delete frontMatter["modified"];
-        }
-        if (data.data["pinned"]) {
-          noteConfig.pinned = data.data["pinned"];
-          delete frontMatter["pinned"];
-        }
-        if (data.data["favorited"]) {
-          noteConfig.favorited = data.data["favorited"];
-          delete frontMatter["favorited"];
-        }
-        if (data.data["icon"]) {
-          noteConfig.icon = data.data["icon"];
-          delete frontMatter["icon"];
-        }
-        if (data.data["aliases"]) {
-          const aliases = data.data["aliases"] || [];
-          if (typeof aliases === "string") {
-            noteConfig.aliases = aliases.split(",").map((x) => x.trim());
-          } else {
-            noteConfig.aliases = aliases;
-          }
-          delete frontMatter["aliases"];
-        }
-
-        // markdown = matter.stringify(data.content, frontMatter); // <= NOTE: I think gray-matter has bug. Although I delete "note" section from front-matter, it still includes it.
-        markdown = matterStringify(data.content, frontMatter);
-      } catch (error) {
-        // Do nothing
-        markdown =
-          "Please fix front-matter. (👈 Don't forget to delete this line)\n\n" +
-          markdown;
+      }
+      if (settings.icon !== undefined && settings.icon !== null) {
+        noteConfig.icon = settings.icon as string;
+      }
+      if (typeof settings.aliases === "string") {
+        noteConfig.aliases = settings.aliases.split(",").map((x) => x.trim());
+      } else if (Array.isArray(settings.aliases)) {
+        noteConfig.aliases = settings.aliases;
       }
 
       let oldMentions = {};
@@ -522,28 +478,21 @@ export class Notebook {
     noteConfig: NoteConfig,
   ): Promise<Note> {
     noteConfig.modifiedAt = new Date();
-    const oMarkdown = markdown;
+    const absFilePath = path.resolve(this.dir, filePath);
+    // Settings that have not changed are written as the file had them.
+    let previous: string = null;
     try {
-      const data = matter(markdown);
-      if (data.data["note"] && data.data["note"] instanceof Object) {
-        noteConfig = Object.assign({}, noteConfig, data.data["note"] || {});
-      }
-      const frontMatter = Object.assign(
-        data.data || {},
-        formatNoteConfig(noteConfig),
-      );
-      delete frontMatter["note"];
-      const aliases = frontMatter["aliases"];
-      if (!aliases || !aliases.length) {
-        delete frontMatter["aliases"];
-      }
-      markdown = data.content;
-      markdown = matterStringify(markdown, frontMatter);
+      previous = (await pfs.readFile(absFilePath, {
+        encoding: "utf8",
+      })) as string;
     } catch (error) {
-      markdown = matterStringify(markdown, formatNoteConfig(noteConfig));
+      // A new note.
     }
 
-    await pfs.writeFile(path.resolve(this.dir, filePath), markdown);
+    await pfs.writeFile(
+      absFilePath,
+      writeNoteText(markdown, noteSettings(noteConfig), previous),
+    );
     if (!this.isLocal) {
       // Stages the note, which writes its text as a new object file.
       await git.add({
@@ -555,7 +504,7 @@ export class Notebook {
     await pfs.storeTree(this.dir);
 
     const note = await this.getNote(filePath, true);
-    note.markdown = oMarkdown;
+    note.markdown = markdown;
     return note;
   }
 

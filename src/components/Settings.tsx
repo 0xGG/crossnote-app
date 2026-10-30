@@ -19,6 +19,7 @@ import { SettingsContainer } from "../containers/settings";
 import { EditorMode } from "../lib/editorMode";
 import { KeyMap } from "../lib/keymap";
 import { themeManager } from "../themes/manager";
+import StorageSettings from "./StorageSettings";
 const GitCommit = __GIT_COMMIT__;
 
 const SettingsPanel = styled(Box)(({ theme }) => ({
@@ -359,6 +360,10 @@ export function Settings() {
               {t("general/Emacs") as string}
             </MenuItem>
           </Select>
+        </Section>
+
+        <Section>
+          <StorageSettings></StorageSettings>
         </Section>
         <Section style={{ marginTop: "32px" }}>
           <Link

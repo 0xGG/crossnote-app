@@ -55,6 +55,21 @@ export function notify(input: {
   }
 }
 
+// A message for something that failed, with the reason the browser or the
+// file system gave, such as a full disk.
+export function failureMessage(message: string, error: unknown): string {
+  // What a browser throws, a DOMException among them, has a message, or at
+  // least a name, whether or not it counts as an Error where it is caught.
+  const { message: said, name } = Object(error) as {
+    message?: unknown;
+    name?: unknown;
+  };
+  const reason =
+    [said, name].find((part) => typeof part === "string" && part) ??
+    (typeof error === "string" ? error : "");
+  return reason ? `${message}: ${reason}` : message;
+}
+
 // Starts hiding the current message. The host calls this from every close
 // path (the timer, the close button, Escape). The message leaves the queue
 // only once its exit transition has ended, see dismissNotification.

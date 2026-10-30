@@ -109,6 +109,10 @@ export const zhCN = {
     "error/failed-to-change-file-path": "更改文件路径失败",
     "error/link-outside-notebook": "链接指向笔记本之外",
     "error/link-inside-note": "链接指向笔记内部，而不是文件夹",
+    "error/failed-to-save-note": "保存笔记失败",
+    "error/failed-to-create-note": "新建笔记失败",
+    "error/failed-to-delete-note": "删除笔记失败",
+    "error/failed-to-save-note-settings": "保存笔记设置失败",
 
     // Success
     "success/notebook-uploaded": "笔记本已上传",
@@ -116,6 +120,10 @@ export const zhCN = {
 
     // Info
     "info/downloading-notebook": "正在下载笔记本",
+
+    // Warning
+    "warning/front-matter-unreadable":
+      "这篇笔记的 front matter 读不出来，已原样保留。",
 
     // Settings
     "settings/about-this-project": "关于这个项目",
@@ -129,6 +137,13 @@ export const zhCN = {
     "settings/author-email": "作者邮箱",
     "settings/theme": "主题",
     "settings/key-map": "键盘映射",
+    "settings/persistent-storage": "持久存储",
+    "settings/persistent-storage/persisted":
+      "已开启：浏览器不会为了腾出空间清除本站存储的笔记。",
+    "settings/persistent-storage/not-persisted":
+      "未开启：空间不足时，浏览器可能清除本站存储的笔记。",
+    "settings/persistent-storage/unsupported": "此浏览器不提供。",
+    "settings/ask-for-persistent-storage": "再次申请",
 
     // ProfileCard
     "profile-card/notes": "笔记",
