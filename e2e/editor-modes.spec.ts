@@ -39,6 +39,14 @@ async function probeEditingKeys(
   expect(pageErrors).toEqual([]);
 }
 
+// How the emphasis around "by" is drawn: the markers that show, and the word
+// itself, which shows either way. The word tells markup that is not shown
+// from an editor that has drawn nothing.
+const emphasis = async (app: CrossnoteApp) => ({
+  markers: await app.timesShown("**"),
+  word: await app.timesShown("by"),
+});
+
 test("switches between edit, preview and source code", async ({
   app,
   page,
@@ -54,7 +62,7 @@ test("switches between edit, preview and source code", async ({
   // Edit is the default: the editor folds markup as you type, so the
   // emphasis markers around "by" are not shown.
   await expect(app.modeOn).toHaveAccessibleName("Edit");
-  await expect.poll(() => app.markupShown("**")).toBe(0);
+  await expect.poll(() => emphasis(app)).toEqual({ markers: 0, word: 1 });
 
   // Preview renders the markdown and puts the editor away.
   await app.modeButton("Preview").click();
@@ -70,12 +78,12 @@ test("switches between edit, preview and source code", async ({
   await expect(app.modeOn).toHaveAccessibleName("Source code");
   await expect(app.editor).toBeVisible();
   await expect(app.preview).toHaveCount(0);
-  await expect.poll(() => app.markupShown("**")).toBe(2);
+  await expect.poll(() => emphasis(app)).toEqual({ markers: 2, word: 1 });
 
   // And back to the folding editor.
   await app.modeButton("Edit").click();
   await expect(app.modeOn).toHaveAccessibleName("Edit");
-  await expect.poll(() => app.markupShown("**")).toBe(0);
+  await expect.poll(() => emphasis(app)).toEqual({ markers: 0, word: 1 });
 });
 
 test("shows source code as plain text once the setting is on", async ({
@@ -97,7 +105,7 @@ test("shows source code as plain text once the setting is on", async ({
   // before leaving for the settings tab.
   const noteTab = app.tab(await app.noteTitle.inputValue());
   await expect(noteTab).toBeVisible();
-  const heading = () => app.lineScale("Hello from Playwright");
+  const heading = () => app.textScale("Hello from Playwright");
 
   // Styled source is the default: the heading line keeps its typography.
   await app.modeButton("Source code").click();
@@ -128,7 +136,7 @@ test("shows source code as plain text once the setting is on", async ({
 
   // The folding editor is not affected.
   await app.modeButton("Edit").click();
-  await expect.poll(() => app.markupShown("**")).toBe(0);
+  await expect.poll(() => emphasis(app)).toEqual({ markers: 0, word: 1 });
   await probeEditingKeys(page, app, pageErrors);
   await app.modeButton("Source code").click();
   await expect.poll(heading).toBe(1);
@@ -186,7 +194,7 @@ test("keeps headings inside fenced code out of the table of contents", async ({
   await app.plainTextSourceCodeSwitch.check();
   await noteTab.click();
   await app.modeButton("Source code").click();
-  await expect.poll(() => app.lineScale("Real heading")).toBe(1);
+  await expect.poll(() => app.textScale("Real heading")).toBe(1);
   await app.editor.click();
   await page.keyboard.press("Control+End");
   await page.keyboard.press("Enter");

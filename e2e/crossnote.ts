@@ -25,10 +25,10 @@ export class CrossnoteApp {
     this.notesPanel = page
       .locator(".notes-panel")
       .filter({ has: page.getByRole("heading", { name: "Notes" }) });
-    // Every note open in a tab has its editor on the page, hidden ones
-    // included; a spec with two notes open picks the visible one. Hidden ones
-    // are not filtered out here, or a check that the editor is hidden would
-    // pass on finding none.
+    // A note's editor stays on the page once its tab has been shown, hidden
+    // or not, so with two notes open there can be two; a spec then picks the
+    // visible one. Hidden ones are not filtered out here, or a check that the
+    // editor is hidden would pass on finding none.
     this.editor = page.getByTestId("note-editor");
     this.preview = page.getByTestId("note-preview");
   }
@@ -345,9 +345,10 @@ export class CrossnoteApp {
     );
   }
 
-  // Puts text in place of all of it as one change, as pasting would: for
-  // text that typing would change on the way in, as the editor closes
-  // brackets and opens hints. The app saves it as it saves typing.
+  // Puts text in place of all of it as one change: for text that typing
+  // would change on the way in, as the editor closes brackets and opens
+  // hints. The app saves it as it saves typing. The caret is wherever the
+  // editor leaves it.
   async setEditorText(text: string, editor = this.editor) {
     await editor.evaluate(
       (element, text) => (element as EditorHost).editorHandle.setText(text),
@@ -385,11 +386,18 @@ export class CrossnoteApp {
     );
   }
 
-  // Whether the keys go to the editor: focus is somewhere inside it.
+  // Whether the keys go to the editor's text: focus is on the place in it
+  // that takes typing, not on another field the editor holds, such as a
+  // search box or a widget's.
   editorHasFocus(editor = this.editor): Promise<boolean> {
-    return editor.evaluate((element) =>
-      element.contains(document.activeElement),
-    );
+    return editor.evaluate((element) => {
+      const focused = document.activeElement;
+      return (
+        focused instanceof HTMLElement &&
+        element.contains(focused) &&
+        (focused.isContentEditable || focused instanceof HTMLTextAreaElement)
+      );
+    });
   }
 
   // The kinds of token the editor draws a piece of text with, as it names
@@ -401,11 +409,13 @@ export class CrossnoteApp {
     );
   }
 
-  // How many times markup such as "**" is drawn where a user sees it: with
-  // some width, in a colour that is not transparent, in nothing hidden. An
-  // editor that folds markup draws it at no width or not at all; either way
-  // it does not count.
-  markupShown(markup: string, editor = this.editor): Promise<number> {
+  // How many times a piece of text, markup such as "**" included, is drawn
+  // where a user sees it: with some width, in a colour that is not
+  // transparent, in nothing hidden. An editor that folds markup draws it at
+  // no width or not at all; either way it does not count. None at all, too,
+  // while the editor is hidden or has not drawn its lines, so a check that
+  // markup is not shown wants one that the text around it is.
+  timesShown(markup: string, editor = this.editor): Promise<number> {
     return editor.evaluate((element, markup) => {
       let shown = 0;
       const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT);
@@ -433,11 +443,12 @@ export class CrossnoteApp {
     }, markup);
   }
 
-  // The font size of the line a piece of text is drawn on, over the
-  // editor's own: 1 for a line drawn as plain text, more for a heading drawn
-  // larger. Read in one go: an editor redraws its lines freely, so separate
-  // reads could straddle a redraw. NaN while the text is not drawn.
-  lineScale(text: string, editor = this.editor): Promise<number> {
+  // The font size a piece of text is drawn at, over the editor's own: 1 for
+  // text drawn as plain text, more for a heading drawn larger, whether the
+  // editor sizes the heading's line or the heading itself. Read in one go: an
+  // editor redraws its lines freely, so separate reads could straddle a
+  // redraw. NaN while the text is not drawn.
+  textScale(text: string, editor = this.editor): Promise<number> {
     return editor.evaluate((element, text) => {
       const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT);
       for (let node = walker.nextNode(); node; node = walker.nextNode()) {
@@ -446,16 +457,8 @@ export class CrossnoteApp {
           node.textContent?.includes(text) &&
           parent.checkVisibility({ visibilityProperty: true })
         ) {
-          // The line is the block the text sits in.
-          let line: Element = parent;
-          while (
-            line !== element &&
-            getComputedStyle(line).display.startsWith("inline")
-          ) {
-            line = line.parentElement!;
-          }
           return (
-            parseFloat(getComputedStyle(line).fontSize) /
+            parseFloat(getComputedStyle(parent).fontSize) /
             parseFloat(getComputedStyle(element).fontSize)
           );
         }
