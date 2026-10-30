@@ -99,3 +99,29 @@ test("leaves an alias out when it cannot be saved", async ({ app, page }) => {
     0,
   );
 });
+
+test("keeps an alias in when taking it out cannot be saved", async ({
+  app,
+  page,
+}) => {
+  const aliasPopover = page
+    .getByRole("presentation")
+    .filter({ has: page.getByPlaceholder("Add an alias") });
+  await app.createNote();
+  await expect(app.noteTitle).not.toHaveValue("");
+  await page.getByRole("button", { name: "Note menu" }).click();
+  await page.getByRole("button", { name: "Edit note alias" }).click();
+  await aliasPopover.getByPlaceholder("Add an alias").fill("Kept in");
+  await aliasPopover.getByPlaceholder("Add an alias").press("Enter");
+  // The list shows an alias once it is saved.
+  const alias = aliasPopover.getByText("Kept in", { exact: true });
+  await expect(alias).toBeVisible();
+  await app.refuseWrites();
+  await aliasPopover.getByRole("button", { name: "Delete" }).click();
+  // The list takes the deletion's answer right after the message goes up,
+  // before the check after it reaches the page.
+  await expect(page.getByRole("alert")).toContainText(
+    "Failed to save the note's settings",
+  );
+  await expect(alias).toBeVisible();
+});
