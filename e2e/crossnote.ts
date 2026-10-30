@@ -1,10 +1,16 @@
 import { expect, type Locator, type Page } from "@playwright/test";
+import type { EditorHost, TextPosition } from "../src/editor/handle";
+
+export type { EditorHost, TextPosition };
 
 /**
  * Drives the app the way a user does: through roles, visible text and the few
  * global class names the app itself relies on (its print stylesheet targets
  * them), never through generated MUI class names, so the specs survive the
- * UI-stack migration.
+ * UI-stack migration. Nor through the editor's own markup: the editors and
+ * the preview are found by test id, and what an editor holds is read and
+ * changed through the handle the app hangs on it (src/editor/handle.ts), so
+ * the specs survive the editor being replaced too.
  */
 export class CrossnoteApp {
   readonly sidebar: Locator;
@@ -19,10 +25,12 @@ export class CrossnoteApp {
     this.notesPanel = page
       .locator(".notes-panel")
       .filter({ has: page.getByRole("heading", { name: "Notes" }) });
-    this.editor = page.locator(".CodeMirror");
-    // The preview pane is rendered next to the editor's textarea; other
-    // components (cards, widgets) reuse the class name elsewhere.
-    this.preview = page.locator(".editor-textarea ~ .preview");
+    // A note's editor stays on the page once its tab has been shown, hidden
+    // or not, so with two notes open there can be two; a spec then picks the
+    // visible one. Hidden ones are not filtered out here, or a check that the
+    // editor is hidden would pass on finding none.
+    this.editor = page.getByTestId("note-editor");
+    this.preview = page.getByTestId("note-preview");
   }
 
   async open() {
@@ -313,12 +321,166 @@ export class CrossnoteApp {
 
   // The editor in the dialog a kanban card is edited in.
   get cardEditor(): Locator {
-    return this.page.getByRole("dialog").locator(".CodeMirror");
+    return this.page.getByRole("dialog").getByTestId("card-editor");
   }
 
-  // The element that holds the caret while typing.
-  get editorInput(): Locator {
-    return this.editor.locator("[contenteditable=true]");
+  // What an editor holds and where its caret is, read and changed through
+  // its handle. Each of these is one step on its own; a spec that has to do
+  // several things in the same task, so that nothing the app does can come
+  // in between, calls the handle in the page:
+  //
+  //   await app.editor.evaluate((element) => {
+  //     const editor = (element as EditorHost).editorHandle;
+  //     ...
+  //   });
+  //
+  // Each takes the editor to use, the note's by default.
+
+  // The whole text, lines joined with \n: what the editor holds, which a
+  // check on what it draws cannot read (it leaves lines out of view undrawn,
+  // and an editor that folds markup draws something else).
+  editorText(editor = this.editor): Promise<string> {
+    return editor.evaluate((element) =>
+      (element as EditorHost).editorHandle.text(),
+    );
+  }
+
+  // Puts text in place of all of it as one change: for text that typing
+  // would change on the way in, as the editor closes brackets and opens
+  // hints. The app saves it as it saves typing. The caret is wherever the
+  // editor leaves it.
+  async setEditorText(text: string, editor = this.editor) {
+    await editor.evaluate(
+      (element, text) => (element as EditorHost).editorHandle.setText(text),
+      text,
+    );
+  }
+
+  caret(editor = this.editor): Promise<TextPosition> {
+    return editor.evaluate((element) =>
+      (element as EditorHost).editorHandle.caret(),
+    );
+  }
+
+  async selectInEditor(
+    anchor: TextPosition,
+    head?: TextPosition,
+    editor = this.editor,
+  ) {
+    await editor.evaluate(
+      (element, { anchor, head }) =>
+        (element as EditorHost).editorHandle.select(anchor, head),
+      { anchor, head },
+    );
+  }
+
+  editorSelection(editor = this.editor): Promise<string> {
+    return editor.evaluate((element) =>
+      (element as EditorHost).editorHandle.selection(),
+    );
+  }
+
+  async focusEditor(editor = this.editor) {
+    await editor.evaluate((element) =>
+      (element as EditorHost).editorHandle.focus(),
+    );
+  }
+
+  // Whether the keys go to the editor: focus is on an editable area or a
+  // textarea inside it, the editor's own or a widget's, not on an input such
+  // as the search box the editor opens.
+  editorHasFocus(editor = this.editor): Promise<boolean> {
+    return editor.evaluate((element) => {
+      const focused = document.activeElement;
+      return (
+        focused instanceof HTMLElement &&
+        element.contains(focused) &&
+        (focused.isContentEditable || focused instanceof HTMLTextAreaElement)
+      );
+    });
+  }
+
+  // The kinds of token the editor draws a piece of text with, as it names
+  // them: what a language mode that has taken effect shows.
+  tokenTypes(text: string, editor = this.editor): Promise<string[]> {
+    return editor.evaluate(
+      (element, text) => (element as EditorHost).editorHandle.tokenTypes(text),
+      text,
+    );
+  }
+
+  // How many times each of some pieces of text, markup such as "**"
+  // included, is drawn where a user sees it: with some width, in a colour
+  // that is not transparent, in nothing hidden. An editor that folds markup
+  // draws it at no width or not at all; either way it does not count. None
+  // at all, too, while the editor is hidden or has not drawn its lines, so a
+  // check that markup is not shown wants one that the text around it is,
+  // counted in the same go: separate reads could straddle a redraw.
+  timesShown(pieces: string[], editor = this.editor): Promise<number[]> {
+    return editor.evaluate((element, pieces) => {
+      const shown = pieces.map(() => 0);
+      const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT);
+      for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+        const text = node.textContent ?? "";
+        const parent = node.parentElement!;
+        const style = getComputedStyle(parent);
+        const visible =
+          parent.checkVisibility({
+            opacityProperty: true,
+            visibilityProperty: true,
+          }) && !/^rgba\(.*,\s*0\)$|^transparent$/.test(style.color);
+        pieces.forEach((piece, i) => {
+          let at = text.indexOf(piece);
+          while (visible && at >= 0) {
+            const range = document.createRange();
+            range.setStart(node, at);
+            range.setEnd(node, at + piece.length);
+            if (range.getBoundingClientRect().width >= 1) {
+              shown[i]++;
+            }
+            at = text.indexOf(piece, at + piece.length);
+          }
+        });
+      }
+      return shown;
+    }, pieces);
+  }
+
+  // The font size a piece of text is drawn at, over the editor's own: 1 for
+  // text drawn as plain text, more for a heading drawn larger, whether the
+  // editor sizes the heading's line or the heading itself. Read in one go: an
+  // editor redraws its lines freely, so separate reads could straddle a
+  // redraw. NaN while the text is not drawn.
+  textScale(text: string, editor = this.editor): Promise<number> {
+    return editor.evaluate((element, text) => {
+      const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT);
+      for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+        const parent = node.parentElement!;
+        if (
+          node.textContent?.includes(text) &&
+          parent.checkVisibility({ visibilityProperty: true })
+        ) {
+          return (
+            parseFloat(getComputedStyle(parent).fontSize) /
+            parseFloat(getComputedStyle(element).fontSize)
+          );
+        }
+      }
+      return NaN;
+    }, text);
+  }
+
+  // An entry of the note's table of contents.
+  tocItem(text: string): Locator {
+    return this.page.locator(".toc-item").filter({ hasText: text });
+  }
+
+  // The element of the visible preview marked as the one a reference leads
+  // to.
+  get highlightedReference(): Locator {
+    return this.preview
+      .filter({ visible: true })
+      .locator(".reference-highlight");
   }
 
   // The divider between the note and its table of contents. It reports the
@@ -355,5 +517,12 @@ export class CrossnoteApp {
     return this.page
       .getByRole("group", { name: "editor mode" })
       .getByRole("button", { name });
+  }
+
+  // The mode button that is on, the one pressed.
+  get modeOn(): Locator {
+    return this.page
+      .getByRole("group", { name: "editor mode" })
+      .getByRole("button", { pressed: true });
   }
 }

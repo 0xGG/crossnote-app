@@ -27,6 +27,7 @@ import {
 } from "mdi-material-ui";
 import React, { useEffect, useState } from "react";
 import { renderWidget } from "../../../utilities/widgetRender";
+import { attachEditorHandle } from "../../handle";
 import { useTranslation } from "react-i18next";
 import EditImageDialog from "../../../components/EditImageDialog";
 import { globalContainers } from "../../../containers/global";
@@ -225,6 +226,7 @@ function KanbanCardDisplay(props: KanbanCardProps) {
         showCursorWhenSelecting: true,
         inputStyle: "contenteditable",
       });
+      attachEditorHandle(editor, "card-editor");
       editor.setValue(card.description);
       editor.setOption("lineNumbers", false);
       editor.setOption("foldGutter", false);

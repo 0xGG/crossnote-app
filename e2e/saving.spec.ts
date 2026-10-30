@@ -45,7 +45,7 @@ test("says when a note cannot be saved, keeps what was typed and saves it once i
   await expect
     .poll(async () => (await app.refusedWrites()).slice(refused))
     .toContain("file");
-  await expect(app.editor).toContainText("First second third");
+  expect(await app.editorText()).toBe("First second third");
 
   await app.refuseWrites(false);
   await page.keyboard.type(" fourth");

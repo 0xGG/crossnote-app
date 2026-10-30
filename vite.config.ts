@@ -85,5 +85,12 @@ export default defineConfig({
     // invariant rather than a one-off verification; Vitest prints the seed on
     // failure for reproduction.
     sequence: { shuffle: true },
+    // emoji-mart loaded as the bundle loads it, as ES modules: it unpacks its
+    // emoji data in place as it loads, and only that way is the data it
+    // unpacks the one the app reads (src/editor/emoji.ts).
+    alias: [
+      { find: /^emoji-mart$/, replacement: "emoji-mart/dist-es/index.js" },
+    ],
+    server: { deps: { inline: ["emoji-mart"] } },
   },
 });

@@ -1,5 +1,4 @@
 import type { Page } from "@playwright/test";
-import type CodeMirror from "codemirror";
 import type { CrossnoteApp } from "./crossnote";
 import { expect, test } from "./fixtures";
 
@@ -11,40 +10,42 @@ async function probeEditingKeys(
   app: CrossnoteApp,
   pageErrors: string[],
 ) {
-  const lastLine = app.editor.locator(".CodeMirror-line").last();
-  // Indentation has to be read from the editor itself: toHaveText trims it.
-  const lastLineText = () =>
-    app.editor.evaluate((editor) => {
-      const cm = (editor as HTMLElement & { CodeMirror: CodeMirror.Editor })
-        .CodeMirror;
-      return cm.getLine(cm.lastLine());
-    });
+  // Read from the text the editor holds, indentation and all.
+  const lastLine = async () => (await app.editorText()).split("\n").pop();
   await app.editor.click();
   await page.keyboard.press("Control+End");
   await page.keyboard.press("Enter");
   await page.keyboard.type("one");
-  await expect(lastLine).toHaveText("one");
+  await expect.poll(lastLine).toBe("one");
   await page.keyboard.press("Shift+Enter");
   await page.keyboard.type("two");
-  await expect(lastLine).toHaveText("two");
+  await expect.poll(lastLine).toBe("two");
   await page.keyboard.press("Tab");
   await page.keyboard.type("three");
-  await expect(lastLine).toHaveText(/^two\s+three$/);
-  await expect(app.editorInput).toBeFocused();
+  await expect.poll(lastLine).toMatch(/^two\s+three$/);
+  expect(await app.editorHasFocus()).toBe(true);
   // Shift+Tab takes one indent unit off the line each time; the probe leaves
   // the line unindented so that Enter copies no indentation later on.
   await page.keyboard.press("Enter");
   await page.keyboard.type("    four");
-  await expect.poll(lastLineText).toBe("    four");
+  await expect.poll(lastLine).toBe("    four");
   await page.keyboard.press("Shift+Tab");
-  await expect.poll(lastLineText).toBe("  four");
+  await expect.poll(lastLine).toBe("  four");
   await page.keyboard.press("Shift+Tab");
-  await expect.poll(lastLineText).toBe("four");
+  await expect.poll(lastLine).toBe("four");
   await page.keyboard.type("!");
-  await expect.poll(lastLineText).toBe("four!");
-  await expect(app.editorInput).toBeFocused();
+  await expect.poll(lastLine).toBe("four!");
+  expect(await app.editorHasFocus()).toBe(true);
   expect(pageErrors).toEqual([]);
 }
+
+// How the emphasis around "by" is drawn: the markers that show, and the word
+// itself, which shows either way, counted in one go. The word tells markup
+// that is not shown from an editor that has drawn nothing.
+const emphasis = async (app: CrossnoteApp) => {
+  const [markers, word] = await app.timesShown(["**", "by"]);
+  return { markers, word };
+};
 
 test("switches between edit, preview and source code", async ({
   app,
@@ -56,15 +57,16 @@ test("switches between edit, preview and source code", async ({
   await app.typeInEditor("# Hello from Playwright");
   await page.keyboard.press("Enter");
   await page.keyboard.type("Written **by** a robot");
+  await expect.poll(() => app.editorText()).toContain("Written **by** a robot");
 
   // Edit is the default: the editor folds markup as you type, so the
-  // emphasis markers around "by" are hidden tokens.
-  const markers = app.editor.locator(".cm-formatting-strong");
-  await expect(markers).toHaveCount(2);
-  await expect(markers.first()).toHaveClass(/hmd-hidden-token/);
+  // emphasis markers around "by" are not shown.
+  await expect(app.modeOn).toHaveAccessibleName("Edit");
+  await expect.poll(() => emphasis(app)).toEqual({ markers: 0, word: 1 });
 
   // Preview renders the markdown and puts the editor away.
   await app.modeButton("Preview").click();
+  await expect(app.modeOn).toHaveAccessibleName("Preview");
   await expect(app.editor).toBeHidden();
   await expect(app.preview.getByRole("heading", { level: 1 })).toHaveText(
     "Hello from Playwright",
@@ -73,13 +75,15 @@ test("switches between edit, preview and source code", async ({
 
   // Source code shows the markdown as written: no preview, nothing folded.
   await app.modeButton("Source code").click();
+  await expect(app.modeOn).toHaveAccessibleName("Source code");
   await expect(app.editor).toBeVisible();
   await expect(app.preview).toHaveCount(0);
-  await expect(markers.first()).not.toHaveClass(/hmd-hidden-token/);
+  await expect.poll(() => emphasis(app)).toEqual({ markers: 2, word: 1 });
 
   // And back to the folding editor.
   await app.modeButton("Edit").click();
-  await expect(markers.first()).toHaveClass(/hmd-hidden-token/);
+  await expect(app.modeOn).toHaveAccessibleName("Edit");
+  await expect.poll(() => emphasis(app)).toEqual({ markers: 0, word: 1 });
 });
 
 test("shows source code as plain text once the setting is on", async ({
@@ -101,59 +105,41 @@ test("shows source code as plain text once the setting is on", async ({
   // before leaving for the settings tab.
   const noteTab = app.tab(await app.noteTitle.inputValue());
   await expect(noteTab).toBeVisible();
-
-  const heading = app.editor
-    .locator(".CodeMirror-line")
-    .filter({ hasText: "Hello from Playwright" });
-  // The heading line's font size relative to a paragraph line, read in one
-  // go: CodeMirror redraws line nodes freely, so two separate reads could
-  // straddle a redraw.
-  const headingScale = () =>
-    app.editor.evaluate((editor) => {
-      const fontSize = (text: string) => {
-        const line = Array.from(
-          editor.querySelectorAll(".CodeMirror-line"),
-        ).find((candidate) => candidate.textContent?.includes(text));
-        return line ? parseFloat(getComputedStyle(line).fontSize) : NaN;
-      };
-      return fontSize("Hello from Playwright") / fontSize("a robot");
-    });
+  const heading = () => app.textScale("Hello from Playwright");
 
   // Styled source is the default: the heading line keeps its typography.
   await app.modeButton("Source code").click();
-  await expect(heading).toHaveClass(/HyperMD-header-1/);
-  await expect.poll(headingScale).toBeGreaterThan(1);
+  await expect.poll(heading).toBeGreaterThan(1);
 
   // Switching the setting on reaches the note that is already open.
   await app.openSettings();
   await app.plainTextSourceCodeSwitch.check();
   await noteTab.click();
-  await expect(heading).not.toHaveClass(/HyperMD-header/);
-  await expect.poll(headingScale).toBe(1);
+  await expect.poll(heading).toBe(1);
   // Syntax colors stay and the markers are part of the text.
-  await expect(app.editor.locator(".cm-header")).not.toHaveCount(0);
-  await expect(app.editor.locator(".cm-strong")).toHaveText("**by**");
+  await expect
+    .poll(() => app.tokenTypes("Hello from Playwright"))
+    .toContain("header");
+  await expect.poll(() => app.tokenTypes("**by**")).toContain("strong");
   // The editing keys keep working without the HyperMD parser behind them.
   await probeEditingKeys(page, app, pageErrors);
   // Ctrl+B still toggles emphasis around the selection.
-  const lastLine = app.editor.locator(".CodeMirror-line").last();
+  const lastLine = async () => (await app.editorText()).split("\n").pop();
   await page.keyboard.press("Enter");
   await page.keyboard.type("bold");
   await page.keyboard.press("Shift+Home");
   await page.keyboard.press("Control+b");
-  await expect(lastLine).toHaveText("**bold**");
+  await expect.poll(lastLine).toBe("**bold**");
   await page.keyboard.press("Control+b");
-  await expect(lastLine).toHaveText("bold");
+  await expect.poll(lastLine).toBe("bold");
   expect(pageErrors).toEqual([]);
 
   // The folding editor is not affected.
   await app.modeButton("Edit").click();
-  await expect(app.editor.locator(".cm-formatting-strong").first()).toHaveClass(
-    /hmd-hidden-token/,
-  );
+  await expect.poll(() => emphasis(app)).toEqual({ markers: 0, word: 1 });
   await probeEditingKeys(page, app, pageErrors);
   await app.modeButton("Source code").click();
-  await expect(heading).not.toHaveClass(/HyperMD-header/);
+  await expect.poll(heading).toBe(1);
 
   // The setting is remembered across a reload.
   await page.reload();
@@ -162,21 +148,19 @@ test("shows source code as plain text once the setting is on", async ({
   await expect(app.plainTextSourceCodeSwitch).toBeChecked();
   await noteTab.click();
   await app.modeButton("Source code").click();
-  await expect(heading).not.toHaveClass(/HyperMD-header/);
+  await expect.poll(heading).toBe(1);
   // The table of contents is rebuilt from the plain text parser state, so a
   // heading typed now has to show up in it.
   await app.editor.click();
   await page.keyboard.press("Control+End");
   await page.keyboard.type("\n\n## Second heading");
-  await expect(
-    page.locator(".toc-item").filter({ hasText: "Second heading" }),
-  ).toBeVisible();
+  await expect(app.tocItem("Second heading")).toBeVisible();
 
   // Switching it off brings the styled source back, keys included.
   await app.openSettings();
   await app.plainTextSourceCodeSwitch.uncheck();
   await noteTab.click();
-  await expect(heading).toHaveClass(/HyperMD-header-1/);
+  await expect.poll(heading).toBeGreaterThan(1);
   await probeEditingKeys(page, app, pageErrors);
 });
 
@@ -187,8 +171,6 @@ test("keeps headings inside fenced code out of the table of contents", async ({
   await app.open();
   await app.openNotes();
   await app.createNote();
-  const tocItem = (text: string) =>
-    page.locator(".toc-item").filter({ hasText: text });
 
   await app.typeInEditor("# Real heading");
   await page.keyboard.press("Enter");
@@ -202,9 +184,9 @@ test("keeps headings inside fenced code out of the table of contents", async ({
   await page.keyboard.type("## After the fence");
   // Once the table of contents has caught up with the last heading, the one
   // inside the fence must not be there.
-  await expect(tocItem("After the fence")).toBeVisible();
-  await expect(tocItem("Real heading")).toBeVisible();
-  await expect(tocItem("Example inside fenced code")).toHaveCount(0);
+  await expect(app.tocItem("After the fence")).toBeVisible();
+  await expect(app.tocItem("Real heading")).toBeVisible();
+  await expect(app.tocItem("Example inside fenced code")).toHaveCount(0);
 
   // Plain text source code parses the fence with its own mode as well.
   const noteTab = app.tab(await app.noteTitle.inputValue());
@@ -212,14 +194,12 @@ test("keeps headings inside fenced code out of the table of contents", async ({
   await app.plainTextSourceCodeSwitch.check();
   await noteTab.click();
   await app.modeButton("Source code").click();
-  await expect(
-    app.editor.locator(".CodeMirror-line").filter({ hasText: "Real heading" }),
-  ).not.toHaveClass(/HyperMD-header/);
+  await expect.poll(() => app.textScale("Real heading")).toBe(1);
   await app.editor.click();
   await page.keyboard.press("Control+End");
   await page.keyboard.press("Enter");
   await page.keyboard.type("## Plain text heading");
-  await expect(tocItem("Plain text heading")).toBeVisible();
-  await expect(tocItem("Real heading")).toBeVisible();
-  await expect(tocItem("Example inside fenced code")).toHaveCount(0);
+  await expect(app.tocItem("Plain text heading")).toBeVisible();
+  await expect(app.tocItem("Real heading")).toBeVisible();
+  await expect(app.tocItem("Example inside fenced code")).toHaveCount(0);
 });

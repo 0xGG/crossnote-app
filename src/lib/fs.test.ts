@@ -221,8 +221,10 @@ it("leaves nothing behind of two refused writes to a new file", async () => {
 });
 
 // Nor a deletion called while the write of a new file is still going on. The
-// deletion is refused only once the write has been, the order in which it put
-// the write's entry back.
+// two take turns: the deletion starts once the refused write has taken its
+// entry out again, finds no file and fails for that. The stub would refuse it
+// only after the write, the order in which the patch put the write's entry
+// back before operations on the same path took turns.
 it("leaves nothing behind of a refused write and deletion of a new file", async () => {
   await pfs.mkdirp("/notebooks/fs-turns-delete");
   let written: Promise<void> = Promise.resolve();
@@ -275,11 +277,14 @@ it("keeps a file whose deletion and next write were both refused", async () => {
 });
 
 // A write that went through between two refused deletions of the file is
-// what the file reads. The first deletion is refused once the second has
-// taken the file away, the order in which it put the file back as it was
-// before the write, or after a while, should the second not come first. A
-// file made after the note keeps the write from getting the note's inode, the
-// highest one plus one, which would store it where the old entry points.
+// what the file reads. The three take turns: the first deletion is refused,
+// the write goes through, the second deletion is refused. The stub holds the
+// first until the second reaches the store or 50 ms have passed: before
+// operations on the same path took turns, the second got there first, the
+// order in which the patch put the file back as it was before the write; now
+// it never does, and the first waits the 50 ms. A file made after the note
+// keeps the write from getting the note's inode, the highest one plus one,
+// which would store it where the old entry points.
 it("keeps the write that went through between two refused deletions", async () => {
   await pfs.mkdirp("/notebooks/fs-turns-between");
   await pfs.writeFile("/notebooks/fs-turns-between/note.md", "# Old");
