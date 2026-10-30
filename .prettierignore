@@ -12,6 +12,9 @@ public/assets/
 # pnpm patch files
 patches/
 
+# What the shared corpus renders to, kept byte for byte as the renderer gave it
+src/test/corpus/rendering/
+
 # Local-only directories
 .pr-docs/
 .claude/
