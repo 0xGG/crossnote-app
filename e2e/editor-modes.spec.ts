@@ -40,12 +40,12 @@ async function probeEditingKeys(
 }
 
 // How the emphasis around "by" is drawn: the markers that show, and the word
-// itself, which shows either way. The word tells markup that is not shown
-// from an editor that has drawn nothing.
-const emphasis = async (app: CrossnoteApp) => ({
-  markers: await app.timesShown("**"),
-  word: await app.timesShown("by"),
-});
+// itself, which shows either way, counted in one go. The word tells markup
+// that is not shown from an editor that has drawn nothing.
+const emphasis = async (app: CrossnoteApp) => {
+  const [markers, word] = await app.timesShown(["**", "by"]);
+  return { markers, word };
+};
 
 test("switches between edit, preview and source code", async ({
   app,

@@ -386,9 +386,9 @@ export class CrossnoteApp {
     );
   }
 
-  // Whether the keys go to the editor's text: focus is on the place in it
-  // that takes typing, not on another field the editor holds, such as a
-  // search box or a widget's.
+  // Whether the keys go to the editor: focus is on a place inside it that
+  // takes text, its own or a text field of a widget in it, not on an input
+  // such as the search box the editor opens.
   editorHasFocus(editor = this.editor): Promise<boolean> {
     return editor.evaluate((element) => {
       const focused = document.activeElement;
@@ -409,15 +409,16 @@ export class CrossnoteApp {
     );
   }
 
-  // How many times a piece of text, markup such as "**" included, is drawn
-  // where a user sees it: with some width, in a colour that is not
-  // transparent, in nothing hidden. An editor that folds markup draws it at
-  // no width or not at all; either way it does not count. None at all, too,
-  // while the editor is hidden or has not drawn its lines, so a check that
-  // markup is not shown wants one that the text around it is.
-  timesShown(markup: string, editor = this.editor): Promise<number> {
-    return editor.evaluate((element, markup) => {
-      let shown = 0;
+  // How many times each of some pieces of text, markup such as "**"
+  // included, is drawn where a user sees it: with some width, in a colour
+  // that is not transparent, in nothing hidden. An editor that folds markup
+  // draws it at no width or not at all; either way it does not count. None
+  // at all, too, while the editor is hidden or has not drawn its lines, so a
+  // check that markup is not shown wants one that the text around it is,
+  // counted in the same go: separate reads could straddle a redraw.
+  timesShown(pieces: string[], editor = this.editor): Promise<number[]> {
+    return editor.evaluate((element, pieces) => {
+      const shown = pieces.map(() => 0);
       const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT);
       for (let node = walker.nextNode(); node; node = walker.nextNode()) {
         const text = node.textContent ?? "";
@@ -428,19 +429,21 @@ export class CrossnoteApp {
             opacityProperty: true,
             visibilityProperty: true,
           }) && !/^rgba\(.*,\s*0\)$|^transparent$/.test(style.color);
-        let at = text.indexOf(markup);
-        while (visible && at >= 0) {
-          const range = document.createRange();
-          range.setStart(node, at);
-          range.setEnd(node, at + markup.length);
-          if (range.getBoundingClientRect().width >= 1) {
-            shown++;
+        pieces.forEach((piece, i) => {
+          let at = text.indexOf(piece);
+          while (visible && at >= 0) {
+            const range = document.createRange();
+            range.setStart(node, at);
+            range.setEnd(node, at + piece.length);
+            if (range.getBoundingClientRect().width >= 1) {
+              shown[i]++;
+            }
+            at = text.indexOf(piece, at + piece.length);
           }
-          at = text.indexOf(markup, at + markup.length);
-        }
+        });
       }
       return shown;
-    }, markup);
+    }, pieces);
   }
 
   // The font size a piece of text is drawn at, over the editor's own: 1 for
