@@ -859,8 +859,14 @@ export default function NotePanel(props: Props) {
     if (!editor || !note) return;
     if (isCm6(editor)) {
       editor.setLivePreview(editorMode === EditorMode.EchoMD);
-      editor.getWrapperElement().style.display =
-        editorMode === EditorMode.Preview ? "none" : "";
+      // CodeMirror 6's base theme gives the editor `display: flex
+      // !important`, which a plain inline display does not override.
+      const style = editor.getWrapperElement().style;
+      if (editorMode === EditorMode.Preview) {
+        style.setProperty("display", "none", "important");
+      } else {
+        style.removeProperty("display");
+      }
       editor.refresh();
       return;
     }
