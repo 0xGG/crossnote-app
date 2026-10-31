@@ -53,9 +53,8 @@ export class Cm6NoteEditor {
         extensions: [
           history(),
           drawSelection(),
-          // The default keymap leaves Ctrl-Shift-Z unbound on Windows, and an
-          // unbound shifted key falls back to the unshifted one: undo.
-          // CodeMirror 5 redoes on it.
+          // The default keymap leaves Ctrl-Shift-Z unbound on Windows, where
+          // it then does nothing; CodeMirror 5 redoes on it.
           keymap.of([
             { key: "Mod-Shift-z", run: redo, preventDefault: true },
             ...defaultKeymap,
