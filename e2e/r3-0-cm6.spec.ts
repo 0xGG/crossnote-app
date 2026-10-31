@@ -493,16 +493,55 @@ test("undo: the history outlasts switching between edit, source code and preview
 });
 
 // 5. Opening a note, moving around in it and switching modes writes nothing.
+const openText =
+  "---\r\ntitle: 不写盘\r\nphone: 0123456789\r\ntags: [a, b]\r\n---\r\n# 标题  \r\n\r\n前面 **粗体** 后面\t\r\n\r\n```bash\r\necho $HOME\r\n```\r\n\r\n" +
+  board +
+  "\r\n\r\n行内 " +
+  timer +
+  " 之后\r\n末行";
+
+// Opened in the mode a note's tab starts in, so the editor is made while it
+// is shown, rather than in the preview and switched from there.
+for (const { mode, setting } of [
+  { mode: "Edit", setting: "EchoMD" },
+  { mode: "Source code", setting: "SourceCode" },
+] as const) {
+  test(`open: a note opened straight in ${mode} is not written`, async ({
+    app,
+    page,
+  }) => {
+    await page.addInitScript((setting) => {
+      localStorage.setItem("settings/defaultEditorMode", setting);
+    }, setting);
+    await app.open();
+    await app.openNotes();
+    const readme = `${await app.notebookFolder()}/README.md`;
+    await app.storedText(readme, openText);
+    await page.reload();
+    await app.waitUntilReady();
+    await app.refuseWrites();
+    await app.openNotes();
+    await app.noteCards.filter({ hasText: "README" }).click();
+    await expect(app.modeOn).toHaveAccessibleName(mode);
+    await expect(app.editor).toBeVisible();
+    await page.waitForTimeout(1500);
+    const refused = await app.refusedWrites();
+    test
+      .info()
+      .annotations.push({
+        type: "refused writes",
+        description: refused.join(","),
+      });
+    expect(refused.filter((write) => write !== "!root")).toEqual([]);
+    expect(await app.storedText(readme)).toBe(openText);
+  });
+}
+
 test("open: a note opened, looked through and switched between modes is not written", async ({
   app,
   page,
 }) => {
-  const text =
-    "---\r\ntitle: 不写盘\r\ntags: [a, b]\r\n---\r\n# 标题  \r\n\r\n前面 **粗体** 后面\t\r\n\r\n" +
-    board +
-    "\r\n\r\n行内 " +
-    timer +
-    " 之后\r\n末行";
+  const text = openText;
   const readme = await openNote(app, text, () => app.refuseWrites());
   await expect(app.editor.getByText("Todo", { exact: true })).toBeVisible();
   await app.editor.getByText("末行").click();
