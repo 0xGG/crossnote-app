@@ -33,7 +33,7 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { CrossnoteContainer } from "../containers/crossnote";
 import { SettingsContainer } from "../containers/settings";
-import { attachEditorHandle } from "../editor/handle";
+import { attachCm6Handle, Cm6NoteEditor, isCm6 } from "../editor/cm6/editor";
 import { initMathPreview } from "../editor/views/math-preview";
 import {
   applyCodeMirrorMode,
@@ -680,6 +680,23 @@ export default function NotePanel(props: Props) {
 
   // Set editor
   useEffect(() => {
+    // R3-0 prototype: the note's editor is CodeMirror 6.
+    if (textAreaElement.current && !editor && note) {
+      const cm6 = new Cm6NoteEditor(
+        textAreaElement.current,
+        note.markdown || "",
+      );
+      attachCm6Handle(cm6, "note-editor");
+      synced.current = note.markdown || "";
+      cm6.on("cursorActivity", () => {
+        setCursorPosition(cm6.getCursor());
+      });
+      setEditor(cm6 as unknown as CodeMirrorEditor);
+      if (props.tabNode.getRect()) {
+        setTocEnabled(props.tabNode.getRect().width >= 500);
+      }
+      return;
+    }
     if (textAreaElement.current && !editor && note) {
       const editor: CodeMirrorEditor = EchoMD.fromTextArea(
         textAreaElement.current,
@@ -718,7 +735,6 @@ export default function NotePanel(props: Props) {
       );
       editor.setOption("lineNumbers", false);
       editor.setOption("foldGutter", false);
-      attachEditorHandle(editor, "note-editor");
       editor.setValue(note.markdown || "");
       synced.current = note.markdown || "";
       editor.on("cursorActivity", (instance) => {
@@ -745,8 +761,21 @@ export default function NotePanel(props: Props) {
     }
   }, [note, editor]);
 
+  // R3-0 prototype: a CodeMirror 6 editor is destroyed with the panel, and
+  // its widgets with it.
+  useEffect(() => {
+    return () => {
+      if (isCm6(editor)) {
+        editor.destroy();
+      }
+    };
+  }, [editor]);
+
   // Math preview
   useEffect(() => {
+    if (isCm6(editor)) {
+      return;
+    }
     if (editor && mathPreviewElement) {
       initMathPreview(editor, mathPreviewElement.current);
     }
@@ -828,6 +857,13 @@ export default function NotePanel(props: Props) {
   // Toggle editor & preview
   useEffect(() => {
     if (!editor || !note) return;
+    if (isCm6(editor)) {
+      editor.setLivePreview(editorMode === EditorMode.EchoMD);
+      editor.getWrapperElement().style.display =
+        editorMode === EditorMode.Preview ? "none" : "";
+      editor.refresh();
+      return;
+    }
     if (editorMode === EditorMode.EchoMD) {
       applyCodeMirrorMode(
         editor,
@@ -950,7 +986,7 @@ export default function NotePanel(props: Props) {
 
   // Command
   useEffect(() => {
-    if (!editor || !note) return;
+    if (!editor || !note || isCm6(editor)) return;
     const onChangeHandler = (
       instance: CodeMirrorEditor,
       changeObject: EditorChangeLinkedList,
@@ -1422,7 +1458,7 @@ export default function NotePanel(props: Props) {
 
   // TOC
   useEffect(() => {
-    if (!editor || !tocElement || !note || !tocEnabled) {
+    if (!editor || !tocElement || !note || !tocEnabled || isCm6(editor)) {
       return;
     }
 
