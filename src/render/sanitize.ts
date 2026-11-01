@@ -10,8 +10,8 @@ import createDOMPurify from "dompurify";
 //   not page furniture, and embedded video goes through the youtube and
 //   bilibili widgets;
 // - data-* and style attributes stay, as the preview, the widgets and
-//   reveal.js read them; the data-* ones that hold an address must hold a
-//   safe one, as reveal.js loads them;
+//   reveal.js read them; the data-* ones reveal.js loads as media must hold
+//   a safe address, and the two it writes into HTML as they are go;
 // - ids stay as written, even one that names a property of document (the
 //   heading "Title" gets the id "title"), or the headings' anchors would
 //   break. DOMPurify's own check, which drops such ids, is off. What it
@@ -38,6 +38,11 @@ const forbiddenTags = [
 // reveal.js's slide backgrounds and lazy-loaded media.
 const addressAttributes = /^data-(background-(image|video|iframe)|src)$/;
 
+// Attributes reveal.js writes into HTML of its own as they are: a slide's
+// speaker notes (its notes in an aside stay, as sanitized HTML) and a link
+// to show in a preview frame.
+const writtenAsHTML = ["data-notes", "data-preview-link"];
+
 export function isSafeAddress(value: string): boolean {
   // eslint-disable-next-line no-control-regex
   const address = value.replace(/[\u0000-\u0020]/g, "");
@@ -47,8 +52,9 @@ export function isSafeAddress(value: string): boolean {
 }
 
 // A wavedrom code block comes out of the markdown stage as a script element
-// of type WaveDrom holding the diagram's source, which is text to draw, not
-// code to run; the text stays where the element was.
+// of type WaveDrom holding the diagram's source. The source stays as text
+// where the element was; the preview and the slides draw it from that text,
+// read as JSON.
 purify.addHook("uponSanitizeElement", (node, data) => {
   if (
     data.tagName === "script" &&
@@ -76,6 +82,9 @@ purify.addHook("uponSanitizeAttribute", (node, data) => {
     data.attrValue = `./${data.attrValue}`;
   }
   if (
+    writtenAsHTML.includes(data.attrName) ||
+    // wavedrom's own loader evaluates any element with this type as script.
+    (data.attrName === "type" && /^wavedrom$/i.test(data.attrValue)) ||
     (addressAttributes.test(data.attrName) && !isSafeAddress(data.attrValue)) ||
     (data.attrName === "name" &&
       (node.nodeName === "IMG" || data.attrValue in document))

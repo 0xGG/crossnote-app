@@ -171,18 +171,76 @@ describe("mountPreview with slides", () => {
   });
 
   it("stops listening when disposed of before the deck is ready", async () => {
-    const { preview, listener, removed, iframe, id } = mountDeck();
+    const { preview, listener, removed } = mountDeck();
     preview.dispose();
     await preview.done;
     expect(removed).toHaveBeenCalledWith("message", listener);
-    window.dispatchEvent(
-      new MessageEvent("message", {
-        data: { event: "reveal-ready", id },
-        source: iframe.contentWindow,
-      }),
-    );
-    await new Promise((resolve) => setTimeout(resolve));
-    expect(iframe.contentDocument.body.querySelector("a").onclick).toBeNull();
     removed.mockRestore();
+  });
+
+  it("writes nothing of the note into the frame that could run", () => {
+    // The frame is the app's own origin and runs scripts, so what the note
+    // brings in must not: raw HTML, a block made to look like wavedrom's, an
+    // element whose type wavedrom's own loader would evaluate, speaker notes
+    // reveal.js writes as HTML, and front matter that names a theme file,
+    // scripts to load or a value that would end the frame's script.
+    const element = document.createElement("div");
+    document.body.appendChild(element);
+    const preview = mountPreview(
+      element,
+      [
+        "---",
+        "presentation:",
+        '  theme: "../../x.css"',
+        "  previewLinks: true",
+        "  dependencies:",
+        '    - src: "https://unpkg.com/x"',
+        '  title: "</script><script>window.fromSettings=1</script>"',
+        "---",
+        "",
+        '<!-- slide data-notes="<img src=x onerror=window.fromNotes=1>" -->',
+        "",
+        '<img src="x.png" onerror="window.fromImage=1">',
+        "",
+        '<div class="vickeymd-fence wavedrom">window.fromFence=1</div>',
+        "",
+        '<ol type="WaveDrom"><li>window.fromList=1</li></ol>',
+        "",
+        "```wavedrom",
+        '{ "signal": [] }',
+        "```",
+        "",
+      ].join("\n"),
+      { note: null },
+    );
+    const frame = element.querySelector("iframe").contentDocument;
+    expect(frame.querySelector("[onerror]")).toBeNull();
+    expect(frame.querySelector("[data-notes]")).toBeNull();
+    expect(frame.querySelector('[type="WaveDrom" i]')).toBeNull();
+    const themes = Array.from(frame.querySelectorAll("link")).map((link) =>
+      link.getAttribute("href"),
+    );
+    expect(themes).toContain(
+      "https://cdn.jsdelivr.net/npm/reveal.js@3.9.2/css/theme/white.css",
+    );
+    expect(themes.join(" ")).not.toContain("x.css");
+    // The scripts are the frame's own: the libraries it loads and its own
+    // inline code, the settings included as a value inside it.
+    const scripts = Array.from(frame.querySelectorAll("script"));
+    expect(
+      scripts.filter((script) => !script.src).map((script) => script.text),
+    ).toEqual([
+      expect.stringContaining("JSON.parse(text)"),
+      expect.stringContaining("Reveal.initialize("),
+    ]);
+    const init = scripts.find((script) =>
+      script.text.includes("Reveal.initialize("),
+    ).text;
+    expect(init).toContain('"previewLinks":false');
+    expect(init).not.toContain("dependencies");
+    expect(init).toContain(
+      "\\u003c/script>\\u003cscript>window.fromSettings=1",
+    );
+    preview.dispose();
   });
 });

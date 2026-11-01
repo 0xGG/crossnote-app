@@ -59,25 +59,42 @@ const mermaidInit = `<script>
 const scriptValue = (value: unknown) =>
   JSON.stringify(value).replace(/</g, "\\u003c");
 
-// The sanitized deck, with each wavedrom block's source put back in the
-// script element WaveDrom.ProcessAll looks for. Its type is not one the
-// browser runs; a source that could end the element early stays as text.
-function deckHTML(html: string): string {
-  const template = document.createElement("template");
-  template.innerHTML = sanitizeHTML(html);
-  for (const block of Array.from(
-    template.content.querySelectorAll(".vickeymd-fence.wavedrom"),
-  )) {
-    const source = block.textContent;
-    if (/<\/script|<!--/i.test(source)) {
-      continue;
+// The frame draws each wavedrom block from its source read as JSON, as the
+// preview does. WaveDrom.ProcessAll is not used: it evaluates the text of
+// every element whose type is WaveDrom as script, and a note's HTML can
+// make such an element.
+const wavedromInit = `<script>
+  (function () {
+    var blocks = document.querySelectorAll(".vickeymd-fence.wavedrom");
+    for (var i = 0; i < blocks.length; i++) {
+      var text = blocks[i].textContent;
+      try {
+        var source = JSON.parse(text);
+        var target = document.createElement("div");
+        target.id = "WaveDrom_Display_" + i;
+        blocks[i].textContent = "";
+        blocks[i].appendChild(target);
+        WaveDrom.RenderWaveForm(i, source, "WaveDrom_Display_");
+      } catch (error) {
+        blocks[i].textContent = text;
+      }
     }
-    const script = document.createElement("script");
-    script.setAttribute("type", "WaveDrom");
-    script.textContent = source;
-    block.replaceChildren(script);
-  }
-  return template.innerHTML;
+  })();
+</script>`;
+
+// The front matter's reveal.js settings, less the two that would run what
+// the note names: dependencies, scripts reveal.js loads, and previewLinks,
+// which writes a link's address into HTML of reveal.js's own.
+function revealSettings(frontMatter: Record<string, any>) {
+  const presentation = frontMatter?.["presentation"];
+  const settings =
+    presentation &&
+    typeof presentation === "object" &&
+    !Array.isArray(presentation)
+      ? { ...presentation }
+      : {};
+  delete settings["dependencies"];
+  return { margin: 0.1, ...settings, previewLinks: false };
 }
 
 let frames = 0;
@@ -98,11 +115,11 @@ export function mountPresentation(
   },
 ): Promise<void> {
   const id = `reveal.js.${Date.now()}.${frames++}`;
-  const config: Record<string, any> = frontMatter?.["presentation"] || {};
-  const theme = revealThemes.includes(config["theme"])
-    ? config["theme"]
+  const settings = revealSettings(frontMatter);
+  const theme = revealThemes.includes(settings["theme"])
+    ? settings["theme"]
     : "white.css";
-  const body = deckHTML(html);
+  const body = sanitizeHTML(html);
 
   let diagramScripts = "";
   let diagramInits = "";
@@ -110,8 +127,7 @@ export function mountPresentation(
     diagramScripts +=
       '<script src="https://cdn.jsdelivr.net/npm/wavedrom@2.3.2/skins/default.js"></script>' +
       '<script src="https://cdn.jsdelivr.net/npm/wavedrom@2.3.2/wavedrom.min.js"></script>';
-    diagramInits +=
-      '<script>Reveal.addEventListener("ready", function () { WaveDrom.ProcessAll(); });</script>';
+    diagramInits += wavedromInit;
   }
   if (body.indexOf("mermaid") >= 0) {
     // The same mermaid the page loads from the site (index.html).
@@ -172,7 +188,7 @@ ${diagramInits}
   if (typeof Reveal === "undefined") {
     parent.postMessage({ event: "reveal-failed", id: ${scriptValue(id)} }, "/");
   } else {
-    Reveal.initialize(${scriptValue({ margin: 0.1, ...config })});
+    Reveal.initialize(${scriptValue(settings)});
     Reveal.addEventListener("ready", function () {
       parent.postMessage({ event: "reveal-ready", id: ${scriptValue(id)} }, "/");
     });

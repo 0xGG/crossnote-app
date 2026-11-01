@@ -105,6 +105,17 @@ describe("sanitizeHTML", () => {
     );
   });
 
+  it("drops what reveal.js would write into HTML as it is", () => {
+    const section = render(
+      '<section data-notes="<img src=x onerror=alert(1)>"><a href="https://example.com/" data-preview-link>link</a><aside class="notes"><b>Said</b></aside></section>',
+    ).querySelector("section");
+    expect(section.hasAttribute("data-notes")).toBe(false);
+    expect(section.querySelector("a").hasAttribute("data-preview-link")).toBe(
+      false,
+    );
+    expect(section.querySelector("aside.notes").innerHTML).toBe("<b>Said</b>");
+  });
+
   it("keeps the TeX KaTeX puts beside its MathML apart from the formula", () => {
     const math = render(
       '<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mi>x</mi><mn>2</mn></msup></mrow><annotation encoding="application/x-tex">x^2</annotation></semantics></math></span></span>',

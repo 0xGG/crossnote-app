@@ -1,29 +1,33 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { renderVegaLite, withoutEditorAction } from "./vegaLite";
+import { renderVegaLite, withoutWindowActions } from "./vegaLite";
 
-describe("withoutEditorAction", () => {
-  it("turns the editor action off and drops the editor's address", () => {
+const noWindows = { source: false, compiled: false, editor: false };
+
+describe("withoutWindowActions", () => {
+  it("turns off the actions that open windows, and drops what feeds them", () => {
     expect(
-      withoutEditorAction({
+      withoutWindowActions({
         editorUrl: "https://example.org/",
-        actions: { export: true, source: false },
+        sourceHeader: "<script>opener.x = 1</script>",
+        sourceFooter: "<script>opener.y = 1</script>",
+        actions: { export: true, source: true },
         renderer: "svg",
       }),
     ).toEqual({
-      actions: { export: true, source: false, editor: false },
+      actions: { export: true, ...noWindows },
       renderer: "svg",
     });
   });
 
   it("leaves the other actions on when none are named", () => {
-    expect(withoutEditorAction()).toEqual({ actions: { editor: false } });
-    expect(withoutEditorAction({ actions: true })).toEqual({
-      actions: { editor: false },
+    expect(withoutWindowActions()).toEqual({ actions: noWindows });
+    expect(withoutWindowActions({ actions: true })).toEqual({
+      actions: noWindows,
     });
   });
 
   it("keeps all actions off", () => {
-    expect(withoutEditorAction({ actions: false })).toEqual({
+    expect(withoutWindowActions({ actions: false })).toEqual({
       actions: false,
     });
   });
@@ -34,7 +38,7 @@ describe("renderVegaLite", () => {
     delete (window as any).vegaEmbed;
   });
 
-  it("embeds the chart, JSON or YAML, without the editor action", () => {
+  it("embeds the chart, JSON or YAML, without the actions that open windows", () => {
     const vegaEmbed = vi.fn((_element: HTMLElement, _spec: unknown) =>
       Promise.resolve(),
     );
@@ -45,18 +49,28 @@ describe("renderVegaLite", () => {
     renderVegaLite("mark: bar\n");
     expect(vegaEmbed).toHaveBeenNthCalledWith(1, element, {
       mark: "point",
-      usermeta: { embedOptions: { actions: { editor: false } } },
+      usermeta: { embedOptions: { actions: noWindows } },
     });
     expect(vegaEmbed.mock.calls[1][1]).toEqual({
       mark: "bar",
-      usermeta: { embedOptions: { actions: { editor: false } } },
+      usermeta: { embedOptions: { actions: noWindows } },
     });
   });
 
   it("shows why a chart cannot be read", () => {
     (window as any).vegaEmbed = vi.fn();
     const { element } = renderVegaLite("{ not json");
-    expect(element.innerText).toMatch(/JSON/);
+    expect(element.textContent).toMatch(/JSON/);
     expect((window as any).vegaEmbed).not.toHaveBeenCalled();
+  });
+
+  it("shows why a chart cannot be drawn", async () => {
+    (window as any).vegaEmbed = vi.fn(() =>
+      Promise.reject(new Error("no such mark")),
+    );
+    const { element } = renderVegaLite('{"mark": "nothing"}');
+    await vi.waitFor(() =>
+      expect(element.textContent).toBe("Error: no such mark"),
+    );
   });
 });

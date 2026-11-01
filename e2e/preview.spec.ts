@@ -33,19 +33,98 @@ test("draws a deck of slides with a diagram in it", async ({ app }) => {
     .toBe(true);
 });
 
-test("draws a vega-lite chart without a way to open it on another site", async ({
+// Stands in for reveal.js in the slides' frame: initialize says the deck is
+// ready, as reveal.js does once it has laid the slides out.
+const revealStub = `window.Reveal = (function () {
+  var ready = [];
+  return {
+    initialize: function () {
+      setTimeout(function () {
+        var slide = document.querySelector(".slides section");
+        ready.forEach(function (listener) {
+          try {
+            listener({ currentSlide: slide, indexh: 0, indexv: 0 });
+          } catch (error) {}
+        });
+      });
+    },
+    addEventListener: function (type, listener) {
+      if (type === "ready") ready.push(listener);
+    },
+    slide: function () {},
+  };
+})();`;
+
+test("draws wavedrom in slides from JSON, and runs nothing a note makes look like it", async ({
+  app,
+  context,
+}) => {
+  // Registered after the refusal above, so these answer first: reveal.js's
+  // stand-in, and the wavedrom the slides ask the CDN for, from the site's
+  // copy of the same version.
+  await context.route(/reveal\.js@3\.9\.2\/js\/reveal\.min\.js$/, (route) =>
+    route.fulfill({ contentType: "text/javascript", body: revealStub }),
+  );
+  await context.route(
+    /wavedrom@2\.3\.2\/(wavedrom\.min|skins\/default)\.js$/,
+    (route) =>
+      route.fulfill({
+        path: `public/deps/wavedrom/${route.request().url().split("wavedrom@2.3.2/")[1]}`,
+      }),
+  );
+  await app.open();
+  await app.openNotes();
+  await app.createNote();
+  await app.setEditorText(
+    [
+      "<!-- slide -->",
+      "",
+      "[[Other]]",
+      "",
+      "```wavedrom",
+      '{ "signal": [{ "name": "clk", "wave": "p..." }] }',
+      "```",
+      "",
+      '<div class="vickeymd-fence wavedrom">window.fromFence = 1</div>',
+      "",
+      '<a type="WaveDrom">({ signal: [], x: (window.fromAnchor = 1) })</a>',
+      "",
+    ].join("\n"),
+  );
+  await app.modeButton("Preview").click();
+
+  const deck = app.preview.frameLocator("iframe");
+  await expect(deck.locator("#WaveDrom_Display_0 svg")).toBeVisible();
+  // The deck is finished once reveal.js is ready: its links open notes.
+  await expect
+    .poll(() =>
+      deck
+        .getByRole("link", { name: "Other" })
+        .evaluate((link: HTMLAnchorElement) => link.onclick !== null),
+    )
+    .toBe(true);
+  expect(
+    await deck
+      .locator("body")
+      .evaluate(() => [(window as any).fromFence, (window as any).fromAnchor]),
+  ).toEqual([undefined, undefined]);
+});
+
+test("draws a vega-lite chart without the actions that open other windows", async ({
   app,
 }) => {
   await app.open();
   await app.openNotes();
   await app.createNote();
-  // The chart names an editor of its own; neither it nor vega's is offered.
+  // The chart names an editor of its own, and HTML to write around its
+  // source; neither the editor nor the source is offered.
   await app.setEditorText(
     [
       "```vega-lite",
       "usermeta:",
       "  embedOptions:",
       "    editorUrl: https://example.org/",
+      '    sourceHeader: "<script>opener.fromHeader = 1</script>"',
       "data:",
       "  values:",
       "    - a: 1",
@@ -64,6 +143,10 @@ test("draws a vega-lite chart without a way to open it on another site", async (
   await expect(actions.filter({ hasText: "Save as SVG" })).toHaveCount(1);
   await expect(app.preview.locator(".vega-embed canvas")).toBeVisible();
   await expect(actions.filter({ hasText: "Vega Editor" })).toHaveCount(0);
+  await expect(actions.filter({ hasText: "View Source" })).toHaveCount(0);
+  await expect(actions.filter({ hasText: "View Compiled Vega" })).toHaveCount(
+    0,
+  );
 });
 
 test("prints a note with its local images and page breaks", async ({

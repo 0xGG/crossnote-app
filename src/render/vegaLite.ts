@@ -1,21 +1,34 @@
 import YAML from "yamljs";
 
-// vega-embed's "Open in Vega Editor" opens the editor's site with a handle
-// on this window, to send it the chart, and a chart's
-// usermeta.embedOptions.editorUrl can name another site to open instead.
-// vega-embed reads usermeta.embedOptions over the options it is given, so
-// the action is turned off there; the chart's other options stay.
-export function withoutEditorAction(
+// Three of vega-embed's actions open another window with a handle on this
+// one: "Open in Vega Editor" opens the editor's site to send it the chart,
+// and a chart's usermeta.embedOptions.editorUrl can name another site to
+// open instead; "View Source" and "View Compiled Vega" write the chart, with
+// the chart's own sourceHeader and sourceFooter as HTML around it, into a
+// window of this site. vega-embed reads usermeta.embedOptions over the
+// options it is given, so these actions are turned off there, and the
+// options that would feed them go; the chart's other options stay.
+export function withoutWindowActions(
   embedOptions: Record<string, any> = {},
 ): Record<string, any> {
-  const { editorUrl: _editorUrl, ...options } = embedOptions;
+  const {
+    editorUrl: _editorUrl,
+    sourceHeader: _sourceHeader,
+    sourceFooter: _sourceFooter,
+    ...options
+  } = embedOptions;
   const actions = options.actions;
   return {
     ...options,
     actions:
       actions === false
         ? false
-        : { ...(typeof actions === "object" ? actions : {}), editor: false },
+        : {
+            ...(typeof actions === "object" ? actions : {}),
+            source: false,
+            compiled: false,
+            editor: false,
+          },
   };
 }
 
@@ -29,13 +42,13 @@ export function renderVegaLite(code: string): { element: HTMLElement } {
       code.trim()[0] === "{" ? JSON.parse(code) : YAML.parse(code) || {};
     spec.usermeta = {
       ...spec.usermeta,
-      embedOptions: withoutEditorAction(spec.usermeta?.embedOptions),
+      embedOptions: withoutWindowActions(spec.usermeta?.embedOptions),
     };
     (window as any)
       .vegaEmbed(element, spec)
-      .catch((error: unknown) => (element.innerText = String(error)));
+      .catch((error: unknown) => (element.textContent = String(error)));
   } catch (error) {
-    element.innerText = String(error);
+    element.textContent = String(error);
   }
   return { element };
 }
