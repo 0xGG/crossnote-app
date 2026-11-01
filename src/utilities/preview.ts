@@ -6,7 +6,12 @@ export function openURL(url: string = "", note: Note) {
   if (!note || !url) {
     return;
   }
-  if (url.match(/https?:\/\//)) {
+  if (/^[a-z][a-z\d+.-]*:/i.test(url) && !/^https?:\/\//i.test(url)) {
+    // Another scheme (javascript:, mailto:, ...) is neither a page to open
+    // nor a note to open or create.
+    return;
+  }
+  if (/^https?:\/\//i.test(url)) {
     // Strict same-origin comparison: a prefix test would also match
     // lookalike hosts such as https://<origin>.evil.example or
     // https://<origin>@attacker.example.
