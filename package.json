@@ -38,6 +38,7 @@
     "d3": "^6.5.0",
     "date-fns": "^2.12.0",
     "diff3": "^0.0.3",
+    "dompurify": "^3.4.17",
     "emoji-mart": "^3.0.0",
     "events": "^3.3.0",
     "flexlayout-react": "^0.11.1",

@@ -59,6 +59,9 @@ importers:
       diff3:
         specifier: ^0.0.3
         version: 0.0.3
+      dompurify:
+        specifier: ^3.4.17
+        version: 3.4.17
       emoji-mart:
         specifier: ^3.0.0
         version: 3.0.1(react@18.3.1)
