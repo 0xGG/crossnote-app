@@ -43,6 +43,16 @@ describe("mountPreview", () => {
     expect(element.querySelector("a").textContent).toBe("Other");
   });
 
+  it("keeps a wiki link to a note whose name starts like a scheme", async () => {
+    const element = document.createElement("div");
+    await mountPreview(element, "[[Todo: groceries]] and [[README]]\n", {
+      note: null,
+    }).done;
+    const [todo, readme] = Array.from(element.querySelectorAll("a"));
+    expect(todo.getAttribute("href")).toBe("./Todo: groceries");
+    expect(readme.getAttribute("href")).toBe("README");
+  });
+
   it("draws the rest of the note when one block cannot be drawn", async () => {
     // mermaid is not loaded here, so its block fails.
     const element = document.createElement("div");

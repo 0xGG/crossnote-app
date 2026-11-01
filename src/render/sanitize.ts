@@ -14,9 +14,12 @@ import createDOMPurify from "dompurify";
 //   safe one, as reveal.js loads them;
 // - ids stay as written, even one that names a property of document (the
 //   heading "Title" gets the id "title"), or the headings' anchors would
-//   break; a name that does is dropped instead. Without forms, objects and
-//   named images, nothing in a note can then stand in for a property of
-//   document, which is what DOMPurify's own check (off here) guards against.
+//   break. DOMPurify's own check, which drops such ids, is off. What it
+//   guards against is an element standing in for a property of document,
+//   which only forms, frames, plugins and images that have a name can do
+//   (an image then by its id as well): the first three are not allowed, and
+//   every name on an image is dropped, as is any name that is itself a
+//   property of document.
 const purify = createDOMPurify(window);
 
 const forbiddenTags = [
@@ -37,7 +40,7 @@ const addressAttributes = /^data-(background-(image|video|iframe)|src)$/;
 
 export function isSafeAddress(value: string): boolean {
   // eslint-disable-next-line no-control-regex
-  const address = value.replace(/[\u0000- ]/g, "");
+  const address = value.replace(/[\u0000-\u0020]/g, "");
   return /^(?:https?:|[^a-z]|[a-z][a-z\d+.-]*(?:[^a-z\d+.\-:]|$))/i.test(
     address,
   );
@@ -58,10 +61,24 @@ purify.addHook("uponSanitizeElement", (node, data) => {
   }
 });
 
-purify.addHook("uponSanitizeAttribute", (_node, data) => {
+// A wiki link names a note, and a note's name can start like an address
+// with a scheme ("Todo: groceries"), which no page address check lets
+// through; it is kept as a path to the note instead.
+const schemeLike = /^[a-z][a-z\d+.-]*:/i;
+
+purify.addHook("uponSanitizeAttribute", (node, data) => {
+  if (
+    data.attrName === "href" &&
+    (node as Element).hasAttribute("data-wikilink-url") &&
+    schemeLike.test(data.attrValue) &&
+    !/^https?:/i.test(data.attrValue)
+  ) {
+    data.attrValue = `./${data.attrValue}`;
+  }
   if (
     (addressAttributes.test(data.attrName) && !isSafeAddress(data.attrValue)) ||
-    (data.attrName === "name" && data.attrValue in document)
+    (data.attrName === "name" &&
+      (node.nodeName === "IMG" || data.attrValue in document))
   ) {
     data.keepAttr = false;
   }
@@ -71,5 +88,10 @@ export function sanitizeHTML(html: string): string {
   return purify.sanitize(html, {
     FORBID_TAGS: forbiddenTags,
     SANITIZE_DOM: false,
+    // KaTeX pairs the MathML a screen reader reads with the TeX it came
+    // from; both elements hold text only. Without them the TeX would be read
+    // out as part of the formula.
+    ADD_TAGS: ["semantics", "annotation"],
+    ADD_ATTR: ["encoding"],
   });
 }

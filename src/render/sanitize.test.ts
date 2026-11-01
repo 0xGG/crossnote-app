@@ -67,11 +67,21 @@ describe("sanitizeHTML", () => {
 
   it("keeps a heading's id that names a property of document, not such a name", () => {
     const element = render(
-      '<h1 id="cookie">Cookie</h1><a name="anchor"></a><img name="getElementById" src="a.png">',
+      '<h1 id="cookie">Cookie</h1><a name="anchor"></a><a name="cookie"></a><img name="getElementById" src="a.png">',
     );
     expect(element.querySelector("h1").id).toBe("cookie");
-    expect(element.querySelector("a").getAttribute("name")).toBe("anchor");
+    const [anchor, cookie] = Array.from(element.querySelectorAll("a"));
+    expect(anchor.getAttribute("name")).toBe("anchor");
+    expect(cookie.hasAttribute("name")).toBe(false);
     expect(element.querySelector("img").hasAttribute("name")).toBe(false);
+  });
+
+  it("drops any name on an image, which would make its id a property of document", () => {
+    const image = render(
+      '<img id="getElementById" name="x" src="a.png">',
+    ).querySelector("img");
+    expect(image.id).toBe("getElementById");
+    expect(image.hasAttribute("name")).toBe(false);
   });
 
   it("keeps a wavedrom block's source as text, and runs no script", () => {
@@ -93,6 +103,24 @@ describe("sanitizeHTML", () => {
     expect(section.getAttribute("data-background-image")).toBe(
       "https://example.com/a.png",
     );
+  });
+
+  it("keeps the TeX KaTeX puts beside its MathML apart from the formula", () => {
+    const math = render(
+      '<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mi>x</mi><mn>2</mn></msup></mrow><annotation encoding="application/x-tex">x^2</annotation></semantics></math></span></span>',
+    ).querySelector("math");
+    expect(math.querySelector("semantics > mrow").textContent).toBe("x2");
+    const annotation = math.querySelector("semantics > annotation");
+    expect(annotation.getAttribute("encoding")).toBe("application/x-tex");
+    expect(annotation.textContent).toBe("x^2");
+  });
+
+  it("drops HTML that MathML would carry", () => {
+    const element = render(
+      '<math><semantics><annotation-xml encoding="text/html"><img src="x.png" onerror="alert(1)"></annotation-xml></semantics></math>',
+    );
+    expect(element.querySelector("annotation-xml")).toBeNull();
+    expect(element.querySelector("img[onerror]")).toBeNull();
   });
 });
 

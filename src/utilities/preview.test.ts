@@ -39,9 +39,12 @@ describe("openURL", () => {
   it("opens a note by its path, from the notebook or from the note", () => {
     openURL("/top.md", note);
     openURL("sibling%20note.md", note);
+    // A wiki link's target that starts like a scheme, as the preview keeps it.
+    openURL("./Todo: groceries", note);
     expect(openNoteAtPath.mock.calls).toEqual([
       ["notebook", "top.md"],
       ["notebook", "folder/sibling note.md"],
+      ["notebook", "folder/Todo: groceries"],
     ]);
     expect(open).not.toHaveBeenCalled();
   });
