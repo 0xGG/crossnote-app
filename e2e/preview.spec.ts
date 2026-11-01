@@ -32,3 +32,48 @@ test("draws a deck of slides with a diagram in it", async ({ app }) => {
     )
     .toBe(true);
 });
+
+test("prints a note with its local images and page breaks", async ({
+  app,
+  page,
+}) => {
+  await app.open();
+  await app.openNotes();
+  // Any file of the notebook stands in for a picture, as the preview reads
+  // it as one: here the note itself.
+  const readme = `${await app.notebookFolder()}/README.md`;
+  await app.storedText(
+    readme,
+    "![picture](README.md)\n\nBefore.\n\n<!-- pagebreak -->\n\nAfter.\n",
+  );
+  await page.reload();
+  await app.waitUntilReady();
+  await app.openNotes();
+  await app.noteCards.filter({ hasText: "README" }).click();
+
+  // What the page holds when the print dialog would open.
+  await page.emulateMedia({ media: "print" });
+  await page.evaluate(() => {
+    window.print = () => {
+      // The note printed covers the page from the end of the body.
+      const printed = Array.from(document.body.children)
+        .filter((element) => element.classList.contains("preview"))
+        .pop()!;
+      (window as any).printed = {
+        image: printed.querySelector("img")!.getAttribute("src"),
+        breakAfter: getComputedStyle(printed.querySelector(".pagebreak")!)
+          .breakAfter,
+      };
+    };
+  });
+  await page.getByRole("button", { name: "Note menu" }).click();
+  await page.getByRole("button", { name: "Print" }).click();
+  await expect
+    .poll(() => page.evaluate(() => (window as any).printed), {
+      timeout: 15000,
+    })
+    .toEqual({
+      image: expect.stringMatching(/^data:image\/md;base64,/),
+      breakAfter: "page",
+    });
+});

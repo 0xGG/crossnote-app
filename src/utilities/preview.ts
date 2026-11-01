@@ -1,32 +1,6 @@
-import { printPreview as EchoMDPrintPreview } from "@0xgg/echomd/preview";
 import path from "path-browserify";
 import { globalContainers } from "../containers/global";
 import { Note } from "../lib/note";
-
-export function printPreview(
-  previewElement: HTMLElement,
-  bannerElement?: HTMLElement,
-  timeout = 2000,
-) {
-  return EchoMDPrintPreview(
-    previewElement,
-    bannerElement,
-    ["body"],
-    `
-  .App,
-  .editor-bottom-panel,
-  .drawer,
-  .CodeMirror,
-  .editor-textarea,
-  .editor-toolbar,
-  .notes-panel,
-  .control-panel-wrapper {
-    display: none;
-  }
-`,
-    timeout,
-  );
-}
 
 export function openURL(url: string = "", note: Note) {
   if (!note || !url) {
