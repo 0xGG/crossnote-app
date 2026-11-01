@@ -157,3 +157,73 @@ test("takes key events without a key in its stride", async ({ app, page }) => {
   await expect(app.plainTextSourceCodeSwitch).toBeVisible();
   expect(errors).toEqual([]);
 });
+
+// A tab opened at a reference keeps it in the saved layout. One kept by an
+// older version holds markdown-it's tokens, and one could lack them.
+const readmeTabAt = (folder: string, reference: object) =>
+  layoutOf(
+    row(
+      tabset({
+        type: "tab",
+        id: "README",
+        name: "README",
+        component: "Note",
+        config: {
+          component: "Note",
+          singleton: false,
+          notebookPath: folder,
+          noteFilePath: "README.md",
+          reference,
+        },
+      }),
+    ),
+  );
+
+test("opens a note whose saved tab holds a reference it cannot read", async ({
+  app,
+}) => {
+  await app.open();
+  await app.openNotes();
+  const folder = await app.notebookFolder();
+  await app.seedLayout(
+    readmeTabAt(folder, {
+      elementId: "wikilink-README-4",
+      text: "README",
+      link: "README.md",
+    }),
+  );
+  await app.page.reload();
+  await app.waitUntilReady();
+  await expect(app.preview).toContainText("Welcome to Crossnote");
+  // The editor goes to the reference's line when it shows.
+  await app.modeButton("Edit").click();
+  await expect.poll(() => app.editorText()).toContain("Welcome to Crossnote");
+  await expect(app.modeOn).toHaveAccessibleName("Edit");
+});
+
+test("goes to the line of a reference kept by an older version", async ({
+  app,
+}) => {
+  await app.open();
+  await app.openNotes();
+  const folder = await app.notebookFolder();
+  const readme = `${folder}/README.md`;
+  await app.storedText(readme, "First.\n\nSecond.\n\nThird [[README]].\n");
+  await app.seedLayout(
+    readmeTabAt(folder, {
+      elementId: "wikilink-README-6",
+      text: "README",
+      link: "README.md",
+      parentToken: {
+        type: "inline",
+        map: [4, 5],
+        content: "Third [[README]].",
+      },
+      token: { type: "wikilink", content: "README" },
+    }),
+  );
+  await app.page.reload();
+  await app.waitUntilReady();
+  await app.modeButton("Edit").click();
+  await expect.poll(() => app.caret()).toEqual({ line: 4, ch: 0 });
+});

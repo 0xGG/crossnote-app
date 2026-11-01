@@ -153,6 +153,14 @@ export class Notebook {
         );
       }
     };
+    // The block a reference's inline token is in.
+    const blockOf = (parentToken: Token) => ({
+      lines: [parentToken?.map?.[0] ?? 0, parentToken?.map?.[1] ?? 0] as [
+        number,
+        number,
+      ],
+      context: parentToken?.content ?? "",
+    });
     const traverse = function (
       tokens: Token[],
       parentToken: Token,
@@ -175,8 +183,7 @@ export class Notebook {
             elementId: token.attrGet("id") || "",
             text,
             link: resolveLink(link),
-            parentToken,
-            token,
+            ...blockOf(parentToken),
           });
         } else if (token.type === "tag") {
           const text = token.content.trim();
@@ -186,8 +193,7 @@ export class Notebook {
             elementId: token.attrGet("id") || "",
             text,
             link: resolveLink(link),
-            parentToken,
-            token,
+            ...blockOf(parentToken),
           });
         } else if (
           token.type === "link_open" &&
@@ -209,8 +215,7 @@ export class Notebook {
               elementId: token.attrGet("id") || "",
               text,
               link: resolveLink(link),
-              parentToken,
-              token,
+              ...blockOf(parentToken),
             });
           }
         } else if (token.children && token.children.length) {

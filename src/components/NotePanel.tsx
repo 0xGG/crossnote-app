@@ -780,9 +780,12 @@ export default function NotePanel(props: Props) {
           highlightedElements[i].classList.remove("reference-highlight");
         }
 
-        const element = previewElement.current.querySelector(
-          `#` + props.reference.elementId,
-        );
+        // An id is the notebook's, and may not make a selector as it is.
+        const element = props.reference.elementId
+          ? previewElement.current.querySelector(
+              `#${CSS.escape(props.reference.elementId)}`,
+            )
+          : null;
         if (element) {
           element.classList.add("reference-highlight");
           element.scrollIntoView({
@@ -803,7 +806,7 @@ export default function NotePanel(props: Props) {
           };
         }
       } /* else if (editor) { // <= Doesn't work very well
-        const line = (props.reference.parentToken.map || [])[0];
+        const line = props.reference.lines[0];
         console.log("refer line: ", line);
         if (typeof line === "number") {
           const lineText = editor.getLine(line);
@@ -818,7 +821,7 @@ export default function NotePanel(props: Props) {
           );
         }
       }*/ else if (editor) {
-        const lineNo = (props.reference.parentToken.map || [])[0];
+        const lineNo = props.reference.lines[0];
         if (typeof lineNo === "number") {
           editor.setCursor({ line: editor.lastLine(), ch: 0 });
           setTimeout(function () {

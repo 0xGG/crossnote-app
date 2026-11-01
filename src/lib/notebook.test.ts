@@ -104,6 +104,23 @@ describe("Notebook", () => {
     }
   });
 
+  it("keeps where a note mentions another as lines and text, not tokens", async () => {
+    await notebook.writeNote(
+      "mentioning.md",
+      "Intro.\n\nSee [[mentioned]]\nand on.\n",
+      { createdAt: new Date(), modifiedAt: new Date() },
+    );
+    expect(notebook.getReferences("mentioned.md", "mentioning.md")).toEqual([
+      {
+        elementId: expect.stringMatching(/^wikilink-mentioned-/),
+        text: "mentioned",
+        link: "mentioned.md",
+        lines: [2, 4],
+        context: "See [[mentioned]]\nand on.",
+      },
+    ]);
+  });
+
   it("leaves a note it cannot rename where it was", async () => {
     await notebook.writeNote("source.md", "See [[target]].", {
       createdAt: new Date(),
