@@ -33,6 +33,39 @@ test("draws a deck of slides with a diagram in it", async ({ app }) => {
     .toBe(true);
 });
 
+test("draws a vega-lite chart without a way to open it on another site", async ({
+  app,
+}) => {
+  await app.open();
+  await app.openNotes();
+  await app.createNote();
+  // The chart names an editor of its own; neither it nor vega's is offered.
+  await app.setEditorText(
+    [
+      "```vega-lite",
+      "usermeta:",
+      "  embedOptions:",
+      "    editorUrl: https://example.org/",
+      "data:",
+      "  values:",
+      "    - a: 1",
+      "mark: point",
+      "encoding:",
+      "  x:",
+      "    field: a",
+      "    type: quantitative",
+      "```",
+      "",
+    ].join("\n"),
+  );
+  await app.modeButton("Preview").click();
+
+  const actions = app.preview.locator(".vega-embed .vega-actions a");
+  await expect(actions.filter({ hasText: "Save as SVG" })).toHaveCount(1);
+  await expect(app.preview.locator(".vega-embed canvas")).toBeVisible();
+  await expect(actions.filter({ hasText: "Vega Editor" })).toHaveCount(0);
+});
+
 test("prints a note with its local images and page breaks", async ({
   app,
   page,

@@ -9,5 +9,4 @@ export { EchartsRenderer } from "@0xgg/echomd/powerpack/fold-code-with-echarts";
 export { MermaidRenderer } from "@0xgg/echomd/powerpack/fold-code-with-mermaid";
 export { PlantUMLRenderer } from "@0xgg/echomd/powerpack/fold-code-with-plantuml";
 export { VegaRenderer } from "@0xgg/echomd/powerpack/fold-code-with-vega";
-export { VegaLiteRenderer } from "@0xgg/echomd/powerpack/fold-code-with-vega-lite";
 export { WaveDromRenderer } from "@0xgg/echomd/powerpack/fold-code-with-wavedrom";

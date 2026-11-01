@@ -8,10 +8,10 @@ import {
   MermaidRenderer,
   PlantUMLRenderer,
   renderTwemoji,
-  VegaLiteRenderer,
   VegaRenderer,
   WaveDromRenderer,
 } from "./echomd";
+import { renderVegaLite } from "./vegaLite";
 
 type CodeRenderer = (
   code: string,
@@ -26,7 +26,7 @@ const diagramRenderers: [RegExp, CodeRenderer, boolean][] = [
   [/^echarts$/, EchartsRenderer, true],
   [/^mermaid$/, MermaidRenderer, false],
   [/^vega$/, VegaRenderer, true],
-  [/^vega-lite$/, VegaLiteRenderer, true],
+  [/^vega-lite$/, renderVegaLite, true],
   [/^wavedrom$/i, WaveDromRenderer, false],
 ];
 
