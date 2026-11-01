@@ -16,6 +16,12 @@ import { sanitizeHTML } from "./sanitize";
 //    (./preview.ts): widgets, code blocks and diagrams, twemoji, links,
 //    images. A deck of slides goes into a frame (./presentation.ts).
 //
+// Where the HTML stands in the note's text: the markdown stage leaves marks
+// with a data-line attribute, the 0-based line they stand for (empty
+// paragraphs of class sync-line between blocks, task checkboxes, a deck's
+// sections), and a reference keeps the lines of its block
+// (lib/reference.ts). A markdown stage of the app's own keeps both.
+//
 // The page's Content-Security-Policy (index.html) still lets scripts run
 // inline, through eval and from the CDNs the slides and widgets load. The
 // target, once the diagram libraries come from the app's own bundle and the
