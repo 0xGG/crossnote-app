@@ -117,6 +117,11 @@ const codeMirrorSelectCss = {
   color: `#fff !important`,
 };
 
+// A note's title, which is its file name, as text in the table of contents'
+// HTML.
+const escapeTitle = (title: string) =>
+  title.replace(/&/g, "&amp;").replace(/</g, "&lt;");
+
 const Row = styled(Box)({
   display: "flex",
   flexDirection: "row",
@@ -1465,7 +1470,7 @@ export default function NotePanel(props: Props) {
           "</div>";
       });
       newTOC =
-        `<div data-line="0" class="toc-item" style="padding-left: 1em;">${note.title}</div>` +
+        `<div data-line="0" class="toc-item" style="padding-left: 1em;">${escapeTitle(note.title)}</div>` +
         newTOC;
       if (newTOC === lastTOC) return;
       if (tocElement && tocElement.current) {
