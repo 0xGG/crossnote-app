@@ -120,9 +120,8 @@ test("loads mermaid for a slide from the site", async ({ app, page }) => {
     "<!-- slide -->\n\n```mermaid\ngraph TD; A-->B\n```\n",
   );
   // The page itself loads the same file at start; the one asked for here is
-  // the slide's own, from the frame the slides are drawn in. Only the address
-  // is checked: a deck with a diagram in it is not drawn at all yet, as the
-  // preview reads the frame before the scripts in its head have loaded.
+  // the slide's own, from the frame the slides are drawn in. That the deck
+  // is drawn is preview.spec.ts's to check.
   const slideMermaid = page.waitForRequest(
     (request) =>
       /mermaid(\.min)?\.js$/.test(request.url()) &&

@@ -1,5 +1,3 @@
-// @ts-ignore
-import { renderPreview } from "@0xgg/echomd/preview";
 import { WidgetArgs, WidgetCreator } from "@0xgg/echomd/widget";
 // @ts-ignore
 import Board from "@lourenci/react-kanban";
@@ -33,8 +31,9 @@ import EditImageDialog from "../../../components/EditImageDialog";
 import { globalContainers } from "../../../containers/global";
 import { Note } from "../../../lib/note";
 import { setTheme } from "../../../themes/manager";
+import { mountPreview } from "../../../render";
 import { resolveNoteImageSrc } from "../../../utilities/image";
-import { openURL, postprocessPreview } from "../../../utilities/preview";
+import { openURL } from "../../../utilities/preview";
 
 import * as EchoMD from "@0xgg/echomd/core";
 
@@ -261,11 +260,10 @@ function KanbanCardDisplay(props: KanbanCardProps) {
 
   useEffect(() => {
     if (previewElement) {
-      renderPreview(previewElement, card.description);
-      postprocessPreview(
-        previewElement,
-        null, // globalContainers.crossnoteContainer.selectedNote,
-      );
+      const preview = mountPreview(previewElement, card.description, {
+        note: null, // globalContainers.crossnoteContainer.selectedNote,
+      });
+      return () => preview.dispose();
     }
   }, [previewElement, card.description]);
 

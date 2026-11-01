@@ -43,6 +43,21 @@ export function isSafeAddress(value: string): boolean {
   );
 }
 
+// A wavedrom code block comes out of the markdown stage as a script element
+// of type WaveDrom holding the diagram's source, which is text to draw, not
+// code to run; the text stays where the element was.
+purify.addHook("uponSanitizeElement", (node, data) => {
+  if (
+    data.tagName === "script" &&
+    /^wavedrom$/i.test((node as Element).getAttribute("type") || "")
+  ) {
+    node.parentNode?.insertBefore(
+      node.ownerDocument.createTextNode(node.textContent || ""),
+      node,
+    );
+  }
+});
+
 purify.addHook("uponSanitizeAttribute", (_node, data) => {
   if (
     (addressAttributes.test(data.attrName) && !isSafeAddress(data.attrValue)) ||

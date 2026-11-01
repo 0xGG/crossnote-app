@@ -74,6 +74,17 @@ describe("sanitizeHTML", () => {
     expect(element.querySelector("img").hasAttribute("name")).toBe(false);
   });
 
+  it("keeps a wavedrom block's source as text, and runs no script", () => {
+    const element = render(
+      '<div class="vickeymd-fence wavedrom"><script type="WaveDrom">{ signal: [] }</script></div><script type="text/javascript">alert(1)</script>',
+    );
+    expect(element.querySelector("script")).toBeNull();
+    expect(element.querySelector(".wavedrom").textContent).toBe(
+      "{ signal: [] }",
+    );
+    expect(element.textContent).toBe("{ signal: [] }");
+  });
+
   it("drops a slide background that would load a script address", () => {
     const section = render(
       '<section data-background-iframe="javascript:alert(1)" data-background-image="https://example.com/a.png"></section>',

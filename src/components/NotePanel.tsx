@@ -1,6 +1,6 @@
 import { debounce } from "@0xgg/echomd";
 import { EmojiDefinitions } from "@0xgg/echomd/addon/emoji";
-import { renderPreview, renderTwemoji } from "@0xgg/echomd/preview";
+import { renderTwemoji } from "@0xgg/echomd/preview";
 import {
   Box,
   Button,
@@ -57,12 +57,10 @@ import { isFinishingEnter } from "../lib/keys";
 import { failureMessage, notify } from "../lib/notifications";
 import { Reference } from "../lib/reference";
 import { TabNodeConfig } from "../lib/tabNode";
+import { MountedPreview, mountPreview } from "../render";
 import { setTheme } from "../themes/manager";
 import { resolveNoteImageSrc } from "../utilities/image";
-import {
-  openURL,
-  postprocessPreview as previewPostprocessPreview,
-} from "../utilities/preview";
+import { openURL } from "../utilities/preview";
 import EditImageDialog from "./EditImageDialog";
 import { Emoji } from "./EmojiWrapper";
 import IconPopover from "./IconPopover";
@@ -375,6 +373,7 @@ export default function NotePanel(props: Props) {
   const previewElement = useRef<HTMLDivElement>(null);
   const [previewIsPresentation, setPreviewIsPresentation] =
     useState<boolean>(false);
+  const mountedPreview = useRef<MountedPreview>(null);
   const textAreaElement = useRef<HTMLTextAreaElement>(null);
   const [cursorPosition, setCursorPosition] = useState<CursorPosition>({
     line: 0,
@@ -432,14 +431,25 @@ export default function NotePanel(props: Props) {
       });
   }, [noteTitle, note, tabNode, t]);
 
-  const postprocessPreview = useCallback(
-    (previewElement: HTMLElement) => {
-      previewPostprocessPreview(previewElement, note, (flag) => {
-        setPreviewIsPresentation(flag);
-      });
+  const showPreview = useCallback(
+    (text: string) => {
+      const element = previewElement.current;
+      if (!element) {
+        return;
+      }
+      const preview = mountPreview(element, text, { note });
+      mountedPreview.current = preview;
+      setPreviewIsPresentation(preview.isPresentation);
+      element.scrollTop = 0;
     },
     [note],
   );
+
+  useEffect(() => {
+    return () => {
+      mountedPreview.current?.dispose();
+    };
+  }, []);
 
   useEffect(() => {
     isMounted.current = true;
@@ -755,15 +765,9 @@ export default function NotePanel(props: Props) {
   // Render Preview
   useEffect(() => {
     if (editorMode === EditorMode.Preview && editor && note && previewElement) {
-      try {
-        renderPreview(previewElement.current, editor.getValue());
-        postprocessPreview(previewElement.current);
-        previewElement.current.scrollTop = 0;
-      } catch (error) {
-        previewElement.current.innerText = String(error);
-      }
+      showPreview(editor.getValue());
     }
-  }, [editorMode, editor, previewElement, note, postprocessPreview, t]);
+  }, [editorMode, editor, previewElement, note, showPreview, t]);
 
   // Check need to highlight reference
   useEffect(() => {
@@ -899,14 +903,8 @@ export default function NotePanel(props: Props) {
                 saveFailed.current = true;
               });
           }
-          if (editorMode === EditorMode.Preview && previewElement.current) {
-            try {
-              renderPreview(previewElement.current, editor.getValue());
-              postprocessPreview(previewElement.current);
-              previewElement.current.scrollTop = 0;
-            } catch (error) {
-              previewElement.current.innerText = String(error);
-            }
+          if (editorMode === EditorMode.Preview) {
+            showPreview(editor.getValue());
           }
         }, 300);
       };
@@ -938,15 +936,7 @@ export default function NotePanel(props: Props) {
         editor.off("imageReadyToLoad", loadImage);
       };
     }
-  }, [
-    editor,
-    note,
-    tabNode,
-    editorMode,
-    previewElement,
-    postprocessPreview,
-    t,
-  ]);
+  }, [editor, note, tabNode, editorMode, previewElement, showPreview, t]);
 
   // Command
   useEffect(() => {
