@@ -195,7 +195,7 @@ test("opens a note whose saved tab holds a reference it cannot read", async ({
   await app.page.reload();
   await app.waitUntilReady();
   await expect(app.preview).toContainText("Welcome to Crossnote");
-  // The editor goes to the reference's line when it shows.
+  // Showing the editor is where the reference's line was read.
   await app.modeButton("Edit").click();
   await expect.poll(() => app.editorText()).toContain("Welcome to Crossnote");
   await expect(app.modeOn).toHaveAccessibleName("Edit");
@@ -224,6 +224,8 @@ test("goes to the line of a reference kept by an older version", async ({
   );
   await app.page.reload();
   await app.waitUntilReady();
+  // The preview marks the element the reference names, the editor its line.
+  await expect(app.highlightedReference).toHaveText("README");
   await app.modeButton("Edit").click();
   await expect.poll(() => app.caret()).toEqual({ line: 4, ch: 0 });
 });

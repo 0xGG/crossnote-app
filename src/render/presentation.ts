@@ -102,7 +102,8 @@ let frames = 0;
 // Draws a deck of slides into a frame inside element, with reveal.js and the
 // slides' own mermaid and wavedrom. Settles once reveal.js says the deck is
 // ready, or that it could not load, and the frame's content has been
-// finished like a preview's; cleanups gets what dispose has to undo.
+// finished like a preview's, or once it is disposed of; cleanups gets what
+// dispose has to undo.
 export function mountPresentation(
   element: HTMLElement,
   html: string,

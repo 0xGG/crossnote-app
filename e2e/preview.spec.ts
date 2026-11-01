@@ -12,7 +12,8 @@ test("draws a deck of slides with a diagram in it", async ({ app }) => {
   await app.open();
   await app.openNotes();
   await app.createNote();
-  await app.typeInEditor(
+  // Set rather than typed: typing "[[" would open the wikilink hints.
+  await app.setEditorText(
     "<!-- slide -->\n\n[[Other]]\n\n```mermaid\ngraph TD; A-->B\n```\n",
   );
   await app.modeButton("Preview").click();
@@ -192,4 +193,31 @@ test("prints a note with its local images and page breaks", async ({
       image: expect.stringMatching(/^data:image\/md;base64,/),
       breakAfter: "page",
     });
+});
+
+test("draws a kanban card's description through the same sanitizing", async ({
+  app,
+}) => {
+  await app.open();
+  await app.openNotes();
+  await app.createNote();
+  // echomd's own filter lets a form through; the preview's sanitizing does
+  // not, and a card's description is drawn the same way.
+  const card = {
+    id: 2,
+    title: "C",
+    description:
+      '[[Other]]\n\n<form action="javascript:alert(1)"><input value="kept"></form>\n',
+  };
+  const board = { columns: [{ id: 1, title: "A", cards: [card] }] };
+  await app.setEditorText(
+    `<!-- @crossnote.kanban "board":${JSON.stringify(board)} -->\n`,
+  );
+  await app.modeButton("Preview").click();
+
+  const description = app.preview.locator(".preview").filter({
+    has: app.page.locator('input[value="kept"]'),
+  });
+  await expect(description.getByRole("link", { name: "Other" })).toBeVisible();
+  await expect(description.locator("form")).toHaveCount(0);
 });

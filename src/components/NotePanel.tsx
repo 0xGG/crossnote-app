@@ -442,6 +442,9 @@ export default function NotePanel(props: Props) {
       if (!element) {
         return;
       }
+      // The preview element is a new one each time the preview shows, so
+      // what was drawn into the last one is disposed of here.
+      mountedPreview.current?.dispose();
       const preview = mountPreview(element, text, { note });
       mountedPreview.current = preview;
       setPreviewIsPresentation(preview.isPresentation);
@@ -449,12 +452,6 @@ export default function NotePanel(props: Props) {
     },
     [note],
   );
-
-  useEffect(() => {
-    return () => {
-      mountedPreview.current?.dispose();
-    };
-  }, []);
 
   useEffect(() => {
     isMounted.current = true;
@@ -771,6 +768,8 @@ export default function NotePanel(props: Props) {
   useEffect(() => {
     if (editorMode === EditorMode.Preview && editor && note && previewElement) {
       showPreview(editor.getValue());
+      // Leaving the preview, or the panel going, stops what is still to come.
+      return () => mountedPreview.current?.dispose();
     }
   }, [editorMode, editor, previewElement, note, showPreview, t]);
 
@@ -785,7 +784,8 @@ export default function NotePanel(props: Props) {
           highlightedElements[i].classList.remove("reference-highlight");
         }
 
-        // An id is the notebook's, and may not make a selector as it is.
+        // The id comes from the note's text and may not be a valid
+        // selector as it is.
         const element = props.reference.elementId
           ? previewElement.current.querySelector(
               `#${CSS.escape(props.reference.elementId)}`,

@@ -97,9 +97,11 @@ export function sanitizeHTML(html: string): string {
   return purify.sanitize(html, {
     FORBID_TAGS: forbiddenTags,
     SANITIZE_DOM: false,
-    // KaTeX pairs the MathML a screen reader reads with the TeX it came
-    // from; both elements hold text only. Without them the TeX would be read
-    // out as part of the formula.
+    // KaTeX writes, beside what is seen, MathML for screen readers: a
+    // semantics element holds the formula's MathML (which is sanitized as
+    // any other) and an annotation with the TeX it came from, as text.
+    // Without the two, the TeX would sit inside the formula as text of its
+    // own.
     ADD_TAGS: ["semantics", "annotation"],
     ADD_ATTR: ["encoding"],
   });

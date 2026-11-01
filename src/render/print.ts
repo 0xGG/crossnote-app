@@ -31,9 +31,9 @@ const printCSS = `
 /**
  * Prints a note mountPreview has drawn into element (with forPrint for a
  * deck). The element covers the page meanwhile, banner over it on screen
- * only; after timeout, which lets diagrams that draw themselves finish, the
- * browser's print dialog opens on the page, or on the deck's frame. Settles
- * once print() returns and everything is put back.
+ * only; after timeout, which gives diagrams that draw themselves time to
+ * finish, the browser's print dialog opens on the page, or on the deck's
+ * frame. Settles once print() returns and everything is put back.
  */
 export function printPreview(
   element: HTMLElement,

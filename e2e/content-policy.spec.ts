@@ -8,8 +8,9 @@ test("refuses a base address elsewhere and plugin content", async ({
   page,
 }) => {
   await app.open();
-  const result = await page.evaluate(async () => {
+  const baseURI = await page.evaluate(() => {
     const violations: string[] = [];
+    (window as any).violations = violations;
     document.addEventListener("securitypolicyviolation", (event) =>
       violations.push(event.effectiveDirective),
     );
@@ -21,12 +22,11 @@ test("refuses a base address elsewhere and plugin content", async ({
     const object = document.createElement("object");
     object.data = "/favicon.ico";
     document.body.appendChild(object);
-    await new Promise((resolve) => setTimeout(resolve, 500));
-    object.remove();
-    return { baseURI, violations };
+    return baseURI;
   });
-  expect(new URL(result.baseURI).origin).toBe(new URL(page.url()).origin);
-  expect(result.violations).toEqual(
-    expect.arrayContaining(["base-uri", "object-src"]),
-  );
+  expect(new URL(baseURI).origin).toBe(new URL(page.url()).origin);
+  // The object's violation is reported once it tries to load.
+  await expect
+    .poll(() => page.evaluate(() => (window as any).violations))
+    .toEqual(expect.arrayContaining(["base-uri", "object-src"]));
 });

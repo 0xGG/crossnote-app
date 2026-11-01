@@ -113,7 +113,18 @@ describe("mountPreview", () => {
     await expect(mountPreview(element, "text", { note }).done).rejects.toThrow(
       "cannot read",
     );
-    expect(element.innerText).toBe("Error: cannot read");
+    expect(element.textContent).toBe("Error: cannot read");
+  });
+
+  it("shows why a deck's frame cannot be put in, and rejects", async () => {
+    // An element outside a page gives its frame no window to write into.
+    const element = document.createElement("div");
+    const preview = mountPreview(element, "<!-- slide -->\n\n# One\n", {
+      note: null,
+    });
+    expect(preview.isPresentation).toBe(true);
+    await expect(preview.done).rejects.toThrow(TypeError);
+    expect(element.textContent).toMatch(/^TypeError/);
   });
 });
 

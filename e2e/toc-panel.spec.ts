@@ -88,7 +88,7 @@ test("shows a note's title in the table of contents as text", async ({
   page,
 }) => {
   // A file name is the note's title, and a notebook cloned from elsewhere
-  // can hold any.
+  // can hold names with markup in them.
   const title = "<img src=x onerror=window.fromTitle=1>Title";
   await app.noteTitle.fill(title);
   await app.noteTitle.press("Enter");
@@ -99,5 +99,7 @@ test("shows a note's title in the table of contents as text", async ({
   await expect(app.tocItem("Heading")).toBeVisible();
 
   await expect(app.tocItem(title)).toBeVisible();
-  expect(await page.evaluate(() => (window as any).fromTitle)).toBeUndefined();
+  // As markup the title would be an image, whose handler runs only once
+  // its picture fails to load; no element is the check that does not wait.
+  await expect(page.locator(".toc-item img")).toHaveCount(0);
 });

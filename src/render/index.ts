@@ -11,7 +11,9 @@ import { sanitizeHTML } from "./sanitize";
 //    is echomd's for now (./echomd.ts) and becomes the app's own later; the
 //    HTML is not safe to put in a page yet.
 // 2. sanitizeHTML (./sanitize.ts) holds the rules for what a note's HTML may
-//    keep. Nothing reaches the page without passing it.
+//    keep. Nothing the markdown stage gives reaches the page without passing
+//    it. The editor's own folding of HTML in a note (CodeMirror 5) is not
+//    drawn through here and is not sanitized by it.
 // 3. mountPreview puts the result into an element and finishes it there
 //    (./preview.ts): widgets, code blocks and diagrams, twemoji, links,
 //    images. A deck of slides goes into a frame (./presentation.ts).
@@ -20,7 +22,7 @@ import { sanitizeHTML } from "./sanitize";
 // with a data-line attribute, the 0-based line they stand for (empty
 // paragraphs of class sync-line between blocks, task checkboxes, a deck's
 // sections), and a reference keeps the lines of its block
-// (lib/reference.ts). A markdown stage of the app's own keeps both.
+// (lib/reference.ts). A markdown stage of the app's own must keep both.
 //
 // The page's Content-Security-Policy (index.html) still lets scripts run
 // inline, through eval and from the CDNs the slides and widgets load. The
@@ -52,16 +54,19 @@ export interface MountedPreview {
   /**
    * Settles once the note is drawn: its HTML in the element, finished, and
    * its images read from the notebook; a deck once reveal.js is ready or
-   * failed to load. Diagrams that draw themselves later are not waited for.
-   * Rejects only when the markdown stage fails, whose error the element
-   * then shows; a block that fails shows its error in its place.
+   * failed to load, or once it is disposed of. Diagrams that draw themselves
+   * later are not waited for. Rejects when the note cannot be drawn into
+   * the element at all (the markdown stage, or putting its HTML or the
+   * deck's frame in, fails), and the element then shows why; a block that
+   * fails shows its error in its place instead.
    */
   done: Promise<void>;
   /**
-   * Stops what is still to come: images resolved afterwards keep their
-   * address, a deck that gets ready afterwards is left as it is, and the
-   * listener that waits for it goes. Drawing into the same element again
-   * disposes of what was drawn there before.
+   * Stops the finishing still to come: images still being read keep their
+   * address, a deck that gets ready afterwards is left unfinished, and the
+   * listener it waits with goes. Diagrams that draw themselves later
+   * (mermaid, vega and the like) are not stopped. Drawing into the same
+   * element again disposes of what was drawn there before.
    */
   dispose(): void;
 }
@@ -78,38 +83,34 @@ export function mountPreview(
   const cleanups: (() => void)[] = [];
   const isCurrent = () => !disposed;
 
-  let rendered: RenderedMarkdown;
-  try {
-    rendered = renderMarkdown(text);
-  } catch (error) {
-    element.innerText = String(error);
-    const preview: MountedPreview = {
-      isPresentation: false,
-      done: Promise.reject(error),
-      dispose: () => {},
-    };
-    preview.done.catch(() => {});
-    return preview;
-  }
-
+  let isPresentation = false;
   let done: Promise<void>;
-  if (rendered.isPresentation) {
-    element.style.maxWidth = "100%";
-    element.style.height = "100%";
-    done = mountPresentation(element, rendered.html, rendered.frontMatter, {
-      note: options.note,
-      forPrint: !!options.forPrint,
-      isCurrent,
-      cleanups,
-    });
-  } else {
-    element.style.height = "100%";
-    element.innerHTML = sanitizeHTML(rendered.html);
-    done = finishPreview(element, options.note, false, isCurrent);
+  try {
+    const rendered = renderMarkdown(text);
+    isPresentation = rendered.isPresentation;
+    if (isPresentation) {
+      element.style.maxWidth = "100%";
+      element.style.height = "100%";
+      done = mountPresentation(element, rendered.html, rendered.frontMatter, {
+        note: options.note,
+        forPrint: !!options.forPrint,
+        isCurrent,
+        cleanups,
+      });
+    } else {
+      element.style.height = "100%";
+      element.innerHTML = sanitizeHTML(rendered.html);
+      done = finishPreview(element, options.note, false, isCurrent);
+    }
+  } catch (error) {
+    element.textContent = String(error);
+    done = Promise.reject(error);
   }
+  // Callers that do not wait for it need not handle its failure.
+  done.catch(() => {});
 
   const preview: MountedPreview = {
-    isPresentation: rendered.isPresentation,
+    isPresentation,
     done,
     dispose() {
       if (disposed) {
