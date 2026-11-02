@@ -1,9 +1,8 @@
-import { md } from "@0xgg/echomd/preview";
 import { Mutex } from "async-mutex";
 import * as git from "isomorphic-git";
-import type Token from "markdown-it/lib/token";
 import path from "path-browserify";
 // import { isFileAnImage } from "../utilities/image";
+import { findLinks } from "../render/links";
 import { NOTE_SETTINGS, readNoteText, writeNoteText } from "./frontMatter";
 import { fs, pfs } from "./fs";
 import { Mentions, Note, NoteConfig, Notes } from "./note";
@@ -139,7 +138,6 @@ export class Notebook {
       return;
     }
     // Get mentions
-    const tokens = md.parse(note.markdown, {});
     const resolveLink = (link: string) => {
       if (!link.endsWith(".md")) {
         link = link + ".md";
@@ -153,79 +151,27 @@ export class Notebook {
         );
       }
     };
-    // The block a reference's inline token is in.
-    const blockOf = (parentToken: Token) => ({
-      lines: [parentToken?.map?.[0] ?? 0, parentToken?.map?.[1] ?? 0] as [
-        number,
-        number,
-      ],
-      context: parentToken?.content ?? "",
-    });
-    const traverse = function (
-      tokens: Token[],
-      parentToken: Token,
-      results: Reference[],
-      level: number,
-    ): Reference[] {
-      for (let i = 0; i < tokens.length; i++) {
-        const token = tokens[i];
-        if (token.type === "wikilink") {
-          // TODO: Support normal links
-          const arr = token.content.split("|");
-          const text = (arr.length > 1 ? arr[1] : arr[0]).trim();
-          let link = arr[0].trim();
-          if (link.match(/https?:\/\//)) {
-            // TODO: Ignore more protocols
-            continue;
-          }
-          // console.log("find link token: ", token, parentToken);
-          results.push({
-            elementId: token.attrGet("id") || "",
-            text,
-            link: resolveLink(link),
-            ...blockOf(parentToken),
-          });
-        } else if (token.type === "tag") {
-          const text = token.content.trim();
-          const link = token.content.trim();
-          // console.log("find link token: ", token, parentToken);
-          results.push({
-            elementId: token.attrGet("id") || "",
-            text,
-            link: resolveLink(link),
-            ...blockOf(parentToken),
-          });
-        } else if (
-          token.type === "link_open" &&
-          tokens[i + 1] &&
-          tokens[i + 1].type === "text"
-        ) {
-          if (token.attrs.length && token.attrs[0][0] === "href") {
-            const link = decodeURI(token.attrs[0][1]);
-            const text = tokens[i + 1].content.trim();
-            if (
-              link.match(/https?:\/\//) ||
-              !text.length ||
-              !link.endsWith(".md")
-            ) {
-              // TODO: Ignore more protocols
-              continue;
-            }
-            results.push({
-              elementId: token.attrGet("id") || "",
-              text,
-              link: resolveLink(link),
-              ...blockOf(parentToken),
-            });
-          }
-        } else if (token.children && token.children.length) {
-          traverse(token.children, token, results, level + 1);
-        }
+    // A wiki link or a markdown link to a web address is not a note's, and a
+    // markdown link is one only when it names a .md file and has words.
+    const references: Reference[] = [];
+    for (const found of findLinks(note.markdown)) {
+      // TODO: Ignore more protocols
+      const link =
+        found.kind === "link" ? decodeURI(found.target) : found.target;
+      if (
+        (found.kind !== "tag" && link.match(/https?:\/\//)) ||
+        (found.kind === "link" && (!found.text.length || !link.endsWith(".md")))
+      ) {
+        continue;
       }
-      return results;
-    };
-
-    const references = traverse(tokens, null, [], 0);
+      references.push({
+        elementId: found.elementId,
+        text: found.text,
+        link: resolveLink(link),
+        lines: found.lines,
+        context: found.context,
+      });
+    }
     const mentions: Mentions = {};
     const oldMentions = note.mentions;
 

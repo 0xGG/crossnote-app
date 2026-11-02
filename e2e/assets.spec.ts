@@ -11,9 +11,10 @@ test("loads each theme stylesheet from the root as CSS", async ({
   page,
 }) => {
   await app.open();
-  // The editor, preview and code block themes.
+  // The editor's theme; the preview's and the code blocks' come with the
+  // bundle.
   const themes = page.locator('link[rel="stylesheet"][id^="echomd-"]');
-  await expect(themes).toHaveCount(3);
+  await expect(themes).toHaveCount(1);
   const hrefs = await themes.evaluateAll((links) =>
     links.map((link) => link.getAttribute("href") ?? ""),
   );

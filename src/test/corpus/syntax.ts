@@ -29,6 +29,10 @@ export const syntaxSamples: { name: string; text: string }[] = [
     text: "See [[README]], [[folder/Other note]] and [[README|the readme]].\n",
   },
   {
+    name: "the same links again",
+    text: "[[README]] once\n\n[[README]] twice\n\n- #topic one\n- #topic two\n\n| a | b |\n| - | - |\n| [[README]] | [[README]] |\n",
+  },
+  {
     name: "hashtags and a block reference",
     text: "A note about #topic and #topic/sub.\n\nA paragraph to point at ^para-id\n",
   },

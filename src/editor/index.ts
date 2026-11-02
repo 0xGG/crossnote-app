@@ -37,11 +37,8 @@ import "codemirror/mode/python/python";
 import "codemirror/mode/stex/stex"; // for Math TeX Formular
 import "codemirror/mode/yaml/yaml"; // for Front Matters
 import "codemirror/mode/yaml-frontmatter/yaml-frontmatter"; // plain text source code
-import { Emoji } from "emoji-mart";
-import twemoji from "twemoji";
-import { EmojiBackgroundImageFn } from "../components/EmojiWrapper";
 import { withPlainTextFallback } from "../lib/editorMode";
-import { emojiCodePointToShortNameMap } from "./emoji";
+import { twemojiOptions } from "../render/emoji";
 import { AudioWidgetCreator } from "./widgets/audio";
 import { BilibiliWidgetCreator } from "./widgets/bilibili";
 import { GitHubGistWidgetCreator } from "./widgets/github_gist";
@@ -107,68 +104,5 @@ window["CodeMirror"].keyMap["sublime"] = Object.assign(
   },
 );
 
-// Hack twemoji
-const oldTwemojiParse = twemoji.parse;
-twemoji.parse = function (what: string | HTMLElement, options: any) {
-  const result: any = oldTwemojiParse(what as any, options);
-  if (typeof what === "string") {
-    return (
-      result
-        .replace(/^<img\s/, "<span ")
-        .replace(/\/>$/, "")
-        .replace(/&quot;/g, "")
-        .replace(/src="(.+?)"/, "") + "</span>"
-    );
-  } else {
-    const emojiElements = what.querySelectorAll(".emoji");
-    for (let i = 0; i < emojiElements.length; i++) {
-      const emojiElement = emojiElements[i];
-      if (emojiElement.tagName.match(/IMG/i)) {
-        const newElement = document.createElement("span");
-        newElement.setAttribute("style", emojiElement.getAttribute("style"));
-        newElement.setAttribute("class", emojiElement.getAttribute("class"));
-        newElement.setAttribute("alt", emojiElement.getAttribute("alt"));
-        newElement.setAttribute(
-          "aria-label",
-          emojiElement.getAttribute("aria-label"),
-        );
-        emojiElement.replaceWith(newElement);
-      }
-    }
-    return;
-  }
-};
-
-setTwemojiOptions({
-  folder: "svg",
-  ext: ".svg",
-  className: "emoji",
-  attributes: (emoji: string, codePoint: string) => {
-    try {
-      const shortName = emojiCodePointToShortNameMap[codePoint];
-      const html = Emoji({
-        html: true,
-        set: "twitter",
-        emoji: shortName,
-        size: 16,
-        backgroundImageFn: EmojiBackgroundImageFn,
-      }) as any;
-      const attr: { [key: string]: string } = {};
-      const attrRegExp = /\s([a-z-]+)='(.+?)'/g;
-      let result;
-      while ((result = attrRegExp.exec(html)) !== null) {
-        const attrName = result[1];
-        const attrValue = result[2];
-        if (attrName !== "class") {
-          attr[attrName] = attrValue.replace(/&quot;/, "");
-        }
-      }
-      return attr;
-    } catch (error) {
-      return {};
-    }
-  },
-  callback: () => {
-    return "data:image/svg+xml;charset=utf8,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%3E%3C/svg%3E";
-  },
-});
+// The editor draws its emoji as the preview does.
+setTwemojiOptions(twemojiOptions);

@@ -1,5 +1,7 @@
 import { Note } from "../lib/note";
 import * as echomd from "./echomd";
+// Enables the markdown stage's emoji.
+import "./emoji";
 import { mountPresentation } from "./presentation";
 import { finishPreview } from "./preview";
 import { sanitizeHTML } from "./sanitize";
@@ -17,6 +19,11 @@ import { sanitizeHTML } from "./sanitize";
 // 3. mountPreview puts the result into an element and finishes it there
 //    (./preview.ts): widgets, code blocks and diagrams, twemoji, links,
 //    images. A deck of slides goes into a frame (./presentation.ts).
+//
+// The notebook reads a note's links from the same markdown stage
+// (./links.ts) and keeps them as references; each names the element the
+// preview draws it as by its id. How previews look in each theme is
+// ./theme.ts's.
 //
 // Where the HTML stands in the note's text: the markdown stage leaves marks
 // with a data-line attribute, the 0-based line they stand for (empty

@@ -32,11 +32,10 @@ import {
 import React, { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { CrossnoteContainer } from "../containers/crossnote";
-import { SettingsContainer } from "../containers/settings";
 import { Note } from "../lib/note";
 import { mountPreview } from "../render";
 import { printPreview } from "../render/print";
-import { setTheme } from "../themes/manager";
+import { setPreviewTheme } from "../render/theme";
 import { copyToClipboard } from "../utilities/utils";
 import ChangeFilePathDialog from "./ChangeFilePathDialog";
 import { DeleteNoteDialog } from "./DeleteNoteDialog";
@@ -68,7 +67,6 @@ export default function NotePopover(props: Props) {
   const theme = useTheme();
   const { t } = useTranslation();
   const crossnoteContainer = CrossnoteContainer.useContainer();
-  const settingsContainer = SettingsContainer.useContainer();
   const notebook = crossnoteContainer.getNotebookAtPath(note.notebookPath);
   const isLocal = notebook && notebook.isLocal;
   const shareableLink = notebook.gitURL
@@ -87,9 +85,11 @@ export default function NotePopover(props: Props) {
       return;
     }
 
+    // Printed light whatever the app's theme, without changing the page's.
     const tempPreviewElement = document.createElement("div");
     tempPreviewElement.classList.add("preview");
     tempPreviewElement.style.zIndex = "999999";
+    setPreviewTheme("light", tempPreviewElement);
     document.body.appendChild(tempPreviewElement);
 
     const bannerElement = document.createElement("div");
@@ -104,17 +104,8 @@ export default function NotePopover(props: Props) {
     bannerElement.style.zIndex = "9999";
     bannerElement.innerHTML = `<p>${t("general/please-wait")}</p>`;
 
-    const currentTheme = settingsContainer.theme.name; // editor.getOption("theme") as ThemeName;
-    setTheme({
-      editor: null,
-      themeName: "light",
-    });
     const printDone = () => {
       tempPreviewElement.remove();
-      setTheme({
-        editor: null,
-        themeName: currentTheme,
-      });
       setNeedsToPrint(false);
     };
     crossnoteContainer
@@ -137,7 +128,6 @@ export default function NotePopover(props: Props) {
   }, [
     needsToPrint,
     note,
-    settingsContainer.theme.name,
     t,
     theme.palette.background.default,
     theme.palette.text.primary,

@@ -1,4 +1,3 @@
-import { debounce } from "@0xgg/echomd";
 import { Box, Typography } from "@mui/material";
 import { styled, useTheme } from "@mui/material/styles";
 import * as d3 from "d3";
@@ -25,6 +24,7 @@ import {
 } from "../lib/graphView";
 import { Notebook } from "../lib/notebook";
 import { TabNodeConfig } from "../lib/tabNode";
+import { debounce } from "../utilities/utils";
 
 const bottomPanelHeight = 20;
 const defaultFillColor = `#aaa`;

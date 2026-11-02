@@ -7,10 +7,10 @@ import {
   getWidgetCreator,
   MermaidRenderer,
   PlantUMLRenderer,
-  renderTwemoji,
   VegaRenderer,
   WaveDromRenderer,
 } from "./echomd";
+import { renderTwemoji } from "./emoji";
 import { renderVegaLite } from "./vegaLite";
 
 type CodeRenderer = (

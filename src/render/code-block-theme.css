@@ -1,0 +1,3402 @@
+/*
+ * How code blocks in the preview are coloured in each of the app's themes:
+ * echomd 1.0.4's compiled prism themes, each selector limited to previews
+ * in that theme: the page's (data-preview-theme on the root element), or
+ * one of their own around them (a preview being printed). :where keeps each
+ * selector as specific as it was.
+ */
+/* light: echomd's github */
+.preview:where(:root[data-preview-theme="light"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  code[class*="language-"],
+.preview:where(
+    [data-preview-theme="light"]:not(:root),
+    [data-preview-theme="light"]:not(:root) *
+  )
+  code[class*="language-"],
+.preview:where(:root[data-preview-theme="light"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  pre[class*="language-"],
+.preview:where(
+    [data-preview-theme="light"]:not(:root),
+    [data-preview-theme="light"]:not(:root) *
+  )
+  pre[class*="language-"] {
+  color: #333;
+  background: 0 0;
+  font-family: Consolas, "Liberation Mono", Menlo, Courier, monospace;
+  text-align: left;
+  white-space: pre;
+  word-spacing: normal;
+  word-break: normal;
+  word-wrap: normal;
+  line-height: 1.4;
+  -moz-tab-size: 8;
+  -o-tab-size: 8;
+  tab-size: 8;
+  -webkit-hyphens: none;
+  -moz-hyphens: none;
+  -ms-hyphens: none;
+  hyphens: none;
+}
+.preview:where(:root[data-preview-theme="light"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  pre[class*="language-"],
+.preview:where(
+    [data-preview-theme="light"]:not(:root),
+    [data-preview-theme="light"]:not(:root) *
+  )
+  pre[class*="language-"] {
+  padding: 0.8em;
+  overflow: auto;
+  border-radius: 3px;
+  background: #f5f5f5;
+}
+.preview:where(:root[data-preview-theme="light"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  :not(pre)
+  > code[class*="language-"],
+.preview:where(
+    [data-preview-theme="light"]:not(:root),
+    [data-preview-theme="light"]:not(:root) *
+  )
+  :not(pre)
+  > code[class*="language-"] {
+  padding: 0.1em;
+  border-radius: 0.3em;
+  white-space: normal;
+  background: #f5f5f5;
+}
+.preview:where(:root[data-preview-theme="light"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  .token.blockquote,
+.preview:where(
+    [data-preview-theme="light"]:not(:root),
+    [data-preview-theme="light"]:not(:root) *
+  )
+  .token.blockquote,
+.preview:where(:root[data-preview-theme="light"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  .token.comment,
+.preview:where(
+    [data-preview-theme="light"]:not(:root),
+    [data-preview-theme="light"]:not(:root) *
+  )
+  .token.comment {
+  color: #969896;
+}
+.preview:where(:root[data-preview-theme="light"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  .token.cdata,
+.preview:where(
+    [data-preview-theme="light"]:not(:root),
+    [data-preview-theme="light"]:not(:root) *
+  )
+  .token.cdata {
+  color: #183691;
+}
+.preview:where(:root[data-preview-theme="light"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  .token.doctype,
+.preview:where(
+    [data-preview-theme="light"]:not(:root),
+    [data-preview-theme="light"]:not(:root) *
+  )
+  .token.doctype,
+.preview:where(:root[data-preview-theme="light"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  .token.macro.property,
+.preview:where(
+    [data-preview-theme="light"]:not(:root),
+    [data-preview-theme="light"]:not(:root) *
+  )
+  .token.macro.property,
+.preview:where(:root[data-preview-theme="light"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  .token.punctuation,
+.preview:where(
+    [data-preview-theme="light"]:not(:root),
+    [data-preview-theme="light"]:not(:root) *
+  )
+  .token.punctuation,
+.preview:where(:root[data-preview-theme="light"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  .token.variable,
+.preview:where(
+    [data-preview-theme="light"]:not(:root),
+    [data-preview-theme="light"]:not(:root) *
+  )
+  .token.variable {
+  color: #333;
+}
+.preview:where(:root[data-preview-theme="light"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  .token.builtin,
+.preview:where(
+    [data-preview-theme="light"]:not(:root),
+    [data-preview-theme="light"]:not(:root) *
+  )
+  .token.builtin,
+.preview:where(:root[data-preview-theme="light"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  .token.important,
+.preview:where(
+    [data-preview-theme="light"]:not(:root),
+    [data-preview-theme="light"]:not(:root) *
+  )
+  .token.important,
+.preview:where(:root[data-preview-theme="light"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  .token.keyword,
+.preview:where(
+    [data-preview-theme="light"]:not(:root),
+    [data-preview-theme="light"]:not(:root) *
+  )
+  .token.keyword,
+.preview:where(:root[data-preview-theme="light"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  .token.operator,
+.preview:where(
+    [data-preview-theme="light"]:not(:root),
+    [data-preview-theme="light"]:not(:root) *
+  )
+  .token.operator,
+.preview:where(:root[data-preview-theme="light"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  .token.rule,
+.preview:where(
+    [data-preview-theme="light"]:not(:root),
+    [data-preview-theme="light"]:not(:root) *
+  )
+  .token.rule {
+  color: #a71d5d;
+}
+.preview:where(:root[data-preview-theme="light"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  .token.attr-value,
+.preview:where(
+    [data-preview-theme="light"]:not(:root),
+    [data-preview-theme="light"]:not(:root) *
+  )
+  .token.attr-value,
+.preview:where(:root[data-preview-theme="light"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  .token.regex,
+.preview:where(
+    [data-preview-theme="light"]:not(:root),
+    [data-preview-theme="light"]:not(:root) *
+  )
+  .token.regex,
+.preview:where(:root[data-preview-theme="light"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  .token.string,
+.preview:where(
+    [data-preview-theme="light"]:not(:root),
+    [data-preview-theme="light"]:not(:root) *
+  )
+  .token.string,
+.preview:where(:root[data-preview-theme="light"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  .token.url,
+.preview:where(
+    [data-preview-theme="light"]:not(:root),
+    [data-preview-theme="light"]:not(:root) *
+  )
+  .token.url {
+  color: #183691;
+}
+.preview:where(:root[data-preview-theme="light"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  .token.atrule,
+.preview:where(
+    [data-preview-theme="light"]:not(:root),
+    [data-preview-theme="light"]:not(:root) *
+  )
+  .token.atrule,
+.preview:where(:root[data-preview-theme="light"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  .token.boolean,
+.preview:where(
+    [data-preview-theme="light"]:not(:root),
+    [data-preview-theme="light"]:not(:root) *
+  )
+  .token.boolean,
+.preview:where(:root[data-preview-theme="light"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  .token.code,
+.preview:where(
+    [data-preview-theme="light"]:not(:root),
+    [data-preview-theme="light"]:not(:root) *
+  )
+  .token.code,
+.preview:where(:root[data-preview-theme="light"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  .token.command,
+.preview:where(
+    [data-preview-theme="light"]:not(:root),
+    [data-preview-theme="light"]:not(:root) *
+  )
+  .token.command,
+.preview:where(:root[data-preview-theme="light"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  .token.constant,
+.preview:where(
+    [data-preview-theme="light"]:not(:root),
+    [data-preview-theme="light"]:not(:root) *
+  )
+  .token.constant,
+.preview:where(:root[data-preview-theme="light"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  .token.entity,
+.preview:where(
+    [data-preview-theme="light"]:not(:root),
+    [data-preview-theme="light"]:not(:root) *
+  )
+  .token.entity,
+.preview:where(:root[data-preview-theme="light"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  .token.number,
+.preview:where(
+    [data-preview-theme="light"]:not(:root),
+    [data-preview-theme="light"]:not(:root) *
+  )
+  .token.number,
+.preview:where(:root[data-preview-theme="light"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  .token.property,
+.preview:where(
+    [data-preview-theme="light"]:not(:root),
+    [data-preview-theme="light"]:not(:root) *
+  )
+  .token.property,
+.preview:where(:root[data-preview-theme="light"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  .token.symbol,
+.preview:where(
+    [data-preview-theme="light"]:not(:root),
+    [data-preview-theme="light"]:not(:root) *
+  )
+  .token.symbol {
+  color: #0086b3;
+}
+.preview:where(:root[data-preview-theme="light"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  .token.prolog,
+.preview:where(
+    [data-preview-theme="light"]:not(:root),
+    [data-preview-theme="light"]:not(:root) *
+  )
+  .token.prolog,
+.preview:where(:root[data-preview-theme="light"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  .token.selector,
+.preview:where(
+    [data-preview-theme="light"]:not(:root),
+    [data-preview-theme="light"]:not(:root) *
+  )
+  .token.selector,
+.preview:where(:root[data-preview-theme="light"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  .token.tag,
+.preview:where(
+    [data-preview-theme="light"]:not(:root),
+    [data-preview-theme="light"]:not(:root) *
+  )
+  .token.tag {
+  color: #63a35c;
+}
+.preview:where(:root[data-preview-theme="light"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  .token.attr-name,
+.preview:where(
+    [data-preview-theme="light"]:not(:root),
+    [data-preview-theme="light"]:not(:root) *
+  )
+  .token.attr-name,
+.preview:where(:root[data-preview-theme="light"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  .token.class,
+.preview:where(
+    [data-preview-theme="light"]:not(:root),
+    [data-preview-theme="light"]:not(:root) *
+  )
+  .token.class,
+.preview:where(:root[data-preview-theme="light"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  .token.class-name,
+.preview:where(
+    [data-preview-theme="light"]:not(:root),
+    [data-preview-theme="light"]:not(:root) *
+  )
+  .token.class-name,
+.preview:where(:root[data-preview-theme="light"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  .token.function,
+.preview:where(
+    [data-preview-theme="light"]:not(:root),
+    [data-preview-theme="light"]:not(:root) *
+  )
+  .token.function,
+.preview:where(:root[data-preview-theme="light"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  .token.id,
+.preview:where(
+    [data-preview-theme="light"]:not(:root),
+    [data-preview-theme="light"]:not(:root) *
+  )
+  .token.id,
+.preview:where(:root[data-preview-theme="light"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  .token.namespace,
+.preview:where(
+    [data-preview-theme="light"]:not(:root),
+    [data-preview-theme="light"]:not(:root) *
+  )
+  .token.namespace,
+.preview:where(:root[data-preview-theme="light"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  .token.pseudo-class,
+.preview:where(
+    [data-preview-theme="light"]:not(:root),
+    [data-preview-theme="light"]:not(:root) *
+  )
+  .token.pseudo-class,
+.preview:where(:root[data-preview-theme="light"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  .token.pseudo-element,
+.preview:where(
+    [data-preview-theme="light"]:not(:root),
+    [data-preview-theme="light"]:not(:root) *
+  )
+  .token.pseudo-element,
+.preview:where(:root[data-preview-theme="light"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  .token.url-reference
+  .token.variable,
+.preview:where(
+    [data-preview-theme="light"]:not(:root),
+    [data-preview-theme="light"]:not(:root) *
+  )
+  .token.url-reference
+  .token.variable {
+  color: #795da3;
+}
+.preview:where(:root[data-preview-theme="light"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  .token.entity,
+.preview:where(
+    [data-preview-theme="light"]:not(:root),
+    [data-preview-theme="light"]:not(:root) *
+  )
+  .token.entity {
+  cursor: help;
+}
+.preview:where(:root[data-preview-theme="light"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  .token.title,
+.preview:where(
+    [data-preview-theme="light"]:not(:root),
+    [data-preview-theme="light"]:not(:root) *
+  )
+  .token.title,
+.preview:where(:root[data-preview-theme="light"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  .token.title
+  .token.punctuation,
+.preview:where(
+    [data-preview-theme="light"]:not(:root),
+    [data-preview-theme="light"]:not(:root) *
+  )
+  .token.title
+  .token.punctuation {
+  font-weight: 700;
+  color: #1d3e81;
+}
+.preview:where(:root[data-preview-theme="light"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  .token.list,
+.preview:where(
+    [data-preview-theme="light"]:not(:root),
+    [data-preview-theme="light"]:not(:root) *
+  )
+  .token.list {
+  color: #ed6a43;
+}
+.preview:where(:root[data-preview-theme="light"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  .token.inserted,
+.preview:where(
+    [data-preview-theme="light"]:not(:root),
+    [data-preview-theme="light"]:not(:root) *
+  )
+  .token.inserted {
+  background-color: #eaffea;
+  color: #55a532;
+}
+.preview:where(:root[data-preview-theme="light"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  .token.deleted,
+.preview:where(
+    [data-preview-theme="light"]:not(:root),
+    [data-preview-theme="light"]:not(:root) *
+  )
+  .token.deleted {
+  background-color: #ffecec;
+  color: #bd2c00;
+}
+.preview:where(:root[data-preview-theme="light"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  .token.bold,
+.preview:where(
+    [data-preview-theme="light"]:not(:root),
+    [data-preview-theme="light"]:not(:root) *
+  )
+  .token.bold {
+  font-weight: 700;
+}
+.preview:where(:root[data-preview-theme="light"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  .token.italic,
+.preview:where(
+    [data-preview-theme="light"]:not(:root),
+    [data-preview-theme="light"]:not(:root) *
+  )
+  .token.italic {
+  font-style: italic;
+}
+.preview:where(:root[data-preview-theme="light"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  .language-json
+  .token.property,
+.preview:where(
+    [data-preview-theme="light"]:not(:root),
+    [data-preview-theme="light"]:not(:root) *
+  )
+  .language-json
+  .token.property {
+  color: #183691;
+}
+.preview:where(:root[data-preview-theme="light"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  .language-markup
+  .token.tag
+  .token.punctuation,
+.preview:where(
+    [data-preview-theme="light"]:not(:root),
+    [data-preview-theme="light"]:not(:root) *
+  )
+  .language-markup
+  .token.tag
+  .token.punctuation {
+  color: #333;
+}
+.preview:where(:root[data-preview-theme="light"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  .language-css
+  .token.function,
+.preview:where(
+    [data-preview-theme="light"]:not(:root),
+    [data-preview-theme="light"]:not(:root) *
+  )
+  .language-css
+  .token.function,
+.preview:where(:root[data-preview-theme="light"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  code.language-css,
+.preview:where(
+    [data-preview-theme="light"]:not(:root),
+    [data-preview-theme="light"]:not(:root) *
+  )
+  code.language-css {
+  color: #0086b3;
+}
+.preview:where(:root[data-preview-theme="light"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  .language-yaml
+  .token.atrule,
+.preview:where(
+    [data-preview-theme="light"]:not(:root),
+    [data-preview-theme="light"]:not(:root) *
+  )
+  .language-yaml
+  .token.atrule {
+  color: #63a35c;
+}
+.preview:where(:root[data-preview-theme="light"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  code.language-yaml,
+.preview:where(
+    [data-preview-theme="light"]:not(:root),
+    [data-preview-theme="light"]:not(:root) *
+  )
+  code.language-yaml {
+  color: #183691;
+}
+.preview:where(:root[data-preview-theme="light"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  .language-ruby
+  .token.function,
+.preview:where(
+    [data-preview-theme="light"]:not(:root),
+    [data-preview-theme="light"]:not(:root) *
+  )
+  .language-ruby
+  .token.function {
+  color: #333;
+}
+.preview:where(:root[data-preview-theme="light"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  .language-markdown
+  .token.url,
+.preview:where(
+    [data-preview-theme="light"]:not(:root),
+    [data-preview-theme="light"]:not(:root) *
+  )
+  .language-markdown
+  .token.url {
+  color: #795da3;
+}
+.preview:where(:root[data-preview-theme="light"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  .language-makefile
+  .token.symbol,
+.preview:where(
+    [data-preview-theme="light"]:not(:root),
+    [data-preview-theme="light"]:not(:root) *
+  )
+  .language-makefile
+  .token.symbol {
+  color: #795da3;
+}
+.preview:where(:root[data-preview-theme="light"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  .language-makefile
+  .token.variable,
+.preview:where(
+    [data-preview-theme="light"]:not(:root),
+    [data-preview-theme="light"]:not(:root) *
+  )
+  .language-makefile
+  .token.variable {
+  color: #183691;
+}
+.preview:where(:root[data-preview-theme="light"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  .language-makefile
+  .token.builtin,
+.preview:where(
+    [data-preview-theme="light"]:not(:root),
+    [data-preview-theme="light"]:not(:root) *
+  )
+  .language-makefile
+  .token.builtin {
+  color: #0086b3;
+}
+.preview:where(:root[data-preview-theme="light"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  .language-bash
+  .token.keyword,
+.preview:where(
+    [data-preview-theme="light"]:not(:root),
+    [data-preview-theme="light"]:not(:root) *
+  )
+  .language-bash
+  .token.keyword {
+  color: #0086b3;
+}
+.preview:where(:root[data-preview-theme="light"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  pre[data-line],
+.preview:where(
+    [data-preview-theme="light"]:not(:root),
+    [data-preview-theme="light"]:not(:root) *
+  )
+  pre[data-line] {
+  position: relative;
+  padding: 1em 0 1em 3em;
+}
+.preview:where(:root[data-preview-theme="light"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  pre[data-line]
+  .line-highlight-wrapper,
+.preview:where(
+    [data-preview-theme="light"]:not(:root),
+    [data-preview-theme="light"]:not(:root) *
+  )
+  pre[data-line]
+  .line-highlight-wrapper {
+  position: absolute;
+  top: 0;
+  left: 0;
+  background-color: transparent;
+  display: block;
+  width: 100%;
+}
+.preview:where(:root[data-preview-theme="light"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  pre[data-line]
+  .line-highlight,
+.preview:where(
+    [data-preview-theme="light"]:not(:root),
+    [data-preview-theme="light"]:not(:root) *
+  )
+  pre[data-line]
+  .line-highlight {
+  position: absolute;
+  left: 0;
+  right: 0;
+  padding: inherit 0;
+  margin-top: 1em;
+  background: rgba(153, 122, 102, 0.08);
+  background: linear-gradient(
+    to right,
+    rgba(153, 122, 102, 0.1) 70%,
+    rgba(153, 122, 102, 0)
+  );
+  pointer-events: none;
+  line-height: inherit;
+  white-space: pre;
+}
+.preview:where(:root[data-preview-theme="light"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  pre[data-line]
+  .line-highlight:before,
+.preview:where(
+    [data-preview-theme="light"]:not(:root),
+    [data-preview-theme="light"]:not(:root) *
+  )
+  pre[data-line]
+  .line-highlight:before,
+.preview:where(:root[data-preview-theme="light"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  pre[data-line]
+  .line-highlight[data-end]:after,
+.preview:where(
+    [data-preview-theme="light"]:not(:root),
+    [data-preview-theme="light"]:not(:root) *
+  )
+  pre[data-line]
+  .line-highlight[data-end]:after {
+  content: attr(data-start);
+  position: absolute;
+  top: 0.4em;
+  left: 0.6em;
+  min-width: 1em;
+  padding: 0 0.5em;
+  background-color: rgba(153, 122, 102, 0.4);
+  color: #f5f2f0;
+  font: bold 65%/1.5 sans-serif;
+  text-align: center;
+  vertical-align: 0.3em;
+  border-radius: 999px;
+  text-shadow: none;
+  box-shadow: 0 1px #fff;
+}
+.preview:where(:root[data-preview-theme="light"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  pre[data-line]
+  .line-highlight[data-end]:after,
+.preview:where(
+    [data-preview-theme="light"]:not(:root),
+    [data-preview-theme="light"]:not(:root) *
+  )
+  pre[data-line]
+  .line-highlight[data-end]:after {
+  content: attr(data-end);
+  top: auto;
+  bottom: 0.4em;
+}
+
+/* dark: echomd's monokai */
+.preview:where(:root[data-preview-theme="dark"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  pre,
+.preview:where(
+    [data-preview-theme="dark"]:not(:root),
+    [data-preview-theme="dark"]:not(:root) *
+  )
+  pre {
+  font-family: Menlo, Monaco, Consolas, "Courier New", monospace;
+  direction: ltr;
+  text-align: left;
+  white-space: pre;
+  word-spacing: normal;
+  word-break: normal;
+  word-wrap: normal;
+  padding: 1em;
+  margin: 0.5em 0;
+  overflow: auto;
+  line-height: 1.5;
+  tab-size: 4;
+  hyphens: none;
+  color: #f8f8f2;
+  background-color: #191919 !important;
+  border: #515151;
+  border-radius: 3px;
+}
+.preview:where(:root[data-preview-theme="dark"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  pre[class*="language-"],
+.preview:where(
+    [data-preview-theme="dark"]:not(:root),
+    [data-preview-theme="dark"]:not(:root) *
+  )
+  pre[class*="language-"] {
+  padding: 1em;
+}
+.preview:where(:root[data-preview-theme="dark"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  code[class*="language-"]
+  .token.cdata,
+.preview:where(
+    [data-preview-theme="dark"]:not(:root),
+    [data-preview-theme="dark"]:not(:root) *
+  )
+  code[class*="language-"]
+  .token.cdata,
+.preview:where(:root[data-preview-theme="dark"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  code[class*="language-"]
+  .token.comment,
+.preview:where(
+    [data-preview-theme="dark"]:not(:root),
+    [data-preview-theme="dark"]:not(:root) *
+  )
+  code[class*="language-"]
+  .token.comment,
+.preview:where(:root[data-preview-theme="dark"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  code[class*="language-"]
+  .token.doctype,
+.preview:where(
+    [data-preview-theme="dark"]:not(:root),
+    [data-preview-theme="dark"]:not(:root) *
+  )
+  code[class*="language-"]
+  .token.doctype,
+.preview:where(:root[data-preview-theme="dark"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  code[class*="language-"]
+  .token.prolog,
+.preview:where(
+    [data-preview-theme="dark"]:not(:root),
+    [data-preview-theme="dark"]:not(:root) *
+  )
+  code[class*="language-"]
+  .token.prolog,
+.preview:where(:root[data-preview-theme="dark"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  pre[class*="language-"]
+  .token.cdata,
+.preview:where(
+    [data-preview-theme="dark"]:not(:root),
+    [data-preview-theme="dark"]:not(:root) *
+  )
+  pre[class*="language-"]
+  .token.cdata,
+.preview:where(:root[data-preview-theme="dark"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  pre[class*="language-"]
+  .token.comment,
+.preview:where(
+    [data-preview-theme="dark"]:not(:root),
+    [data-preview-theme="dark"]:not(:root) *
+  )
+  pre[class*="language-"]
+  .token.comment,
+.preview:where(:root[data-preview-theme="dark"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  pre[class*="language-"]
+  .token.doctype,
+.preview:where(
+    [data-preview-theme="dark"]:not(:root),
+    [data-preview-theme="dark"]:not(:root) *
+  )
+  pre[class*="language-"]
+  .token.doctype,
+.preview:where(:root[data-preview-theme="dark"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  pre[class*="language-"]
+  .token.prolog,
+.preview:where(
+    [data-preview-theme="dark"]:not(:root),
+    [data-preview-theme="dark"]:not(:root) *
+  )
+  pre[class*="language-"]
+  .token.prolog {
+  color: #75715e;
+}
+.preview:where(:root[data-preview-theme="dark"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  code[class*="language-"]
+  .token.punctuation,
+.preview:where(
+    [data-preview-theme="dark"]:not(:root),
+    [data-preview-theme="dark"]:not(:root) *
+  )
+  code[class*="language-"]
+  .token.punctuation,
+.preview:where(:root[data-preview-theme="dark"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  pre[class*="language-"]
+  .token.punctuation,
+.preview:where(
+    [data-preview-theme="dark"]:not(:root),
+    [data-preview-theme="dark"]:not(:root) *
+  )
+  pre[class*="language-"]
+  .token.punctuation {
+  color: inherit;
+}
+.preview:where(:root[data-preview-theme="dark"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  code[class*="language-"]
+  .namespace,
+.preview:where(
+    [data-preview-theme="dark"]:not(:root),
+    [data-preview-theme="dark"]:not(:root) *
+  )
+  code[class*="language-"]
+  .namespace,
+.preview:where(:root[data-preview-theme="dark"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  pre[class*="language-"]
+  .namespace,
+.preview:where(
+    [data-preview-theme="dark"]:not(:root),
+    [data-preview-theme="dark"]:not(:root) *
+  )
+  pre[class*="language-"]
+  .namespace {
+  opacity: 0.7;
+}
+.preview:where(:root[data-preview-theme="dark"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  code[class*="language-"]
+  .token.boolean,
+.preview:where(
+    [data-preview-theme="dark"]:not(:root),
+    [data-preview-theme="dark"]:not(:root) *
+  )
+  code[class*="language-"]
+  .token.boolean,
+.preview:where(:root[data-preview-theme="dark"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  code[class*="language-"]
+  .token.constant,
+.preview:where(
+    [data-preview-theme="dark"]:not(:root),
+    [data-preview-theme="dark"]:not(:root) *
+  )
+  code[class*="language-"]
+  .token.constant,
+.preview:where(:root[data-preview-theme="dark"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  code[class*="language-"]
+  .token.deleted,
+.preview:where(
+    [data-preview-theme="dark"]:not(:root),
+    [data-preview-theme="dark"]:not(:root) *
+  )
+  code[class*="language-"]
+  .token.deleted,
+.preview:where(:root[data-preview-theme="dark"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  code[class*="language-"]
+  .token.function-name,
+.preview:where(
+    [data-preview-theme="dark"]:not(:root),
+    [data-preview-theme="dark"]:not(:root) *
+  )
+  code[class*="language-"]
+  .token.function-name,
+.preview:where(:root[data-preview-theme="dark"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  code[class*="language-"]
+  .token.number,
+.preview:where(
+    [data-preview-theme="dark"]:not(:root),
+    [data-preview-theme="dark"]:not(:root) *
+  )
+  code[class*="language-"]
+  .token.number,
+.preview:where(:root[data-preview-theme="dark"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  code[class*="language-"]
+  .token.property,
+.preview:where(
+    [data-preview-theme="dark"]:not(:root),
+    [data-preview-theme="dark"]:not(:root) *
+  )
+  code[class*="language-"]
+  .token.property,
+.preview:where(:root[data-preview-theme="dark"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  code[class*="language-"]
+  .token.symbol,
+.preview:where(
+    [data-preview-theme="dark"]:not(:root),
+    [data-preview-theme="dark"]:not(:root) *
+  )
+  code[class*="language-"]
+  .token.symbol,
+.preview:where(:root[data-preview-theme="dark"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  code[class*="language-"]
+  .token.tag,
+.preview:where(
+    [data-preview-theme="dark"]:not(:root),
+    [data-preview-theme="dark"]:not(:root) *
+  )
+  code[class*="language-"]
+  .token.tag,
+.preview:where(:root[data-preview-theme="dark"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  pre[class*="language-"]
+  .token.boolean,
+.preview:where(
+    [data-preview-theme="dark"]:not(:root),
+    [data-preview-theme="dark"]:not(:root) *
+  )
+  pre[class*="language-"]
+  .token.boolean,
+.preview:where(:root[data-preview-theme="dark"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  pre[class*="language-"]
+  .token.constant,
+.preview:where(
+    [data-preview-theme="dark"]:not(:root),
+    [data-preview-theme="dark"]:not(:root) *
+  )
+  pre[class*="language-"]
+  .token.constant,
+.preview:where(:root[data-preview-theme="dark"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  pre[class*="language-"]
+  .token.deleted,
+.preview:where(
+    [data-preview-theme="dark"]:not(:root),
+    [data-preview-theme="dark"]:not(:root) *
+  )
+  pre[class*="language-"]
+  .token.deleted,
+.preview:where(:root[data-preview-theme="dark"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  pre[class*="language-"]
+  .token.function-name,
+.preview:where(
+    [data-preview-theme="dark"]:not(:root),
+    [data-preview-theme="dark"]:not(:root) *
+  )
+  pre[class*="language-"]
+  .token.function-name,
+.preview:where(:root[data-preview-theme="dark"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  pre[class*="language-"]
+  .token.number,
+.preview:where(
+    [data-preview-theme="dark"]:not(:root),
+    [data-preview-theme="dark"]:not(:root) *
+  )
+  pre[class*="language-"]
+  .token.number,
+.preview:where(:root[data-preview-theme="dark"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  pre[class*="language-"]
+  .token.property,
+.preview:where(
+    [data-preview-theme="dark"]:not(:root),
+    [data-preview-theme="dark"]:not(:root) *
+  )
+  pre[class*="language-"]
+  .token.property,
+.preview:where(:root[data-preview-theme="dark"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  pre[class*="language-"]
+  .token.symbol,
+.preview:where(
+    [data-preview-theme="dark"]:not(:root),
+    [data-preview-theme="dark"]:not(:root) *
+  )
+  pre[class*="language-"]
+  .token.symbol,
+.preview:where(:root[data-preview-theme="dark"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  pre[class*="language-"]
+  .token.tag,
+.preview:where(
+    [data-preview-theme="dark"]:not(:root),
+    [data-preview-theme="dark"]:not(:root) *
+  )
+  pre[class*="language-"]
+  .token.tag {
+  color: #ae81ff;
+}
+.preview:where(:root[data-preview-theme="dark"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  code[class*="language-"]
+  .token.attr-name,
+.preview:where(
+    [data-preview-theme="dark"]:not(:root),
+    [data-preview-theme="dark"]:not(:root) *
+  )
+  code[class*="language-"]
+  .token.attr-name,
+.preview:where(:root[data-preview-theme="dark"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  code[class*="language-"]
+  .token.builtin,
+.preview:where(
+    [data-preview-theme="dark"]:not(:root),
+    [data-preview-theme="dark"]:not(:root) *
+  )
+  code[class*="language-"]
+  .token.builtin,
+.preview:where(:root[data-preview-theme="dark"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  code[class*="language-"]
+  .token.char,
+.preview:where(
+    [data-preview-theme="dark"]:not(:root),
+    [data-preview-theme="dark"]:not(:root) *
+  )
+  code[class*="language-"]
+  .token.char,
+.preview:where(:root[data-preview-theme="dark"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  code[class*="language-"]
+  .token.inserted,
+.preview:where(
+    [data-preview-theme="dark"]:not(:root),
+    [data-preview-theme="dark"]:not(:root) *
+  )
+  code[class*="language-"]
+  .token.inserted,
+.preview:where(:root[data-preview-theme="dark"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  code[class*="language-"]
+  .token.selector,
+.preview:where(
+    [data-preview-theme="dark"]:not(:root),
+    [data-preview-theme="dark"]:not(:root) *
+  )
+  code[class*="language-"]
+  .token.selector,
+.preview:where(:root[data-preview-theme="dark"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  code[class*="language-"]
+  .token.string,
+.preview:where(
+    [data-preview-theme="dark"]:not(:root),
+    [data-preview-theme="dark"]:not(:root) *
+  )
+  code[class*="language-"]
+  .token.string,
+.preview:where(:root[data-preview-theme="dark"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  pre[class*="language-"]
+  .token.attr-name,
+.preview:where(
+    [data-preview-theme="dark"]:not(:root),
+    [data-preview-theme="dark"]:not(:root) *
+  )
+  pre[class*="language-"]
+  .token.attr-name,
+.preview:where(:root[data-preview-theme="dark"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  pre[class*="language-"]
+  .token.builtin,
+.preview:where(
+    [data-preview-theme="dark"]:not(:root),
+    [data-preview-theme="dark"]:not(:root) *
+  )
+  pre[class*="language-"]
+  .token.builtin,
+.preview:where(:root[data-preview-theme="dark"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  pre[class*="language-"]
+  .token.char,
+.preview:where(
+    [data-preview-theme="dark"]:not(:root),
+    [data-preview-theme="dark"]:not(:root) *
+  )
+  pre[class*="language-"]
+  .token.char,
+.preview:where(:root[data-preview-theme="dark"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  pre[class*="language-"]
+  .token.inserted,
+.preview:where(
+    [data-preview-theme="dark"]:not(:root),
+    [data-preview-theme="dark"]:not(:root) *
+  )
+  pre[class*="language-"]
+  .token.inserted,
+.preview:where(:root[data-preview-theme="dark"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  pre[class*="language-"]
+  .token.selector,
+.preview:where(
+    [data-preview-theme="dark"]:not(:root),
+    [data-preview-theme="dark"]:not(:root) *
+  )
+  pre[class*="language-"]
+  .token.selector,
+.preview:where(:root[data-preview-theme="dark"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  pre[class*="language-"]
+  .token.string,
+.preview:where(
+    [data-preview-theme="dark"]:not(:root),
+    [data-preview-theme="dark"]:not(:root) *
+  )
+  pre[class*="language-"]
+  .token.string {
+  color: #e6db74;
+}
+.preview:where(:root[data-preview-theme="dark"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  code[class*="language-"]
+  .token.entity,
+.preview:where(
+    [data-preview-theme="dark"]:not(:root),
+    [data-preview-theme="dark"]:not(:root) *
+  )
+  code[class*="language-"]
+  .token.entity,
+.preview:where(:root[data-preview-theme="dark"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  pre[class*="language-"]
+  .token.entity,
+.preview:where(
+    [data-preview-theme="dark"]:not(:root),
+    [data-preview-theme="dark"]:not(:root) *
+  )
+  pre[class*="language-"]
+  .token.entity {
+  color: #ae81ff;
+}
+.preview:where(:root[data-preview-theme="dark"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  code[class*="language-"]
+  .token.url,
+.preview:where(
+    [data-preview-theme="dark"]:not(:root),
+    [data-preview-theme="dark"]:not(:root) *
+  )
+  code[class*="language-"]
+  .token.url,
+.preview:where(:root[data-preview-theme="dark"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  pre[class*="language-"]
+  .token.url,
+.preview:where(
+    [data-preview-theme="dark"]:not(:root),
+    [data-preview-theme="dark"]:not(:root) *
+  )
+  pre[class*="language-"]
+  .token.url {
+  color: #ccc;
+}
+.preview:where(:root[data-preview-theme="dark"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  code[class*="language-"]
+  .token.operator,
+.preview:where(
+    [data-preview-theme="dark"]:not(:root),
+    [data-preview-theme="dark"]:not(:root) *
+  )
+  code[class*="language-"]
+  .token.operator,
+.preview:where(:root[data-preview-theme="dark"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  pre[class*="language-"]
+  .token.operator,
+.preview:where(
+    [data-preview-theme="dark"]:not(:root),
+    [data-preview-theme="dark"]:not(:root) *
+  )
+  pre[class*="language-"]
+  .token.operator {
+  color: #f92672;
+}
+.preview:where(:root[data-preview-theme="dark"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  code[class*="language-"]
+  .token.atrule,
+.preview:where(
+    [data-preview-theme="dark"]:not(:root),
+    [data-preview-theme="dark"]:not(:root) *
+  )
+  code[class*="language-"]
+  .token.atrule,
+.preview:where(:root[data-preview-theme="dark"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  code[class*="language-"]
+  .token.attr-value,
+.preview:where(
+    [data-preview-theme="dark"]:not(:root),
+    [data-preview-theme="dark"]:not(:root) *
+  )
+  code[class*="language-"]
+  .token.attr-value,
+.preview:where(:root[data-preview-theme="dark"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  code[class*="language-"]
+  .token.keyword,
+.preview:where(
+    [data-preview-theme="dark"]:not(:root),
+    [data-preview-theme="dark"]:not(:root) *
+  )
+  code[class*="language-"]
+  .token.keyword,
+.preview:where(:root[data-preview-theme="dark"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  pre[class*="language-"]
+  .token.atrule,
+.preview:where(
+    [data-preview-theme="dark"]:not(:root),
+    [data-preview-theme="dark"]:not(:root) *
+  )
+  pre[class*="language-"]
+  .token.atrule,
+.preview:where(:root[data-preview-theme="dark"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  pre[class*="language-"]
+  .token.attr-value,
+.preview:where(
+    [data-preview-theme="dark"]:not(:root),
+    [data-preview-theme="dark"]:not(:root) *
+  )
+  pre[class*="language-"]
+  .token.attr-value,
+.preview:where(:root[data-preview-theme="dark"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  pre[class*="language-"]
+  .token.keyword,
+.preview:where(
+    [data-preview-theme="dark"]:not(:root),
+    [data-preview-theme="dark"]:not(:root) *
+  )
+  pre[class*="language-"]
+  .token.keyword {
+  color: #66d9ef;
+}
+.preview:where(:root[data-preview-theme="dark"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  code[class*="language-"]
+  .token.function,
+.preview:where(
+    [data-preview-theme="dark"]:not(:root),
+    [data-preview-theme="dark"]:not(:root) *
+  )
+  code[class*="language-"]
+  .token.function,
+.preview:where(:root[data-preview-theme="dark"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  pre[class*="language-"]
+  .token.function,
+.preview:where(
+    [data-preview-theme="dark"]:not(:root),
+    [data-preview-theme="dark"]:not(:root) *
+  )
+  pre[class*="language-"]
+  .token.function {
+  color: #a6e22e;
+}
+.preview:where(:root[data-preview-theme="dark"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  code[class*="language-"]
+  .token.class-name,
+.preview:where(
+    [data-preview-theme="dark"]:not(:root),
+    [data-preview-theme="dark"]:not(:root) *
+  )
+  code[class*="language-"]
+  .token.class-name,
+.preview:where(:root[data-preview-theme="dark"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  pre[class*="language-"]
+  .token.class-name,
+.preview:where(
+    [data-preview-theme="dark"]:not(:root),
+    [data-preview-theme="dark"]:not(:root) *
+  )
+  pre[class*="language-"]
+  .token.class-name {
+  color: #a6e22e;
+}
+.preview:where(:root[data-preview-theme="dark"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  code[class*="language-"]
+  .token.regex,
+.preview:where(
+    [data-preview-theme="dark"]:not(:root),
+    [data-preview-theme="dark"]:not(:root) *
+  )
+  code[class*="language-"]
+  .token.regex,
+.preview:where(:root[data-preview-theme="dark"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  pre[class*="language-"]
+  .token.regex,
+.preview:where(
+    [data-preview-theme="dark"]:not(:root),
+    [data-preview-theme="dark"]:not(:root) *
+  )
+  pre[class*="language-"]
+  .token.regex {
+  color: #ae81ff;
+}
+.preview:where(:root[data-preview-theme="dark"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  code[class*="language-"]
+  .token.important,
+.preview:where(
+    [data-preview-theme="dark"]:not(:root),
+    [data-preview-theme="dark"]:not(:root) *
+  )
+  code[class*="language-"]
+  .token.important,
+.preview:where(:root[data-preview-theme="dark"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  code[class*="language-"]
+  .token.variable,
+.preview:where(
+    [data-preview-theme="dark"]:not(:root),
+    [data-preview-theme="dark"]:not(:root) *
+  )
+  code[class*="language-"]
+  .token.variable,
+.preview:where(:root[data-preview-theme="dark"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  pre[class*="language-"]
+  .token.important,
+.preview:where(
+    [data-preview-theme="dark"]:not(:root),
+    [data-preview-theme="dark"]:not(:root) *
+  )
+  pre[class*="language-"]
+  .token.important,
+.preview:where(:root[data-preview-theme="dark"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  pre[class*="language-"]
+  .token.variable,
+.preview:where(
+    [data-preview-theme="dark"]:not(:root),
+    [data-preview-theme="dark"]:not(:root) *
+  )
+  pre[class*="language-"]
+  .token.variable {
+  color: #a6e22e;
+}
+.preview:where(:root[data-preview-theme="dark"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  code[class*="language-"]
+  .token.bold,
+.preview:where(
+    [data-preview-theme="dark"]:not(:root),
+    [data-preview-theme="dark"]:not(:root) *
+  )
+  code[class*="language-"]
+  .token.bold,
+.preview:where(:root[data-preview-theme="dark"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  code[class*="language-"]
+  .token.important,
+.preview:where(
+    [data-preview-theme="dark"]:not(:root),
+    [data-preview-theme="dark"]:not(:root) *
+  )
+  code[class*="language-"]
+  .token.important,
+.preview:where(:root[data-preview-theme="dark"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  pre[class*="language-"]
+  .token.bold,
+.preview:where(
+    [data-preview-theme="dark"]:not(:root),
+    [data-preview-theme="dark"]:not(:root) *
+  )
+  pre[class*="language-"]
+  .token.bold,
+.preview:where(:root[data-preview-theme="dark"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  pre[class*="language-"]
+  .token.important,
+.preview:where(
+    [data-preview-theme="dark"]:not(:root),
+    [data-preview-theme="dark"]:not(:root) *
+  )
+  pre[class*="language-"]
+  .token.important {
+  font-weight: 700;
+}
+.preview:where(:root[data-preview-theme="dark"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  code[class*="language-"]
+  .token.italic,
+.preview:where(
+    [data-preview-theme="dark"]:not(:root),
+    [data-preview-theme="dark"]:not(:root) *
+  )
+  code[class*="language-"]
+  .token.italic,
+.preview:where(:root[data-preview-theme="dark"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  pre[class*="language-"]
+  .token.italic,
+.preview:where(
+    [data-preview-theme="dark"]:not(:root),
+    [data-preview-theme="dark"]:not(:root) *
+  )
+  pre[class*="language-"]
+  .token.italic {
+  font-style: italic;
+}
+.preview:where(:root[data-preview-theme="dark"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  code[class*="language-"]
+  .token.entity,
+.preview:where(
+    [data-preview-theme="dark"]:not(:root),
+    [data-preview-theme="dark"]:not(:root) *
+  )
+  code[class*="language-"]
+  .token.entity,
+.preview:where(:root[data-preview-theme="dark"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  pre[class*="language-"]
+  .token.entity,
+.preview:where(
+    [data-preview-theme="dark"]:not(:root),
+    [data-preview-theme="dark"]:not(:root) *
+  )
+  pre[class*="language-"]
+  .token.entity {
+  cursor: help;
+}
+.preview:where(:root[data-preview-theme="dark"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  pre[data-line],
+.preview:where(
+    [data-preview-theme="dark"]:not(:root),
+    [data-preview-theme="dark"]:not(:root) *
+  )
+  pre[data-line] {
+  position: relative;
+  padding: 1em 0 1em 3em;
+}
+.preview:where(:root[data-preview-theme="dark"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  pre[data-line]
+  .line-highlight-wrapper,
+.preview:where(
+    [data-preview-theme="dark"]:not(:root),
+    [data-preview-theme="dark"]:not(:root) *
+  )
+  pre[data-line]
+  .line-highlight-wrapper {
+  position: absolute;
+  top: 0;
+  left: 0;
+  background-color: transparent;
+  display: block;
+  width: 100%;
+}
+.preview:where(:root[data-preview-theme="dark"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  pre[data-line]
+  .line-highlight,
+.preview:where(
+    [data-preview-theme="dark"]:not(:root),
+    [data-preview-theme="dark"]:not(:root) *
+  )
+  pre[data-line]
+  .line-highlight {
+  position: absolute;
+  left: 0;
+  right: 0;
+  padding: inherit 0;
+  margin-top: 1em;
+  background: rgba(153, 122, 102, 0.08);
+  background: linear-gradient(
+    to right,
+    rgba(153, 122, 102, 0.1) 70%,
+    rgba(153, 122, 102, 0)
+  );
+  pointer-events: none;
+  line-height: inherit;
+  white-space: pre;
+}
+.preview:where(:root[data-preview-theme="dark"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  pre[data-line]
+  .line-highlight:before,
+.preview:where(
+    [data-preview-theme="dark"]:not(:root),
+    [data-preview-theme="dark"]:not(:root) *
+  )
+  pre[data-line]
+  .line-highlight:before,
+.preview:where(:root[data-preview-theme="dark"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  pre[data-line]
+  .line-highlight[data-end]:after,
+.preview:where(
+    [data-preview-theme="dark"]:not(:root),
+    [data-preview-theme="dark"]:not(:root) *
+  )
+  pre[data-line]
+  .line-highlight[data-end]:after {
+  content: attr(data-start);
+  position: absolute;
+  top: 0.4em;
+  left: 0.6em;
+  min-width: 1em;
+  padding: 0 0.5em;
+  background-color: rgba(153, 122, 102, 0.4);
+  color: #f5f2f0;
+  font: bold 65%/1.5 sans-serif;
+  text-align: center;
+  vertical-align: 0.3em;
+  border-radius: 999px;
+  text-shadow: none;
+  box-shadow: 0 1px #fff;
+}
+.preview:where(:root[data-preview-theme="dark"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  pre[data-line]
+  .line-highlight[data-end]:after,
+.preview:where(
+    [data-preview-theme="dark"]:not(:root),
+    [data-preview-theme="dark"]:not(:root) *
+  )
+  pre[data-line]
+  .line-highlight[data-end]:after {
+  content: attr(data-end);
+  top: auto;
+  bottom: 0.4em;
+}
+
+/* one-dark: echomd's one-dark */
+.preview:where(:root[data-preview-theme="one-dark"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  pre,
+.preview:where(
+    [data-preview-theme="one-dark"]:not(:root),
+    [data-preview-theme="one-dark"]:not(:root) *
+  )
+  pre {
+  font-family: Menlo, Monaco, Consolas, "Courier New", monospace;
+  direction: ltr;
+  text-align: left;
+  white-space: pre;
+  word-spacing: normal;
+  word-break: normal;
+  padding: 1em;
+  margin: 0.5em 0;
+  overflow: auto;
+  line-height: 1.5;
+  tab-size: 4;
+  hyphens: none;
+  color: #abb2bf;
+  background-color: #1b1d23 !important;
+  border: #4b5362;
+  border-radius: 3px;
+}
+.preview:where(:root[data-preview-theme="one-dark"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  pre[class*="language-"],
+.preview:where(
+    [data-preview-theme="one-dark"]:not(:root),
+    [data-preview-theme="one-dark"]:not(:root) *
+  )
+  pre[class*="language-"] {
+  padding: 1em;
+}
+.preview:where(:root[data-preview-theme="one-dark"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  code[class*="language-"]
+  .token.cdata,
+.preview:where(
+    [data-preview-theme="one-dark"]:not(:root),
+    [data-preview-theme="one-dark"]:not(:root) *
+  )
+  code[class*="language-"]
+  .token.cdata,
+.preview:where(:root[data-preview-theme="one-dark"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  code[class*="language-"]
+  .token.comment,
+.preview:where(
+    [data-preview-theme="one-dark"]:not(:root),
+    [data-preview-theme="one-dark"]:not(:root) *
+  )
+  code[class*="language-"]
+  .token.comment,
+.preview:where(:root[data-preview-theme="one-dark"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  code[class*="language-"]
+  .token.doctype,
+.preview:where(
+    [data-preview-theme="one-dark"]:not(:root),
+    [data-preview-theme="one-dark"]:not(:root) *
+  )
+  code[class*="language-"]
+  .token.doctype,
+.preview:where(:root[data-preview-theme="one-dark"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  code[class*="language-"]
+  .token.prolog,
+.preview:where(
+    [data-preview-theme="one-dark"]:not(:root),
+    [data-preview-theme="one-dark"]:not(:root) *
+  )
+  code[class*="language-"]
+  .token.prolog,
+.preview:where(:root[data-preview-theme="one-dark"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  pre[class*="language-"]
+  .token.cdata,
+.preview:where(
+    [data-preview-theme="one-dark"]:not(:root),
+    [data-preview-theme="one-dark"]:not(:root) *
+  )
+  pre[class*="language-"]
+  .token.cdata,
+.preview:where(:root[data-preview-theme="one-dark"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  pre[class*="language-"]
+  .token.comment,
+.preview:where(
+    [data-preview-theme="one-dark"]:not(:root),
+    [data-preview-theme="one-dark"]:not(:root) *
+  )
+  pre[class*="language-"]
+  .token.comment,
+.preview:where(:root[data-preview-theme="one-dark"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  pre[class*="language-"]
+  .token.doctype,
+.preview:where(
+    [data-preview-theme="one-dark"]:not(:root),
+    [data-preview-theme="one-dark"]:not(:root) *
+  )
+  pre[class*="language-"]
+  .token.doctype,
+.preview:where(:root[data-preview-theme="one-dark"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  pre[class*="language-"]
+  .token.prolog,
+.preview:where(
+    [data-preview-theme="one-dark"]:not(:root),
+    [data-preview-theme="one-dark"]:not(:root) *
+  )
+  pre[class*="language-"]
+  .token.prolog {
+  color: #5c6370;
+}
+.preview:where(:root[data-preview-theme="one-dark"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  code[class*="language-"]
+  .namespace,
+.preview:where(
+    [data-preview-theme="one-dark"]:not(:root),
+    [data-preview-theme="one-dark"]:not(:root) *
+  )
+  code[class*="language-"]
+  .namespace,
+.preview:where(:root[data-preview-theme="one-dark"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  pre[class*="language-"]
+  .namespace,
+.preview:where(
+    [data-preview-theme="one-dark"]:not(:root),
+    [data-preview-theme="one-dark"]:not(:root) *
+  )
+  pre[class*="language-"]
+  .namespace {
+  opacity: 0.7;
+}
+.preview:where(:root[data-preview-theme="one-dark"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  code[class*="language-"]
+  .token.constant,
+.preview:where(
+    [data-preview-theme="one-dark"]:not(:root),
+    [data-preview-theme="one-dark"]:not(:root) *
+  )
+  code[class*="language-"]
+  .token.constant,
+.preview:where(:root[data-preview-theme="one-dark"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  pre[class*="language-"]
+  .token.constant,
+.preview:where(
+    [data-preview-theme="one-dark"]:not(:root),
+    [data-preview-theme="one-dark"]:not(:root) *
+  )
+  pre[class*="language-"]
+  .token.constant {
+  color: #d19a66;
+}
+.preview:where(:root[data-preview-theme="one-dark"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  code[class*="language-"]
+  .token.boolean,
+.preview:where(
+    [data-preview-theme="one-dark"]:not(:root),
+    [data-preview-theme="one-dark"]:not(:root) *
+  )
+  code[class*="language-"]
+  .token.boolean,
+.preview:where(:root[data-preview-theme="one-dark"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  code[class*="language-"]
+  .token.function-name,
+.preview:where(
+    [data-preview-theme="one-dark"]:not(:root),
+    [data-preview-theme="one-dark"]:not(:root) *
+  )
+  code[class*="language-"]
+  .token.function-name,
+.preview:where(:root[data-preview-theme="one-dark"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  code[class*="language-"]
+  .token.number,
+.preview:where(
+    [data-preview-theme="one-dark"]:not(:root),
+    [data-preview-theme="one-dark"]:not(:root) *
+  )
+  code[class*="language-"]
+  .token.number,
+.preview:where(:root[data-preview-theme="one-dark"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  pre[class*="language-"]
+  .token.boolean,
+.preview:where(
+    [data-preview-theme="one-dark"]:not(:root),
+    [data-preview-theme="one-dark"]:not(:root) *
+  )
+  pre[class*="language-"]
+  .token.boolean,
+.preview:where(:root[data-preview-theme="one-dark"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  pre[class*="language-"]
+  .token.function-name,
+.preview:where(
+    [data-preview-theme="one-dark"]:not(:root),
+    [data-preview-theme="one-dark"]:not(:root) *
+  )
+  pre[class*="language-"]
+  .token.function-name,
+.preview:where(:root[data-preview-theme="one-dark"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  pre[class*="language-"]
+  .token.number,
+.preview:where(
+    [data-preview-theme="one-dark"]:not(:root),
+    [data-preview-theme="one-dark"]:not(:root) *
+  )
+  pre[class*="language-"]
+  .token.number {
+  color: #d19a66;
+}
+.preview:where(:root[data-preview-theme="one-dark"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  code[class*="language-"]
+  .token.tag,
+.preview:where(
+    [data-preview-theme="one-dark"]:not(:root),
+    [data-preview-theme="one-dark"]:not(:root) *
+  )
+  code[class*="language-"]
+  .token.tag,
+.preview:where(:root[data-preview-theme="one-dark"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  pre[class*="language-"]
+  .token.tag,
+.preview:where(
+    [data-preview-theme="one-dark"]:not(:root),
+    [data-preview-theme="one-dark"]:not(:root) *
+  )
+  pre[class*="language-"]
+  .token.tag {
+  color: #e06c75;
+}
+.preview:where(:root[data-preview-theme="one-dark"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  code[class*="language-"]
+  .token.symbol,
+.preview:where(
+    [data-preview-theme="one-dark"]:not(:root),
+    [data-preview-theme="one-dark"]:not(:root) *
+  )
+  code[class*="language-"]
+  .token.symbol,
+.preview:where(:root[data-preview-theme="one-dark"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  pre[class*="language-"]
+  .token.symbol,
+.preview:where(
+    [data-preview-theme="one-dark"]:not(:root),
+    [data-preview-theme="one-dark"]:not(:root) *
+  )
+  pre[class*="language-"]
+  .token.symbol {
+  color: #56b6c2;
+}
+.preview:where(:root[data-preview-theme="one-dark"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  code[class*="language-"]
+  .token.selector,
+.preview:where(
+    [data-preview-theme="one-dark"]:not(:root),
+    [data-preview-theme="one-dark"]:not(:root) *
+  )
+  code[class*="language-"]
+  .token.selector,
+.preview:where(:root[data-preview-theme="one-dark"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  pre[class*="language-"]
+  .token.selector,
+.preview:where(
+    [data-preview-theme="one-dark"]:not(:root),
+    [data-preview-theme="one-dark"]:not(:root) *
+  )
+  pre[class*="language-"]
+  .token.selector {
+  color: #c678dd;
+}
+.preview:where(:root[data-preview-theme="one-dark"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  code[class*="language-"]
+  .token.attr-name,
+.preview:where(
+    [data-preview-theme="one-dark"]:not(:root),
+    [data-preview-theme="one-dark"]:not(:root) *
+  )
+  code[class*="language-"]
+  .token.attr-name,
+.preview:where(:root[data-preview-theme="one-dark"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  pre[class*="language-"]
+  .token.attr-name,
+.preview:where(
+    [data-preview-theme="one-dark"]:not(:root),
+    [data-preview-theme="one-dark"]:not(:root) *
+  )
+  pre[class*="language-"]
+  .token.attr-name {
+  color: #d19a66;
+}
+.preview:where(:root[data-preview-theme="one-dark"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  code[class*="language-"]
+  .token.string,
+.preview:where(
+    [data-preview-theme="one-dark"]:not(:root),
+    [data-preview-theme="one-dark"]:not(:root) *
+  )
+  code[class*="language-"]
+  .token.string,
+.preview:where(:root[data-preview-theme="one-dark"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  pre[class*="language-"]
+  .token.string,
+.preview:where(
+    [data-preview-theme="one-dark"]:not(:root),
+    [data-preview-theme="one-dark"]:not(:root) *
+  )
+  pre[class*="language-"]
+  .token.string {
+  color: #98c379;
+}
+.preview:where(:root[data-preview-theme="one-dark"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  code[class*="language-"]
+  .token.char,
+.preview:where(
+    [data-preview-theme="one-dark"]:not(:root),
+    [data-preview-theme="one-dark"]:not(:root) *
+  )
+  code[class*="language-"]
+  .token.char,
+.preview:where(:root[data-preview-theme="one-dark"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  pre[class*="language-"]
+  .token.char,
+.preview:where(
+    [data-preview-theme="one-dark"]:not(:root),
+    [data-preview-theme="one-dark"]:not(:root) *
+  )
+  pre[class*="language-"]
+  .token.char {
+  color: #56b6c2;
+}
+.preview:where(:root[data-preview-theme="one-dark"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  code[class*="language-"]
+  .token.url,
+.preview:where(
+    [data-preview-theme="one-dark"]:not(:root),
+    [data-preview-theme="one-dark"]:not(:root) *
+  )
+  code[class*="language-"]
+  .token.url,
+.preview:where(:root[data-preview-theme="one-dark"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  pre[class*="language-"]
+  .token.url,
+.preview:where(
+    [data-preview-theme="one-dark"]:not(:root),
+    [data-preview-theme="one-dark"]:not(:root) *
+  )
+  pre[class*="language-"]
+  .token.url {
+  color: #56b6c2;
+}
+.preview:where(:root[data-preview-theme="one-dark"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  code[class*="language-"]
+  .token.operator,
+.preview:where(
+    [data-preview-theme="one-dark"]:not(:root),
+    [data-preview-theme="one-dark"]:not(:root) *
+  )
+  code[class*="language-"]
+  .token.operator,
+.preview:where(:root[data-preview-theme="one-dark"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  pre[class*="language-"]
+  .token.operator,
+.preview:where(
+    [data-preview-theme="one-dark"]:not(:root),
+    [data-preview-theme="one-dark"]:not(:root) *
+  )
+  pre[class*="language-"]
+  .token.operator {
+  color: #abb2bf;
+}
+.preview:where(:root[data-preview-theme="one-dark"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  code[class*="language-"]
+  .token.atrule,
+.preview:where(
+    [data-preview-theme="one-dark"]:not(:root),
+    [data-preview-theme="one-dark"]:not(:root) *
+  )
+  code[class*="language-"]
+  .token.atrule,
+.preview:where(:root[data-preview-theme="one-dark"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  code[class*="language-"]
+  .token.attr-value,
+.preview:where(
+    [data-preview-theme="one-dark"]:not(:root),
+    [data-preview-theme="one-dark"]:not(:root) *
+  )
+  code[class*="language-"]
+  .token.attr-value,
+.preview:where(:root[data-preview-theme="one-dark"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  code[class*="language-"]
+  .token.keyword,
+.preview:where(
+    [data-preview-theme="one-dark"]:not(:root),
+    [data-preview-theme="one-dark"]:not(:root) *
+  )
+  code[class*="language-"]
+  .token.keyword,
+.preview:where(:root[data-preview-theme="one-dark"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  pre[class*="language-"]
+  .token.atrule,
+.preview:where(
+    [data-preview-theme="one-dark"]:not(:root),
+    [data-preview-theme="one-dark"]:not(:root) *
+  )
+  pre[class*="language-"]
+  .token.atrule,
+.preview:where(:root[data-preview-theme="one-dark"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  pre[class*="language-"]
+  .token.attr-value,
+.preview:where(
+    [data-preview-theme="one-dark"]:not(:root),
+    [data-preview-theme="one-dark"]:not(:root) *
+  )
+  pre[class*="language-"]
+  .token.attr-value,
+.preview:where(:root[data-preview-theme="one-dark"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  pre[class*="language-"]
+  .token.keyword,
+.preview:where(
+    [data-preview-theme="one-dark"]:not(:root),
+    [data-preview-theme="one-dark"]:not(:root) *
+  )
+  pre[class*="language-"]
+  .token.keyword {
+  color: #c678dd;
+}
+.preview:where(:root[data-preview-theme="one-dark"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  code[class*="language-"]
+  .token.function,
+.preview:where(
+    [data-preview-theme="one-dark"]:not(:root),
+    [data-preview-theme="one-dark"]:not(:root) *
+  )
+  code[class*="language-"]
+  .token.function,
+.preview:where(:root[data-preview-theme="one-dark"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  pre[class*="language-"]
+  .token.function,
+.preview:where(
+    [data-preview-theme="one-dark"]:not(:root),
+    [data-preview-theme="one-dark"]:not(:root) *
+  )
+  pre[class*="language-"]
+  .token.function {
+  color: #61afef;
+}
+.preview:where(:root[data-preview-theme="one-dark"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  code[class*="language-"]
+  .token.class-name,
+.preview:where(
+    [data-preview-theme="one-dark"]:not(:root),
+    [data-preview-theme="one-dark"]:not(:root) *
+  )
+  code[class*="language-"]
+  .token.class-name,
+.preview:where(:root[data-preview-theme="one-dark"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  pre[class*="language-"]
+  .token.class-name,
+.preview:where(
+    [data-preview-theme="one-dark"]:not(:root),
+    [data-preview-theme="one-dark"]:not(:root) *
+  )
+  pre[class*="language-"]
+  .token.class-name {
+  color: #e5c07b;
+}
+.preview:where(:root[data-preview-theme="one-dark"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  code[class*="language-"]
+  .token.variable,
+.preview:where(
+    [data-preview-theme="one-dark"]:not(:root),
+    [data-preview-theme="one-dark"]:not(:root) *
+  )
+  code[class*="language-"]
+  .token.variable,
+.preview:where(:root[data-preview-theme="one-dark"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  pre[class*="language-"]
+  .token.variable,
+.preview:where(
+    [data-preview-theme="one-dark"]:not(:root),
+    [data-preview-theme="one-dark"]:not(:root) *
+  )
+  pre[class*="language-"]
+  .token.variable {
+  color: #d19a66;
+}
+.preview:where(:root[data-preview-theme="one-dark"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  code[class*="language-"]
+  .token.regex,
+.preview:where(
+    [data-preview-theme="one-dark"]:not(:root),
+    [data-preview-theme="one-dark"]:not(:root) *
+  )
+  code[class*="language-"]
+  .token.regex,
+.preview:where(:root[data-preview-theme="one-dark"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  pre[class*="language-"]
+  .token.regex,
+.preview:where(
+    [data-preview-theme="one-dark"]:not(:root),
+    [data-preview-theme="one-dark"]:not(:root) *
+  )
+  pre[class*="language-"]
+  .token.regex {
+  color: #56b6c2;
+}
+.preview:where(:root[data-preview-theme="one-dark"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  code[class*="language-"]
+  .token.important,
+.preview:where(
+    [data-preview-theme="one-dark"]:not(:root),
+    [data-preview-theme="one-dark"]:not(:root) *
+  )
+  code[class*="language-"]
+  .token.important,
+.preview:where(:root[data-preview-theme="one-dark"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  pre[class*="language-"]
+  .token.important,
+.preview:where(
+    [data-preview-theme="one-dark"]:not(:root),
+    [data-preview-theme="one-dark"]:not(:root) *
+  )
+  pre[class*="language-"]
+  .token.important {
+  color: #e06c75;
+}
+.preview:where(:root[data-preview-theme="one-dark"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  code[class*="language-"]
+  .token.bold,
+.preview:where(
+    [data-preview-theme="one-dark"]:not(:root),
+    [data-preview-theme="one-dark"]:not(:root) *
+  )
+  code[class*="language-"]
+  .token.bold,
+.preview:where(:root[data-preview-theme="one-dark"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  code[class*="language-"]
+  .token.important,
+.preview:where(
+    [data-preview-theme="one-dark"]:not(:root),
+    [data-preview-theme="one-dark"]:not(:root) *
+  )
+  code[class*="language-"]
+  .token.important,
+.preview:where(:root[data-preview-theme="one-dark"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  pre[class*="language-"]
+  .token.bold,
+.preview:where(
+    [data-preview-theme="one-dark"]:not(:root),
+    [data-preview-theme="one-dark"]:not(:root) *
+  )
+  pre[class*="language-"]
+  .token.bold,
+.preview:where(:root[data-preview-theme="one-dark"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  pre[class*="language-"]
+  .token.important,
+.preview:where(
+    [data-preview-theme="one-dark"]:not(:root),
+    [data-preview-theme="one-dark"]:not(:root) *
+  )
+  pre[class*="language-"]
+  .token.important {
+  font-weight: 700;
+}
+.preview:where(:root[data-preview-theme="one-dark"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  code[class*="language-"]
+  .token.italic,
+.preview:where(
+    [data-preview-theme="one-dark"]:not(:root),
+    [data-preview-theme="one-dark"]:not(:root) *
+  )
+  code[class*="language-"]
+  .token.italic,
+.preview:where(:root[data-preview-theme="one-dark"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  pre[class*="language-"]
+  .token.italic,
+.preview:where(
+    [data-preview-theme="one-dark"]:not(:root),
+    [data-preview-theme="one-dark"]:not(:root) *
+  )
+  pre[class*="language-"]
+  .token.italic {
+  font-style: italic;
+}
+.preview:where(:root[data-preview-theme="one-dark"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  code[class*="language-"]
+  .token.entity,
+.preview:where(
+    [data-preview-theme="one-dark"]:not(:root),
+    [data-preview-theme="one-dark"]:not(:root) *
+  )
+  code[class*="language-"]
+  .token.entity,
+.preview:where(:root[data-preview-theme="one-dark"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  pre[class*="language-"]
+  .token.entity,
+.preview:where(
+    [data-preview-theme="one-dark"]:not(:root),
+    [data-preview-theme="one-dark"]:not(:root) *
+  )
+  pre[class*="language-"]
+  .token.entity {
+  cursor: help;
+}
+.preview:where(:root[data-preview-theme="one-dark"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  pre[data-line],
+.preview:where(
+    [data-preview-theme="one-dark"]:not(:root),
+    [data-preview-theme="one-dark"]:not(:root) *
+  )
+  pre[data-line] {
+  position: relative;
+  padding: 1em 0 1em 3em;
+}
+.preview:where(:root[data-preview-theme="one-dark"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  pre[data-line]
+  .line-highlight-wrapper,
+.preview:where(
+    [data-preview-theme="one-dark"]:not(:root),
+    [data-preview-theme="one-dark"]:not(:root) *
+  )
+  pre[data-line]
+  .line-highlight-wrapper {
+  position: absolute;
+  top: 0;
+  left: 0;
+  background-color: transparent;
+  display: block;
+  width: 100%;
+}
+.preview:where(:root[data-preview-theme="one-dark"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  pre[data-line]
+  .line-highlight,
+.preview:where(
+    [data-preview-theme="one-dark"]:not(:root),
+    [data-preview-theme="one-dark"]:not(:root) *
+  )
+  pre[data-line]
+  .line-highlight {
+  position: absolute;
+  left: 0;
+  right: 0;
+  padding: inherit 0;
+  margin-top: 1em;
+  background: rgba(153, 122, 102, 0.08);
+  background: linear-gradient(
+    to right,
+    rgba(153, 122, 102, 0.1) 70%,
+    rgba(153, 122, 102, 0)
+  );
+  pointer-events: none;
+  line-height: inherit;
+  white-space: pre;
+}
+.preview:where(:root[data-preview-theme="one-dark"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  pre[data-line]
+  .line-highlight:before,
+.preview:where(
+    [data-preview-theme="one-dark"]:not(:root),
+    [data-preview-theme="one-dark"]:not(:root) *
+  )
+  pre[data-line]
+  .line-highlight:before,
+.preview:where(:root[data-preview-theme="one-dark"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  pre[data-line]
+  .line-highlight[data-end]:after,
+.preview:where(
+    [data-preview-theme="one-dark"]:not(:root),
+    [data-preview-theme="one-dark"]:not(:root) *
+  )
+  pre[data-line]
+  .line-highlight[data-end]:after {
+  content: attr(data-start);
+  position: absolute;
+  top: 0.4em;
+  left: 0.6em;
+  min-width: 1em;
+  padding: 0 0.5em;
+  background-color: rgba(153, 122, 102, 0.4);
+  color: #f5f2f0;
+  font: bold 65%/1.5 sans-serif;
+  text-align: center;
+  vertical-align: 0.3em;
+  border-radius: 999px;
+  text-shadow: none;
+  box-shadow: 0 1px #fff;
+}
+.preview:where(:root[data-preview-theme="one-dark"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  pre[data-line]
+  .line-highlight[data-end]:after,
+.preview:where(
+    [data-preview-theme="one-dark"]:not(:root),
+    [data-preview-theme="one-dark"]:not(:root) *
+  )
+  pre[data-line]
+  .line-highlight[data-end]:after {
+  content: attr(data-end);
+  top: auto;
+  bottom: 0.4em;
+}
+
+/* solarized-light: echomd's solarized-light */
+.preview:where(:root[data-preview-theme="solarized-light"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  pre,
+.preview:where(
+    [data-preview-theme="solarized-light"]:not(:root),
+    [data-preview-theme="solarized-light"]:not(:root) *
+  )
+  pre {
+  font-family: Menlo, Monaco, Consolas, "Courier New", monospace;
+  direction: ltr;
+  text-align: left;
+  white-space: pre;
+  word-spacing: normal;
+  word-break: normal;
+  padding: 1em;
+  margin: 0.5em 0;
+  overflow: auto;
+  line-height: 1.5;
+  tab-size: 4;
+  hyphens: none;
+  color: #657b83;
+  background-color: #fbedc6 !important;
+  border: #f8de97;
+  border-radius: 3px;
+}
+.preview:where(:root[data-preview-theme="solarized-light"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  pre[class*="language-"],
+.preview:where(
+    [data-preview-theme="solarized-light"]:not(:root),
+    [data-preview-theme="solarized-light"]:not(:root) *
+  )
+  pre[class*="language-"] {
+  padding: 1em;
+}
+.preview:where(:root[data-preview-theme="solarized-light"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  code[class*="language-"]
+  .token.cdata,
+.preview:where(
+    [data-preview-theme="solarized-light"]:not(:root),
+    [data-preview-theme="solarized-light"]:not(:root) *
+  )
+  code[class*="language-"]
+  .token.cdata,
+.preview:where(:root[data-preview-theme="solarized-light"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  code[class*="language-"]
+  .token.comment,
+.preview:where(
+    [data-preview-theme="solarized-light"]:not(:root),
+    [data-preview-theme="solarized-light"]:not(:root) *
+  )
+  code[class*="language-"]
+  .token.comment,
+.preview:where(:root[data-preview-theme="solarized-light"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  code[class*="language-"]
+  .token.doctype,
+.preview:where(
+    [data-preview-theme="solarized-light"]:not(:root),
+    [data-preview-theme="solarized-light"]:not(:root) *
+  )
+  code[class*="language-"]
+  .token.doctype,
+.preview:where(:root[data-preview-theme="solarized-light"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  code[class*="language-"]
+  .token.prolog,
+.preview:where(
+    [data-preview-theme="solarized-light"]:not(:root),
+    [data-preview-theme="solarized-light"]:not(:root) *
+  )
+  code[class*="language-"]
+  .token.prolog,
+.preview:where(:root[data-preview-theme="solarized-light"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  pre[class*="language-"]
+  .token.cdata,
+.preview:where(
+    [data-preview-theme="solarized-light"]:not(:root),
+    [data-preview-theme="solarized-light"]:not(:root) *
+  )
+  pre[class*="language-"]
+  .token.cdata,
+.preview:where(:root[data-preview-theme="solarized-light"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  pre[class*="language-"]
+  .token.comment,
+.preview:where(
+    [data-preview-theme="solarized-light"]:not(:root),
+    [data-preview-theme="solarized-light"]:not(:root) *
+  )
+  pre[class*="language-"]
+  .token.comment,
+.preview:where(:root[data-preview-theme="solarized-light"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  pre[class*="language-"]
+  .token.doctype,
+.preview:where(
+    [data-preview-theme="solarized-light"]:not(:root),
+    [data-preview-theme="solarized-light"]:not(:root) *
+  )
+  pre[class*="language-"]
+  .token.doctype,
+.preview:where(:root[data-preview-theme="solarized-light"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  pre[class*="language-"]
+  .token.prolog,
+.preview:where(
+    [data-preview-theme="solarized-light"]:not(:root),
+    [data-preview-theme="solarized-light"]:not(:root) *
+  )
+  pre[class*="language-"]
+  .token.prolog {
+  color: #93a1a1;
+  font-style: italic;
+}
+.preview:where(:root[data-preview-theme="solarized-light"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  code[class*="language-"]
+  .token.punctuation,
+.preview:where(
+    [data-preview-theme="solarized-light"]:not(:root),
+    [data-preview-theme="solarized-light"]:not(:root) *
+  )
+  code[class*="language-"]
+  .token.punctuation,
+.preview:where(:root[data-preview-theme="solarized-light"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  pre[class*="language-"]
+  .token.punctuation,
+.preview:where(
+    [data-preview-theme="solarized-light"]:not(:root),
+    [data-preview-theme="solarized-light"]:not(:root) *
+  )
+  pre[class*="language-"]
+  .token.punctuation {
+  color: #93a1a1;
+}
+.preview:where(:root[data-preview-theme="solarized-light"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  code[class*="language-"]
+  .namespace,
+.preview:where(
+    [data-preview-theme="solarized-light"]:not(:root),
+    [data-preview-theme="solarized-light"]:not(:root) *
+  )
+  code[class*="language-"]
+  .namespace,
+.preview:where(:root[data-preview-theme="solarized-light"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  pre[class*="language-"]
+  .namespace,
+.preview:where(
+    [data-preview-theme="solarized-light"]:not(:root),
+    [data-preview-theme="solarized-light"]:not(:root) *
+  )
+  pre[class*="language-"]
+  .namespace {
+  opacity: 0.7;
+}
+.preview:where(:root[data-preview-theme="solarized-light"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  code[class*="language-"]
+  .token.property,
+.preview:where(
+    [data-preview-theme="solarized-light"]:not(:root),
+    [data-preview-theme="solarized-light"]:not(:root) *
+  )
+  code[class*="language-"]
+  .token.property,
+.preview:where(:root[data-preview-theme="solarized-light"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  pre[class*="language-"]
+  .token.property,
+.preview:where(
+    [data-preview-theme="solarized-light"]:not(:root),
+    [data-preview-theme="solarized-light"]:not(:root) *
+  )
+  pre[class*="language-"]
+  .token.property {
+  color: #859900;
+}
+.preview:where(:root[data-preview-theme="solarized-light"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  code[class*="language-"]
+  .token.boolean,
+.preview:where(
+    [data-preview-theme="solarized-light"]:not(:root),
+    [data-preview-theme="solarized-light"]:not(:root) *
+  )
+  code[class*="language-"]
+  .token.boolean,
+.preview:where(:root[data-preview-theme="solarized-light"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  code[class*="language-"]
+  .token.function-name,
+.preview:where(
+    [data-preview-theme="solarized-light"]:not(:root),
+    [data-preview-theme="solarized-light"]:not(:root) *
+  )
+  code[class*="language-"]
+  .token.function-name,
+.preview:where(:root[data-preview-theme="solarized-light"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  code[class*="language-"]
+  .token.number,
+.preview:where(
+    [data-preview-theme="solarized-light"]:not(:root),
+    [data-preview-theme="solarized-light"]:not(:root) *
+  )
+  code[class*="language-"]
+  .token.number,
+.preview:where(:root[data-preview-theme="solarized-light"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  pre[class*="language-"]
+  .token.boolean,
+.preview:where(
+    [data-preview-theme="solarized-light"]:not(:root),
+    [data-preview-theme="solarized-light"]:not(:root) *
+  )
+  pre[class*="language-"]
+  .token.boolean,
+.preview:where(:root[data-preview-theme="solarized-light"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  pre[class*="language-"]
+  .token.function-name,
+.preview:where(
+    [data-preview-theme="solarized-light"]:not(:root),
+    [data-preview-theme="solarized-light"]:not(:root) *
+  )
+  pre[class*="language-"]
+  .token.function-name,
+.preview:where(:root[data-preview-theme="solarized-light"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  pre[class*="language-"]
+  .token.number,
+.preview:where(
+    [data-preview-theme="solarized-light"]:not(:root),
+    [data-preview-theme="solarized-light"]:not(:root) *
+  )
+  pre[class*="language-"]
+  .token.number {
+  color: #d33682;
+}
+.preview:where(:root[data-preview-theme="solarized-light"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  code[class*="language-"]
+  .token.tag,
+.preview:where(
+    [data-preview-theme="solarized-light"]:not(:root),
+    [data-preview-theme="solarized-light"]:not(:root) *
+  )
+  code[class*="language-"]
+  .token.tag,
+.preview:where(:root[data-preview-theme="solarized-light"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  pre[class*="language-"]
+  .token.tag,
+.preview:where(
+    [data-preview-theme="solarized-light"]:not(:root),
+    [data-preview-theme="solarized-light"]:not(:root) *
+  )
+  pre[class*="language-"]
+  .token.tag {
+  color: #268bd2;
+}
+.preview:where(:root[data-preview-theme="solarized-light"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  code[class*="language-"]
+  .token.selector,
+.preview:where(
+    [data-preview-theme="solarized-light"]:not(:root),
+    [data-preview-theme="solarized-light"]:not(:root) *
+  )
+  code[class*="language-"]
+  .token.selector,
+.preview:where(:root[data-preview-theme="solarized-light"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  pre[class*="language-"]
+  .token.selector,
+.preview:where(
+    [data-preview-theme="solarized-light"]:not(:root),
+    [data-preview-theme="solarized-light"]:not(:root) *
+  )
+  pre[class*="language-"]
+  .token.selector {
+  color: #859900;
+}
+.preview:where(:root[data-preview-theme="solarized-light"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  code[class*="language-"]
+  .token.attr-name,
+.preview:where(
+    [data-preview-theme="solarized-light"]:not(:root),
+    [data-preview-theme="solarized-light"]:not(:root) *
+  )
+  code[class*="language-"]
+  .token.attr-name,
+.preview:where(:root[data-preview-theme="solarized-light"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  pre[class*="language-"]
+  .token.attr-name,
+.preview:where(
+    [data-preview-theme="solarized-light"]:not(:root),
+    [data-preview-theme="solarized-light"]:not(:root) *
+  )
+  pre[class*="language-"]
+  .token.attr-name {
+  color: #657b83;
+}
+.preview:where(:root[data-preview-theme="solarized-light"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  code[class*="language-"]
+  .token.string,
+.preview:where(
+    [data-preview-theme="solarized-light"]:not(:root),
+    [data-preview-theme="solarized-light"]:not(:root) *
+  )
+  code[class*="language-"]
+  .token.string,
+.preview:where(:root[data-preview-theme="solarized-light"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  pre[class*="language-"]
+  .token.string,
+.preview:where(
+    [data-preview-theme="solarized-light"]:not(:root),
+    [data-preview-theme="solarized-light"]:not(:root) *
+  )
+  pre[class*="language-"]
+  .token.string {
+  color: #2aa198;
+}
+.preview:where(:root[data-preview-theme="solarized-light"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  code[class*="language-"]
+  .token.char,
+.preview:where(
+    [data-preview-theme="solarized-light"]:not(:root),
+    [data-preview-theme="solarized-light"]:not(:root) *
+  )
+  code[class*="language-"]
+  .token.char,
+.preview:where(:root[data-preview-theme="solarized-light"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  pre[class*="language-"]
+  .token.char,
+.preview:where(
+    [data-preview-theme="solarized-light"]:not(:root),
+    [data-preview-theme="solarized-light"]:not(:root) *
+  )
+  pre[class*="language-"]
+  .token.char {
+  color: #cb4b16;
+}
+.preview:where(:root[data-preview-theme="solarized-light"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  code[class*="language-"]
+  .token.builtin,
+.preview:where(
+    [data-preview-theme="solarized-light"]:not(:root),
+    [data-preview-theme="solarized-light"]:not(:root) *
+  )
+  code[class*="language-"]
+  .token.builtin,
+.preview:where(:root[data-preview-theme="solarized-light"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  pre[class*="language-"]
+  .token.builtin,
+.preview:where(
+    [data-preview-theme="solarized-light"]:not(:root),
+    [data-preview-theme="solarized-light"]:not(:root) *
+  )
+  pre[class*="language-"]
+  .token.builtin {
+  color: #859900;
+}
+.preview:where(:root[data-preview-theme="solarized-light"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  code[class*="language-"]
+  .token.entity,
+.preview:where(
+    [data-preview-theme="solarized-light"]:not(:root),
+    [data-preview-theme="solarized-light"]:not(:root) *
+  )
+  code[class*="language-"]
+  .token.entity,
+.preview:where(:root[data-preview-theme="solarized-light"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  pre[class*="language-"]
+  .token.entity,
+.preview:where(
+    [data-preview-theme="solarized-light"]:not(:root),
+    [data-preview-theme="solarized-light"]:not(:root) *
+  )
+  pre[class*="language-"]
+  .token.entity {
+  color: #268bd2;
+}
+.preview:where(:root[data-preview-theme="solarized-light"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  code[class*="language-"]
+  .token.url,
+.preview:where(
+    [data-preview-theme="solarized-light"]:not(:root),
+    [data-preview-theme="solarized-light"]:not(:root) *
+  )
+  code[class*="language-"]
+  .token.url,
+.preview:where(:root[data-preview-theme="solarized-light"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  pre[class*="language-"]
+  .token.url,
+.preview:where(
+    [data-preview-theme="solarized-light"]:not(:root),
+    [data-preview-theme="solarized-light"]:not(:root) *
+  )
+  pre[class*="language-"]
+  .token.url {
+  color: #93a1a1;
+}
+.preview:where(:root[data-preview-theme="solarized-light"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  code[class*="language-"]
+  .token.atrule,
+.preview:where(
+    [data-preview-theme="solarized-light"]:not(:root),
+    [data-preview-theme="solarized-light"]:not(:root) *
+  )
+  code[class*="language-"]
+  .token.atrule,
+.preview:where(:root[data-preview-theme="solarized-light"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  code[class*="language-"]
+  .token.attr-value,
+.preview:where(
+    [data-preview-theme="solarized-light"]:not(:root),
+    [data-preview-theme="solarized-light"]:not(:root) *
+  )
+  code[class*="language-"]
+  .token.attr-value,
+.preview:where(:root[data-preview-theme="solarized-light"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  code[class*="language-"]
+  .token.keyword,
+.preview:where(
+    [data-preview-theme="solarized-light"]:not(:root),
+    [data-preview-theme="solarized-light"]:not(:root) *
+  )
+  code[class*="language-"]
+  .token.keyword,
+.preview:where(:root[data-preview-theme="solarized-light"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  pre[class*="language-"]
+  .token.atrule,
+.preview:where(
+    [data-preview-theme="solarized-light"]:not(:root),
+    [data-preview-theme="solarized-light"]:not(:root) *
+  )
+  pre[class*="language-"]
+  .token.atrule,
+.preview:where(:root[data-preview-theme="solarized-light"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  pre[class*="language-"]
+  .token.attr-value,
+.preview:where(
+    [data-preview-theme="solarized-light"]:not(:root),
+    [data-preview-theme="solarized-light"]:not(:root) *
+  )
+  pre[class*="language-"]
+  .token.attr-value,
+.preview:where(:root[data-preview-theme="solarized-light"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  pre[class*="language-"]
+  .token.keyword,
+.preview:where(
+    [data-preview-theme="solarized-light"]:not(:root),
+    [data-preview-theme="solarized-light"]:not(:root) *
+  )
+  pre[class*="language-"]
+  .token.keyword {
+  color: #859900;
+}
+.preview:where(:root[data-preview-theme="solarized-light"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  code[class*="language-"]
+  .token.function,
+.preview:where(
+    [data-preview-theme="solarized-light"]:not(:root),
+    [data-preview-theme="solarized-light"]:not(:root) *
+  )
+  code[class*="language-"]
+  .token.function,
+.preview:where(:root[data-preview-theme="solarized-light"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  pre[class*="language-"]
+  .token.function,
+.preview:where(
+    [data-preview-theme="solarized-light"]:not(:root),
+    [data-preview-theme="solarized-light"]:not(:root) *
+  )
+  pre[class*="language-"]
+  .token.function {
+  color: #268bd2;
+}
+.preview:where(:root[data-preview-theme="solarized-light"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  code[class*="language-"]
+  .token.class-name,
+.preview:where(
+    [data-preview-theme="solarized-light"]:not(:root),
+    [data-preview-theme="solarized-light"]:not(:root) *
+  )
+  code[class*="language-"]
+  .token.class-name,
+.preview:where(:root[data-preview-theme="solarized-light"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  pre[class*="language-"]
+  .token.class-name,
+.preview:where(
+    [data-preview-theme="solarized-light"]:not(:root),
+    [data-preview-theme="solarized-light"]:not(:root) *
+  )
+  pre[class*="language-"]
+  .token.class-name {
+  color: #268bd2;
+}
+.preview:where(:root[data-preview-theme="solarized-light"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  code[class*="language-"]
+  .token.variable,
+.preview:where(
+    [data-preview-theme="solarized-light"]:not(:root),
+    [data-preview-theme="solarized-light"]:not(:root) *
+  )
+  code[class*="language-"]
+  .token.variable,
+.preview:where(:root[data-preview-theme="solarized-light"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  pre[class*="language-"]
+  .token.variable,
+.preview:where(
+    [data-preview-theme="solarized-light"]:not(:root),
+    [data-preview-theme="solarized-light"]:not(:root) *
+  )
+  pre[class*="language-"]
+  .token.variable {
+  color: #268bd2;
+}
+.preview:where(:root[data-preview-theme="solarized-light"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  code[class*="language-"]
+  .token.important,
+.preview:where(
+    [data-preview-theme="solarized-light"]:not(:root),
+    [data-preview-theme="solarized-light"]:not(:root) *
+  )
+  code[class*="language-"]
+  .token.important,
+.preview:where(:root[data-preview-theme="solarized-light"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  code[class*="language-"]
+  .token.regex,
+.preview:where(
+    [data-preview-theme="solarized-light"]:not(:root),
+    [data-preview-theme="solarized-light"]:not(:root) *
+  )
+  code[class*="language-"]
+  .token.regex,
+.preview:where(:root[data-preview-theme="solarized-light"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  pre[class*="language-"]
+  .token.important,
+.preview:where(
+    [data-preview-theme="solarized-light"]:not(:root),
+    [data-preview-theme="solarized-light"]:not(:root) *
+  )
+  pre[class*="language-"]
+  .token.important,
+.preview:where(:root[data-preview-theme="solarized-light"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  pre[class*="language-"]
+  .token.regex,
+.preview:where(
+    [data-preview-theme="solarized-light"]:not(:root),
+    [data-preview-theme="solarized-light"]:not(:root) *
+  )
+  pre[class*="language-"]
+  .token.regex {
+  color: #dc322f;
+}
+.preview:where(:root[data-preview-theme="solarized-light"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  code[class*="language-"]
+  .token.bold,
+.preview:where(
+    [data-preview-theme="solarized-light"]:not(:root),
+    [data-preview-theme="solarized-light"]:not(:root) *
+  )
+  code[class*="language-"]
+  .token.bold,
+.preview:where(:root[data-preview-theme="solarized-light"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  code[class*="language-"]
+  .token.important,
+.preview:where(
+    [data-preview-theme="solarized-light"]:not(:root),
+    [data-preview-theme="solarized-light"]:not(:root) *
+  )
+  code[class*="language-"]
+  .token.important,
+.preview:where(:root[data-preview-theme="solarized-light"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  pre[class*="language-"]
+  .token.bold,
+.preview:where(
+    [data-preview-theme="solarized-light"]:not(:root),
+    [data-preview-theme="solarized-light"]:not(:root) *
+  )
+  pre[class*="language-"]
+  .token.bold,
+.preview:where(:root[data-preview-theme="solarized-light"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  pre[class*="language-"]
+  .token.important,
+.preview:where(
+    [data-preview-theme="solarized-light"]:not(:root),
+    [data-preview-theme="solarized-light"]:not(:root) *
+  )
+  pre[class*="language-"]
+  .token.important {
+  font-weight: 700;
+}
+.preview:where(:root[data-preview-theme="solarized-light"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  code[class*="language-"]
+  .token.italic,
+.preview:where(
+    [data-preview-theme="solarized-light"]:not(:root),
+    [data-preview-theme="solarized-light"]:not(:root) *
+  )
+  code[class*="language-"]
+  .token.italic,
+.preview:where(:root[data-preview-theme="solarized-light"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  pre[class*="language-"]
+  .token.italic,
+.preview:where(
+    [data-preview-theme="solarized-light"]:not(:root),
+    [data-preview-theme="solarized-light"]:not(:root) *
+  )
+  pre[class*="language-"]
+  .token.italic {
+  font-style: italic;
+}
+.preview:where(:root[data-preview-theme="solarized-light"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  code[class*="language-"]
+  .token.entity,
+.preview:where(
+    [data-preview-theme="solarized-light"]:not(:root),
+    [data-preview-theme="solarized-light"]:not(:root) *
+  )
+  code[class*="language-"]
+  .token.entity,
+.preview:where(:root[data-preview-theme="solarized-light"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  pre[class*="language-"]
+  .token.entity,
+.preview:where(
+    [data-preview-theme="solarized-light"]:not(:root),
+    [data-preview-theme="solarized-light"]:not(:root) *
+  )
+  pre[class*="language-"]
+  .token.entity {
+  cursor: help;
+}
+.preview:where(:root[data-preview-theme="solarized-light"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  pre[data-line],
+.preview:where(
+    [data-preview-theme="solarized-light"]:not(:root),
+    [data-preview-theme="solarized-light"]:not(:root) *
+  )
+  pre[data-line] {
+  position: relative;
+  padding: 1em 0 1em 3em;
+}
+.preview:where(:root[data-preview-theme="solarized-light"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  pre[data-line]
+  .line-highlight-wrapper,
+.preview:where(
+    [data-preview-theme="solarized-light"]:not(:root),
+    [data-preview-theme="solarized-light"]:not(:root) *
+  )
+  pre[data-line]
+  .line-highlight-wrapper {
+  position: absolute;
+  top: 0;
+  left: 0;
+  background-color: transparent;
+  display: block;
+  width: 100%;
+}
+.preview:where(:root[data-preview-theme="solarized-light"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  pre[data-line]
+  .line-highlight,
+.preview:where(
+    [data-preview-theme="solarized-light"]:not(:root),
+    [data-preview-theme="solarized-light"]:not(:root) *
+  )
+  pre[data-line]
+  .line-highlight {
+  position: absolute;
+  left: 0;
+  right: 0;
+  padding: inherit 0;
+  margin-top: 1em;
+  background: rgba(153, 122, 102, 0.08);
+  background: linear-gradient(
+    to right,
+    rgba(153, 122, 102, 0.1) 70%,
+    rgba(153, 122, 102, 0)
+  );
+  pointer-events: none;
+  line-height: inherit;
+  white-space: pre;
+}
+.preview:where(:root[data-preview-theme="solarized-light"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  pre[data-line]
+  .line-highlight:before,
+.preview:where(
+    [data-preview-theme="solarized-light"]:not(:root),
+    [data-preview-theme="solarized-light"]:not(:root) *
+  )
+  pre[data-line]
+  .line-highlight:before,
+.preview:where(:root[data-preview-theme="solarized-light"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  pre[data-line]
+  .line-highlight[data-end]:after,
+.preview:where(
+    [data-preview-theme="solarized-light"]:not(:root),
+    [data-preview-theme="solarized-light"]:not(:root) *
+  )
+  pre[data-line]
+  .line-highlight[data-end]:after {
+  content: attr(data-start);
+  position: absolute;
+  top: 0.4em;
+  left: 0.6em;
+  min-width: 1em;
+  padding: 0 0.5em;
+  background-color: rgba(153, 122, 102, 0.4);
+  color: #f5f2f0;
+  font: bold 65%/1.5 sans-serif;
+  text-align: center;
+  vertical-align: 0.3em;
+  border-radius: 999px;
+  text-shadow: none;
+  box-shadow: 0 1px #fff;
+}
+.preview:where(:root[data-preview-theme="solarized-light"] *):where(
+    :not([data-preview-theme], [data-preview-theme]:not(:root) *)
+  )
+  pre[data-line]
+  .line-highlight[data-end]:after,
+.preview:where(
+    [data-preview-theme="solarized-light"]:not(:root),
+    [data-preview-theme="solarized-light"]:not(:root) *
+  )
+  pre[data-line]
+  .line-highlight[data-end]:after {
+  content: attr(data-end);
+  top: auto;
+  bottom: 0.4em;
+}

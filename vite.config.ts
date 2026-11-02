@@ -9,8 +9,11 @@ const pkg = JSON.parse(
   readFileSync(new URL("./package.json", import.meta.url), "utf-8"),
 );
 
-// The echomd theme CSS is loaded at runtime by URL (see src/themes/manager.ts),
-// versioned by the dependency spec string, e.g. /styles/echomd@^1.0.4/...
+// The editor's theme CSS from echomd is loaded at runtime by URL (see
+// src/themes/manager.ts),
+// versioned by the dependency spec string, e.g.
+// /styles/echomd@^1.0.4/editor_themes/light.css. The preview's own come with
+// the bundle (src/render/theme.ts).
 const echomdVersion: string = pkg.dependencies["@0xgg/echomd"];
 
 // CodeMirror's language modes are loaded at runtime, one script per language,
@@ -44,8 +47,8 @@ export default defineConfig({
     viteStaticCopy({
       targets: [
         {
-          src: "node_modules/@0xgg/echomd/theme/*",
-          dest: `styles/echomd@${echomdVersion}`,
+          src: "node_modules/@0xgg/echomd/theme/editor_themes/*",
+          dest: `styles/echomd@${echomdVersion}/editor_themes`,
         },
         {
           src: "node_modules/codemirror/mode/*/*.js",
@@ -87,7 +90,7 @@ export default defineConfig({
     sequence: { shuffle: true },
     // emoji-mart loaded as the bundle loads it, as ES modules: it unpacks its
     // emoji data in place as it loads, and only that way is the data it
-    // unpacks the one the app reads (src/editor/emoji.ts).
+    // unpacks the one the app reads (src/render/emoji.ts).
     alias: [
       { find: /^emoji-mart$/, replacement: "emoji-mart/dist-es/index.js" },
     ],

@@ -85,6 +85,8 @@ exports[`the shared corpus, sanitized > keeps slides with presentation settings 
 ]
 `;
 
+exports[`the shared corpus, sanitized > keeps the same links again as it reads 1`] = `[]`;
+
 exports[`the shared corpus, sanitized > keeps widgets as it reads 1`] = `[]`;
 
 exports[`the shared corpus, sanitized > keeps wiki links as it reads 1`] = `
