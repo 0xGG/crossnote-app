@@ -73,5 +73,40 @@ describe("the shared corpus", () => {
         `${JSON.stringify(references, null, 2)}\n`,
       ).toMatchFileSnapshot(`./rendering/${fileName(name)}.references.json`);
     });
+
+    it(`draws each reference in ${name} under the id the notebook keeps`, async () => {
+      const filePath = `${fileName(name)}.md`;
+      await pfs.writeFile(`/notebooks/corpus/${filePath}`, text);
+      const note = await notebook.getNote(filePath, true);
+      const ids = Object.keys(note.mentions).flatMap((mentioned) =>
+        notebook
+          .getReferences(mentioned, filePath)
+          .map(({ elementId }) => elementId),
+      );
+      // The preview draws the note's text as the editor has it, and marks a
+      // reference by finding the element with its id. The same link at the
+      // same place in two blocks shares one, and the first is marked.
+      const preview = document.createElement("div");
+      preview.innerHTML = renderMarkdown(note.markdown).html;
+      const drawn = Array.from(
+        preview.querySelectorAll("[id]"),
+        ({ id }) => id,
+      );
+      expect(ids.filter((id) => !drawn.includes(id))).toEqual([]);
+    });
+  });
+
+  // So that the check above is not run on notes without references alone.
+  it("finds references in the notes written with links", async () => {
+    let withReferences = 0;
+    for (const { name, text } of samples) {
+      const filePath = `${fileName(name)}.md`;
+      await pfs.writeFile(`/notebooks/corpus/${filePath}`, text);
+      const note = await notebook.getNote(filePath, true);
+      if (Object.keys(note.mentions).length) {
+        withReferences++;
+      }
+    }
+    expect(withReferences).toBeGreaterThanOrEqual(4);
   });
 });

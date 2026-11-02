@@ -5,7 +5,7 @@
 // rest of src/render/ is the app's and stays when this file goes. Outside
 // it, the preview still takes its theme's CSS from echomd
 // (themes/manager.ts, which printing calls too).
-export { enableEmoji, renderMarkdown } from "@0xgg/echomd/preview";
+export { enableEmoji, md, renderMarkdown } from "@0xgg/echomd/preview";
 export { getWidgetCreator } from "@0xgg/echomd/widget";
 export { EchartsRenderer } from "@0xgg/echomd/powerpack/fold-code-with-echarts";
 export { MermaidRenderer } from "@0xgg/echomd/powerpack/fold-code-with-mermaid";
