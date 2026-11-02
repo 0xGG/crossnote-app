@@ -8,6 +8,17 @@ export function waitForTimeout(timeout: number): Promise<void> {
   });
 }
 
+/**
+ * A function that calls `fn` once calls to it have stopped for `delay` ms.
+ */
+export function debounce(fn: () => void, delay: number): () => void {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  return () => {
+    clearTimeout(timer);
+    timer = setTimeout(fn, delay);
+  };
+}
+
 export const UUIDNil = "00000000-0000-0000-0000-000000000000";
 
 export const OneDay = 1000 * 60 * 60 * 24;

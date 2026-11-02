@@ -1,4 +1,3 @@
-import { debounce } from "@0xgg/echomd";
 import { EmojiDefinitions } from "@0xgg/echomd/addon/emoji";
 import { renderTwemoji } from "@0xgg/echomd/preview";
 import {
@@ -61,6 +60,7 @@ import { MountedPreview, mountPreview } from "../render";
 import { setTheme } from "../themes/manager";
 import { resolveNoteImageSrc } from "../utilities/image";
 import { openURL } from "../utilities/preview";
+import { debounce } from "../utilities/utils";
 import EditImageDialog from "./EditImageDialog";
 import { Emoji } from "./EmojiWrapper";
 import IconPopover from "./IconPopover";
