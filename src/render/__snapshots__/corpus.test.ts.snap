@@ -1,0 +1,94 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`the shared corpus, sanitized > keeps HTML as it reads 1`] = `[]`;
+
+exports[`the shared corpus, sanitized > keeps Windows line endings as it reads 1`] = `[]`;
+
+exports[`the shared corpus, sanitized > keeps a table as it reads 1`] = `[]`;
+
+exports[`the shared corpus, sanitized > keeps a table of contents marker as it reads 1`] = `[]`;
+
+exports[`the shared corpus, sanitized > keeps code as it reads 1`] = `[]`;
+
+exports[`the shared corpus, sanitized > keeps diagrams as it reads 1`] = `
+[
+  "script",
+  "script[type]",
+]
+`;
+
+exports[`the shared corpus, sanitized > keeps emoji as it reads 1`] = `[]`;
+
+exports[`the shared corpus, sanitized > keeps emphasis and inline marks as it reads 1`] = `[]`;
+
+exports[`the shared corpus, sanitized > keeps footnotes as it reads 1`] = `[]`;
+
+exports[`the shared corpus, sanitized > keeps front matter YAML cannot read, a list between rules as it reads 1`] = `[]`;
+
+exports[`the shared corpus, sanitized > keeps front matter YAML cannot read, a paragraph between rules as it reads 1`] = `[]`;
+
+exports[`the shared corpus, sanitized > keeps front matter YAML cannot read, conflict markers as git writes them as it reads 1`] = `[]`;
+
+exports[`the shared corpus, sanitized > keeps front matter YAML cannot read, conflict markers as the notebook's own merge writes them as it reads 1`] = `[]`;
+
+exports[`the shared corpus, sanitized > keeps front matter YAML cannot read, four dashes as it reads 1`] = `[]`;
+
+exports[`the shared corpus, sanitized > keeps front matter YAML cannot read, half typed as it reads 1`] = `[]`;
+
+exports[`the shared corpus, sanitized > keeps front matter YAML cannot read, indented with a tab as it reads 1`] = `[]`;
+
+exports[`the shared corpus, sanitized > keeps front matter, Windows line endings as it reads 1`] = `[]`;
+
+exports[`the shared corpus, sanitized > keeps front matter, a byte order mark as it reads 1`] = `[]`;
+
+exports[`the shared corpus, sanitized > keeps front matter, a setting that is off as it reads 1`] = `[]`;
+
+exports[`the shared corpus, sanitized > keeps front matter, aliases in a line as it reads 1`] = `[]`;
+
+exports[`the shared corpus, sanitized > keeps front matter, an empty block as it reads 1`] = `[]`;
+
+exports[`the shared corpus, sanitized > keeps front matter, comments, quotes, a block of text, anchors and a flow list as it reads 1`] = `[]`;
+
+exports[`the shared corpus, sanitized > keeps front matter, no front matter as it reads 1`] = `[]`;
+
+exports[`the shared corpus, sanitized > keeps front matter, settings as the notebook wrote them as it reads 1`] = `[]`;
+
+exports[`the shared corpus, sanitized > keeps front matter, settings typed by hand as it reads 1`] = `[]`;
+
+exports[`the shared corpus, sanitized > keeps front matter, values YAML reads as other types as it reads 1`] = `[]`;
+
+exports[`the shared corpus, sanitized > keeps hashtags and a block reference as it reads 1`] = `[]`;
+
+exports[`the shared corpus, sanitized > keeps headings, one with an id and a class as it reads 1`] = `[]`;
+
+exports[`the shared corpus, sanitized > keeps indented with tabs as it reads 1`] = `[]`;
+
+exports[`the shared corpus, sanitized > keeps line breaks as it reads 1`] = `[]`;
+
+exports[`the shared corpus, sanitized > keeps links, images and bare addresses as it reads 1`] = `[]`;
+
+exports[`the shared corpus, sanitized > keeps lists and task lists as it reads 1`] = `[]`;
+
+exports[`the shared corpus, sanitized > keeps math as it reads 1`] = `[]`;
+
+exports[`the shared corpus, sanitized > keeps quotes and a rule as it reads 1`] = `[]`;
+
+exports[`the shared corpus, sanitized > keeps slides and a page break as it reads 1`] = `
+[
+  "section[lineno]",
+]
+`;
+
+exports[`the shared corpus, sanitized > keeps slides with presentation settings as it reads 1`] = `
+[
+  "section[lineno]",
+]
+`;
+
+exports[`the shared corpus, sanitized > keeps widgets as it reads 1`] = `[]`;
+
+exports[`the shared corpus, sanitized > keeps wiki links as it reads 1`] = `
+[
+  "a[note]",
+]
+`;

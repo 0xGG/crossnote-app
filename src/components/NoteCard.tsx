@@ -372,7 +372,7 @@ export default function NoteCard(props: Props) {
                     style={{ fontWeight: "bold" }}
                     color={"textPrimary"}
                   >
-                    {reference.parentToken.map[0] + 1}:
+                    {reference.lines[0] + 1}:
                   </Typography>
                 </Box>
                 <ReferencePreview
@@ -395,7 +395,7 @@ export default function NoteCard(props: Props) {
                   }}
                 >
                   <Typography style={{ color: theme.palette.text.secondary }}>
-                    {reference.parentToken.content}
+                    {reference.context}
                   </Typography>
                 </ReferencePreview>
               </Box>

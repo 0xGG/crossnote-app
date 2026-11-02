@@ -1,4 +1,3 @@
-import { renderPreview } from "@0xgg/echomd/preview";
 import {
   Box,
   Divider,
@@ -35,8 +34,9 @@ import { useTranslation } from "react-i18next";
 import { CrossnoteContainer } from "../containers/crossnote";
 import { SettingsContainer } from "../containers/settings";
 import { Note } from "../lib/note";
+import { mountPreview } from "../render";
+import { printPreview } from "../render/print";
 import { setTheme } from "../themes/manager";
-import { printPreview } from "../utilities/preview";
 import { copyToClipboard } from "../utilities/utils";
 import ChangeFilePathDialog from "./ChangeFilePathDialog";
 import { DeleteNoteDialog } from "./DeleteNoteDialog";
@@ -119,25 +119,21 @@ export default function NotePopover(props: Props) {
     };
     crossnoteContainer
       .getNote(note.notebookPath, note.filePath)
-      .then((note) => {
-        const previewIsPresentation = !!note.markdown.match(/^<!--\s*slide/im);
-        renderPreview(tempPreviewElement, note.markdown, previewIsPresentation)
-          .then(() => {
-            printPreview(tempPreviewElement, bannerElement)
-              .then(() => {
-                printDone();
-              })
-              .catch(() => {
-                printDone();
-              });
-          })
-          .catch(() => {
-            printDone();
-          });
+      .then(async (note) => {
+        // Printed as drawn, local images included: the print waits for them.
+        const preview = mountPreview(tempPreviewElement, note.markdown, {
+          note,
+          forPrint: true,
+        });
+        try {
+          await preview.done;
+          await printPreview(tempPreviewElement, bannerElement);
+        } finally {
+          preview.dispose();
+        }
       })
-      .catch(() => {
-        printDone();
-      });
+      .catch(() => {})
+      .then(printDone);
   }, [
     needsToPrint,
     note,

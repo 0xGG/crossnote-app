@@ -1,39 +1,17 @@
-import { printPreview as EchoMDPrintPreview } from "@0xgg/echomd/preview";
 import path from "path-browserify";
 import { globalContainers } from "../containers/global";
 import { Note } from "../lib/note";
-import { resolveNoteImageSrc } from "./image";
-
-export function printPreview(
-  previewElement: HTMLElement,
-  bannerElement?: HTMLElement,
-  timeout = 2000,
-) {
-  return EchoMDPrintPreview(
-    previewElement,
-    bannerElement,
-    ["body"],
-    `
-  .App,
-  .editor-bottom-panel,
-  .drawer,
-  .CodeMirror,
-  .editor-textarea,
-  .editor-toolbar,
-  .notes-panel,
-  .control-panel-wrapper {
-    display: none;
-  }
-`,
-    timeout,
-  );
-}
 
 export function openURL(url: string = "", note: Note) {
   if (!note || !url) {
     return;
   }
-  if (url.match(/https?:\/\//)) {
+  if (/^[a-z][a-z\d+.-]*:/i.test(url) && !/^https?:\/\//i.test(url)) {
+    // Another scheme (javascript:, mailto:, ...) is neither a page to open
+    // nor a note to open or create.
+    return;
+  }
+  if (/^https?:\/\//i.test(url)) {
     // Strict same-origin comparison: a prefix test would also match
     // lookalike hosts such as https://<origin>.evil.example or
     // https://<origin>@attacker.example.
@@ -74,80 +52,5 @@ export function openURL(url: string = "", note: Note) {
       globalContainers.crossnoteContainer.getNotebookAtPath(note.notebookPath),
       decodeURIComponent(filePath),
     );
-  }
-}
-
-export function postprocessPreview(
-  previewElement: HTMLElement,
-  note: Note,
-  isPresentationCallback?: (isPresentation: boolean) => void,
-) {
-  if (!previewElement) {
-    return;
-  }
-  const handleLinksClickEvent = (preview: HTMLElement) => {
-    // Handle link click event
-    const links = preview.getElementsByTagName("A");
-    for (let i = 0; i < links.length; i++) {
-      const link = links[i] as HTMLAnchorElement;
-      link.onclick = (event) => {
-        event.preventDefault();
-        if (link.hasAttribute("data-topic")) {
-          const tag = link.getAttribute("data-topic");
-          if (tag.length) {
-            globalContainers.crossnoteContainer.openNoteAtPath(
-              globalContainers.crossnoteContainer.getNotebookAtPath(
-                note.notebookPath,
-              ),
-              tag,
-            );
-          }
-        } else {
-          openURL(link.getAttribute("href"), note);
-        }
-      };
-    }
-  };
-  const resolveImages = async (preview: HTMLElement) => {
-    const images = preview.getElementsByTagName("IMG");
-    for (let i = 0; i < images.length; i++) {
-      const image = images[i] as HTMLImageElement;
-      const imageSrc = image.getAttribute("src");
-      image.setAttribute(
-        "src",
-        await resolveNoteImageSrc(note, decodeURIComponent(imageSrc)),
-      );
-    }
-  };
-
-  if (
-    previewElement.childElementCount &&
-    previewElement.children[0].tagName.toUpperCase() === "IFRAME"
-  ) {
-    // presentation
-    previewElement.style.maxWidth = "100%";
-    previewElement.style.height = "100%";
-    previewElement.style.overflow = "hidden !important";
-    handleLinksClickEvent(
-      (previewElement.children[0] as HTMLIFrameElement).contentDocument
-        .body as HTMLElement,
-    );
-    resolveImages(
-      (previewElement.children[0] as HTMLIFrameElement).contentDocument
-        .body as HTMLElement,
-    );
-    if (isPresentationCallback) {
-      isPresentationCallback(true);
-    }
-  } else {
-    // normal
-    // previewElement.style.maxWidth = `${EditorPreviewMaxWidth}px`;
-    previewElement.style.height = "100%";
-    previewElement.style.overflow = "hidden !important";
-    handleLinksClickEvent(previewElement);
-    resolveImages(previewElement);
-    if (isPresentationCallback) {
-      isPresentationCallback(false);
-    }
   }
 }

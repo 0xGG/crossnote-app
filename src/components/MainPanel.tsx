@@ -24,6 +24,7 @@ import { pfs } from "../lib/fs";
 import { layoutShowsNotebook } from "../lib/layout";
 import { guardLayoutDrags } from "../lib/layoutDrag";
 import { translateLayoutLabel } from "../lib/layoutLabels";
+import { toReference } from "../lib/reference";
 import { TabNodeComponent, TabNodeConfig } from "../lib/tabNode";
 import { Emoji } from "./EmojiWrapper";
 import GraphView from "./GraphView";
@@ -192,7 +193,7 @@ export function MainPanel() {
               notebook={notebook}
               noteFilePath={config.noteFilePath}
               tabNode={node}
-              reference={config.reference}
+              reference={toReference(config.reference)}
             ></NotePanel>
           );
         }

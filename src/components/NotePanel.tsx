@@ -1,6 +1,6 @@
 import { debounce } from "@0xgg/echomd";
 import { EmojiDefinitions } from "@0xgg/echomd/addon/emoji";
-import { renderPreview, renderTwemoji } from "@0xgg/echomd/preview";
+import { renderTwemoji } from "@0xgg/echomd/preview";
 import {
   Box,
   Button,
@@ -57,12 +57,10 @@ import { isFinishingEnter } from "../lib/keys";
 import { failureMessage, notify } from "../lib/notifications";
 import { Reference } from "../lib/reference";
 import { TabNodeConfig } from "../lib/tabNode";
+import { MountedPreview, mountPreview } from "../render";
 import { setTheme } from "../themes/manager";
 import { resolveNoteImageSrc } from "../utilities/image";
-import {
-  openURL,
-  postprocessPreview as previewPostprocessPreview,
-} from "../utilities/preview";
+import { openURL } from "../utilities/preview";
 import EditImageDialog from "./EditImageDialog";
 import { Emoji } from "./EmojiWrapper";
 import IconPopover from "./IconPopover";
@@ -118,6 +116,11 @@ const codeMirrorSelectCss = {
   background: `#5091DA !important`,
   color: `#fff !important`,
 };
+
+// A note's title, which is its file name, as text in the table of contents'
+// HTML.
+const escapeTitle = (title: string) =>
+  title.replace(/&/g, "&amp;").replace(/</g, "&lt;");
 
 const Row = styled(Box)({
   display: "flex",
@@ -375,6 +378,7 @@ export default function NotePanel(props: Props) {
   const previewElement = useRef<HTMLDivElement>(null);
   const [previewIsPresentation, setPreviewIsPresentation] =
     useState<boolean>(false);
+  const mountedPreview = useRef<MountedPreview>(null);
   const textAreaElement = useRef<HTMLTextAreaElement>(null);
   const [cursorPosition, setCursorPosition] = useState<CursorPosition>({
     line: 0,
@@ -432,11 +436,19 @@ export default function NotePanel(props: Props) {
       });
   }, [noteTitle, note, tabNode, t]);
 
-  const postprocessPreview = useCallback(
-    (previewElement: HTMLElement) => {
-      previewPostprocessPreview(previewElement, note, (flag) => {
-        setPreviewIsPresentation(flag);
-      });
+  const showPreview = useCallback(
+    (text: string) => {
+      const element = previewElement.current;
+      if (!element) {
+        return;
+      }
+      // The preview element is a new one each time the preview shows, so
+      // what was drawn into the last one is disposed of here.
+      mountedPreview.current?.dispose();
+      const preview = mountPreview(element, text, { note });
+      mountedPreview.current = preview;
+      setPreviewIsPresentation(preview.isPresentation);
+      element.scrollTop = 0;
     },
     [note],
   );
@@ -755,15 +767,12 @@ export default function NotePanel(props: Props) {
   // Render Preview
   useEffect(() => {
     if (editorMode === EditorMode.Preview && editor && note && previewElement) {
-      try {
-        renderPreview(previewElement.current, editor.getValue());
-        postprocessPreview(previewElement.current);
-        previewElement.current.scrollTop = 0;
-      } catch (error) {
-        previewElement.current.innerText = String(error);
-      }
+      showPreview(editor.getValue());
+      // Leaving the preview, or the panel going, disposes of the drawing:
+      // images still being read are not written, and a deck's listener goes.
+      return () => mountedPreview.current?.dispose();
     }
-  }, [editorMode, editor, previewElement, note, postprocessPreview, t]);
+  }, [editorMode, editor, previewElement, note, showPreview, t]);
 
   // Check need to highlight reference
   useEffect(() => {
@@ -776,9 +785,13 @@ export default function NotePanel(props: Props) {
           highlightedElements[i].classList.remove("reference-highlight");
         }
 
-        const element = previewElement.current.querySelector(
-          `#` + props.reference.elementId,
-        );
+        // The id comes from the note's text and may not be a valid
+        // selector as it is.
+        const element = props.reference.elementId
+          ? previewElement.current.querySelector(
+              `#${CSS.escape(props.reference.elementId)}`,
+            )
+          : null;
         if (element) {
           element.classList.add("reference-highlight");
           element.scrollIntoView({
@@ -799,7 +812,7 @@ export default function NotePanel(props: Props) {
           };
         }
       } /* else if (editor) { // <= Doesn't work very well
-        const line = (props.reference.parentToken.map || [])[0];
+        const line = props.reference.lines[0];
         console.log("refer line: ", line);
         if (typeof line === "number") {
           const lineText = editor.getLine(line);
@@ -814,7 +827,7 @@ export default function NotePanel(props: Props) {
           );
         }
       }*/ else if (editor) {
-        const lineNo = (props.reference.parentToken.map || [])[0];
+        const lineNo = props.reference.lines[0];
         if (typeof lineNo === "number") {
           editor.setCursor({ line: editor.lastLine(), ch: 0 });
           setTimeout(function () {
@@ -899,14 +912,8 @@ export default function NotePanel(props: Props) {
                 saveFailed.current = true;
               });
           }
-          if (editorMode === EditorMode.Preview && previewElement.current) {
-            try {
-              renderPreview(previewElement.current, editor.getValue());
-              postprocessPreview(previewElement.current);
-              previewElement.current.scrollTop = 0;
-            } catch (error) {
-              previewElement.current.innerText = String(error);
-            }
+          if (editorMode === EditorMode.Preview) {
+            showPreview(editor.getValue());
           }
         }, 300);
       };
@@ -938,15 +945,7 @@ export default function NotePanel(props: Props) {
         editor.off("imageReadyToLoad", loadImage);
       };
     }
-  }, [
-    editor,
-    note,
-    tabNode,
-    editorMode,
-    previewElement,
-    postprocessPreview,
-    t,
-  ]);
+  }, [editor, note, tabNode, editorMode, previewElement, showPreview, t]);
 
   // Command
   useEffect(() => {
@@ -1472,7 +1471,7 @@ export default function NotePanel(props: Props) {
           "</div>";
       });
       newTOC =
-        `<div data-line="0" class="toc-item" style="padding-left: 1em;">${note.title}</div>` +
+        `<div data-line="0" class="toc-item" style="padding-left: 1em;">${escapeTitle(note.title)}</div>` +
         newTOC;
       if (newTOC === lastTOC) return;
       if (tocElement && tocElement.current) {

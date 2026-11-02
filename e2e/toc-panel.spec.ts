@@ -82,3 +82,24 @@ test("hides the divider with the table of contents", async ({ app, page }) => {
   await expect(app.tocPane).toBeVisible();
   await expect(app.tocPane).toHaveCSS("width", "300px");
 });
+
+test("shows a note's title in the table of contents as text", async ({
+  app,
+  page,
+}) => {
+  // A file name is the note's title, and a notebook cloned from elsewhere
+  // can hold names with markup in them.
+  const title = "<img src=x onerror=window.fromTitle=1>Title";
+  await app.noteTitle.fill(title);
+  await app.noteTitle.press("Enter");
+  await expect(app.tab(title)).toBeVisible();
+  // The table of contents is rebuilt as the note changes.
+  await app.modeButton("Edit").click();
+  await app.typeInEditor("# Heading");
+  await expect(app.tocItem("Heading")).toBeVisible();
+
+  await expect(app.tocItem(title)).toBeVisible();
+  // As markup the title would be an image, whose handler runs only once
+  // its picture fails to load; no element is the check that does not wait.
+  await expect(page.locator(".toc-item img")).toHaveCount(0);
+});

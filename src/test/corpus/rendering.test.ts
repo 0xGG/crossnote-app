@@ -1,4 +1,4 @@
-import { renderMarkdown } from "@0xgg/echomd/preview";
+import { renderMarkdown } from "../../render";
 import * as git from "isomorphic-git";
 import { beforeAll, describe, expect, it } from "vitest";
 // The preview's markdown turns :short names: into emoji once this has run,

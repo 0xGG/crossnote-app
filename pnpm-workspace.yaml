@@ -17,7 +17,8 @@ patchedDependencies:
 # a lifted consumer still takes later releases within the floor's major:
 # - dompurify: 2.5.9 was the last 2.x release and the 2026 advisories are only
 #   fixed on the 3.4 line (3.4.17 for the latest ones), so this floor crosses
-#   a major. The one bundled consumer, super-react-gist, calls sanitize() with
+#   a major. The app's own preview depends on it directly, within the floor;
+#   the other bundled consumer, super-react-gist, calls sanitize() with
 #   default options, which 3.x kept unchanged; it declares ^2.3.6 and is
 #   verified by rendering a gist.
 # - sanitize-url 6.0.4 fixes the javascript: scheme bypasses.

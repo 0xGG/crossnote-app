@@ -1,0 +1,32 @@
+import { expect, test } from "./fixtures";
+
+// What the page's Content-Security-Policy (index.html) holds the page to,
+// whatever ends up in it: no base address on another site, and no plugin
+// content.
+test("refuses a base address elsewhere and plugin content", async ({
+  app,
+  page,
+}) => {
+  await app.open();
+  const baseURI = await page.evaluate(() => {
+    const violations: string[] = [];
+    (window as any).violations = violations;
+    document.addEventListener("securitypolicyviolation", (event) =>
+      violations.push(event.effectiveDirective),
+    );
+    const base = document.createElement("base");
+    base.href = "https://example.org/";
+    document.head.appendChild(base);
+    const baseURI = document.baseURI;
+    base.remove();
+    const object = document.createElement("object");
+    object.data = "/favicon.ico";
+    document.body.appendChild(object);
+    return baseURI;
+  });
+  expect(new URL(baseURI).origin).toBe(new URL(page.url()).origin);
+  // The object's violation is reported once it tries to load.
+  await expect
+    .poll(() => page.evaluate(() => (window as any).violations))
+    .toEqual(expect.arrayContaining(["base-uri", "object-src"]));
+});
