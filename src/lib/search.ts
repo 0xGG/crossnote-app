@@ -1,5 +1,18 @@
-import { uslug } from "@0xgg/echomd/preview/heading-id-generator";
 import MiniSearch, { SearchOptions, SearchResult } from "minisearch";
+
+/**
+ * The words a note is searched by: each character outside ASCII on its own,
+ * as CJK has no spaces to split at, and each run of ASCII letters and
+ * digits. Punctuation, the underscore and full-width brackets, colons and
+ * stops split words and are not searched for.
+ */
+export function tokenize(text: string): string[] {
+  return (
+    text
+      .replace(/[.\s!@#$%^&*()\-=_+~`[\]{}\\<>?/|（）【】:：，。]+/g, " ")
+      .match(/([^\x00-\x7F]|\w+)/g) || []
+  );
+}
 
 export interface SearchDoc {
   id: string;
@@ -26,9 +39,7 @@ export default class Search {
           return (document as any)[fieldName];
         }
       },
-      tokenize: (string) => {
-        return uslug(string, " ").match(/([^\x00-\x7F]|\w+)/g) || [];
-      },
+      tokenize,
     });
     this._cache = {};
   }
