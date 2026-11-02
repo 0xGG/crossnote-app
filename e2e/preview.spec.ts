@@ -215,6 +215,87 @@ test("prints a note with its local images and page breaks", async ({
     });
 });
 
+test("colours the preview in the theme chosen in the settings, and the editor's stylesheet with it", async ({
+  app,
+  page,
+}) => {
+  await app.open();
+  await app.openNotes();
+  await app.createNote();
+  const title = await app.noteTitle.inputValue();
+  await app.setEditorText("Some text.\n\n```js\n// a comment\n```\n");
+  await app.modeButton("Preview").click();
+  const comment = app.preview.locator("pre .token.comment");
+  await expect(app.preview).toHaveCSS("color", "rgb(51, 51, 51)");
+  await expect(comment).toHaveCSS("color", "rgb(150, 152, 150)");
+
+  await app.openSettings();
+  await page
+    .getByRole("combobox")
+    .filter({ hasText: /^light$/ })
+    .click();
+  await page.getByRole("option", { name: "one-dark" }).click();
+  await app.selectTab(title);
+  // One Dark's text, and a comment in its code blocks.
+  await expect(app.preview).toHaveCSS("color", "rgb(171, 178, 191)");
+  await expect(comment).toHaveCSS("color", "rgb(92, 99, 112)");
+  await expect(page.locator("#echomd-editor-theme")).toHaveAttribute(
+    "href",
+    /\/editor_themes\/one-dark\.css$/,
+  );
+});
+
+test("prints a note light in a dark theme, and leaves the preview on the page dark", async ({
+  app,
+  page,
+}) => {
+  await page.addInitScript(() => {
+    localStorage.setItem("settings/theme", "dark");
+    // The text's colour and a comment's in code, as a preview shows them.
+    (window as any).colours = (preview: Element) => ({
+      text: getComputedStyle(preview).color,
+      comment: getComputedStyle(preview.querySelector("pre .token.comment")!)
+        .color,
+    });
+  });
+  await app.open();
+  await app.openNotes();
+  await app.createNote();
+  await app.setEditorText("Some text.\n\n```js\n// a comment\n```\n");
+  await app.modeButton("Preview").click();
+  await expect(app.preview.locator("pre .token.comment")).toBeVisible();
+  const dark = await app.preview.evaluate((preview) =>
+    (window as any).colours(preview),
+  );
+  expect(dark).toEqual({
+    text: "rgb(212, 212, 212)",
+    comment: "rgb(117, 113, 94)",
+  });
+  const light = { text: "rgb(51, 51, 51)", comment: "rgb(150, 152, 150)" };
+
+  await page.evaluate(() => {
+    window.print = () => {
+      const printed = Array.from(document.body.children)
+        .filter((element) => element.classList.contains("preview"))
+        .pop()!;
+      const shown = document.querySelector('[data-testid="note-preview"]')!;
+      (window as any).printed = {
+        printed: (window as any).colours(printed),
+        shown: (window as any).colours(shown),
+      };
+    };
+  });
+  await page.getByRole("button", { name: "Note menu" }).click();
+  await page.getByRole("button", { name: "Print" }).click();
+  // Printed in the light theme's colours, while the preview on the page
+  // keeps the dark's.
+  await expect
+    .poll(() => page.evaluate(() => (window as any).printed), {
+      timeout: 15000,
+    })
+    .toEqual({ printed: light, shown: dark });
+});
+
 test("draws a kanban card's description through the same sanitizing", async ({
   app,
 }) => {
