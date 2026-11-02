@@ -3,9 +3,9 @@ import YAML from "yamljs";
 // Three of vega-embed's actions open another window with a handle on this
 // one: "Open in Vega Editor" opens the editor's site to send it the chart,
 // and a chart's usermeta.embedOptions.editorUrl can name another site to
-// open instead; "View Source" and "View Compiled Vega" write the chart, with
-// the chart's own sourceHeader and sourceFooter as HTML around it, into a
-// window of this site. vega-embed reads usermeta.embedOptions over the
+// open instead; "View Source" and "View Compiled Vega" write the chart's
+// source, unescaped, with its own sourceHeader and sourceFooter around it,
+// as HTML into a window of this site. vega-embed reads usermeta.embedOptions over the
 // options it is given, so these actions are turned off there, and the
 // options that would feed them go; the chart's other options stay.
 export function withoutWindowActions(

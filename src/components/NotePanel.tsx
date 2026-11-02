@@ -768,7 +768,8 @@ export default function NotePanel(props: Props) {
   useEffect(() => {
     if (editorMode === EditorMode.Preview && editor && note && previewElement) {
       showPreview(editor.getValue());
-      // Leaving the preview, or the panel going, stops what is still to come.
+      // Leaving the preview, or the panel going, disposes of the drawing:
+      // images still being read are not written, and a deck's listener goes.
       return () => mountedPreview.current?.dispose();
     }
   }, [editorMode, editor, previewElement, note, showPreview, t]);

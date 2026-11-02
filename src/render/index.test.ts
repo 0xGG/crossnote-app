@@ -3,6 +3,7 @@ import { Note } from "../lib/note";
 import { resolveNoteImageSrc } from "../utilities/image";
 import * as echomd from "./echomd";
 import { mountPreview } from "./index";
+import { revealTimeout } from "./presentation";
 
 vi.mock("../utilities/image", () => ({ resolveNoteImageSrc: vi.fn() }));
 vi.mock("./echomd", async (importOriginal) => {
@@ -24,6 +25,8 @@ function pendingImage() {
 afterEach(() => {
   vi.mocked(resolveNoteImageSrc).mockReset();
   document.body.innerHTML = "";
+  // A test that times out on fake timers does not reach its own finally.
+  vi.useRealTimers();
 });
 
 describe("mountPreview", () => {
@@ -43,13 +46,16 @@ describe("mountPreview", () => {
     expect(element.querySelector("a").textContent).toBe("Other");
   });
 
-  it("keeps a wiki link to a note whose name starts like a scheme", async () => {
+  it("keeps a wiki link to a note whose name holds a colon", async () => {
     const element = document.createElement("div");
-    await mountPreview(element, "[[Todo: groceries]] and [[README]]\n", {
-      note: null,
-    }).done;
-    const [todo, readme] = Array.from(element.querySelectorAll("a"));
+    await mountPreview(
+      element,
+      "[[Todo: groceries]], [[Book review: Dune]] and [[README]]\n",
+      { note: null },
+    ).done;
+    const [todo, review, readme] = Array.from(element.querySelectorAll("a"));
     expect(todo.getAttribute("href")).toBe("./Todo: groceries");
+    expect(review.getAttribute("href")).toBe("./Book review: Dune");
     expect(readme.getAttribute("href")).toBe("README");
   });
 
@@ -118,6 +124,9 @@ describe("mountPreview", () => {
 
   it("shows why a deck's frame cannot be put in, and rejects", async () => {
     // An element outside a page gives its frame no window to write into.
+    vi.useFakeTimers();
+    const added = vi.spyOn(window, "addEventListener");
+    const removed = vi.spyOn(window, "removeEventListener");
     const element = document.createElement("div");
     const preview = mountPreview(element, "<!-- slide -->\n\n# One\n", {
       note: null,
@@ -125,6 +134,13 @@ describe("mountPreview", () => {
     expect(preview.isPresentation).toBe(true);
     await expect(preview.done).rejects.toThrow(TypeError);
     expect(element.textContent).toMatch(/^TypeError/);
+    // Nothing is left waiting for the frame: neither the listener for
+    // reveal.js nor the time it is given.
+    const listener = added.mock.calls.find(([type]) => type === "message")[1];
+    expect(removed).toHaveBeenCalledWith("message", listener);
+    expect(vi.getTimerCount()).toBe(0);
+    added.mockRestore();
+    removed.mockRestore();
   });
 });
 
@@ -189,6 +205,23 @@ describe("mountPreview with slides", () => {
     removed.mockRestore();
   });
 
+  it("gives up on a deck reveal.js says nothing about, and stops listening", async () => {
+    // Scripts do not run in these frames, so reveal.js never answers, as
+    // when its request neither answers nor fails.
+    vi.useFakeTimers();
+    try {
+      const { preview, listener, removed } = mountDeck();
+      vi.advanceTimersByTime(revealTimeout - 1);
+      expect(removed).not.toHaveBeenCalledWith("message", listener);
+      vi.advanceTimersByTime(1);
+      await expect(preview.done).rejects.toThrow("reveal.js did not load");
+      expect(removed).toHaveBeenCalledWith("message", listener);
+      removed.mockRestore();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it("writes nothing of the note into the frame that could run", () => {
     // The frame is the app's own origin and runs scripts, so what the note
     // brings in must not: raw HTML, a block made to look like wavedrom's, an
@@ -217,6 +250,9 @@ describe("mountPreview with slides", () => {
         "",
         '<ol type="WaveDrom"><li>window.fromList=1</li></ol>',
         "",
+        // Written with &#61; for "=", which echomd's own filter would catch.
+        `<section data-background-video='https://a.invalid/x.mp4" onerror&#61;"window.fromVideo&#61;1'></section>`,
+        "",
         "```wavedrom",
         '{ "signal": [] }',
         "```",
@@ -227,6 +263,7 @@ describe("mountPreview with slides", () => {
     const frame = element.querySelector("iframe").contentDocument;
     expect(frame.querySelector("[onerror]")).toBeNull();
     expect(frame.querySelector("[data-notes]")).toBeNull();
+    expect(frame.querySelector("[data-background-video]")).toBeNull();
     expect(frame.querySelector('[type="WaveDrom" i]')).toBeNull();
     const themes = Array.from(frame.querySelectorAll("link")).map((link) =>
       link.getAttribute("href"),

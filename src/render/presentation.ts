@@ -62,7 +62,8 @@ const scriptValue = (value: unknown) =>
 // The frame draws each wavedrom block from its source read as JSON, as the
 // preview does. WaveDrom.ProcessAll is not used: it evaluates the text of
 // every element whose type is WaveDrom as script, and a note's HTML can
-// make such an element.
+// make such an element. What RenderWaveForm draws is not sanitized, here as
+// in the preview (see sanitize.ts).
 const wavedromInit = `<script>
   (function () {
     var blocks = document.querySelectorAll(".vickeymd-fence.wavedrom");
@@ -99,11 +100,15 @@ function revealSettings(frontMatter: Record<string, any>) {
 
 let frames = 0;
 
+// How long a deck waits for reveal.js to say it is ready or could not load.
+export const revealTimeout = 30000;
+
 // Draws a deck of slides into a frame inside element, with reveal.js and the
 // slides' own mermaid and wavedrom. Settles once reveal.js says the deck is
 // ready, or that it could not load, and the frame's content has been
-// finished like a preview's, or once it is disposed of; cleanups gets what
-// dispose has to undo.
+// finished like a preview's, or once it is disposed of; fails when reveal.js
+// has said neither within revealTimeout. cleanups gets what dispose has to
+// undo.
 export function mountPresentation(
   element: HTMLElement,
   html: string,
@@ -144,7 +149,8 @@ export function mountPresentation(
   element.innerHTML = "";
   element.appendChild(iframe);
 
-  const settled = new Promise<void>((resolve) => {
+  let stopWaiting = () => {};
+  const settled = new Promise<void>((resolve, reject) => {
     const onMessage = (event: MessageEvent) => {
       if (
         event.source === iframe.contentWindow &&
@@ -156,18 +162,36 @@ export function mountPresentation(
         resolve();
       }
     };
-    const stopListening = () =>
+    // reveal.js comes from a CDN: a request that neither answers nor fails
+    // would leave the deck, and printing it, waiting for good.
+    const timer = window.setTimeout(() => {
+      stopListening();
+      reject(new Error("reveal.js did not load in time"));
+    }, revealTimeout);
+    const stopListening = () => {
       window.removeEventListener("message", onMessage);
+      window.clearTimeout(timer);
+    };
     window.addEventListener("message", onMessage);
+    stopWaiting = stopListening;
     options.cleanups.push(() => {
       stopListening();
       resolve();
     });
   });
 
-  const doc = iframe.contentWindow.document;
-  doc.open();
-  doc.write(`<html>
+  // A frame that cannot be written into, as one outside a page has no
+  // window, leaves nothing waiting for it.
+  try {
+    writeDeck(iframe.contentWindow.document);
+  } catch (error) {
+    stopWaiting();
+    throw error;
+  }
+
+  function writeDeck(doc: Document) {
+    doc.open();
+    doc.write(`<html>
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -196,7 +220,8 @@ ${diagramInits}
   }
 </script>
 </html>`);
-  doc.close();
+    doc.close();
+  }
 
   return settled.then(() => {
     // The frame's body exists only now: its head waits for scripts to load

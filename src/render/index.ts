@@ -58,7 +58,9 @@ export interface MountedPreview {
    * later are not waited for. Rejects when the note cannot be drawn into
    * the element at all (the markdown stage, or putting its HTML or the
    * deck's frame in, fails), and the element then shows why; a block that
-   * fails shows its error in its place instead.
+   * fails shows its error in its place instead. A deck's also rejects when
+   * reveal.js has said neither that it is ready nor that it could not load
+   * within 30 seconds; the frame stays as it is.
    */
   done: Promise<void>;
   /**
