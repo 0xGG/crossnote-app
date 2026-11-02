@@ -113,6 +113,7 @@ export const zhCN = {
     "error/failed-to-create-note": "新建笔记失败",
     "error/failed-to-delete-note": "删除笔记失败",
     "error/failed-to-save-note-settings": "保存笔记设置失败",
+    "error/notes-not-saved": "没有执行：{{notes}} 没能保存",
 
     // Success
     "success/notebook-uploaded": "笔记本已上传",
@@ -254,6 +255,10 @@ export const zhCN = {
     // Dialogs
     "delete-note-dialog/title": "你确定要删除这个笔记？",
     "delete-note-dialog/subtitle": "你无法撤销此操作。",
+    "unsaved-note-dialog/title": "不保存就关闭这篇笔记吗？",
+    "unsaved-note-dialog/subtitle":
+      "这篇笔记没能保存。关闭标签后，上次保存以来输入的内容会丢失。",
+    "unsaved-note-dialog/close-anyway": "仍然关闭",
     "add-notebook-dialog/disclaimer":
       "所有笔记本的数据将只会被保存于浏览器本地以供离线使用。我们不会上传任何你的笔记本数据到我们的服务器。",
     "edit-image-dialog/title": "编辑图片",

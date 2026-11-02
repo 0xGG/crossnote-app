@@ -114,6 +114,8 @@ export const enUS = {
     "error/failed-to-create-note": "Failed to create the note",
     "error/failed-to-delete-note": "Failed to delete the note",
     "error/failed-to-save-note-settings": "Failed to save the note's settings",
+    "error/notes-not-saved":
+      "Nothing was done, as {{notes}} could not be saved",
 
     // Success
     "success/notebook-uploaded": "Notebook uploaded",
@@ -257,6 +259,10 @@ export const enUS = {
     // Dialogs
     "delete-note-dialog/title": "Are you sure to delete this note?",
     "delete-note-dialog/subtitle": "You can't undo this action.",
+    "unsaved-note-dialog/title": "Close this note without saving?",
+    "unsaved-note-dialog/subtitle":
+      "It could not be saved. Closing the tab loses what was typed since it was last saved.",
+    "unsaved-note-dialog/close-anyway": "Close anyway",
     "add-notebook-dialog/disclaimer":
       "Notebook data will only be stored locally in browser for offline uses. We won't upload any notebook data to our server.",
     "edit-image-dialog/title": "Edit the image",

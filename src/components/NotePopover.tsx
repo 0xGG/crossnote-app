@@ -108,8 +108,14 @@ export default function NotePopover(props: Props) {
       tempPreviewElement.remove();
       setNeedsToPrint(false);
     };
+    // Drawn from the notebook, so what was typed a moment ago is written
+    // first; a note that cannot be written is said and not printed.
     crossnoteContainer
-      .getNote(note.notebookPath, note.filePath)
+      .saveOpenNotes({
+        notebookPath: note.notebookPath,
+        filePath: note.filePath,
+      })
+      .then(() => crossnoteContainer.getNote(note.notebookPath, note.filePath))
       .then(async (note) => {
         // Printed as drawn, local images included: the print waits for them.
         const preview = mountPreview(tempPreviewElement, note.markdown, {

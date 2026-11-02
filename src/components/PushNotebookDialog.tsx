@@ -17,6 +17,7 @@ import { useTranslation } from "react-i18next";
 import { CrossnoteContainer } from "../containers/crossnote";
 import { SettingsContainer } from "../containers/settings";
 import { Notebook } from "../lib/notebook";
+import { NotesNotSavedError } from "../lib/noteSaver";
 import { notify } from "../lib/notifications";
 
 const SpacedTextField = styled(TextField)(({ theme }) => ({
@@ -76,6 +77,10 @@ export default function PushNotebookDialog(props: Props) {
       .catch((error: Error) => {
         console.log(error);
         close();
+        // Already said: which note could not be saved first.
+        if (error instanceof NotesNotSavedError) {
+          return;
+        }
         notify({
           severity: "error",
           message: error.message.match(/^error\//)

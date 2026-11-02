@@ -8,6 +8,7 @@ import {
 } from "@mui/material";
 import { ThemeProvider, darken, styled } from "@mui/material/styles";
 import {
+  type Action,
   Actions,
   type IKeyMap,
   type ILayoutApi,
@@ -22,10 +23,12 @@ import { CrossnoteContainer } from "../containers/crossnote";
 import { SettingsContainer } from "../containers/settings";
 import { pfs } from "../lib/fs";
 import { layoutShowsNotebook } from "../lib/layout";
+import { saverOfTab } from "../lib/noteSaver";
 import { guardLayoutDrags } from "../lib/layoutDrag";
 import { translateLayoutLabel } from "../lib/layoutLabels";
 import { toReference } from "../lib/reference";
 import { TabNodeComponent, TabNodeConfig } from "../lib/tabNode";
+import { CloseUnsavedNoteDialog } from "./CloseUnsavedNoteDialog";
 import { Emoji } from "./EmojiWrapper";
 import GraphView from "./GraphView";
 import { Loading } from "./Loading";
@@ -148,6 +151,38 @@ export function MainPanel() {
   const settingsContainer = SettingsContainer.useContainer();
   const { t, i18n } = useTranslation();
 
+  // A note's tab closes once what its editor holds is written. When that
+  // cannot be, the tab stays and the user is asked. Tabs the app closes
+  // itself, as their note or notebook goes, do not come through here.
+  const [unsavedTab, setUnsavedTab] = useState<string>(null);
+  const closeTab = useCallback(
+    (tabId: string) => {
+      const model = crossnoteContainer.layoutModel;
+      if (model?.getNodeById(tabId)) {
+        model.doAction(Actions.deleteTab(tabId));
+      }
+    },
+    [crossnoteContainer.layoutModel],
+  );
+  const onAction = useCallback(
+    (action: Action) => {
+      if (action.type !== Actions.DELETE_TAB) {
+        return action;
+      }
+      const tabId: string = action.data.node;
+      const saver = saverOfTab(tabId);
+      if (!saver?.pending) {
+        return action;
+      }
+      saver.flush().then(
+        () => closeTab(tabId),
+        () => setUnsavedTab(tabId),
+      );
+      return undefined;
+    },
+    [closeTab],
+  );
+
   const factory = useCallback(
     (node: TabNode) => {
       if (!crossnoteContainer.initialized || !ready) {
@@ -263,6 +298,7 @@ export function MainPanel() {
         ref={layout}
         model={crossnoteContainer.layoutModel}
         factory={factory}
+        onAction={onAction}
         onModelChange={(model, action) => {
           crossnoteContainer.saveCurrentLayoutModel();
           // The factory reads a tab's config, but the layout calls it again
@@ -295,6 +331,15 @@ export function MainPanel() {
         keyMap={layoutKeyMap}
         i18nTranslator={i18nTranslator}
       ></Layout>
+      <CloseUnsavedNoteDialog
+        open={unsavedTab !== null}
+        onCancel={() => setUnsavedTab(null)}
+        onDiscard={() => {
+          saverOfTab(unsavedTab)?.discard();
+          closeTab(unsavedTab);
+          setUnsavedTab(null);
+        }}
+      ></CloseUnsavedNoteDialog>
       {/*
         The dialog here is useful for file system access API requestPermission from user interaction.
       */}

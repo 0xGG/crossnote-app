@@ -15,6 +15,7 @@ import {
 } from "../lib/event";
 import { getNoteIcon, Notes } from "../lib/note";
 import { Notebook } from "../lib/notebook";
+import { NotesNotSavedError } from "../lib/noteSaver";
 import { notify } from "../lib/notifications";
 import ConfigureNotebookDialog from "./ConfigureNotebookDialog";
 import { Emoji } from "./EmojiWrapper";
@@ -497,6 +498,10 @@ export default function NotebookTreeView(props: Props) {
                       })
                       .catch((error) => {
                         console.log(error);
+                        // Already said: which note could not be saved first.
+                        if (error instanceof NotesNotSavedError) {
+                          return;
+                        }
                         notify({
                           severity: "error",
                           message: t("error/failed-to-download-notebook"),

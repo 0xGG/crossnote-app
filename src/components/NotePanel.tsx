@@ -488,8 +488,10 @@ export default function NotePanel(props: Props) {
   // What the saver calls on, as of the latest render.
   const saverCalls = useRef<{
     write: (location: NoteLocation, text: string) => Promise<void>;
+    written: () => void;
     failed: (error: unknown) => void;
   }>(null);
+  const [writtenCount, setWrittenCount] = useState<number>(0);
   saverCalls.current = {
     write: (location, text) =>
       crossnoteContainer.updateNoteMarkdown(
@@ -498,6 +500,12 @@ export default function NotePanel(props: Props) {
         location.filePath,
         text,
       ),
+    // The status bar's git status follows what is written.
+    written: () => {
+      if (isMounted.current) {
+        setWrittenCount((count) => count + 1);
+      }
+    },
     // Said once; what was typed stays in the editor for the next change to
     // save, and the page asks before it is left with it.
     failed: (error) => {
@@ -513,18 +521,32 @@ export default function NotePanel(props: Props) {
     if (!saver) {
       return;
     }
-    // Asks while the write started last has failed and none has gone
-    // through since.
+    // Asks while anything typed may not be written yet: a write started as
+    // the page reloads seldom lands before it is gone (none of five in a
+    // measurement; four or five of five as the page is closed).
     const ask = (event: BeforeUnloadEvent) => {
-      if (saver.error !== null) {
+      if (saver.pending) {
         event.preventDefault();
         // Older browsers ask only when this is set.
         event.returnValue = "";
       }
     };
+    // Written as the page is hidden as well, in case it is not coming back.
+    const hide = () => {
+      saver.flush().catch(() => {});
+    };
+    const hidden = () => {
+      if (document.visibilityState === "hidden") {
+        hide();
+      }
+    };
     window.addEventListener("beforeunload", ask);
+    window.addEventListener("pagehide", hide);
+    document.addEventListener("visibilitychange", hidden);
     return () => {
       window.removeEventListener("beforeunload", ask);
+      window.removeEventListener("pagehide", hide);
+      document.removeEventListener("visibilitychange", hidden);
       saver.dispose();
     };
   }, [saver]);
@@ -757,6 +779,7 @@ export default function NotePanel(props: Props) {
         location: { notebookPath: note.notebookPath, filePath: note.filePath },
         text: handle.text,
         write: (location, text) => saverCalls.current.write(location, text),
+        onWritten: () => saverCalls.current.written(),
         onFailed: (error) => saverCalls.current.failed(error),
       });
       saver.took(note.markdown || "");
@@ -1506,17 +1529,27 @@ export default function NotePanel(props: Props) {
     };
   }, [editor, editorMode, previewElement, tocElement, note, tocEnabled]);
 
-  // Git Status
+  // Git Status, read again as the note changes and once what is typed has
+  // been written. A reading that git cannot give (as it may while a reset
+  // rewrites the index) leaves the status as it was, and one that comes back
+  // after a newer one was asked for is dropped.
   useEffect(() => {
     if (!note || !isMounted.current) {
       return;
     }
+    let latest = true;
     crossnoteContainer
       .getStatus(note.notebookPath, note.filePath)
       .then((status) => {
-        setGitStatus(status);
-      });
-  }, [note, crossnoteContainer.getStatus]);
+        if (latest) {
+          setGitStatus(status);
+        }
+      })
+      .catch(() => {});
+    return () => {
+      latest = false;
+    };
+  }, [note, writtenCount, crossnoteContainer.getStatus]);
 
   // Set theme
   useEffect(() => {

@@ -6,7 +6,9 @@ import { afterEach, beforeEach, expect, it } from "vitest";
 import "../i18n/i18n";
 import type Crossnote from "../lib/crossnote";
 import { pfs } from "../lib/fs";
+import type { Note } from "../lib/note";
 import { Notebook } from "../lib/notebook";
+import { NoteSaver, NotesNotSavedError } from "../lib/noteSaver";
 import { getNotificationState, resetNotifications } from "../lib/notifications";
 import { CrossnoteContainer } from "./crossnote";
 
@@ -40,8 +42,12 @@ afterEach(() => {
 });
 
 // A notebook whose notes have been read, on the browser file system the app
-// uses. Every test has one of its own.
-async function notebookAt(dir: string): Promise<Notebook> {
+// uses. Every test has one of its own. git stands in for what the container
+// asks git to do, where a test has it do something.
+async function notebookAt(
+  dir: string,
+  git: Partial<Crossnote> = {},
+): Promise<Notebook> {
   await pfs.mkdirp(dir);
   const notebook = new Notebook();
   notebook._id = dir;
@@ -53,7 +59,7 @@ async function notebookAt(dir: string): Promise<Notebook> {
     dir: "./",
     includeSubdirectories: true,
   });
-  const listed = { listNotebooks: async () => [notebook] };
+  const listed = { listNotebooks: async () => [notebook], ...git };
   await act(async () =>
     root.render(
       <CrossnoteContainer.Provider
@@ -188,4 +194,197 @@ it("saves nothing for a note that is gone, and does not fail", async () => {
     }),
   ).resolves.toBe(false);
   expect(await pfs.exists(`${notebook.dir}/moved.md`)).toBe(false);
+});
+
+it("says when a note a link asks for cannot be created, and opens none", async () => {
+  const notebook = await notebookAt("/notebooks/link-new");
+  notebook.writeNote = async () => {
+    throw new Error("Disk full");
+  };
+  resetNotifications();
+
+  // What clicking [[New]] in one of its notes does.
+  await crossnote.openNoteAtPath(notebook, "New");
+  expect(getNotificationState().current?.message).toBe(
+    "Failed to create the note: Disk full",
+  );
+  expect(notebook.notes["New.md"]).toBeUndefined();
+  expect(await pfs.exists(`${notebook.dir}/New.md`)).toBe(false);
+});
+
+// What git, and reading a local folder again, are asked to do, in order, and
+// a saver with text typed into a note of the notebook that is yet to be
+// written.
+async function notebookWithTyping(dir: string, write: () => Promise<void>) {
+  const done: string[] = [];
+  const notebook = await notebookAt(dir, {
+    pullNotebook: async () => {
+      done.push("pull");
+    },
+    pushNotebook: async () => {
+      done.push("push");
+    },
+    hardResetNotebook: async () => {
+      done.push("reset");
+    },
+  } as unknown as Partial<Crossnote>);
+  // Restoring a note is for notebooks git keeps.
+  notebook.isLocal = false;
+  notebook.checkoutNote = async (note) => {
+    done.push("restore");
+    return note;
+  };
+  const refreshNotes = notebook.refreshNotes.bind(notebook);
+  notebook.refreshNotes = async (args) => {
+    done.push("read");
+    return refreshNotes(args);
+  };
+  const saver = new NoteSaver({
+    tabId: `tab-${dir}`,
+    location: { notebookPath: dir, filePath: "a.md" },
+    text: () => "Typed",
+    write: async () => {
+      done.push("write");
+      await write();
+      done.push("written");
+    },
+  });
+  const operations: [string, () => Promise<unknown>][] = [
+    ["pull", () => crossnote.pullNotebook({ notebook })],
+    [
+      "push",
+      () =>
+        crossnote.pushNotebook({
+          notebook,
+          authorName: "Test",
+          authorEmail: "",
+          username: "",
+          password: "",
+          message: "",
+        }),
+    ],
+    ["reset", () => crossnote.hardResetNotebook(notebook)],
+    ["read", () => crossnote.refreshNotebook(notebook)],
+    [
+      "restore",
+      () =>
+        crossnote.checkoutNote({
+          notebookPath: dir,
+          filePath: "a.md",
+        } as Note),
+    ],
+  ];
+  return { done, saver, operations };
+}
+
+it("writes what is typed into a notebook's notes before git, or reading the folder again, changes them", async () => {
+  const { done, saver, operations } = await notebookWithTyping(
+    "/notebooks/git-written",
+    async () => {},
+  );
+  try {
+    for (const [name, run] of operations) {
+      done.length = 0;
+      saver.changed();
+      await act(async () => {
+        await run();
+      });
+      expect(done.slice(0, 2), name).toEqual(["write", "written"]);
+      expect(done, name).toContain(name);
+    }
+  } finally {
+    saver.discard();
+  }
+});
+
+it("does none of it, and says which note, when what is typed into it cannot be written first", async () => {
+  const { done, saver, operations } = await notebookWithTyping(
+    "/notebooks/git-not-written",
+    async () => {
+      throw new Error("Disk full");
+    },
+  );
+  try {
+    for (const [name, run] of operations) {
+      done.length = 0;
+      saver.changed();
+      resetNotifications();
+      let failure: unknown = null;
+      await act(async () => {
+        await run().catch((error) => {
+          failure = error;
+        });
+      });
+      // Pulling and pushing fail for their callers, which say nothing more;
+      // none of the others' callers acts on a failure.
+      if (name === "pull" || name === "push") {
+        expect(failure, name).toBeInstanceOf(NotesNotSavedError);
+      } else {
+        expect(failure, name).toBeNull();
+      }
+      expect(done, name).toEqual(["write"]);
+      expect(getNotificationState().current?.message, name).toBe(
+        "Nothing was done, as a.md could not be saved: Disk full",
+      );
+    }
+  } finally {
+    saver.discard();
+  }
+});
+
+// Typed while git resets the notebook: the reset is done, so what is typed
+// is written, or fails, and the notebook is then read again either way.
+it("reads the notebook again after a hard reset once what is typed during it has been written, or could not be", async () => {
+  const done: string[] = [];
+  let saver: NoteSaver = null;
+  let reset = false;
+  const notebook = await notebookAt("/notebooks/git-reset", {
+    hardResetNotebook: async () => {
+      done.push("reset");
+      reset = true;
+      saver.changed();
+    },
+  } as unknown as Partial<Crossnote>);
+  const refreshNotes = notebook.refreshNotes.bind(notebook);
+  notebook.refreshNotes = async (args) => {
+    done.push("read");
+    return refreshNotes(args);
+  };
+  saver = new NoteSaver({
+    tabId: "tab-git-reset",
+    location: { notebookPath: notebook.dir, filePath: "a.md" },
+    text: () => "Typed",
+    write: async () => {
+      done.push("write");
+      // Settles a step later, as a real write does.
+      await Promise.resolve();
+      if (reset) {
+        done.push("failed");
+        throw new Error("Disk full");
+      }
+      done.push("written");
+    },
+    // Only a flush writes what is typed here, never the timer.
+    delay: 60_000,
+  });
+  try {
+    saver.changed();
+    resetNotifications();
+    await act(async () => {
+      await crossnote.hardResetNotebook(notebook);
+    });
+    // The typing during the reset is written (here it fails) before the
+    // notebook is read again, and the reset is not said to be undone.
+    expect(done).toEqual([
+      "write",
+      "written",
+      "reset",
+      "write",
+      "failed",
+      "read",
+    ]);
+    expect(getNotificationState().current?.message).toBeUndefined();
+  } finally {
+    saver.discard();
+  }
 });
