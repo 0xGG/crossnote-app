@@ -1,5 +1,5 @@
 import { EmojiDefinitions } from "@0xgg/echomd/addon/emoji";
-import { renderTwemoji } from "@0xgg/echomd/preview";
+import { renderTwemoji } from "../render/emoji";
 import {
   Box,
   Button,

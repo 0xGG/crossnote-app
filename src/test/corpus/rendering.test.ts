@@ -1,9 +1,6 @@
 import { renderMarkdown } from "../../render";
 import * as git from "isomorphic-git";
 import { beforeAll, describe, expect, it } from "vitest";
-// The preview's markdown turns :short names: into emoji once this has run,
-// as the app has it.
-import "../../editor/emoji";
 import { fs, pfs } from "../../lib/fs";
 import { Notebook } from "../../lib/notebook";
 import {

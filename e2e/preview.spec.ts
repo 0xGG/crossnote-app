@@ -34,6 +34,26 @@ test("draws a deck of slides with a diagram in it", async ({ app }) => {
     .toBe(true);
 });
 
+test("draws a note's emoji from the sheet", async ({ app, page }) => {
+  await app.open();
+  await app.openNotes();
+  await app.createNote();
+  await app.setEditorText("Hello :smile: there\n");
+  await app.modeButton("Preview").click();
+
+  // The short name becomes the emoji, drawn as an image named by the emoji
+  // whose background is its place in the sheet.
+  const emoji = app.preview.locator(".emoji");
+  await expect(emoji).toHaveCount(1);
+  await expect(emoji).toHaveJSProperty("tagName", "IMG");
+  await expect(emoji).toHaveAttribute("alt", "😄");
+  await expect(emoji).toHaveCSS(
+    "background-image",
+    `url("${new URL("/assets/emoji/twitter/64.png", page.url()).href}")`,
+  );
+  await expect(emoji).toHaveCSS("background-position", "53.5714% 69.6429%");
+});
+
 // Stands in for reveal.js in the slides' frame: initialize says the deck is
 // ready, as reveal.js does once it has laid the slides out.
 const revealStub = `window.Reveal = (function () {

@@ -87,7 +87,7 @@ export default defineConfig({
     sequence: { shuffle: true },
     // emoji-mart loaded as the bundle loads it, as ES modules: it unpacks its
     // emoji data in place as it loads, and only that way is the data it
-    // unpacks the one the app reads (src/editor/emoji.ts).
+    // unpacks the one the app reads (src/render/emoji.ts).
     alias: [
       { find: /^emoji-mart$/, replacement: "emoji-mart/dist-es/index.js" },
     ],

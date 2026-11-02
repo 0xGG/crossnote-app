@@ -1,5 +1,7 @@
 import { Note } from "../lib/note";
 import * as echomd from "./echomd";
+// Enables the markdown stage's emoji.
+import "./emoji";
 import { mountPresentation } from "./presentation";
 import { finishPreview } from "./preview";
 import { sanitizeHTML } from "./sanitize";
