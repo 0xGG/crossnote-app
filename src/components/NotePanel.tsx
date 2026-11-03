@@ -28,7 +28,13 @@ import {
   TableOfContents,
 } from "mdi-material-ui";
 import path from "path-browserify";
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from "react";
 import { useTranslation } from "react-i18next";
 import { CrossnoteContainer } from "../containers/crossnote";
 import { SettingsContainer } from "../containers/settings";
@@ -485,37 +491,40 @@ export default function NotePanel(props: Props) {
   // Writes what is typed to the notebook and knows which texts the notebook
   // brings back are the editor's own; made with the editor.
   const [saver, setSaver] = useState<NoteSaver>(null);
-  // What the saver calls on, as of the latest render.
+  // What the saver calls on, as of the latest commit. Set in a layout effect,
+  // which runs before the effect that makes the saver.
   const saverCalls = useRef<{
     write: (location: NoteLocation, text: string) => Promise<void>;
     written: () => void;
     failed: (error: unknown) => void;
   }>(null);
   const [writtenCount, setWrittenCount] = useState<number>(0);
-  saverCalls.current = {
-    write: (location, text) =>
-      crossnoteContainer.updateNoteMarkdown(
-        tabNode,
-        location.notebookPath,
-        location.filePath,
-        text,
-      ),
-    // The status bar's git status follows what is written.
-    written: () => {
-      if (isMounted.current) {
-        setWrittenCount((count) => count + 1);
-      }
-    },
-    // Said once; what was typed stays in the editor for the next change to
-    // save, and the page asks before it is left with it.
-    failed: (error) => {
-      notify({
-        severity: "error",
-        message: failureMessage(t("error/failed-to-save-note"), error),
-        duration: 5000,
-      });
-    },
-  };
+  useLayoutEffect(() => {
+    saverCalls.current = {
+      write: (location, text) =>
+        crossnoteContainer.updateNoteMarkdown(
+          tabNode,
+          location.notebookPath,
+          location.filePath,
+          text,
+        ),
+      // The status bar's git status follows what is written.
+      written: () => {
+        if (isMounted.current) {
+          setWrittenCount((count) => count + 1);
+        }
+      },
+      // Said once; what was typed stays in the editor for the next change to
+      // save, and the page asks before it is left with it.
+      failed: (error) => {
+        notify({
+          severity: "error",
+          message: failureMessage(t("error/failed-to-save-note"), error),
+          duration: 5000,
+        });
+      },
+    };
+  });
 
   useEffect(() => {
     if (!saver) {
