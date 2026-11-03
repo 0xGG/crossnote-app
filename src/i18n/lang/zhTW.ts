@@ -113,6 +113,7 @@ export const zhTW = {
     "error/failed-to-create-note": "新增筆記失敗",
     "error/failed-to-delete-note": "刪除筆記失敗",
     "error/failed-to-save-note-settings": "儲存筆記設定失敗",
+    "error/notes-not-saved": "沒有執行：{{notes}} 沒能儲存",
 
     // Success
     "success/notebook-uploaded": "筆記本已上傳",
@@ -254,6 +255,10 @@ export const zhTW = {
     // Dialogs
     "delete-note-dialog/title": "你確定要刪除這個筆記?",
     "delete-note-dialog/subtitle": "你無法撤銷此操作。",
+    "unsaved-note-dialog/title": "不儲存就關閉這篇筆記嗎？",
+    "unsaved-note-dialog/subtitle":
+      "這篇筆記沒能儲存。關閉分頁後，上次儲存以來輸入的內容會遺失。",
+    "unsaved-note-dialog/close-anyway": "仍然關閉",
     "add-notebook-dialog/disclaimer":
       "所有筆記本的數據將只會被保存於瀏覽器本地以供離線使用。我們不會上傳任何你的筆記本數據到我們的伺服器。",
     "edit-image-dialog/title": "編輯圖片",

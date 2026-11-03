@@ -116,6 +116,8 @@ export const jaJP = {
     "error/failed-to-create-note": "ノートを作成できませんでした",
     "error/failed-to-delete-note": "ノートを削除できませんでした",
     "error/failed-to-save-note-settings": "ノートの設定を保存できませんでした",
+    "error/notes-not-saved":
+      "{{notes}} を保存できなかったため、実行しませんでした",
 
     // Success
     "success/notebook-uploaded": "ノートブックがアップロードされます",
@@ -262,6 +264,10 @@ export const jaJP = {
     // Dialogs
     "delete-note-dialog/title": "このノートを削除しますか?",
     "delete-note-dialog/subtitle": "この操作を取り消すことはできません。",
+    "unsaved-note-dialog/title": "保存せずにこのノートを閉じますか？",
+    "unsaved-note-dialog/subtitle":
+      "このノートは保存できませんでした。タブを閉じると、最後に保存してから入力した内容は失われます。",
+    "unsaved-note-dialog/close-anyway": "それでも閉じる",
     "add-notebook-dialog/disclaimer":
       "すべてのノートブックデータは、ブラウザにローカルに保存されます。ノートブックデータを当社のサーバーにアップロードすることはありません。",
     "edit-image-dialog/title": "画像を編集する",

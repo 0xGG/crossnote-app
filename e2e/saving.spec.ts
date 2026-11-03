@@ -1,4 +1,5 @@
 import { type Page } from "@playwright/test";
+import type { EditorHost } from "./crossnote";
 import { expect, test } from "./fixtures";
 
 // Writes the browser's storage refuses, as a full disk does, have to show,
@@ -118,4 +119,147 @@ test("leaves the page without asking once the note is saved", async ({
   await page.close({ runBeforeUnload: true });
   await expect.poll(() => page.isClosed()).toBe(true);
   expect(asked).toBe(false);
+});
+
+test("asks before the page is left while what was just typed is still to be saved", async ({
+  app,
+  page,
+}) => {
+  await app.open();
+  await app.openNotes();
+  await app.createNote();
+  // Nothing waits to be written before the typing.
+  await expect.poll(() => asksBeforeLeaving(page)).toBe(false);
+  // Typed and asked in the same task: the save is still a moment away.
+  const asked = await app.editor.evaluate((element) => {
+    (element as EditorHost).editorHandle.insert("Just typed");
+    const leaving = new Event("beforeunload", { cancelable: true });
+    window.dispatchEvent(leaving);
+    return leaving.defaultPrevented;
+  });
+  expect(asked).toBe(true);
+  await expect.poll(() => asksBeforeLeaving(page)).toBe(false);
+});
+
+test("asks before a note it could not save is closed, and keeps it open unless told otherwise", async ({
+  app,
+  page,
+}) => {
+  await app.open();
+  await app.openNotes();
+  await app.createNote();
+  await expect(app.noteTitle).not.toHaveValue("");
+  const title = await app.noteTitle.inputValue();
+  const file = `${await app.notebookFolder()}/${title}.md`;
+  const tab = app.tab(title);
+  await app.typeInEditor("First");
+  await expect.poll(() => app.storedText(file)).toContain("First");
+  await app.refuseWrites();
+  await page.keyboard.type(" second");
+  await expect(page.getByRole("alert")).toContainText(
+    "Failed to save the note",
+  );
+
+  const close = tab.locator(".flexlayout__tab_button_trailing");
+  const dialog = page.getByRole("dialog");
+  await close.click();
+  await expect(dialog).toContainText("Close this note without saving?");
+  await dialog.getByRole("button", { name: "Cancel" }).click();
+  await expect(dialog).toBeHidden();
+  await expect(tab).toBeVisible();
+  expect(await app.editorText()).toBe("First second");
+
+  // Closing anyway lets go of what was not saved: with the storage taking
+  // writes again, nothing writes it as the tab goes.
+  await close.click();
+  await expect(dialog).toBeVisible();
+  await app.refuseWrites(false);
+  await dialog.getByRole("button", { name: "Close anyway" }).click();
+  await expect(tab).toBeHidden();
+  await expect(dialog).toBeHidden();
+  // A later note written and stored: anything the closed one wrote as it
+  // went would be in by then.
+  await app.selectTab("Drafts");
+  await app.createNote();
+  await expect(app.noteTitle).not.toHaveValue("");
+  const later = `${await app.notebookFolder()}/${await app.noteTitle.inputValue()}.md`;
+  await app.typeInEditor("Later");
+  await expect.poll(() => app.storedText(later)).toContain("Later");
+  const stored = await app.storedText(file);
+  expect(stored).toContain("First");
+  expect(stored).not.toContain("second");
+});
+
+test("saves what was just typed into a note as its tab is closed", async ({
+  app,
+  page,
+}) => {
+  await app.open();
+  await app.openNotes();
+  await app.createNote();
+  await expect(app.noteTitle).not.toHaveValue("");
+  const title = await app.noteTitle.inputValue();
+  const file = `${await app.notebookFolder()}/${title}.md`;
+  const close = await app
+    .tab(title)
+    .locator(".flexlayout__tab_button_trailing")
+    .elementHandle();
+  // Typed and closed in the same task: the save is still a moment away.
+  await app.editor.evaluate((element, close) => {
+    (element as EditorHost).editorHandle.insert("Typed");
+    (close as HTMLElement).click();
+  }, close);
+  await expect(app.tab(title)).toBeHidden();
+  await expect(page.getByRole("dialog")).toBeHidden();
+  await expect.poll(() => app.storedText(file)).toContain("Typed");
+});
+
+test("prints what was typed into the note a moment before", async ({
+  app,
+  page,
+}) => {
+  await app.open();
+  await app.openNotes();
+  await app.createNote();
+  await app.setEditorText("Saved before.\n");
+  await page.evaluate(() => {
+    window.print = () => {
+      const printed = Array.from(document.body.children)
+        .filter((element) => element.classList.contains("preview"))
+        .pop()!;
+      (window as any).printed = printed.textContent;
+    };
+  });
+  await page.getByRole("button", { name: "Note menu" }).click();
+  const print = await page
+    .getByRole("button", { name: "Print" })
+    .elementHandle();
+  // Typed and printed in the same task: the save is still a moment away.
+  await app.editor.evaluate((element, print) => {
+    (element as EditorHost).editorHandle.insert("Typed last. ");
+    (print as HTMLElement).click();
+  }, print);
+  await expect
+    .poll(() => page.evaluate(() => (window as any).printed), {
+      timeout: 15000,
+    })
+    .toContain("Typed last.");
+});
+
+test("shows the note's git status as it is once what was typed is saved", async ({
+  app,
+  page,
+}) => {
+  await app.open();
+  await app.openNotes();
+  await app.noteCards.filter({ hasText: "README" }).click();
+  // The first-run README was written without being staged; a save stages
+  // what it writes.
+  const status = page.locator(".editor-bottom-panel");
+  await expect(status).toContainText("README.md - *added");
+  // README opens in the preview, its editor out of sight.
+  await app.editor.evaluate((element) =>
+    (element as EditorHost).editorHandle.insert("Changed. "),
+  );
+  await expect(status).toContainText("README.md - added");
 });

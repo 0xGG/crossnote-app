@@ -48,7 +48,11 @@ export type EditorHost = HTMLElement & { editorHandle: EditorHandle };
 
 // Hangs a handle on a CodeMirror 5 editor and names its root element by test
 // id: "note-editor" for a note's editor, "card-editor" for a kanban card's.
-export function attachEditorHandle(editor: Editor, testId: string) {
+// Returns the handle, for the app's own use of the same few things.
+export function attachEditorHandle(
+  editor: Editor,
+  testId: string,
+): EditorHandle {
   const root = editor.getWrapperElement() as EditorHost;
   root.dataset.testid = testId;
   root.editorHandle = {
@@ -84,4 +88,5 @@ export function attachEditorHandle(editor: Editor, testId: string) {
       return [];
     },
   };
+  return root.editorHandle;
 }

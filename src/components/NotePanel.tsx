@@ -28,7 +28,13 @@ import {
   TableOfContents,
 } from "mdi-material-ui";
 import path from "path-browserify";
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from "react";
 import { useTranslation } from "react-i18next";
 import { CrossnoteContainer } from "../containers/crossnote";
 import { SettingsContainer } from "../containers/settings";
@@ -51,7 +57,8 @@ import {
 } from "../lib/event";
 import { readNoteText } from "../lib/frontMatter";
 import { Note } from "../lib/note";
-import { Notebook, sameNoteText } from "../lib/notebook";
+import { Notebook } from "../lib/notebook";
+import { NoteLocation, NoteSaver } from "../lib/noteSaver";
 import { isFinishingEnter } from "../lib/keys";
 import { failureMessage, notify } from "../lib/notifications";
 import { Reference } from "../lib/reference";
@@ -481,41 +488,90 @@ export default function NotePanel(props: Props) {
     );
   }, [note, crossnoteContainer.layoutModel, tabNode]);
 
-  // The note's text as this editor last had it from the notebook or gave it
-  // to it, and the text of the save it started last. The notebook, read
-  // again, brings back one of them whenever nothing has changed the note
-  // meanwhile, if less settings typed into its front matter once it has read
-  // its notes again from disk; putting that in the editor would drop
-  // whatever was typed since, before it is saved, and send the caret to the
-  // start. Once the text has been replaced from elsewhere, that save no
-  // longer stands for what the editor holds, and the notebook bringing it
-  // back is a change like any other.
-  const synced = useRef<string>(null);
-  const saving = useRef<string>(null);
+  // Writes what is typed to the notebook and knows which texts the notebook
+  // brings back are the editor's own; made with the editor.
+  const [saver, setSaver] = useState<NoteSaver>(null);
+  // What the saver calls on, as of the latest commit. Set in a layout effect,
+  // which runs before the effect that makes the saver.
+  const saverCalls = useRef<{
+    write: (location: NoteLocation, text: string) => Promise<void>;
+    written: () => void;
+    failed: (error: unknown) => void;
+  }>(null);
+  const [writtenCount, setWrittenCount] = useState<number>(0);
+  useLayoutEffect(() => {
+    saverCalls.current = {
+      write: (location, text) =>
+        crossnoteContainer.updateNoteMarkdown(
+          tabNode,
+          location.notebookPath,
+          location.filePath,
+          text,
+        ),
+      // The status bar's git status follows what is written.
+      written: () => {
+        if (isMounted.current) {
+          setWrittenCount((count) => count + 1);
+        }
+      },
+      // Said once; what was typed stays in the editor for the next change to
+      // save, and the page asks before it is left with it.
+      failed: (error) => {
+        notify({
+          severity: "error",
+          message: failureMessage(t("error/failed-to-save-note"), error),
+          duration: 5000,
+        });
+      },
+    };
+  });
 
-  // Whether the last save failed, until one goes through. Said once; what
-  // was typed stays in the editor for the next change to save, and the page
-  // asks before it is left with it. Only the save started last tells: one
-  // started before it can settle after it.
-  const saveFailed = useRef<boolean>(false);
-  const lastSave = useRef<number>(0);
   useEffect(() => {
+    if (!saver) {
+      return;
+    }
+    // Asks while anything typed may not be written yet: a write started as
+    // the page reloads seldom lands before it is gone (none of five in a
+    // measurement; four or five of five as the page is closed).
     const ask = (event: BeforeUnloadEvent) => {
-      if (saveFailed.current) {
+      if (saver.pending) {
         event.preventDefault();
         // Older browsers ask only when this is set.
         event.returnValue = "";
       }
     };
+    // Written as the page is hidden as well, in case it is not coming back.
+    const hide = () => {
+      saver.flush().catch(() => {});
+    };
+    const hidden = () => {
+      if (document.visibilityState === "hidden") {
+        hide();
+      }
+    };
     window.addEventListener("beforeunload", ask);
+    window.addEventListener("pagehide", hide);
+    document.addEventListener("visibilitychange", hidden);
     return () => {
       window.removeEventListener("beforeunload", ask);
+      window.removeEventListener("pagehide", hide);
+      document.removeEventListener("visibilitychange", hidden);
+      saver.dispose();
     };
-  }, []);
+  }, [saver]);
+
+  useEffect(() => {
+    if (saver && note) {
+      saver.moveTo({
+        notebookPath: note.notebookPath,
+        filePath: note.filePath,
+      });
+    }
+  }, [saver, note]);
 
   // Emitter
   useEffect(() => {
-    if (!globalEmitter || !tabNode || !editor || !note) {
+    if (!globalEmitter || !tabNode || !editor || !note || !saver) {
       return;
     }
 
@@ -531,7 +587,7 @@ export default function NotePanel(props: Props) {
         );
       };
       if (data.tabId === tabNode.getId()) {
-        synced.current = data.markdown;
+        saver.wrote(data.markdown);
         return updateNoteIcon();
       }
       if (
@@ -542,8 +598,7 @@ export default function NotePanel(props: Props) {
         if (editor.getValue() !== data.markdown) {
           editor.setValue(data.markdown);
         }
-        synced.current = data.markdown;
-        saving.current = null;
+        saver.took(data.markdown);
         return updateNoteIcon();
       }
     };
@@ -582,18 +637,13 @@ export default function NotePanel(props: Props) {
         );
         if (newNote) {
           setNote(newNote);
-          if (
-            [synced.current, saving.current].some(
-              (text) => text !== null && sameNoteText(newNote.markdown, text),
-            )
-          ) {
+          if (saver.isOwn(newNote.markdown)) {
             return;
           }
           if (editor.getValue() !== newNote.markdown) {
             editor.setValue(newNote.markdown);
           }
-          synced.current = newNote.markdown;
-          saving.current = null;
+          saver.took(newNote.markdown);
         } else {
           crossnoteContainer.closeTabNode(tabNode.getId());
         }
@@ -634,6 +684,7 @@ export default function NotePanel(props: Props) {
     tabNode,
     editor,
     note,
+    saver,
     crossnoteContainer.layoutModel,
     crossnoteContainer.closeTabNode,
     crossnoteContainer.getNote,
@@ -730,9 +781,18 @@ export default function NotePanel(props: Props) {
       );
       editor.setOption("lineNumbers", false);
       editor.setOption("foldGutter", false);
-      attachEditorHandle(editor, "note-editor");
+      const handle = attachEditorHandle(editor, "note-editor");
       editor.setValue(note.markdown || "");
-      synced.current = note.markdown || "";
+      const saver = new NoteSaver({
+        tabId: props.tabNode.getId(),
+        location: { notebookPath: note.notebookPath, filePath: note.filePath },
+        text: handle.text,
+        write: (location, text) => saverCalls.current.write(location, text),
+        onWritten: () => saverCalls.current.written(),
+        onFailed: (error) => saverCalls.current.failed(error),
+      });
+      saver.took(note.markdown || "");
+      setSaver(saver);
       editor.on("cursorActivity", (instance) => {
         const cursor = instance.getCursor();
         if (cursor) {
@@ -869,53 +929,21 @@ export default function NotePanel(props: Props) {
 
   // Change markdown
   useEffect(() => {
-    if (editor && note && tabNode) {
+    if (editor && note && tabNode && saver) {
       const changesHandler = () => {
         if (editor.getOption("readOnly")) {
           // This line is necessary for decryption...
           return;
         }
-        const markdown = editor.getValue();
         // Not compared with the note the tab opened with, which saving does
         // not replace: a change back to that text would never be saved.
         // updateNoteMarkdown skips text the notebook already holds.
-        setTimeout(() => {
-          if (markdown === editor.getValue()) {
-            saving.current = markdown;
-            const save = ++lastSave.current;
-            crossnoteContainer
-              .updateNoteMarkdown(
-                tabNode,
-                note.notebookPath,
-                note.filePath,
-                markdown,
-              )
-              .then(() => {
-                if (save === lastSave.current) {
-                  saveFailed.current = false;
-                }
-              })
-              .catch((error) => {
-                if (save !== lastSave.current) {
-                  return;
-                }
-                if (!saveFailed.current) {
-                  notify({
-                    severity: "error",
-                    message: failureMessage(
-                      t("error/failed-to-save-note"),
-                      error,
-                    ),
-                    duration: 5000,
-                  });
-                }
-                saveFailed.current = true;
-              });
-          }
-          if (editorMode === EditorMode.Preview) {
+        saver.changed();
+        if (editorMode === EditorMode.Preview) {
+          setTimeout(() => {
             showPreview(editor.getValue());
-          }
-        }, 300);
+          }, 300);
+        }
       };
       editor.on("changes", changesHandler);
 
@@ -945,7 +973,7 @@ export default function NotePanel(props: Props) {
         editor.off("imageReadyToLoad", loadImage);
       };
     }
-  }, [editor, note, tabNode, editorMode, previewElement, showPreview, t]);
+  }, [editor, note, tabNode, saver, editorMode, previewElement, showPreview]);
 
   // Command
   useEffect(() => {
@@ -1510,17 +1538,27 @@ export default function NotePanel(props: Props) {
     };
   }, [editor, editorMode, previewElement, tocElement, note, tocEnabled]);
 
-  // Git Status
+  // Git Status, read again as the note changes and once what is typed has
+  // been written. A reading that git cannot give (as it may while a reset
+  // rewrites the index) leaves the status as it was, and one that comes back
+  // after a newer one was asked for is dropped.
   useEffect(() => {
     if (!note || !isMounted.current) {
       return;
     }
+    let latest = true;
     crossnoteContainer
       .getStatus(note.notebookPath, note.filePath)
       .then((status) => {
-        setGitStatus(status);
-      });
-  }, [note, crossnoteContainer.getStatus]);
+        if (latest) {
+          setGitStatus(status);
+        }
+      })
+      .catch(() => {});
+    return () => {
+      latest = false;
+    };
+  }, [note, writtenCount, crossnoteContainer.getStatus]);
 
   // Set theme
   useEffect(() => {

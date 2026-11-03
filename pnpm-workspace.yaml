@@ -22,9 +22,10 @@ patchedDependencies:
 #   default options, which 3.x kept unchanged; it declares ^2.3.6 and is
 #   verified by rendering a gist.
 # - sanitize-url 6.0.4 fixes the javascript: scheme bypasses.
-# - d3-color 3.1.0 fixes the ReDoS in the color-string parser. The direct d3 6
-#   dependency (GraphView) resolves d3-color 2.0.0, inside the affected range;
-#   3.x is API-compatible and already in the tree through mermaid's d3 7.
+# - d3-color 3.1.0 fixes the ReDoS in the color-string parser. The d3 5 that
+#   mermaid's dagre-d3 brings, and the d3 1.x modules under it, ask for
+#   d3-color 1.x, inside the affected range; 3.x is API-compatible and is what
+#   the direct d3 7 dependency (GraphView) and mermaid's own d3 7 use.
 # What these do NOT cover: the mermaid that renders at runtime is the vendored
 # copy under public/deps (loaded via a script tag - echomd's powerpack reads
 # the window.mermaid global and the npm mermaid package is never bundled), so
@@ -33,3 +34,11 @@ overrides:
   "dompurify@<3.4.17": ^3.4.17
   "@braintree/sanitize-url@<6.0.4": ^6.0.4
   "d3-color@<3.1.0": ^3.1.0
+# pnpm 12 records the pnpm that packageManager pins in a YAML document of its
+# own at the head of pnpm-lock.yaml, and GitHub's dependency graph reads only
+# that first document: it sees pnpm and none of the app's dependencies, so
+# Dependabot alerts close without anything being updated (issue 15904 in
+# dependabot/dependabot-core). "ignore" keeps the pin out of the lockfile. It
+# also has pnpm run as installed instead of switching to the pinned version.
+# Remove it once the dependency graph reads both documents.
+pmOnFail: ignore

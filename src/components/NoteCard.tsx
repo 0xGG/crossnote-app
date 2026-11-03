@@ -1,7 +1,6 @@
 import { Box, Chip, IconButton, Tooltip, Typography } from "@mui/material";
 import { darken, styled, useTheme } from "@mui/material/styles";
-import { formatRelative } from "date-fns";
-import { formatDistanceStrict } from "date-fns/esm";
+import { formatDistanceStrict, formatRelative } from "date-fns";
 import { TabNode } from "flexlayout-react";
 import { DotsVertical, Pin } from "mdi-material-ui";
 import React, { useCallback, useEffect, useState } from "react";
