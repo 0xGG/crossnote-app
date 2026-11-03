@@ -34,3 +34,11 @@ overrides:
   "dompurify@<3.4.17": ^3.4.17
   "@braintree/sanitize-url@<6.0.4": ^6.0.4
   "d3-color@<3.1.0": ^3.1.0
+# pnpm 12 records the pnpm that packageManager pins in a YAML document of its
+# own at the head of pnpm-lock.yaml, and GitHub's dependency graph reads only
+# that first document: it sees pnpm and none of the app's dependencies, so
+# Dependabot alerts close without anything being updated (issue 15904 in
+# dependabot/dependabot-core). "ignore" keeps the pin out of the lockfile. It
+# also has pnpm run as installed instead of switching to the pinned version.
+# Remove it once the dependency graph reads both documents.
+pmOnFail: ignore
