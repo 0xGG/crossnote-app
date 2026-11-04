@@ -84,15 +84,16 @@ describe("the shared corpus", () => {
           .map(({ elementId }) => elementId),
       );
       // The preview draws the note's text as the editor has it, and marks a
-      // reference by finding the element with its id. The same link at the
-      // same place in two blocks shares one, and the first is marked.
+      // reference by finding the element with its id: each id once.
       const preview = document.createElement("div");
       preview.innerHTML = renderMarkdown(note.markdown).html;
       const drawn = Array.from(
         preview.querySelectorAll("[id]"),
         ({ id }) => id,
       );
-      expect(ids.filter((id) => !drawn.includes(id))).toEqual([]);
+      expect(
+        ids.filter((id) => drawn.filter((other) => other === id).length !== 1),
+      ).toEqual([]);
     });
   });
 

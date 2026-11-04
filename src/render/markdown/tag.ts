@@ -67,8 +67,9 @@ export default function tag(md: MarkdownIt) {
     if (!content) {
       return '<a class="tag tag-error" data-error="Invalid tag">loading...</a>';
     }
-    return `<a id="${id}" class="tag tag-topic" data-topic="${content}">${
-      content.match(/\s/) ? "#" + content + "#" : "#" + content
-    }</a>`;
+    const escape = md.utils.escapeHtml;
+    return `<a id="${escape(String(id))}" class="tag tag-topic" data-topic="${escape(content)}">${escape(
+      content.match(/\s/) ? "#" + content + "#" : "#" + content,
+    )}</a>`;
   };
 }

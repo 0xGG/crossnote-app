@@ -229,3 +229,30 @@ test("goes to the line of a reference kept by an older version", async ({
   await app.modeButton("Edit").click();
   await expect.poll(() => app.caret()).toEqual({ line: 4, ch: 0 });
 });
+
+test("marks the second of two links the same at the same place in their blocks", async ({
+  app,
+}) => {
+  await app.open();
+  await app.openNotes();
+  const folder = await app.notebookFolder();
+  const readme = `${folder}/README.md`;
+  await app.storedText(readme, "[[README]] first.\n\n[[README]] second.\n");
+  // The second gets "-2" after the id the two used to share; kept as the
+  // app keeps a reference now.
+  await app.seedLayout(
+    readmeTabAt(folder, {
+      elementId: "wikilink-README-0-2",
+      text: "README",
+      link: "README.md",
+      lines: [2, 3],
+      context: "[[README]] second.",
+    }),
+  );
+  await app.page.reload();
+  await app.waitUntilReady();
+  await expect(app.highlightedReference).toHaveText("README");
+  await expect(app.highlightedReference.locator("xpath=..")).toHaveText(
+    "README second.",
+  );
+});

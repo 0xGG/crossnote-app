@@ -49,6 +49,7 @@ export default function wikilink(md: MarkdownIt) {
       linkText = splits[0].trim();
       wikiLink = splits[0].trim();
     }
-    return `<a id="${id}" href="${wikiLink}" data-wikilink-url=${wikiLink}>${linkText}</a>`;
+    const escape = md.utils.escapeHtml;
+    return `<a id="${escape(String(id))}" href="${escape(wikiLink)}" data-wikilink-url="${escape(wikiLink)}">${escape(linkText)}</a>`;
   };
 }

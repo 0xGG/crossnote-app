@@ -43,6 +43,7 @@ export default function blockReference(md: MarkdownIt) {
     const token = tokens[idx];
     const content = token.content || "";
     const id = token.attrGet("id") || "";
-    return `<span class="block-reference" id="${id}">${content}</span>`;
+    const escape = md.utils.escapeHtml;
+    return `<span class="block-reference" id="${escape(String(id))}">${escape(content)}</span>`;
   };
 }

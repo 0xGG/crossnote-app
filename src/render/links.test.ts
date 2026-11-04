@@ -62,17 +62,32 @@ describe("findLinks", () => {
     expect(renderMarkdown(text).html).not.toContain("Hidden");
   });
 
-  it("names a link as the preview does, the same one at the same place in two blocks alike", () => {
-    // Telling these apart waits for the notebook and the preview to read
-    // the same text.
-    const text = "[[a]] one\n\n[[a]] two\n";
-    expect(findLinks(text).map(({ elementId }) => elementId)).toEqual([
-      "wikilink-a-0",
-      "wikilink-a-0",
-    ]);
-    expect(ids(renderMarkdown(text).html)).toEqual([
-      "wikilink-a-0",
-      "wikilink-a-0",
-    ]);
+  it("names a link as the preview does, the same one at the same place in two blocks apart", () => {
+    const text = "[[a]] one\n\n[[a]] two\n\n- [[a]] three\n";
+    const expected = ["wikilink-a-0", "wikilink-a-0-2", "wikilink-a-0-3"];
+    expect(findLinks(text).map(({ elementId }) => elementId)).toEqual(expected);
+    expect(ids(renderMarkdown(text).html)).toEqual(expected);
+  });
+
+  it("escapes what a link writes into the preview's attributes", () => {
+    const element = document.createElement("div");
+    element.innerHTML = renderMarkdown('[[My "note"|words]] #a"b\n').html;
+    const [wikilink, tag] = Array.from(element.querySelectorAll("a"));
+    expect(wikilink.getAttribute("data-wikilink-url")).toBe('My "note"');
+    expect(wikilink.textContent).toBe("words");
+    expect(tag.getAttribute("data-topic")).toBe('a"b');
+  });
+
+  it("escapes a block reference's name", () => {
+    const element = document.createElement("div");
+    element.innerHTML = renderMarkdown('Text ^x"y\n').html;
+    expect(element.querySelector(".block-reference")?.id).toBe('x"y');
+  });
+
+  it("names the same markdown link at the same place in two blocks apart", () => {
+    const text = "[x](a.md) one\n\n[x](a.md) two\n";
+    const expected = ["link-a-md-0", "link-a-md-0-2"];
+    expect(findLinks(text).map(({ elementId }) => elementId)).toEqual(expected);
+    expect(ids(renderMarkdown(text).html)).toEqual(expected);
   });
 });

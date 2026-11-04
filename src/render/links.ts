@@ -7,9 +7,10 @@ import { md } from "./markdown";
 // What a note links to, as the markdown stage reads it: the notebook keeps
 // these as the note's references, and the preview marks one by the id of
 // the element it draws it as. The markdown stage names that element by the
-// link and where it stands in its block (wikilink-README-4), so the same
-// link at the same place in two blocks shares an id, and the preview marks
-// the first. Both read the same tokens of the same text.
+// link and where it stands in its block (wikilink-README-4), the same link
+// at the same place in a later block with "-2", "-3" after it
+// (./markdown/linkId.ts); the notebook and the preview read the same tokens
+// of the same text, so the ids are the same on both sides.
 
 export interface NoteLink {
   /** A wiki link, a hashtag, or a markdown link followed by its words. */
