@@ -1,5 +1,5 @@
 import MarkdownIt from "markdown-it";
-import emoji from "markdown-it-emoji";
+import { full as emoji } from "markdown-it-emoji";
 import footnote from "markdown-it-footnote";
 import ins from "markdown-it-ins";
 import mark from "markdown-it-mark";

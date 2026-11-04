@@ -1,4 +1,4 @@
-import type Token from "markdown-it/lib/token";
+import type { Token } from "markdown-it";
 // The emoji the markdown stage turns :short names: into change how it names
 // links and what follows a link, so they are set up here as for the preview.
 import "./emoji";
@@ -59,7 +59,7 @@ export function findLinks(text: string): NoteLink[] {
     }
     const token = tokens[i];
     const found = {
-      elementId: token.attrGet("id") || "",
+      elementId: String(token.attrGet("id") || ""),
       lines: [parent?.map?.[0] ?? 0, parent?.map?.[1] ?? 0] as [number, number],
       context: parent?.content ?? "",
     };
@@ -77,7 +77,7 @@ export function findLinks(text: string): NoteLink[] {
     } else if (token.attrs?.[0]?.[0] === "href") {
       links.push({
         kind: "link",
-        target: token.attrs[0][1],
+        target: String(token.attrs[0][1]),
         text: tokens[i + 1].content.trim(),
         ...found,
       });

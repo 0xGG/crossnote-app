@@ -1,4 +1,4 @@
-import type MarkdownIt from "markdown-it";
+import type { MarkdownIt } from "markdown-it";
 import forInline from "markdown-it-for-inline";
 import { uslug } from "./slug";
 

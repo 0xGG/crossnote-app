@@ -1,4 +1,4 @@
-import type MarkdownIt from "markdown-it";
+import type { MarkdownIt } from "markdown-it";
 import { uslug } from "./slug";
 
 // [[note]] and [[note|words]]: a link to another note of the notebook.

@@ -1,5 +1,5 @@
 import katex from "katex";
-import type MarkdownIt from "markdown-it";
+import type { MarkdownIt } from "markdown-it";
 
 // $inline$ and $$display$$ math, drawn by KaTeX as the note renders; an
 // expression KaTeX cannot read shows its error in its place.
@@ -56,6 +56,6 @@ export default function math(md: MarkdownIt) {
   md.renderer.rules.math = (tokens, idx) =>
     parseMath(
       tokens[idx] ? tokens[idx].content : null,
-      tokens[idx].meta.displayMode,
+      (tokens[idx].meta as { displayMode: boolean }).displayMode,
     );
 }

@@ -1,4 +1,4 @@
-import type MarkdownIt from "markdown-it";
+import type { MarkdownIt } from "markdown-it";
 import { uslug } from "./slug";
 
 // What ends a tag ("-" and "_" do not).

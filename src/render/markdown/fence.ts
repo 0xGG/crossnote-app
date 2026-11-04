@@ -1,4 +1,4 @@
-import type MarkdownIt from "markdown-it";
+import type { MarkdownIt } from "markdown-it";
 import { normalizeBlockInfo, parseBlockInfo } from "./blockInfo";
 
 const TAGS_TO_REPLACE: { [char: string]: string } = {

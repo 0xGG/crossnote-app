@@ -1,4 +1,4 @@
-import type MarkdownIt from "markdown-it";
+import type { MarkdownIt } from "markdown-it";
 
 // echomd's check of the HTML a note writes: false for markup it would not
 // draw (scripts, styles, frames, event handlers, javascript: addresses),
