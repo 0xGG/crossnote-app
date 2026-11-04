@@ -1,13 +1,13 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { Note } from "../lib/note";
 import { resolveNoteImageSrc } from "../utilities/image";
-import * as echomd from "./echomd";
 import { mountPreview } from "./index";
+import * as markdown from "./markdown";
 import { revealTimeout } from "./presentation";
 
 vi.mock("../utilities/image", () => ({ resolveNoteImageSrc: vi.fn() }));
-vi.mock("./echomd", async (importOriginal) => {
-  const original = await importOriginal<typeof import("./echomd")>();
+vi.mock("./markdown", async (importOriginal) => {
+  const original = await importOriginal<typeof import("./markdown")>();
   return { ...original, renderMarkdown: vi.fn(original.renderMarkdown) };
 });
 
@@ -112,7 +112,7 @@ describe("mountPreview", () => {
   });
 
   it("shows why the markdown stage failed, and rejects", async () => {
-    vi.mocked(echomd.renderMarkdown).mockImplementationOnce(() => {
+    vi.mocked(markdown.renderMarkdown).mockImplementationOnce(() => {
       throw new Error("cannot read");
     });
     const element = document.createElement("div");

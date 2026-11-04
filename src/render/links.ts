@@ -1,18 +1,19 @@
 import type Token from "markdown-it/lib/token";
-import * as echomd from "./echomd";
 // The emoji the markdown stage turns :short names: into change how it names
 // links and what follows a link, so they are set up here as for the preview.
 import "./emoji";
+import { md } from "./markdown";
 
 // What a note links to, as the markdown stage reads it: the notebook keeps
 // these as the note's references, and the preview marks one by the id of
 // the element it draws it as. The markdown stage names that element by the
 // link and where it stands in its block (wikilink-README-4), so the same
 // link at the same place in two blocks shares an id, and the preview marks
-// the first. Telling them apart waits for a markdown stage of the app's
-// own: the notebook reads a note's text as it is, the preview after echomd
-// has taken its front matter out and turned its task boxes into HTML, so
-// counting links in the note's order would not count the same links.
+// the first. Telling them apart needs both to read the same tokens: the
+// notebook reads a note's text as it is, the preview after
+// ./markdown/transform.ts has taken its front matter out and turned its task
+// boxes into HTML, so counting links in the note's order would not count the
+// same links.
 
 export interface NoteLink {
   /** A wiki link, a hashtag, or a markdown link followed by its words. */
@@ -52,7 +53,7 @@ const isLink = (tokens: Token[], i: number) =>
 /** The links in a note's text, in the order it has them. */
 export function findLinks(text: string): NoteLink[] {
   const links: NoteLink[] = [];
-  eachToken(echomd.md.parse(text, {}), (tokens, i, parent) => {
+  eachToken(md.parse(text, {}), (tokens, i, parent) => {
     if (!isLink(tokens, i)) {
       return false;
     }

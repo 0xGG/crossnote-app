@@ -6,7 +6,8 @@ import { Emoji } from "emoji-mart";
 import EmojiData from "emoji-mart/data/all.json";
 import twemoji from "twemoji";
 import { EmojiBackgroundImageFn } from "../components/EmojiWrapper";
-import { enableEmoji } from "./echomd";
+import { setEmojiDefinitions, setReverseEmojiDefinitions } from "./echomd";
+import { enableEmoji } from "./markdown";
 
 // The emoji the markdown stage turns :short names: into, those twemoji has
 // an image for, enabled once this module has run; and the short name of
@@ -42,6 +43,13 @@ const emojiCodePointToShortNameMap: { [key: string]: string } = ((data) => {
       }
     }
   }
+  // The editor's, as echomd's preview set them.
+  setEmojiDefinitions(emojiDefinitions);
+  const reverse: { [emoji: string]: string } = {};
+  for (const shortName in emojiDefinitions) {
+    reverse[emojiDefinitions[shortName]] = shortName;
+  }
+  setReverseEmojiDefinitions(reverse);
   enableEmoji(emojiDefinitions);
   return m;
 })(EmojiData);
