@@ -86,7 +86,7 @@ export function renderMarkdown(markdown: string): MarkdownStageOutput {
     };
   } catch (error) {
     return {
-      html: "Failed to render markdown:\n" + JSON.stringify(error),
+      html: "Failed to render markdown:\n" + String(error),
       slideConfigs: [],
       yamlConfig: {},
     };

@@ -9,7 +9,8 @@ export default function blockReference(md: MarkdownIt) {
     if (!(
       (state.src[state.pos - 1] || "").match(/(^|\s)$/) &&
       state.src[state.pos] === "^" &&
-      !state.src[state.pos + 1].match(BlockReferenceStopRegExp)
+      // A "^" that ends the text names no block.
+      !(state.src[state.pos + 1] ?? " ").match(BlockReferenceStopRegExp)
     )) {
       return false;
     }

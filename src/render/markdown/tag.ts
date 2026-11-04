@@ -10,7 +10,8 @@ export default function tag(md: MarkdownIt) {
     if (!(
       (state.src[state.pos - 1] || "").match(/(^|\s)$/) &&
       state.src[state.pos] === "#" &&
-      !state.src[state.pos + 1].match(StopRegExp)
+      // A "#" that ends the text is not a tag.
+      !(state.src[state.pos + 1] ?? " ").match(StopRegExp)
     )) {
       return false;
     }

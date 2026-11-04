@@ -50,6 +50,12 @@ describe("findLinks", () => {
     ]);
   });
 
+  it("reads the links of a note whose block ends in a # or a ^ after a space", () => {
+    expect(
+      findLinks("[[A]] issue #\n\n[[B]] x ^\n").map(({ target }) => target),
+    ).toEqual(["A", "B"]);
+  });
+
   it("takes no links from the front matter, which the preview does not draw", () => {
     const text = "---\nsee: '[[Hidden]] #hidden'\n---\n[[Shown]]\n";
     expect(findLinks(text).map(({ target }) => target)).toEqual(["Shown"]);

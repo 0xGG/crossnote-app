@@ -1,5 +1,5 @@
-import { describe, expect, it } from "vitest";
-import { renderMarkdown } from "./index";
+import { describe, expect, it, vi } from "vitest";
+import { md, renderMarkdown } from "./index";
 
 const parse = (text: string) => {
   const element = document.createElement("div");
@@ -52,6 +52,19 @@ describe("the markdown stage", () => {
     expect(
       Array.from(section?.attributes ?? [], ({ name }) => name).sort(),
     ).toEqual(["class", "data-background", "data-h", "data-line", "data-v"]);
+  });
+
+  it("says why the markdown stage failed", () => {
+    const parse = vi.spyOn(md, "parse").mockImplementationOnce(() => {
+      throw new Error("cannot read");
+    });
+    try {
+      expect(renderMarkdown("text").html).toBe(
+        "Failed to render markdown:\nError: cannot read",
+      );
+    } finally {
+      parse.mockRestore();
+    }
   });
 
   it("marks each block with the line it starts on, after a comment of many lines too", () => {
@@ -112,6 +125,19 @@ describe("the markdown stage", () => {
         .querySelector(".echomd-widget")
         ?.getAttribute("data-widget-name"),
     ).toBe("timer");
+  });
+
+  it("draws a block that ends in a # or a ^ after a space", () => {
+    for (const text of [
+      "Issue #\n",
+      "x ^\n",
+      "# Heading ^\n",
+      "- item #\n",
+      "| a | b #|\n|---|---|\n| c ^ | d |\n",
+    ]) {
+      expect(renderMarkdown(text).html).not.toContain("Failed");
+    }
+    expect(parse("Issue #\n").textContent?.trim()).toBe("Issue #");
   });
 
   it("shows [TOC] as the text it is", () => {
