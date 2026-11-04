@@ -1,5 +1,5 @@
 import MarkdownIt from "markdown-it";
-import { full as emoji } from "markdown-it-emoji";
+import { bare as emoji } from "markdown-it-emoji";
 import footnote from "markdown-it-footnote";
 import ins from "markdown-it-ins";
 import mark from "markdown-it-mark";
@@ -49,7 +49,15 @@ blockReference(md);
 linkId(md);
 linkTargets(md);
 
-/** Turns :short_name: into the emoji it names, from then on. */
+// Addresses become links when they say their scheme (https://, mailto:)
+// or are written in angle brackets; a word that only looks like a domain
+// (README.md) or an e-mail address does not.
+md.linkify.set({ fuzzyEmail: false });
+
+/**
+ * Turns :short_name: into the emoji it names, from then on. Shortcuts such
+ * as :) and <3 stay text.
+ */
 export function enableEmoji(emojiDefinitions: { [shortName: string]: string }) {
   md.use(emoji, { defs: emojiDefinitions });
 }
