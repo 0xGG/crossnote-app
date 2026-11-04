@@ -137,6 +137,22 @@ describe("Notebook", () => {
     ).toEqual(["%E0%A4.md"]);
   });
 
+  it("finds a tag's note at the notebook's top, as the preview opens it", async () => {
+    await pfs.mkdirp(`${notebook.dir}/folder`);
+    await notebook.writeNote("folder/tagging.md", "About #topic here.\n", {
+      createdAt: new Date(),
+      modifiedAt: new Date(),
+    });
+    expect(
+      notebook
+        .getReferences("topic.md", "folder/tagging.md")
+        .map(({ link }) => link),
+    ).toEqual(["topic.md"]);
+    expect(
+      notebook.getReferences("folder/topic.md", "folder/tagging.md"),
+    ).toEqual([]);
+  });
+
   it("leaves a note it cannot rename where it was", async () => {
     await notebook.writeNote("source.md", "See [[target]].", {
       createdAt: new Date(),

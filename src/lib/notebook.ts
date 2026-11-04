@@ -174,7 +174,9 @@ export class Notebook {
       references.push({
         elementId: found.elementId,
         text: found.text,
-        link: resolveLink(link),
+        // A tag is a topic of the notebook's, its note at the notebook's
+        // top, as the preview opens it.
+        link: resolveLink(found.kind === "tag" ? "/" + link : link),
         lines: found.lines,
         context: found.context,
       });

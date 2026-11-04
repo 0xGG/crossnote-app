@@ -49,14 +49,9 @@ export default function tag(md: MarkdownIt) {
     const token = state.push("tag", "", 0);
     token.content = content.trim();
     token.attrPush(["id", "tag-" + uslug(content) + "-" + state.pos]);
-    if (
-      (end < state.src.length && state.src[end].match(/\s/)) ||
-      state.src[end] === "#"
-    ) {
-      state.pos = end + 1;
-    } else {
-      state.pos = end;
-    }
+    // The "#" that closes a tag with spaces is the tag's; what follows a
+    // tag, a space too, is the text's.
+    state.pos = state.src[end] === "#" ? end + 1 : end;
     return true;
   });
 

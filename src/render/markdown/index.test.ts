@@ -140,6 +140,12 @@ describe("the markdown stage", () => {
     expect(parse("Issue #\n").textContent?.trim()).toBe("Issue #");
   });
 
+  it("keeps the space after a tag", () => {
+    expect(parse("About #topic and #two words# here.\n").textContent).toBe(
+      "About #topic and #two words# here.\n",
+    );
+  });
+
   it("shows [TOC] as the text it is", () => {
     expect(parse("[TOC]\n").textContent?.trim()).toBe("[TOC]");
   });
