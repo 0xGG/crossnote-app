@@ -1,3 +1,4 @@
+import { findFrontMatter } from "../lib/frontMatter";
 import { UUIDNil } from "./utils";
 
 export interface Summary {
@@ -68,7 +69,7 @@ export async function generateSummaryFromMarkdown(
   let title = "",
     summary = "",
     images: string[] = [];
-  markdown = markdown.replace(/^---([\w\W]+?\n---)/, "").trim(); // Remove front matter
+  markdown = (findFrontMatter(markdown)?.rest ?? markdown).trim();
   let contentString = markdown;
 
   const titleMatch = markdown.match(/^#\s.+$/gim);

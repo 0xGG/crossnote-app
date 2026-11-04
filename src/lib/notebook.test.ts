@@ -121,6 +121,38 @@ describe("Notebook", () => {
     ]);
   });
 
+  it("reads the rest of a note's links past an address not well percent-encoded", async () => {
+    await notebook.writeNote(
+      "encoded.md",
+      "[odd](%E0%A4.md) and [[after-odd]]\n",
+      { createdAt: new Date(), modifiedAt: new Date() },
+    );
+    expect(
+      notebook
+        .getReferences("after-odd.md", "encoded.md")
+        .map(({ link }) => link),
+    ).toEqual(["after-odd.md"]);
+    expect(
+      notebook.getReferences("%E0%A4.md", "encoded.md").map(({ link }) => link),
+    ).toEqual(["%E0%A4.md"]);
+  });
+
+  it("finds a tag's note at the notebook's top, as the preview opens it", async () => {
+    await pfs.mkdirp(`${notebook.dir}/folder`);
+    await notebook.writeNote("folder/tagging.md", "About #topic here.\n", {
+      createdAt: new Date(),
+      modifiedAt: new Date(),
+    });
+    expect(
+      notebook
+        .getReferences("topic.md", "folder/tagging.md")
+        .map(({ link }) => link),
+    ).toEqual(["topic.md"]);
+    expect(
+      notebook.getReferences("folder/topic.md", "folder/tagging.md"),
+    ).toEqual([]);
+  });
+
   it("leaves a note it cannot rename where it was", async () => {
     await notebook.writeNote("source.md", "See [[target]].", {
       createdAt: new Date(),

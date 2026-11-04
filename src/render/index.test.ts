@@ -1,13 +1,13 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { Note } from "../lib/note";
 import { resolveNoteImageSrc } from "../utilities/image";
-import * as echomd from "./echomd";
 import { mountPreview } from "./index";
+import * as markdown from "./markdown";
 import { revealTimeout } from "./presentation";
 
 vi.mock("../utilities/image", () => ({ resolveNoteImageSrc: vi.fn() }));
-vi.mock("./echomd", async (importOriginal) => {
-  const original = await importOriginal<typeof import("./echomd")>();
+vi.mock("./markdown", async (importOriginal) => {
+  const original = await importOriginal<typeof import("./markdown")>();
   return { ...original, renderMarkdown: vi.fn(original.renderMarkdown) };
 });
 
@@ -30,6 +30,57 @@ afterEach(() => {
 });
 
 describe("mountPreview", () => {
+  it("keeps what a note's HTML says, less what the sanitizer takes out", async () => {
+    const element = document.createElement("div");
+    await mountPreview(
+      element,
+      '<p onclick="alert(1)">Kept</p>\n\n<br>\n\n<script>alert(1)</script>\n\nA <a href="javascript:alert(1)">link</a> and <iframe src="https://a.b/"></iframe>.\n',
+      { note: null },
+    ).done;
+    expect(element.querySelector("p")?.textContent).toBe("Kept");
+    expect(element.querySelector("[onclick]")).toBeNull();
+    expect(element.querySelector("br")).not.toBeNull();
+    expect(element.querySelector("script, iframe")).toBeNull();
+    expect(element.querySelector("a")?.textContent).toBe("link");
+    expect(element.querySelector("a")?.hasAttribute("href")).toBe(false);
+  });
+
+  it("goes to the place in the note a link to #name names", async () => {
+    const element = document.createElement("div");
+    document.body.append(element);
+    await mountPreview(element, "A note[^1].\n\n[^1]: The note.\n", { note })
+      .done;
+    // jsdom does not scroll.
+    const scrolled: Element[] = [];
+    Element.prototype.scrollIntoView = function (this: Element) {
+      scrolled.push(this);
+    };
+    try {
+      element.querySelector<HTMLAnchorElement>('a[href^="#fn"]')!.click();
+      expect(scrolled.map(({ id }) => id)).toEqual(["fn1"]);
+    } finally {
+      delete (Element.prototype as Partial<Element>).scrollIntoView;
+    }
+  });
+
+  it("goes to the top of the note for a link to # alone", async () => {
+    // In the app, what scrolls is a box around the preview.
+    const box = document.createElement("div");
+    const element = document.createElement("div");
+    box.append(element);
+    document.body.append(box);
+    await mountPreview(element, "Text.\n\n[Back to top](#)\n", { note }).done;
+    // jsdom does not scroll, so the box's scroll position is recorded.
+    const tops: number[] = [];
+    Object.defineProperty(box, "scrollTop", {
+      configurable: true,
+      get: () => 120,
+      set: (top: number) => tops.push(top),
+    });
+    element.querySelector<HTMLAnchorElement>('a[href="#"]')!.click();
+    expect(tops).toEqual([0]);
+  });
+
   it("draws the sanitized HTML", async () => {
     // echomd's own filter lets a form through, as it looks at src, href and
     // background addresses only.
@@ -112,7 +163,7 @@ describe("mountPreview", () => {
   });
 
   it("shows why the markdown stage failed, and rejects", async () => {
-    vi.mocked(echomd.renderMarkdown).mockImplementationOnce(() => {
+    vi.mocked(markdown.renderMarkdown).mockImplementationOnce(() => {
       throw new Error("cannot read");
     });
     const element = document.createElement("div");

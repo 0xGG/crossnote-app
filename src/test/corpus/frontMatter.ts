@@ -15,6 +15,7 @@ export const frontMatterSamples = {
     "---\ncreated: 2026-01-01\ntitle: T\nmodified: 2026-01-02\n---\nBody\n",
   "a setting that is off": "---\ntitle: T\npinned: false\n---\nBody\n",
   "aliases in a line": "---\naliases: x, y\n---\nBody\n",
+  "links in it": "---\nsee: '[[Other]] #topic'\n---\nBody with [[Other]]\n",
   "settings as the notebook wrote them":
     "---\ntags:\n    - a\naliases:\n    - x\npinned: true\ncreated: 2026-10-01T10:00:00.000Z\nmodified: 2026-10-02T10:00:00.000Z\n---\nBody\n",
   "no front matter": "Body only\n",

@@ -49,6 +49,8 @@ exports[`the shared corpus, sanitized > keeps front matter, an empty block as it
 
 exports[`the shared corpus, sanitized > keeps front matter, comments, quotes, a block of text, anchors and a flow list as it reads 1`] = `[]`;
 
+exports[`the shared corpus, sanitized > keeps front matter, links in it as it reads 1`] = `[]`;
+
 exports[`the shared corpus, sanitized > keeps front matter, no front matter as it reads 1`] = `[]`;
 
 exports[`the shared corpus, sanitized > keeps front matter, settings as the notebook wrote them as it reads 1`] = `[]`;
@@ -65,6 +67,10 @@ exports[`the shared corpus, sanitized > keeps indented with tabs as it reads 1`]
 
 exports[`the shared corpus, sanitized > keeps line breaks as it reads 1`] = `[]`;
 
+exports[`the shared corpus, sanitized > keeps links in task items as it reads 1`] = `[]`;
+
+exports[`the shared corpus, sanitized > keeps links with odd addresses as it reads 1`] = `[]`;
+
 exports[`the shared corpus, sanitized > keeps links, images and bare addresses as it reads 1`] = `[]`;
 
 exports[`the shared corpus, sanitized > keeps lists and task lists as it reads 1`] = `[]`;
@@ -73,24 +79,12 @@ exports[`the shared corpus, sanitized > keeps math as it reads 1`] = `[]`;
 
 exports[`the shared corpus, sanitized > keeps quotes and a rule as it reads 1`] = `[]`;
 
-exports[`the shared corpus, sanitized > keeps slides and a page break as it reads 1`] = `
-[
-  "section[lineno]",
-]
-`;
+exports[`the shared corpus, sanitized > keeps slides and a page break as it reads 1`] = `[]`;
 
-exports[`the shared corpus, sanitized > keeps slides with presentation settings as it reads 1`] = `
-[
-  "section[lineno]",
-]
-`;
+exports[`the shared corpus, sanitized > keeps slides with presentation settings as it reads 1`] = `[]`;
 
 exports[`the shared corpus, sanitized > keeps the same links again as it reads 1`] = `[]`;
 
 exports[`the shared corpus, sanitized > keeps widgets as it reads 1`] = `[]`;
 
-exports[`the shared corpus, sanitized > keeps wiki links as it reads 1`] = `
-[
-  "a[note]",
-]
-`;
+exports[`the shared corpus, sanitized > keeps wiki links as it reads 1`] = `[]`;

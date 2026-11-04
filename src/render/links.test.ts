@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { renderMarkdown } from "./index";
 import { findLinks } from "./links";
+import { sanitizeHTML } from "./sanitize";
 
 const ids = (html: string) => {
   const element = document.createElement("div");
@@ -50,17 +51,87 @@ describe("findLinks", () => {
     ]);
   });
 
-  it("names a link as the preview does, the same one at the same place in two blocks alike", () => {
-    // Telling these apart waits for the notebook and the preview to read
-    // the same text.
-    const text = "[[a]] one\n\n[[a]] two\n";
-    expect(findLinks(text).map(({ elementId }) => elementId)).toEqual([
-      "wikilink-a-0",
-      "wikilink-a-0",
+  it("reads the links of a note whose block ends in a # or a ^ after a space", () => {
+    expect(
+      findLinks("[[A]] issue #\n\n[[B]] x ^\n").map(({ target }) => target),
+    ).toEqual(["A", "B"]);
+  });
+
+  it("gives a link in a table cell the lines of its row", () => {
+    expect(
+      findLinks("| a | b |\n|---|---|\n| [[x]] | c |\n| d | [[y]] |\n").map(
+        ({ target, lines }) => [target, lines],
+      ),
+    ).toEqual([
+      ["x", [2, 3]],
+      ["y", [3, 4]],
     ]);
-    expect(ids(renderMarkdown(text).html)).toEqual([
-      "wikilink-a-0",
-      "wikilink-a-0",
+  });
+
+  it("gives a link after a table no lines of the table's", () => {
+    const [link] = findLinks("| a |\n|---|\n| b |\n\nText^[see [[X]]]\n");
+    expect(link.target).toBe("X");
+    expect(link.lines).toEqual([0, 0]);
+  });
+
+  it("leaves an address of another app's as it is, to do nothing", () => {
+    const element = document.createElement("div");
+    element.innerHTML = renderMarkdown(
+      "[item](zotero://select/items/A) [file](ftp://example.org/a.md) [text](sms:+15550100) [run](javascript:void%200)\n",
+    ).html;
+    expect(
+      Array.from(element.querySelectorAll("a"), (a) => a.getAttribute("href")),
+    ).toEqual([
+      "zotero://select/items/A",
+      "ftp://example.org/a.md",
+      "sms:+15550100",
     ]);
+  });
+
+  it("keeps a link whose address has a colon as a note's path", () => {
+    const element = document.createElement("div");
+    element.innerHTML = sanitizeHTML(
+      renderMarkdown(
+        "[x](Re:Zero.md) [[Re:Zero]] [m](mailto:a@b.c) [w](https://a.b/)\n",
+      ).html,
+    );
+    expect(
+      Array.from(element.querySelectorAll("a"), (a) => a.getAttribute("href")),
+    ).toEqual(["./Re:Zero.md", "./Re:Zero", "mailto:a@b.c", "https://a.b/"]);
+  });
+
+  it("takes no links from the front matter, which the preview does not draw", () => {
+    const text = "---\nsee: '[[Hidden]] #hidden'\n---\n[[Shown]]\n";
+    expect(findLinks(text).map(({ target }) => target)).toEqual(["Shown"]);
+    expect(renderMarkdown(text).html).not.toContain("Hidden");
+  });
+
+  it("names a link as the preview does, the same one at the same place in two blocks apart", () => {
+    const text = "[[a]] one\n\n[[a]] two\n\n- [[a]] three\n";
+    const expected = ["wikilink-a-0", "wikilink-a-0-2", "wikilink-a-0-3"];
+    expect(findLinks(text).map(({ elementId }) => elementId)).toEqual(expected);
+    expect(ids(renderMarkdown(text).html)).toEqual(expected);
+  });
+
+  it("escapes what a link writes into the preview's attributes", () => {
+    const element = document.createElement("div");
+    element.innerHTML = renderMarkdown('[[My "note"|words]] #a"b\n').html;
+    const [wikilink, tag] = Array.from(element.querySelectorAll("a"));
+    expect(wikilink.getAttribute("data-wikilink-url")).toBe('My "note"');
+    expect(wikilink.textContent).toBe("words");
+    expect(tag.getAttribute("data-topic")).toBe('a"b');
+  });
+
+  it("escapes a block reference's name", () => {
+    const element = document.createElement("div");
+    element.innerHTML = renderMarkdown('Text ^x"y\n').html;
+    expect(element.querySelector(".block-reference")?.id).toBe('x"y');
+  });
+
+  it("names the same markdown link at the same place in two blocks apart", () => {
+    const text = "[x](a.md) one\n\n[x](a.md) two\n";
+    const expected = ["link-a-md-0", "link-a-md-0-2"];
+    expect(findLinks(text).map(({ elementId }) => elementId)).toEqual(expected);
+    expect(ids(renderMarkdown(text).html)).toEqual(expected);
   });
 });

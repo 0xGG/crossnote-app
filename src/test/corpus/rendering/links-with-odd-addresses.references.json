@@ -1,0 +1,22 @@
+[
+  {
+    "elementId": "link-Re-Zero-md-0",
+    "text": "a colon",
+    "link": "Re:Zero.md"
+  },
+  {
+    "elementId": "link--E0-A4-md-4",
+    "text": "a broken encoding",
+    "link": "%E0%A4.md"
+  },
+  {
+    "elementId": "wikilink-Other-80",
+    "text": "Other",
+    "link": "Other.md"
+  },
+  {
+    "elementId": "link-Table-md-0",
+    "text": "in a table",
+    "link": "Table.md"
+  }
+]

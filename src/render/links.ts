@@ -1,18 +1,16 @@
-import type Token from "markdown-it/lib/token";
-import * as echomd from "./echomd";
+import type { Token } from "markdown-it";
 // The emoji the markdown stage turns :short names: into change how it names
 // links and what follows a link, so they are set up here as for the preview.
 import "./emoji";
+import { md } from "./markdown";
 
 // What a note links to, as the markdown stage reads it: the notebook keeps
 // these as the note's references, and the preview marks one by the id of
 // the element it draws it as. The markdown stage names that element by the
-// link and where it stands in its block (wikilink-README-4), so the same
-// link at the same place in two blocks shares an id, and the preview marks
-// the first. Telling them apart waits for a markdown stage of the app's
-// own: the notebook reads a note's text as it is, the preview after echomd
-// has taken its front matter out and turned its task boxes into HTML, so
-// counting links in the note's order would not count the same links.
+// link and where it stands in its block (wikilink-README-4), the same link
+// at the same place in a later block with "-2", "-3" after it
+// (./markdown/linkId.ts); the notebook and the preview read the same tokens
+// of the same text, so the ids are the same on both sides.
 
 export interface NoteLink {
   /** A wiki link, a hashtag, or a markdown link followed by its words. */
@@ -52,14 +50,22 @@ const isLink = (tokens: Token[], i: number) =>
 /** The links in a note's text, in the order it has them. */
 export function findLinks(text: string): NoteLink[] {
   const links: NoteLink[] = [];
-  eachToken(echomd.md.parse(text, {}), (tokens, i, parent) => {
+  // A table cell's text has no lines of its own: its row's are taken.
+  let row: [number, number] | null = null;
+  eachToken(md.parse(text, {}), (tokens, i, parent) => {
+    if (!parent && tokens[i].type === "tr_open") {
+      row = tokens[i].map;
+    } else if (!parent && tokens[i].type === "table_close") {
+      row = null;
+    }
     if (!isLink(tokens, i)) {
       return false;
     }
     const token = tokens[i];
+    const map = parent?.map ?? row;
     const found = {
-      elementId: token.attrGet("id") || "",
-      lines: [parent?.map?.[0] ?? 0, parent?.map?.[1] ?? 0] as [number, number],
+      elementId: String(token.attrGet("id") || ""),
+      lines: [map?.[0] ?? 0, map?.[1] ?? 0] as [number, number],
       context: parent?.content ?? "",
     };
     if (token.type === "wikilink") {
@@ -76,7 +82,7 @@ export function findLinks(text: string): NoteLink[] {
     } else if (token.attrs?.[0]?.[0] === "href") {
       links.push({
         kind: "link",
-        target: token.attrs[0][1],
+        target: String(token.attrs[0][1]),
         text: tokens[i + 1].content.trim(),
         ...found,
       });
