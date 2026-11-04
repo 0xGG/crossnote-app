@@ -50,6 +50,12 @@ describe("findLinks", () => {
     ]);
   });
 
+  it("takes no links from the front matter, which the preview does not draw", () => {
+    const text = "---\nsee: '[[Hidden]] #hidden'\n---\n[[Shown]]\n";
+    expect(findLinks(text).map(({ target }) => target)).toEqual(["Shown"]);
+    expect(renderMarkdown(text).html).not.toContain("Hidden");
+  });
+
   it("names a link as the preview does, the same one at the same place in two blocks alike", () => {
     // Telling these apart waits for the notebook and the preview to read
     // the same text.

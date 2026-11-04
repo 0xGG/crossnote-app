@@ -227,6 +227,24 @@ function readFrontMatter(text: string, keys: string[]) {
   return { bom, block, unreadable: mapping === undefined, split };
 }
 
+/**
+ * The front matter a text starts with, as notes are read: the mapping it
+ * holds, how many lines it takes from the first (a byte order mark before
+ * it included) and the text after it. Null when there is none, and when
+ * YAML cannot read it or it is not a mapping: that is the note's text.
+ */
+export function findFrontMatter(
+  text: string,
+): { mapping: Mapping; lineCount: number; rest: string } | null {
+  const bom = text.startsWith(BOM) ? BOM : "";
+  const block = findBlock(text.slice(bom.length));
+  const mapping = block ? readMapping(block.lines) : null;
+  if (!block || !mapping) {
+    return null;
+  }
+  return { mapping, lineCount: block.lines.length + 2, rest: block.rest };
+}
+
 export interface NoteText {
   /** The note as an editor shows it: its front matter less the settings. */
   text: string;

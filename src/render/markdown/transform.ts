@@ -1,8 +1,9 @@
+import { findFrontMatter } from "../../lib/frontMatter";
 import { Attributes, parseAttributes } from "./attributes";
 import { HeadingIdGenerator } from "./slug";
 
 // What the note's text is rewritten into, line by line, before markdown-it
-// reads it, as echomd's preview did: the front matter taken out; empty
+// reads it, as echomd's preview did, but for the front matter: empty
 // paragraphs of class sync-line, carrying the line they stand for, put
 // before headings, code blocks, images, comments and [TOC]; a heading's
 // {#id .class} turned into an empty paragraph after it; a slide or page
@@ -15,8 +16,6 @@ export type SlideConfig = Attributes & { lineNo: number };
 export interface Transformed {
   outputString: string;
   slideConfigs: SlideConfig[];
-  /** The front matter, with the lines of dashes around it. */
-  frontMatterString: string;
 }
 
 function createAnchor(lineNo: number) {
@@ -64,7 +63,6 @@ export function transformMarkdown(inputString: string): Transformed {
   let lastOpeningCodeBlockFence: string | null = null;
   let codeChunkOffset = 0;
   const slideConfigs: SlideConfig[] = [];
-  let frontMatterString = "";
 
   function helper(i: number, lineNo: number): Transformed {
     let outputString = "";
@@ -265,18 +263,17 @@ export function transformMarkdown(inputString: string): Transformed {
       lineNo = lineNo + 1;
       outputString = outputString + line + "\n";
     }
-    return { outputString, slideConfigs, frontMatterString };
+    return { outputString, slideConfigs };
   }
 
-  const endFrontMatterOffset = inputString.startsWith("---")
-    ? inputString.indexOf("\n---")
-    : -1;
-  if (endFrontMatterOffset > 0) {
-    frontMatterString = inputString.slice(0, endFrontMatterOffset + 4);
-    return helper(
-      frontMatterString.length,
-      (frontMatterString.match(/\n/g) as RegExpMatchArray).length,
-    );
+  // Front matter is left for markdown-it to find (./frontMatter.ts).
+  const frontMatter = findFrontMatter(inputString);
+  if (frontMatter) {
+    const start = inputString.length - frontMatter.rest.length;
+    const transformed = helper(start, frontMatter.lineCount);
+    transformed.outputString =
+      inputString.slice(0, start) + transformed.outputString;
+    return transformed;
   }
   return helper(0, 0);
 }

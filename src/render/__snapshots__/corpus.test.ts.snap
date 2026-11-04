@@ -49,6 +49,8 @@ exports[`the shared corpus, sanitized > keeps front matter, an empty block as it
 
 exports[`the shared corpus, sanitized > keeps front matter, comments, quotes, a block of text, anchors and a flow list as it reads 1`] = `[]`;
 
+exports[`the shared corpus, sanitized > keeps front matter, links in it as it reads 1`] = `[]`;
+
 exports[`the shared corpus, sanitized > keeps front matter, no front matter as it reads 1`] = `[]`;
 
 exports[`the shared corpus, sanitized > keeps front matter, settings as the notebook wrote them as it reads 1`] = `[]`;

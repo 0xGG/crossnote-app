@@ -6,9 +6,10 @@ import mark from "markdown-it-mark";
 import sub from "markdown-it-sub";
 import sup from "markdown-it-sup";
 import taskLists from "markdown-it-task-lists";
-import YAML from "yamljs";
+import { findFrontMatter } from "../../lib/frontMatter";
 import blockReference from "./blockReference";
 import fence from "./fence";
+import frontMatter from "./frontMatter";
 import linkId from "./linkId";
 import math from "./math";
 import { parseSlides } from "./slides";
@@ -28,6 +29,7 @@ export const md = new MarkdownIt({
   typographer: false,
   breaks: true,
 });
+frontMatter(md);
 md.use(footnote);
 md.use(taskLists);
 md.use(mark);
@@ -50,21 +52,14 @@ export function enableEmoji(emojiDefinitions: { [shortName: string]: string }) {
 export interface MarkdownStageOutput {
   html: string;
   slideConfigs: SlideConfig[];
-  yamlConfig: Record<string, any> | null;
+  /** The mapping the note's front matter holds, {} when it has none. */
+  yamlConfig: Record<string, any>;
 }
 
 export function renderMarkdown(markdown: string): MarkdownStageOutput {
   try {
-    const { slideConfigs, outputString, frontMatterString } =
-      transformMarkdown(markdown);
-    let yamlConfig: Record<string, any> | null = {};
-    try {
-      yamlConfig = YAML.parse(
-        frontMatterString.trim().replace(/^-+/, "").replace(/-+$/, "").trim(),
-      );
-    } catch {
-      yamlConfig = {};
-    }
+    const { slideConfigs, outputString } = transformMarkdown(markdown);
+    const yamlConfig = findFrontMatter(markdown)?.mapping ?? {};
     let html = md.render(outputString);
     if (slideConfigs.length) {
       html = parseSlides(html, slideConfigs);
