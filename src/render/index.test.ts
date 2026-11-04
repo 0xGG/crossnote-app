@@ -284,10 +284,10 @@ describe("mountPreview with slides", () => {
 
   it("writes nothing of the note into the frame that could run", () => {
     // The frame is the app's own origin and runs scripts, so what the note
-    // brings in must not: raw HTML, a block made to look like wavedrom's, an
-    // element whose type wavedrom's own loader would evaluate, speaker notes
-    // reveal.js writes as HTML, and front matter that names a theme file,
-    // scripts to load or a value that would end the frame's script.
+    // brings in must not: raw HTML, a block made to look like wavedrom's,
+    // speaker notes reveal.js writes as HTML, and front matter that names a
+    // theme file, scripts to load or a value that would end the frame's
+    // script. The frame loads no diagram scripts: the page draws them.
     const element = document.createElement("div");
     document.body.appendChild(element);
     const preview = mountPreview(
@@ -308,8 +308,6 @@ describe("mountPreview with slides", () => {
         "",
         '<div class="vickeymd-fence wavedrom">window.fromFence=1</div>',
         "",
-        '<ol type="WaveDrom"><li>window.fromList=1</li></ol>',
-        "",
         // Written with &#61; for "=", which echomd's own filter would catch.
         `<section data-background-video='https://a.invalid/x.mp4" onerror&#61;"window.fromVideo&#61;1'></section>`,
         "",
@@ -324,7 +322,6 @@ describe("mountPreview with slides", () => {
     expect(frame.querySelector("[onerror]")).toBeNull();
     expect(frame.querySelector("[data-notes]")).toBeNull();
     expect(frame.querySelector("[data-background-video]")).toBeNull();
-    expect(frame.querySelector('[type="WaveDrom" i]')).toBeNull();
     const themes = Array.from(frame.querySelectorAll("link")).map((link) =>
       link.getAttribute("href"),
     );
@@ -332,15 +329,17 @@ describe("mountPreview with slides", () => {
       "https://cdn.jsdelivr.net/npm/reveal.js@3.9.2/css/theme/white.css",
     );
     expect(themes.join(" ")).not.toContain("x.css");
-    // The scripts are the frame's own: the libraries it loads and its own
-    // inline code, the settings included as a value inside it.
+    // The scripts are the frame's own: reveal.js and its own inline code, the
+    // settings included as a value inside it.
     const scripts = Array.from(frame.querySelectorAll("script"));
     expect(
-      scripts.filter((script) => !script.src).map((script) => script.text),
+      scripts.filter((script) => script.src).map((script) => script.src),
     ).toEqual([
-      expect.stringContaining("JSON.parse(text)"),
-      expect.stringContaining("Reveal.initialize("),
+      "https://cdn.jsdelivr.net/npm/reveal.js@3.9.2/js/reveal.min.js",
     ]);
+    expect(
+      scripts.filter((script) => !script.src).map((script) => script.text),
+    ).toEqual([expect.stringContaining("Reveal.initialize(")]);
     const init = scripts.find((script) =>
       script.text.includes("Reveal.initialize("),
     ).text;

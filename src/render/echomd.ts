@@ -11,4 +11,3 @@ export {
 } from "@0xgg/echomd/addon/emoji";
 export { getWidgetCreator } from "@0xgg/echomd/widget";
 export { PlantUMLRenderer } from "@0xgg/echomd/powerpack/fold-code-with-plantuml";
-export { WaveDromRenderer } from "@0xgg/echomd/powerpack/fold-code-with-wavedrom";

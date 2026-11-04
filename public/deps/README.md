@@ -10,8 +10,7 @@ and `pnpm audit` never report their vulnerabilities.
 ```json
 {
   "marked": "0.7.0",
-  "plantuml-encoder": "1.4.0",
-  "wavedrom": "2.3.2"
+  "plantuml-encoder": "1.4.0"
 }
 ```
 

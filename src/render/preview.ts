@@ -119,11 +119,7 @@ function renderCodeFences(
     try {
       let drawing: Drawing;
       if (diagram) {
-        const [, renderer, drawnInSlides] = diagram;
-        if (context.inSlides && !drawnInSlides) {
-          continue;
-        }
-        drawing = renderer(code, info, context);
+        drawing = diagram[1](code, info, context);
       } else {
         drawing = renderCodeBlock(code, language);
       }

@@ -80,6 +80,7 @@
     "vega-interpreter": "^2.3.2",
     "vega-lite": "^6.5.0",
     "vega-themes": "^3.0.0",
+    "wavedrom": "^3.8.0",
     "yamljs": "^0.3.0"
   },
   "devDependencies": {

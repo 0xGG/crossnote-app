@@ -265,3 +265,95 @@ test("draws vega and vega-lite charts, sized by an expression", async ({
   expect(vendored.flatMap((requested) => requested())).toEqual([]);
   expect(await violations()).toEqual([]);
 });
+
+// Sources that have wavedrom write markup of their own into its drawing
+// (the same as in src/render/wavedrom.test.ts): JsonML in the head's text
+// (an image with onerror, an animation with onbegin), XHTML in a lane's
+// name, an attribute value a quote ends early, and an edge's label.
+const wavedromPayloads = [
+  {
+    signal: [{ name: "a", wave: "01" }],
+    head: {
+      text: ["tspan", ["image", { href: "x.png", onerror: "window.wd1=1" }]],
+    },
+  },
+  {
+    signal: [{ name: "a", wave: "01" }],
+    head: {
+      text: [
+        "tspan",
+        ["set", { attributeName: "x", to: "1", onbegin: "window.wd2=1" }],
+      ],
+    },
+  },
+  {
+    signal: [
+      {
+        name: "<img xmlns='http://www.w3.org/1999/xhtml' src='x.png' onerror='window.wd3=1'/>",
+        wave: "01",
+      },
+    ],
+  },
+  {
+    signal: [{ name: "a", wave: "01" }],
+    head: {
+      text: [
+        "tspan",
+        {
+          class:
+            'x"><image href="x.png" onerror="window.wd4=1"/><tspan class="y',
+        },
+        "t",
+      ],
+    },
+  },
+  {
+    signal: [
+      { name: "a", wave: "01", node: ".a" },
+      { name: "b", wave: "01", node: ".b" },
+    ],
+    edge: ["a~b <image href='x.png' onerror='window.wd5=1'/>"],
+  },
+];
+
+test("draws wavedrom as sanitized SVG, running nothing its source writes", async ({
+  app,
+  page,
+}) => {
+  const violations = await app.recordPolicyViolations();
+  const vendored = app.recordVendoredRequests("wavedrom");
+  await app.open();
+  await app.openNotes();
+  await app.createNote();
+  await app.setEditorText(
+    [{ signal: [{ name: "clk", wave: "p..." }] }, ...wavedromPayloads]
+      .map((source) => "```wavedrom\n" + JSON.stringify(source) + "\n```\n")
+      .join("\n"),
+  );
+  await app.modeButton("Preview").click();
+
+  const drawings = app.preview.locator("svg");
+  await expect(drawings).toHaveCount(6);
+  await expect(drawings.first()).toContainText("clk");
+  // The wave itself, drawn with the skin's shapes.
+  await expect(drawings.first().locator("use").first()).toBeAttached();
+  // What is in the page has no handlers to run.
+  const handlers = await drawings.evaluateAll((svgs) =>
+    svgs.flatMap((svg) =>
+      [svg, ...svg.querySelectorAll("*")].flatMap((element) =>
+        element
+          .getAttributeNames()
+          .filter((name) => /^on/i.test(name))
+          .map((name) => `${element.tagName}@${name}`),
+      ),
+    ),
+  );
+  expect(handlers).toEqual([]);
+  expect(
+    await page.evaluate(() =>
+      [1, 2, 3, 4, 5].map((n) => (window as any)[`wd${n}`]),
+    ),
+  ).toEqual([undefined, undefined, undefined, undefined, undefined]);
+  expect(vendored()).toEqual([]);
+  expect(await violations()).toEqual([]);
+});

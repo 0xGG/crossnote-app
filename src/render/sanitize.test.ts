@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { isSafeAddress, sanitizeHTML } from "./sanitize";
+import { isSafeAddress, sanitizeHTML, sanitizeSVG } from "./sanitize";
 
 const render = (html: string) => {
   const element = document.createElement("div");
@@ -84,15 +84,12 @@ describe("sanitizeHTML", () => {
     expect(image.hasAttribute("name")).toBe(false);
   });
 
-  it("keeps a wavedrom block's source as text, and runs no script", () => {
+  it("keeps a wavedrom block's source as text, and drops scripts of any type", () => {
     const element = render(
-      '<div class="vickeymd-fence wavedrom"><script type="WaveDrom">{ signal: [] }</script></div><script type="text/javascript">alert(1)</script>',
+      '<div class="vickeymd-fence wavedrom">{ "signal": [] }</div><script type="WaveDrom">window.x = 1</script><script type="text/javascript">alert(1)</script>',
     );
     expect(element.querySelector("script")).toBeNull();
-    expect(element.querySelector(".wavedrom").textContent).toBe(
-      "{ signal: [] }",
-    );
-    expect(element.textContent).toBe("{ signal: [] }");
+    expect(element.textContent).toBe('{ "signal": [] }');
   });
 
   it("drops a slide background that would load a script address", () => {
@@ -166,5 +163,66 @@ describe("isSafeAddress", () => {
     "vbscript:msgbox(1)",
   ])("refuses %s", (address) => {
     expect(isSafeAddress(address)).toBe(false);
+  });
+});
+
+describe("sanitizeSVG", () => {
+  const draw = (svg: string) => {
+    const element = document.createElement("div");
+    element.innerHTML = sanitizeSVG(svg);
+    return element;
+  };
+
+  it("keeps a shape repeated from the drawing, not one fetched from elsewhere", () => {
+    const element = draw(
+      '<svg xmlns:xlink="http://www.w3.org/1999/xlink"><defs><path id="wave" d="M0 0"/></defs>' +
+        '<use xlink:href="#wave"/><use href="#wave"/>' +
+        '<use xlink:href="https://example.org/a.svg#x"/><use href="data:image/svg+xml,&lt;svg/&gt;#x"/></svg>',
+    );
+    const uses = Array.from(element.querySelectorAll("use"));
+    expect(
+      uses.map(
+        (use) => use.getAttribute("xlink:href") ?? use.getAttribute("href"),
+      ),
+    ).toEqual(["#wave", "#wave", null, null]);
+  });
+
+  it("keeps the drawing's own style sheet, not one a label brings", () => {
+    const element = draw(
+      "<svg><style>#d text{fill:red}</style><g><style>body{display:none}</style></g><foreignObject><div><style>.App{display:none}</style>label</div></foreignObject></svg>",
+    );
+    expect(
+      Array.from(
+        element.querySelectorAll("style"),
+        (style) => style.textContent,
+      ),
+    ).toEqual(["#d text{fill:red}"]);
+    expect(element.textContent).toContain("label");
+  });
+
+  it("keeps out what a note's HTML may not have either", () => {
+    const element = draw(
+      '<svg><foreignObject><div><form action="https://example.org/"><input type="password"><select></select><textarea></textarea><button>x</button></form><iframe src="x"></iframe>label</div></foreignObject></svg>',
+    );
+    expect(
+      element.querySelector("form, input, select, textarea, button, iframe"),
+    ).toBeNull();
+    // Their text stays, as text.
+    expect(element.textContent).toBe("xlabel");
+  });
+
+  it("keeps HTML labels and a diagram's style, without what would run", () => {
+    const element = draw(
+      '<svg onload="alert(1)"><style>#d .node{fill:red}</style><foreignObject><div><img src="x" onerror="alert(1)">label</div></foreignObject><script>alert(1)</script></svg>',
+    );
+    expect(element.querySelector("svg").hasAttribute("onload")).toBe(false);
+    expect(element.querySelector("style").textContent).toBe(
+      "#d .node{fill:red}",
+    );
+    expect(element.querySelector("foreignObject div").textContent).toBe(
+      "label",
+    );
+    expect(element.querySelector("img").hasAttribute("onerror")).toBe(false);
+    expect(element.querySelector("script")).toBeNull();
   });
 });

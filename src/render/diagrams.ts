@@ -1,9 +1,10 @@
 import { Renderer, startDrawing } from "./drawing";
 import { renderEcharts } from "./echarts";
-import { PlantUMLRenderer, WaveDromRenderer } from "./echomd";
+import { PlantUMLRenderer } from "./echomd";
 import { renderMermaid } from "./mermaid";
 import { renderVega } from "./vega";
 import { renderVegaLite } from "./vegaLite";
+import { renderWaveDrom } from "./wavedrom";
 
 type EchomdRenderer = (
   code: string,
@@ -20,15 +21,14 @@ function echomd(renderer: EchomdRenderer): Renderer {
 }
 
 /**
- * The code blocks drawn as diagrams, by the language their fence names, and
- * whether they are drawn in slides too. Wavedrom is left as it is in
- * slides, where the deck's frame draws it with its own scripts.
+ * The code blocks drawn as diagrams, by the language their fence names, in
+ * the preview and, by the page, into the slides' frame.
  */
-export const diagramRenderers: [RegExp, Renderer, boolean][] = [
-  [/^(puml|plantuml)$/, echomd(PlantUMLRenderer), true],
-  [/^echarts$/, renderEcharts, true],
-  [/^mermaid$/, renderMermaid, true],
-  [/^vega$/, renderVega, true],
-  [/^vega-lite$/, renderVegaLite, true],
-  [/^wavedrom$/i, echomd(WaveDromRenderer), false],
+export const diagramRenderers: [RegExp, Renderer][] = [
+  [/^(puml|plantuml)$/, echomd(PlantUMLRenderer)],
+  [/^echarts$/, renderEcharts],
+  [/^mermaid$/, renderMermaid],
+  [/^vega$/, renderVega],
+  [/^vega-lite$/, renderVegaLite],
+  [/^wavedrom$/i, renderWaveDrom],
 ];
