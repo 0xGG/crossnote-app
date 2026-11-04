@@ -235,6 +235,7 @@ ${diagramInits}
         options.note,
         true,
         options.isCurrent,
+        options.cleanups,
       );
     }
   });

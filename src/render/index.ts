@@ -58,10 +58,12 @@ export function renderMarkdown(text: string): RenderedMarkdown {
 export interface MountedPreview {
   isPresentation: boolean;
   /**
-   * Settles once the note is drawn: its HTML in the element, finished, and
-   * its images read from the notebook; a deck once reveal.js is ready or
-   * failed to load, or once it is disposed of. Diagrams that draw themselves
-   * later are not waited for. Rejects when the note cannot be drawn into
+   * Settles once the note is drawn: its HTML in the element, finished, its
+   * images read from the notebook, and its code blocks drawn, each given up
+   * to 10 seconds before it shows that it took too long (diagrams drawn by
+   * echomd's renderers count as drawn once they have started); a deck once
+   * reveal.js is ready or failed to load and its own blocks are drawn, or
+   * once it is disposed of. Rejects when the note cannot be drawn into
    * the element at all (the markdown stage, or putting its HTML or the
    * deck's frame in, fails), and the element then shows why; a block that
    * fails shows its error in its place instead. A deck's also rejects when
@@ -72,8 +74,9 @@ export interface MountedPreview {
   /**
    * Stops the finishing still to come: images still being read keep their
    * address, a deck that gets ready afterwards is left unfinished, and the
-   * listener it waits with goes. Diagrams that draw themselves later
-   * (mermaid, vega and the like) are not stopped. Drawing into the same
+   * listener it waits with goes. The code blocks are disposed of: those
+   * still being drawn stop, and the diagrams let go of what they hold.
+   * Drawing into the same
    * element again disposes of what was drawn there before.
    */
   dispose(): void;
@@ -108,7 +111,7 @@ export function mountPreview(
     } else {
       element.style.height = "100%";
       element.innerHTML = sanitizeHTML(rendered.html);
-      done = finishPreview(element, options.note, false, isCurrent);
+      done = finishPreview(element, options.note, false, isCurrent, cleanups);
     }
   } catch (error) {
     element.textContent = String(error);
