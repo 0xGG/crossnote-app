@@ -207,3 +207,61 @@ test("draws a 3D echarts chart with echarts-gl", async ({ app }) => {
   expect(vendored()).toEqual([]);
   expect(await violations()).toEqual([]);
 });
+
+test("draws vega and vega-lite charts, sized by an expression", async ({
+  app,
+}) => {
+  const violations = await app.recordPolicyViolations();
+  const vendored = ["vega", "vega-lite", "vega-embed"].map((name) =>
+    app.recordVendoredRequests(name),
+  );
+  await app.open();
+  await app.openNotes();
+  await app.createNote();
+  await app.setEditorText(
+    [
+      "```vega",
+      JSON.stringify({
+        signals: [{ name: "side", value: 60 }],
+        width: { signal: "side * 2" },
+        height: { signal: "side" },
+        marks: [
+          {
+            type: "rect",
+            encode: {
+              enter: {
+                width: { signal: "side" },
+                height: { signal: "side / 2" },
+                fill: { value: "steelblue" },
+              },
+            },
+          },
+        ],
+      }),
+      "```",
+      "",
+      "```vega-lite",
+      "data:",
+      "  values:",
+      "    - a: 1",
+      "mark: point",
+      "```",
+      "",
+    ].join("\n"),
+  );
+  await app.modeButton("Preview").click();
+
+  const canvases = app.preview.locator("canvas");
+  await expect(canvases).toHaveCount(2);
+  // The width the expression gives, with vega's padding around it.
+  await expect
+    .poll(() =>
+      canvases
+        .first()
+        .evaluate((canvas) => Math.round(canvas.getBoundingClientRect().width)),
+    )
+    .toBe(120);
+  await expect(app.preview.locator(".language-error")).toHaveCount(0);
+  expect(vendored.flatMap((requested) => requested())).toEqual([]);
+  expect(await violations()).toEqual([]);
+});

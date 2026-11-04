@@ -11,10 +11,7 @@ and `pnpm audit` never report their vulnerabilities.
 {
   "marked": "0.7.0",
   "plantuml-encoder": "1.4.0",
-  "wavedrom": "2.3.2",
-  "vega": "5.9.2",
-  "vega-lite": "4.4.0",
-  "vega-embed": "6.3.2"
+  "wavedrom": "2.3.2"
 }
 ```
 
