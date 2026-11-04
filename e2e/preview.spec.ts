@@ -18,7 +18,7 @@ test("draws a deck of slides with a diagram in it", async ({ app }) => {
   );
   await app.modeButton("Preview").click();
 
-  // The deck's frame stays, and the slides' own mermaid draws the diagram in
+  // The deck's frame stays, and the page's mermaid draws the diagram into
   // it. The preview used to read the frame's body before the scripts in its
   // head had loaded, fail, and show the error in place of the deck.
   const deck = app.preview.frameLocator("iframe");

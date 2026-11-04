@@ -6,6 +6,15 @@ import * as markdown from "./markdown";
 import { revealTimeout } from "./presentation";
 
 vi.mock("../utilities/image", () => ({ resolveNoteImageSrc: vi.fn() }));
+// mermaid itself is too slow to load here; this one cannot draw anything.
+vi.mock("mermaid", () => ({
+  default: {
+    initialize: () => {},
+    render: async () => {
+      throw new Error("Parse error on line 1");
+    },
+  },
+}));
 vi.mock("./markdown", async (importOriginal) => {
   const original = await importOriginal<typeof import("./markdown")>();
   return { ...original, renderMarkdown: vi.fn(original.renderMarkdown) };
@@ -111,7 +120,7 @@ describe("mountPreview", () => {
   });
 
   it("draws the rest of the note when one block cannot be drawn", async () => {
-    // mermaid is not loaded here, so its block fails.
+    // mermaid cannot draw it, so its block fails.
     const element = document.createElement("div");
     await mountPreview(
       element,

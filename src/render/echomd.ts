@@ -11,7 +11,6 @@ export {
 } from "@0xgg/echomd/addon/emoji";
 export { getWidgetCreator } from "@0xgg/echomd/widget";
 export { EchartsRenderer } from "@0xgg/echomd/powerpack/fold-code-with-echarts";
-export { MermaidRenderer } from "@0xgg/echomd/powerpack/fold-code-with-mermaid";
 export { PlantUMLRenderer } from "@0xgg/echomd/powerpack/fold-code-with-plantuml";
 export { VegaRenderer } from "@0xgg/echomd/powerpack/fold-code-with-vega";
 export { WaveDromRenderer } from "@0xgg/echomd/powerpack/fold-code-with-wavedrom";

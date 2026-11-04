@@ -111,25 +111,3 @@ test("keeps folded widgets when a language loads", async ({ app, page }) => {
   await expect(thumbnail).toHaveAttribute("data-before", "language");
   await expect(thumbnail).toBeVisible();
 });
-
-test("loads mermaid for a slide from the site", async ({ app, page }) => {
-  await app.open();
-  await app.openNotes();
-  await app.createNote();
-  await app.typeInEditor(
-    "<!-- slide -->\n\n```mermaid\ngraph TD; A-->B\n```\n",
-  );
-  // The page itself loads the same file at start; the one asked for here is
-  // the slide's own, from the frame the slides are drawn in. That the deck
-  // is drawn is preview.spec.ts's to check.
-  const slideMermaid = page.waitForRequest(
-    (request) =>
-      /mermaid(\.min)?\.js$/.test(request.url()) &&
-      request.frame() !== page.mainFrame(),
-  );
-  await app.modeButton("Preview").click();
-  const request = await slideMermaid;
-  expect(request.url()).toBe(
-    new URL("/deps/mermaid/mermaid.min.js", page.url()).href,
-  );
-});

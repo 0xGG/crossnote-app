@@ -101,6 +101,25 @@ purify.addHook("uponSanitizeAttribute", (node, data) => {
   }
 });
 
+/**
+ * What a diagram library drew, as SVG markup, through the same sanitizer and
+ * hooks as a note's HTML, with what a drawing holds kept: SVG's elements and
+ * filters, the style element a diagram scopes its look with, and HTML labels
+ * inside foreignObject (sanitized as HTML), formulas in them included.
+ */
+export function sanitizeSVG(svg: string): string {
+  return purify.sanitize(svg, {
+    USE_PROFILES: { svg: true, svgFilters: true, html: true, mathMl: true },
+    // KaTeX's MathML, as in sanitizeHTML, for formulas in labels.
+    ADD_TAGS: ["foreignObject", "semantics", "annotation"],
+    ADD_ATTR: ["encoding"],
+    // HTML may sit in foreignObject, sanitized as HTML; DOMPurify takes it
+    // out otherwise.
+    HTML_INTEGRATION_POINTS: { "annotation-xml": true, "foreignobject": true },
+    SANITIZE_DOM: false,
+  });
+}
+
 export function sanitizeHTML(html: string): string {
   return purify.sanitize(html, {
     FORBID_TAGS: forbiddenTags,

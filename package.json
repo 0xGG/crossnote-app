@@ -54,6 +54,7 @@
     "markdown-it-sub": "^2.0.0",
     "markdown-it-sup": "^2.0.0",
     "mdi-material-ui": "^8.0.0",
+    "mermaid": "^12.3.0",
     "minisearch": "^7.2.0",
     "moment": "^2.31.0",
     "object-hash": "^3.0.0",
