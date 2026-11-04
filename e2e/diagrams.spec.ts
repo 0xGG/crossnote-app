@@ -410,3 +410,22 @@ test("asks before sending a PlantUML diagram to plantuml.com, unless set to draw
   expect(vendored()).toEqual([]);
   expect(await violations()).toEqual([]);
 });
+
+test("loads no library from the site's /deps folder but CodeMirror's languages", async ({
+  app,
+  page,
+}) => {
+  const requested: string[] = [];
+  page.on("request", (request) => {
+    const { pathname } = new URL(request.url());
+    if (
+      pathname.startsWith("/deps/") &&
+      !pathname.startsWith("/deps/codemirror@")
+    ) {
+      requested.push(pathname);
+    }
+  });
+  await app.open();
+  await app.openNotes();
+  expect(requested).toEqual([]);
+});
