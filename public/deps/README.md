@@ -9,7 +9,6 @@ and `pnpm audit` never report their vulnerabilities.
 
 ```json
 {
-  "prism": "1.23.0",
   "mermaid": "8.14.0",
   "marked": "0.7.0",
   "plantuml-encoder": "1.4.0",

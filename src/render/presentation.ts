@@ -210,7 +210,6 @@ ${body}
 </body>
 ${options.forPrint ? '<script>window.history.replaceState("", "", "?print-pdf");</script>' : ""}
 <script src="https://cdn.jsdelivr.net/npm/reveal.js@3.9.2/js/reveal.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/prismjs@1.17.1/prism.min.js"></script>
 ${diagramInits}
 <script>
   if (typeof Reveal === "undefined") {
