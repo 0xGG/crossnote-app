@@ -11,6 +11,7 @@ import fence from "./fence";
 import frontMatter from "./frontMatter";
 import headings from "./headings";
 import linkId from "./linkId";
+import linkTargets from "./linkTargets";
 import math from "./math";
 import lines from "./lines";
 import { deckHTML } from "./slides";
@@ -46,6 +47,7 @@ fence(md);
 wikilink(md);
 blockReference(md);
 linkId(md);
+linkTargets(md);
 
 /** Turns :short_name: into the emoji it names, from then on. */
 export function enableEmoji(emojiDefinitions: { [shortName: string]: string }) {

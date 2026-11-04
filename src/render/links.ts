@@ -50,14 +50,22 @@ const isLink = (tokens: Token[], i: number) =>
 /** The links in a note's text, in the order it has them. */
 export function findLinks(text: string): NoteLink[] {
   const links: NoteLink[] = [];
+  // A table cell's text has no lines of its own: its row's are taken.
+  let row: [number, number] | null = null;
   eachToken(md.parse(text, {}), (tokens, i, parent) => {
+    if (!parent && tokens[i].type === "tr_open") {
+      row = tokens[i].map;
+    } else if (!parent && tokens[i].type === "table_close") {
+      row = null;
+    }
     if (!isLink(tokens, i)) {
       return false;
     }
     const token = tokens[i];
+    const map = parent?.map ?? row;
     const found = {
       elementId: String(token.attrGet("id") || ""),
-      lines: [parent?.map?.[0] ?? 0, parent?.map?.[1] ?? 0] as [number, number],
+      lines: [map?.[0] ?? 0, map?.[1] ?? 0] as [number, number],
       context: parent?.content ?? "",
     };
     if (token.type === "wikilink") {

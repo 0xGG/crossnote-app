@@ -30,6 +30,24 @@ afterEach(() => {
 });
 
 describe("mountPreview", () => {
+  it("goes to the place in the note a link to #name names", async () => {
+    const element = document.createElement("div");
+    document.body.append(element);
+    await mountPreview(element, "A note[^1].\n\n[^1]: The note.\n", { note })
+      .done;
+    // jsdom does not scroll.
+    const scrolled: Element[] = [];
+    Element.prototype.scrollIntoView = function (this: Element) {
+      scrolled.push(this);
+    };
+    try {
+      element.querySelector<HTMLAnchorElement>('a[href^="#fn"]')!.click();
+      expect(scrolled.map(({ id }) => id)).toEqual(["fn1"]);
+    } finally {
+      delete (Element.prototype as Partial<Element>).scrollIntoView;
+    }
+  });
+
   it("draws the sanitized HTML", async () => {
     // echomd's own filter lets a form through, as it looks at src, href and
     // background addresses only.

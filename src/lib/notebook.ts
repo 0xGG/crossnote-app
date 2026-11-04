@@ -155,9 +155,16 @@ export class Notebook {
     // markdown link is one only when it names a .md file and has words.
     const references: Reference[] = [];
     for (const found of findLinks(note.markdown)) {
-      // TODO: Ignore more protocols
-      const link =
-        found.kind === "link" ? decodeURI(found.target) : found.target;
+      // A markdown link's address may be percent-encoded; one that is not
+      // well encoded is taken as it is written.
+      let link = found.target;
+      if (found.kind === "link") {
+        try {
+          link = decodeURI(found.target);
+        } catch {
+          // As it is written.
+        }
+      }
       if (
         (found.kind !== "tag" && link.match(/https?:\/\//)) ||
         (found.kind === "link" && (!found.text.length || !link.endsWith(".md")))

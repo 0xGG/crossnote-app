@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { renderMarkdown } from "./index";
 import { findLinks } from "./links";
+import { sanitizeHTML } from "./sanitize";
 
 const ids = (html: string) => {
   const element = document.createElement("div");
@@ -54,6 +55,49 @@ describe("findLinks", () => {
     expect(
       findLinks("[[A]] issue #\n\n[[B]] x ^\n").map(({ target }) => target),
     ).toEqual(["A", "B"]);
+  });
+
+  it("gives a link in a table cell the lines of its row", () => {
+    expect(
+      findLinks("| a | b |\n|---|---|\n| [[x]] | c |\n| d | [[y]] |\n").map(
+        ({ target, lines }) => [target, lines],
+      ),
+    ).toEqual([
+      ["x", [2, 3]],
+      ["y", [3, 4]],
+    ]);
+  });
+
+  it("gives a link after a table no lines of the table's", () => {
+    const [link] = findLinks("| a |\n|---|\n| b |\n\nText^[see [[X]]]\n");
+    expect(link.target).toBe("X");
+    expect(link.lines).toEqual([0, 0]);
+  });
+
+  it("leaves an address of another app's as it is, to do nothing", () => {
+    const element = document.createElement("div");
+    element.innerHTML = renderMarkdown(
+      "[item](zotero://select/items/A) [file](ftp://example.org/a.md) [text](sms:+15550100) [run](javascript:void%200)\n",
+    ).html;
+    expect(
+      Array.from(element.querySelectorAll("a"), (a) => a.getAttribute("href")),
+    ).toEqual([
+      "zotero://select/items/A",
+      "ftp://example.org/a.md",
+      "sms:+15550100",
+    ]);
+  });
+
+  it("keeps a link whose address has a colon as a note's path", () => {
+    const element = document.createElement("div");
+    element.innerHTML = sanitizeHTML(
+      renderMarkdown(
+        "[x](Re:Zero.md) [[Re:Zero]] [m](mailto:a@b.c) [w](https://a.b/)\n",
+      ).html,
+    );
+    expect(
+      Array.from(element.querySelectorAll("a"), (a) => a.getAttribute("href")),
+    ).toEqual(["./Re:Zero.md", "./Re:Zero", "mailto:a@b.c", "https://a.b/"]);
   });
 
   it("takes no links from the front matter, which the preview does not draw", () => {

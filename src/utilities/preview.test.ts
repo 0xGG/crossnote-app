@@ -49,11 +49,34 @@ describe("openURL", () => {
     expect(open).not.toHaveBeenCalled();
   });
 
+  it.each(["mailto:someone@example.org", "tel:+15550100"])(
+    "hands %s to the system, as a click on the link would",
+    (url) => {
+      const click = vi
+        .spyOn(HTMLAnchorElement.prototype, "click")
+        .mockImplementation(() => {});
+      try {
+        openURL(url, note);
+        expect(click).toHaveBeenCalledTimes(1);
+        expect((click.mock.contexts[0] as HTMLAnchorElement).href).toBe(url);
+        expect(open).not.toHaveBeenCalled();
+        expect(openNoteAtPath).not.toHaveBeenCalled();
+      } finally {
+        click.mockRestore();
+      }
+    },
+  );
+
+  it("opens a note whose address is not well percent-encoded as it is written", () => {
+    openURL("100%.md", note);
+    expect(openNoteAtPath).toHaveBeenCalledWith("notebook", "folder/100%.md");
+  });
+
   it.each([
     "javascript:alert(1)//http://example.org/",
     "JavaScript:alert(1)",
-    "mailto:someone@example.org",
     "data:text/html,https://example.org/",
+    "#a-heading",
   ])("neither opens nor creates anything for %s", (url) => {
     openURL(url, note);
     expect(open).not.toHaveBeenCalled();

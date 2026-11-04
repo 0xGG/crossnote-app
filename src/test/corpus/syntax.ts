@@ -97,6 +97,10 @@ export const syntaxSamples: { name: string; text: string }[] = [
     text: "- list\n\t- indented with a tab\n\n\tcode indented with a tab\n",
   },
   {
+    name: "links with odd addresses",
+    text: "[a colon](Re:Zero.md), [a broken encoding](%E0%A4.md), [mail](mailto:a@b.c) and [[Other]]\n\n| a | b |\n|---|---|\n| [in a table](Table.md) | c |\n",
+  },
+  {
     name: "links in task items",
     text: "- [ ] read [[Book]] #reading\n- [x] see [the notes](notes.md)\n\n> - [ ] quoted [[Book]]\n",
   },

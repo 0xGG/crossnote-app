@@ -2,12 +2,34 @@ import path from "path-browserify";
 import { globalContainers } from "../containers/global";
 import { Note } from "../lib/note";
 
+// A note's path as a link writes it, percent-encoded or not: one that is
+// not well encoded (100%.md) is taken as it is written.
+export function decodeLinkPath(link: string): string {
+  try {
+    return decodeURIComponent(link);
+  } catch {
+    return link;
+  }
+}
+
 export function openURL(url: string = "", note: Note) {
   if (!note || !url) {
     return;
   }
+  if (/^(mailto|tel):/i.test(url)) {
+    // Mail and phone numbers go to what the system opens them with, as a
+    // click on the link would.
+    const link = document.createElement("a");
+    link.href = url;
+    link.click();
+    return;
+  }
+  if (url.startsWith("#")) {
+    // A place in the note itself, which the preview goes to.
+    return;
+  }
   if (/^[a-z][a-z\d+.-]*:/i.test(url) && !/^https?:\/\//i.test(url)) {
-    // Another scheme (javascript:, mailto:, ...) is neither a page to open
+    // Another scheme (javascript:, data:, ...) is neither a page to open
     // nor a note to open or create.
     return;
   }
@@ -38,7 +60,7 @@ export function openURL(url: string = "", note: Note) {
     );
     globalContainers.crossnoteContainer.openNoteAtPath(
       globalContainers.crossnoteContainer.getNotebookAtPath(note.notebookPath),
-      decodeURIComponent(filePath),
+      decodeLinkPath(filePath),
     );
   } else {
     let filePath = path.relative(
@@ -50,7 +72,7 @@ export function openURL(url: string = "", note: Note) {
     );
     globalContainers.crossnoteContainer.openNoteAtPath(
       globalContainers.crossnoteContainer.getNotebookAtPath(note.notebookPath),
-      decodeURIComponent(filePath),
+      decodeLinkPath(filePath),
     );
   }
 }

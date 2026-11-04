@@ -121,7 +121,19 @@ function handleLinks(container: HTMLElement, note: Note | null) {
   for (const link of links) {
     link.onclick = (event) => {
       event.preventDefault();
-      if (link.hasAttribute("data-topic")) {
+      const href = link.getAttribute("href") ?? "";
+      if (href.startsWith("#")) {
+        // A place in the note, such as a footnote or a heading.
+        let id = href.slice(1);
+        try {
+          id = decodeURIComponent(id);
+        } catch {
+          // As it is written.
+        }
+        container
+          .querySelector(`#${CSS.escape(id)}`)
+          ?.scrollIntoView({ block: "center" });
+      } else if (link.hasAttribute("data-topic")) {
         const tag = link.getAttribute("data-topic");
         if (tag.length && note) {
           globalContainers.crossnoteContainer.openNoteAtPath(
