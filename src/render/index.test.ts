@@ -63,6 +63,24 @@ describe("mountPreview", () => {
     }
   });
 
+  it("goes to the top of the note for a link to # alone", async () => {
+    // In the app, what scrolls is a box around the preview.
+    const box = document.createElement("div");
+    const element = document.createElement("div");
+    box.append(element);
+    document.body.append(box);
+    await mountPreview(element, "Text.\n\n[Back to top](#)\n", { note }).done;
+    // jsdom does not scroll, so the box's scroll position is recorded.
+    const tops: number[] = [];
+    Object.defineProperty(box, "scrollTop", {
+      configurable: true,
+      get: () => 120,
+      set: (top: number) => tops.push(top),
+    });
+    element.querySelector<HTMLAnchorElement>('a[href="#"]')!.click();
+    expect(tops).toEqual([0]);
+  });
+
   it("draws the sanitized HTML", async () => {
     // echomd's own filter lets a form through, as it looks at src, href and
     // background addresses only.

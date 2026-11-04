@@ -123,16 +123,28 @@ function handleLinks(container: HTMLElement, note: Note | null) {
       event.preventDefault();
       const href = link.getAttribute("href") ?? "";
       if (href.startsWith("#")) {
-        // A place in the note, such as a footnote or a heading.
+        // A place in the note, such as a footnote or a heading; "#" alone
+        // is the note's top, as on a web page.
         let id = href.slice(1);
         try {
           id = decodeURIComponent(id);
         } catch {
           // As it is written.
         }
-        container
-          .querySelector(`#${CSS.escape(id)}`)
-          ?.scrollIntoView({ block: "center" });
+        if (id) {
+          container
+            .querySelector(`#${CSS.escape(id)}`)
+            ?.scrollIntoView({ block: "center" });
+        } else {
+          // What scrolls is a box around the preview, not the preview.
+          let scroller: HTMLElement | null = container;
+          while (scroller && scroller.scrollTop === 0) {
+            scroller = scroller.parentElement;
+          }
+          if (scroller) {
+            scroller.scrollTop = 0;
+          }
+        }
       } else if (link.hasAttribute("data-topic")) {
         const tag = link.getAttribute("data-topic");
         if (tag.length && note) {
