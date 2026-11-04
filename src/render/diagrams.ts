@@ -1,10 +1,6 @@
 import { Renderer, startDrawing } from "./drawing";
-import {
-  EchartsRenderer,
-  PlantUMLRenderer,
-  VegaRenderer,
-  WaveDromRenderer,
-} from "./echomd";
+import { renderEcharts } from "./echarts";
+import { PlantUMLRenderer, VegaRenderer, WaveDromRenderer } from "./echomd";
 import { renderMermaid } from "./mermaid";
 import { renderVegaLite } from "./vegaLite";
 
@@ -29,7 +25,7 @@ function echomd(renderer: EchomdRenderer): Renderer {
  */
 export const diagramRenderers: [RegExp, Renderer, boolean][] = [
   [/^(puml|plantuml)$/, echomd(PlantUMLRenderer), true],
-  [/^echarts$/, echomd(EchartsRenderer), true],
+  [/^echarts$/, renderEcharts, true],
   [/^mermaid$/, renderMermaid, true],
   [/^vega$/, echomd(VegaRenderer), true],
   [
