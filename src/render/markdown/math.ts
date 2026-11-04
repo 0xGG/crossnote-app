@@ -1,4 +1,6 @@
 import katex from "katex";
+// The styles and fonts the math KaTeX draws needs, in the page.
+import "katex/dist/katex.min.css";
 import type { MarkdownIt } from "markdown-it";
 
 // $inline$ and $$display$$ math, drawn by KaTeX as the note renders; an

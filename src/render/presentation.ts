@@ -1,6 +1,9 @@
 import { Note } from "../lib/note";
 import { finishPreview } from "./preview";
 import { sanitizeHTML } from "./sanitize";
+// The styles of the math the markdown stage drew, from the same KaTeX, for
+// the deck's frame.
+import katexStyles from "katex/dist/katex.min.css?inline";
 
 const revealThemes = [
   "beige.css",
@@ -198,7 +201,7 @@ export function mountPresentation(
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@3.9.2/css/reveal.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@3.9.2/css/theme/${theme}">
   ${options.forPrint ? '<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@3.9.2/css/print/pdf.css">' : ""}
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.13.0/dist/katex.min.css">
+  <style>${katexStyles}</style>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@shd101wyy/mume@0.4.7/styles/prism_theme/${prismThemes[theme]}">
   ${diagramScripts}
 </head>

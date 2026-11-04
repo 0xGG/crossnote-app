@@ -12,10 +12,9 @@ import { syntaxSamples } from "./syntax";
 // What each note of the corpus renders to, and the references the notebook
 // finds in it, kept in files beside this one (rendering/). A change to
 // either fails here until the files are written again (vitest -u) and the
-// difference has been looked over; the renderer and the parser that replace
-// echomd's are held up against them the same way. Only the HTML the
-// markdown stage gives is kept: what scripts on the page draw into it
-// afterwards (diagrams, block math, twemoji's images) is not.
+// difference has been looked over. Only the HTML the markdown stage gives
+// is kept, math included, as KaTeX draws it there: what scripts on the page
+// draw into it afterwards (diagrams, twemoji's images) is not.
 const samples = [
   ...syntaxSamples,
   ...Object.entries(frontMatterSamples).map(([name, text]) => ({

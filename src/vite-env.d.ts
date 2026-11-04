@@ -7,7 +7,6 @@ declare const __CODEMIRROR_MODES__: string;
 
 // Untyped CommonJS modules
 declare module "@0xgg/echomd/core";
-declare module "katex";
 declare module "markdown-it-emoji";
 declare module "markdown-it-footnote";
 declare module "markdown-it-for-inline";
