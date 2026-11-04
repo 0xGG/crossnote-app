@@ -5,8 +5,8 @@ import { Attributes, parseAttributes } from "./attributes";
 // reads it, as echomd's preview did, but for the front matter: empty
 // paragraphs of class sync-line, carrying the line they stand for, put
 // before headings, code blocks, images, comments and [TOC]; a slide or page
-// break comment turned into a marker; a task box turned into a checkbox;
-// and HTML that opens a line kept as it is up to the tag that closes it.
+// break comment turned into a marker; and HTML that opens a line kept as
+// it is up to the tag that closes it.
 
 /** A slide's attributes, from its <!-- slide --> comment, and its line. */
 export type SlideConfig = Attributes & { lineNo: number };
@@ -109,7 +109,6 @@ export function transformMarkdown(inputString: string): Transformed {
         outputString = outputString + line + "\n";
         continue;
       }
-      let taskListItemMatch: RegExpMatchArray | null;
       let htmlTagMatch: RegExpMatchArray | null;
       if (
         line.match(/^(!\[|@import)/) &&
@@ -184,22 +183,6 @@ export function transformMarkdown(inputString: string): Transformed {
         i = end + 1;
         lineNo = lineNo + 1;
         outputString = outputString + "\n[MUMETOC]\n\n";
-        continue;
-      } else if (
-        (taskListItemMatch = line.match(
-          /^\s*(?:[*\-+]|\d+\.)\s+(\[[xX\s]\])\s/,
-        ))
-      ) {
-        const checked = taskListItemMatch[1] !== "[ ]";
-        line = line.replace(
-          taskListItemMatch[1],
-          `<input type="checkbox" class="task-list-item-checkbox sync-line" data-line="${lineNo}"` +
-            (checked ? " checked" : "") +
-            ">",
-        );
-        i = end + 1;
-        lineNo = lineNo + 1;
-        outputString = outputString + line + "\n";
         continue;
       } else if (
         (htmlTagMatch = line.match(

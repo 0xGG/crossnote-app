@@ -96,4 +96,8 @@ export const syntaxSamples: { name: string; text: string }[] = [
     name: "indented with tabs",
     text: "- list\n\t- indented with a tab\n\n\tcode indented with a tab\n",
   },
+  {
+    name: "links in task items",
+    text: "- [ ] read [[Book]] #reading\n- [x] see [the notes](notes.md)\n\n> - [ ] quoted [[Book]]\n",
+  },
 ];

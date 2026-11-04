@@ -67,6 +67,8 @@ exports[`the shared corpus, sanitized > keeps indented with tabs as it reads 1`]
 
 exports[`the shared corpus, sanitized > keeps line breaks as it reads 1`] = `[]`;
 
+exports[`the shared corpus, sanitized > keeps links in task items as it reads 1`] = `[]`;
+
 exports[`the shared corpus, sanitized > keeps links, images and bare addresses as it reads 1`] = `[]`;
 
 exports[`the shared corpus, sanitized > keeps lists and task lists as it reads 1`] = `[]`;

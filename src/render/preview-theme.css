@@ -194,9 +194,6 @@ html .preview.preview .task-list-item-checkbox {
   border: 1px solid #454545;
   border-radius: 3px;
 }
-html .preview.preview .task-list-item-checkbox:hover {
-  cursor: pointer;
-}
 html .preview.preview .task-list-item-checkbox[checked]:before {
   content: "✔";
   white-space: pre;
