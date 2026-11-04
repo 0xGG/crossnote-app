@@ -335,6 +335,21 @@ export function Settings() {
         </Section>
 
         <Section>
+          <FormControlLabel
+            control={
+              <Switch
+                color="primary"
+                checked={settingsContainer.alwaysDrawPlantUML}
+                onChange={(event) => {
+                  settingsContainer.setAlwaysDrawPlantUML(event.target.checked);
+                }}
+              />
+            }
+            label={t("settings/always-draw-plantuml")}
+          />
+        </Section>
+
+        <Section>
           <Typography
             variant={"body2"}
             style={{

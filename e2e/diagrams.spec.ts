@@ -357,3 +357,56 @@ test("draws wavedrom as sanitized SVG, running nothing its source writes", async
   expect(vendored()).toEqual([]);
   expect(await violations()).toEqual([]);
 });
+
+test("asks before sending a PlantUML diagram to plantuml.com, unless set to draw without asking", async ({
+  app,
+  page,
+}) => {
+  const sent: string[] = [];
+  page.on("request", (request) => {
+    if (request.url().startsWith("https://www.plantuml.com/")) {
+      sent.push(request.url());
+    }
+  });
+  const violations = await app.recordPolicyViolations();
+  const vendored = app.recordVendoredRequests("plantuml-encoder");
+  await app.open();
+  await app.openNotes();
+  await app.createNote();
+  await app.setEditorText("```plantuml\n@startuml\nA -> B\n@enduml\n```\n");
+  const noteTab = app.tab(await app.noteTitle.inputValue());
+  await app.modeButton("Preview").click();
+
+  const draw = app.preview.getByRole("button", {
+    name: "Draw with plantuml.com (sends the diagram's source to it)",
+  });
+  await expect(draw).toBeVisible();
+  await expect(app.preview.locator("pre")).toContainText("A -> B");
+  expect(sent).toEqual([]);
+  await draw.click();
+  const diagram = app.preview.getByRole("img", { name: "PlantUML diagram" });
+  await expect(diagram).toHaveAttribute(
+    "src",
+    /^https:\/\/www\.plantuml\.com\/plantuml\/img\/[0-9A-Za-z_-]+$/,
+  );
+  await expect.poll(() => sent.length).toBe(1);
+
+  // With the setting on, the diagram is drawn as the note is.
+  await app.openSettings();
+  await page
+    .getByRole("switch", {
+      name: "Draw PlantUML diagrams with plantuml.com without asking",
+    })
+    .check();
+  await noteTab.click();
+  await app.modeButton("Edit").click();
+  await app.modeButton("Preview").click();
+  // Its request is refused here, so the image is looked for by its address.
+  await expect(diagram).toHaveAttribute(
+    "src",
+    /^https:\/\/www\.plantuml\.com\/plantuml\/img\//,
+  );
+  await expect(draw).toHaveCount(0);
+  expect(vendored()).toEqual([]);
+  expect(await violations()).toEqual([]);
+});

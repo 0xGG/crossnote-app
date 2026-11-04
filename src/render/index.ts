@@ -60,8 +60,8 @@ export interface MountedPreview {
   /**
    * Settles once the note is drawn: its HTML in the element, finished, its
    * images read from the notebook, and its code blocks drawn, each given up
-   * to 10 seconds before it shows that it took too long (diagrams drawn by
-   * echomd's renderers count as drawn once they have started); a deck once
+   * to 10 seconds before it shows that it took too long (a PlantUML image
+   * counts as drawn once it is in its place, loaded or not); a deck once
    * reveal.js is ready or failed to load and its own blocks are drawn, or
    * once it is disposed of. Rejects when the note cannot be drawn into
    * the element at all (the markdown stage, or putting its HTML or the

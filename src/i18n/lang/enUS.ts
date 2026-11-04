@@ -135,6 +135,11 @@ export const enUS = {
     "settings/editor-cursor-color": "Editor cursor color",
     "settings/default-editor-mode": "Default editor mode",
     "settings/plain-text-source-code": "Plain text in source code mode",
+    "settings/always-draw-plantuml":
+      "Draw PlantUML diagrams with plantuml.com without asking",
+    "preview/draw-plantuml":
+      "Draw with plantuml.com (sends the diagram's source to it)",
+    "preview/plantuml-diagram": "PlantUML diagram",
     "settings/hello": "Hello, ",
     "settings/world": "world!",
     "settings/author-name": "Author name",

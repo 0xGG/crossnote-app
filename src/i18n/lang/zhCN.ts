@@ -132,6 +132,10 @@ export const zhCN = {
     "settings/editor-cursor-color": "编辑器光标颜色",
     "settings/default-editor-mode": "默认编辑器模式",
     "settings/plain-text-source-code": "源代码模式显示纯文本",
+    "settings/always-draw-plantuml":
+      "不经询问就用 plantuml.com 绘制 PlantUML 图",
+    "preview/draw-plantuml": "用 plantuml.com 绘制（会把图的源码发给该服务）",
+    "preview/plantuml-diagram": "PlantUML 图",
     "settings/hello": "你好，",
     "settings/world": "世界！",
     "settings/author-name": "作者姓名",

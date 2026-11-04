@@ -9,8 +9,7 @@ and `pnpm audit` never report their vulnerabilities.
 
 ```json
 {
-  "marked": "0.7.0",
-  "plantuml-encoder": "1.4.0"
+  "marked": "0.7.0"
 }
 ```
 
