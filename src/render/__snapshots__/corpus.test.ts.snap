@@ -77,17 +77,9 @@ exports[`the shared corpus, sanitized > keeps math as it reads 1`] = `[]`;
 
 exports[`the shared corpus, sanitized > keeps quotes and a rule as it reads 1`] = `[]`;
 
-exports[`the shared corpus, sanitized > keeps slides and a page break as it reads 1`] = `
-[
-  "section[lineno]",
-]
-`;
+exports[`the shared corpus, sanitized > keeps slides and a page break as it reads 1`] = `[]`;
 
-exports[`the shared corpus, sanitized > keeps slides with presentation settings as it reads 1`] = `
-[
-  "section[lineno]",
-]
-`;
+exports[`the shared corpus, sanitized > keeps slides with presentation settings as it reads 1`] = `[]`;
 
 exports[`the shared corpus, sanitized > keeps the same links again as it reads 1`] = `[]`;
 

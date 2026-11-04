@@ -9,11 +9,7 @@ import { md } from "./markdown";
 // the element it draws it as. The markdown stage names that element by the
 // link and where it stands in its block (wikilink-README-4), so the same
 // link at the same place in two blocks shares an id, and the preview marks
-// the first. Telling them apart needs both to read the same tokens: the
-// notebook reads a note's text as it is, the preview after
-// ./markdown/transform.ts has taken its front matter out and turned its task
-// boxes into HTML, so counting links in the note's order would not count the
-// same links.
+// the first. Both read the same tokens of the same text.
 
 export interface NoteLink {
   /** A wiki link, a hashtag, or a markdown link followed by its words. */

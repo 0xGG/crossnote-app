@@ -24,11 +24,11 @@ import { sanitizeHTML } from "./sanitize";
 // preview draws it as by its id. How previews look in each theme is
 // ./theme.ts's.
 //
-// Where the HTML stands in the note's text: the markdown stage leaves marks
-// with a data-line attribute, the 0-based line they stand for (empty
-// paragraphs of class sync-line between blocks, task checkboxes, a deck's
-// sections), and a reference keeps the lines of its block
-// (lib/reference.ts). A markdown stage of the app's own must keep both.
+// Where the HTML stands in the note's text: the markdown stage marks blocks
+// (but code blocks), task checkboxes, page breaks and a deck's sections
+// with a data-line attribute, the 0-based line they start on
+// (./markdown/lines.ts), and a reference keeps the lines of its block
+// (lib/reference.ts).
 //
 // The page's Content-Security-Policy (index.html) still lets scripts run
 // inline, through eval and from the CDNs the slides and widgets load. The
