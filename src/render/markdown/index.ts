@@ -10,6 +10,7 @@ import { findFrontMatter } from "../../lib/frontMatter";
 import blockReference from "./blockReference";
 import fence from "./fence";
 import frontMatter from "./frontMatter";
+import headings from "./headings";
 import linkId from "./linkId";
 import math from "./math";
 import { parseSlides } from "./slides";
@@ -30,6 +31,7 @@ export const md = new MarkdownIt({
   breaks: true,
 });
 frontMatter(md);
+headings(md);
 md.use(footnote);
 md.use(taskLists);
 md.use(mark);

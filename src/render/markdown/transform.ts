@@ -1,12 +1,10 @@
 import { findFrontMatter } from "../../lib/frontMatter";
 import { Attributes, parseAttributes } from "./attributes";
-import { HeadingIdGenerator } from "./slug";
 
 // What the note's text is rewritten into, line by line, before markdown-it
 // reads it, as echomd's preview did, but for the front matter: empty
 // paragraphs of class sync-line, carrying the line they stand for, put
-// before headings, code blocks, images, comments and [TOC]; a heading's
-// {#id .class} turned into an empty paragraph after it; a slide or page
+// before headings, code blocks, images, comments and [TOC]; a slide or page
 // break comment turned into a marker; a task box turned into a checkbox;
 // and HTML that opens a line kept as it is up to the tag that closes it.
 
@@ -59,7 +57,6 @@ const selfClosingTag: { [tag: string]: 1 } = {
 };
 
 export function transformMarkdown(inputString: string): Transformed {
-  const headingIdGenerator = new HeadingIdGenerator();
   let lastOpeningCodeBlockFence: string | null = null;
   let codeChunkOffset = 0;
   const slideConfigs: SlideConfig[] = [];
@@ -112,7 +109,6 @@ export function transformMarkdown(inputString: string): Transformed {
         outputString = outputString + line + "\n";
         continue;
       }
-      let headingMatch: RegExpMatchArray | null;
       let taskListItemMatch: RegExpMatchArray | null;
       let htmlTagMatch: RegExpMatchArray | null;
       if (
@@ -122,39 +118,9 @@ export function transformMarkdown(inputString: string): Transformed {
       ) {
         // An image or an import after an empty line.
         outputString += createAnchor(lineNo);
-      } else if ((headingMatch = line.match(/^(#{1,7})\s+.*/))) {
+      } else if (line.match(/^#{1,7}\s+.*/)) {
+        // A heading, left as it is (./headings.ts reads its attributes).
         outputString += createAnchor(lineNo);
-        const tag = headingMatch[1];
-        let heading = line.replace(tag, "");
-        const optMatch = heading.match(/(\s+\{|^\{)(.+?)\}(\s*)$/);
-        let classes: any = "";
-        let id: any = "";
-        if (optMatch) {
-          heading = heading.replace(optMatch[0], "");
-          try {
-            const opt = parseAttributes(optMatch[0]);
-            classes = opt["class"];
-            id = opt["id"];
-          } catch {
-            heading = "OptionsError: " + optMatch[1];
-          }
-        }
-        if (!id) {
-          id = headingIdGenerator.generateId(heading);
-        }
-        line =
-          tag +
-          " " +
-          heading +
-          '\n<p class="mume-header ' +
-          classes +
-          '" id="' +
-          id +
-          '"></p>';
-        i = end + 1;
-        lineNo = lineNo + 1;
-        outputString = outputString + line + "\n\n";
-        continue;
       } else if (line.match(/^<!--/)) {
         outputString += createAnchor(lineNo);
         let commentEnd = inputString.indexOf("-->", i + 4);

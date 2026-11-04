@@ -23,4 +23,11 @@ export class HeadingIdGenerator {
     }
     return slug;
   }
+
+  /** Counts an id given by hand as taken, for the ones made later. */
+  reserve(id: string) {
+    if (!(this.table[id] >= 0)) {
+      this.table[id] = 0;
+    }
+  }
 }

@@ -68,8 +68,15 @@ function extractValue(value: string): AttributeValue {
   return value;
 }
 
-function extractArray(text: string, start: number): Node | undefined {
-  if (text[start] !== "[") {
+// Lists in lists are read this deep; a "[" deeper than that is a word's.
+const maxDepth = 32;
+
+function extractArray(
+  text: string,
+  start: number,
+  depth = 0,
+): Node | undefined {
+  if (text[start] !== "[" || depth >= maxDepth) {
     return undefined;
   }
   const result: AttributeValue[] = [];
@@ -80,7 +87,7 @@ function extractArray(text: string, start: number): Node | undefined {
       break;
     }
     const node =
-      extractArray(text, i) ||
+      extractArray(text, i, depth + 1) ||
       extractQuotedString(text, i) ||
       extractWord(text, i);
     if (node) {
