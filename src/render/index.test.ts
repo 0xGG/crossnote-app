@@ -30,6 +30,21 @@ afterEach(() => {
 });
 
 describe("mountPreview", () => {
+  it("keeps what a note's HTML says, less what the sanitizer takes out", async () => {
+    const element = document.createElement("div");
+    await mountPreview(
+      element,
+      '<p onclick="alert(1)">Kept</p>\n\n<br>\n\n<script>alert(1)</script>\n\nA <a href="javascript:alert(1)">link</a> and <iframe src="https://a.b/"></iframe>.\n',
+      { note: null },
+    ).done;
+    expect(element.querySelector("p")?.textContent).toBe("Kept");
+    expect(element.querySelector("[onclick]")).toBeNull();
+    expect(element.querySelector("br")).not.toBeNull();
+    expect(element.querySelector("script, iframe")).toBeNull();
+    expect(element.querySelector("a")?.textContent).toBe("link");
+    expect(element.querySelector("a")?.hasAttribute("href")).toBe(false);
+  });
+
   it("goes to the place in the note a link to #name names", async () => {
     const element = document.createElement("div");
     document.body.append(element);

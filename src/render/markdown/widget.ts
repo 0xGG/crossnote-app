@@ -1,24 +1,5 @@
 import type { MarkdownIt } from "markdown-it";
 
-// echomd's check of the HTML a note writes: false for markup it would not
-// draw (scripts, styles, frames, event handlers, javascript: addresses),
-// which is then left out.
-function defaultChecker(html: string) {
-  if (/^<(?:br)/i.test(html)) {
-    return false;
-  }
-  if (/<(?:script|style|link|meta|object|embed|iframe)/i.test(html)) {
-    return false;
-  }
-  if (/\son\w+\s*=/i.test(html)) {
-    return false;
-  }
-  if (/(src|background|href)\s*=\s*["']?javascript:/i.test(html)) {
-    return false;
-  }
-  return true;
-}
-
 // <!-- @name "key": value --> becomes the element the preview mounts the
 // widget of that name on, with its attributes as JSON.
 function renderWidget(content: string) {
@@ -64,8 +45,9 @@ export default function widget(md: MarkdownIt) {
       if (content.match(/^<!--\s*@/) && content.match(/-->$/)) {
         return renderWidget(content) as string;
       }
-      const html = original(tokens, idx, options, env, self);
-      return defaultChecker(html) ? html : "";
+      // Any other HTML is the note's, as it is: what may stay of it is
+      // sanitizeHTML's to say (../sanitize.ts).
+      return original(tokens, idx, options, env, self);
     };
   }
 }
