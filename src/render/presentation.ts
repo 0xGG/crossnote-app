@@ -34,57 +34,9 @@ const prismThemes: Record<string, string> = {
   "white.css": "default.css",
 };
 
-const mermaidInit = `<script>
-  if (window["MERMAID_CONFIG"]) {
-    window["MERMAID_CONFIG"].startOnLoad = false;
-    window["MERMAID_CONFIG"].cloneCssStyles = false;
-  }
-  mermaid.initialize(window["MERMAID_CONFIG"] || {});
-  if (typeof window["Reveal"] !== "undefined") {
-    function mermaidRevealHelper(event) {
-      var diagrams = event.currentSlide.querySelectorAll(".mermaid");
-      for (var i = 0; i < diagrams.length; i++) {
-        if (!diagrams[i].hasAttribute("data-processed")) {
-          mermaid.init(null, diagrams[i], function () {
-            Reveal.slide(event.indexh, event.indexv);
-          });
-        }
-      }
-    }
-    Reveal.addEventListener("slidechanged", mermaidRevealHelper);
-    Reveal.addEventListener("ready", mermaidRevealHelper);
-  } else {
-    mermaid.init(null, document.getElementsByClassName("mermaid"));
-  }
-</script>`;
-
 // A value written into an inline script, which "</script>" in it must not end.
 const scriptValue = (value: unknown) =>
   JSON.stringify(value).replace(/</g, "\\u003c");
-
-// The frame draws each wavedrom block from its source read as JSON, as the
-// preview does. WaveDrom.ProcessAll is not used: it evaluates the text of
-// every element whose type is WaveDrom as script, and a note's HTML can
-// make such an element. What RenderWaveForm draws is not sanitized, here as
-// in the preview (see sanitize.ts).
-const wavedromInit = `<script>
-  (function () {
-    var blocks = document.querySelectorAll(".vickeymd-fence.wavedrom");
-    for (var i = 0; i < blocks.length; i++) {
-      var text = blocks[i].textContent;
-      try {
-        var source = JSON.parse(text);
-        var target = document.createElement("div");
-        target.id = "WaveDrom_Display_" + i;
-        blocks[i].textContent = "";
-        blocks[i].appendChild(target);
-        WaveDrom.RenderWaveForm(i, source, "WaveDrom_Display_");
-      } catch (error) {
-        blocks[i].textContent = text;
-      }
-    }
-  })();
-</script>`;
 
 // The front matter's reveal.js settings, less the two that would run what
 // the note names: dependencies, scripts reveal.js loads, and previewLinks,
@@ -106,12 +58,12 @@ let frames = 0;
 // How long a deck waits for reveal.js to say it is ready or could not load.
 export const revealTimeout = 30000;
 
-// Draws a deck of slides into a frame inside element, with reveal.js and the
-// slides' own mermaid and wavedrom. Settles once reveal.js says the deck is
-// ready, or that it could not load, and the frame's content has been
-// finished like a preview's, or once it is disposed of; fails when reveal.js
-// has said neither within revealTimeout. cleanups gets what dispose has to
-// undo.
+// Draws a deck of slides into a frame inside element, with reveal.js; the
+// page draws the slides' diagrams and code into it. Settles once reveal.js
+// says the deck is ready, or that it could not load, and the frame's content
+// has been finished like a preview's, or once it is disposed of; fails when
+// reveal.js has said neither within revealTimeout. cleanups gets what
+// dispose has to undo.
 export function mountPresentation(
   element: HTMLElement,
   html: string,
@@ -129,20 +81,6 @@ export function mountPresentation(
     ? settings["theme"]
     : "white.css";
   const body = sanitizeHTML(html);
-
-  let diagramScripts = "";
-  let diagramInits = "";
-  if (body.indexOf("wavedrom") >= 0) {
-    diagramScripts +=
-      '<script src="https://cdn.jsdelivr.net/npm/wavedrom@2.3.2/skins/default.js"></script>' +
-      '<script src="https://cdn.jsdelivr.net/npm/wavedrom@2.3.2/wavedrom.min.js"></script>';
-    diagramInits += wavedromInit;
-  }
-  if (body.indexOf("mermaid") >= 0) {
-    // The same mermaid the page loads from the site (index.html).
-    diagramScripts += '<script src="/deps/mermaid/mermaid.min.js"></script>';
-    diagramInits += mermaidInit;
-  }
 
   const iframe = document.createElement("iframe");
   iframe.style.border = "none";
@@ -203,15 +141,12 @@ export function mountPresentation(
   ${options.forPrint ? '<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@3.9.2/css/print/pdf.css">' : ""}
   <style>${katexStyles}</style>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@shd101wyy/mume@0.4.7/styles/prism_theme/${prismThemes[theme]}">
-  ${diagramScripts}
 </head>
 <body>
 ${body}
 </body>
 ${options.forPrint ? '<script>window.history.replaceState("", "", "?print-pdf");</script>' : ""}
 <script src="https://cdn.jsdelivr.net/npm/reveal.js@3.9.2/js/reveal.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/prismjs@1.17.1/prism.min.js"></script>
-${diagramInits}
 <script>
   if (typeof Reveal === "undefined") {
     parent.postMessage({ event: "reveal-failed", id: ${scriptValue(id)} }, "/");
@@ -235,6 +170,7 @@ ${diagramInits}
         options.note,
         true,
         options.isCurrent,
+        options.cleanups,
       );
     }
   });

@@ -20,21 +20,29 @@ const attributeValue = (value: AttributeValue) =>
 
 // A deck's HTML: each slide a <section> with its comment's attributes, its
 // class added to "slide", and a slide marked vertical put under the one
-// before it. What comes before the first slide is kept, hidden.
+// before it; the first slide has none before it, and stays where it is. What
+// comes before the first slide is kept, hidden.
 export function deckHTML(before: string, slides: Slide[]): string {
   let output = "";
   let h = -1; // horizontal
   let v = 0; // vertical
+  const vertical = (i: number) => i > 0 && !!slides[i].config.vertical;
   slides.forEach(({ config, html }, i) => {
-    const { class: classes, id, vertical, lineNo, ...attributes } = config;
-    if (!vertical) {
+    const {
+      class: classes,
+      id,
+      vertical: _vertical,
+      lineNo,
+      ...attributes
+    } = config;
+    if (!vertical(i)) {
       h += 1;
-      if (i > 0 && slides[i - 1].config.vertical) {
+      if (i > 0 && vertical(i - 1)) {
         // The end of vertical slides.
         output += "</section>";
         v = 0;
       }
-      if (i < slides.length - 1 && slides[i + 1].config.vertical) {
+      if (i < slides.length - 1 && vertical(i + 1)) {
         // The start of vertical slides.
         output += "<section>";
       }
@@ -50,7 +58,7 @@ export function deckHTML(before: string, slides: Slide[]): string {
     const idString = id ? ` id="${attributeValue(id)}"` : "";
     output += `<section${attributeString}${idString} class="slide${className}" data-line="${lineNo}" data-h="${h}" data-v="${v}">${html}</section>`;
   });
-  if (slides.length && slides[slides.length - 1].config.vertical) {
+  if (slides.length && vertical(slides.length - 1)) {
     output += "</section>";
   }
   return `

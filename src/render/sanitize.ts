@@ -55,31 +55,21 @@ export function isSafeAddress(value: string): boolean {
   );
 }
 
-// A wavedrom code block comes out of the markdown stage as a script element
-// of type WaveDrom holding the diagram's source. The source stays as text
-// where the element was; the preview and the slides draw it from that text,
-// read as JSON. What wavedrom then draws is not sanitized: its renderer
-// writes markup the source holds into the page as it is, in the preview as
-// in the slides, until wavedrom is drawn by a renderer whose output can be
-// sanitized before it reaches the page.
-purify.addHook("uponSanitizeElement", (node, data) => {
-  if (
-    data.tagName === "script" &&
-    /^wavedrom$/i.test((node as Element).getAttribute("type") || "")
-  ) {
-    node.parentNode?.insertBefore(
-      node.ownerDocument.createTextNode(node.textContent || ""),
-      node,
-    );
-  }
-});
-
 // A wiki link names a note, and a note's name can hold a colon ("Todo:
 // groceries", "Book review: Dune"), which DOMPurify's address check, as it
 // ignores spaces, can take for the end of a scheme and then not let
 // through; such a link is kept as a path to the note instead.
 
 purify.addHook("uponSanitizeAttribute", (node, data) => {
+  // A diagram's use element repeats a shape the drawing defines; one that
+  // names anything outside the page, which it would fetch, goes without it.
+  if (
+    node.nodeName.toLowerCase() === "use" &&
+    /^(xlink:)?href$/i.test(data.attrName) &&
+    !data.attrValue.trim().startsWith("#")
+  ) {
+    data.keepAttr = false;
+  }
   if (
     data.attrName === "href" &&
     (node as Element).hasAttribute("data-wikilink-url") &&
@@ -90,8 +80,6 @@ purify.addHook("uponSanitizeAttribute", (node, data) => {
   }
   if (
     writtenAsHTML.includes(data.attrName) ||
-    // wavedrom's own loader evaluates any element with this type as script.
-    (data.attrName === "type" && /^wavedrom$/i.test(data.attrValue)) ||
     (addressAttributes.test(data.attrName) &&
       (!isSafeAddress(data.attrValue) || /["'<>`]/.test(data.attrValue))) ||
     (data.attrName === "name" &&
@@ -100,6 +88,45 @@ purify.addHook("uponSanitizeAttribute", (node, data) => {
     data.keepAttr = false;
   }
 });
+
+/**
+ * What a diagram library drew, as SVG markup, through the same sanitizer and
+ * hooks as a note's HTML, with what a drawing holds kept: SVG's elements and
+ * filters, use elements that repeat a shape defined in the page, the
+ * drawing's own style sheet, and HTML labels inside foreignObject (sanitized
+ * as HTML), formulas in them included.
+ */
+export function sanitizeSVG(svg: string): string {
+  const drawing = purify.sanitize(svg, {
+    // A note's HTML may not have these, nor a drawing; a style element may
+    // be a drawing's own.
+    FORBID_TAGS: [...forbiddenTags.filter((tag) => tag !== "style"), "input"],
+    USE_PROFILES: { svg: true, svgFilters: true, html: true, mathMl: true },
+    // KaTeX's MathML, as in sanitizeHTML, for formulas in labels.
+    ADD_TAGS: ["foreignObject", "semantics", "annotation", "use"],
+    ADD_ATTR: ["encoding"],
+    // HTML may sit in foreignObject, sanitized as HTML; DOMPurify takes it
+    // out otherwise.
+    HTML_INTEGRATION_POINTS: { "annotation-xml": true, "foreignobject": true },
+    SANITIZE_DOM: false,
+    RETURN_DOM_FRAGMENT: true,
+  });
+  // A drawing's own style sheet sits at its root; one further in came with
+  // what the drawing shows (a label, say) and would style the whole page.
+  for (const style of Array.from(drawing.querySelectorAll("style"))) {
+    const parent = style.parentNode;
+    if (
+      !parent ||
+      parent.nodeName.toLowerCase() !== "svg" ||
+      parent.parentNode !== drawing
+    ) {
+      style.remove();
+    }
+  }
+  const holder = document.createElement("div");
+  holder.appendChild(drawing);
+  return holder.innerHTML;
+}
 
 export function sanitizeHTML(html: string): string {
   return purify.sanitize(html, {

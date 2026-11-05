@@ -1,5 +1,15 @@
+import { expressionInterpreter } from "vega-interpreter";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { renderVegaLite, withoutWindowActions } from "./vegaLite";
+import { withBindingsInChart } from "./vega";
+import {
+  chartEmbedOptions,
+  renderVegaLite,
+  withoutWindowActions,
+} from "./vegaLite";
+
+// vega-embed draws on a canvas, which jsdom does not have.
+const embed = vi.hoisted(() => vi.fn());
+vi.mock("vega-embed", () => ({ default: embed }));
 
 const noWindows = { source: false, compiled: false, editor: false };
 
@@ -33,44 +43,98 @@ describe("withoutWindowActions", () => {
   });
 });
 
+describe("chartEmbedOptions", () => {
+  it("keeps a chart from turning vega's interpreter off or naming its inputs' or tooltip's element", () => {
+    expect(
+      chartEmbedOptions({
+        ast: false,
+        expr: "eval",
+        viewClass: "View",
+        bind: "body",
+        patch: [{ op: "remove", path: "/config" }],
+        tooltip: { id: "root", theme: "dark" },
+        renderer: "svg",
+      }),
+    ).toEqual({
+      actions: noWindows,
+      tooltip: { theme: "dark" },
+      renderer: "svg",
+    });
+  });
+});
+
 describe("renderVegaLite", () => {
   afterEach(() => {
-    delete (window as any).vegaEmbed;
+    embed.mockReset();
   });
 
-  it("embeds the chart, JSON or YAML, without the actions that open windows", () => {
-    const vegaEmbed = vi.fn((_element: HTMLElement, _spec: unknown) =>
-      Promise.resolve(),
-    );
-    (window as any).vegaEmbed = vegaEmbed;
-    const { element } = renderVegaLite(
+  const context = { dark: false, inSlides: false };
+
+  it("embeds the chart, JSON or YAML, without the actions that open windows, with vega's interpreter and its inputs in its own element", async () => {
+    const finalize = vi.fn();
+    embed.mockResolvedValue({ finalize });
+    const point = renderVegaLite(
       '{"mark": "point", "usermeta": {"embedOptions": {"editorUrl": "https://example.org/"}}}',
+      {},
+      context,
     );
-    renderVegaLite("mark: bar\n");
-    expect(vegaEmbed).toHaveBeenNthCalledWith(1, element, {
+    const bar = renderVegaLite("mark: bar\n", {}, { ...context, dark: true });
+    await Promise.all([point.done, bar.done]);
+    expect(embed.mock.calls[0][0]).toBe(point.element);
+    expect(embed.mock.calls[0][1]).toEqual({
       mark: "point",
       usermeta: { embedOptions: { actions: noWindows } },
     });
-    expect(vegaEmbed.mock.calls[1][1]).toEqual({
+    expect(embed.mock.calls[0][2]).toMatchObject({
+      ast: true,
+      expr: expressionInterpreter,
+      theme: undefined,
+      patch: withBindingsInChart,
+    });
+    expect(embed.mock.calls[1][1]).toEqual({
       mark: "bar",
+      usermeta: { embedOptions: { actions: noWindows } },
+    });
+    // In a dark preview, vega's dark theme.
+    expect(embed.mock.calls[1][2]).toMatchObject({ theme: "dark" });
+    point.dispose();
+    expect(finalize).toHaveBeenCalledTimes(1);
+  });
+
+  it("draws a chart whose embed options are not an object", async () => {
+    embed.mockResolvedValue({ finalize: vi.fn() });
+    const drawing = renderVegaLite(
+      '{"mark": "point", "usermeta": {"embedOptions": null}}',
+      {},
+      context,
+    );
+    await drawing.done;
+    expect(embed.mock.calls[0][1]).toEqual({
+      mark: "point",
       usermeta: { embedOptions: { actions: noWindows } },
     });
   });
 
-  it("shows why a chart cannot be read", () => {
-    (window as any).vegaEmbed = vi.fn();
-    const { element } = renderVegaLite("{ not json");
-    expect(element.textContent).toMatch(/JSON/);
-    expect((window as any).vegaEmbed).not.toHaveBeenCalled();
+  it("starts no chart for a drawing disposed of while vega-embed loads", async () => {
+    const drawing = renderVegaLite('{"mark": "point"}', {}, context);
+    await Promise.resolve();
+    drawing.dispose();
+    await drawing.done;
+    await new Promise((resolve) => setTimeout(resolve, 10));
+    expect(embed).not.toHaveBeenCalled();
+  });
+
+  it("shows why a chart cannot be read", async () => {
+    const drawing = renderVegaLite("{ not json", {}, context);
+    await drawing.done;
+    expect(drawing.element.textContent).toMatch(/JSON/);
+    expect(embed).not.toHaveBeenCalled();
   });
 
   it("shows why a chart cannot be drawn", async () => {
-    (window as any).vegaEmbed = vi.fn(() =>
-      Promise.reject(new Error("no such mark")),
-    );
-    const { element } = renderVegaLite('{"mark": "nothing"}');
-    await vi.waitFor(() =>
-      expect(element.textContent).toBe("Error: no such mark"),
-    );
+    embed.mockRejectedValue(new Error("no such mark"));
+    const drawing = renderVegaLite('{"mark": "nothing"}', {}, context);
+    await drawing.done;
+    expect(drawing.element.textContent).toBe("Error: no such mark");
   });
 });

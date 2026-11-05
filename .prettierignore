@@ -5,7 +5,6 @@ dist/
 coverage/
 
 # Vendored / generated static assets
-public/deps/
 public/styles/
 public/assets/
 

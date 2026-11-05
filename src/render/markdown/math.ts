@@ -4,15 +4,20 @@ import "katex/dist/katex.min.css";
 import type { MarkdownIt } from "markdown-it";
 
 // $inline$ and $$display$$ math, drawn by KaTeX as the note renders; an
-// expression KaTeX cannot read shows its error in its place.
-function parseMath(content: string | null, displayMode: boolean) {
+// expression KaTeX cannot read shows its error in its place, as text: the
+// error quotes the expression.
+function parseMath(
+  content: string | null,
+  displayMode: boolean,
+  escapeHtml: (text: string) => string,
+) {
   if (!content) {
     return "";
   }
   try {
     return katex.renderToString(content, { displayMode });
   } catch (error) {
-    return `<span style="color: #ee7f49; font-weight: 500;">${String(error)}</span>`;
+    return `<span style="color: #ee7f49; font-weight: 500;">${escapeHtml(String(error))}</span>`;
   }
 }
 
@@ -59,5 +64,6 @@ export default function math(md: MarkdownIt) {
     parseMath(
       tokens[idx] ? tokens[idx].content : null,
       (tokens[idx].meta as { displayMode: boolean }).displayMode,
+      md.utils.escapeHtml,
     );
 }

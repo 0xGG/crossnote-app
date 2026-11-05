@@ -1,4 +1,5 @@
-import YAML from "yamljs";
+import { Renderer, startDrawing } from "./drawing";
+import { isObject, readSpec, withBindingsInChart } from "./vega";
 
 // Three of vega-embed's actions open another window with a handle on this
 // one: "Open in Vega Editor" opens the editor's site to send it the chart,
@@ -32,23 +33,76 @@ export function withoutWindowActions(
   };
 }
 
-// A vega-lite code block, JSON or YAML, drawn by the vega-embed that
-// index.html loads. Draws into the element it returns, which is not in the
-// page yet; what it cannot read or draw is written in it instead.
-export function renderVegaLite(code: string): { element: HTMLElement } {
+/**
+ * The options a chart may give vega-embed (in usermeta.embedOptions, which
+ * vega-embed reads over the app's own): not the actions that open windows;
+ * not ast, expr or viewClass, which would turn vega's interpreter off or
+ * replace its view; not bind, which names the element of the page that
+ * vega empties to put the chart's inputs in, or patch, which would take the
+ * place of the app's own; and not a tooltip id, which would have vega's
+ * tooltip write into whatever element of the page has that id.
+ */
+export function chartEmbedOptions(
+  embedOptions: Record<string, any> = {},
+): Record<string, any> {
+  const {
+    ast: _ast,
+    expr: _expr,
+    viewClass: _viewClass,
+    bind: _bind,
+    patch: _patch,
+    ...options
+  } = withoutWindowActions(embedOptions);
+  if (options.tooltip && typeof options.tooltip === "object") {
+    const { id: _id, ...tooltip } = options.tooltip;
+    options.tooltip = tooltip;
+  }
+  return options;
+}
+
+// Loaded once for all the charts that ask for it at the same time.
+let loading:
+  | Promise<[typeof import("vega-embed"), typeof import("vega-interpreter")]>
+  | undefined;
+const load = () =>
+  (loading ??= Promise.all([import("vega-embed"), import("vega-interpreter")]));
+
+/**
+ * A vega-lite chart, JSON or YAML, drawn by vega-embed 7 (loaded with the
+ * first one) on a canvas, in the theme that goes with the preview's, without
+ * the actions that open other windows, with its inputs in its own element
+ * (set in the vega spec vega-lite compiles it to); its expressions are run
+ * by vega's interpreter, whatever the chart's own options say, so drawing it
+ * needs no eval. Done once the chart is drawn; disposing of it finalizes the
+ * view.
+ */
+export const renderVegaLite: Renderer = (code, _info, { dark }) => {
   const element = document.createElement("div");
-  try {
-    const spec =
-      code.trim()[0] === "{" ? JSON.parse(code) : YAML.parse(code) || {};
+  return startDrawing(element, async (signal) => {
+    const spec = readSpec(code);
     spec.usermeta = {
       ...spec.usermeta,
-      embedOptions: withoutWindowActions(spec.usermeta?.embedOptions),
+      embedOptions: chartEmbedOptions(
+        isObject(spec.usermeta?.embedOptions)
+          ? spec.usermeta.embedOptions
+          : undefined,
+      ),
     };
-    (window as any)
-      .vegaEmbed(element, spec)
-      .catch((error: unknown) => (element.textContent = String(error)));
-  } catch (error) {
-    element.textContent = String(error);
-  }
-  return { element };
-}
+    const [{ default: embed }, { expressionInterpreter }] = await load();
+    if (signal.aborted) {
+      return;
+    }
+    const result = await embed(element, spec, {
+      ast: true,
+      expr: expressionInterpreter,
+      renderer: "canvas",
+      theme: dark ? "dark" : undefined,
+      patch: withBindingsInChart,
+    });
+    if (signal.aborted) {
+      result.finalize();
+    } else {
+      signal.addEventListener("abort", () => result.finalize());
+    }
+  });
+};

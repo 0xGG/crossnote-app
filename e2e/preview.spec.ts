@@ -18,7 +18,7 @@ test("draws a deck of slides with a diagram in it", async ({ app }) => {
   );
   await app.modeButton("Preview").click();
 
-  // The deck's frame stays, and the slides' own mermaid draws the diagram in
+  // The deck's frame stays, and the page's mermaid draws the diagram into
   // it. The preview used to read the frame's body before the scripts in its
   // head had loaded, fail, and show the error in place of the deck.
   const deck = app.preview.frameLocator("iframe");
@@ -80,18 +80,10 @@ test("draws wavedrom in slides from JSON, and runs nothing a note makes look lik
   app,
   context,
 }) => {
-  // Registered after the refusal above, so these answer first: reveal.js's
-  // stand-in, and the wavedrom the slides ask the CDN for, from the site's
-  // copy of the same version.
+  // Registered after the refusal above, so this answers first: reveal.js's
+  // stand-in. The page draws the slides' wavedrom into the frame.
   await context.route(/reveal\.js@3\.9\.2\/js\/reveal\.min\.js$/, (route) =>
     route.fulfill({ contentType: "text/javascript", body: revealStub }),
-  );
-  await context.route(
-    /wavedrom@2\.3\.2\/(wavedrom\.min|skins\/default)\.js$/,
-    (route) =>
-      route.fulfill({
-        path: `public/deps/wavedrom/${route.request().url().split("wavedrom@2.3.2/")[1]}`,
-      }),
   );
   await app.open();
   await app.openNotes();
@@ -115,7 +107,7 @@ test("draws wavedrom in slides from JSON, and runs nothing a note makes look lik
   await app.modeButton("Preview").click();
 
   const deck = app.preview.frameLocator("iframe");
-  await expect(deck.locator("#WaveDrom_Display_0 svg")).toBeVisible();
+  await expect(deck.locator(".wavedrom svg")).toBeVisible();
   // The deck is finished once reveal.js is ready: its links open notes.
   await expect
     .poll(() =>

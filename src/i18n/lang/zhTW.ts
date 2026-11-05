@@ -132,6 +132,10 @@ export const zhTW = {
     "settings/editor-cursor-color": "編輯器光標顏色",
     "settings/default-editor-mode": "默认编辑器模式",
     "settings/plain-text-source-code": "原始碼模式顯示純文字",
+    "settings/always-draw-plantuml":
+      "不經詢問就用 plantuml.com 繪製 PlantUML 圖",
+    "preview/draw-plantuml": "用 plantuml.com 繪製（會把圖的原始碼傳給該服務）",
+    "preview/plantuml-diagram": "PlantUML 圖",
     "settings/hello": "你好，",
     "settings/world": "世界！",
     "settings/author-name": "作者姓名",

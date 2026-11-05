@@ -106,6 +106,24 @@ describe("the markdown stage", () => {
     ).toEqual(["A\n[MUMESLIDE]", "B"]);
   });
 
+  it("keeps a first slide marked vertical where it is, there being none before it to go under", () => {
+    const text =
+      "<!-- slide vertical=true -->\nA\n<!-- slide -->\nB\n<!-- slide vertical=true -->\nC\n";
+    const { html } = renderMarkdown(text);
+    expect(html.split("<section").length).toBe(html.split("</section>").length);
+    expect(
+      Array.from(parse(text).querySelectorAll("section.slide"), (slide) => [
+        slide.textContent.trim(),
+        slide.getAttribute("data-h"),
+        slide.getAttribute("data-v"),
+      ]),
+    ).toEqual([
+      ["A", "0", "0"],
+      ["B", "1", "0"],
+      ["C", "1", "1"],
+    ]);
+  });
+
   it("keeps a slide's class beside slide, and its attributes escaped", () => {
     const element = parse(
       '<!-- slide class="dark" data-x="a&quot;b" -->\nA\n<!-- slide vertical=true -->\nB\n',

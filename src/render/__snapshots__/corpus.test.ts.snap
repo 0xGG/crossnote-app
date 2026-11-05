@@ -10,12 +10,7 @@ exports[`the shared corpus, sanitized > keeps a table of contents marker as it r
 
 exports[`the shared corpus, sanitized > keeps code as it reads 1`] = `[]`;
 
-exports[`the shared corpus, sanitized > keeps diagrams as it reads 1`] = `
-[
-  "script",
-  "script[type]",
-]
-`;
+exports[`the shared corpus, sanitized > keeps diagrams as it reads 1`] = `[]`;
 
 exports[`the shared corpus, sanitized > keeps emoji as it reads 1`] = `[]`;
 

@@ -17,23 +17,27 @@ patchedDependencies:
 # a lifted consumer still takes later releases within the floor's major:
 # - dompurify: 2.5.9 was the last 2.x release and the 2026 advisories are only
 #   fixed on the 3.4 line (3.4.17 for the latest ones), so this floor crosses
-#   a major. The app's own preview depends on it directly, within the floor;
-#   the other bundled consumer, super-react-gist, calls sanitize() with
-#   default options, which 3.x kept unchanged; it declares ^2.3.6 and is
-#   verified by rendering a gist.
+#   a major. The app's own preview depends on it directly, within the floor,
+#   and so does mermaid 12; the other bundled consumer, super-react-gist,
+#   calls sanitize() with default options, which 3.x kept unchanged; it
+#   declares ^2.3.6 and is verified by rendering a gist.
 # - sanitize-url 6.0.4 fixes the javascript: scheme bypasses.
 # - d3-color 3.1.0 fixes the ReDoS in the color-string parser. The d3 5 that
 #   mermaid's dagre-d3 brings, and the d3 1.x modules under it, ask for
 #   d3-color 1.x, inside the affected range; 3.x is API-compatible and is what
 #   the direct d3 7 dependency (GraphView) and mermaid's own d3 7 use.
-# What these do NOT cover: the mermaid that renders at runtime is the vendored
-# copy under public/deps (loaded via a script tag - echomd's powerpack reads
-# the window.mermaid global and the npm mermaid package is never bundled), so
-# upgrading that copy is the only fix for it.
+#   The mermaid 8 these two reach is echomd's, which nothing runs: the
+#   preview draws with the app's own mermaid 12.
+# Not a floor: mermaid's KaTeX is the app's. mermaid 12 asks for ^0.18.0, and
+# 0.18 to 0.19 has changes that break (npm marks 0.18.11 deprecated for
+# having them), so without this mermaid would bring a KaTeX of its own
+# besides the app's 0.19 (the editor's echomd brings a third, 0.13).
+# Formulas in diagrams are checked in e2e/diagrams.spec.ts.
 overrides:
   "dompurify@<3.4.17": ^3.4.17
   "@braintree/sanitize-url@<6.0.4": ^6.0.4
   "d3-color@<3.1.0": ^3.1.0
+  "mermaid>katex": ^0.19.1
 # pnpm 12 records the pnpm that packageManager pins in a YAML document of its
 # own at the head of pnpm-lock.yaml, and GitHub's dependency graph reads only
 # that first document: it sees pnpm and none of the app's dependencies, so

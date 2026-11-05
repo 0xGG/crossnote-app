@@ -2,40 +2,17 @@ import { globalContainers } from "../containers/global";
 import { Note } from "../lib/note";
 import { resolveNoteImageSrc } from "../utilities/image";
 import { openURL } from "../utilities/preview";
+import { diagramRenderers } from "./diagrams";
 import {
-  EchartsRenderer,
-  getWidgetCreator,
-  MermaidRenderer,
-  PlantUMLRenderer,
-  VegaRenderer,
-  WaveDromRenderer,
-} from "./echomd";
+  Drawing,
+  DrawingContext,
+  failedBlock,
+  isDarkPreview,
+  startDrawing,
+  waitForDrawing,
+} from "./drawing";
+import { getWidgetCreator } from "./echomd";
 import { renderTwemoji } from "./emoji";
-import { renderVegaLite } from "./vegaLite";
-
-type CodeRenderer = (
-  code: string,
-  info: any,
-) => { element: HTMLElement; asyncRenderer?: () => void };
-
-// Code blocks drawn as diagrams, by the language their fence names. Mermaid
-// and wavedrom are left as they are in slides, where the frame's own scripts
-// draw them.
-const diagramRenderers: [RegExp, CodeRenderer, boolean][] = [
-  [/^(puml|plantuml)$/, PlantUMLRenderer, true],
-  [/^echarts$/, EchartsRenderer, true],
-  [/^mermaid$/, MermaidRenderer, false],
-  [/^vega$/, VegaRenderer, true],
-  [/^vega-lite$/, renderVegaLite, true],
-  [/^wavedrom$/i, WaveDromRenderer, false],
-];
-
-function failedBlock(error: unknown): HTMLElement {
-  const pre = document.createElement("pre");
-  pre.classList.add("language-error");
-  pre.textContent = String(error);
-  return pre;
-}
 
 function renderWidgets(container: HTMLElement) {
   const spans = Array.from(container.getElementsByClassName("echomd-widget"));
@@ -66,23 +43,57 @@ function renderWidgets(container: HTMLElement) {
   }
 }
 
-function renderCodeBlock(code: string, language: string): HTMLElement {
+// Code, shown as it is at once and highlighted once Prism has its language;
+// as it is in a language Prism does not have, or cannot load.
+function renderCodeBlock(code: string, language: string): Drawing {
   const pre = document.createElement("pre");
-  const prism = (window as any).Prism;
-  if (!prism) {
-    pre.textContent = code;
-  } else if (!(language in prism.languages)) {
-    pre.classList.add("language-text");
-    pre.textContent = code;
-  } else {
-    // Prism escapes the code it is given; what it returns is its own markup.
-    pre.innerHTML = prism.highlight(code, prism.languages[language], language);
-    pre.classList.add(`language-${language}`);
-  }
-  return pre;
+  pre.textContent = code;
+  return startDrawing(
+    pre,
+    async (signal) => {
+      // Prism, and what it knows of its languages, load with the first block;
+      // code is shown as it is when they cannot be loaded.
+      let prism: any;
+      try {
+        const { prismWith } = await import("./prism");
+        prism = await prismWith(language);
+      } catch {
+        prism = undefined;
+      }
+      if (signal.aborted) {
+        return;
+      }
+      if (!prism) {
+        pre.classList.add("language-text");
+        return;
+      }
+      let highlighted: string;
+      try {
+        highlighted = prism.highlight(
+          code,
+          prism.languages[language],
+          language,
+        );
+      } catch {
+        pre.classList.add("language-text");
+        return;
+      }
+      // Prism escapes the code it is given; what it returns is its own markup.
+      pre.innerHTML = highlighted;
+      pre.classList.add(`language-${language}`);
+    },
+    // Code that takes too long to highlight stays as it is.
+    { keepsWhatItShows: true },
+  );
 }
 
-function renderCodeFences(container: HTMLElement, inSlides: boolean) {
+// Draws each code block, a diagram or highlighted code, in its place, and
+// returns the drawings.
+function renderCodeFences(
+  container: HTMLElement,
+  context: DrawingContext,
+): Drawing[] {
+  const drawings: Drawing[] = [];
   const fences = Array.from(container.getElementsByClassName("vickeymd-fence"));
   for (const fence of fences) {
     let info: any;
@@ -91,29 +102,34 @@ function renderCodeFences(container: HTMLElement, inSlides: boolean) {
     } catch {
       info = {};
     }
+    // A note's own HTML can say anything here.
+    if (!info || typeof info !== "object") {
+      info = {};
+    }
     const code = fence.textContent;
-    const language: string = info["language"] || "text";
+    const language: string =
+      typeof info["language"] === "string" && info["language"]
+        ? info["language"]
+        : "text";
     const diagram = diagramRenderers.find(([pattern]) =>
       pattern.test(language),
     );
     // One block that cannot be drawn shows why, in its place; the rest of
     // the note is drawn all the same.
     try {
+      let drawing: Drawing;
       if (diagram) {
-        const [, renderer, drawnInSlides] = diagram;
-        if (inSlides && !drawnInSlides) {
-          continue;
-        }
-        const { element, asyncRenderer } = renderer(code, info);
-        fence.replaceWith(element);
-        asyncRenderer?.();
+        drawing = diagram[1](code, info, context);
       } else {
-        fence.replaceWith(renderCodeBlock(code, language));
+        drawing = renderCodeBlock(code, language);
       }
+      fence.replaceWith(drawing.element);
+      drawings.push(drawing);
     } catch (error) {
       fence.replaceWith(failedBlock(error));
     }
   }
+  return drawings;
 }
 
 function handleLinks(container: HTMLElement, note: Note | null) {
@@ -192,21 +208,35 @@ async function resolveImages(
 
 // What the preview does to the sanitized HTML once it is in the page:
 // widgets, code blocks and diagrams, twemoji, links that open notes, and
-// images read from the notebook. Settles once the images are resolved; a
-// diagram that draws itself later (mermaid, vega) is not waited for.
+// images read from the notebook. Settles once the images are resolved and
+// the code blocks drawn, each given up to drawingTimeout. cleanups gets
+// what disposing of the preview has to undo: the drawings, still under way
+// or done, are disposed of.
 export async function finishPreview(
   container: HTMLElement,
   note: Note | null,
   inSlides: boolean,
   isCurrent: () => boolean,
+  cleanups: (() => void)[],
 ) {
   renderWidgets(container);
-  renderCodeFences(container, inSlides);
+  const drawings = renderCodeFences(container, {
+    dark: !inSlides && isDarkPreview(container),
+    inSlides,
+  });
+  const waits = drawings.map((drawing) => waitForDrawing(drawing));
+  cleanups.push(() => {
+    waits.forEach((wait) => wait.stop());
+    drawings.forEach((drawing) => drawing.dispose());
+  });
   try {
     renderTwemoji(container);
   } catch {
     // The emoji stay as text.
   }
   handleLinks(container, note);
-  await resolveImages(container, note, isCurrent);
+  await Promise.all([
+    resolveImages(container, note, isCurrent),
+    ...waits.map((wait) => wait.settled),
+  ]);
 }

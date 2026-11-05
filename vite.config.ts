@@ -68,12 +68,6 @@ export default defineConfig({
     // `global` object; map it to the standard globalThis.
     global: "globalThis",
   },
-  optimizeDeps: {
-    // Scan from the source entry instead of index.html: the classic
-    // <script src="/deps/..."> tags there point at large pre-minified
-    // bundles in /public that stall the dependency scanner.
-    entries: ["src/index.tsx"],
-  },
   server: {
     port: 3000,
   },

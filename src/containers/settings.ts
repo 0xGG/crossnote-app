@@ -4,6 +4,10 @@ import { useTranslation } from "react-i18next";
 import { createContainer } from "unstated-next";
 import { EditorMode } from "../lib/editorMode";
 import { getKeyMap, KeyMap } from "../lib/keymap";
+import {
+  alwaysDrawPlantUML as isAlwaysDrawingPlantUML,
+  alwaysDrawPlantUMLKey,
+} from "../render/plantuml";
 import { themeManager } from "../themes/manager";
 import { CrossnoteTheme } from "../themes/theme";
 
@@ -36,6 +40,9 @@ function useSettingsContainer(initialState: InitialState) {
   );
   const [plainTextSourceCode, setPlainTextSourceCode] = useState<boolean>(
     localStorage.getItem("settings/plainTextSourceCode") === "true",
+  );
+  const [alwaysDrawPlantUML, setAlwaysDrawPlantUML] = useState<boolean>(
+    isAlwaysDrawingPlantUML,
   );
 
   const { i18n } = useTranslation();
@@ -97,6 +104,12 @@ function useSettingsContainer(initialState: InitialState) {
     setPlainTextSourceCode(enabled);
   }, []);
 
+  // Read by the preview as it draws a PlantUML diagram.
+  const _setAlwaysDrawPlantUML = useCallback((enabled: boolean) => {
+    localStorage.setItem(alwaysDrawPlantUMLKey, String(enabled));
+    setAlwaysDrawPlantUML(enabled);
+  }, []);
+
   useEffect(() => {
     const themeName = localStorage.getItem("settings/theme") as ThemeName;
     if (themeName) {
@@ -121,6 +134,8 @@ function useSettingsContainer(initialState: InitialState) {
     setKeyMap: _setKeyMap,
     plainTextSourceCode,
     setPlainTextSourceCode: _setPlainTextSourceCode,
+    alwaysDrawPlantUML,
+    setAlwaysDrawPlantUML: _setAlwaysDrawPlantUML,
   };
 }
 
