@@ -69,6 +69,7 @@ export default tseslint.config(
       "scripts/**/*.mjs",
       "*.config.js",
       "vite.config.ts",
+      "site-headers.ts",
       "playwright.config.ts",
     ],
     languageOptions: {

@@ -4,6 +4,7 @@ import { readFileSync } from "node:fs";
 import { basename, dirname } from "node:path";
 import { defineConfig } from "vitest/config";
 import { viteStaticCopy } from "vite-plugin-static-copy";
+import { siteHeaders } from "./site-headers";
 
 const pkg = JSON.parse(
   readFileSync(new URL("./package.json", import.meta.url), "utf-8"),
@@ -44,6 +45,7 @@ function getGitCommit(): { logMessage: string; hash: string } {
 export default defineConfig({
   plugins: [
     react(),
+    siteHeaders(),
     viteStaticCopy({
       targets: [
         {

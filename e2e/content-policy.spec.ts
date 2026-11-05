@@ -1,8 +1,25 @@
+import { readFileSync } from "node:fs";
+import { appPolicy, headersFile } from "../site-headers";
 import { expect, test } from "./fixtures";
 
-// What the page's Content-Security-Policy (index.html) holds the page to,
-// whatever ends up in it: no base address on another site, and no plugin
-// content.
+// The policy comes with the page's response, from site-headers.ts, which
+// also writes the _headers file the deployed site is served by; the page
+// holds none of its own.
+test("sends the page's policy as a header, as the deployed site does", async ({
+  page,
+}) => {
+  const response = await page.goto("/");
+  expect(response?.headers()["content-security-policy"]).toBe(appPolicy);
+  await expect(
+    page.locator('meta[http-equiv="Content-Security-Policy" i]'),
+  ).toHaveCount(0);
+  expect(
+    readFileSync(new URL("../dist/_headers", import.meta.url), "utf-8"),
+  ).toBe(headersFile());
+});
+
+// What the page's Content-Security-Policy holds the page to, whatever ends
+// up in it: no base address on another site, and no plugin content.
 test("refuses a base address elsewhere and plugin content", async ({
   app,
   page,

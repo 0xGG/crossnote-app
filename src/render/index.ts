@@ -28,12 +28,11 @@ import { sanitizeHTML } from "./sanitize";
 // attribute, the 0-based line they start on (./markdown/lines.ts), and a
 // reference keeps the lines of its block (lib/reference.ts).
 //
-// The page's Content-Security-Policy (index.html) still lets scripts run
-// inline, through eval and from the CDNs the widgets loaded. The target, once
-// the diagram libraries come from the app's own bundle, is a policy sent as
-// a header whose scripts come from the site alone ('self', without
-// 'unsafe-inline' or 'unsafe-eval'), with object-src 'none' and base-uri
-// 'self'.
+// The page's Content-Security-Policy (sent as a header, site-headers.ts)
+// still lets scripts run inline, through eval and from the CDNs the widgets
+// loaded. The target is a policy whose scripts come from the site alone
+// ('self', without 'unsafe-inline' or 'unsafe-eval'), with object-src 'none'
+// and base-uri 'self'.
 
 export interface RenderedMarkdown {
   /** The note's HTML, not yet sanitized. */

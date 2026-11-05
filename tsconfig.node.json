@@ -4,5 +4,5 @@
     "types": ["node"],
     "strictNullChecks": true
   },
-  "include": ["vite.config.ts"]
+  "include": ["vite.config.ts", "site-headers.ts"]
 }
