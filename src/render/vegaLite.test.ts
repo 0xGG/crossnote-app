@@ -1,5 +1,6 @@
 import { expressionInterpreter } from "vega-interpreter";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { withBindingsInChart } from "./vega";
 import {
   chartEmbedOptions,
   renderVegaLite,
@@ -43,12 +44,14 @@ describe("withoutWindowActions", () => {
 });
 
 describe("chartEmbedOptions", () => {
-  it("keeps a chart from turning vega's interpreter off or naming its tooltip's element", () => {
+  it("keeps a chart from turning vega's interpreter off or naming its inputs' or tooltip's element", () => {
     expect(
       chartEmbedOptions({
         ast: false,
         expr: "eval",
         viewClass: "View",
+        bind: "body",
+        patch: [{ op: "remove", path: "/config" }],
         tooltip: { id: "root", theme: "dark" },
         renderer: "svg",
       }),
@@ -67,7 +70,7 @@ describe("renderVegaLite", () => {
 
   const context = { dark: false, inSlides: false };
 
-  it("embeds the chart, JSON or YAML, without the actions that open windows, with vega's interpreter", async () => {
+  it("embeds the chart, JSON or YAML, without the actions that open windows, with vega's interpreter and its inputs in its own element", async () => {
     const finalize = vi.fn();
     embed.mockResolvedValue({ finalize });
     const point = renderVegaLite(
@@ -86,6 +89,7 @@ describe("renderVegaLite", () => {
       ast: true,
       expr: expressionInterpreter,
       theme: undefined,
+      patch: withBindingsInChart,
     });
     expect(embed.mock.calls[1][1]).toEqual({
       mark: "bar",

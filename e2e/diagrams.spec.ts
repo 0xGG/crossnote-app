@@ -266,6 +266,88 @@ test("draws vega and vega-lite charts, sized by an expression", async ({
   expect(await violations()).toEqual([]);
 });
 
+// Elements of the page, outside the preview, that charts name for their
+// inputs: vega would empty them to put the inputs in, or bind a signal to
+// the input's value.
+test("keeps the inputs of vega and vega-lite charts in the chart", async ({
+  app,
+  page,
+}) => {
+  const violations = await app.recordPolicyViolations();
+  await app.open();
+  await page.evaluate(() => {
+    for (const id of ["outside-vega", "outside-vega-lite", "outside-embed"]) {
+      const element = document.createElement("div");
+      element.id = id;
+      element.textContent = "kept";
+      document.body.append(element);
+    }
+    const input = document.createElement("input");
+    input.id = "outside-input";
+    input.value = "kept";
+    document.body.append(input);
+  });
+  await app.openNotes();
+  await app.createNote();
+  await app.setEditorText(
+    [
+      "```vega",
+      JSON.stringify({
+        signals: [
+          {
+            name: "size",
+            value: 5,
+            bind: { input: "range", min: 1, max: 10, element: "#outside-vega" },
+          },
+          // Bound to the page's input, and changed by the chart.
+          {
+            name: "word",
+            value: "",
+            bind: { element: "#outside-input" },
+            on: [{ events: "timer{50}", update: "'changed'" }],
+          },
+          { name: "echo", update: "word", bind: { input: "text" } },
+        ],
+      }),
+      "```",
+      "",
+      "```vega-lite",
+      JSON.stringify({
+        data: { values: [{ a: 1 }] },
+        mark: "point",
+        params: [
+          {
+            name: "shown",
+            value: 1,
+            bind: {
+              input: "range",
+              min: 0,
+              max: 1,
+              element: "#outside-vega-lite",
+            },
+          },
+        ],
+        usermeta: { embedOptions: { bind: "#outside-embed" } },
+      }),
+      "```",
+      "",
+    ].join("\n"),
+  );
+  await app.modeButton("Preview").click();
+
+  // Once the chart has changed its signal, and both charts have their inputs.
+  await expect(app.preview.locator('input[type="text"]')).toHaveValue(
+    "changed",
+  );
+  await expect(app.preview.locator('input[type="range"]')).toHaveCount(2);
+  for (const id of ["outside-vega", "outside-vega-lite", "outside-embed"]) {
+    await expect(page.locator(`#${id}`)).toHaveText("kept");
+  }
+  await expect(page.locator("#outside-input")).toHaveValue("kept");
+  await expect(app.preview.locator(".language-error")).toHaveCount(0);
+  expect(await violations()).toEqual([]);
+});
+
 // Sources that have wavedrom write markup of their own into its drawing
 // (the same as in src/render/wavedrom.test.ts): JsonML in the head's text
 // (an image with onerror, an animation with onbegin), XHTML in a lane's
