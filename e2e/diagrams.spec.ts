@@ -450,6 +450,19 @@ test("asks before sending a PlantUML diagram to plantuml.com, unless set to draw
       sent.push(request.url());
     }
   });
+  // plantuml.com, here, draws every diagram as the same small image, until
+  // it cannot be reached.
+  let reachable = true;
+  await page.route("https://www.plantuml.com/**", (route) =>
+    reachable
+      ? route.fulfill({
+          contentType: "image/svg+xml",
+          body: '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="10"><rect width="20" height="10"/></svg>',
+        })
+      : route.abort(),
+  );
+  const loaded = (image: Locator) =>
+    image.evaluate((image: HTMLImageElement) => image.naturalWidth);
   const violations = await app.recordPolicyViolations();
   const vendored = app.recordVendoredRequests("plantuml-encoder");
   await app.open();
@@ -472,6 +485,7 @@ test("asks before sending a PlantUML diagram to plantuml.com, unless set to draw
     /^https:\/\/www\.plantuml\.com\/plantuml\/img\/[0-9A-Za-z_-]+$/,
   );
   await expect.poll(() => sent.length).toBe(1);
+  await expect.poll(() => loaded(diagram)).toBe(20);
 
   // With the setting on, the diagram is drawn as the note is.
   await app.openSettings();
@@ -483,12 +497,24 @@ test("asks before sending a PlantUML diagram to plantuml.com, unless set to draw
   await noteTab.click();
   await app.modeButton("Edit").click();
   await app.modeButton("Preview").click();
-  // Its request is refused here, so the image is looked for by its address.
-  await expect(diagram).toHaveAttribute(
-    "src",
-    /^https:\/\/www\.plantuml\.com\/plantuml\/img\//,
-  );
+  await expect.poll(() => loaded(diagram)).toBe(20);
   await expect(draw).toHaveCount(0);
+
+  // An image that cannot be loaded gives way to the source and the button,
+  // which tries again when pressed. (Another diagram, as the browser keeps
+  // the image it has loaded.)
+  reachable = false;
+  await app.modeButton("Edit").click();
+  await app.setEditorText("```plantuml\n@startuml\nA -> C\n@enduml\n```\n");
+  await app.modeButton("Preview").click();
+  await expect(draw).toBeEnabled();
+  await expect(app.preview.locator("pre")).toContainText("A -> C");
+  await expect(diagram).toHaveCount(0);
+  const tried = sent.length;
+  await draw.click();
+  await expect.poll(() => sent.length).toBe(tried + 1);
+  await expect(draw).toBeEnabled();
+  await expect(diagram).toHaveCount(0);
   expect(vendored()).toEqual([]);
   expect(await violations()).toEqual([]);
 });

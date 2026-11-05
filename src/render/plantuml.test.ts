@@ -99,4 +99,35 @@ describe("renderPlantUML", () => {
       drawing.element.querySelector("img").src.startsWith(plantUMLServer),
     ).toBe(true);
   });
+
+  // jsdom loads no images: the test says when one cannot be loaded.
+  it("shows the source and the button again when the image cannot be loaded", async () => {
+    const drawing = renderPlantUML("A -> B", {}, context);
+    await drawing.done;
+    drawing.element.querySelector("button").click();
+    await vi.waitFor(() =>
+      expect(drawing.element.querySelector("img")).not.toBeNull(),
+    );
+    drawing.element.querySelector("img").dispatchEvent(new Event("error"));
+    expect(drawing.element.querySelector("img")).toBeNull();
+    expect(drawing.element.querySelector("pre").textContent).toBe("A -> B");
+    expect(drawing.element.querySelector("button").disabled).toBe(false);
+  });
+
+  it("shows the source and the button when an image drawn without asking cannot be loaded", async () => {
+    localStorage.setItem(alwaysDrawPlantUMLKey, "true");
+    const drawing = renderPlantUML("A -> B", {}, context);
+    await drawing.done;
+    drawing.element.querySelector("img").dispatchEvent(new Event("error"));
+    expect(drawing.element.querySelector("pre").textContent).toBe("A -> B");
+    expect(drawing.element.querySelector("button").disabled).toBe(false);
+
+    // Not once the block is disposed of.
+    const disposed = renderPlantUML("C -> D", {}, context);
+    await disposed.done;
+    const image = disposed.element.querySelector("img");
+    disposed.dispose();
+    image.dispatchEvent(new Event("error"));
+    expect(disposed.element.querySelector("img")).toBe(image);
+  });
 });
