@@ -1,5 +1,4 @@
 import { Renderer } from "./drawing";
-import { renderEcharts } from "./echarts";
 import { renderMermaid } from "./mermaid";
 
 /**
@@ -7,6 +6,5 @@ import { renderMermaid } from "./mermaid";
  * fence names.
  */
 export const diagramRenderers: [RegExp, Renderer][] = [
-  [/^echarts$/, renderEcharts],
   [/^mermaid$/, renderMermaid],
 ];

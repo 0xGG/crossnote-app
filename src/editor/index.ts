@@ -5,7 +5,6 @@ import "@0xgg/echomd"; // ESSENTIAL
 import { setTwemojiOptions } from "@0xgg/echomd/addon/emoji";
 import { suggestedEditorConfig } from "@0xgg/echomd/core";
 import { wrapTexts } from "@0xgg/echomd/keymap/hypermd";
-import "@0xgg/echomd/powerpack/fold-code-with-echarts";
 import "@0xgg/echomd/powerpack/fold-code-with-mermaid";
 import "@0xgg/echomd/powerpack/fold-emoji-with-twemoji";
 // Widgets

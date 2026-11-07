@@ -53,7 +53,7 @@ describe("mountPreview's code blocks", () => {
   });
 
   // Kinds of block the preview used to draw as diagrams: code like any other.
-  it.each(["vega", "vega-lite", "wavedrom", "plantuml", "puml"])(
+  it.each(["echarts", "vega", "vega-lite", "wavedrom", "plantuml", "puml"])(
     "shows a %s block as code",
     async (language) => {
       const element = document.createElement("div");

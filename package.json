@@ -39,8 +39,6 @@
     "date-fns": "^4.4.0",
     "diff3": "^0.0.3",
     "dompurify": "^3.4.17",
-    "echarts": "^6.1.0",
-    "echarts-gl": "^2.1.0",
     "emoji-mart": "^3.0.0",
     "events": "^3.3.0",
     "flexlayout-react": "^0.11.1",
