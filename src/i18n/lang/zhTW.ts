@@ -6,7 +6,6 @@ export const zhTW = {
     "account/Anonymous": "匿名",
 
     // General
-    "general/go-back": "回退",
     "general/cancel": "取消",
     "general/add": "添加",
     "general/adding": "正在添加",
@@ -31,7 +30,6 @@ export const zhTW = {
     "general/no-aliases": "沒有別名",
     "general/add-an-alias": "添加壹個別名",
     "general/Untitled": "無標題",
-    "general/untitled": "無標題",
     "general/Print": "打印",
     "general/Share": "分享",
     "Editor": "編輯者",
@@ -45,16 +43,10 @@ export const zhTW = {
     "general/sort-notes": "排序筆記",
     "general/table-of-contents": "目錄",
     "general/change-note-icon": "更改筆記圖示",
-    "general/Audio": "音頻",
-    "general/Video": "視頻",
-    "general/source-url": "源鏈接",
-    "general/Link": "鏈接",
     "general/Upload": "上傳",
     "general/Uploading": "正在上傳",
-    "general/Processing": "正在處理...",
     "general/please-wait": "請稍候...",
     "general/Download": "下載",
-    "general/empty": "空的",
     "general/Notebooks": "筆記本",
     "general/add-a-notebook": "添加一個筆記本",
     "general/add-a-note": "添加一个筆記",
@@ -157,16 +149,6 @@ export const zhTW = {
     "editor/split-vertically": "垂直拆分",
 
     // * EditorToolBar
-    "editor/toolbar/insert-image": "插入圖片",
-    "editor/toolbar/insert-clock": "插入時鐘",
-    "editor/toolbar/insert-audio": "插入音頻",
-    "editor/toolbar/netease-music": "網易雲音樂",
-    "editor/toolbar/insert-video": "插入視頻",
-    "editor/toolbar/insert-youtube": "插入 Youtube",
-    "editor/toolbar/insert-bilibili": "插入 Bilibili",
-    "editor/toolbar/insert-ocr": "插入 OCR",
-    "editor/toolbar/insert-kanban": "插入看板",
-    "editor/toolbar/insert-abc-notation": "插入 ABC notation",
     "editor/toolbar/insert-header-1": "插入一級標題",
     "editor/toolbar/insert-header-2": "插入二級標題",
     "editor/toolbar/insert-header-3": "插入三級標題",
@@ -177,7 +159,6 @@ export const zhTW = {
     "editor/toolbar/insert-unordered-list": "插入無序列表",
     "editor/toolbar/insert-ordered-list": "插入有序列表",
     "editor/toolbar/insert-table": "插入表格",
-    "editor/toolbar/insert-github-gist": "插入 GitHub Gist",
 
     // * NoteControl
     "editor/note-control/source-code": "源代碼",
@@ -186,70 +167,10 @@ export const zhTW = {
     "editor/note-control/copy-to-clipboard": "複製到粘貼板",
 
     // Utils
-    "utils/uploading-image": "正在上傳圖片...",
-    "utils/upload-image-failure": "上傳圖片失敗",
 
     // Widgets
-    "widget/autoplay": "自動播放",
-    "widget/controls": "控制器",
-    "widget/loop": "循環",
-    "widget/muted": "靜音",
-    "widget/crossnote.image/thanks_sm_ms":
-      "在此由衷感謝 sm.ms 提供免費的圖床服務。",
-    "widget/crossnote.audio/audio_element_fail":
-      "你的瀏覽器不支持音頻 audio 元素",
-    "widget/crossnote.audio/source-url-placeholder":
-      "在這裡輸入音頻文件源鏈接，然後按 '回車' 鍵來插入",
-    "widget/crossnote.video/video_element_fail":
-      "你的瀏覽器不支持視頻 video 元素",
-    "widget/crossnote.bilibili/error_message":
-      "錯誤：僅支持 https://www.bilibili.com/video/av79126732 這樣的鏈接",
-    "widget/crossnote.youtube/error_message":
-      "錯誤：僅支持 https://www.youtube.com/watch?v=MmB9b5njVbA 這樣的鏈接",
     "widget/crossnote.auth/welcome": "歡迎使用交叉筆記",
     "widget/crossnote.auth/Or": "或者",
-    "widget/crossnote.bilibili/Bilibili": "Bilibili",
-    "widget/crossnote.bilibili/bilibili-video-url": "Bilibili 視頻鏈接",
-    "widget/crossnote.bilibili/url-placeholder":
-      "在這裡插入 Bilibili 視頻的鏈接，然後按 '回車' 鍵來插入",
-    "widget/crossnote.image/image-helper": "圖片助手",
-    "widget/crossnote.image/image-url-placeholder":
-      "在這裡輸入圖片鏈接，然後按 '回車' 鍵來插入",
-    "widget/crossnote.image/click-here-to-browse-image-file":
-      "點擊這裡來選擇圖片文件",
-    "widget/crossnote.video/video-url-placeholder":
-      "在這裡輸入視頻文件源鏈接，然後按 '回車' 鍵來插入",
-    "widget/crossnote.video/poster-url": "封面圖片鏈接（可選填）",
-    "widget/crossnote.video/poster-url-placeholder": "在這裡輸入封面圖片鏈接。",
-    "widget/crossnote.youtube/youtube-video-url": "Youtube 視頻鏈接",
-    "widget/crossnote.youtube/youtube-video-url-placeholder":
-      "在這裡插入 Youtube 視頻的鏈接，然後按 '回車' 鍵來插入",
-    "widget/crossnote.ocr/ocr": "OCR - 光學字元識別",
-    "widget/crossnote.ocr/local-image": "本地圖片",
-    "widget/crossnote.ocr/recognize-text-in-languages": "識別以下語言的文字",
-    "widget/crossnote.ocr/start-ocr": "開始文字識別",
-    "widget/crossnote.ocr/extra-settings": "額外設定",
-    "widget/crossnote.ocr/grayscale": "灰度",
-    "widget/crossnote.ocr/failed": "文字識別失敗",
-    "widget/crossnote.ocr/image-failed": "圖片無法載入",
-    "widget/crossnote.kanban/add-column": "添加新的列",
-    "widget/crossnote.kanban/add-card": "添加新的卡片",
-    "widget/crossnote.kanban/delete-column": "刪除列",
-    "widget/crossnote.kanban/edit-card": "編輯卡片",
-    "widget/crossnote.kanban/delete-card": "刪除卡片",
-    "widget/crossnote.github_gist/title": "內嵌入 GitHub Gist",
-    "widget/crossnote/github_gist/enter-github-gist-url":
-      "輸入 GitHub Gist URL",
-
-    // Tesseract
-    "tesseract/loading tesseract core": "正在讀取 tesseract 核心",
-    "tesseract/initializing tesseract": "正在初始化 tesseract",
-    "tesseract/initialized tesseract": "已初始化 tesseract",
-    "tesseract/loading language traineddata": "正在讀取語言訓練數據",
-    "tesseract/loaded language traineddata": "已讀取語言訓練數據",
-    "tesseract/initializing api": "正在初始化程序接口",
-    "tesseract/initialized api": "已初始化程序接口",
-    "tesseract/recognizing text": "正在識別文字",
 
     // Dialogs
     "delete-note-dialog/title": "你確定要刪除這個筆記?",

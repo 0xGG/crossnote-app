@@ -30,11 +30,11 @@ describe("sanitizeHTML", () => {
     expect(render(`<p>${html}</p>`).querySelector(tag)).toBeNull();
   });
 
-  it("keeps what the preview and the widgets read", () => {
+  it("keeps what the preview reads", () => {
     const element = render(
       [
         '<h2 data-line="3" id="title" class="mume-header">Title</h2>',
-        '<p style="color: red"><kbd>Ctrl</kbd> <span class="echomd-widget" data-widget-name="timer" data-widget-attributes="{&quot;date&quot;:1}"></span></p>',
+        '<p style="color: red"><kbd>Ctrl</kbd></p>',
         '<ul><li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox" data-line="5"> task</li></ul>',
         "<details><summary>More</summary>hidden</details>",
         '<pre class="vickeymd-fence" data-language="js">let a</pre>',
@@ -45,11 +45,6 @@ describe("sanitizeHTML", () => {
     );
     expect(element.querySelector("p").getAttribute("style")).toBe("color: red");
     expect(element.querySelector("kbd")).not.toBeNull();
-    expect(
-      element
-        .querySelector(".echomd-widget")
-        .getAttribute("data-widget-attributes"),
-    ).toBe('{"date":1}');
     expect(element.querySelector("input").getAttribute("type")).toBe(
       "checkbox",
     );

@@ -5,7 +5,7 @@ import * as markdown from "./markdown";
 import { finishPreview } from "./preview";
 import { sanitizeHTML } from "./sanitize";
 
-// How a note is drawn: the preview, a kanban card and printing all go
+// How a note is drawn: the preview and printing both go
 // through here.
 //
 // 1. The markdown stage turns the note's text into HTML (renderMarkdown,
@@ -15,7 +15,7 @@ import { sanitizeHTML } from "./sanitize";
 //    it. The editor's own folding of HTML in a note (CodeMirror 5) is not
 //    drawn through here and is not sanitized by it.
 // 3. mountPreview puts the result into an element and finishes it there
-//    (./preview.ts): widgets, code blocks and diagrams, twemoji, links,
+//    (./preview.ts): code blocks and diagrams, twemoji, links,
 //    images.
 //
 // The notebook reads a note's links from the same markdown stage
@@ -29,7 +29,7 @@ import { sanitizeHTML } from "./sanitize";
 // reference keeps the lines of its block (lib/reference.ts).
 //
 // The page's Content-Security-Policy (index.html) still lets scripts run
-// inline, through eval and from the CDNs the widgets load. The target, once
+// inline, through eval and from the CDNs the widgets loaded. The target, once
 // the diagram libraries come from the app's own bundle, is a policy sent as
 // a header whose scripts come from the site alone ('self', without
 // 'unsafe-inline' or 'unsafe-eval'), with object-src 'none' and base-uri

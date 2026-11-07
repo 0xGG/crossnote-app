@@ -353,11 +353,6 @@ export class CrossnoteApp {
     await this.page.keyboard.type(text);
   }
 
-  // The editor in the dialog a kanban card is edited in.
-  get cardEditor(): Locator {
-    return this.page.getByRole("dialog").getByTestId("card-editor");
-  }
-
   // What an editor holds and where its caret is, read and changed through
   // its handle. Each of these is one step on its own; a spec that has to do
   // several things in the same task, so that nothing the app does can come

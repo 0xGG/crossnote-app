@@ -67,7 +67,7 @@ export const syntaxSamples: { name: string; text: string }[] = [
   },
   {
     name: "widgets",
-    text: '<!-- @crossnote.audio -->\n\n<!-- @crossnote.youtube "videoID":"abc" -->\n\n<!-- @crossnote.kanban "board":{"columns":[{"id":1,"title":"A","cards":[{"id":2,"title":"C","description":"[outside](https://a.b/)"}]}]} -->\n\n<!-- @timer -->\n',
+    text: '<!-- @crossnote.audio -->\n\n<!-- @crossnote.youtube "videoID":"abc" -->\n\n<!-- @crossnote.kanban "board":{"columns":[{"id":1,"title":"A","cards":[{"id":2,"title":"C","description":"[outside](https://a.b/)"}]}]} -->\n\n<!-- @timer -->\n\n<!-- @timer "date":"Sat Nov 07 2026 10:00:00 GMT+0800" -->\n\n<!-- @crossnote.image -->\n\n<!-- @crossnote.ocr -->\n\n<!-- @crossnote.video "src":"https://a.b/v.mp4","poster":"https://a.b/p.png" -->\n\n<!-- @crossnote.bilibili "bvid":"1xx411c7mD" -->\n\n<!-- @crossnote.github_gist "url":"https://gist.github.com/a/b" -->\n\n<!-- @crossnote.kanban "board":{"columns":[{"title":"Don\'t forget","cards":[]}]} -->\n\n<!-- @ -->\n\n<!-- @timer {"date": 1} -->\n\nText <!--@timer--> in a line.\n',
   },
   {
     name: "code",

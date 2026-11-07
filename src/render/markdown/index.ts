@@ -16,7 +16,6 @@ import math from "./math";
 import lines from "./lines";
 import tag from "./tag";
 import taskLists from "./taskLists";
-import widget from "./widget";
 import wikilink from "./wikilink";
 
 // The markdown stage: a note's text to HTML. The preview and the notebook,
@@ -41,7 +40,6 @@ md.use(sub);
 md.use(sup);
 tag(md);
 math(md);
-widget(md);
 fence(md);
 wikilink(md);
 blockReference(md);

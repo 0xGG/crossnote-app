@@ -96,7 +96,7 @@ const HMDFold = {
   math: true,
   html: true, // maybe dangerous
   emoji: true,
-  widget: true,
+  widget: false,
   code: true,
 };
 
@@ -1109,13 +1109,6 @@ export default function NotePanel(props: Props) {
                   render,
                 },
                 {
-                  text: "<!-- @crossnote.image -->\n",
-                  command: "/image",
-                  description: t("editor/toolbar/insert-image"),
-                  icon: "mdi-image",
-                  render,
-                },
-                {
                   text: `|   |   |
 |---|---|
 |   |   |
@@ -1123,80 +1116,6 @@ export default function NotePanel(props: Props) {
                   command: "/table",
                   description: t("editor/toolbar/insert-table"),
                   icon: "mdi-table",
-                  render,
-                },
-                {
-                  text:
-                    "<!-- @timer " +
-                    JSON.stringify({ date: new Date().toString() })
-                      .replace(/^{/, "")
-                      .replace(/}$/, "") +
-                    " -->\n",
-                  command: "/timer",
-                  description: t("editor/toolbar/insert-clock"),
-                  icon: "mdi-timer",
-                  render,
-                },
-                {
-                  text: "<!-- @crossnote.audio -->  \n",
-                  command: "/audio",
-                  description: t("editor/toolbar/insert-audio"),
-                  icon: "mdi-music",
-                  render,
-                },
-                //
-                // {
-                //   text: "<!-- @crossnote.netease_music -->  \n",
-                //   displayText: `/netease - ${t(
-                //   "editor/toolbar/netease-music",
-                //   )}`,
-                //  },
-                {
-                  text: "<!-- @crossnote.video -->  \n",
-                  command: "/video",
-                  description: t("editor/toolbar/insert-video"),
-                  icon: "mdi-video",
-                  render,
-                },
-                {
-                  text: "<!-- @crossnote.youtube -->  \n",
-                  command: "/youtube",
-                  description: t("editor/toolbar/insert-youtube"),
-                  icon: "mdi-youtube",
-                  render,
-                },
-                {
-                  text: "<!-- @crossnote.bilibili -->  \n",
-                  command: "/bilibili",
-                  description: t("editor/toolbar/insert-bilibili"),
-                  icon: "mdi-television-classic",
-                  render,
-                },
-                {
-                  text: "<!-- @crossnote.ocr -->  \n",
-                  command: "/ocr",
-                  description: t("editor/toolbar/insert-ocr"),
-                  icon: "mdi-ocr",
-                  render,
-                },
-                {
-                  text: '<!-- @crossnote.kanban "v":2,"board":{"columns":[]} -->  \n',
-                  command: "/kanban",
-                  description: `${t("editor/toolbar/insert-kanban")} (beta)`,
-                  icon: "mdi-developer-board",
-                  render,
-                },
-                // {
-                //   text: "<!-- @crossnote.abc -->  \n",
-                //   displayText: `/abc - ${t(
-                //      "editor/toolbar/insert-abc-notation",
-                //    )}`,
-                //  },
-                {
-                  text: "<!-- @crossnote.github_gist -->  \n",
-                  command: "/github_gist",
-                  description: t("editor/toolbar/insert-github-gist"),
-                  icon: "mdi-github",
                   render,
                 },
               ];

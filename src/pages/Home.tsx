@@ -30,7 +30,6 @@ import { MainPanel } from "../components/MainPanel";
 import NotebookTreeView from "../components/NotebookTreeView";
 import { CrossnoteContainer } from "../containers/crossnote";
 import { globalContainers } from "../containers/global";
-import { SettingsContainer } from "../containers/settings";
 import { getNoteIcon } from "../lib/note";
 
 const drawerWidth = 200;
@@ -104,10 +103,8 @@ export function Home(props: Props) {
   const [drawerOpen, setDrawerOpen] = useState<boolean>(false);
   const { t } = useTranslation();
   const crossnoteContainer = CrossnoteContainer.useContainer();
-  const settingsContainer = SettingsContainer.useContainer();
 
-  // HACK: Register globalContainers for widgets use
-  globalContainers.settingsContainer = settingsContainer;
+  // HACK: Register globalContainers for the preview, which opens notes
   globalContainers.crossnoteContainer = crossnoteContainer;
 
   const toggleDrawer = useCallback(() => {

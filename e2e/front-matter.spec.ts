@@ -139,6 +139,11 @@ for (const { layout, text, opened } of [
     text: '<!-- slide -->\n\n# Kept\n\n<!-- .slide: data-background="red" -->\n\nMore\n',
     opened: nothingToClose,
   },
+  {
+    layout: "the comments widgets left",
+    text: '# Kept\n\n<!-- @crossnote.kanban "board":{"columns":[{"title":"Don\'t forget","cards":[]}]} -->\n\n<!-- @timer "date":"Sat Nov 07 2026" -->\n\n<!-- @hello -->\n\nText <!--@timer--> in a line.\n',
+    opened: nothingToClose,
+  },
 ]) {
   test(`opens a note with ${layout} without writing it`, async ({ app }) => {
     const readme = await openReadme(app, text);

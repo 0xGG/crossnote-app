@@ -6,7 +6,6 @@ export const jaJP = {
     "account/Anonymous": "匿名",
 
     // General
-    "general/go-back": "戻る",
     "general/cancel": "キャンセル",
     "general/add": "追加",
     "general/adding": "追加",
@@ -31,7 +30,6 @@ export const jaJP = {
     "general/no-aliases": "エイリアスなし",
     "general/add-an-alias": "エイリアスを追加する",
     "general/Untitled": "無題",
-    "general/untitled": "無題",
     "general/Print": "印刷する",
     "general/Share": "シェア",
     "Editor": "編集者",
@@ -45,16 +43,10 @@ export const jaJP = {
     "general/sort-notes": "ノートを並べ替える",
     "general/table-of-contents": "目次",
     "general/change-note-icon": "ノートのアイコンを変更する",
-    "general/Audio": "音声",
-    "general/Video": "映像",
-    "general/source-url": "ソースリンク",
-    "general/Link": "リンク",
     "general/Upload": "アップロードする",
     "general/Uploading": "アップロードしています",
-    "general/Processing": "処理中...",
     "general/please-wait": "しばらくお待ちください...",
     "general/Download": "ダウンロード",
-    "general/empty": "空",
     "general/Notebooks": "ノートブック",
     "general/add-a-notebook": "ノートブックを追加する",
     "general/add-a-note": "ノートを追加する",
@@ -164,16 +156,6 @@ export const jaJP = {
     "editor/split-vertically": "垂直方向に分割",
 
     // * EditorToolBar
-    "editor/toolbar/insert-image": "画像を挿入",
-    "editor/toolbar/insert-clock": "時計を挿入",
-    "editor/toolbar/insert-audio": "音声を挿入",
-    "editor/toolbar/netease-music": "Netease Cloud Music",
-    "editor/toolbar/insert-video": "ビデオを挿入",
-    "editor/toolbar/insert-youtube": "Youtube を挿入",
-    "editor/toolbar/insert-bilibili": "Bilibili を挿入",
-    "editor/toolbar/insert-ocr": "OCRを挿入",
-    "editor/toolbar/insert-kanban": "かんばんを挿入",
-    "editor/toolbar/insert-abc-notation": "ABC notation を挿入",
     "editor/toolbar/insert-header-1": "第1レベルの見出しを挿入",
     "editor/toolbar/insert-header-2": "第2レベルの見出しを挿入",
     "editor/toolbar/insert-header-3": "第3レベルの見出しを挿入",
@@ -184,7 +166,6 @@ export const jaJP = {
     "editor/toolbar/insert-unordered-list": "順不同リストを挿入",
     "editor/toolbar/insert-ordered-list": "順序付きリストを挿入",
     "editor/toolbar/insert-table": "テーブルを挿入",
-    "editor/toolbar/insert-github-gist": "GitHub Gist を挿入",
 
     // * NoteControl
     "editor/note-control/source-code": "ソースコード",
@@ -193,72 +174,10 @@ export const jaJP = {
     "editor/note-control/copy-to-clipboard": "ペーストボードにコピー",
 
     // Utils
-    "utils/uploading-image": "画像をアップロードしています...",
-    "utils/upload-image-failure": "画像のアップロードに失敗しました",
 
     // Widgets
-    "widget/autoplay": "自動再生",
-    "widget/controls": "コントローラー",
-    "widget/loop": "サイクル",
-    "widget/muted": "ミュート",
-    "widget/crossnote.image/thanks_sm_ms":
-      "無料のドローイングベッドサービスを提供してくれたsm.msに感謝します。",
-    "widget/crossnote.audio/audio_element_fail":
-      "お使いのブラウザはオーディオ要素をサポートしていません",
-    "widget/crossnote.audio/source-url-placeholder":
-      "ここにオーディオファイルのソースリンクを入力し、「Enter」キーを押して挿入します",
-    "widget/crossnote.video/video_element_fail":
-      "お使いのブラウザは動画動画要素をサポートしていません",
-    "widget/crossnote.bilibili/error_message":
-      "エラー：https://www.bilibili.com/video/av79126732のようなリンクのみがサポートされています",
-    "widget/crossnote.youtube/error_message":
-      "エラー：https://www.youtube.com/watch?v=MmB9b5njVbAなどのリンクのみがサポートされています",
     "widget/crossnote.auth/welcome": "クロスノートへようこそ",
     "widget/crossnote.auth/Or": "または",
-    "widget/crossnote.bilibili/Bilibili": "Bilibili",
-    "widget/crossnote.bilibili/bilibili-video-url": "Bilibili ビデオリンク",
-    "widget/crossnote.bilibili/url-placeholder":
-      "ここにビリビリのビデオへのリンクを挿入し、「Enter」を押して挿入します",
-    "widget/crossnote.image/image-helper": "画像アシスタント",
-    "widget/crossnote.image/image-url-placeholder":
-      "ここに画像リンクを入力し、「Enter」を押して挿入します",
-    "widget/crossnote.image/click-here-to-browse-image-file":
-      "画像ファイルを選択するにはここをクリックしてください",
-    "widget/crossnote.video/video-url-placeholder":
-      "ここにビデオファイルのソースリンクを入力し、「Enter」を押して挿入します",
-    "widget/crossnote.video/poster-url": "カバー画像リンク（オプション）",
-    "widget/crossnote.video/poster-url-placeholder":
-      "ここにカバー画像のリンクを入力してください。",
-    "widget/crossnote.youtube/youtube-video-url": "Youtube ビデオリンク",
-    "widget/crossnote.youtube/youtube-video-url-placeholder":
-      "Youtubeビデオへのリンクをここに挿入し、「Enter」を押して挿入します",
-    "widget/crossnote.ocr/ocr": "OCR - Optical character recognition",
-    "widget/crossnote.ocr/local-image": "ローカル画像",
-    "widget/crossnote.ocr/recognize-text-in-languages":
-      "次の言語のテキストを認識する",
-    "widget/crossnote.ocr/start-ocr": "開始文字識別",
-    "widget/crossnote.ocr/extra-settings": "追加設定",
-    "widget/crossnote.ocr/grayscale": "グレースケール",
-    "widget/crossnote.ocr/failed": "文字を認識できませんでした",
-    "widget/crossnote.ocr/image-failed": "画像を読み込めませんでした",
-    "widget/crossnote.kanban/add-column": "新しい列を追加する",
-    "widget/crossnote.kanban/add-card": "新しいカードを追加する",
-    "widget/crossnote.kanban/delete-column": "列を削除する",
-    "widget/crossnote.kanban/edit-card": "カードを編集する",
-    "widget/crossnote.kanban/delete-card": "カードを削除する",
-    "widget/crossnote.github_gist/title": "GitHub Gist を埋め込む",
-    "widget/crossnote/github_gist/enter-github-gist-url":
-      "GitHub Gist URL を入力してください",
-
-    // Tesseract
-    "tesseract/loading tesseract core": "loading tesseract core",
-    "tesseract/initializing tesseract": "initializing tesseract",
-    "tesseract/initialized tesseract": "initialized tesseract",
-    "tesseract/loading language traineddata": "loading language traineddata",
-    "tesseract/loaded language traineddata": "loaded language traineddata",
-    "tesseract/initializing api": "initializing api",
-    "tesseract/initialized api": "initialized api",
-    "tesseract/recognizing text": "recognizing text",
 
     // Dialogs
     "delete-note-dialog/title": "このノートを削除しますか?",

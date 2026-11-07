@@ -33,6 +33,47 @@ test("draws a note that was a deck of slides as any other note", async ({
     .toBe(true);
 });
 
+test("shows the comments the widgets that are gone left in a note as text in the editor, and not at all in the preview", async ({
+  app,
+}) => {
+  await app.open();
+  await app.openNotes();
+  await app.createNote();
+
+  // In the editor a comment typed in is the text it is, not folded into
+  // anything: the YouTube widget showed a thumbnail, and echomd folds into
+  // widgets of its own a comment whose attributes it cannot read and one
+  // named hello.
+  await app.typeInEditor(
+    '<!-- @crossnote.youtube "videoID":"abc" -->\n\n<!-- @hello -->\n\n<!-- @broken "a":b -->\n\n',
+  );
+  await expect(app.editor).toContainText("@crossnote.youtube");
+  await expect(app.editor).toContainText("@hello");
+  await expect(app.editor).toContainText("@broken");
+  await expect(app.editor.getByRole("img")).toHaveCount(0);
+
+  const kanban =
+    '<!-- @crossnote.kanban "board":{"columns":[{"title":"Column","cards":[{"title":"Card"}]}]} -->';
+  const text = [
+    "Before.",
+    '<!-- @crossnote.youtube "videoID":"abc" -->',
+    kanban,
+    '<!-- @timer "date":"Sat Nov 07 2026 10:00:00 GMT+0800" -->',
+    "After.",
+    "",
+  ].join("\n\n");
+  await app.setEditorText(text);
+
+  await app.modeButton("Preview").click();
+  await expect(app.preview).toContainText("After.");
+  await expect(app.preview).not.toContainText("Column");
+  await expect(app.preview).not.toContainText("2026");
+  await expect(app.preview.locator("img, iframe, input")).toHaveCount(0);
+
+  await app.modeButton("Edit").click();
+  expect(await app.editorText()).toBe(text);
+});
+
 test("draws a note's emoji from the sheet", async ({ app, page }) => {
   await app.open();
   await app.openNotes();
@@ -177,31 +218,4 @@ test("prints a note light in a dark theme, and leaves the preview on the page da
       timeout: 15000,
     })
     .toEqual({ printed: light, shown: dark });
-});
-
-test("draws a kanban card's description through the same sanitizing", async ({
-  app,
-}) => {
-  await app.open();
-  await app.openNotes();
-  await app.createNote();
-  // echomd's own filter lets a form through; the preview's sanitizing does
-  // not, and a card's description is drawn the same way.
-  const card = {
-    id: 2,
-    title: "C",
-    description:
-      '[[Other]]\n\n<form action="javascript:alert(1)"><input value="kept"></form>\n',
-  };
-  const board = { columns: [{ id: 1, title: "A", cards: [card] }] };
-  await app.setEditorText(
-    `<!-- @crossnote.kanban "board":${JSON.stringify(board)} -->\n`,
-  );
-  await app.modeButton("Preview").click();
-
-  const description = app.preview.locator(".preview").filter({
-    has: app.page.locator('input[value="kept"]'),
-  });
-  await expect(description.getByRole("link", { name: "Other" })).toBeVisible();
-  await expect(description.locator("form")).toHaveCount(0);
 });

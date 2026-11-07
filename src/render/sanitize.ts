@@ -1,16 +1,14 @@
 import createDOMPurify from "dompurify";
 
 // What a note's HTML may keep once rendered. Every place a note is drawn (the
-// preview, a kanban card, printing) passes the markdown
+// preview, printing) passes the markdown
 // stage's output through sanitizeHTML before it reaches the page, so the
 // rules live here only:
 // - no scripts, event handler attributes or javascript: style addresses
 //   (DOMPurify's defaults);
 // - no style elements, frames, plugins or forms: a note's HTML is content,
-//   not page furniture, and embedded video goes through the youtube and
-//   bilibili widgets;
-// - data-* and style attributes stay, as the preview and the widgets read
-//   them;
+//   not page furniture;
+// - data-* and style attributes stay, as the preview reads them;
 // - ids stay as written, even one that names a property of document (the
 //   heading "Title" gets the id "title"), or the headings' anchors would
 //   break. DOMPurify's own check, which drops such ids, is off. What it

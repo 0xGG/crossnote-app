@@ -76,12 +76,25 @@ describe("the markdown stage", () => {
     expect(element.textContent).not.toContain("slide");
   });
 
-  it("draws a widget written without a space after the comment opens", () => {
-    expect(
-      parse("<!--@timer-->\n")
-        .querySelector(".echomd-widget")
-        ?.getAttribute("data-widget-name"),
-    ).toBe("timer");
+  it("draws the comments the widgets that are gone left in notes as any other comment: nothing", () => {
+    const element = document.createElement("div");
+    element.innerHTML = sanitizeHTML(
+      renderMarkdown(
+        [
+          '<!-- @timer "date":"Sat Nov 07 2026" -->',
+          '<!-- @crossnote.audio "src":"https://a.b/c.mp3" -->',
+          '<!-- @crossnote.youtube "videoID":"abc" -->',
+          '<!-- @crossnote.kanban "board":{"columns":[{"title":"Don\'t forget","cards":[]}]} -->',
+          "<!-- @ -->",
+          '<!-- @timer {"date": 1} -->',
+          'Text <!--@timer--> and <!-- @crossnote.github_gist "url":"https://gist.github.com/a" --> more.',
+        ].join("\n\n") + "\n",
+      ).html,
+    );
+    expect(element.textContent.replace(/\s+/g, " ").trim()).toBe(
+      "Text and more.",
+    );
+    expect(element.querySelectorAll("*:not(p)")).toHaveLength(0);
   });
 
   it("draws a block that ends in a # or a ^ after a space", () => {

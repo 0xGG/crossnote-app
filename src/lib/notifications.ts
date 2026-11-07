@@ -1,8 +1,7 @@
-// The transient messages the app shows in a corner: the git dialogs, the note
-// title box and the image widget all report outcomes this way. It is a module
-// rather than a React context on purpose. The editor widgets render through
-// their own React roots outside the main tree, so a context could not reach
-// them, while a module can be imported from anywhere.
+// The transient messages the app shows in a corner: the git dialogs and the
+// note title box report outcomes this way. It is a module rather than a
+// React context, so that it can be imported from anywhere, inside the React
+// tree or not.
 //
 // Messages show one at a time, in the order they were raised. A message stays
 // until its own duration runs out or the user closes it, and the next one

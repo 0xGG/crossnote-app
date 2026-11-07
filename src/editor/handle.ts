@@ -47,7 +47,7 @@ export interface EditorHandle {
 export type EditorHost = HTMLElement & { editorHandle: EditorHandle };
 
 // Hangs a handle on a CodeMirror 5 editor and names its root element by test
-// id: "note-editor" for a note's editor, "card-editor" for a kanban card's.
+// id ("note-editor" for a note's editor).
 // Returns the handle, for the app's own use of the same few things.
 export function attachEditorHandle(
   editor: Editor,

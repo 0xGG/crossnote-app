@@ -11,37 +11,7 @@ import {
   startDrawing,
   waitForDrawing,
 } from "./drawing";
-import { getWidgetCreator } from "./echomd";
 import { renderTwemoji } from "./emoji";
-
-function renderWidgets(container: HTMLElement) {
-  const spans = Array.from(container.getElementsByClassName("echomd-widget"));
-  for (const span of spans) {
-    const name = span.getAttribute("data-widget-name");
-    const attributesString = span.getAttribute("data-widget-attributes");
-    const creator = getWidgetCreator(name);
-    if (!creator) {
-      continue;
-    }
-    let attributes: Record<string, unknown>;
-    try {
-      attributes = JSON.parse(attributesString);
-    } catch {
-      attributes = {};
-    }
-    try {
-      const widget = creator({ attributes, isPreview: true });
-      if (widget) {
-        widget.classList.add("echomd-widget");
-        widget.setAttribute("data-widget-name", name);
-        widget.setAttribute("data-widget-attributes", attributesString);
-        span.replaceWith(widget);
-      }
-    } catch (error) {
-      span.replaceWith(failedBlock(error));
-    }
-  }
-}
 
 // Code, shown as it is at once and highlighted once Prism has its language;
 // as it is in a language Prism does not have, or cannot load.
@@ -194,7 +164,7 @@ async function resolveImages(
 }
 
 // What the preview does to the sanitized HTML once it is in the page:
-// widgets, code blocks and diagrams, twemoji, links that open notes, and
+// code blocks and diagrams, twemoji, links that open notes, and
 // images read from the notebook. Settles once the images are resolved and
 // the code blocks drawn, each given up to drawingTimeout. cleanups gets
 // what disposing of the preview has to undo: the drawings, still under way
@@ -205,7 +175,6 @@ export async function finishPreview(
   isCurrent: () => boolean,
   cleanups: (() => void)[],
 ) {
-  renderWidgets(container);
   const drawings = renderCodeFences(container, {
     dark: isDarkPreview(container),
   });

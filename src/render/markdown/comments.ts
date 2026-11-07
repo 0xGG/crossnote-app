@@ -17,8 +17,8 @@ function readComment(html: string): [string, string] | null {
 // HTML comments a note writes on lines of their own that mean something:
 // <!-- pagebreak --> or <!-- newpage --> breaks the page when printing, and
 // <!-- @import "file" --> is shown as the text it says, as it is not
-// followed. Other comments are left as HTML, for ./widget.ts to draw a
-// widget's or for the sanitizer to take out.
+// followed. Other comments, those the widgets that are gone left in notes
+// among them, are left as HTML, for the sanitizer to take out.
 export default function comments(md: MarkdownIt) {
   md.core.ruler.after("block", "comments", (state) => {
     for (const token of state.tokens) {
