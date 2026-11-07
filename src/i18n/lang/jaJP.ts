@@ -73,9 +73,6 @@ export const jaJP = {
       "ノートブックの更新を定期的に確認する",
     "general/minutes": "分",
     "general/hard-reset": "ハードリセット",
-    "general/Default": "既定",
-    "general/Vim": "Vim",
-    "general/Emacs": "Emacs",
     "general/Desc": "降順",
     "general/Asc": "昇順",
     "general/pin-the-note": "ノートをピン留めする",
@@ -125,16 +122,12 @@ export const jaJP = {
     "settings/about-this-project": "このプロジェクトについて",
     "settings/issues-and-feature-requests":
       "問題を発見したか、機能要求がありますか？",
-    "settings/editor-cursor-color": "エディターのカーソルの色",
     "settings/default-editor-mode": "既定のエディター モード",
     "settings/plain-text-source-code":
       "ソースコードモードでプレーンテキスト表示",
-    "settings/hello": "こんにちは，",
-    "settings/world": "世界！",
     "settings/author-name": "著者名",
     "settings/author-email": "著者の電子メール",
     "settings/theme": "テーマ",
-    "settings/key-map": "キーマップ",
     "settings/persistent-storage": "永続ストレージ",
     "settings/persistent-storage/persisted":
       "オン：ブラウザーは空き容量を確保するためにこのサイトのノートを消去しません。",

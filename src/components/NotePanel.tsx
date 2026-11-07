@@ -717,7 +717,7 @@ export default function NotePanel(props: Props) {
           mode: HYPERMD_MODE,
           // inputStyle: "textarea", // Break mobile device paste functionality
           hmdFold: HMDFold,
-          keyMap: settingsContainer.keyMap,
+          keyMap: "sublime",
           showCursorWhenSelecting: true,
           inputStyle: "contenteditable",
           // The insert-file add-on gets no file handler here, so it inserts
@@ -775,7 +775,7 @@ export default function NotePanel(props: Props) {
         setTocEnabled(props.tabNode.getRect().width >= 500);
       }
     }
-  }, [textAreaElement, note, editor, props.tabNode, settingsContainer.keyMap]);
+  }, [textAreaElement, note, editor, props.tabNode]);
 
   // Save note info to editor
   useEffect(() => {

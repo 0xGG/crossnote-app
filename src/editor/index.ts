@@ -20,9 +20,7 @@ import "codemirror/addon/hint/show-hint";
 import "codemirror/addon/mode/multiplex";
 import "codemirror/addon/mode/overlay";
 import "codemirror/addon/mode/simple";
-import "codemirror/keymap/emacs";
 import "codemirror/keymap/sublime";
-import "codemirror/keymap/vim";
 // Load these modes if you want highlighting ...
 import "codemirror/lib/codemirror.css";
 import "codemirror/mode/htmlmixed/htmlmixed"; // for embedded HTML
