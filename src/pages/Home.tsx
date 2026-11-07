@@ -30,8 +30,6 @@ import { MainPanel } from "../components/MainPanel";
 import NotebookTreeView from "../components/NotebookTreeView";
 import { CrossnoteContainer } from "../containers/crossnote";
 import { globalContainers } from "../containers/global";
-import { SettingsContainer } from "../containers/settings";
-import { getNoteIcon } from "../lib/note";
 
 const drawerWidth = 200;
 const Page = styled(Box)({
@@ -104,10 +102,8 @@ export function Home(props: Props) {
   const [drawerOpen, setDrawerOpen] = useState<boolean>(false);
   const { t } = useTranslation();
   const crossnoteContainer = CrossnoteContainer.useContainer();
-  const settingsContainer = SettingsContainer.useContainer();
 
-  // HACK: Register globalContainers for widgets use
-  globalContainers.settingsContainer = settingsContainer;
+  // HACK: Register globalContainers for the preview, which opens notes
   globalContainers.crossnoteContainer = crossnoteContainer;
 
   const toggleDrawer = useCallback(() => {
@@ -148,7 +144,6 @@ export function Home(props: Props) {
                       singleton: false,
                       noteFilePath: note.filePath,
                       notebookPath: note.notebookPath,
-                      icon: getNoteIcon(note),
                     },
                     name: note.title,
                   });
@@ -164,7 +159,6 @@ export function Home(props: Props) {
 
                       singleton: true,
                       notebookPath: notebook.dir,
-                      icon: ":notebook_with_decorative_cover:",
                     },
                   });
                 }
@@ -178,7 +172,6 @@ export function Home(props: Props) {
                     component: "Notes",
                     singleton: true,
                     notebookPath: notebook.dir,
-                    icon: ":notebook_with_decorative_cover:",
                   },
                 });
               }
@@ -265,7 +258,6 @@ export function Home(props: Props) {
                   config: {
                     component: "Settings",
                     singleton: true,
-                    icon: ":gear:",
                   },
                 });
                 setDrawerOpen(false);

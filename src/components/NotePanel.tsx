@@ -62,15 +62,12 @@ import { NoteLocation, NoteSaver } from "../lib/noteSaver";
 import { isFinishingEnter } from "../lib/keys";
 import { failureMessage, notify } from "../lib/notifications";
 import { Reference } from "../lib/reference";
-import { TabNodeConfig } from "../lib/tabNode";
 import { MountedPreview, mountPreview } from "../render";
 import { setTheme } from "../themes/manager";
 import { resolveNoteImageSrc } from "../utilities/image";
 import { openURL } from "../utilities/preview";
 import { debounce } from "../utilities/utils";
 import EditImageDialog from "./EditImageDialog";
-import { Emoji } from "./EmojiWrapper";
-import IconPopover from "./IconPopover";
 import { Loading } from "./Loading";
 import NotePopover from "./NotePopover";
 import NotesPanel from "./NotesPanel";
@@ -96,7 +93,7 @@ const HMDFold = {
   math: true,
   html: true, // maybe dangerous
   emoji: true,
-  widget: true,
+  widget: false,
   code: true,
 };
 
@@ -356,13 +353,6 @@ const CursorPositionInfo = styled(Box)({
 // The three conditional rules; sx keeps the condition at the call site.
 const controlBtnSelectedSx = { color: "primary.main" } as const;
 
-const presentationSx = {
-  padding: "0 !important",
-  overflow: "hidden !important",
-} as const;
-
-const editorPresentationSx = { height: "100%" } as const;
-
 interface Props {
   notebook: Notebook;
   noteFilePath: string;
@@ -376,15 +366,12 @@ export default function NotePanel(props: Props) {
   const { t } = useTranslation();
   const [noteTitle, setNoteTitle] = useState<string>("");
   const [note, setNote] = useState<Note>(null);
-  const [noteIcon, setNoteIcon] = useState<string>("");
   const [editor, setEditor] = useState<CodeMirrorEditor>(null);
   const [editorMode, setEditorMode] = useState<EditorMode>(
     settingsContainer.defaultEditorMode,
   );
   const tocElement = useRef<HTMLDivElement>(null);
   const previewElement = useRef<HTMLDivElement>(null);
-  const [previewIsPresentation, setPreviewIsPresentation] =
-    useState<boolean>(false);
   const mountedPreview = useRef<MountedPreview>(null);
   const textAreaElement = useRef<HTMLTextAreaElement>(null);
   const [cursorPosition, setCursorPosition] = useState<CursorPosition>({
@@ -399,7 +386,6 @@ export default function NotePanel(props: Props) {
   const [editImageDialogOpen, setEditImageDialogOpen] =
     useState<boolean>(false);
   const [notePopoverElement, setNotePopoverElement] = useState<Element>(null);
-  const [iconPopoverElement, setIconPopoverElement] = useState<Element>(null);
   const [gitStatus, setGitStatus] = useState<string>("");
   const [tocEnabled, setTocEnabled] = useState<boolean>(
     false, // props.tabNode.getTabRect().width >= 500,
@@ -454,7 +440,6 @@ export default function NotePanel(props: Props) {
       mountedPreview.current?.dispose();
       const preview = mountPreview(element, text, { note });
       mountedPreview.current = preview;
-      setPreviewIsPresentation(preview.isPresentation);
       element.scrollTop = 0;
     },
     [note],
@@ -576,19 +561,9 @@ export default function NotePanel(props: Props) {
     }
 
     const modifiedMarkdownCallback = (data: ModifiedMarkdownEventData) => {
-      const updateNoteIcon = () => {
-        const tabNodeConfig: TabNodeConfig = tabNode.getConfig();
-        tabNodeConfig.icon = data.noteConfig.icon;
-        setNoteIcon(data.noteConfig.icon);
-        crossnoteContainer.layoutModel.doAction(
-          Actions.updateNodeAttributes(tabNode.getId(), {
-            config: tabNodeConfig,
-          }),
-        );
-      };
       if (data.tabId === tabNode.getId()) {
         saver.wrote(data.markdown);
-        return updateNoteIcon();
+        return;
       }
       if (
         data.notebookPath === note.notebookPath &&
@@ -599,7 +574,6 @@ export default function NotePanel(props: Props) {
           editor.setValue(data.markdown);
         }
         saver.took(data.markdown);
-        return updateNoteIcon();
       }
     };
 
@@ -717,13 +691,6 @@ export default function NotePanel(props: Props) {
       });
   }, [props.noteFilePath, props.notebook]);
 
-  // set note icon
-  useEffect(() => {
-    if (note) {
-      setNoteIcon(note.config.icon);
-    }
-  }, [note]);
-
   // Front matter YAML cannot read is kept as it is, and the note's settings
   // are saved before it. Said once, as the note opens: front matter caught
   // half typed later on is still being typed.
@@ -750,13 +717,17 @@ export default function NotePanel(props: Props) {
           mode: HYPERMD_MODE,
           // inputStyle: "textarea", // Break mobile device paste functionality
           hmdFold: HMDFold,
-          keyMap: settingsContainer.keyMap,
+          keyMap: "sublime",
           showCursorWhenSelecting: true,
           inputStyle: "contenteditable",
-          // The insert-file add-on gets no file handler here, so it inserts
-          // nothing; left on for drops, it still moves the caret to wherever
+          // echomd's add-ons for inserting a file, converting what is pasted
+          // and showing a footnote on hover are given nothing to do here, and
+          // are off. echomd turns them on unless told otherwise; inserting
+          // files, left on for drops, would move the caret to wherever
           // anything is dropped, a dragged tab included.
-          hmdInsertFile: { byPaste: true, byDrop: false },
+          hmdInsertFile: false,
+          hmdPaste: false,
+          hmdHover: false,
           hmdClick: (info: any, cm: CodeMirrorEditor) => {
             let { text, url } = info;
             if (info.type === "link" || info.type === "url") {
@@ -808,7 +779,7 @@ export default function NotePanel(props: Props) {
         setTocEnabled(props.tabNode.getRect().width >= 500);
       }
     }
-  }, [textAreaElement, note, editor, props.tabNode, settingsContainer.keyMap]);
+  }, [textAreaElement, note, editor, props.tabNode]);
 
   // Save note info to editor
   useEffect(() => {
@@ -829,7 +800,7 @@ export default function NotePanel(props: Props) {
     if (editorMode === EditorMode.Preview && editor && note && previewElement) {
       showPreview(editor.getValue());
       // Leaving the preview, or the panel going, disposes of the drawing:
-      // images still being read are not written, and a deck's listener goes.
+      // images still being read are not written.
       return () => mountedPreview.current?.dispose();
     }
   }, [editorMode, editor, previewElement, note, showPreview, t]);
@@ -931,10 +902,6 @@ export default function NotePanel(props: Props) {
   useEffect(() => {
     if (editor && note && tabNode && saver) {
       const changesHandler = () => {
-        if (editor.getOption("readOnly")) {
-          // This line is necessary for decryption...
-          return;
-        }
         // Not compared with the note the tab opened with, which saving does
         // not replace: a change back to that text would never be saved.
         // updateNoteMarkdown skips text the notebook already holds.
@@ -1119,13 +1086,6 @@ export default function NotePanel(props: Props) {
                   render,
                 },
                 {
-                  text: "<!-- @crossnote.image -->\n",
-                  command: "/image",
-                  description: t("editor/toolbar/insert-image"),
-                  icon: "mdi-image",
-                  render,
-                },
-                {
                   text: `|   |   |
 |---|---|
 |   |   |
@@ -1133,87 +1093,6 @@ export default function NotePanel(props: Props) {
                   command: "/table",
                   description: t("editor/toolbar/insert-table"),
                   icon: "mdi-table",
-                  render,
-                },
-                {
-                  text:
-                    "<!-- @timer " +
-                    JSON.stringify({ date: new Date().toString() })
-                      .replace(/^{/, "")
-                      .replace(/}$/, "") +
-                    " -->\n",
-                  command: "/timer",
-                  description: t("editor/toolbar/insert-clock"),
-                  icon: "mdi-timer",
-                  render,
-                },
-                {
-                  text: "<!-- @crossnote.audio -->  \n",
-                  command: "/audio",
-                  description: t("editor/toolbar/insert-audio"),
-                  icon: "mdi-music",
-                  render,
-                },
-                //
-                // {
-                //   text: "<!-- @crossnote.netease_music -->  \n",
-                //   displayText: `/netease - ${t(
-                //   "editor/toolbar/netease-music",
-                //   )}`,
-                //  },
-                {
-                  text: "<!-- @crossnote.video -->  \n",
-                  command: "/video",
-                  description: t("editor/toolbar/insert-video"),
-                  icon: "mdi-video",
-                  render,
-                },
-                {
-                  text: "<!-- @crossnote.youtube -->  \n",
-                  command: "/youtube",
-                  description: t("editor/toolbar/insert-youtube"),
-                  icon: "mdi-youtube",
-                  render,
-                },
-                {
-                  text: "<!-- @crossnote.bilibili -->  \n",
-                  command: "/bilibili",
-                  description: t("editor/toolbar/insert-bilibili"),
-                  icon: "mdi-television-classic",
-                  render,
-                },
-                {
-                  text: "<!-- slide -->  \n",
-                  command: "/slide",
-                  description: t("editor/toolbar/insert-slide"),
-                  icon: "mdi-presentation",
-                  render,
-                },
-                {
-                  text: "<!-- @crossnote.ocr -->  \n",
-                  command: "/ocr",
-                  description: t("editor/toolbar/insert-ocr"),
-                  icon: "mdi-ocr",
-                  render,
-                },
-                {
-                  text: '<!-- @crossnote.kanban "v":2,"board":{"columns":[]} -->  \n',
-                  command: "/kanban",
-                  description: `${t("editor/toolbar/insert-kanban")} (beta)`,
-                  icon: "mdi-developer-board",
-                  render,
-                },
-                // {
-                //   text: "<!-- @crossnote.abc -->  \n",
-                //   displayText: `/abc - ${t(
-                //      "editor/toolbar/insert-abc-notation",
-                //    )}`,
-                //  },
-                {
-                  text: "<!-- @crossnote.github_gist -->  \n",
-                  command: "/github_gist",
-                  description: t("editor/toolbar/insert-github-gist"),
-                  icon: "mdi-github",
                   render,
                 },
               ];
@@ -1608,8 +1487,7 @@ export default function NotePanel(props: Props) {
     return <Loading></Loading>;
   }
 
-  const tocVisible =
-    tocEnabled && !(previewIsPresentation && editorMode === EditorMode.Preview);
+  const tocVisible = tocEnabled;
 
   return (
     <NotePanelRoot>
@@ -1621,15 +1499,6 @@ export default function NotePanel(props: Props) {
         }}
       >
         <Row style={{ width: "100%" }}>
-          <Box>
-            <IconButton
-              aria-label={t("general/change-note-icon")}
-              color={"primary"}
-              onClick={(event) => setIconPopoverElement(event.currentTarget)}
-            >
-              {<Emoji emoji={noteIcon || ":memo:"} size={32}></Emoji>}
-            </IconButton>
-          </Box>
           <InputBase
             value={noteTitle}
             style={{
@@ -1719,22 +1588,20 @@ export default function NotePanel(props: Props) {
               <DotsVertical></DotsVertical>
             </ControlButton>
           </ButtonGroup>
-          {!(previewIsPresentation && editorMode === EditorMode.Preview) && (
-            <TocButtonGroup
-              variant="text"
-              color="inherit"
-              aria-label="table of contents"
-              size="small"
+          <TocButtonGroup
+            variant="text"
+            color="inherit"
+            aria-label="table of contents"
+            size="small"
+          >
+            <ControlButton
+              aria-label={t("general/table-of-contents")}
+              sx={tocEnabled ? controlBtnSelectedSx : undefined}
+              onClick={() => setTocEnabled(!tocEnabled)}
             >
-              <ControlButton
-                aria-label={t("general/table-of-contents")}
-                sx={tocEnabled ? controlBtnSelectedSx : undefined}
-                onClick={() => setTocEnabled(!tocEnabled)}
-              >
-                <TableOfContents></TableOfContents>
-              </ControlButton>
-            </TocButtonGroup>
-          )}
+              <TableOfContents></TableOfContents>
+            </ControlButton>
+          </TocButtonGroup>
         </Row>
         <Divider></Divider>
       </TopPanel>
@@ -1752,13 +1619,7 @@ export default function NotePanel(props: Props) {
           }}
         >
           <EditorContentPanel>
-            <EditorWrapper
-              sx={
-                previewIsPresentation && editorMode === EditorMode.Preview
-                  ? editorPresentationSx
-                  : undefined
-              }
-            >
+            <EditorWrapper>
               <EditorTextArea
                 className={"editor-textarea"}
                 placeholder={t("editor/placeholder")}
@@ -1768,22 +1629,17 @@ export default function NotePanel(props: Props) {
                 <Preview
                   className={"preview"}
                   data-testid="note-preview"
-                  sx={previewIsPresentation ? presentationSx : undefined}
                   ref={previewElement}
                 ></Preview>
               ) : null}
             </EditorWrapper>
-            {!(editorMode === EditorMode.Preview && previewIsPresentation) && (
-              <React.Fragment>
-                <Box style={{ marginTop: "32px" }}></Box>
-                <NotesPanel
-                  title={t("general/References")}
-                  tabNode={props.tabNode}
-                  notebook={props.notebook}
-                  note={note}
-                ></NotesPanel>
-              </React.Fragment>
-            )}
+            <Box style={{ marginTop: "32px" }}></Box>
+            <NotesPanel
+              title={t("general/References")}
+              tabNode={props.tabNode}
+              notebook={props.notebook}
+              note={note}
+            ></NotesPanel>
           </EditorContentPanel>
           <TocPanel>
             <Toc ref={tocElement}></Toc>
@@ -1825,13 +1681,6 @@ export default function NotePanel(props: Props) {
         anchorElement={notePopoverElement}
         onClose={() => setNotePopoverElement(null)}
       ></NotePopover>
-
-      <IconPopover
-        tabNode={props.tabNode}
-        note={note}
-        anchorElement={iconPopoverElement}
-        onClose={() => setIconPopoverElement(null)}
-      ></IconPopover>
 
       <FloatWin
         id="math-preview"

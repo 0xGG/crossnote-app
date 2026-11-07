@@ -14,7 +14,7 @@ vi.mock("./diagrams", () => ({
   diagramRenderers: [
     [
       /^test$/,
-      (code: string, _info: unknown, context: DrawingContext) => {
+      (code: string, context: DrawingContext) => {
         const element = document.createElement("div");
         let finish = () => {};
         let released = false;
@@ -63,7 +63,7 @@ describe("mountPreview with blocks drawn later", () => {
     await preview.done;
     expect(element.textContent).toContain("drawn: A");
     expect(element.textContent).toContain("drawn: B");
-    expect(drawings[0].context).toEqual({ dark: false, inSlides: false });
+    expect(drawings[0].context).toEqual({ dark: false });
   });
 
   it("disposes of the blocks when it is disposed of, and settles", async () => {
@@ -109,15 +109,15 @@ describe("mountPreview with blocks drawn later", () => {
     document.body.appendChild(element);
     mountPreview(element, note, { note: null });
     await vi.waitFor(() => expect(drawings).toHaveLength(2));
-    expect(drawings[0].context).toEqual({ dark: true, inSlides: false });
+    expect(drawings[0].context).toEqual({ dark: true });
   });
 
-  it("draws the other blocks when a block's info, written in the note's HTML, is not an object", async () => {
+  it("draws a block written in the note's HTML that names no language, or one of its own, as code", async () => {
     const element = document.createElement("div");
     document.body.appendChild(element);
     const preview = mountPreview(
       element,
-      '```test\nA\n```\n\n<pre class="vickeymd-fence" data-parsed-info="null">B</pre>\n\n<pre class="vickeymd-fence" data-parsed-info=\'{"language":{"toString":1}}\'>C</pre>\n',
+      '```test {width=1}\nA\n```\n\n<pre class="vickeymd-fence">B</pre>\n\n<pre class="vickeymd-fence" data-language="{&quot;toString&quot;:1}">C</pre>\n',
       { note: null },
     );
     await vi.waitFor(() => expect(drawings).toHaveLength(1));
@@ -126,44 +126,6 @@ describe("mountPreview with blocks drawn later", () => {
     expect(element.textContent).toContain("drawn: A");
     expect(element.textContent).toContain("B");
     expect(element.textContent).toContain("C");
-    preview.dispose();
-    expect(drawings[0].released()).toBe(true);
-  });
-});
-
-describe("mountPreview with a deck", () => {
-  // The deck is ready once reveal.js says so, which the test does for it.
-  function mountDeck(text: string) {
-    const element = document.createElement("div");
-    document.body.appendChild(element);
-    const added = vi.spyOn(window, "addEventListener");
-    const preview = mountPreview(element, text, { note: null });
-    const listener = added.mock.calls.find(
-      ([type]) => type === "message",
-    )[1] as (event: unknown) => void;
-    added.mockRestore();
-    const iframe = element.querySelector("iframe");
-    const id =
-      iframe.contentDocument.documentElement.innerHTML.match(
-        /reveal\.js\.[\d.]+/,
-      )[0];
-    listener({
-      source: iframe.contentWindow,
-      data: { event: "reveal-ready", id },
-    });
-    return preview;
-  }
-
-  it("settles once its slides' blocks are drawn, and disposes of them with it", async () => {
-    const preview = mountDeck("<!-- slide -->\n\n```test\nA\n```\n");
-    await vi.waitFor(() => expect(drawings).toHaveLength(1));
-    expect(drawings[0].context).toEqual({ dark: false, inSlides: true });
-    let settled = false;
-    preview.done.then(() => (settled = true));
-    await new Promise((resolve) => setTimeout(resolve));
-    expect(settled).toBe(false);
-    drawings[0].finish();
-    await preview.done;
     preview.dispose();
     expect(drawings[0].released()).toBe(true);
   });

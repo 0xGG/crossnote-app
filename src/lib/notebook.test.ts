@@ -548,6 +548,26 @@ describe("Notebook", () => {
         pinned:
           "---\ntags:\n    - a\naliases:\n    - x\npinned: true\ncreated: <time>\nmodified: <time>\n---\nBody\n",
       },
+      // A note's emoji (icon) was a setting once; it is a key of the note's
+      // own now, kept in the file wherever it was.
+      {
+        layout: "an emoji, as the notebook wrote it among the settings",
+        file: "---\naliases: x\npinned: true\nicon: ':star:'\ncreated: 2026-01-01T00:00:00.000Z\nmodified: 2026-01-02T00:00:00.000Z\n---\nBody\n",
+        opened: "---\nicon: ':star:'\n---\nBody\n",
+        edited:
+          "---\nicon: ':star:'\naliases: x\npinned: true\ncreated: <time>\nmodified: <time>\n---\nBody\nEdit",
+        pinned:
+          "---\nicon: ':star:'\naliases: x\npinned: true\ncreated: <time>\nmodified: <time>\n---\nBody\n",
+      },
+      {
+        layout: "an emoji between keys of the note's own",
+        file: "---\ntitle: T\nicon: ':star:'\npinned: true\n---\nBody\n",
+        opened: "---\ntitle: T\nicon: ':star:'\n---\nBody\n",
+        edited:
+          "---\ntitle: T\nicon: ':star:'\npinned: true\ncreated: <time>\nmodified: <time>\n---\nBody\nEdit",
+        pinned:
+          "---\ntitle: T\nicon: ':star:'\npinned: true\ncreated: <time>\nmodified: <time>\n---\nBody\n",
+      },
       {
         layout: "no front matter",
         file: frontMatterSamples["no front matter"],
@@ -587,7 +607,7 @@ describe("Notebook", () => {
       });
     });
 
-    it("reads the settings it keeps, however they are written", async () => {
+    it("reads the settings it keeps, however they are written, and leaves an emoji the note was given in its text", async () => {
       await pfs.writeFile(
         "/notebooks/test/kept-settings.md",
         "---\ncreated: 2026-01-01\nmodified: 2026-01-02\npinned: false\nfavorited: true\nicon: ':star:'\naliases: x, y\n---\nBody\n",
@@ -598,9 +618,9 @@ describe("Notebook", () => {
         modifiedAt: new Date("2026-01-02T00:00:00.000Z"),
         pinned: false,
         favorited: true,
-        icon: ":star:",
         aliases: ["x", "y"],
       });
+      expect(note.markdown).toBe("---\nicon: ':star:'\n---\nBody\n");
     });
 
     it("keeps the settings while front matter is half typed", async () => {

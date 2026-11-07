@@ -16,7 +16,7 @@ function noteSettings(noteConfig: NoteConfig): [string, unknown][] {
   if (noteConfig.aliases && noteConfig.aliases.length) {
     settings.push(["aliases", noteConfig.aliases]);
   }
-  for (const key of ["pinned", "favorited", "icon"] as const) {
+  for (const key of ["pinned", "favorited"] as const) {
     if (noteConfig[key] !== undefined && noteConfig[key] !== null) {
       settings.push([key, noteConfig[key]]);
     }
@@ -317,9 +317,6 @@ export class Notebook {
           noteConfig[key] = settings[key] as boolean;
         }
       }
-      if (settings.icon !== undefined && settings.icon !== null) {
-        noteConfig.icon = settings.icon as string;
-      }
       if (typeof settings.aliases === "string") {
         noteConfig.aliases = settings.aliases.split(",").map((x) => x.trim());
       } else if (Array.isArray(settings.aliases)) {
@@ -494,17 +491,6 @@ export class Notebook {
       await this.removeNoteRelations(filePath);
       this.search.remove(filePath);
     }
-  }
-
-  public async duplicateNote(filePath: string) {
-    const oldNote = await this.getNote(filePath);
-    if (!oldNote) return;
-    const noteConfig = oldNote.config;
-    noteConfig.createdAt = new Date();
-    noteConfig.modifiedAt = new Date();
-    const newFilePath = filePath.replace(/\.md$/, ".copy.md");
-    await this.writeNote(newFilePath, oldNote.markdown, noteConfig);
-    return await this.getNote(newFilePath, true);
   }
 }
 

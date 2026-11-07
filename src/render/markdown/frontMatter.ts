@@ -2,9 +2,9 @@ import type { MarkdownIt } from "markdown-it";
 import { findFrontMatter } from "../../lib/frontMatter";
 
 // The front matter a note starts with, found as the notebook finds it
-// (lib/frontMatter.ts): a token of its own, with the mapping it holds, which
-// draws nothing and has no links in it. Front matter YAML cannot read is
-// the note's text, and is drawn as text.
+// (lib/frontMatter.ts): a token of its own, which draws nothing and has no
+// links in it. Front matter YAML cannot read is the note's text, and is
+// drawn as text.
 export default function frontMatter(md: MarkdownIt) {
   md.block.ruler.before(
     "table",
@@ -22,7 +22,6 @@ export default function frontMatter(md: MarkdownIt) {
         token.block = true;
         token.hidden = true;
         token.map = [0, found.lineCount];
-        token.meta = found.mapping;
       }
       state.line = found.lineCount;
       return true;

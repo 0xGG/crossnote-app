@@ -11,16 +11,15 @@ import {
 // Where the messages have always appeared.
 const anchorOrigin = { vertical: "top", horizontal: "right" } as const;
 
-// Three dialogs pin themselves above MUI's modal layer: the image editor at
-// 3001, the kanban card editor at 3000 and the language picker at 2000. A
+// Two dialogs pin themselves above MUI's modal layer: the image editor at
+// 3001 and the language picker at 2000. A
 // message raised while one of them is open has to sit above it, as noty's
 // container always did, or its close button lands on the dialog's backdrop
 // and closes the dialog instead.
 const snackbarSx = { zIndex: 3002 } as const;
 
 // Shows the notification queue one message at a time. Mounted once under the
-// theme provider, so a message raised by an editor widget gets the same look
-// as one raised by a dialog even though the widget renders outside this tree.
+// theme provider, so every message gets the same look wherever it is raised.
 export default function Notifications() {
   const { t } = useTranslation();
   const { current, open } = useSyncExternalStore(

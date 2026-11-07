@@ -11,37 +11,7 @@ import {
   startDrawing,
   waitForDrawing,
 } from "./drawing";
-import { getWidgetCreator } from "./echomd";
 import { renderTwemoji } from "./emoji";
-
-function renderWidgets(container: HTMLElement) {
-  const spans = Array.from(container.getElementsByClassName("echomd-widget"));
-  for (const span of spans) {
-    const name = span.getAttribute("data-widget-name");
-    const attributesString = span.getAttribute("data-widget-attributes");
-    const creator = getWidgetCreator(name);
-    if (!creator) {
-      continue;
-    }
-    let attributes: Record<string, unknown>;
-    try {
-      attributes = JSON.parse(attributesString);
-    } catch {
-      attributes = {};
-    }
-    try {
-      const widget = creator({ attributes, isPreview: true });
-      if (widget) {
-        widget.classList.add("echomd-widget");
-        widget.setAttribute("data-widget-name", name);
-        widget.setAttribute("data-widget-attributes", attributesString);
-        span.replaceWith(widget);
-      }
-    } catch (error) {
-      span.replaceWith(failedBlock(error));
-    }
-  }
-}
 
 // Code, shown as it is at once and highlighted once Prism has its language;
 // as it is in a language Prism does not have, or cannot load.
@@ -96,21 +66,8 @@ function renderCodeFences(
   const drawings: Drawing[] = [];
   const fences = Array.from(container.getElementsByClassName("vickeymd-fence"));
   for (const fence of fences) {
-    let info: any;
-    try {
-      info = JSON.parse(fence.getAttribute("data-parsed-info") || "{}");
-    } catch {
-      info = {};
-    }
-    // A note's own HTML can say anything here.
-    if (!info || typeof info !== "object") {
-      info = {};
-    }
     const code = fence.textContent;
-    const language: string =
-      typeof info["language"] === "string" && info["language"]
-        ? info["language"]
-        : "text";
+    const language = fence.getAttribute("data-language") || "text";
     const diagram = diagramRenderers.find(([pattern]) =>
       pattern.test(language),
     );
@@ -119,7 +76,7 @@ function renderCodeFences(
     try {
       let drawing: Drawing;
       if (diagram) {
-        drawing = diagram[1](code, info, context);
+        drawing = diagram[1](code, context);
       } else {
         drawing = renderCodeBlock(code, language);
       }
@@ -207,7 +164,7 @@ async function resolveImages(
 }
 
 // What the preview does to the sanitized HTML once it is in the page:
-// widgets, code blocks and diagrams, twemoji, links that open notes, and
+// code blocks and diagrams, twemoji, links that open notes, and
 // images read from the notebook. Settles once the images are resolved and
 // the code blocks drawn, each given up to drawingTimeout. cleanups gets
 // what disposing of the preview has to undo: the drawings, still under way
@@ -215,14 +172,11 @@ async function resolveImages(
 export async function finishPreview(
   container: HTMLElement,
   note: Note | null,
-  inSlides: boolean,
   isCurrent: () => boolean,
   cleanups: (() => void)[],
 ) {
-  renderWidgets(container);
   const drawings = renderCodeFences(container, {
-    dark: !inSlides && isDarkPreview(container),
-    inSlides,
+    dark: isDarkPreview(container),
   });
   const waits = drawings.map((drawing) => waitForDrawing(drawing));
   cleanups.push(() => {

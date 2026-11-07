@@ -6,7 +6,6 @@ export const enUS = {
     "account/Anonymous": "Anonymous",
 
     // General
-    "general/go-back": "Go back",
     "general/cancel": "Cancel",
     "general/add": "Add",
     "general/adding": "Adding",
@@ -31,7 +30,6 @@ export const enUS = {
     "general/no-aliases": "No aliases",
     "general/add-an-alias": "Add an alias",
     "general/Untitled": "Untitled",
-    "general/untitled": "untitled",
     "general/Print": "Print",
     "general/Share": "Share",
     "Editor": "Editor",
@@ -44,17 +42,10 @@ export const enUS = {
     "general/note-menu": "Note menu",
     "general/sort-notes": "Sort notes",
     "general/table-of-contents": "Table of contents",
-    "general/change-note-icon": "Change note icon",
-    "general/Audio": "Audio",
-    "general/Video": "Video",
-    "general/source-url": "Source URL",
-    "general/Link": "Link",
     "general/Upload": "Upload",
     "general/Uploading": "Uploading",
-    "general/Processing": "Processing...",
     "general/please-wait": "Please wait...",
     "general/Download": "Download",
-    "general/empty": "empty",
     "general/Notebooks": "Notebooks",
     "general/add-a-notebook": "Add a notebook",
     "general/add-a-note": "Add a note",
@@ -71,6 +62,8 @@ export const enUS = {
     "general/why-cors-proxy": "Why do we need CORS proxy？",
     "general/today": "Today",
     "general/graph-view": "Graph view",
+    "general/graph-view-unavailable":
+      "The graph could not be loaded. Reload the page to try again.",
     "general/conflicted": "Conflicted",
     "general/change-file-path": "Change file path",
     "general/restore-checkout": "Restore (git checkout)",
@@ -82,9 +75,6 @@ export const enUS = {
       "Check notebook updates periodically",
     "general/minutes": "minute(s)",
     "general/hard-reset": "Hard reset",
-    "general/Default": "Default",
-    "general/Vim": "Vim",
-    "general/Emacs": "Emacs",
     "general/Desc": "Desc",
     "general/Asc": "Asc",
     "general/pin-the-note": "Pin the note",
@@ -132,20 +122,11 @@ export const enUS = {
     "settings/about-this-project": "About this project",
     "settings/issues-and-feature-requests":
       "Found issues or have feature requests?",
-    "settings/editor-cursor-color": "Editor cursor color",
     "settings/default-editor-mode": "Default editor mode",
     "settings/plain-text-source-code": "Plain text in source code mode",
-    "settings/always-draw-plantuml":
-      "Draw PlantUML diagrams with plantuml.com without asking",
-    "preview/draw-plantuml":
-      "Draw with plantuml.com (sends the diagram's source to it)",
-    "preview/plantuml-diagram": "PlantUML diagram",
-    "settings/hello": "Hello, ",
-    "settings/world": "world!",
     "settings/author-name": "Author name",
     "settings/author-email": "Author email",
     "settings/theme": "Theme",
-    "settings/key-map": "Key Map",
     "settings/persistent-storage": "Persistent storage",
     "settings/persistent-storage/persisted":
       "On: the browser does not clear the notes this site stores to free up space.",
@@ -165,17 +146,6 @@ export const enUS = {
     "editor/split-vertically": "Split vertically",
 
     // * EditorToolBar
-    "editor/toolbar/insert-image": "Insert image",
-    "editor/toolbar/insert-clock": "Insert clock",
-    "editor/toolbar/insert-audio": "Insert Audio",
-    "editor/toolbar/netease-music": "Netease Music",
-    "editor/toolbar/insert-video": "Insert video",
-    "editor/toolbar/insert-youtube": "Insert Youtube",
-    "editor/toolbar/insert-bilibili": "Insert Bilibili",
-    "editor/toolbar/insert-slide": "Insert slide",
-    "editor/toolbar/insert-ocr": "Insert OCR",
-    "editor/toolbar/insert-kanban": "Insert Kanban",
-    "editor/toolbar/insert-abc-notation": "Insert ABC notation",
     "editor/toolbar/insert-header-1": "Insert header 1",
     "editor/toolbar/insert-header-2": "Insert header 2",
     "editor/toolbar/insert-header-3": "Insert header 3",
@@ -186,7 +156,6 @@ export const enUS = {
     "editor/toolbar/insert-unordered-list": "Insert unordered list",
     "editor/toolbar/insert-ordered-list": "Insert ordered list",
     "editor/toolbar/insert-table": "Insert table",
-    "editor/toolbar/insert-github-gist": "Insert GitHub Gist",
 
     // * NoteControl
     "editor/note-control/source-code": "Source code",
@@ -195,71 +164,10 @@ export const enUS = {
     "editor/note-control/copy-to-clipboard": "Copy to clipboard",
 
     // Utils
-    "utils/uploading-image": "Uploading image...",
-    "utils/upload-image-failure": "Failed to upload image",
 
     // Widgets
-    "widget/autoplay": "autoplay",
-    "widget/controls": "controls",
-    "widget/loop": "loop",
-    "widget/muted": "muted",
-    "widget/crossnote.image/thanks_sm_ms":
-      "Thanks sm.ms for offering free image hosting service.",
-    "widget/crossnote.audio/audio_element_fail":
-      "Your browser does not support the audio element.",
-    "widget/crossnote.audio/source-url-placeholder":
-      "Enter audio source URL here, then press 'Enter' to insert.",
-    "widget/crossnote.video/video_element_fail":
-      "Your browser does not support the video element",
-    "widget/crossnote.bilibili/error_message":
-      "Error: Only supported https://www.bilibili.com/video/av79126732 like URL",
-    "widget/crossnote.youtube/error_message":
-      "Error: Only supported https://www.youtube.com/watch?v=MmB9b5njVbA like URL",
     "widget/crossnote.auth/welcome": "Welcome to Crossnote",
     "widget/crossnote.auth/Or": "Or",
-    "widget/crossnote.bilibili/Bilibili": "Bilibili",
-    "widget/crossnote.bilibili/bilibili-video-url": "Bilibili video URL",
-    "widget/crossnote.bilibili/url-placeholder":
-      "Enter the Bilibili video URL here, then press 'Enter' to insert.",
-    "widget/crossnote.image/image-helper": "Image helper",
-    "widget/crossnote.image/image-url-placeholder":
-      "Enter image URL here, then press 'Enter' to insert.",
-    "widget/crossnote.image/click-here-to-browse-image-file":
-      "Click here to browse image file",
-    "widget/crossnote.video/video-url-placeholder":
-      "Enter video source URL here, then press 'Enter' to insert.",
-    "widget/crossnote.video/poster-url": "Poster URL (optional)",
-    "widget/crossnote.video/poster-url-placeholder": "Enter poster URL here.",
-    "widget/crossnote.youtube/youtube-video-url": "Youtube video URL",
-    "widget/crossnote.youtube/youtube-video-url-placeholder":
-      "Enter the Youtube video URL here, then press 'Enter' to insert.",
-    "widget/crossnote.ocr/ocr": "OCR - Optical character recognition",
-    "widget/crossnote.ocr/local-image": "Local image",
-    "widget/crossnote.ocr/recognize-text-in-languages":
-      "Recognize text in languages",
-    "widget/crossnote.ocr/start-ocr": "Start OCR",
-    "widget/crossnote.ocr/extra-settings": "Extra settings",
-    "widget/crossnote.ocr/grayscale": "Grayscale",
-    "widget/crossnote.ocr/failed": "Failed to recognize the text",
-    "widget/crossnote.ocr/image-failed": "The image could not be loaded",
-    "widget/crossnote.kanban/add-column": "Add new column",
-    "widget/crossnote.kanban/add-card": "Add new card",
-    "widget/crossnote.kanban/delete-column": "Delete column",
-    "widget/crossnote.kanban/edit-card": "Edit card",
-    "widget/crossnote.kanban/delete-card": "Delete card",
-    "widget/crossnote.github_gist/title": "Embed a GitHub Gist",
-    "widget/crossnote/github_gist/enter-github-gist-url":
-      "Enter GitHub Gist URL",
-
-    // Tesseract
-    "tesseract/loading tesseract core": "loading tesseract core",
-    "tesseract/initializing tesseract": "initializing tesseract",
-    "tesseract/initialized tesseract": "initialized tesseract",
-    "tesseract/loading language traineddata": "loading language traineddata",
-    "tesseract/loaded language traineddata": "loaded language traineddata",
-    "tesseract/initializing api": "initializing api",
-    "tesseract/initialized api": "initialized api",
-    "tesseract/recognizing text": "recognizing text",
 
     // Dialogs
     "delete-note-dialog/title": "Are you sure to delete this note?",

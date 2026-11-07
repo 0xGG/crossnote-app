@@ -133,6 +133,34 @@ for (const { layout, text, opened } of [
     text: "\uFEFF---\ntitle: T\n---\n# Kept\n",
     opened: nothingToClose,
   },
+  // Notes written for features since dropped: what they hold stays as it is.
+  {
+    layout: "the comments of a deck of slides",
+    text: '<!-- slide -->\n\n# Kept\n\n<!-- .slide: data-background="red" -->\n\nMore\n',
+    opened: nothingToClose,
+  },
+  {
+    layout: "the comments widgets left",
+    text: '# Kept\n\n<!-- @crossnote.kanban "board":{"columns":[{"title":"Don\'t forget","cards":[]}]} -->\n\n<!-- @timer "date":"Sat Nov 07 2026" -->\n\n<!-- @hello -->\n\nText <!--@timer--> in a line.\n',
+    opened: nothingToClose,
+  },
+  // A note's emoji was a setting; it is a key of the note's own now, which
+  // the editor shows.
+  {
+    layout: "an emoji among the settings the notebook wrote",
+    text: "---\naliases: x\npinned: true\nicon: ':star:'\ncreated: 2026-01-01T00:00:00.000Z\nmodified: 2026-01-02T00:00:00.000Z\n---\n# Kept\n",
+    opened: nothingToClose,
+  },
+  {
+    layout: "an emoji in the older form of the settings",
+    text: "---\nnote:\n  icon: ':star:'\n  createdAt: 2026-01-01T00:00:00.000Z\n---\n# Kept\n",
+    opened: nothingToClose,
+  },
+  {
+    layout: "an import comment and a block's name at a line's end",
+    text: '# Kept\n\n<!-- @import "other.md" -->\n\nA paragraph ^para-id\n',
+    opened: nothingToClose,
+  },
 ]) {
   test(`opens a note with ${layout} without writing it`, async ({ app }) => {
     const readme = await openReadme(app, text);

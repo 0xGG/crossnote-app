@@ -1,37 +1,77 @@
 import { expect, test } from "./fixtures";
 
-// Requests that would leave the machine are refused: reveal.js, which the
-// slides load from a CDN, does not arrive, and the deck is drawn without it.
+// Requests that would leave the machine are refused.
 test.beforeEach(async ({ context }) => {
   await context.route(/^https?:\/\/(?!localhost[:/])/, (route) =>
     route.abort(),
   );
 });
 
-test("draws a deck of slides with a diagram in it", async ({ app }) => {
+test("draws a note that was a deck of slides as any other note", async ({
+  app,
+}) => {
   await app.open();
   await app.openNotes();
   await app.createNote();
   // Set rather than typed: typing "[[" would open the wikilink hints.
   await app.setEditorText(
-    "<!-- slide -->\n\n[[Other]]\n\n```mermaid\ngraph TD; A-->B\n```\n",
+    "<!-- slide -->\n\n[[Other]]\n\n<!-- slide -->\n\n```mermaid\ngraph TD; A-->B\n```\n",
   );
   await app.modeButton("Preview").click();
 
-  // The deck's frame stays, and the page's mermaid draws the diagram into
-  // it. The preview used to read the frame's body before the scripts in its
-  // head had loaded, fail, and show the error in place of the deck.
-  const deck = app.preview.frameLocator("iframe");
-  await expect(deck.locator(".mermaid svg")).toBeVisible();
-  await expect(app.preview).not.toContainText("TypeError");
-  // Links in the deck open notes, as the preview's do.
+  // No frame: the diagram is drawn in the preview itself, and its links
+  // open notes.
+  await expect(app.preview.locator(".mermaid svg")).toBeVisible();
+  await expect(app.preview.locator("iframe")).toHaveCount(0);
+  await expect(app.preview).not.toContainText("slide");
   await expect
     .poll(() =>
-      deck
+      app.preview
         .getByRole("link", { name: "Other" })
         .evaluate((link: HTMLAnchorElement) => link.onclick !== null),
     )
     .toBe(true);
+});
+
+test("shows the comments the widgets that are gone left in a note as text in the editor, and not at all in the preview", async ({
+  app,
+}) => {
+  await app.open();
+  await app.openNotes();
+  await app.createNote();
+
+  // In the editor a comment typed in is the text it is, not folded into
+  // anything: the YouTube widget showed a thumbnail, and echomd folds into
+  // widgets of its own a comment whose attributes it cannot read and one
+  // named hello.
+  await app.typeInEditor(
+    '<!-- @crossnote.youtube "videoID":"abc" -->\n\n<!-- @hello -->\n\n<!-- @broken "a":b -->\n\n',
+  );
+  await expect(app.editor).toContainText("@crossnote.youtube");
+  await expect(app.editor).toContainText("@hello");
+  await expect(app.editor).toContainText("@broken");
+  await expect(app.editor.getByRole("img")).toHaveCount(0);
+
+  const kanban =
+    '<!-- @crossnote.kanban "board":{"columns":[{"title":"Column","cards":[{"title":"Card"}]}]} -->';
+  const text = [
+    "Before.",
+    '<!-- @crossnote.youtube "videoID":"abc" -->',
+    kanban,
+    '<!-- @timer "date":"Sat Nov 07 2026 10:00:00 GMT+0800" -->',
+    "After.",
+    "",
+  ].join("\n\n");
+  await app.setEditorText(text);
+
+  await app.modeButton("Preview").click();
+  await expect(app.preview).toContainText("After.");
+  await expect(app.preview).not.toContainText("Column");
+  await expect(app.preview).not.toContainText("2026");
+  await expect(app.preview.locator("img, iframe, input")).toHaveCount(0);
+
+  await app.modeButton("Edit").click();
+  expect(await app.editorText()).toBe(text);
 });
 
 test("draws a note's emoji from the sheet", async ({ app, page }) => {
@@ -52,114 +92,6 @@ test("draws a note's emoji from the sheet", async ({ app, page }) => {
     `url("${new URL("/assets/emoji/twitter/64.png", page.url()).href}")`,
   );
   await expect(emoji).toHaveCSS("background-position", "53.5714% 69.6429%");
-});
-
-// Stands in for reveal.js in the slides' frame: initialize says the deck is
-// ready, as reveal.js does once it has laid the slides out.
-const revealStub = `window.Reveal = (function () {
-  var ready = [];
-  return {
-    initialize: function () {
-      setTimeout(function () {
-        var slide = document.querySelector(".slides section");
-        ready.forEach(function (listener) {
-          try {
-            listener({ currentSlide: slide, indexh: 0, indexv: 0 });
-          } catch (error) {}
-        });
-      });
-    },
-    addEventListener: function (type, listener) {
-      if (type === "ready") ready.push(listener);
-    },
-    slide: function () {},
-  };
-})();`;
-
-test("draws wavedrom in slides from JSON, and runs nothing a note makes look like it", async ({
-  app,
-  context,
-}) => {
-  // Registered after the refusal above, so this answers first: reveal.js's
-  // stand-in. The page draws the slides' wavedrom into the frame.
-  await context.route(/reveal\.js@3\.9\.2\/js\/reveal\.min\.js$/, (route) =>
-    route.fulfill({ contentType: "text/javascript", body: revealStub }),
-  );
-  await app.open();
-  await app.openNotes();
-  await app.createNote();
-  await app.setEditorText(
-    [
-      "<!-- slide -->",
-      "",
-      "[[Other]]",
-      "",
-      "```wavedrom",
-      '{ "signal": [{ "name": "clk", "wave": "p..." }] }',
-      "```",
-      "",
-      '<div class="vickeymd-fence wavedrom">window.fromFence = 1</div>',
-      "",
-      '<a type="WaveDrom">({ signal: [], x: (window.fromAnchor = 1) })</a>',
-      "",
-    ].join("\n"),
-  );
-  await app.modeButton("Preview").click();
-
-  const deck = app.preview.frameLocator("iframe");
-  await expect(deck.locator(".wavedrom svg")).toBeVisible();
-  // The deck is finished once reveal.js is ready: its links open notes.
-  await expect
-    .poll(() =>
-      deck
-        .getByRole("link", { name: "Other" })
-        .evaluate((link: HTMLAnchorElement) => link.onclick !== null),
-    )
-    .toBe(true);
-  expect(
-    await deck
-      .locator("body")
-      .evaluate(() => [(window as any).fromFence, (window as any).fromAnchor]),
-  ).toEqual([undefined, undefined]);
-});
-
-test("draws a vega-lite chart without the actions that open other windows", async ({
-  app,
-}) => {
-  await app.open();
-  await app.openNotes();
-  await app.createNote();
-  // The chart names an editor of its own, and HTML to write around its
-  // source; neither the editor nor the source is offered.
-  await app.setEditorText(
-    [
-      "```vega-lite",
-      "usermeta:",
-      "  embedOptions:",
-      "    editorUrl: https://example.org/",
-      '    sourceHeader: "<script>opener.fromHeader = 1</script>"',
-      "data:",
-      "  values:",
-      "    - a: 1",
-      "mark: point",
-      "encoding:",
-      "  x:",
-      "    field: a",
-      "    type: quantitative",
-      "```",
-      "",
-    ].join("\n"),
-  );
-  await app.modeButton("Preview").click();
-
-  const actions = app.preview.locator(".vega-embed .vega-actions a");
-  await expect(actions.filter({ hasText: "Save as SVG" })).toHaveCount(1);
-  await expect(app.preview.locator(".vega-embed canvas")).toBeVisible();
-  await expect(actions.filter({ hasText: "Vega Editor" })).toHaveCount(0);
-  await expect(actions.filter({ hasText: "View Source" })).toHaveCount(0);
-  await expect(actions.filter({ hasText: "View Compiled Vega" })).toHaveCount(
-    0,
-  );
 });
 
 test("prints a note with its local images and page breaks", async ({
@@ -286,31 +218,4 @@ test("prints a note light in a dark theme, and leaves the preview on the page da
       timeout: 15000,
     })
     .toEqual({ printed: light, shown: dark });
-});
-
-test("draws a kanban card's description through the same sanitizing", async ({
-  app,
-}) => {
-  await app.open();
-  await app.openNotes();
-  await app.createNote();
-  // echomd's own filter lets a form through; the preview's sanitizing does
-  // not, and a card's description is drawn the same way.
-  const card = {
-    id: 2,
-    title: "C",
-    description:
-      '[[Other]]\n\n<form action="javascript:alert(1)"><input value="kept"></form>\n',
-  };
-  const board = { columns: [{ id: 1, title: "A", cards: [card] }] };
-  await app.setEditorText(
-    `<!-- @crossnote.kanban "board":${JSON.stringify(board)} -->\n`,
-  );
-  await app.modeButton("Preview").click();
-
-  const description = app.preview.locator(".preview").filter({
-    has: app.page.locator('input[value="kept"]'),
-  });
-  await expect(description.getByRole("link", { name: "Other" })).toBeVisible();
-  await expect(description.locator("form")).toHaveCount(0);
 });

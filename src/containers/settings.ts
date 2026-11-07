@@ -3,11 +3,6 @@ import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { createContainer } from "unstated-next";
 import { EditorMode } from "../lib/editorMode";
-import { getKeyMap, KeyMap } from "../lib/keymap";
-import {
-  alwaysDrawPlantUML as isAlwaysDrawingPlantUML,
-  alwaysDrawPlantUMLKey,
-} from "../render/plantuml";
 import { themeManager } from "../themes/manager";
 import { CrossnoteTheme } from "../themes/theme";
 
@@ -16,10 +11,6 @@ type InitialState = object;
 function useSettingsContainer(initialState: InitialState) {
   const [language, setLanguage] = useState<string>(
     localStorage.getItem("settings/language") || "en-US",
-  );
-  const [editorCursorColor, setEditorCursorColor] = useState<string>(
-    localStorage.getItem("settings/editorCursorColor") ||
-      "rgba(74, 144, 226, 1)",
   );
   const [defaultEditorMode, setDefaultEditorMode] = useState<EditorMode>(
     (localStorage.getItem("settings/defaultEditorMode") as EditorMode) ||
@@ -35,14 +26,8 @@ function useSettingsContainer(initialState: InitialState) {
     themeManager.getTheme(localStorage.getItem("settings/theme")) ||
       themeManager.selectedTheme,
   );
-  const [keyMap, setKeyMap] = useState<KeyMap>(
-    getKeyMap(localStorage.getItem("settings/keyMap")) || KeyMap.DEFAULT,
-  );
   const [plainTextSourceCode, setPlainTextSourceCode] = useState<boolean>(
     localStorage.getItem("settings/plainTextSourceCode") === "true",
-  );
-  const [alwaysDrawPlantUML, setAlwaysDrawPlantUML] = useState<boolean>(
-    isAlwaysDrawingPlantUML,
   );
 
   const { i18n } = useTranslation();
@@ -67,12 +52,6 @@ function useSettingsContainer(initialState: InitialState) {
     [i18n],
   );
 
-  const _setEditorCursorColor = useCallback((editorCursorColor: string) => {
-    editorCursorColor = editorCursorColor || "rgba(74, 144, 226, 1)";
-    localStorage.setItem("settings/editorCursorColor", editorCursorColor);
-    setEditorCursorColor(editorCursorColor);
-  }, []);
-
   const _setDefaultEditorMode = useCallback((editorMode: EditorMode) => {
     localStorage.setItem("settings/defaultEditorMode", editorMode);
     setDefaultEditorMode(editorMode);
@@ -94,20 +73,9 @@ function useSettingsContainer(initialState: InitialState) {
     setTheme(themeManager.selectedTheme);
   }, []);
 
-  const _setKeyMap = useCallback((keyMap: KeyMap) => {
-    localStorage.setItem("settings/keyMap", keyMap);
-    setKeyMap(keyMap);
-  }, []);
-
   const _setPlainTextSourceCode = useCallback((enabled: boolean) => {
     localStorage.setItem("settings/plainTextSourceCode", String(enabled));
     setPlainTextSourceCode(enabled);
-  }, []);
-
-  // Read by the preview as it draws a PlantUML diagram.
-  const _setAlwaysDrawPlantUML = useCallback((enabled: boolean) => {
-    localStorage.setItem(alwaysDrawPlantUMLKey, String(enabled));
-    setAlwaysDrawPlantUML(enabled);
   }, []);
 
   useEffect(() => {
@@ -120,8 +88,6 @@ function useSettingsContainer(initialState: InitialState) {
   return {
     language,
     setLanguage: _setLanguage,
-    editorCursorColor,
-    setEditorCursorColor: _setEditorCursorColor,
     defaultEditorMode,
     setDefaultEditorMode: _setDefaultEditorMode,
     authorName,
@@ -130,12 +96,8 @@ function useSettingsContainer(initialState: InitialState) {
     setAuthorEmail: _setAuthorEmail,
     theme,
     setTheme: _setTheme,
-    keyMap,
-    setKeyMap: _setKeyMap,
     plainTextSourceCode,
     setPlainTextSourceCode: _setPlainTextSourceCode,
-    alwaysDrawPlantUML,
-    setAlwaysDrawPlantUML: _setAlwaysDrawPlantUML,
   };
 }
 

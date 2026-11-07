@@ -6,7 +6,6 @@ export const zhCN = {
     "account/Anonymous": "匿名",
 
     // General
-    "general/go-back": "回退",
     "general/cancel": "取消",
     "general/add": "添加",
     "general/adding": "正在添加",
@@ -31,7 +30,6 @@ export const zhCN = {
     "general/no-aliases": "没有别名",
     "general/add-an-alias": "添加一个别名",
     "general/Untitled": "无标题",
-    "general/untitled": "无标题",
     "general/Print": "打印",
     "general/Share": "分享",
     "Editor": "编辑者",
@@ -44,17 +42,10 @@ export const zhCN = {
     "general/note-menu": "笔记菜单",
     "general/sort-notes": "排序笔记",
     "general/table-of-contents": "目录",
-    "general/change-note-icon": "更改笔记图标",
-    "general/Audio": "音频",
-    "general/Video": "视频",
-    "general/source-url": "源链接",
-    "general/Link": "链接",
     "general/Upload": "上传",
     "general/Uploading": "正在上传",
-    "general/Processing": "正在处理...",
     "general/please-wait": "请稍候...",
     "general/Download": "下载",
-    "general/empty": "空的",
     "general/Notebooks": "笔记本",
     "general/add-a-notebook": "添加一个笔记本",
     "general/add-a-note": "添加一个笔记",
@@ -71,6 +62,7 @@ export const zhCN = {
     "general/why-cors-proxy": "为什么需要 CORS 代理？",
     "general/today": "今天",
     "general/graph-view": "关联图",
+    "general/graph-view-unavailable": "关联图加载失败，请刷新页面重试。",
     "general/conflicted": "冲突",
     "general/change-file-path": "更改文件路径",
     "general/restore-checkout": "恢复 (git checkout)",
@@ -81,9 +73,6 @@ export const zhCN = {
     "general/check-notebook-updates-periodically": "周期性地检查笔记本更新",
     "general/minutes": "分钟",
     "general/hard-reset": "硬重置",
-    "general/Default": "默认",
-    "general/Vim": "Vim",
-    "general/Emacs": "Emacs",
     "general/Desc": "降序",
     "general/Asc": "升序",
     "general/pin-the-note": "置顶这个笔记",
@@ -129,19 +118,11 @@ export const zhCN = {
     // Settings
     "settings/about-this-project": "关于这个项目",
     "settings/issues-and-feature-requests": "发现了问题或者有功能请求？",
-    "settings/editor-cursor-color": "编辑器光标颜色",
     "settings/default-editor-mode": "默认编辑器模式",
     "settings/plain-text-source-code": "源代码模式显示纯文本",
-    "settings/always-draw-plantuml":
-      "不经询问就用 plantuml.com 绘制 PlantUML 图",
-    "preview/draw-plantuml": "用 plantuml.com 绘制（会把图的源码发给该服务）",
-    "preview/plantuml-diagram": "PlantUML 图",
-    "settings/hello": "你好，",
-    "settings/world": "世界！",
     "settings/author-name": "作者姓名",
     "settings/author-email": "作者邮箱",
     "settings/theme": "主题",
-    "settings/key-map": "键盘映射",
     "settings/persistent-storage": "持久存储",
     "settings/persistent-storage/persisted":
       "已开启：浏览器不会为了腾出空间清除本站存储的笔记。",
@@ -161,17 +142,6 @@ export const zhCN = {
     "editor/split-vertically": "垂直拆分",
 
     // * EditorToolBar
-    "editor/toolbar/insert-image": "插入图片",
-    "editor/toolbar/insert-clock": "插入时钟",
-    "editor/toolbar/insert-audio": "插入音频",
-    "editor/toolbar/netease-music": "网易云音乐",
-    "editor/toolbar/insert-video": "插入视频",
-    "editor/toolbar/insert-youtube": "插入 Youtube",
-    "editor/toolbar/insert-bilibili": "插入 Bilibili",
-    "editor/toolbar/insert-slide": "插入幻灯片",
-    "editor/toolbar/insert-ocr": "插入 OCR",
-    "editor/toolbar/insert-kanban": "插入看板",
-    "editor/toolbar/insert-abc-notation": "插入 ABC notation",
     "editor/toolbar/insert-header-1": "插入一级标题",
     "editor/toolbar/insert-header-2": "插入二级标题",
     "editor/toolbar/insert-header-3": "插入三级标题",
@@ -182,7 +152,6 @@ export const zhCN = {
     "editor/toolbar/insert-unordered-list": "插入无序列表",
     "editor/toolbar/insert-ordered-list": "插入有序列表",
     "editor/toolbar/insert-table": "插入表格",
-    "editor/toolbar/insert-github-gist": "插入 GitHub Gist",
 
     // * NoteControl
     "editor/note-control/source-code": "源代码",
@@ -191,70 +160,10 @@ export const zhCN = {
     "editor/note-control/copy-to-clipboard": "复制到粘贴板",
 
     // Utils
-    "utils/uploading-image": "正在上传图片...",
-    "utils/upload-image-failure": "上传图片失败",
 
     // Widgets
-    "widget/autoplay": "自动播放",
-    "widget/controls": "控制器",
-    "widget/loop": "循环",
-    "widget/muted": "静音",
-    "widget/crossnote.image/thanks_sm_ms":
-      "在此由衷感谢 sm.ms 提供免费的图床服务。",
-    "widget/crossnote.audio/audio_element_fail":
-      "你的浏览器不支持音频 audio 元素",
-    "widget/crossnote.audio/source-url-placeholder":
-      "在这里输入音频文件源链接，然后按 '回车' 键来插入",
-    "widget/crossnote.video/video_element_fail":
-      "你的浏览器不支持视频 video 元素",
-    "widget/crossnote.bilibili/error_message":
-      "错误：仅支持 https://www.bilibili.com/video/av79126732 这样的链接",
-    "widget/crossnote.youtube/error_message":
-      "错误：仅支持 https://www.youtube.com/watch?v=MmB9b5njVbA 这样的链接",
     "widget/crossnote.auth/welcome": "欢迎使用交叉笔记",
     "widget/crossnote.auth/Or": "或者",
-    "widget/crossnote.bilibili/Bilibili": "Bilibili",
-    "widget/crossnote.bilibili/bilibili-video-url": "Bilibili 视频链接",
-    "widget/crossnote.bilibili/url-placeholder":
-      "在这里插入 Bilibili 视频的链接，然后按 '回车' 键来插入",
-    "widget/crossnote.image/image-helper": "图片助手",
-    "widget/crossnote.image/image-url-placeholder":
-      "在这里输入图片链接，然后按 '回车' 键来插入",
-    "widget/crossnote.image/click-here-to-browse-image-file":
-      "点击这里来选择图片文件",
-    "widget/crossnote.video/video-url-placeholder":
-      "在这里输入视频文件源链接，然后按 '回车' 键来插入",
-    "widget/crossnote.video/poster-url": "封面图片链接（可选填）",
-    "widget/crossnote.video/poster-url-placeholder": "在这里输入封面图片链接。",
-    "widget/crossnote.youtube/youtube-video-url": "Youtube 视频链接",
-    "widget/crossnote.youtube/youtube-video-url-placeholder":
-      "在这里插入 Youtube 视频的链接，然后按 '回车' 键来插入",
-    "widget/crossnote.ocr/ocr": "OCR - 光学字符识别",
-    "widget/crossnote.ocr/local-image": "本地图片",
-    "widget/crossnote.ocr/recognize-text-in-languages": "识别以下语言的文字",
-    "widget/crossnote.ocr/start-ocr": "开始文字识别",
-    "widget/crossnote.ocr/extra-settings": "额外设定",
-    "widget/crossnote.ocr/grayscale": "灰度",
-    "widget/crossnote.ocr/failed": "文字识别失败",
-    "widget/crossnote.ocr/image-failed": "图片无法加载",
-    "widget/crossnote.kanban/add-column": "添加新的列",
-    "widget/crossnote.kanban/add-card": "添加新的卡片",
-    "widget/crossnote.kanban/delete-column": "删除列",
-    "widget/crossnote.kanban/edit-card": "编辑卡片",
-    "widget/crossnote.kanban/delete-card": "删除卡片",
-    "widget/crossnote.github_gist/title": "嵌入一个 GitHub Gist",
-    "widget/crossnote/github_gist/enter-github-gist-url":
-      "输入 GitHub Gist URL",
-
-    // Tesseract
-    "tesseract/loading tesseract core": "正在读取 tesseract 核心",
-    "tesseract/initializing tesseract": "正在初始化 tesseract",
-    "tesseract/initialized tesseract": "已初始化 tesseract",
-    "tesseract/loading language traineddata": "正在读取语言训练数据",
-    "tesseract/loaded language traineddata": "已读取语言训练数据",
-    "tesseract/initializing api": "正在初始化程序接口",
-    "tesseract/initialized api": "已初始化程序接口",
-    "tesseract/recognizing text": "正在识别文字",
 
     // Dialogs
     "delete-note-dialog/title": "你确定要删除这个笔记？",

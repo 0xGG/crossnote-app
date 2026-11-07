@@ -51,4 +51,23 @@ describe("mountPreview's code blocks", () => {
     expect(block.textContent).toBe("<b>x</b>\n");
     expect(block.querySelector("b")).toBeNull();
   });
+
+  // Kinds of block the preview used to draw as diagrams: code like any other.
+  it.each(["echarts", "vega", "vega-lite", "wavedrom", "plantuml", "puml"])(
+    "shows a %s block as code",
+    async (language) => {
+      const element = document.createElement("div");
+      document.body.appendChild(element);
+      const source = '{"a": "<b>x</b>"}\n';
+      await mountPreview(element, "```" + language + "\n" + source + "```\n", {
+        note: null,
+      }).done;
+      const blocks = element.querySelectorAll("pre");
+      expect(blocks).toHaveLength(1);
+      expect(blocks[0].textContent).toBe(source);
+      expect(
+        element.querySelector(".language-error, svg, img, b, button"),
+      ).toBeNull();
+    },
+  );
 });

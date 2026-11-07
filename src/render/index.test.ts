@@ -3,7 +3,6 @@ import { Note } from "../lib/note";
 import { resolveNoteImageSrc } from "../utilities/image";
 import { mountPreview } from "./index";
 import * as markdown from "./markdown";
-import { revealTimeout } from "./presentation";
 
 vi.mock("../utilities/image", () => ({ resolveNoteImageSrc: vi.fn() }));
 // mermaid itself is too slow to load here; this one cannot draw anything.
@@ -100,7 +99,6 @@ describe("mountPreview", () => {
       { note: null },
     );
     await preview.done;
-    expect(preview.isPresentation).toBe(false);
     expect(element.querySelector("form")).toBeNull();
     expect(element.querySelector("input").value).toBe("Go");
     expect(element.querySelector("a").textContent).toBe("Other");
@@ -180,174 +178,5 @@ describe("mountPreview", () => {
       "cannot read",
     );
     expect(element.textContent).toBe("Error: cannot read");
-  });
-
-  it("shows why a deck's frame cannot be put in, and rejects", async () => {
-    // An element outside a page gives its frame no window to write into.
-    vi.useFakeTimers();
-    const added = vi.spyOn(window, "addEventListener");
-    const removed = vi.spyOn(window, "removeEventListener");
-    const element = document.createElement("div");
-    const preview = mountPreview(element, "<!-- slide -->\n\n# One\n", {
-      note: null,
-    });
-    expect(preview.isPresentation).toBe(true);
-    await expect(preview.done).rejects.toThrow(TypeError);
-    expect(element.textContent).toMatch(/^TypeError/);
-    // Nothing is left waiting for the frame: neither the listener for
-    // reveal.js nor the time it is given.
-    const listener = added.mock.calls.find(([type]) => type === "message")[1];
-    expect(removed).toHaveBeenCalledWith("message", listener);
-    expect(vi.getTimerCount()).toBe(0);
-    added.mockRestore();
-    removed.mockRestore();
-  });
-});
-
-describe("mountPreview with slides", () => {
-  const deck = "<!-- slide -->\n\n# One\n\n[[Other]]\n";
-
-  function mountDeck() {
-    const element = document.createElement("div");
-    document.body.appendChild(element);
-    const added = vi.spyOn(window, "addEventListener");
-    const removed = vi.spyOn(window, "removeEventListener");
-    const preview = mountPreview(element, deck, { note: null });
-    const listener = added.mock.calls.find(([type]) => type === "message")[1];
-    added.mockRestore();
-    const iframe = element.querySelector("iframe");
-    const id =
-      iframe.contentDocument.documentElement.innerHTML.match(
-        /reveal\.js\.[\d.]+/,
-      )[0];
-    return { element, preview, listener, removed, iframe, id };
-  }
-
-  it("finishes the deck once reveal.js says it is ready, and stops listening", async () => {
-    const { preview, listener, removed, iframe, id } = mountDeck();
-    expect(preview.isPresentation).toBe(true);
-    window.dispatchEvent(
-      new MessageEvent("message", {
-        data: { event: "reveal-ready", id },
-        source: iframe.contentWindow,
-      }),
-    );
-    await preview.done;
-    expect(removed).toHaveBeenCalledWith("message", listener);
-    const link = iframe.contentDocument.body.querySelector("a");
-    expect(link.textContent).toBe("Other");
-    expect(link.onclick).not.toBeNull();
-    removed.mockRestore();
-  });
-
-  it("ignores the message of another frame", async () => {
-    const { preview, iframe, id, removed } = mountDeck();
-    let settled = false;
-    preview.done.then(() => (settled = true));
-    window.dispatchEvent(
-      new MessageEvent("message", {
-        data: { event: "reveal-ready", id },
-        source: window,
-      }),
-    );
-    await new Promise((resolve) => setTimeout(resolve));
-    expect(settled).toBe(false);
-    expect(iframe.contentDocument.body.querySelector("a").onclick).toBeNull();
-    preview.dispose();
-    removed.mockRestore();
-  });
-
-  it("stops listening when disposed of before the deck is ready", async () => {
-    const { preview, listener, removed } = mountDeck();
-    preview.dispose();
-    await preview.done;
-    expect(removed).toHaveBeenCalledWith("message", listener);
-    removed.mockRestore();
-  });
-
-  it("gives up on a deck reveal.js says nothing about, and stops listening", async () => {
-    // Scripts do not run in these frames, so reveal.js never answers, as
-    // when its request neither answers nor fails.
-    vi.useFakeTimers();
-    try {
-      const { preview, listener, removed } = mountDeck();
-      vi.advanceTimersByTime(revealTimeout - 1);
-      expect(removed).not.toHaveBeenCalledWith("message", listener);
-      vi.advanceTimersByTime(1);
-      await expect(preview.done).rejects.toThrow("reveal.js did not load");
-      expect(removed).toHaveBeenCalledWith("message", listener);
-      removed.mockRestore();
-    } finally {
-      vi.useRealTimers();
-    }
-  });
-
-  it("writes nothing of the note into the frame that could run", () => {
-    // The frame is the app's own origin and runs scripts, so what the note
-    // brings in must not: raw HTML, a block made to look like wavedrom's,
-    // speaker notes reveal.js writes as HTML, and front matter that names a
-    // theme file, scripts to load or a value that would end the frame's
-    // script. The frame loads no diagram scripts: the page draws them.
-    const element = document.createElement("div");
-    document.body.appendChild(element);
-    const preview = mountPreview(
-      element,
-      [
-        "---",
-        "presentation:",
-        '  theme: "../../x.css"',
-        "  previewLinks: true",
-        "  dependencies:",
-        '    - src: "https://unpkg.com/x"',
-        '  title: "</script><script>window.fromSettings=1</script>"',
-        "---",
-        "",
-        '<!-- slide data-notes="<img src=x onerror=window.fromNotes=1>" -->',
-        "",
-        '<img src="x.png" onerror="window.fromImage=1">',
-        "",
-        '<div class="vickeymd-fence wavedrom">window.fromFence=1</div>',
-        "",
-        // Written with &#61; for "=", which echomd's own filter would catch.
-        `<section data-background-video='https://a.invalid/x.mp4" onerror&#61;"window.fromVideo&#61;1'></section>`,
-        "",
-        "```wavedrom",
-        '{ "signal": [] }',
-        "```",
-        "",
-      ].join("\n"),
-      { note: null },
-    );
-    const frame = element.querySelector("iframe").contentDocument;
-    expect(frame.querySelector("[onerror]")).toBeNull();
-    expect(frame.querySelector("[data-notes]")).toBeNull();
-    expect(frame.querySelector("[data-background-video]")).toBeNull();
-    const themes = Array.from(frame.querySelectorAll("link")).map((link) =>
-      link.getAttribute("href"),
-    );
-    expect(themes).toContain(
-      "https://cdn.jsdelivr.net/npm/reveal.js@3.9.2/css/theme/white.css",
-    );
-    expect(themes.join(" ")).not.toContain("x.css");
-    // The scripts are the frame's own: reveal.js and its own inline code, the
-    // settings included as a value inside it.
-    const scripts = Array.from(frame.querySelectorAll("script"));
-    expect(
-      scripts.filter((script) => script.src).map((script) => script.src),
-    ).toEqual([
-      "https://cdn.jsdelivr.net/npm/reveal.js@3.9.2/js/reveal.min.js",
-    ]);
-    expect(
-      scripts.filter((script) => !script.src).map((script) => script.text),
-    ).toEqual([expect.stringContaining("Reveal.initialize(")]);
-    const init = scripts.find((script) =>
-      script.text.includes("Reveal.initialize("),
-    ).text;
-    expect(init).toContain('"previewLinks":false');
-    expect(init).not.toContain("dependencies");
-    expect(init).toContain(
-      "\\u003c/script>\\u003cscript>window.fromSettings=1",
-    );
-    preview.dispose();
   });
 });

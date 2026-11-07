@@ -4,20 +4,16 @@ import {
   FormControlLabel,
   Link,
   MenuItem,
-  Popover,
   Select,
   Switch,
   TextField,
   Typography,
 } from "@mui/material";
 import { styled } from "@mui/material/styles";
-import { BookEdit, Keyboard, ThemeLightDark, Translate } from "mdi-material-ui";
-import React, { useState } from "react";
-import { SketchPicker } from "react-color";
+import { BookEdit, ThemeLightDark, Translate } from "mdi-material-ui";
 import { useTranslation } from "react-i18next";
 import { SettingsContainer } from "../containers/settings";
 import { EditorMode } from "../lib/editorMode";
-import { KeyMap } from "../lib/keymap";
 import { themeManager } from "../themes/manager";
 import StorageSettings from "./StorageSettings";
 const GitCommit = __GIT_COMMIT__;
@@ -47,74 +43,8 @@ const Section = styled(Box)(({ theme }) => ({
   marginTop: theme.spacing(4),
 }));
 
-const Swatch = styled(Box)({
-  padding: "4px",
-  backgroundColor: "#fff",
-  borderRadius: "1px",
-  boxShadow: "0 0 0 1px rgba(0,0,0,0.1)",
-  display: "inline-block",
-  cursor: "pointer",
-});
-
-const ColorPreview = styled(Box)({
-  width: "36px",
-  height: "18px",
-  borderRadius: "2px",
-});
-
-const EditorText = styled("div")(({ theme }) => ({
-  marginLeft: theme.spacing(4),
-}));
-
-const EditorCursor = styled("span")({
-  borderLeftStyle: "solid",
-  borderLeftWidth: "2px",
-  padding: "0",
-  position: "relative",
-});
-
-interface RGBA {
-  r: number;
-  g: number;
-  b: number;
-  a: number;
-}
-
-function getRGBA(inputStr: string = ""): RGBA {
-  if (!inputStr || !inputStr.length || !inputStr.match(/^rgba\(/)) {
-    return {
-      r: 51,
-      g: 51,
-      b: 51,
-      a: 1,
-    };
-  } else {
-    const match = inputStr.match(
-      /^rgba\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*\)$/,
-    );
-    if (!match) {
-      return {
-        r: 51,
-        g: 51,
-        b: 51,
-        a: 1,
-      };
-    } else {
-      return {
-        r: parseInt(match[1], 10),
-        g: parseInt(match[2], 10),
-        b: parseInt(match[3], 10),
-        a: parseInt(match[4], 10),
-      };
-    }
-  }
-}
-
 export function Settings() {
   const { t } = useTranslation();
-  const [colorPickerAnchorElement, setColorPickerAnchorElement] =
-    useState<HTMLElement>(null);
-  const displayColorPicker = Boolean(colorPickerAnchorElement);
   const settingsContainer = SettingsContainer.useContainer();
 
   return (
@@ -231,69 +161,6 @@ export function Settings() {
               marginTop: "16px",
             }}
           >
-            {t("settings/editor-cursor-color") + " (beta)"}
-          </Typography>
-          <Box
-            style={{
-              display: "flex",
-              flexDirection: "row",
-              alignItems: "center",
-            }}
-          >
-            <Swatch
-              onClick={(event: React.MouseEvent<HTMLElement>) =>
-                setColorPickerAnchorElement(event.currentTarget)
-              }
-            >
-              <ColorPreview
-                style={{ backgroundColor: settingsContainer.editorCursorColor }}
-              ></ColorPreview>
-            </Swatch>
-            <EditorText>
-              {t("settings/hello")}
-              <EditorCursor
-                style={{
-                  borderLeftColor:
-                    settingsContainer.editorCursorColor || "#4A90E2",
-                }}
-              ></EditorCursor>
-              {t("settings/world")}
-            </EditorText>
-          </Box>
-          <Popover
-            open={displayColorPicker}
-            anchorEl={colorPickerAnchorElement}
-            onClose={() => {
-              setColorPickerAnchorElement(null);
-            }}
-            anchorOrigin={{
-              vertical: "bottom",
-              horizontal: "center",
-            }}
-            transformOrigin={{
-              vertical: "top",
-              horizontal: "center",
-            }}
-          >
-            <SketchPicker
-              color={getRGBA(settingsContainer.editorCursorColor)}
-              onChange={(color) => {
-                const cursorColor = `rgba(${color.rgb.r}, ${color.rgb.g}, ${color.rgb.b}, ${color.rgb.a})`;
-                settingsContainer.setEditorCursorColor(cursorColor);
-              }}
-            ></SketchPicker>
-          </Popover>
-        </Section>
-
-        <Section>
-          <Typography
-            variant={"body2"}
-            style={{
-              fontSize: "0.75rem",
-              marginBottom: "6px",
-              marginTop: "16px",
-            }}
-          >
             <BookEdit style={{ marginRight: "8px" }}></BookEdit>
             {t("settings/default-editor-mode")}
           </Typography>
@@ -332,49 +199,6 @@ export function Settings() {
             }
             label={t("settings/plain-text-source-code")}
           />
-        </Section>
-
-        <Section>
-          <FormControlLabel
-            control={
-              <Switch
-                color="primary"
-                checked={settingsContainer.alwaysDrawPlantUML}
-                onChange={(event) => {
-                  settingsContainer.setAlwaysDrawPlantUML(event.target.checked);
-                }}
-              />
-            }
-            label={t("settings/always-draw-plantuml")}
-          />
-        </Section>
-
-        <Section>
-          <Typography
-            variant={"body2"}
-            style={{
-              fontSize: "0.75rem",
-              marginBottom: "6px",
-              marginTop: "16px",
-            }}
-          >
-            <Keyboard style={{ marginRight: "8px" }}></Keyboard>
-            {t("settings/key-map")}
-          </Typography>
-          <Select
-            value={settingsContainer.keyMap}
-            onChange={(event) => {
-              settingsContainer.setKeyMap(event.target.value as KeyMap);
-            }}
-          >
-            <MenuItem value={KeyMap.DEFAULT}>
-              {t("general/Default") as string}
-            </MenuItem>
-            <MenuItem value={KeyMap.VIM}>{t("general/Vim") as string}</MenuItem>
-            <MenuItem value={KeyMap.EMACS}>
-              {t("general/Emacs") as string}
-            </MenuItem>
-          </Select>
         </Section>
 
         <Section>

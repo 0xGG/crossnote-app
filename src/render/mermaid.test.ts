@@ -40,8 +40,8 @@ afterEach(() => {
 
 describe("renderMermaid", () => {
   it("draws the diagram in the theme that goes with the preview's, strictly", async () => {
-    const light = renderMermaid("A", {}, { dark: false, inSlides: false });
-    const dark = renderMermaid("B", {}, { dark: true, inSlides: false });
+    const light = renderMermaid("A", { dark: false });
+    const dark = renderMermaid("B", { dark: true });
     await Promise.all([light.done, dark.done]);
     expect(light.element.querySelector("svg text").textContent).toBe("A");
     expect(dark.element.querySelector("svg text").textContent).toBe("B");
@@ -58,8 +58,8 @@ describe("renderMermaid", () => {
   it("gives a diagram its time from its turn, not while it waits behind another", async () => {
     let release: (value?: unknown) => void;
     held = new Promise((resolve) => (release = resolve));
-    const first = renderMermaid("A", {}, { dark: false, inSlides: false });
-    const second = renderMermaid("B", {}, { dark: false, inSlides: false });
+    const first = renderMermaid("A", { dark: false });
+    const second = renderMermaid("B", { dark: false });
     let secondStarted = false;
     second.started.then(() => (secondStarted = true));
     await vi.waitFor(() => expect(calls).toHaveLength(1));
@@ -71,8 +71,8 @@ describe("renderMermaid", () => {
   });
 
   it("gives the next diagram its turn when one that never finishes is given up on", async () => {
-    const stuck = renderMermaid("stuck", {}, { dark: false, inSlides: false });
-    const next = renderMermaid("B", {}, { dark: false, inSlides: false });
+    const stuck = renderMermaid("stuck", { dark: false });
+    const next = renderMermaid("B", { dark: false });
     await vi.waitFor(() => expect(calls).toHaveLength(1));
     stuck.giveUp(10);
     await next.done;
@@ -85,7 +85,7 @@ describe("renderMermaid", () => {
   it("puts what mermaid draws in the page only once sanitized", async () => {
     drawn = () =>
       '<svg onload="window.fromMermaid=1"><script>window.fromMermaid=1</script><foreignObject><div><img src="x" onerror="window.fromMermaid=1">label</div></foreignObject></svg>';
-    const drawing = renderMermaid("A", {}, { dark: false, inSlides: false });
+    const drawing = renderMermaid("A", { dark: false });
     await drawing.done;
     const svg = drawing.element.querySelector("svg");
     expect(svg.hasAttribute("onload")).toBe(false);
@@ -102,8 +102,8 @@ describe("renderMermaid", () => {
   it("draws nothing for a diagram disposed of while mermaid draws it, nor for one waiting its turn", async () => {
     let release: (value?: unknown) => void;
     held = new Promise((resolve) => (release = resolve));
-    const first = renderMermaid("A", {}, { dark: false, inSlides: false });
-    const second = renderMermaid("B", {}, { dark: false, inSlides: false });
+    const first = renderMermaid("A", { dark: false });
+    const second = renderMermaid("B", { dark: false });
     await vi.waitFor(() => expect(calls).toHaveLength(1));
     first.dispose();
     second.dispose();

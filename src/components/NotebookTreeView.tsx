@@ -13,7 +13,7 @@ import {
   ModifiedMarkdownEventData,
   PerformedGitOperationEventData,
 } from "../lib/event";
-import { getNoteIcon, Notes } from "../lib/note";
+import { Notes } from "../lib/note";
 import { Notebook } from "../lib/notebook";
 import { NotesNotSavedError } from "../lib/noteSaver";
 import { notify } from "../lib/notifications";
@@ -183,12 +183,6 @@ export default function NotebookTreeView(props: Props) {
       const isFavorited = data.noteFilePath in favoritedNotes;
       if (data.noteConfig.favorited !== isFavorited) {
         refreshQuickAccessNotes(props.notebook.notes);
-      } else if (isFavorited) {
-        const oNote = favoritedNotes[data.noteFilePath];
-        const nNote = props.notebook.notes[data.noteFilePath];
-        if (oNote.config.icon !== nNote.config.icon) {
-          refreshQuickAccessNotes(props.notebook.notes);
-        }
       }
       // refreshQuickAccessNotes(props.notebook.notes);
     };
@@ -335,7 +329,6 @@ export default function NotebookTreeView(props: Props) {
                       component: "Graph",
                       singleton: true,
                       notebookPath: props.notebook.dir,
-                      icon: ":spider_web:",
                     },
                   });
                   props.onCloseDrawer();
@@ -362,7 +355,6 @@ export default function NotebookTreeView(props: Props) {
                       component: "Notes",
                       singleton: true,
                       notebookPath: props.notebook.dir,
-                      icon: ":notebook_with_decorative_cover:",
                     },
                   });
                   props.onCloseDrawer();
@@ -394,7 +386,6 @@ export default function NotebookTreeView(props: Props) {
                           singleton: false,
                           noteFilePath: note.filePath,
                           notebookPath: props.notebook.dir,
-                          icon: getNoteIcon(note),
                         },
                         name: note.title,
                       });
@@ -402,7 +393,7 @@ export default function NotebookTreeView(props: Props) {
                     }}
                   >
                     <EmojiIcon role="img" aria-label="quick-access">
-                      <Emoji emoji={getNoteIcon(note)} size={16}></Emoji>
+                      <Emoji emoji=":memo:" size={16}></Emoji>
                     </EmojiIcon>
                     <FavouriteTitle>{note.title}</FavouriteTitle>
                     <ReferenceCount

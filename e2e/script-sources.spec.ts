@@ -89,25 +89,3 @@ test("loads the language of a code block without rewriting the note", async ({
   await expect.poll(() => app.storedText(other)).toContain("x");
   expect(await app.storedText(readme)).toBe(text);
 });
-
-test("keeps folded widgets when a language loads", async ({ app, page }) => {
-  // A language arriving has the editor highlight the whole note again; what
-  // it had folded into widgets has to stay folded, as the same widgets: one
-  // built anew would lose whatever was entered into it. How an editor that
-  // replaces CodeMirror 5 keeps its widgets is part of its widget protocol;
-  // this check goes on for it.
-  await app.open();
-  await app.openNotes();
-  await app.createNote();
-  await app.typeInEditor('<!-- @crossnote.youtube "videoID":"abc" -->\n\n');
-  const thumbnail = app.editor.getByRole("img", { name: "Youtube: abc" });
-  await expect(thumbnail).toBeVisible();
-  // A mark only this element carries, which a rebuilt widget would not.
-  await thumbnail.evaluate((element) => {
-    element.dataset.before = "language";
-  });
-  await page.keyboard.type("```bash\necho $HOME\n```\n");
-  await expect.poll(() => app.tokenTypes("echo")).toContain("builtin");
-  await expect(thumbnail).toHaveAttribute("data-before", "language");
-  await expect(thumbnail).toBeVisible();
-});

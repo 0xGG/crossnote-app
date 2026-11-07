@@ -158,9 +158,3 @@ it("shows nothing of another note's picture while this note's is looked up", asy
   await endLookup("data:image/png;base64,Qg==");
   expect(preview()).toBe("data:image/png;base64,Qg==");
 });
-
-it("previews the image of a kanban card, which has no note", async () => {
-  await show(false, null, null);
-  await show(true, image("https://example.com/a.png"), null);
-  expect(preview()).toBe("https://example.com/a.png");
-});

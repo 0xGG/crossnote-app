@@ -5,16 +5,10 @@ import "@0xgg/echomd"; // ESSENTIAL
 import { setTwemojiOptions } from "@0xgg/echomd/addon/emoji";
 import { suggestedEditorConfig } from "@0xgg/echomd/core";
 import { wrapTexts } from "@0xgg/echomd/keymap/hypermd";
-import "@0xgg/echomd/powerpack/fold-code-with-echarts";
 import "@0xgg/echomd/powerpack/fold-code-with-mermaid";
-import "@0xgg/echomd/powerpack/fold-code-with-plantuml";
-import "@0xgg/echomd/powerpack/fold-code-with-wavedrom";
 import "@0xgg/echomd/powerpack/fold-emoji-with-twemoji";
-// Widgets
 // Load PowerPacks if you want to utilize 3rd-party libs
 import "@0xgg/echomd/powerpack/fold-math-with-katex";
-import "@0xgg/echomd/powerpack/hover-with-marked";
-import { registerWidgetCreator } from "@0xgg/echomd/widget";
 import CodeMirror from "codemirror";
 import "codemirror/addon/dialog/dialog.css";
 import "codemirror/addon/display/placeholder";
@@ -25,9 +19,7 @@ import "codemirror/addon/hint/show-hint";
 import "codemirror/addon/mode/multiplex";
 import "codemirror/addon/mode/overlay";
 import "codemirror/addon/mode/simple";
-import "codemirror/keymap/emacs";
 import "codemirror/keymap/sublime";
-import "codemirror/keymap/vim";
 // Load these modes if you want highlighting ...
 import "codemirror/lib/codemirror.css";
 import "codemirror/mode/htmlmixed/htmlmixed"; // for embedded HTML
@@ -39,15 +31,6 @@ import "codemirror/mode/yaml/yaml"; // for Front Matters
 import "codemirror/mode/yaml-frontmatter/yaml-frontmatter"; // plain text source code
 import { withPlainTextFallback } from "../lib/editorMode";
 import { twemojiOptions } from "../render/emoji";
-import { AudioWidgetCreator } from "./widgets/audio";
-import { BilibiliWidgetCreator } from "./widgets/bilibili";
-import { GitHubGistWidgetCreator } from "./widgets/github_gist";
-import { ImageWidgetCreator } from "./widgets/image";
-import { KanbanWidgetCreator } from "./widgets/kanban";
-import { OCRWidgetCreator } from "./widgets/ocr";
-import { TimerWidgetCreator } from "./widgets/timer";
-import { VideoWidgetCreator } from "./widgets/video";
-import { YoutubeWidgetCreator } from "./widgets/youtube";
 
 // Set necessary window scope variables
 window["CodeMirror"] = CodeMirror;
@@ -57,17 +40,6 @@ window["CodeMirror"] = CodeMirror;
 // suggests a CDN address without a version for these; take them from the
 // copy of the installed package that the build puts on the site instead.
 suggestedEditorConfig.hmdModeLoader = { source: __CODEMIRROR_MODES__ };
-
-// Register widget creators
-registerWidgetCreator("timer", TimerWidgetCreator);
-registerWidgetCreator("crossnote.image", ImageWidgetCreator);
-registerWidgetCreator("crossnote.audio", AudioWidgetCreator);
-registerWidgetCreator("crossnote.video", VideoWidgetCreator);
-registerWidgetCreator("crossnote.bilibili", BilibiliWidgetCreator);
-registerWidgetCreator("crossnote.youtube", YoutubeWidgetCreator);
-registerWidgetCreator("crossnote.ocr", OCRWidgetCreator);
-registerWidgetCreator("crossnote.kanban", KanbanWidgetCreator);
-registerWidgetCreator("crossnote.github_gist", GitHubGistWidgetCreator);
 
 import packageJSON from "../../package.json";
 export const EchoMDVersion: string = packageJSON.dependencies["@0xgg/echomd"];

@@ -22,7 +22,6 @@ export interface TabNodeConfig {
   noteFilePath?: string;
   notebookPath?: string;
   reference?: Reference;
-  icon?: string;
 }
 
 export interface CrossnoteTabNode {

@@ -120,7 +120,6 @@ export default function NotePopover(props: Props) {
         // Printed as drawn, local images included: the print waits for them.
         const preview = mountPreview(tempPreviewElement, note.markdown, {
           note,
-          forPrint: true,
         });
         try {
           await preview.done;

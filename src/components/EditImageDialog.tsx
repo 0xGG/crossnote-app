@@ -94,8 +94,6 @@ export default function EditImageDialog(props: Props) {
     }
   }, [props.open, imageElement, marker, editor]);
 
-  // A kanban card's images have no note to be resolved against; the lookup
-  // hands such sources back as they are.
   useEffect(() => {
     // A lookup can end after the source has moved on, a local file being read
     // more slowly than a web address is resolved; only the latest one counts.

@@ -1,11 +1,9 @@
-# Neither package needs its install scripts for the browser build:
-# - leveldown is only reachable from PouchDB's Node adapter, which the app
-#   never imports (the browser adapter is used instead).
-# - tesseract.js loads its worker and wasm from a CDN at runtime.
+# leveldown does not need its install scripts for the browser build: it is
+# only reachable from PouchDB's Node adapter, which the app never imports
+# (the browser adapter is used instead).
 allowBuilds:
   esbuild: true
   leveldown: false
-  tesseract.js: false
 patchedDependencies:
   "@0xgg/echomd@1.0.4": patches/@0xgg__echomd@1.0.4.patch
   # Once storage refuses a write of its directory tree, as a full disk does,
@@ -18,9 +16,7 @@ patchedDependencies:
 # - dompurify: 2.5.9 was the last 2.x release and the 2026 advisories are only
 #   fixed on the 3.4 line (3.4.17 for the latest ones), so this floor crosses
 #   a major. The app's own preview depends on it directly, within the floor,
-#   and so does mermaid 12; the other bundled consumer, super-react-gist,
-#   calls sanitize() with default options, which 3.x kept unchanged; it
-#   declares ^2.3.6 and is verified by rendering a gist.
+#   and so does mermaid 12.
 # - sanitize-url 6.0.4 fixes the javascript: scheme bypasses.
 # - d3-color 3.1.0 fixes the ReDoS in the color-string parser. The d3 5 that
 #   mermaid's dagre-d3 brings, and the d3 1.x modules under it, ask for

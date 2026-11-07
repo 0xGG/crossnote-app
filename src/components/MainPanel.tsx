@@ -17,7 +17,15 @@ import {
   TabNode,
 } from "flexlayout-react";
 import "flexlayout-react/style/light.css";
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, {
+  ComponentProps,
+  Suspense,
+  lazy,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import { useTranslation } from "react-i18next";
 import { CrossnoteContainer } from "../containers/crossnote";
 import { SettingsContainer } from "../containers/settings";
@@ -30,7 +38,6 @@ import { toReference } from "../lib/reference";
 import { TabNodeComponent, TabNodeConfig } from "../lib/tabNode";
 import { CloseUnsavedNoteDialog } from "./CloseUnsavedNoteDialog";
 import { Emoji } from "./EmojiWrapper";
-import GraphView from "./GraphView";
 import { Loading } from "./Loading";
 import NotePanel from "./NotePanel";
 import NotesPanel from "./NotesPanel";
@@ -129,12 +136,42 @@ const MainPanelRoot = styled("div")(({ theme }) => ({
   },
 }));
 
+// What a graph tab shows when the graph could not be loaded (offline, or the
+// site updated since the page was opened): the rest of the app goes on.
+function GraphViewUnavailable(
+  _props: ComponentProps<typeof import("./GraphView").default>,
+) {
+  const { t } = useTranslation();
+  return (
+    <Box sx={{ padding: 2 }}>
+      <DialogContentText>
+        {t("general/graph-view-unavailable")}
+      </DialogContentText>
+    </Box>
+  );
+}
+
+// The graph, with d3, is loaded the first time a graph tab is drawn rather
+// than with the app.
+const GraphView = lazy(() =>
+  import("./GraphView").catch(() => ({ default: GraphViewUnavailable })),
+);
+
 // Tabs named after what they show rather than after a note or a notebook.
 // The name a tab is saved with is in the language it was opened under, so
 // these are named afresh each time they are drawn.
 const builtInTabLabels: Partial<Record<TabNodeComponent, string>> = {
   Settings: "general/Settings",
   Graph: "general/graph-view",
+};
+
+// The emoji a tab shows, by what it shows. Each note has the same one; an
+// emoji a layout saved before kept in a tab's config is no longer read.
+const tabIcons: Record<TabNodeComponent, string> = {
+  Settings: ":gear:",
+  Note: ":memo:",
+  Notes: ":notebook_with_decorative_cover:",
+  Graph: ":spider_web:",
 };
 
 // The app has no borders to close with Escape, and the layout listens for it
@@ -238,7 +275,9 @@ export function MainPanel() {
         );
         if (notebook) {
           renderElement = (
-            <GraphView notebook={notebook} tabNode={node}></GraphView>
+            <Suspense fallback={<Loading></Loading>}>
+              <GraphView notebook={notebook} tabNode={node}></GraphView>
+            </Suspense>
           );
         }
       } else {
@@ -310,8 +349,8 @@ export function MainPanel() {
           }
         }}
         onRenderTab={(node, renderValues) => {
-          const config: TabNodeConfig = node.getConfig();
-          const emoji = config.icon || ":memo:";
+          const emoji =
+            tabIcons[node.getComponent() as TabNodeComponent] ?? ":memo:";
           renderValues.leading = <Emoji size={16} emoji={emoji}></Emoji>;
           const label =
             builtInTabLabels[node.getComponent() as TabNodeComponent];

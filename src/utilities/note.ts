@@ -104,7 +104,7 @@ export async function generateSummaryFromMarkdown(
       (x) =>
         x.trim().length > 0 &&
         !x.match(/!\[.*?\]\(.+?\)/) && // Remove image
-        !x.match(/<!--\s*@.+?-->/), // Remove widget
+        !x.match(/<!--\s*@.+?-->/), // Remove a widget's comment
     )
     .map((x) => x.replace(/#+\s(.+)\s*$/, "**$1**").trim()) // Replace headers to bold
     .slice(0, 10)

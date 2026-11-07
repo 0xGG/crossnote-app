@@ -2,7 +2,8 @@
 // gives with the settings and plugins echomd sets up (links found in bare
 // text, line breaks kept, footnotes, marks, insertions, sub- and
 // superscript, task lists), and what echomd and the app add on top (wiki
-// links, hashtags, block references, math, emoji, widgets, diagrams, slides).
+// links, hashtags, math, emoji, diagrams), and what notes written for
+// features since dropped hold (block references, widgets, slides).
 // Each is a whole file. Tests that the notebook keeps a note as written, and
 // what it renders to, run over all of them; an editor that replaces
 // CodeMirror 5 is to keep them as they are too, though no test runs one over
@@ -66,7 +67,7 @@ export const syntaxSamples: { name: string; text: string }[] = [
   },
   {
     name: "widgets",
-    text: '<!-- @crossnote.audio -->\n\n<!-- @crossnote.youtube "videoID":"abc" -->\n\n<!-- @crossnote.kanban "board":{"columns":[{"id":1,"title":"A","cards":[{"id":2,"title":"C","description":"[outside](https://a.b/)"}]}]} -->\n\n<!-- @timer -->\n',
+    text: '<!-- @crossnote.audio -->\n\n<!-- @crossnote.youtube "videoID":"abc" -->\n\n<!-- @crossnote.kanban "board":{"columns":[{"id":1,"title":"A","cards":[{"id":2,"title":"C","description":"[outside](https://a.b/)"}]}]} -->\n\n<!-- @timer -->\n\n<!-- @timer "date":"Sat Nov 07 2026 10:00:00 GMT+0800" -->\n\n<!-- @crossnote.image -->\n\n<!-- @crossnote.ocr -->\n\n<!-- @crossnote.video "src":"https://a.b/v.mp4","poster":"https://a.b/p.png" -->\n\n<!-- @crossnote.bilibili "bvid":"1xx411c7mD" -->\n\n<!-- @crossnote.github_gist "url":"https://gist.github.com/a/b" -->\n\n<!-- @crossnote.kanban "board":{"columns":[{"title":"Don\'t forget","cards":[]}]} -->\n\n<!-- @ -->\n\n<!-- @timer {"date": 1} -->\n\nText <!--@timer--> in a line.\n',
   },
   {
     name: "code",
@@ -83,6 +84,10 @@ export const syntaxSamples: { name: string; text: string }[] = [
   {
     name: "slides with presentation settings",
     text: "---\npresentation:\n  theme: white.css\n---\n\n<!-- slide -->\n\n# Deck\n",
+  },
+  {
+    name: "an import comment",
+    text: 'Before.\n\n<!-- @import "other.md" -->\n\nAfter.\n',
   },
   {
     name: "a table of contents marker",

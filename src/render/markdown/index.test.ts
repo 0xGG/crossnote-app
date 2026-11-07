@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
+import { sanitizeHTML } from "../sanitize";
 import { md, renderMarkdown } from "./index";
 
 const parse = (text: string) => {
@@ -23,35 +24,6 @@ describe("the markdown stage", () => {
     expect(element.querySelector("details")?.textContent).toContain(
       "# Not a heading",
     );
-  });
-
-  it("starts slides only at comments outside lists and quotes, in each way they are written", () => {
-    expect(
-      renderMarkdown("- <!-- slide -->\n\n> <!-- slide -->\n").slideConfigs,
-    ).toEqual([]);
-    const element = parse(
-      "<!-- .slide: -->\nA\n<!-- slide -->\nB\n<!-- slide vertical=true -->\nC\n",
-    );
-    expect(
-      Array.from(element.querySelectorAll("section.slide"), (slide) => [
-        slide.getAttribute("data-h"),
-        slide.getAttribute("data-v"),
-      ]),
-    ).toEqual([
-      ["0", "0"],
-      ["1", "0"],
-      ["1", "1"],
-    ]);
-  });
-
-  it("gives a slide only the attributes its comment names properly", () => {
-    const section = parse(
-      '<!-- slide a/onclick="x" data-background="red" -->\nA\n',
-    ).querySelector("section.slide");
-    expect(section?.getAttribute("data-background")).toBe("red");
-    expect(
-      Array.from(section?.attributes ?? [], ({ name }) => name).sort(),
-    ).toEqual(["class", "data-background", "data-h", "data-line", "data-v"]);
   });
 
   it("says why the markdown stage failed", () => {
@@ -87,62 +59,58 @@ describe("the markdown stage", () => {
   it("leaves what code blocks hold as it is", () => {
     const text =
       "~~~\n# not a heading\n<!-- slide -->\n<!-- pagebreak -->\n~~~\n";
-    const rendered = renderMarkdown(text);
-    expect(rendered.slideConfigs).toEqual([]);
     const element = parse(text);
     expect(element.querySelector("pre")?.textContent).toBe(
       "# not a heading\n<!-- slide -->\n<!-- pagebreak -->\n",
     );
   });
 
-  it("draws a deck whose text has the word its slides used to be cut at", () => {
-    const element = parse(
-      "<!-- slide -->\nA\n\n[MUMESLIDE]\n\n<!-- slide -->\nB\n",
-    );
-    expect(
-      Array.from(element.querySelectorAll("section.slide"), (slide) =>
-        slide.textContent?.trim(),
-      ),
-    ).toEqual(["A\n[MUMESLIDE]", "B"]);
+  it("draws a note that was a deck of slides as a note, its slide comments as any other comment", () => {
+    const html = renderMarkdown(
+      '<!-- slide -->\n# A\n\n<!-- .slide: data-background="red" -->\nB\n',
+    ).html;
+    expect(html).not.toContain("<section");
+    const element = document.createElement("div");
+    element.innerHTML = sanitizeHTML(html);
+    expect(element.querySelector("h1")?.textContent).toBe("A");
+    expect(element.textContent).not.toContain("slide");
   });
 
-  it("keeps a first slide marked vertical where it is, there being none before it to go under", () => {
-    const text =
-      "<!-- slide vertical=true -->\nA\n<!-- slide -->\nB\n<!-- slide vertical=true -->\nC\n";
-    const { html } = renderMarkdown(text);
-    expect(html.split("<section").length).toBe(html.split("</section>").length);
-    expect(
-      Array.from(parse(text).querySelectorAll("section.slide"), (slide) => [
-        slide.textContent.trim(),
-        slide.getAttribute("data-h"),
-        slide.getAttribute("data-v"),
-      ]),
-    ).toEqual([
-      ["A", "0", "0"],
-      ["B", "1", "0"],
-      ["C", "1", "1"],
-    ]);
+  it("draws the comments the widgets that are gone left in notes as any other comment: nothing", () => {
+    const element = document.createElement("div");
+    element.innerHTML = sanitizeHTML(
+      renderMarkdown(
+        [
+          '<!-- @timer "date":"Sat Nov 07 2026" -->',
+          '<!-- @crossnote.audio "src":"https://a.b/c.mp3" -->',
+          '<!-- @crossnote.youtube "videoID":"abc" -->',
+          '<!-- @crossnote.kanban "board":{"columns":[{"title":"Don\'t forget","cards":[]}]} -->',
+          "<!-- @ -->",
+          '<!-- @timer {"date": 1} -->',
+          'Text <!--@timer--> and <!-- @crossnote.github_gist "url":"https://gist.github.com/a" --> more.',
+        ].join("\n\n") + "\n",
+      ).html,
+    );
+    expect(element.textContent.replace(/\s+/g, " ").trim()).toBe(
+      "Text and more.",
+    );
+    expect(element.querySelectorAll("*:not(p)")).toHaveLength(0);
   });
 
-  it("keeps a slide's class beside slide, and its attributes escaped", () => {
-    const element = parse(
-      '<!-- slide class="dark" data-x="a&quot;b" -->\nA\n<!-- slide vertical=true -->\nB\n',
+  it("shows an @import comment, which was never followed, as any other comment: nothing", () => {
+    const element = document.createElement("div");
+    element.innerHTML = sanitizeHTML(
+      renderMarkdown('Before.\n\n<!-- @import "other.md" -->\n\nAfter.\n').html,
     );
-    const [first, second] = Array.from(
-      element.querySelectorAll("section.slide"),
+    expect(element.textContent.replace(/\s+/g, " ").trim()).toBe(
+      "Before. After.",
     );
-    expect(first.className).toBe("slide dark");
-    expect(first.getAttribute("data-x")).toBe("a&quot;b");
-    expect(first.hasAttribute("lineno")).toBe(false);
-    expect(second.parentElement?.tagName).toBe("SECTION");
   });
 
-  it("draws a widget written without a space after the comment opens", () => {
-    expect(
-      parse("<!--@timer-->\n")
-        .querySelector(".echomd-widget")
-        ?.getAttribute("data-widget-name"),
-    ).toBe("timer");
+  it("shows a ^name at the end of a line as the text it is", () => {
+    const element = parse("A paragraph ^para-id\n");
+    expect(element.textContent.trim()).toBe("A paragraph ^para-id");
+    expect(element.querySelector("span, [id]")).toBeNull();
   });
 
   it("draws a block that ends in a # or a ^ after a space", () => {

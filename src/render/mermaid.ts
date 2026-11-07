@@ -12,7 +12,7 @@ let queue: Promise<unknown> = Promise.resolve();
  * sanitizer before it is put in the page. mermaid's strict security level
  * keeps the diagram's own HTML and scripts out as well.
  */
-export const renderMermaid: Renderer = (code, _info, { dark }) => {
+export const renderMermaid: Renderer = (code, { dark }) => {
   const element = document.createElement("div");
   element.classList.add("mermaid");
   return startDrawing(

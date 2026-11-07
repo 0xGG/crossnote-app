@@ -2,20 +2,20 @@ import { describe, expect, it } from "vitest";
 import { renderMarkdown } from "./index";
 
 describe("front matter", () => {
-  it("gives the mapping it holds, as markdown-it found it, line endings of any kind", () => {
+  it("draws nothing, line endings of any kind", () => {
     for (const text of [
       "---\ntitle: x\n---\nbody\n",
       "﻿---\ntitle: x\n---\nbody\n",
       "---\r\ntitle: x\r\n---\r\nbody\r\n",
       "---\rtitle: x\r---\rbody\r",
     ]) {
-      const { html, yamlConfig } = renderMarkdown(text);
-      expect(yamlConfig).toEqual({ title: "x" });
+      const { html } = renderMarkdown(text);
       expect(html).not.toContain("title");
+      expect(html).toContain("body");
     }
   });
 
-  it("gives none when there is none", () => {
-    expect(renderMarkdown("---\nIntro\n---\nbody\n").yamlConfig).toEqual({});
+  it("is drawn as text when YAML cannot read it as a mapping", () => {
+    expect(renderMarkdown("---\nIntro\n---\nbody\n").html).toContain("Intro");
   });
 });

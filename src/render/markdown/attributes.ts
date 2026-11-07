@@ -1,5 +1,5 @@
-// Attributes written in braces, as a heading, a code block's info string
-// or a slide comment gives them: {#id .class1 .class2 key=value flag}.
+// Attributes written in braces, as a heading gives them:
+// {#id .class1 .class2 key=value flag}.
 
 export type AttributeValue = string | number | boolean | AttributeValue[];
 export type Attributes = { [key: string]: AttributeValue };

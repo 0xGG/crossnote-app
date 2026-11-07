@@ -8,6 +8,8 @@ exports[`the shared corpus, sanitized > keeps a table as it reads 1`] = `[]`;
 
 exports[`the shared corpus, sanitized > keeps a table of contents marker as it reads 1`] = `[]`;
 
+exports[`the shared corpus, sanitized > keeps an import comment as it reads 1`] = `[]`;
+
 exports[`the shared corpus, sanitized > keeps code as it reads 1`] = `[]`;
 
 exports[`the shared corpus, sanitized > keeps diagrams as it reads 1`] = `[]`;

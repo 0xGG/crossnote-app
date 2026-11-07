@@ -127,6 +127,69 @@ test("keeps a long tab name from scrolling the layout sideways", async ({
   expect(overflow).toBe(0);
 });
 
+test("shows every note's tab with the same emoji, whatever emoji a saved layout gave it", async ({
+  app,
+}) => {
+  const tab = noteTab("starred");
+  await app.seedLayout(
+    layoutOf(
+      row(tabset({ ...tab, config: { ...tab.config, icon: ":star:" } })),
+    ),
+  );
+  await app.open();
+  await expect(app.tab("starred").getByLabel(/memo/)).toBeVisible();
+  await expect(app.tab("starred").getByLabel(/star/)).toHaveCount(0);
+});
+
+test("loads the graph, and d3 with it, only once a graph tab is opened", async ({
+  app,
+  page,
+}) => {
+  const scripts: string[] = [];
+  page.on("request", (request) => {
+    if (request.resourceType() === "script") {
+      scripts.push(new URL(request.url()).pathname);
+    }
+  });
+  const graphChunks = () =>
+    scripts.filter((path) => /\/GraphView-[^/]*\.js$/.test(path));
+  await app.open();
+  await app.openNotes();
+  expect(graphChunks()).toEqual([]);
+
+  const drafts = app.notebook("Drafts");
+  await drafts
+    .getByRole("group")
+    .getByRole("treeitem", { name: /Graph view/ })
+    .click();
+  await expect(app.tab("Graph view")).toBeVisible();
+  await expect(page.locator("#main-panel svg g").first()).toBeAttached();
+  expect(graphChunks()).toHaveLength(1);
+});
+
+test("says so in a graph tab when the graph cannot be loaded, the rest of the app going on", async ({
+  app,
+  page,
+}) => {
+  const errors: string[] = [];
+  page.on("pageerror", (error) => errors.push(error.message));
+  await page.route(/\/GraphView-[^/]*\.js$/, (route) => route.abort());
+  await app.open();
+  await app.openNotes();
+
+  await app
+    .notebook("Drafts")
+    .getByRole("group")
+    .getByRole("treeitem", { name: /Graph view/ })
+    .click();
+  await expect(
+    page.getByText("The graph could not be loaded. Reload the page"),
+  ).toBeVisible();
+  await app.selectTab("Drafts");
+  await expect(app.notesPanel).toBeVisible();
+  expect(errors).toEqual([]);
+});
+
 test("opens a note next to a group of tabs", async ({ app, page }) => {
   const errors: string[] = [];
   page.on("pageerror", (error) => errors.push(error.message));
