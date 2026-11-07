@@ -337,36 +337,6 @@ export default class Crossnote {
     await this.notebookDB.put(nb, { force: true });
   }
 
-  public async renameDirectory(
-    notebook: Notebook,
-    oldDirName: string,
-    newDirName: string,
-  ) {
-    await pfs.rename(
-      path.resolve(notebook.dir, oldDirName),
-      path.resolve(notebook.dir, newDirName),
-    );
-    await git.remove({
-      fs: fs,
-      dir: notebook.dir,
-      filepath: oldDirName,
-    });
-    await git.add({
-      fs: fs,
-      dir: notebook.dir,
-      filepath: newDirName || ".",
-    });
-  }
-
-  public async deleteDirectory(notebook: Notebook, dirName: string) {
-    await pfs.rmdir(path.resolve(notebook.dir, dirName));
-    await git.remove({
-      fs: fs,
-      dir: notebook.dir,
-      filepath: dirName,
-    });
-  }
-
   private async generateChangesCache(notebook: Notebook): Promise<Cache> {
     const cache: Cache = {};
     const createCache = async (stagedFiles: string[]) => {

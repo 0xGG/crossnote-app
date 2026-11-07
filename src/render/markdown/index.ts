@@ -5,7 +5,6 @@ import ins from "markdown-it-ins";
 import mark from "markdown-it-mark";
 import sub from "markdown-it-sub";
 import sup from "markdown-it-sup";
-import blockReference from "./blockReference";
 import comments from "./comments";
 import fence from "./fence";
 import frontMatter from "./frontMatter";
@@ -42,7 +41,6 @@ tag(md);
 math(md);
 fence(md);
 wikilink(md);
-blockReference(md);
 linkId(md);
 linkTargets(md);
 

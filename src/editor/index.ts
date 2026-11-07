@@ -9,7 +9,6 @@ import "@0xgg/echomd/powerpack/fold-code-with-mermaid";
 import "@0xgg/echomd/powerpack/fold-emoji-with-twemoji";
 // Load PowerPacks if you want to utilize 3rd-party libs
 import "@0xgg/echomd/powerpack/fold-math-with-katex";
-import "@0xgg/echomd/powerpack/hover-with-marked";
 import CodeMirror from "codemirror";
 import "codemirror/addon/dialog/dialog.css";
 import "codemirror/addon/display/placeholder";

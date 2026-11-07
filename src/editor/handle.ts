@@ -10,10 +10,6 @@ export type TextPosition = { line: number; ch: number };
 // same way: an editor that replaces CodeMirror 5 hangs the same handle, and
 // the specs stay as they are. A change made through it is a change of the
 // editor's text like any other, which the app answers as it answers typing.
-// It goes in even where the editor takes no typing, such as a kanban card
-// shown read-only: CodeMirror 5's read-only stops only what is typed. Whether
-// the app then saves it is the app's to say; a note's editor does not save
-// while it is read-only.
 export interface EditorHandle {
   // The whole text the editor holds, its lines joined with \n.
   text(): string;

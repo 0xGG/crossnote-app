@@ -97,6 +97,22 @@ describe("the markdown stage", () => {
     expect(element.querySelectorAll("*:not(p)")).toHaveLength(0);
   });
 
+  it("shows an @import comment, which was never followed, as any other comment: nothing", () => {
+    const element = document.createElement("div");
+    element.innerHTML = sanitizeHTML(
+      renderMarkdown('Before.\n\n<!-- @import "other.md" -->\n\nAfter.\n').html,
+    );
+    expect(element.textContent.replace(/\s+/g, " ").trim()).toBe(
+      "Before. After.",
+    );
+  });
+
+  it("shows a ^name at the end of a line as the text it is", () => {
+    const element = parse("A paragraph ^para-id\n");
+    expect(element.textContent.trim()).toBe("A paragraph ^para-id");
+    expect(element.querySelector("span, [id]")).toBeNull();
+  });
+
   it("draws a block that ends in a # or a ^ after a space", () => {
     for (const text of [
       "Issue #\n",

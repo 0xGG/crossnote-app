@@ -122,12 +122,6 @@ describe("findLinks", () => {
     expect(tag.getAttribute("data-topic")).toBe('a"b');
   });
 
-  it("escapes a block reference's name", () => {
-    const element = document.createElement("div");
-    element.innerHTML = renderMarkdown('Text ^x"y\n').html;
-    expect(element.querySelector(".block-reference")?.id).toBe('x"y');
-  });
-
   it("names the same markdown link at the same place in two blocks apart", () => {
     const text = "[x](a.md) one\n\n[x](a.md) two\n";
     const expected = ["link-a-md-0", "link-a-md-0-2"];

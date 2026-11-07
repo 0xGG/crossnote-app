@@ -339,12 +339,6 @@ html .preview.preview a.tag.tag-topic {
   border-radius: 8px;
   cursor: pointer;
 }
-html .preview.preview .block-reference {
-  font-size: 0.8rem;
-  position: relative;
-  top: -6px;
-  color: var(--preview-subtle);
-}
 @media print {
   html .preview.preview {
     background-color: var(--preview-background);

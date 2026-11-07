@@ -720,10 +720,14 @@ export default function NotePanel(props: Props) {
           keyMap: "sublime",
           showCursorWhenSelecting: true,
           inputStyle: "contenteditable",
-          // The insert-file add-on gets no file handler here, so it inserts
-          // nothing; left on for drops, it still moves the caret to wherever
+          // echomd's add-ons for inserting a file, converting what is pasted
+          // and showing a footnote on hover are given nothing to do here, and
+          // are off. echomd turns them on unless told otherwise; inserting
+          // files, left on for drops, would move the caret to wherever
           // anything is dropped, a dragged tab included.
-          hmdInsertFile: { byPaste: true, byDrop: false },
+          hmdInsertFile: false,
+          hmdPaste: false,
+          hmdHover: false,
           hmdClick: (info: any, cm: CodeMirrorEditor) => {
             let { text, url } = info;
             if (info.type === "link" || info.type === "url") {
@@ -898,10 +902,6 @@ export default function NotePanel(props: Props) {
   useEffect(() => {
     if (editor && note && tabNode && saver) {
       const changesHandler = () => {
-        if (editor.getOption("readOnly")) {
-          // This line is necessary for decryption...
-          return;
-        }
         // Not compared with the note the tab opened with, which saving does
         // not replace: a change back to that text would never be saved.
         // updateNoteMarkdown skips text the notebook already holds.

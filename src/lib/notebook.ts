@@ -492,17 +492,6 @@ export class Notebook {
       this.search.remove(filePath);
     }
   }
-
-  public async duplicateNote(filePath: string) {
-    const oldNote = await this.getNote(filePath);
-    if (!oldNote) return;
-    const noteConfig = oldNote.config;
-    noteConfig.createdAt = new Date();
-    noteConfig.modifiedAt = new Date();
-    const newFilePath = filePath.replace(/\.md$/, ".copy.md");
-    await this.writeNote(newFilePath, oldNote.markdown, noteConfig);
-    return await this.getNote(newFilePath, true);
-  }
 }
 
 export interface NotebookConfig {
