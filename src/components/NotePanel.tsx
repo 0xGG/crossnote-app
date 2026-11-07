@@ -62,15 +62,12 @@ import { NoteLocation, NoteSaver } from "../lib/noteSaver";
 import { isFinishingEnter } from "../lib/keys";
 import { failureMessage, notify } from "../lib/notifications";
 import { Reference } from "../lib/reference";
-import { TabNodeConfig } from "../lib/tabNode";
 import { MountedPreview, mountPreview } from "../render";
 import { setTheme } from "../themes/manager";
 import { resolveNoteImageSrc } from "../utilities/image";
 import { openURL } from "../utilities/preview";
 import { debounce } from "../utilities/utils";
 import EditImageDialog from "./EditImageDialog";
-import { Emoji } from "./EmojiWrapper";
-import IconPopover from "./IconPopover";
 import { Loading } from "./Loading";
 import NotePopover from "./NotePopover";
 import NotesPanel from "./NotesPanel";
@@ -369,7 +366,6 @@ export default function NotePanel(props: Props) {
   const { t } = useTranslation();
   const [noteTitle, setNoteTitle] = useState<string>("");
   const [note, setNote] = useState<Note>(null);
-  const [noteIcon, setNoteIcon] = useState<string>("");
   const [editor, setEditor] = useState<CodeMirrorEditor>(null);
   const [editorMode, setEditorMode] = useState<EditorMode>(
     settingsContainer.defaultEditorMode,
@@ -390,7 +386,6 @@ export default function NotePanel(props: Props) {
   const [editImageDialogOpen, setEditImageDialogOpen] =
     useState<boolean>(false);
   const [notePopoverElement, setNotePopoverElement] = useState<Element>(null);
-  const [iconPopoverElement, setIconPopoverElement] = useState<Element>(null);
   const [gitStatus, setGitStatus] = useState<string>("");
   const [tocEnabled, setTocEnabled] = useState<boolean>(
     false, // props.tabNode.getTabRect().width >= 500,
@@ -566,19 +561,9 @@ export default function NotePanel(props: Props) {
     }
 
     const modifiedMarkdownCallback = (data: ModifiedMarkdownEventData) => {
-      const updateNoteIcon = () => {
-        const tabNodeConfig: TabNodeConfig = tabNode.getConfig();
-        tabNodeConfig.icon = data.noteConfig.icon;
-        setNoteIcon(data.noteConfig.icon);
-        crossnoteContainer.layoutModel.doAction(
-          Actions.updateNodeAttributes(tabNode.getId(), {
-            config: tabNodeConfig,
-          }),
-        );
-      };
       if (data.tabId === tabNode.getId()) {
         saver.wrote(data.markdown);
-        return updateNoteIcon();
+        return;
       }
       if (
         data.notebookPath === note.notebookPath &&
@@ -589,7 +574,6 @@ export default function NotePanel(props: Props) {
           editor.setValue(data.markdown);
         }
         saver.took(data.markdown);
-        return updateNoteIcon();
       }
     };
 
@@ -706,13 +690,6 @@ export default function NotePanel(props: Props) {
         console.error(error);
       });
   }, [props.noteFilePath, props.notebook]);
-
-  // set note icon
-  useEffect(() => {
-    if (note) {
-      setNoteIcon(note.config.icon);
-    }
-  }, [note]);
 
   // Front matter YAML cannot read is kept as it is, and the note's settings
   // are saved before it. Said once, as the note opens: front matter caught
@@ -1522,15 +1499,6 @@ export default function NotePanel(props: Props) {
         }}
       >
         <Row style={{ width: "100%" }}>
-          <Box>
-            <IconButton
-              aria-label={t("general/change-note-icon")}
-              color={"primary"}
-              onClick={(event) => setIconPopoverElement(event.currentTarget)}
-            >
-              {<Emoji emoji={noteIcon || ":memo:"} size={32}></Emoji>}
-            </IconButton>
-          </Box>
           <InputBase
             value={noteTitle}
             style={{
@@ -1713,13 +1681,6 @@ export default function NotePanel(props: Props) {
         anchorElement={notePopoverElement}
         onClose={() => setNotePopoverElement(null)}
       ></NotePopover>
-
-      <IconPopover
-        tabNode={props.tabNode}
-        note={note}
-        anchorElement={iconPopoverElement}
-        onClose={() => setIconPopoverElement(null)}
-      ></IconPopover>
 
       <FloatWin
         id="math-preview"

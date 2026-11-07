@@ -144,6 +144,18 @@ for (const { layout, text, opened } of [
     text: '# Kept\n\n<!-- @crossnote.kanban "board":{"columns":[{"title":"Don\'t forget","cards":[]}]} -->\n\n<!-- @timer "date":"Sat Nov 07 2026" -->\n\n<!-- @hello -->\n\nText <!--@timer--> in a line.\n',
     opened: nothingToClose,
   },
+  // A note's emoji was a setting; it is a key of the note's own now, which
+  // the editor shows.
+  {
+    layout: "an emoji among the settings the notebook wrote",
+    text: "---\naliases: x\npinned: true\nicon: ':star:'\ncreated: 2026-01-01T00:00:00.000Z\nmodified: 2026-01-02T00:00:00.000Z\n---\n# Kept\n",
+    opened: nothingToClose,
+  },
+  {
+    layout: "an emoji in the older form of the settings",
+    text: "---\nnote:\n  icon: ':star:'\n  createdAt: 2026-01-01T00:00:00.000Z\n---\n# Kept\n",
+    opened: nothingToClose,
+  },
 ]) {
   test(`opens a note with ${layout} without writing it`, async ({ app }) => {
     const readme = await openReadme(app, text);

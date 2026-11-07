@@ -16,7 +16,7 @@ function noteSettings(noteConfig: NoteConfig): [string, unknown][] {
   if (noteConfig.aliases && noteConfig.aliases.length) {
     settings.push(["aliases", noteConfig.aliases]);
   }
-  for (const key of ["pinned", "favorited", "icon"] as const) {
+  for (const key of ["pinned", "favorited"] as const) {
     if (noteConfig[key] !== undefined && noteConfig[key] !== null) {
       settings.push([key, noteConfig[key]]);
     }
@@ -316,9 +316,6 @@ export class Notebook {
         if (settings[key] !== undefined && settings[key] !== null) {
           noteConfig[key] = settings[key] as boolean;
         }
-      }
-      if (settings.icon !== undefined && settings.icon !== null) {
-        noteConfig.icon = settings.icon as string;
       }
       if (typeof settings.aliases === "string") {
         noteConfig.aliases = settings.aliases.split(",").map((x) => x.trim());

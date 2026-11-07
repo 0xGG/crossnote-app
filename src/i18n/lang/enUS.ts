@@ -42,7 +42,6 @@ export const enUS = {
     "general/note-menu": "Note menu",
     "general/sort-notes": "Sort notes",
     "general/table-of-contents": "Table of contents",
-    "general/change-note-icon": "Change note icon",
     "general/Upload": "Upload",
     "general/Uploading": "Uploading",
     "general/please-wait": "Please wait...",

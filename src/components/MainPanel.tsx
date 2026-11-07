@@ -137,6 +137,15 @@ const builtInTabLabels: Partial<Record<TabNodeComponent, string>> = {
   Graph: "general/graph-view",
 };
 
+// The emoji a tab shows, by what it shows. Each note has the same one; an
+// emoji a layout saved before kept in a tab's config is no longer read.
+const tabIcons: Record<TabNodeComponent, string> = {
+  Settings: ":gear:",
+  Note: ":memo:",
+  Notes: ":notebook_with_decorative_cover:",
+  Graph: ":spider_web:",
+};
+
 // The app has no borders to close with Escape, and the layout listens for it
 // on the whole page with a handler that throws on key events without a key,
 // which a browser's autofill can send.
@@ -310,8 +319,8 @@ export function MainPanel() {
           }
         }}
         onRenderTab={(node, renderValues) => {
-          const config: TabNodeConfig = node.getConfig();
-          const emoji = config.icon || ":memo:";
+          const emoji =
+            tabIcons[node.getComponent() as TabNodeComponent] ?? ":memo:";
           renderValues.leading = <Emoji size={16} emoji={emoji}></Emoji>;
           const label =
             builtInTabLabels[node.getComponent() as TabNodeComponent];

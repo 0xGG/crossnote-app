@@ -1,8 +1,4 @@
-import {
-  Emoji as EmojiMarketEmoji,
-  EmojiData,
-  Picker as EmojiMarketPicker,
-} from "emoji-mart";
+import { Emoji as EmojiMarketEmoji } from "emoji-mart";
 
 export const EmojiBackgroundImageFn = (set: string, sheetSize: number) => {
   return "/assets/emoji/twitter/64.png";
@@ -20,20 +16,5 @@ export function Emoji(props: EmojiProps) {
       emoji={props.emoji}
       backgroundImageFn={EmojiBackgroundImageFn}
     ></EmojiMarketEmoji>
-  );
-}
-
-interface EmojiPickerProps {
-  showSkinTones?: boolean;
-  onSelect?: (data: EmojiData) => void;
-}
-export function EmojiPicker(props: EmojiPickerProps) {
-  return (
-    <EmojiMarketPicker
-      set={"twitter"}
-      showSkinTones={props.showSkinTones}
-      onSelect={props.onSelect}
-      backgroundImageFn={EmojiBackgroundImageFn}
-    ></EmojiMarketPicker>
   );
 }

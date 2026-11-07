@@ -13,7 +13,6 @@ export const NOTE_SETTINGS = [
   "aliases",
   "pinned",
   "favorited",
-  "icon",
   "created",
   "modified",
 ];
@@ -194,8 +193,10 @@ function splitSettings(
   return { rest, settings };
 }
 
-// The names the older form of the settings gave them.
-const OLDER_KEYS = [...NOTE_SETTINGS, "createdAt", "modifiedAt"];
+// The names the older form of the settings gave them. icon was a setting
+// then, a note's emoji; it is no longer one, and comes out of the older form
+// as a key of the note's own.
+const OLDER_KEYS = [...NOTE_SETTINGS, "icon", "createdAt", "modifiedAt"];
 
 // Whether a `note` key holds the older form of the settings, rather than
 // something of the user's own that happens to be called that.

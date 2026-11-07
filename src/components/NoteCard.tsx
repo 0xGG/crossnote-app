@@ -13,7 +13,7 @@ import {
   globalEmitter,
   ModifiedMarkdownEventData,
 } from "../lib/event";
-import { getNoteIcon, Note } from "../lib/note";
+import { Note } from "../lib/note";
 import { Reference } from "../lib/reference";
 import { resolveNoteImageSrc } from "../utilities/image";
 import { generateSummaryFromMarkdown, Summary } from "../utilities/note";
@@ -163,7 +163,6 @@ export default function NoteCard(props: Props) {
           singleton: false,
           noteFilePath: note.filePath,
           notebookPath: note.notebookPath,
-          icon: getNoteIcon(note),
         },
         name: note.title,
       });
@@ -296,7 +295,7 @@ export default function NoteCard(props: Props) {
             }}
           >
             <Header onClick={openNote}>
-              <Emoji emoji={getNoteIcon(note)} size={16}></Emoji>
+              <Emoji emoji=":memo:" size={16}></Emoji>
               <Typography
                 style={{
                   fontWeight: "bold",
@@ -386,7 +385,6 @@ export default function NoteCard(props: Props) {
                           noteFilePath: note.filePath,
                           notebookPath: note.notebookPath,
                           reference: Object.assign({}, reference) as Reference,
-                          icon: getNoteIcon(note),
                         },
                         name: note.title,
                       });

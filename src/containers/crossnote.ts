@@ -21,7 +21,7 @@ import Crossnote, {
 import { EventType, globalEmitter } from "../lib/event";
 import { pfs } from "../lib/fs";
 import { pruneUnknownTabs, tabsShowingNote } from "../lib/layout";
-import { Note, NoteConfig, getNoteIcon } from "../lib/note";
+import { Note, NoteConfig } from "../lib/note";
 import { Notebook } from "../lib/notebook";
 import { NotesNotSavedError, flushNotes } from "../lib/noteSaver";
 import { failureMessage, notify } from "../lib/notifications";
@@ -485,7 +485,6 @@ function useCrossnoteContainer(initialState: InitialState) {
           singleton: false,
           noteFilePath: note.filePath,
           notebookPath: note.notebookPath,
-          icon: getNoteIcon(note),
         },
       });
     },
@@ -805,24 +804,6 @@ function useCrossnoteContainer(initialState: InitialState) {
     [getNotebookAtPath, updateNoteConfig],
   );
 
-  const setNoteIcon = useCallback(
-    async (
-      tabNode: TabNode,
-      notebookPath: string,
-      noteFilePath: string,
-      icon: string,
-    ) => {
-      const notebook = getNotebookAtPath(notebookPath);
-      if (!notebook) {
-        return;
-      }
-      const note = await notebook.getNote(noteFilePath);
-      const newConfig = Object.assign({}, note.config, { icon });
-      await updateNoteConfig(tabNode, notebookPath, noteFilePath, newConfig);
-    },
-    [getNotebookAtPath, updateNoteConfig],
-  );
-
   const addNoteAlias = useCallback(
     async (
       tabNode: TabNode,
@@ -932,7 +913,6 @@ function useCrossnoteContainer(initialState: InitialState) {
             singleton: false,
             noteFilePath: note.filePath,
             notebookPath: note.notebookPath,
-            icon: getNoteIcon(note),
           },
         };
         layoutModel.doAction(
@@ -964,7 +944,6 @@ function useCrossnoteContainer(initialState: InitialState) {
             singleton: false,
             noteFilePath: note.filePath,
             notebookPath: note.notebookPath,
-            icon: getNoteIcon(note),
           },
         };
         layoutModel.doAction(
@@ -1067,7 +1046,6 @@ favorited: true
     openLocalNotebook,
     togglePin,
     toggleFavorite,
-    setNoteIcon,
     addNoteAlias,
     deleteNoteAlias,
     isAddingNotebook,

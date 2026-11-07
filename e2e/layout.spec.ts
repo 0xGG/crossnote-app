@@ -127,6 +127,20 @@ test("keeps a long tab name from scrolling the layout sideways", async ({
   expect(overflow).toBe(0);
 });
 
+test("shows every note's tab with the same emoji, whatever emoji a saved layout gave it", async ({
+  app,
+}) => {
+  const tab = noteTab("starred");
+  await app.seedLayout(
+    layoutOf(
+      row(tabset({ ...tab, config: { ...tab.config, icon: ":star:" } })),
+    ),
+  );
+  await app.open();
+  await expect(app.tab("starred").getByLabel(/memo/)).toBeVisible();
+  await expect(app.tab("starred").getByLabel(/star/)).toHaveCount(0);
+});
+
 test("opens a note next to a group of tabs", async ({ app, page }) => {
   const errors: string[] = [];
   page.on("pageerror", (error) => errors.push(error.message));

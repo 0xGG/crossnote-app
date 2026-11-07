@@ -42,7 +42,6 @@ export const zhCN = {
     "general/note-menu": "笔记菜单",
     "general/sort-notes": "排序笔记",
     "general/table-of-contents": "目录",
-    "general/change-note-icon": "更改笔记图标",
     "general/Upload": "上传",
     "general/Uploading": "正在上传",
     "general/please-wait": "请稍候...",

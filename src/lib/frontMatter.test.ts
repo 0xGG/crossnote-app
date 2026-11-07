@@ -24,7 +24,7 @@ describe("readNoteText", () => {
       // A setting given twice.
       "---\npinned: true\ntitle: T\npinned: false\n---\nBody",
       // An anchor a setting shares.
-      "---\nicon: &i ':star:'\nother: *i\n---\nBody",
+      "---\npinned: &i true\nother: *i\n---\nBody",
     ]) {
       expect(readNoteText(file), file).toEqual({
         text: file,
@@ -56,6 +56,8 @@ describe("writeNoteText", () => {
     );
   });
 
+  // The older form held a note's emoji (icon), a setting then: it comes out
+  // as a key of the note's own, and the rest is taken as settings still.
   it("turns the older form of the settings into the newer", () => {
     expect(
       writeNoteText(

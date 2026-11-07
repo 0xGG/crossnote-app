@@ -42,7 +42,6 @@ export const jaJP = {
     "general/note-menu": "ノートメニュー",
     "general/sort-notes": "ノートを並べ替える",
     "general/table-of-contents": "目次",
-    "general/change-note-icon": "ノートのアイコンを変更する",
     "general/Upload": "アップロードする",
     "general/Uploading": "アップロードしています",
     "general/please-wait": "しばらくお待ちください...",

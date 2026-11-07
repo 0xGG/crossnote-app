@@ -42,7 +42,6 @@ export const zhTW = {
     "general/note-menu": "筆記選單",
     "general/sort-notes": "排序筆記",
     "general/table-of-contents": "目錄",
-    "general/change-note-icon": "更改筆記圖示",
     "general/Upload": "上傳",
     "general/Uploading": "正在上傳",
     "general/please-wait": "請稍候...",
