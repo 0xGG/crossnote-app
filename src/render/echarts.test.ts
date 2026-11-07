@@ -173,7 +173,7 @@ describe("renderEcharts", () => {
     const drawing = renderEcharts(
       '{"tooltip": {}, "series": [{"type": "bar", "data": [1]}]}',
       { attributes: { width: 300, height: "10em" } },
-      { dark: true, inSlides: false },
+      { dark: true },
     );
     let done = false;
     drawing.done.then(() => (done = true));
@@ -199,7 +199,7 @@ describe("renderEcharts", () => {
     const drawing = renderEcharts(
       '{"series": [{"type": "effectScatter", "data": [[1, 2]]}]}',
       {},
-      { dark: false, inSlides: false },
+      { dark: false },
     );
     await vi.waitFor(() => expect(chart.listeners["rendered"]).toBeDefined());
     chart.listeners["rendered"]();
@@ -208,11 +208,7 @@ describe("renderEcharts", () => {
 
   it("starts no chart for a drawing disposed of while echarts loads", async () => {
     const { init } = await stubbedEcharts();
-    const drawing = renderEcharts(
-      '{"series": []}',
-      {},
-      { dark: false, inSlides: false },
-    );
+    const drawing = renderEcharts('{"series": []}', {}, { dark: false });
     await Promise.resolve();
     drawing.dispose();
     await drawing.done;
@@ -221,11 +217,7 @@ describe("renderEcharts", () => {
   });
 
   it("shows why a chart it cannot read is not drawn", async () => {
-    const drawing = renderEcharts(
-      "{ not json",
-      {},
-      { dark: false, inSlides: false },
-    );
+    const drawing = renderEcharts("{ not json", {}, { dark: false });
     await drawing.done;
     expect(drawing.element.querySelector(".language-error")).not.toBeNull();
   });

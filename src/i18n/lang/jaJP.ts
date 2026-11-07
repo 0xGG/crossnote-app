@@ -176,7 +176,6 @@ export const jaJP = {
     "editor/toolbar/insert-video": "ビデオを挿入",
     "editor/toolbar/insert-youtube": "Youtube を挿入",
     "editor/toolbar/insert-bilibili": "Bilibili を挿入",
-    "editor/toolbar/insert-slide": "スライドを挿入",
     "editor/toolbar/insert-ocr": "OCRを挿入",
     "editor/toolbar/insert-kanban": "かんばんを挿入",
     "editor/toolbar/insert-abc-notation": "ABC notation を挿入",

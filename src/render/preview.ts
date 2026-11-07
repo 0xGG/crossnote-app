@@ -215,14 +215,12 @@ async function resolveImages(
 export async function finishPreview(
   container: HTMLElement,
   note: Note | null,
-  inSlides: boolean,
   isCurrent: () => boolean,
   cleanups: (() => void)[],
 ) {
   renderWidgets(container);
   const drawings = renderCodeFences(container, {
-    dark: !inSlides && isDarkPreview(container),
-    inSlides,
+    dark: isDarkPreview(container),
   });
   const waits = drawings.map((drawing) => waitForDrawing(drawing));
   cleanups.push(() => {

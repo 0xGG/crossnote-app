@@ -29,11 +29,11 @@ const printCSS = `
 `;
 
 /**
- * Prints a note mountPreview has drawn into element (with forPrint for a
- * deck). The element covers the page meanwhile, banner over it on screen
- * only; after timeout, which gives diagrams that draw themselves time to
- * finish, the browser's print dialog opens on the page, or on the deck's
- * frame. Settles once print() returns and everything is put back.
+ * Prints a note mountPreview has drawn into element. The element covers
+ * the page meanwhile, banner over it on screen only; after timeout, which
+ * gives diagrams that draw themselves time to finish, the browser's print
+ * dialog opens on the page. Settles once print() returns and everything is
+ * put back.
  */
 export function printPreview(
   element: HTMLElement,
@@ -68,15 +68,10 @@ export function printPreview(
   const bodyPosition = document.body.style.position;
   document.body.style.position = "initial";
 
-  const frame =
-    element.firstElementChild?.tagName === "IFRAME"
-      ? (element.firstElementChild as HTMLIFrameElement)
-      : null;
-
   return new Promise((resolve) => {
     setTimeout(() => {
       try {
-        (frame ? frame.contentWindow : window).print();
+        window.print();
       } finally {
         banner.remove();
         style.remove();

@@ -29,8 +29,6 @@ export interface Drawing {
 export interface DrawingContext {
   /** The preview is coloured in a dark theme. */
   dark: boolean;
-  /** The block is a slide's, drawn into the deck's frame. */
-  inSlides: boolean;
 }
 
 /** Draws a code block of the language it is registered for. */

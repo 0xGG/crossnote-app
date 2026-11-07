@@ -168,7 +168,6 @@ export const zhCN = {
     "editor/toolbar/insert-video": "插入视频",
     "editor/toolbar/insert-youtube": "插入 Youtube",
     "editor/toolbar/insert-bilibili": "插入 Bilibili",
-    "editor/toolbar/insert-slide": "插入幻灯片",
     "editor/toolbar/insert-ocr": "插入 OCR",
     "editor/toolbar/insert-kanban": "插入看板",
     "editor/toolbar/insert-abc-notation": "插入 ABC notation",

@@ -38,11 +38,7 @@ describe("renderVega", () => {
   it("runs the chart with vega's interpreter, in the preview's theme, and finalizes it", async () => {
     const parse = vi.fn((..._args: unknown[]) => ({}));
     stub.parse = parse;
-    const drawing = renderVega(
-      "marks: []\n",
-      {},
-      { dark: true, inSlides: false },
-    );
+    const drawing = renderVega("marks: []\n", {}, { dark: true });
     let done = false;
     drawing.done.then(() => (done = true));
     await vi.waitFor(() => expect(stub.views).toHaveLength(1));
@@ -66,11 +62,7 @@ describe("renderVega", () => {
   it("starts no chart for a drawing disposed of while vega loads", async () => {
     const parse = vi.fn((..._args: unknown[]) => ({}));
     stub.parse = parse;
-    const drawing = renderVega(
-      '{"marks": []}',
-      {},
-      { dark: false, inSlides: false },
-    );
+    const drawing = renderVega('{"marks": []}', {}, { dark: false });
     await Promise.resolve();
     drawing.dispose();
     await drawing.done;
@@ -81,7 +73,7 @@ describe("renderVega", () => {
   it("uses vega's own look in a light preview", async () => {
     const parse = vi.fn((..._args: unknown[]) => ({}));
     stub.parse = parse;
-    renderVega('{"marks": []}', {}, { dark: false, inSlides: false });
+    renderVega('{"marks": []}', {}, { dark: false });
     await vi.waitFor(() => expect(parse).toHaveBeenCalled());
     expect(parse.mock.calls[0][1]).toBeUndefined();
   });
@@ -95,7 +87,7 @@ describe("renderVega", () => {
         signals: [],
       }),
       {},
-      { dark: false, inSlides: false },
+      { dark: false },
     );
     await vi.waitFor(() => expect(parse).toHaveBeenCalled());
     expect(parse.mock.calls[0][0]).toEqual({

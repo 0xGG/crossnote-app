@@ -6,7 +6,7 @@ import {
   renderPlantUML,
 } from "./plantuml";
 
-const context = { dark: false, inSlides: false };
+const context = { dark: false };
 
 // PlantUML's base64 back to bytes, then inflated: what the server reads.
 async function decode(text: string): Promise<string> {

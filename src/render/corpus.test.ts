@@ -44,7 +44,10 @@ describe("the shared corpus, sanitized", () => {
       before.innerHTML = html;
       const after = document.createElement("div");
       after.innerHTML = sanitizeHTML(html);
-      expect(after.textContent).toBe(before.textContent);
+      // A note that starts with a comment (a slide's, a widget's) loses the
+      // white space after it: DOMPurify parses the HTML as a document, and
+      // the comment and that space go before its body. No reader sees it.
+      expect(after.textContent.trim()).toBe(before.textContent.trim());
       const kept = inventory(after);
       const dropped = [...inventory(before)]
         .filter(([kind, count]) => (kept.get(kind) ?? 0) < count)

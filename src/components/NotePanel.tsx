@@ -356,13 +356,6 @@ const CursorPositionInfo = styled(Box)({
 // The three conditional rules; sx keeps the condition at the call site.
 const controlBtnSelectedSx = { color: "primary.main" } as const;
 
-const presentationSx = {
-  padding: "0 !important",
-  overflow: "hidden !important",
-} as const;
-
-const editorPresentationSx = { height: "100%" } as const;
-
 interface Props {
   notebook: Notebook;
   noteFilePath: string;
@@ -383,8 +376,6 @@ export default function NotePanel(props: Props) {
   );
   const tocElement = useRef<HTMLDivElement>(null);
   const previewElement = useRef<HTMLDivElement>(null);
-  const [previewIsPresentation, setPreviewIsPresentation] =
-    useState<boolean>(false);
   const mountedPreview = useRef<MountedPreview>(null);
   const textAreaElement = useRef<HTMLTextAreaElement>(null);
   const [cursorPosition, setCursorPosition] = useState<CursorPosition>({
@@ -454,7 +445,6 @@ export default function NotePanel(props: Props) {
       mountedPreview.current?.dispose();
       const preview = mountPreview(element, text, { note });
       mountedPreview.current = preview;
-      setPreviewIsPresentation(preview.isPresentation);
       element.scrollTop = 0;
     },
     [note],
@@ -829,7 +819,7 @@ export default function NotePanel(props: Props) {
     if (editorMode === EditorMode.Preview && editor && note && previewElement) {
       showPreview(editor.getValue());
       // Leaving the preview, or the panel going, disposes of the drawing:
-      // images still being read are not written, and a deck's listener goes.
+      // images still being read are not written.
       return () => mountedPreview.current?.dispose();
     }
   }, [editorMode, editor, previewElement, note, showPreview, t]);
@@ -1180,13 +1170,6 @@ export default function NotePanel(props: Props) {
                   command: "/bilibili",
                   description: t("editor/toolbar/insert-bilibili"),
                   icon: "mdi-television-classic",
-                  render,
-                },
-                {
-                  text: "<!-- slide -->  \n",
-                  command: "/slide",
-                  description: t("editor/toolbar/insert-slide"),
-                  icon: "mdi-presentation",
                   render,
                 },
                 {
@@ -1608,8 +1591,7 @@ export default function NotePanel(props: Props) {
     return <Loading></Loading>;
   }
 
-  const tocVisible =
-    tocEnabled && !(previewIsPresentation && editorMode === EditorMode.Preview);
+  const tocVisible = tocEnabled;
 
   return (
     <NotePanelRoot>
@@ -1719,22 +1701,20 @@ export default function NotePanel(props: Props) {
               <DotsVertical></DotsVertical>
             </ControlButton>
           </ButtonGroup>
-          {!(previewIsPresentation && editorMode === EditorMode.Preview) && (
-            <TocButtonGroup
-              variant="text"
-              color="inherit"
-              aria-label="table of contents"
-              size="small"
+          <TocButtonGroup
+            variant="text"
+            color="inherit"
+            aria-label="table of contents"
+            size="small"
+          >
+            <ControlButton
+              aria-label={t("general/table-of-contents")}
+              sx={tocEnabled ? controlBtnSelectedSx : undefined}
+              onClick={() => setTocEnabled(!tocEnabled)}
             >
-              <ControlButton
-                aria-label={t("general/table-of-contents")}
-                sx={tocEnabled ? controlBtnSelectedSx : undefined}
-                onClick={() => setTocEnabled(!tocEnabled)}
-              >
-                <TableOfContents></TableOfContents>
-              </ControlButton>
-            </TocButtonGroup>
-          )}
+              <TableOfContents></TableOfContents>
+            </ControlButton>
+          </TocButtonGroup>
         </Row>
         <Divider></Divider>
       </TopPanel>
@@ -1752,13 +1732,7 @@ export default function NotePanel(props: Props) {
           }}
         >
           <EditorContentPanel>
-            <EditorWrapper
-              sx={
-                previewIsPresentation && editorMode === EditorMode.Preview
-                  ? editorPresentationSx
-                  : undefined
-              }
-            >
+            <EditorWrapper>
               <EditorTextArea
                 className={"editor-textarea"}
                 placeholder={t("editor/placeholder")}
@@ -1768,22 +1742,17 @@ export default function NotePanel(props: Props) {
                 <Preview
                   className={"preview"}
                   data-testid="note-preview"
-                  sx={previewIsPresentation ? presentationSx : undefined}
                   ref={previewElement}
                 ></Preview>
               ) : null}
             </EditorWrapper>
-            {!(editorMode === EditorMode.Preview && previewIsPresentation) && (
-              <React.Fragment>
-                <Box style={{ marginTop: "32px" }}></Box>
-                <NotesPanel
-                  title={t("general/References")}
-                  tabNode={props.tabNode}
-                  notebook={props.notebook}
-                  note={note}
-                ></NotesPanel>
-              </React.Fragment>
-            )}
+            <Box style={{ marginTop: "32px" }}></Box>
+            <NotesPanel
+              title={t("general/References")}
+              tabNode={props.tabNode}
+              notebook={props.notebook}
+              note={note}
+            ></NotesPanel>
           </EditorContentPanel>
           <TocPanel>
             <Toc ref={tocElement}></Toc>

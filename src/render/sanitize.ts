@@ -1,7 +1,7 @@
 import createDOMPurify from "dompurify";
 
 // What a note's HTML may keep once rendered. Every place a note is drawn (the
-// preview, a kanban card, printing, the slides' frame) passes the markdown
+// preview, a kanban card, printing) passes the markdown
 // stage's output through sanitizeHTML before it reaches the page, so the
 // rules live here only:
 // - no scripts, event handler attributes or javascript: style addresses
@@ -9,12 +9,8 @@ import createDOMPurify from "dompurify";
 // - no style elements, frames, plugins or forms: a note's HTML is content,
 //   not page furniture, and embedded video goes through the youtube and
 //   bilibili widgets;
-// - data-* and style attributes stay, as the preview, the widgets and
-//   reveal.js read them. The data-* ones reveal.js loads as media (slide
-//   backgrounds, background videos and frames, lazily loaded src) must hold
-//   a safe address with no quotes or angle brackets in it, as reveal.js
-//   writes a background video's into HTML of its own; the two it writes
-//   into HTML as they are, data-notes and data-preview-link, go;
+// - data-* and style attributes stay, as the preview and the widgets read
+//   them;
 // - ids stay as written, even one that names a property of document (the
 //   heading "Title" gets the id "title"), or the headings' anchors would
 //   break. DOMPurify's own check, which drops such ids, is off. What it
@@ -37,23 +33,6 @@ const forbiddenTags = [
   "select",
   "textarea",
 ];
-
-// reveal.js's slide backgrounds and lazy-loaded media.
-const addressAttributes =
-  /^data-(background|background-(image|video|iframe)|src)$/;
-
-// Attributes reveal.js writes into HTML of its own as they are: a slide's
-// speaker notes (its notes in an aside stay, as sanitized HTML) and a link
-// to show in a preview frame.
-const writtenAsHTML = ["data-notes", "data-preview-link"];
-
-export function isSafeAddress(value: string): boolean {
-  // eslint-disable-next-line no-control-regex
-  const address = value.replace(/[\u0000-\u0020]/g, "");
-  return /^(?:https?:|[^a-z]|[a-z][a-z\d+.-]*(?:[^a-z\d+.\-:]|$))/i.test(
-    address,
-  );
-}
 
 // A wiki link names a note, and a note's name can hold a colon ("Todo:
 // groceries", "Book review: Dune"), which DOMPurify's address check, as it
@@ -79,11 +58,8 @@ purify.addHook("uponSanitizeAttribute", (node, data) => {
     data.attrValue = `./${data.attrValue}`;
   }
   if (
-    writtenAsHTML.includes(data.attrName) ||
-    (addressAttributes.test(data.attrName) &&
-      (!isSafeAddress(data.attrValue) || /["'<>`]/.test(data.attrValue))) ||
-    (data.attrName === "name" &&
-      (node.nodeName === "IMG" || data.attrValue in document))
+    data.attrName === "name" &&
+    (node.nodeName === "IMG" || data.attrValue in document)
   ) {
     data.keepAttr = false;
   }

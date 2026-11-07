@@ -172,7 +172,6 @@ export const enUS = {
     "editor/toolbar/insert-video": "Insert video",
     "editor/toolbar/insert-youtube": "Insert Youtube",
     "editor/toolbar/insert-bilibili": "Insert Bilibili",
-    "editor/toolbar/insert-slide": "Insert slide",
     "editor/toolbar/insert-ocr": "Insert OCR",
     "editor/toolbar/insert-kanban": "Insert Kanban",
     "editor/toolbar/insert-abc-notation": "Insert ABC notation",

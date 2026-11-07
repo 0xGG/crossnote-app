@@ -133,6 +133,12 @@ for (const { layout, text, opened } of [
     text: "\uFEFF---\ntitle: T\n---\n# Kept\n",
     opened: nothingToClose,
   },
+  // Notes written for features since dropped: what they hold stays as it is.
+  {
+    layout: "the comments of a deck of slides",
+    text: '<!-- slide -->\n\n# Kept\n\n<!-- .slide: data-background="red" -->\n\nMore\n',
+    opened: nothingToClose,
+  },
 ]) {
   test(`opens a note with ${layout} without writing it`, async ({ app }) => {
     const readme = await openReadme(app, text);

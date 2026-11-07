@@ -68,7 +68,7 @@ describe("renderVegaLite", () => {
     embed.mockReset();
   });
 
-  const context = { dark: false, inSlides: false };
+  const context = { dark: false };
 
   it("embeds the chart, JSON or YAML, without the actions that open windows, with vega's interpreter and its inputs in its own element", async () => {
     const finalize = vi.fn();

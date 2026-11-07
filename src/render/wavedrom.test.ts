@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { renderWaveDrom } from "./wavedrom";
 
-const light = { dark: false, inSlides: false };
+const light = { dark: false };
 
 /**
  * Sources that have wavedrom write markup of their own into its drawing:
@@ -82,7 +82,7 @@ describe("renderWaveDrom", () => {
       const drawing = renderWaveDrom(
         '{"signal": [{"name": "clk", "wave": "p."}]}',
         {},
-        { dark, inSlides: false },
+        { dark },
       );
       await drawing.done;
       return Array.from(drawing.element.querySelectorAll("rect"))
@@ -113,7 +113,7 @@ describe("renderWaveDrom", () => {
   it("draws in the dark skin in a dark preview, unless the source names a skin", async () => {
     const source = { signal: [{ name: "clk", wave: "p." }] };
     const styles = async (code: string, dark: boolean) => {
-      const drawing = renderWaveDrom(code, {}, { dark, inSlides: false });
+      const drawing = renderWaveDrom(code, {}, { dark });
       await drawing.done;
       return drawing.element.querySelector("style")?.textContent;
     };
