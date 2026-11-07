@@ -96,21 +96,8 @@ function renderCodeFences(
   const drawings: Drawing[] = [];
   const fences = Array.from(container.getElementsByClassName("vickeymd-fence"));
   for (const fence of fences) {
-    let info: any;
-    try {
-      info = JSON.parse(fence.getAttribute("data-parsed-info") || "{}");
-    } catch {
-      info = {};
-    }
-    // A note's own HTML can say anything here.
-    if (!info || typeof info !== "object") {
-      info = {};
-    }
     const code = fence.textContent;
-    const language: string =
-      typeof info["language"] === "string" && info["language"]
-        ? info["language"]
-        : "text";
+    const language = fence.getAttribute("data-language") || "text";
     const diagram = diagramRenderers.find(([pattern]) =>
       pattern.test(language),
     );
@@ -119,7 +106,7 @@ function renderCodeFences(
     try {
       let drawing: Drawing;
       if (diagram) {
-        drawing = diagram[1](code, info, context);
+        drawing = diagram[1](code, context);
       } else {
         drawing = renderCodeBlock(code, language);
       }

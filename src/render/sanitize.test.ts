@@ -37,7 +37,7 @@ describe("sanitizeHTML", () => {
         '<p style="color: red"><kbd>Ctrl</kbd> <span class="echomd-widget" data-widget-name="timer" data-widget-attributes="{&quot;date&quot;:1}"></span></p>',
         '<ul><li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox" data-line="5"> task</li></ul>',
         "<details><summary>More</summary>hidden</details>",
-        '<pre class="vickeymd-fence" data-parsed-info="{&quot;language&quot;:&quot;js&quot;}">let a</pre>',
+        '<pre class="vickeymd-fence" data-language="js">let a</pre>',
       ].join(""),
     );
     expect(element.querySelector("h2").outerHTML).toBe(
@@ -54,8 +54,8 @@ describe("sanitizeHTML", () => {
       "checkbox",
     );
     expect(element.querySelector("details summary").textContent).toBe("More");
-    expect(element.querySelector("pre").getAttribute("data-parsed-info")).toBe(
-      '{"language":"js"}',
+    expect(element.querySelector("pre").getAttribute("data-language")).toBe(
+      "js",
     );
   });
 

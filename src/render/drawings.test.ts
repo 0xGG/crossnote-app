@@ -14,7 +14,7 @@ vi.mock("./diagrams", () => ({
   diagramRenderers: [
     [
       /^test$/,
-      (code: string, _info: unknown, context: DrawingContext) => {
+      (code: string, context: DrawingContext) => {
         const element = document.createElement("div");
         let finish = () => {};
         let released = false;
@@ -112,12 +112,12 @@ describe("mountPreview with blocks drawn later", () => {
     expect(drawings[0].context).toEqual({ dark: true });
   });
 
-  it("draws the other blocks when a block's info, written in the note's HTML, is not an object", async () => {
+  it("draws a block written in the note's HTML that names no language, or one of its own, as code", async () => {
     const element = document.createElement("div");
     document.body.appendChild(element);
     const preview = mountPreview(
       element,
-      '```test\nA\n```\n\n<pre class="vickeymd-fence" data-parsed-info="null">B</pre>\n\n<pre class="vickeymd-fence" data-parsed-info=\'{"language":{"toString":1}}\'>C</pre>\n',
+      '```test {width=1}\nA\n```\n\n<pre class="vickeymd-fence">B</pre>\n\n<pre class="vickeymd-fence" data-language="{&quot;toString&quot;:1}">C</pre>\n',
       { note: null },
     );
     await vi.waitFor(() => expect(drawings).toHaveLength(1));

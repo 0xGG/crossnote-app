@@ -1,5 +1,4 @@
 import type { MarkdownIt } from "markdown-it";
-import { normalizeBlockInfo, parseBlockInfo } from "./blockInfo";
 
 const TAGS_TO_REPLACE: { [char: string]: string } = {
   "&": "&amp;",
@@ -15,22 +14,20 @@ export function escapeString(str = "") {
   return str.replace(/[&<>"'/\\]/g, (tag) => TAGS_TO_REPLACE[tag] || tag);
 }
 
-// A code block: its code, escaped, with what its info string says in
-// attributes, for the preview to highlight it or draw it as a diagram.
-// Mermaid blocks are divs, their source in them as text.
+// A code block: its code, escaped, with the language its info string names
+// first (anything after it, as ```js {cmd=true} has, means nothing), for
+// the preview to highlight it or draw it as a diagram. Mermaid blocks are
+// divs, their source in them as text.
 export default function fence(md: MarkdownIt) {
   md.renderer.rules.fence = (tokens, idx) => {
     const token = tokens[idx];
-    const info = token.info.trim();
-    const parsedInfo = parseBlockInfo(info);
-    const normalizedInfo = normalizeBlockInfo(parsedInfo);
+    const language = token.info.trim().match(/^[^\s{]*/)[0];
     const content = escapeString(token.content);
     const finalBreak =
       idx < tokens.length && tokens[idx].type === "list_item_close" ? "\n" : "";
-    const infoAttributes = `data-parsed-info="${escapeString(JSON.stringify(parsedInfo))}" data-normalized-info="${escapeString(JSON.stringify(normalizedInfo))}"`;
-    if (parsedInfo.language === "mermaid") {
-      return `<div class="vickeymd-fence ${parsedInfo.language}" ${infoAttributes}>${content}</div>`;
+    if (language === "mermaid") {
+      return `<div class="vickeymd-fence mermaid" data-language="mermaid">${content}</div>`;
     }
-    return `<pre data-role="codeBlock" class="vickeymd-fence" data-info="${escapeString(info)}" ${infoAttributes}>${content}</pre>${finalBreak}`;
+    return `<pre class="vickeymd-fence" data-language="${escapeString(language)}">${content}</pre>${finalBreak}`;
   };
 }

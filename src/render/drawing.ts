@@ -1,5 +1,3 @@
-import { BlockInfo } from "./markdown/blockInfo";
-
 /**
  * A code block of the preview drawn: a diagram, or code highlighted. Its
  * element takes the block's place at once and is drawn into, then or later.
@@ -32,11 +30,7 @@ export interface DrawingContext {
 }
 
 /** Draws a code block of the language it is registered for. */
-export type Renderer = (
-  code: string,
-  info: BlockInfo,
-  context: DrawingContext,
-) => Drawing;
+export type Renderer = (code: string, context: DrawingContext) => Drawing;
 
 /** How long a preview waits for one drawing before it gives up on it. */
 export const drawingTimeout = 10000;
