@@ -48,10 +48,9 @@ export interface MountedPreview {
   /**
    * Settles once the note is drawn: its HTML in the element, finished, its
    * images read from the notebook, and its code blocks drawn, each given up
-   * to 10 seconds before it shows that it took too long (a PlantUML image
-   * counts as drawn once it is in its place, loaded or not). Rejects when
-   * the note cannot be drawn into the element at all (the markdown stage,
-   * or putting its HTML in, fails), and the element then shows why; a block
+   * to 10 seconds before it shows that it took too long. Rejects when the
+   * note cannot be drawn into the element at all (the markdown stage, or
+   * putting its HTML in, fails), and the element then shows why; a block
    * that fails shows its error in its place instead.
    */
   done: Promise<void>;

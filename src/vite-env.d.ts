@@ -18,6 +18,3 @@ declare module "markdown-it-sup";
 declare module "prismjs/components/prism-core";
 // echarts-gl, which adds its 3D and WebGL charts to echarts as it loads
 declare module "echarts-gl";
-// wavedrom and its skins, CommonJS without types
-declare module "wavedrom";
-declare module "wavedrom/skins/*.js";

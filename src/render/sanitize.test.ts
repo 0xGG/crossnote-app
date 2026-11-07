@@ -78,12 +78,12 @@ describe("sanitizeHTML", () => {
     expect(image.hasAttribute("name")).toBe(false);
   });
 
-  it("keeps a wavedrom block's source as text, and drops scripts of any type", () => {
+  it("keeps a diagram block's source as text, and drops scripts of any type", () => {
     const element = render(
-      '<div class="vickeymd-fence wavedrom">{ "signal": [] }</div><script type="WaveDrom">window.x = 1</script><script type="text/javascript">alert(1)</script>',
+      '<div class="vickeymd-fence mermaid">graph TD; A-->B</div><script type="WaveDrom">window.x = 1</script><script type="text/javascript">alert(1)</script>',
     );
     expect(element.querySelector("script")).toBeNull();
-    expect(element.textContent).toBe('{ "signal": [] }');
+    expect(element.textContent).toBe("graph TD; A-->B");
   });
 
   it("keeps the TeX KaTeX puts beside its MathML apart from the formula", () => {

@@ -7,8 +7,6 @@ import { suggestedEditorConfig } from "@0xgg/echomd/core";
 import { wrapTexts } from "@0xgg/echomd/keymap/hypermd";
 import "@0xgg/echomd/powerpack/fold-code-with-echarts";
 import "@0xgg/echomd/powerpack/fold-code-with-mermaid";
-import "@0xgg/echomd/powerpack/fold-code-with-plantuml";
-import "@0xgg/echomd/powerpack/fold-code-with-wavedrom";
 import "@0xgg/echomd/powerpack/fold-emoji-with-twemoji";
 // Widgets
 // Load PowerPacks if you want to utilize 3rd-party libs

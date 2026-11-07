@@ -53,45 +53,6 @@ test("draws a note's emoji from the sheet", async ({ app, page }) => {
   await expect(emoji).toHaveCSS("background-position", "53.5714% 69.6429%");
 });
 
-test("draws a vega-lite chart without the actions that open other windows", async ({
-  app,
-}) => {
-  await app.open();
-  await app.openNotes();
-  await app.createNote();
-  // The chart names an editor of its own, and HTML to write around its
-  // source; neither the editor nor the source is offered.
-  await app.setEditorText(
-    [
-      "```vega-lite",
-      "usermeta:",
-      "  embedOptions:",
-      "    editorUrl: https://example.org/",
-      '    sourceHeader: "<script>opener.fromHeader = 1</script>"',
-      "data:",
-      "  values:",
-      "    - a: 1",
-      "mark: point",
-      "encoding:",
-      "  x:",
-      "    field: a",
-      "    type: quantitative",
-      "```",
-      "",
-    ].join("\n"),
-  );
-  await app.modeButton("Preview").click();
-
-  const actions = app.preview.locator(".vega-embed .vega-actions a");
-  await expect(actions.filter({ hasText: "Save as SVG" })).toHaveCount(1);
-  await expect(app.preview.locator(".vega-embed canvas")).toBeVisible();
-  await expect(actions.filter({ hasText: "Vega Editor" })).toHaveCount(0);
-  await expect(actions.filter({ hasText: "View Source" })).toHaveCount(0);
-  await expect(actions.filter({ hasText: "View Compiled Vega" })).toHaveCount(
-    0,
-  );
-});
-
 test("prints a note with its local images and page breaks", async ({
   app,
   page,

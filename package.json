@@ -75,12 +75,6 @@
     "typeface-noto-sans-sc": "^1.1.13",
     "typeface-roboto": "^1.1.13",
     "unstated-next": "^1.1.0",
-    "vega": "^6.4.0",
-    "vega-embed": "^7.3.0",
-    "vega-interpreter": "^2.3.2",
-    "vega-lite": "^6.5.0",
-    "vega-themes": "^3.0.0",
-    "wavedrom": "^3.8.0",
     "yamljs": "^0.3.0"
   },
   "devDependencies": {

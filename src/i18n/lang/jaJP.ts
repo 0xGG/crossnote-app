@@ -138,11 +138,6 @@ export const jaJP = {
     "settings/default-editor-mode": "既定のエディター モード",
     "settings/plain-text-source-code":
       "ソースコードモードでプレーンテキスト表示",
-    "settings/always-draw-plantuml":
-      "確認せずに plantuml.com で PlantUML 図を描画",
-    "preview/draw-plantuml":
-      "plantuml.com で描画（図のソースをこのサービスに送信します）",
-    "preview/plantuml-diagram": "PlantUML 図",
     "settings/hello": "こんにちは，",
     "settings/world": "世界！",
     "settings/author-name": "著者名",
