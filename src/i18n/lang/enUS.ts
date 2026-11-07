@@ -62,6 +62,8 @@ export const enUS = {
     "general/why-cors-proxy": "Why do we need CORS proxy？",
     "general/today": "Today",
     "general/graph-view": "Graph view",
+    "general/graph-view-unavailable":
+      "The graph could not be loaded. Reload the page to try again.",
     "general/conflicted": "Conflicted",
     "general/change-file-path": "Change file path",
     "general/restore-checkout": "Restore (git checkout)",

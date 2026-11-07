@@ -17,7 +17,15 @@ import {
   TabNode,
 } from "flexlayout-react";
 import "flexlayout-react/style/light.css";
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, {
+  ComponentProps,
+  Suspense,
+  lazy,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import { useTranslation } from "react-i18next";
 import { CrossnoteContainer } from "../containers/crossnote";
 import { SettingsContainer } from "../containers/settings";
@@ -30,7 +38,6 @@ import { toReference } from "../lib/reference";
 import { TabNodeComponent, TabNodeConfig } from "../lib/tabNode";
 import { CloseUnsavedNoteDialog } from "./CloseUnsavedNoteDialog";
 import { Emoji } from "./EmojiWrapper";
-import GraphView from "./GraphView";
 import { Loading } from "./Loading";
 import NotePanel from "./NotePanel";
 import NotesPanel from "./NotesPanel";
@@ -128,6 +135,27 @@ const MainPanelRoot = styled("div")(({ theme }) => ({
     borderColor: theme.palette.primary.main,
   },
 }));
+
+// What a graph tab shows when the graph could not be loaded (offline, or the
+// site updated since the page was opened): the rest of the app goes on.
+function GraphViewUnavailable(
+  _props: ComponentProps<typeof import("./GraphView").default>,
+) {
+  const { t } = useTranslation();
+  return (
+    <Box sx={{ padding: 2 }}>
+      <DialogContentText>
+        {t("general/graph-view-unavailable")}
+      </DialogContentText>
+    </Box>
+  );
+}
+
+// The graph, with d3, is loaded the first time a graph tab is drawn rather
+// than with the app.
+const GraphView = lazy(() =>
+  import("./GraphView").catch(() => ({ default: GraphViewUnavailable })),
+);
 
 // Tabs named after what they show rather than after a note or a notebook.
 // The name a tab is saved with is in the language it was opened under, so
@@ -247,7 +275,9 @@ export function MainPanel() {
         );
         if (notebook) {
           renderElement = (
-            <GraphView notebook={notebook} tabNode={node}></GraphView>
+            <Suspense fallback={<Loading></Loading>}>
+              <GraphView notebook={notebook} tabNode={node}></GraphView>
+            </Suspense>
           );
         }
       } else {

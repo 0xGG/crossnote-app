@@ -62,6 +62,8 @@ export const jaJP = {
     "general/why-cors-proxy": "なぜ CORS プロキシが必要なのですか?",
     "general/today": "今日",
     "general/graph-view": "関連グラフ",
+    "general/graph-view-unavailable":
+      "関連グラフを読み込めませんでした。ページを再読み込みしてもう一度お試しください。",
     "general/conflicted": "競合",
     "general/change-file-path": "ファイル パスの変更",
     "general/restore-checkout": "復元 (git checkout)",

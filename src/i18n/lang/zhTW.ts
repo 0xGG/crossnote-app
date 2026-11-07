@@ -62,6 +62,7 @@ export const zhTW = {
     "general/why-cors-proxy": "為什麼需要 CORS 代理？",
     "general/today": "今天",
     "general/graph-view": "關聯圖",
+    "general/graph-view-unavailable": "關聯圖載入失敗，請重新整理頁面再試。",
     "general/conflicted": "衝突",
     "general/change-file-path": "更改檔路徑",
     "general/restore-checkout": "恢復 (git checkout)",

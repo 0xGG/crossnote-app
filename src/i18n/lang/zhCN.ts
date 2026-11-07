@@ -62,6 +62,7 @@ export const zhCN = {
     "general/why-cors-proxy": "为什么需要 CORS 代理？",
     "general/today": "今天",
     "general/graph-view": "关联图",
+    "general/graph-view-unavailable": "关联图加载失败，请刷新页面重试。",
     "general/conflicted": "冲突",
     "general/change-file-path": "更改文件路径",
     "general/restore-checkout": "恢复 (git checkout)",
