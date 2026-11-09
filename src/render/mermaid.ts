@@ -1,4 +1,4 @@
-import { Renderer, startDrawing } from "./drawing";
+import { previewTimeout, Renderer, startDrawing } from "./drawing";
 import { sanitizeSVG } from "./sanitize";
 
 let diagrams = 0;
@@ -18,7 +18,10 @@ export const renderMermaid: Renderer = (code, { dark }) => {
   return startDrawing(
     element,
     async (signal, begin) => {
-      const drawn = queue.then(async () => {
+      const before = queue;
+      // mermaid drawing this diagram, once it does.
+      let rendering: Promise<unknown> | undefined;
+      const drawn = before.then(async () => {
         if (signal.aborted) {
           return "";
         }
@@ -34,20 +37,44 @@ export const renderMermaid: Renderer = (code, { dark }) => {
           // What cannot be drawn is said in the block, not drawn into the page.
           suppressErrorRendering: true,
         });
-        const { svg } = await mermaid.render(
-          `crossnote-mermaid-${++diagrams}`,
-          code,
-        );
+        const render = mermaid.render(`crossnote-mermaid-${++diagrams}`, code);
+        rendering = render;
+        const { svg } = await render;
         return svg;
       });
-      // The next diagram's turn comes once this one is drawn, or given up on
-      // or disposed of: a render that never settles holds up no other.
-      queue = Promise.race([
-        drawn.catch(() => {}),
-        new Promise((resolve) =>
-          signal.addEventListener("abort", resolve, { once: true }),
-        ),
-      ]);
+      // The next diagram's turn comes once this one is drawn. One disposed
+      // of before mermaid draws it ends its turn as it comes, so the next
+      // goes once the one before is done. One given up on or disposed of
+      // while mermaid draws it lets the next go once mermaid is not drawing
+      // it any more, as mermaid draws one diagram at a time: no later than
+      // 30 seconds (as long as a preview waits for all its drawings) after
+      // it was given up on or disposed of, so that a render that never
+      // settles holds up the others for no longer than that.
+      queue = new Promise<void>((release) => {
+        drawn.then(
+          () => release(),
+          () => release(),
+        );
+        signal.addEventListener(
+          "abort",
+          () => {
+            if (!rendering) {
+              return;
+            }
+            let timer: number | undefined;
+            Promise.race([
+              rendering.catch(() => {}),
+              new Promise((resolve) => {
+                timer = window.setTimeout(resolve, previewTimeout);
+              }),
+            ]).then(() => {
+              window.clearTimeout(timer);
+              release();
+            });
+          },
+          { once: true },
+        );
+      });
       const svg = await drawn;
       if (!signal.aborted) {
         element.innerHTML = sanitizeSVG(svg);

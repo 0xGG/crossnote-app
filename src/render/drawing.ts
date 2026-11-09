@@ -35,6 +35,12 @@ export type Renderer = (code: string, context: DrawingContext) => Drawing;
 /** How long a preview waits for one drawing before it gives up on it. */
 export const drawingTimeout = 10000;
 
+/**
+ * How long a preview waits for all its drawings, however many wait their
+ * turn behind others, before it gives up on those not finished.
+ */
+export const previewTimeout = 30000;
+
 /** What a block that cannot be drawn shows in its place. */
 export function failedBlock(error: unknown): HTMLElement {
   const pre = document.createElement("pre");
@@ -100,12 +106,15 @@ export function startDrawing(
 }
 
 /**
- * Waits for a drawing, up to timeout from when it is under way: one that
- * takes longer is given up on. Settles either way; stop() stops the wait.
+ * Waits for a drawing, up to timeout from when it is under way, and no
+ * later than deadline (the preview's, previewTimeout after it began): one
+ * that takes longer is given up on. Settles either way; stop() stops the
+ * wait.
  */
 export function waitForDrawing(
   drawing: Drawing,
   timeout = drawingTimeout,
+  deadline?: Promise<void>,
 ): { settled: Promise<void>; stop(): void } {
   let timer: number | undefined;
   let over = false;
@@ -122,6 +131,12 @@ export function waitForDrawing(
           drawing.giveUp(timeout / 1000);
           resolve();
         }, timeout);
+      }
+    });
+    deadline?.then(() => {
+      if (!over) {
+        drawing.giveUp(previewTimeout / 1000);
+        resolve();
       }
     });
   });

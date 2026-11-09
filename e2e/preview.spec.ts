@@ -124,6 +124,15 @@ test("prints a note with its local images and page breaks", async ({
         image: printed.querySelector("img")!.getAttribute("src"),
         breakAfter: getComputedStyle(printed.querySelector(".pagebreak")!)
           .breakAfter,
+        // Nothing on the page is printed but the note: not the app, and not
+        // the note menu, which is still closing then.
+        shown: Array.from(document.body.children)
+          .filter((element) => getComputedStyle(element).display !== "none")
+          .map((element) =>
+            element === printed
+              ? "the note"
+              : `${element.tagName}#${element.id}.${element.className}`,
+          ),
       };
     };
   });
@@ -136,6 +145,7 @@ test("prints a note with its local images and page breaks", async ({
     .toEqual({
       image: expect.stringMatching(/^data:image\/md;base64,/),
       breakAfter: "page",
+      shown: ["the note"],
     });
 });
 
