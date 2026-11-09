@@ -1,6 +1,6 @@
 // Prism, the code highlighter, from npm: its core the first time a note has
-// a code block, and each language the first time a block is written in it,
-// after the languages it builds on.
+// a code block in a language Prism knows, and each language the first time
+// a block is written in it, after the languages it builds on.
 import components from "prismjs/components.json";
 
 type Language = {

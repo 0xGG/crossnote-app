@@ -1,6 +1,6 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { previewTimeout } from "./drawing";
-import { renderMermaid } from "./mermaid";
+import type { renderMermaid as RenderMermaid } from "./mermaid";
 
 // mermaid draws by laying text out, which jsdom cannot do: the tests have
 // it hand back what they say, and record how it was set up as it finished
@@ -33,17 +33,51 @@ vi.mock("mermaid", () => {
   };
 });
 
+// The diagrams wait their turn in a queue of the module's own: each test
+// has a module of its own, so that one that leaves a diagram waiting holds
+// up no other test's. Time is the tests' to move on.
+let renderMermaid: typeof RenderMermaid;
+beforeEach(async () => {
+  vi.resetModules();
+  ({ renderMermaid } = await import("./mermaid"));
+  vi.useFakeTimers();
+});
+
 afterEach(() => {
+  vi.useRealTimers();
   calls.length = 0;
   drawn = (code) => `<svg><text>${code}</text></svg>`;
   held = Promise.resolve();
 });
 
+// Lets whatever is under way run to its end, then waits for promise.
+async function after<T>(promise: Promise<T>): Promise<T> {
+  await vi.runAllTimersAsync();
+  return promise;
+}
+
+// Waits for promise while time moves on by a millisecond at a time, for a
+// tenth of a second at most: what settles only by a limit of seconds fails.
+async function soon<T>(promise: Promise<T>): Promise<T> {
+  let settled = false;
+  promise.then(
+    () => (settled = true),
+    () => (settled = true),
+  );
+  for (let ms = 0; ms < 100 && !settled; ms++) {
+    await vi.advanceTimersByTimeAsync(1);
+  }
+  if (!settled) {
+    throw new Error("not settled within 100 ms");
+  }
+  return promise;
+}
+
 describe("renderMermaid", () => {
   it("draws the diagram in the theme that goes with the preview's, strictly", async () => {
     const light = renderMermaid("A", { dark: false });
     const dark = renderMermaid("B", { dark: true });
-    await Promise.all([light.done, dark.done]);
+    await after(Promise.all([light.done, dark.done]));
     expect(light.element.querySelector("svg text").textContent).toBe("A");
     expect(dark.element.querySelector("svg text").textContent).toBe("B");
     // One after the other, each in its own theme, under its own id.
@@ -65,32 +99,27 @@ describe("renderMermaid", () => {
     second.started.then(() => (secondStarted = true));
     await vi.waitFor(() => expect(calls).toHaveLength(1));
     await first.started;
+    await vi.advanceTimersByTimeAsync(previewTimeout);
     expect(secondStarted).toBe(false);
     release();
-    await Promise.all([first.done, second.done]);
+    await after(Promise.all([first.done, second.done]));
     expect(secondStarted).toBe(true);
   });
 
   it("gives the next diagram its turn a preview's wait after one mermaid never finishes is given up on", async () => {
-    vi.useFakeTimers();
-    try {
-      const stuck = renderMermaid("stuck", { dark: false });
-      const next = renderMermaid("B", { dark: false });
-      await vi.waitFor(() => expect(calls).toHaveLength(1));
-      stuck.giveUp(10);
-      await vi.advanceTimersByTimeAsync(previewTimeout - 1);
-      expect(calls).toHaveLength(1);
-      await vi.advanceTimersByTimeAsync(1);
-      await vi.waitFor(() => expect(calls).toHaveLength(2));
-      await vi.advanceTimersByTimeAsync(0);
-      await next.done;
-      expect(next.element.querySelector("svg text").textContent).toBe("B");
-      expect(stuck.element.textContent).toBe(
-        "Error: this block took more than 10 seconds to draw",
-      );
-    } finally {
-      vi.useRealTimers();
-    }
+    const stuck = renderMermaid("stuck", { dark: false });
+    const next = renderMermaid("B", { dark: false });
+    await vi.waitFor(() => expect(calls).toHaveLength(1));
+    stuck.giveUp(10);
+    await vi.advanceTimersByTimeAsync(previewTimeout - 1);
+    expect(calls).toHaveLength(1);
+    await vi.advanceTimersByTimeAsync(1);
+    await vi.waitFor(() => expect(calls).toHaveLength(2));
+    await after(next.done);
+    expect(next.element.querySelector("svg text").textContent).toBe("B");
+    expect(stuck.element.textContent).toBe(
+      "Error: this block took more than 10 seconds to draw",
+    );
   });
 
   it("gives the next diagram its turn once mermaid has finished one given up on while it drew it", async () => {
@@ -100,13 +129,15 @@ describe("renderMermaid", () => {
     const second = renderMermaid("B", { dark: false });
     await vi.waitFor(() => expect(calls).toHaveLength(1));
     first.giveUp(10);
-    await new Promise((resolve) => setTimeout(resolve, 10));
+    await vi.advanceTimersByTimeAsync(previewTimeout / 2);
     // mermaid is still drawing the first: the two would be drawn at once.
     expect(calls).toHaveLength(1);
+    // Once it is done, the next goes at once, not at the preview's limit.
     release();
-    await second.done;
+    await soon(second.done);
     expect(calls).toHaveLength(2);
     expect(second.element.querySelector("svg text").textContent).toBe("B");
+    expect(vi.getTimerCount()).toBe(0);
   });
 
   it("keeps the diagrams after one disposed of while waiting its turn behind the one mermaid draws", async () => {
@@ -117,19 +148,23 @@ describe("renderMermaid", () => {
     const third = renderMermaid("C", { dark: false });
     await vi.waitFor(() => expect(calls).toHaveLength(1));
     second.dispose();
-    await new Promise((resolve) => setTimeout(resolve, 10));
+    // The second had no turn yet: the third waits for the first, however
+    // long mermaid takes with it.
+    await vi.advanceTimersByTimeAsync(previewTimeout * 2);
     expect(calls).toHaveLength(1);
+    // Once the first is done, the third goes at once.
     release();
-    await Promise.all([first.done, third.done]);
+    await soon(Promise.all([first.done, third.done]));
     expect(calls).toHaveLength(2);
     expect(third.element.querySelector("svg text").textContent).toBe("C");
+    expect(vi.getTimerCount()).toBe(0);
   });
 
   it("puts what mermaid draws in the page only once sanitized", async () => {
     drawn = () =>
       '<svg onload="window.fromMermaid=1"><script>window.fromMermaid=1</script><foreignObject><div><img src="x" onerror="window.fromMermaid=1">label</div></foreignObject></svg>';
     const drawing = renderMermaid("A", { dark: false });
-    await drawing.done;
+    await after(drawing.done);
     const svg = drawing.element.querySelector("svg");
     expect(svg.hasAttribute("onload")).toBe(false);
     expect(drawing.element.querySelector("script")).toBeNull();
@@ -151,8 +186,7 @@ describe("renderMermaid", () => {
     first.dispose();
     second.dispose();
     release();
-    await Promise.all([first.done, second.done]);
-    await new Promise((resolve) => setTimeout(resolve, 10));
+    await after(Promise.all([first.done, second.done]));
     expect(first.element.childNodes.length).toBe(0);
     expect(second.element.childNodes.length).toBe(0);
     // The one waiting is not drawn at all.
