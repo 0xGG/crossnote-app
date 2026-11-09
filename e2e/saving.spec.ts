@@ -232,7 +232,7 @@ test("prints what was typed into the note a moment before", async ({
   });
   await page.getByRole("button", { name: "Note menu" }).click();
   const print = await page
-    .getByRole("button", { name: "Print" })
+    .getByRole("button", { name: "Print / Export PDF" })
     .elementHandle();
   // Typed and printed in the same task: the save is still a moment away.
   await app.editor.evaluate((element, print) => {

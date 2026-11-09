@@ -105,7 +105,11 @@ test("prints a note with its local images and page breaks", async ({
   const readme = `${await app.notebookFolder()}/README.md`;
   await app.storedText(
     readme,
-    "![picture](README.md)\n\nBefore.\n\n<!-- pagebreak -->\n\nAfter.\n",
+    "![picture](README.md)\n\nBefore.\n\n<!-- pagebreak -->\n\nAfter.\n\n```js\n" +
+      `const line = "${"x".repeat(400)}";\n` +
+      "```\n\n" +
+      // An indented block, drawn as a pre with a code element in it.
+      `    indented ${"y".repeat(400)}\n`,
   );
   await page.reload();
   await app.waitUntilReady();
@@ -124,6 +128,15 @@ test("prints a note with its local images and page breaks", async ({
         image: printed.querySelector("img")!.getAttribute("src"),
         breakAfter: getComputedStyle(printed.querySelector(".pagebreak")!)
           .breakAfter,
+        // A long line of code wraps at the edge of the paper, a long word
+        // in it too: a fenced block (a pre with Prism's markup straight in
+        // it) and an indented one (a pre with a code element in it).
+        codeWraps: Array.from(printed.querySelectorAll("pre, pre > code")).map(
+          (element) => getComputedStyle(element).whiteSpace,
+        ),
+        codeFits: Array.from(printed.querySelectorAll("pre")).map(
+          (pre) => pre.scrollWidth <= pre.clientWidth,
+        ),
         // Nothing on the page is printed but the note: not the app, and not
         // the note menu, which is still closing then.
         shown: Array.from(document.body.children)
@@ -137,7 +150,7 @@ test("prints a note with its local images and page breaks", async ({
     };
   });
   await page.getByRole("button", { name: "Note menu" }).click();
-  await page.getByRole("button", { name: "Print" }).click();
+  await page.getByRole("button", { name: "Print / Export PDF" }).click();
   await expect
     .poll(() => page.evaluate(() => (window as any).printed), {
       timeout: 15000,
@@ -145,6 +158,9 @@ test("prints a note with its local images and page breaks", async ({
     .toEqual({
       image: expect.stringMatching(/^data:image\/md;base64,/),
       breakAfter: "page",
+      // The fenced block's pre, the indented block's pre and its code.
+      codeWraps: ["pre-wrap", "pre-wrap", "pre-wrap"],
+      codeFits: [true, true],
       shown: ["the note"],
     });
 });
@@ -220,7 +236,7 @@ test("prints a note light in a dark theme, and leaves the preview on the page da
     };
   });
   await page.getByRole("button", { name: "Note menu" }).click();
-  await page.getByRole("button", { name: "Print" }).click();
+  await page.getByRole("button", { name: "Print / Export PDF" }).click();
   // Printed in the light theme's colours, while the preview on the page
   // keeps the dark's.
   await expect
