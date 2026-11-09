@@ -29,10 +29,9 @@ import { sanitizeHTML } from "./sanitize";
 // reference keeps the lines of its block (lib/reference.ts).
 //
 // The page's Content-Security-Policy (sent as a header, site-headers.ts)
-// still lets scripts run inline, through eval and from the CDNs the widgets
-// loaded. The target is a policy whose scripts come from the site alone
-// ('self', without 'unsafe-inline' or 'unsafe-eval'), with object-src 'none'
-// and base-uri 'self'.
+// runs scripts from the site alone: none inline, no event handler
+// attributes, nothing through eval. It backs the sanitizer up rather than
+// standing in for it.
 
 export interface RenderedMarkdown {
   /** The note's HTML, not yet sanitized. */

@@ -248,26 +248,6 @@ export class CrossnoteApp {
       );
   }
 
-  // Records what the page's content security policy refuses, from before
-  // the page loads; the function returned reads it: the directive and what
-  // was refused, one entry each. Call it before open().
-  async recordPolicyViolations(): Promise<() => Promise<string[]>> {
-    await this.page.addInitScript(() => {
-      const violations: string[] = [];
-      (window as unknown as { policyViolations: string[] }).policyViolations =
-        violations;
-      document.addEventListener("securitypolicyviolation", (event) =>
-        violations.push(`${event.effectiveDirective} ${event.blockedURI}`),
-      );
-    });
-    return () =>
-      this.page.evaluate(
-        () =>
-          (window as unknown as { policyViolations: string[] })
-            .policyViolations,
-      );
-  }
-
   // The addresses under /deps/<name> (the site's vendored copy of a
   // library) the page asks for from now on; the function returned reads
   // them.

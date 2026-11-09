@@ -17,20 +17,38 @@ function policy(directives: Record<string, string[]>): string {
     .join("; ");
 }
 
+// The app's pages: what the app loads from elsewhere, and no more.
+// - Scripts: the site's alone. Nothing is run from text: no eval, no inline
+//   script.
+// - Styles: the site's and the ones the app writes into elements.
+// - Images and media: anything a note links to on the web, and what the app
+//   makes itself (images as data: addresses, read from local files; media
+//   may also be blob: ones).
+// - Fonts: the site's, and a few small ones written into its style sheets
+//   as data: addresses (the editor's list bullets among them).
+// - Connections: the site, git remotes and their proxies on the web, and a
+//   git remote or proxy run on the user's own machine, which may be plain
+//   http (http://[::1] is no address a policy can name).
+// - No frames, no plugins, no base address elsewhere, no forms sent
+//   anywhere, and no page elsewhere may show the app in a frame.
 export const appPolicy = policy({
-  "img-src": ["'self'", "data:", "https://*"],
-  "script-src": [
+  "default-src": ["'self'"],
+  "script-src": ["'self'"],
+  "style-src": ["'self'", "'unsafe-inline'"],
+  "img-src": ["'self'", "data:", "https:"],
+  "media-src": ["'self'", "data:", "blob:", "https:"],
+  "font-src": ["'self'", "data:"],
+  "connect-src": [
     "'self'",
-    "'unsafe-eval'",
-    "'unsafe-inline'",
-    "*.jsdelivr.net",
-    "tessdata.projectnaptha.com",
-    "gist.github.com",
-    "unpkg.com",
-    "blob:",
+    "https:",
+    "http://localhost:*",
+    "http://127.0.0.1:*",
   ],
+  "frame-src": ["'none'"],
   "object-src": ["'none'"],
   "base-uri": ["'self'"],
+  "form-action": ["'none'"],
+  "frame-ancestors": ["'none'"],
 });
 
 interface Rule {
