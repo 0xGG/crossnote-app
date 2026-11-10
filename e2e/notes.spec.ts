@@ -18,6 +18,59 @@ test("creates a note that joins the notebook's list", async ({ app }) => {
   await expect(app.noteCards.first()).toContainText("Written by a robot");
 });
 
+test("starts a note made from a note's references with a link back to it", async ({
+  app,
+  page,
+}) => {
+  await app.createNote();
+  // In a folder, the note's title is its name alone: the link back has to
+  // lead to its path.
+  await page.getByRole("button", { name: "Note menu" }).click();
+  await page.getByRole("button", { name: "Change file path" }).click();
+  const dialog = page.getByRole("dialog");
+  await dialog.getByRole("textbox").fill("topics/Linked.md");
+  await dialog.getByRole("button", { name: "Save" }).click();
+  await expect(app.tab("Linked")).toHaveAttribute("aria-selected", "true");
+
+  // A note shows its references, and the button with them, once another
+  // note mentions it.
+  await app.selectTab("Drafts");
+  await app.notesPanel.getByRole("button", { name: "New note" }).click();
+  // The title box is the new note's once its tab is up.
+  await expect(app.noteTitle).not.toHaveValue("");
+  const mentioning = await app.noteTitle.inputValue();
+  // Set rather than typed: typing "[[" would open the wikilink hints.
+  await app.setEditorText(
+    "Mentions [[topics/Linked]].\n",
+    app.editor.filter({ visible: true }),
+  );
+  // The note is written a moment after the change; its card shows the
+  // text once it is.
+  await app.selectTab("Drafts");
+  await expect(
+    app.noteCards.filter({ hasText: `${mentioning}.md` }),
+  ).toContainText("Mentions");
+  await app.selectTab("Linked");
+  const references = page
+    .locator(".notes-panel")
+    .filter({ visible: true })
+    .filter({ has: page.getByRole("heading", { name: "References" }) });
+  await references.getByRole("button", { name: "New note" }).click();
+  // The new note opens in a tab of its own.
+  await expect(app.tab("Linked")).toHaveAttribute("aria-selected", "false");
+  // A note with text opens in the preview: [[topics/Linked|Linked]].
+  const link = app.preview.filter({ visible: true }).getByRole("link");
+  await expect(link).toHaveText("Linked");
+  await expect(link).toHaveAttribute("href", "topics/Linked");
+
+  // Followed, the link opens the note it was made from.
+  await link.click();
+  await expect(app.tab("Linked")).toHaveAttribute("aria-selected", "true");
+  await expect(
+    page.getByText("Drafts: topics/Linked.md").filter({ visible: true }),
+  ).toBeVisible();
+});
+
 test("sorts the list from the sort menu", async ({ app, page }) => {
   const sort = app.notesPanel.getByRole("button", { name: "Sort notes" });
   const byTitle = page.getByRole("button", { name: "Title", exact: true });

@@ -164,13 +164,15 @@ function NotesPanel(props: Props) {
 
   const createNewNote = useCallback(() => {
     setIsCreatingNote(true);
+    // Made from a note's references, the new note starts with a link back
+    // to it: [[target|text]], the target its path, shown by its title.
     let markdown = "";
     if (props.note) {
-      if (props.note.title === props.note.filePath.replace(/\.md$/, "")) {
-        markdown = `[[${props.note.title}]]`;
-      } else {
-        markdown = `[[${props.note.title}|${props.note.filePath}]]`;
-      }
+      const target = props.note.filePath.replace(/\.md$/, "");
+      markdown =
+        target === props.note.title
+          ? `[[${target}]]`
+          : `[[${target}|${props.note.title}]]`;
     }
     crossnoteContainer
       .createNewNote(props.notebook, "", markdown)
