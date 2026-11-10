@@ -115,7 +115,8 @@ test("keeps the tabs in the hidden tabs menu where they are", async ({
   const tabsets = page.locator(".flexlayout__tabset");
   await expect(tabsets).toHaveCount(2);
 
-  // A tab pulled out of the menu and let go over the sidebar...
+  // A tab pulled out of the menu and let go over the sidebar, where it has
+  // nowhere to go...
   await page.getByRole("button", { name: "Hidden tabs" }).click();
   const item = await centre(page.getByRole("menuitem").first());
   await page.mouse.move(item.x, item.y);
@@ -133,4 +134,68 @@ test("keeps the tabs in the hidden tabs menu where they are", async ({
   await dragText(page, email, name);
   await expect(name).toHaveValue("someone@example.com");
   await expect(tabsets).toHaveCount(2);
+});
+
+test("docks a tab dragged out of the hidden tabs menu across a note", async ({
+  app,
+  page,
+}) => {
+  // The note opens in the editor, whose text a drop could change.
+  await page.addInitScript(() =>
+    localStorage.setItem("settings/defaultEditorMode", "EchoMD"),
+  );
+  await app.open();
+  await app.openNotes();
+  const readme = {
+    type: "tab",
+    id: "README",
+    name: "README",
+    component: "Note",
+    config: {
+      component: "Note",
+      singleton: false,
+      notebookPath: await app.notebookFolder(),
+      noteFilePath: "README.md",
+    },
+  };
+  const many = Array.from({ length: 15 }, (_, i) => noteTab(`tab ${i}`));
+  await app.seedLayout(
+    layoutOf(
+      row(
+        { ...tabset(readme), weight: 80 },
+        { ...tabset(...many), weight: 20 },
+      ),
+    ),
+  );
+  await page.reload();
+  await app.waitUntilReady();
+  const editor = app.editor.filter({ visible: true });
+  await expect(editor).toBeVisible();
+  const text = await app.editorText(editor);
+  const tabsets = page.locator(".flexlayout__tabset");
+  await expect(tabsets).toHaveCount(2);
+
+  await page.getByRole("button", { name: "Hidden tabs" }).click();
+  const item = page.getByRole("menuitem").first();
+  const name = (await item.textContent())!.trim();
+  const from = await centre(item);
+  await page.mouse.move(from.x, from.y);
+  await page.mouse.down();
+  await page.mouse.move(from.x - 30, from.y + 10, { steps: 5 });
+  // Onto the note's text, and let go there.
+  const target = await centre(editor);
+  await page.mouse.move(target.x, target.y, { steps: 15 });
+  await page.mouse.move(target.x + 5, target.y + 5, { steps: 3 });
+  await page.mouse.up();
+
+  // The tab is docked where it was let go, out of the pane it was hidden
+  // in, and the note is as it was.
+  const tab = page.getByRole("tab", { name, exact: true });
+  await expect(tab).toHaveAttribute("aria-selected", "true");
+  await expect(
+    tabsets
+      .filter({ has: page.getByRole("tab", { name: "tab 14", exact: true }) })
+      .getByRole("tab", { name, exact: true }),
+  ).toHaveCount(0);
+  expect(await app.editorText(app.editor)).toBe(text);
 });
