@@ -34,6 +34,36 @@ test("shows a favourite's whole title and its reference count however long the t
     .toBe(true);
 });
 
+test("works the notebook tree from the keyboard", async ({ app, page }) => {
+  await app.open();
+  const drafts = app.notebook("Drafts");
+
+  // A click on a notebook's name refreshes it rather than expanding it; a
+  // click is a discrete event, so React has drawn its outcome by now.
+  await drafts.getByText("Drafts", { exact: true }).click();
+  await expect(drafts).toHaveAttribute("aria-expanded", "false");
+
+  // The arrow keys expand and collapse a notebook...
+  await drafts.focus();
+  await page.keyboard.press("ArrowRight");
+  await expect(drafts).toHaveAttribute("aria-expanded", "true");
+  await page.keyboard.press("ArrowLeft");
+  await expect(drafts).toHaveAttribute("aria-expanded", "false");
+  await page.keyboard.press("ArrowRight");
+
+  // ...and Enter on a row does what a click on its label does.
+  const favourite = drafts.getByRole("treeitem", {
+    name: /quick-access README/,
+  });
+  await favourite.focus();
+  await page.keyboard.press("Enter");
+  await expect(app.tab("README")).toHaveAttribute("aria-selected", "true");
+  const graph = drafts.getByRole("treeitem", { name: /Graph view/ });
+  await graph.focus();
+  await page.keyboard.press("Enter");
+  await expect(app.tab("Graph view")).toHaveAttribute("aria-selected", "true");
+});
+
 test("forgets edits to a notebook's settings that were cancelled", async ({
   app,
   page,

@@ -13,7 +13,7 @@ import {
   ModifiedMarkdownEventData,
   PerformedGitOperationEventData,
 } from "../lib/event";
-import { Notes } from "../lib/note";
+import { Note, Notes } from "../lib/note";
 import { Notebook } from "../lib/notebook";
 import { NotesNotSavedError } from "../lib/noteSaver";
 import { notify } from "../lib/notifications";
@@ -120,6 +120,18 @@ function EndIcon() {
   return <div style={{ width: 24 }} />;
 }
 
+// A row of the tree does what a click on its label does when Enter is
+// pressed on it: the tree itself gives Enter only to expanding and
+// collapsing. The key goes up through the rows the focused one is in, and
+// only the focused one acts on it.
+function onEnter(action: () => void) {
+  return (event: React.KeyboardEvent) => {
+    if (event.key === "Enter" && event.target === event.currentTarget) {
+      action();
+    }
+  };
+}
+
 export default function NotebookTreeView(props: Props) {
   const [expanded, setExpanded] = useState<string[]>([]);
   const [notebookConfigurationDialogOpen, setNotebookConfigurationDialogOpen] =
@@ -147,11 +159,14 @@ export default function NotebookTreeView(props: Props) {
         return;
       }
       event.stopPropagation();
+      // A click expands or collapses the notebook on its chevron only, its
+      // label refreshing it instead; a key (the arrows, Enter) on the row.
       const element = event.target as HTMLElement;
       if (
-        element &&
-        element.tagName &&
-        element.tagName.toUpperCase().match(/^(SVG|PATH|BUTTON)$/)
+        event.type === "keydown" ||
+        (element &&
+          element.tagName &&
+          element.tagName.toUpperCase().match(/^(SVG|PATH|BUTTON)$/))
       ) {
         props.notebook
           .refreshNotesIfNotLoaded({
@@ -247,6 +262,93 @@ export default function NotebookTreeView(props: Props) {
   }, [crossnoteContainer.selectedNotebook, props.notebook]);
   */
 
+  // What each row does, on a click on its label or Enter on it.
+  const openToday = () => {
+    crossnoteContainer.openTodayNote(props.notebook);
+    props.onCloseDrawer();
+  };
+  const openGraph = () => {
+    crossnoteContainer.addTabNode({
+      type: "tab",
+      component: "Graph",
+      id: "Graph: " + props.notebook.dir,
+      name: t("general/graph-view"),
+      config: {
+        component: "Graph",
+        singleton: true,
+        notebookPath: props.notebook.dir,
+      },
+    });
+    props.onCloseDrawer();
+  };
+  const openNotes = () => {
+    crossnoteContainer.addTabNode({
+      type: "tab",
+      component: "Notes",
+      id: "Notes: " + props.notebook.dir,
+      name: props.notebook.name,
+      config: {
+        component: "Notes",
+        singleton: true,
+        notebookPath: props.notebook.dir,
+      },
+    });
+    props.onCloseDrawer();
+  };
+  const openFavourite = (note: Note) => () => {
+    crossnoteContainer.addTabNode({
+      type: "tab",
+      component: "Note",
+      config: {
+        component: "Note",
+        singleton: false,
+        noteFilePath: note.filePath,
+        notebookPath: props.notebook.dir,
+      },
+      name: note.title,
+    });
+    props.onCloseDrawer();
+  };
+  const openSettings = () => setNotebookConfigurationDialogOpen(true);
+  const upload = () => setPushNotebookDialogOpen(true);
+  const reload = () => crossnoteContainer.refreshNotebook(props.notebook);
+  const download = () => {
+    if (
+      crossnoteContainer.isPullingNotebook ||
+      crossnoteContainer.isPushingNotebook
+    ) {
+      return;
+    }
+    crossnoteContainer
+      .pullNotebook({
+        notebook: props.notebook,
+        onAuthFailure: () => {
+          notify({
+            severity: "error",
+            message: t("error/authentication-failed"),
+            duration: 5000,
+          });
+        },
+      })
+      .then(() => {
+        notify({
+          severity: "success",
+          message: t("success/notebook-downloaded"),
+        });
+      })
+      .catch((error) => {
+        console.log(error);
+        // Already said: which note could not be saved first.
+        if (error instanceof NotesNotSavedError) {
+          return;
+        }
+        notify({
+          severity: "error",
+          message: t("error/failed-to-download-notebook"),
+        });
+      });
+  };
+
   return (
     <React.Fragment>
       <SimpleTreeView
@@ -301,13 +403,9 @@ export default function NotebookTreeView(props: Props) {
         >
           <NotebookTreeItem
             itemId={"today-notes"}
+            onKeyDown={onEnter(openToday)}
             label={
-              <LabelRoot
-                onClick={() => {
-                  crossnoteContainer.openTodayNote(props.notebook);
-                  props.onCloseDrawer();
-                }}
-              >
+              <LabelRoot onClick={openToday}>
                 <EmojiIcon role="img" aria-label="today-notes">
                   <Emoji emoji={":calendar:"} size={16}></Emoji>
                 </EmojiIcon>
@@ -317,23 +415,9 @@ export default function NotebookTreeView(props: Props) {
           ></NotebookTreeItem>
           <NotebookTreeItem
             itemId={"graph-view"}
+            onKeyDown={onEnter(openGraph)}
             label={
-              <LabelRoot
-                onClick={() => {
-                  crossnoteContainer.addTabNode({
-                    type: "tab",
-                    component: "Graph",
-                    id: "Graph: " + props.notebook.dir,
-                    name: t("general/graph-view"),
-                    config: {
-                      component: "Graph",
-                      singleton: true,
-                      notebookPath: props.notebook.dir,
-                    },
-                  });
-                  props.onCloseDrawer();
-                }}
-              >
+              <LabelRoot onClick={openGraph}>
                 <EmojiIcon role="img" aria-label="todo-notes">
                   <Emoji emoji={":spider_web:"} size={16}></Emoji>
                 </EmojiIcon>
@@ -343,23 +427,9 @@ export default function NotebookTreeView(props: Props) {
           ></NotebookTreeItem>
           <NotebookTreeItem
             itemId={"all-notes"}
+            onKeyDown={onEnter(openNotes)}
             label={
-              <LabelRoot
-                onClick={() => {
-                  crossnoteContainer.addTabNode({
-                    type: "tab",
-                    component: "Notes",
-                    id: "Notes: " + props.notebook.dir,
-                    name: props.notebook.name,
-                    config: {
-                      component: "Notes",
-                      singleton: true,
-                      notebookPath: props.notebook.dir,
-                    },
-                  });
-                  props.onCloseDrawer();
-                }}
-              >
+              <LabelRoot onClick={openNotes}>
                 <EmojiIcon role="img" aria-label="Notes">
                   <Emoji
                     emoji={":notebook_with_decorative_cover:"}
@@ -375,23 +445,9 @@ export default function NotebookTreeView(props: Props) {
               <NotebookTreeItem
                 key={`${note.notebookPath}/${note.filePath}`}
                 itemId={`${note.notebookPath}/${note.filePath}`}
+                onKeyDown={onEnter(openFavourite(note))}
                 label={
-                  <LabelRoot
-                    onClick={() => {
-                      crossnoteContainer.addTabNode({
-                        type: "tab",
-                        component: "Note",
-                        config: {
-                          component: "Note",
-                          singleton: false,
-                          noteFilePath: note.filePath,
-                          notebookPath: props.notebook.dir,
-                        },
-                        name: note.title,
-                      });
-                      props.onCloseDrawer();
-                    }}
-                  >
+                  <LabelRoot onClick={openFavourite(note)}>
                     <EmojiIcon role="img" aria-label="quick-access">
                       <Emoji emoji=":memo:" size={16}></Emoji>
                     </EmojiIcon>
@@ -410,10 +466,9 @@ export default function NotebookTreeView(props: Props) {
           })}
           <NotebookTreeItem
             itemId={"settings"}
+            onKeyDown={onEnter(openSettings)}
             label={
-              <LabelRoot
-                onClick={() => setNotebookConfigurationDialogOpen(true)}
-              >
+              <LabelRoot onClick={openSettings}>
                 <EmojiIcon role="img" aria-label={t("general/Settings")}>
                   <Emoji emoji={":gear:"} size={16}></Emoji>
                 </EmojiIcon>
@@ -424,8 +479,9 @@ export default function NotebookTreeView(props: Props) {
           {props.notebook.gitURL && (
             <NotebookTreeItem
               itemId={"upload"}
+              onKeyDown={onEnter(upload)}
               label={
-                <LabelRoot onClick={() => setPushNotebookDialogOpen(true)}>
+                <LabelRoot onClick={upload}>
                   <EmojiIcon role="img" aria-label={t("general/Upload")}>
                     <Emoji emoji={":outbox_tray:"} size={16}></Emoji>
                   </EmojiIcon>
@@ -439,12 +495,9 @@ export default function NotebookTreeView(props: Props) {
           {props.notebook.isLocal && (
             <NotebookTreeItem
               itemId={"reload"}
+              onKeyDown={onEnter(reload)}
               label={
-                <LabelRoot
-                  onClick={() =>
-                    crossnoteContainer.refreshNotebook(props.notebook)
-                  }
-                >
+                <LabelRoot onClick={reload}>
                   <EmojiIcon role="img" aria-label={t("general/refresh")}>
                     <Emoji
                       emoji={":arrows_counterclockwise:"}
@@ -461,44 +514,10 @@ export default function NotebookTreeView(props: Props) {
           {props.notebook.gitURL && (
             <NotebookTreeItem
               itemId={"download"}
+              onKeyDown={onEnter(download)}
               label={
                 <LabelRoot
-                  onClick={() => {
-                    if (
-                      crossnoteContainer.isPullingNotebook ||
-                      crossnoteContainer.isPushingNotebook
-                    ) {
-                      return;
-                    }
-                    crossnoteContainer
-                      .pullNotebook({
-                        notebook: props.notebook,
-                        onAuthFailure: () => {
-                          notify({
-                            severity: "error",
-                            message: t("error/authentication-failed"),
-                            duration: 5000,
-                          });
-                        },
-                      })
-                      .then(() => {
-                        notify({
-                          severity: "success",
-                          message: t("success/notebook-downloaded"),
-                        });
-                      })
-                      .catch((error) => {
-                        console.log(error);
-                        // Already said: which note could not be saved first.
-                        if (error instanceof NotesNotSavedError) {
-                          return;
-                        }
-                        notify({
-                          severity: "error",
-                          message: t("error/failed-to-download-notebook"),
-                        });
-                      });
-                  }}
+                  onClick={download}
                   sx={
                     crossnoteContainer.isPullingNotebook ||
                     crossnoteContainer.isPushingNotebook
