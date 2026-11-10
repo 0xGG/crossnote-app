@@ -123,23 +123,6 @@ describe("guardLayoutDrags", () => {
     expect(layoutSaw).not.toHaveBeenCalled();
   });
 
-  it("tells a tab strip its drag is over after other drops", () => {
-    vi.useFakeTimers();
-    release = guardLayoutDrags(root);
-    const ended = vi.fn();
-    strip.addEventListener("dragend", ended);
-    editor.dispatchEvent(dragEvent("drop", "some text"));
-    vi.runAllTimers();
-    expect(ended).toHaveBeenCalledTimes(1);
-
-    // A tab's own drop ends its drag by itself.
-    dragTab();
-    editor.dispatchEvent(dragEvent("drop", LAYOUT_DRAG_TEXT));
-    vi.runAllTimers();
-    expect(ended).toHaveBeenCalledTimes(1);
-    strip.removeEventListener("dragend", ended);
-  });
-
   it("stops guarding once released", () => {
     guardLayoutDrags(root)();
     dragTab();

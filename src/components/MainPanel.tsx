@@ -10,7 +10,6 @@ import { ThemeProvider, darken, styled } from "@mui/material/styles";
 import {
   type Action,
   Actions,
-  type IKeyMap,
   type ILayoutApi,
   type ITabRenderValues,
   Layout,
@@ -173,11 +172,6 @@ const tabIcons: Record<TabNodeComponent, string> = {
   Notes: ":notebook_with_decorative_cover:",
   Graph: ":spider_web:",
 };
-
-// The app has no borders to close with Escape, and the layout listens for it
-// on the whole page with a handler that throws on key events without a key,
-// which a browser's autofill can send.
-const layoutKeyMap: IKeyMap = { closeOverlayBorder: undefined };
 
 export function MainPanel() {
   const container = useRef<HTMLDivElement>(null);
@@ -367,7 +361,6 @@ export function MainPanel() {
         // resizes while dragging by default and warns that this turns choppy
         // when tabs are slow to draw, as editors and the graph are.
         realtimeResize={false}
-        keyMap={layoutKeyMap}
         i18nTranslator={i18nTranslator}
       ></Layout>
       <CloseUnsavedNoteDialog

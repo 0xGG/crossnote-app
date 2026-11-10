@@ -66,16 +66,6 @@ export function guardLayoutDrags(root: HTMLElement): () => void {
       // overlay must not write its text into the pane it lands on.
       (event as EditorDragEvent).codemirrorIgnore = true;
       event.preventDefault();
-    } else {
-      // FlexLayout counts every drag that comes in, but forgets the count
-      // only when a drag of its own ends; after a drop of text or files it
-      // would show the next tab dragged no overlay or outline. A tab strip
-      // told that its drag has ended clears it.
-      setTimeout(() =>
-        root
-          .querySelector(".flexlayout__tabset_tabbar_outer")
-          ?.dispatchEvent(new Event("dragend", { bubbles: true })),
-      );
     }
     endTabDrag();
   };
