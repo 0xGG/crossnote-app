@@ -75,6 +75,46 @@ describe("printPreview", () => {
     expect(element.style.position).toBe("relative");
   });
 
+  // Where print() returns with the dialog still open, the note has to stay
+  // over the page until the dialog closes, or the dialog prints the app.
+  it("puts the page back once a dialog that does not hold the page up closes", async () => {
+    vi.spyOn(window, "print").mockImplementation(() => {
+      window.dispatchEvent(new Event("beforeprint"));
+    });
+    const element = noteElement();
+    const banner = document.createElement("div");
+    let done = false;
+    const printed = printPreview(element, banner, Promise.resolve()).then(
+      () => (done = true),
+    );
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    expect(done).toBe(false);
+    expect(element.style.position).toBe("absolute");
+    expect(banner.isConnected).toBe(true);
+
+    window.dispatchEvent(new Event("afterprint"));
+    await printed;
+    expect(element.style.position).toBe("relative");
+    expect(banner.isConnected).toBe(false);
+  });
+
+  it("takes the first click on the page for the dialog's end should afterprint not come", async () => {
+    vi.spyOn(window, "print").mockImplementation(() => {
+      window.dispatchEvent(new Event("beforeprint"));
+    });
+    const element = noteElement();
+    const printed = printPreview(
+      element,
+      document.createElement("div"),
+      Promise.resolve(),
+    );
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    expect(element.style.position).toBe("absolute");
+    window.dispatchEvent(new Event("pointerdown"));
+    await printed;
+    expect(element.style.position).toBe("relative");
+  });
+
   it("prints what is drawn once it has waited previewTimeout for the rest", async () => {
     vi.useFakeTimers();
     const print = vi.spyOn(window, "print").mockImplementation(() => {});

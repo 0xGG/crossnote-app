@@ -138,7 +138,7 @@ test("prints a note with its local images and page breaks", async ({
           (pre) => pre.scrollWidth <= pre.clientWidth,
         ),
         // Nothing on the page is printed but the note: not the app, and not
-        // the note menu, which is still closing then.
+        // the note menu, gone by then.
         shown: Array.from(document.body.children)
           .filter((element) => getComputedStyle(element).display !== "none")
           .map((element) =>
@@ -163,6 +163,32 @@ test("prints a note with its local images and page breaks", async ({
       codeFits: [true, true],
       shown: ["the note"],
     });
+});
+
+test("says so when a note cannot be printed, and puts the page back", async ({
+  app,
+  page,
+}) => {
+  await app.open();
+  await app.openNotes();
+  await app.createNote();
+  await app.setEditorText("Not printed.\n");
+  // The browser refuses to print, as one may in a frame or under a policy.
+  await page.evaluate(() => {
+    window.print = () => {
+      throw new Error("Printing is not allowed here");
+    };
+  });
+  await page.getByRole("button", { name: "Note menu" }).click();
+  await page.getByRole("button", { name: "Print / Export PDF" }).click();
+
+  await expect(
+    page.getByRole("alert").filter({ hasText: "Failed to print the note" }),
+  ).toBeVisible({ timeout: 15000 });
+  await expect(page.locator(".printed-note")).toHaveCount(0);
+  await expect(page.getByText("Please wait")).toBeHidden();
+  await app.modeButton("Preview").click();
+  await expect(app.modeOn).toHaveAccessibleName("Preview");
 });
 
 test("colours the preview in the theme chosen in the settings, and the editor's stylesheet with it", async ({
