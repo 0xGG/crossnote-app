@@ -30,7 +30,7 @@ export const zhCN = {
     "general/no-aliases": "没有别名",
     "general/add-an-alias": "添加一个别名",
     "general/Untitled": "无标题",
-    "general/Print": "打印",
+    "general/Print": "打印 / 导出 PDF",
     "general/Share": "分享",
     "Editor": "编辑者",
     "general/math-preview": "数学预览",

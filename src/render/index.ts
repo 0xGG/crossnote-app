@@ -28,12 +28,10 @@ import { sanitizeHTML } from "./sanitize";
 // attribute, the 0-based line they start on (./markdown/lines.ts), and a
 // reference keeps the lines of its block (lib/reference.ts).
 //
-// The page's Content-Security-Policy (index.html) still lets scripts run
-// inline, through eval and from the CDNs the widgets loaded. The target, once
-// the diagram libraries come from the app's own bundle, is a policy sent as
-// a header whose scripts come from the site alone ('self', without
-// 'unsafe-inline' or 'unsafe-eval'), with object-src 'none' and base-uri
-// 'self'.
+// The page's Content-Security-Policy (sent as a header, site-headers.ts)
+// runs scripts from the site alone: none inline, no event handler
+// attributes, nothing through eval. It backs the sanitizer up rather than
+// standing in for it.
 
 export interface RenderedMarkdown {
   /** The note's HTML, not yet sanitized. */
@@ -48,9 +46,12 @@ export interface MountedPreview {
   /**
    * Settles once the note is drawn: its HTML in the element, finished, its
    * images read from the notebook, and its code blocks drawn, each given up
-   * to 10 seconds before it shows that it took too long. Rejects when the
-   * note cannot be drawn into the element at all (the markdown stage, or
-   * putting its HTML in, fails), and the element then shows why; a block
+   * to 10 seconds from its turn (a mermaid diagram waits for the one before
+   * it) and all of them up to 30 seconds, before a diagram shows that it
+   * took too long (one still waiting its turn as well) and code still being
+   * highlighted stays as it was written. Rejects when
+   * the note cannot be drawn into the element at all (the markdown stage,
+   * or putting its HTML in, fails), and the element then shows why; a block
    * that fails shows its error in its place instead.
    */
   done: Promise<void>;

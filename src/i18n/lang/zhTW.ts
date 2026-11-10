@@ -30,7 +30,7 @@ export const zhTW = {
     "general/no-aliases": "沒有別名",
     "general/add-an-alias": "添加壹個別名",
     "general/Untitled": "無標題",
-    "general/Print": "打印",
+    "general/Print": "列印 / 匯出 PDF",
     "general/Share": "分享",
     "Editor": "編輯者",
     "general/math-preview": "數學預覽",

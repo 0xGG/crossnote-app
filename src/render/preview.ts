@@ -8,6 +8,7 @@ import {
   DrawingContext,
   failedBlock,
   isDarkPreview,
+  previewTimeout,
   startDrawing,
   waitForDrawing,
 } from "./drawing";
@@ -166,9 +167,10 @@ async function resolveImages(
 // What the preview does to the sanitized HTML once it is in the page:
 // code blocks and diagrams, twemoji, links that open notes, and
 // images read from the notebook. Settles once the images are resolved and
-// the code blocks drawn, each given up to drawingTimeout. cleanups gets
-// what disposing of the preview has to undo: the drawings, still under way
-// or done, are disposed of.
+// the code blocks drawn, each given up to drawingTimeout from its turn and
+// all of them up to previewTimeout. cleanups gets what disposing of the
+// preview has to undo: the drawings, still under way or done, are disposed
+// of.
 export async function finishPreview(
   container: HTMLElement,
   note: Note | null,
@@ -178,8 +180,17 @@ export async function finishPreview(
   const drawings = renderCodeFences(container, {
     dark: isDarkPreview(container),
   });
-  const waits = drawings.map((drawing) => waitForDrawing(drawing));
+  let timer: number | undefined;
+  const deadline = new Promise<void>((resolve) => {
+    if (drawings.length) {
+      timer = window.setTimeout(resolve, previewTimeout);
+    }
+  });
+  const waits = drawings.map((drawing) =>
+    waitForDrawing(drawing, undefined, deadline),
+  );
   cleanups.push(() => {
+    window.clearTimeout(timer);
     waits.forEach((wait) => wait.stop());
     drawings.forEach((drawing) => drawing.dispose());
   });
@@ -189,8 +200,12 @@ export async function finishPreview(
     // The emoji stay as text.
   }
   handleLinks(container, note);
-  await Promise.all([
-    resolveImages(container, note, isCurrent),
-    ...waits.map((wait) => wait.settled),
-  ]);
+  try {
+    await Promise.all([
+      resolveImages(container, note, isCurrent),
+      ...waits.map((wait) => wait.settled),
+    ]);
+  } finally {
+    window.clearTimeout(timer);
+  }
 }

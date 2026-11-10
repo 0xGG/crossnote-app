@@ -367,9 +367,10 @@ html .preview.preview a.tag.tag-topic {
     max-height: 100%;
   }
   html .preview.preview code,
-  html .preview.preview pre {
+  html .preview.preview pre,
+  html .preview.preview pre code {
     word-wrap: break-word;
-    white-space: pre;
+    white-space: pre-wrap;
   }
 }
 html .preview.preview img.emoji {

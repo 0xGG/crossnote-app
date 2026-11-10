@@ -30,7 +30,7 @@ export const enUS = {
     "general/no-aliases": "No aliases",
     "general/add-an-alias": "Add an alias",
     "general/Untitled": "Untitled",
-    "general/Print": "Print",
+    "general/Print": "Print / Export PDF",
     "general/Share": "Share",
     "Editor": "Editor",
     "general/math-preview": "Math Preview",

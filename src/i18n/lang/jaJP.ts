@@ -30,7 +30,7 @@ export const jaJP = {
     "general/no-aliases": "エイリアスなし",
     "general/add-an-alias": "エイリアスを追加する",
     "general/Untitled": "無題",
-    "general/Print": "印刷する",
+    "general/Print": "印刷 / PDF 出力",
     "general/Share": "シェア",
     "Editor": "編集者",
     "general/math-preview": "数学プレビュー",

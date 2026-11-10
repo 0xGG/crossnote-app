@@ -122,8 +122,7 @@ export default function NotePopover(props: Props) {
           note,
         });
         try {
-          await preview.done;
-          await printPreview(tempPreviewElement, bannerElement);
+          await printPreview(tempPreviewElement, bannerElement, preview.done);
         } finally {
           preview.dispose();
         }

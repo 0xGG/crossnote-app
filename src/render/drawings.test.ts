@@ -1,8 +1,16 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { Drawing, DrawingContext, startDrawing } from "./drawing";
+import {
+  Drawing,
+  DrawingContext,
+  previewTimeout,
+  startDrawing,
+} from "./drawing";
 import { mountPreview } from "./index";
 
-// One kind of block, drawn by a renderer the tests finish when they say so.
+// One kind of block, drawn by a renderer the tests finish when they say so;
+// another whose blocks each wait their turn behind the one before, as
+// mermaid's do, and never finish.
+let turns: Promise<unknown> = Promise.resolve();
 const drawings: {
   drawing: Drawing;
   context: DrawingContext;
@@ -37,12 +45,32 @@ vi.mock("./diagrams", () => ({
       },
       true,
     ],
+    [
+      /^turn$/,
+      () => {
+        const before = turns;
+        let release = () => {};
+        turns = new Promise<void>((resolve) => (release = resolve));
+        return startDrawing(
+          document.createElement("div"),
+          async (signal, begin) => {
+            signal.addEventListener("abort", () => release());
+            await before;
+            begin();
+            await new Promise(() => {});
+          },
+          { waitsItsTurn: true },
+        );
+      },
+      true,
+    ],
   ],
 }));
 
 const note = "Before.\n\n```test\nA\n```\n\n```test\nB\n```\n";
 
 afterEach(() => {
+  turns = Promise.resolve();
   drawings.length = 0;
   document.body.innerHTML = "";
   vi.useRealTimers();
@@ -84,6 +112,30 @@ describe("mountPreview with blocks drawn later", () => {
     drawings.forEach(({ finish }) => finish());
     mountPreview(element, "After.\n", { note: null });
     expect(drawings.map(({ released }) => released())).toEqual([true, true]);
+  });
+
+  it("gives up on every block not drawn once it has waited for them all for previewTimeout", async () => {
+    // Each block's time counts from its turn: four that take too long
+    // would otherwise hold the preview up for four times a block's time.
+    vi.useFakeTimers();
+    const element = document.createElement("div");
+    document.body.appendChild(element);
+    const preview = mountPreview(
+      element,
+      "```turn\nA\n```\n\n```turn\nB\n```\n\n```turn\nC\n```\n\n```turn\nD\n```\n",
+      { note: null },
+    );
+    let settled = false;
+    preview.done.then(() => (settled = true));
+    await vi.advanceTimersByTimeAsync(previewTimeout - 1);
+    expect(settled).toBe(false);
+    await vi.advanceTimersByTimeAsync(1);
+    expect(settled).toBe(true);
+    expect(element.textContent).toContain(
+      "this block took more than 30 seconds to draw",
+    );
+    // Neither the limit's timer nor the blocks' own are left.
+    expect(vi.getTimerCount()).toBe(0);
   });
 
   it("gives up on a block that takes too long, and draws the rest", async () => {
