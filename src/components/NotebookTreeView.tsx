@@ -17,9 +17,7 @@ import { Note, Notes } from "../lib/note";
 import { Notebook } from "../lib/notebook";
 import { NotesNotSavedError } from "../lib/noteSaver";
 import { notify } from "../lib/notifications";
-import ConfigureNotebookDialog from "./ConfigureNotebookDialog";
 import { Emoji } from "./EmojiWrapper";
-import PushNotebookDialog from "./PushNotebookDialog";
 
 // Every tree item here passed the same four slot classes, so those four rules
 // move onto one styled component and address the slots by their own names.
@@ -84,9 +82,16 @@ const EmojiIcon = styled("span")({
   position: "relative",
 });
 
+// What is expanded and which dialogs are open are the page's to keep: the
+// tree is drawn anew when the width of the screen changes the drawer it is
+// in, and an open dialog, with what was typed into it, goes on.
 interface Props {
   notebook: Notebook;
   onCloseDrawer: () => void;
+  expanded: string[];
+  onExpandedChange: (expanded: string[]) => void;
+  onOpenSettings: () => void;
+  onOpenUpload: () => void;
 }
 function ExpandIcon() {
   const { t } = useTranslation();
@@ -133,11 +138,7 @@ function onEnter(action: () => void) {
 }
 
 export default function NotebookTreeView(props: Props) {
-  const [expanded, setExpanded] = useState<string[]>([]);
-  const [notebookConfigurationDialogOpen, setNotebookConfigurationDialogOpen] =
-    useState<boolean>(false);
-  const [pushNotebookDialogOpen, setPushNotebookDialogOpen] =
-    useState<boolean>(false);
+  const { onExpandedChange } = props;
   const [favoritedNotes, setFavoritedNotes] = useState<Notes>({});
   const crossnoteContainer = CrossnoteContainer.useContainer();
   const { t } = useTranslation();
@@ -183,10 +184,10 @@ export default function NotebookTreeView(props: Props) {
             console.error(error);
           });
 
-        setExpanded(nodes);
+        onExpandedChange(nodes);
       }
     },
-    [props.notebook, refreshQuickAccessNotes],
+    [props.notebook, refreshQuickAccessNotes, onExpandedChange],
   );
 
   // Emitter
@@ -309,8 +310,8 @@ export default function NotebookTreeView(props: Props) {
     });
     props.onCloseDrawer();
   };
-  const openSettings = () => setNotebookConfigurationDialogOpen(true);
-  const upload = () => setPushNotebookDialogOpen(true);
+  const openSettings = props.onOpenSettings;
+  const upload = props.onOpenUpload;
   const reload = () => crossnoteContainer.refreshNotebook(props.notebook);
   const download = () => {
     if (
@@ -357,7 +358,7 @@ export default function NotebookTreeView(props: Props) {
           collapseIcon: CollapseIcon,
           endIcon: EndIcon,
         }}
-        expandedItems={expanded}
+        expandedItems={props.expanded}
         onExpandedItemsChange={handleChange}
         style={{ width: "100%" }}
       >
@@ -564,16 +565,6 @@ export default function NotebookTreeView(props: Props) {
         */}
         </NotebookTreeItem>
       </SimpleTreeView>
-      <ConfigureNotebookDialog
-        open={notebookConfigurationDialogOpen}
-        onClose={() => setNotebookConfigurationDialogOpen(false)}
-        notebook={props.notebook}
-      ></ConfigureNotebookDialog>
-      <PushNotebookDialog
-        notebook={props.notebook}
-        open={pushNotebookDialogOpen}
-        onClose={() => setPushNotebookDialogOpen(false)}
-      ></PushNotebookDialog>
     </React.Fragment>
   );
 }
