@@ -1,6 +1,6 @@
-import { Model, type IJsonModel } from "flexlayout-react";
+import { Actions, Model, type IJsonModel } from "flexlayout-react";
 import { describe, expect, it } from "vitest";
-import { tabsetForNewTab } from "./tabset";
+import { notebookInFront, tabsetForNewTab } from "./tabset";
 
 type RowJson = IJsonModel["layout"];
 type ChildJson = RowJson["children"][number];
@@ -40,5 +40,61 @@ describe("tabsetForNewTab", () => {
     };
     const model = modelOf(row(row(tabset("a"), tabset("b"))), [border]);
     expect(tabsetForNewTab(model)?.getId()).toBe("a");
+  });
+});
+
+describe("notebookInFront", () => {
+  // Two panes, each with a tab of a notebook of its own in front.
+  const twoNotebooks = (active: "left" | "right") =>
+    Model.fromJson({
+      global: {},
+      borders: [],
+      layout: {
+        type: "row",
+        children: [
+          {
+            type: "tabset",
+            id: "left",
+            active: active === "left",
+            children: [
+              {
+                type: "tab",
+                component: "Notes",
+                config: { component: "Notes", notebookPath: "/notebooks/a" },
+              },
+            ],
+          },
+          {
+            type: "tabset",
+            id: "right",
+            active: active === "right",
+            selected: 1,
+            children: [
+              {
+                type: "tab",
+                component: "Note",
+                config: { component: "Note", notebookPath: "/notebooks/b" },
+              },
+              {
+                type: "tab",
+                component: "Graph",
+                config: { component: "Graph", notebookPath: "/notebooks/c" },
+              },
+            ],
+          },
+        ],
+      },
+    });
+
+  it("takes the tab in front in the active pane, not the first pane's", () => {
+    expect(notebookInFront(twoNotebooks("left"))).toBe("/notebooks/a");
+    expect(notebookInFront(twoNotebooks("right"))).toBe("/notebooks/c");
+  });
+
+  it("has none for a tab of no notebook's, or no active pane", () => {
+    expect(notebookInFront(modelOf(row(tabset("a"))))).toBeUndefined();
+    const model = twoNotebooks("left");
+    model.doAction(Actions.setActiveTabset(undefined));
+    expect(notebookInFront(model)).toBeUndefined();
   });
 });

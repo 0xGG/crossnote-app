@@ -334,6 +334,7 @@ export function MainPanel() {
         onAction={onAction}
         onModelChange={(model, action) => {
           crossnoteContainer.saveCurrentLayoutModel();
+          crossnoteContainer.followLayout(model);
           // The factory reads a tab's config, but the layout calls it again
           // only when it is rendered anew or told to redraw, not when the
           // config changes: a note opened again at another reference would

@@ -1,5 +1,6 @@
 import type { Page } from "@playwright/test";
 import { expect, test } from "./fixtures";
+import { layoutOf, row, settingsTab, tabset } from "./layouts";
 
 // The notebook tree in the sidebar lists a notebook's favourite notes, each
 // with the number of notes that refer to it.
@@ -88,6 +89,40 @@ test("draws the sidebar once, beside the page or over it on a narrow screen", as
   await expect(drafts).toBeHidden();
 });
 
+test("lists a notebook's favourites after its other rows, and marks the notebook in front", async ({
+  app,
+}) => {
+  // A page that starts with no notebook's tab in front marks no notebook.
+  await app.seedLayout(layoutOf(row(tabset(settingsTab))));
+  await app.open();
+  const drafts = app.notebook("Drafts");
+  await expect(app.plainTextSourceCodeSwitch).toBeVisible();
+  await expect(drafts).not.toHaveAttribute("aria-current", "true");
+  await app.openNotes();
+  // The favourites come in once the notes are read: last, so that a click
+  // aimed at Settings before then does not land on one that moved there.
+  await expect(
+    drafts.getByRole("treeitem", { name: /quick-access README/ }),
+  ).toBeVisible();
+  const rows = await drafts
+    .getByRole("group")
+    .getByRole("treeitem")
+    .allInnerTexts();
+  expect(rows.map((row) => row.trim().split("\n")[0])).toEqual([
+    "Today",
+    "Graph view",
+    "Notes",
+    "Settings",
+    "README",
+  ]);
+
+  // The notebook of the tab in front, and still so with a tab of no
+  // notebook's in front.
+  await expect(drafts).toHaveAttribute("aria-current", "true");
+  await app.openSettings();
+  await expect(drafts).toHaveAttribute("aria-current", "true");
+});
+
 test("forgets edits to a notebook's settings that were cancelled", async ({
   app,
   page,
@@ -95,9 +130,7 @@ test("forgets edits to a notebook's settings that were cancelled", async ({
   await app.open();
   const drafts = app.notebook("Drafts");
   await drafts.getByRole("button").first().click();
-  // The favourites come in once the notes are read, above Settings, and push
-  // it down a row: a click aimed at Settings before then can land on the
-  // favourite that moves into its place.
+  // The favourites come in once the notes are read.
   await expect(
     drafts.getByRole("treeitem", { name: /quick-access README/ }),
   ).toBeVisible();

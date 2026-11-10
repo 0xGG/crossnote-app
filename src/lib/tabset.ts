@@ -1,4 +1,11 @@
-import { Model, TabSetNode } from "flexlayout-react";
+import { Model, TabNode, TabSetNode } from "flexlayout-react";
+
+// The notebook of the tab in front in the layout's active pane, if that tab
+// is one of a notebook's: a note, its notes or its graph.
+export function notebookInFront(model: Model): string | undefined {
+  const tab = model.getActiveTabset()?.getSelectedNode();
+  return tab instanceof TabNode ? tab.getConfig()?.notebookPath : undefined;
+}
 
 // The tabset a new tab opens in when none is active, as happens once the
 // active tabset has been closed. Tabs have always landed in the root row's

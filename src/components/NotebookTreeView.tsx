@@ -43,6 +43,10 @@ const NotebookTreeItem = styled(TreeItem)(({ theme }) => ({
       fontWeight: theme.typography.fontWeightRegular,
     },
   },
+  // The notebook of the tab in front.
+  [`&[aria-current="true"] > .${treeItemClasses.content}`]: {
+    backgroundColor: theme.palette.action.selected,
+  },
   [`& > .${treeItemClasses.groupTransition}`]: {
     marginLeft: 0,
   },
@@ -364,6 +368,11 @@ export default function NotebookTreeView(props: Props) {
       >
         <NotebookTreeItem
           itemId={"notes"}
+          aria-current={
+            crossnoteContainer.currentNotebookPath === props.notebook.dir
+              ? "true"
+              : undefined
+          }
           label={
             <LabelRoot
               onClick={() => {
@@ -441,30 +450,6 @@ export default function NotebookTreeView(props: Props) {
               </LabelRoot>
             }
           ></NotebookTreeItem>
-          {Object.values(favoritedNotes).map((note) => {
-            return (
-              <NotebookTreeItem
-                key={`${note.notebookPath}/${note.filePath}`}
-                itemId={`${note.notebookPath}/${note.filePath}`}
-                onKeyDown={onEnter(openFavourite(note))}
-                label={
-                  <LabelRoot onClick={openFavourite(note)}>
-                    <EmojiIcon role="img" aria-label="quick-access">
-                      <Emoji emoji=":memo:" size={16}></Emoji>
-                    </EmojiIcon>
-                    <FavouriteTitle>{note.title}</FavouriteTitle>
-                    <ReferenceCount
-                      size={"small"}
-                      variant={"outlined"}
-                      label={props.notebook.referenceMap.getReferredByNotesCount(
-                        note.filePath,
-                      )}
-                    ></ReferenceCount>
-                  </LabelRoot>
-                }
-              ></NotebookTreeItem>
-            );
-          })}
           <NotebookTreeItem
             itemId={"settings"}
             onKeyDown={onEnter(openSettings)}
@@ -536,6 +521,32 @@ export default function NotebookTreeView(props: Props) {
               }
             ></NotebookTreeItem>
           )}
+          {/* The favourites come in once the notes are read, last, so that
+              the rows above them stay where they are. */}
+          {Object.values(favoritedNotes).map((note) => {
+            return (
+              <NotebookTreeItem
+                key={`${note.notebookPath}/${note.filePath}`}
+                itemId={`${note.notebookPath}/${note.filePath}`}
+                onKeyDown={onEnter(openFavourite(note))}
+                label={
+                  <LabelRoot onClick={openFavourite(note)}>
+                    <EmojiIcon role="img" aria-label="quick-access">
+                      <Emoji emoji=":memo:" size={16}></Emoji>
+                    </EmojiIcon>
+                    <FavouriteTitle>{note.title}</FavouriteTitle>
+                    <ReferenceCount
+                      size={"small"}
+                      variant={"outlined"}
+                      label={props.notebook.referenceMap.getReferredByNotesCount(
+                        note.filePath,
+                      )}
+                    ></ReferenceCount>
+                  </LabelRoot>
+                }
+              ></NotebookTreeItem>
+            );
+          })}
           {/*<NotebookTreeItem
           itemId={"conflicted-notes"}
           label={

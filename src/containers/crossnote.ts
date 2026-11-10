@@ -26,7 +26,7 @@ import { Notebook } from "../lib/notebook";
 import { NotesNotSavedError, flushNotes } from "../lib/noteSaver";
 import { failureMessage, notify } from "../lib/notifications";
 import { CrossnoteTabNode } from "../lib/tabNode";
-import { tabsetForNewTab } from "../lib/tabset";
+import { notebookInFront, tabsetForNewTab } from "../lib/tabset";
 import { getTodayName } from "../utilities/utils";
 
 export enum SelectedSectionType {
@@ -112,6 +112,18 @@ function useCrossnoteContainer(initialState: InitialState) {
   const [layoutModel, setLayoutModel] = useState<Model>(() =>
     Model.fromJson(getlayoutModelFromLocalStrorage()),
   );
+  // The notebook the sidebar marks as the current one: that of the tab in
+  // front in the active pane, or of the last such tab that had one, a tab of
+  // no notebook's (the settings) leaving it as it was.
+  const [currentNotebookPath, setCurrentNotebookPath] = useState<
+    string | undefined
+  >(() => notebookInFront(layoutModel));
+  const followLayout = useCallback((model: Model) => {
+    const notebookPath = notebookInFront(model);
+    if (notebookPath) {
+      setCurrentNotebookPath(notebookPath);
+    }
+  }, []);
 
   const getNotebookAtPath = useCallback(
     (notebookPath: string) => {
@@ -1055,6 +1067,8 @@ favorited: true
     getNotebookAtPath,
     getStatus,
     saveCurrentLayoutModel,
+    currentNotebookPath,
+    followLayout,
   };
 }
 
