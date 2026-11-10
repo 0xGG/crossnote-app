@@ -9,7 +9,7 @@ import {
 } from "@mui/material";
 import { styled } from "@mui/material/styles";
 import { TrashCan } from "mdi-material-ui";
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { isFinishingEnter } from "../lib/keys";
 
@@ -36,6 +36,7 @@ interface Props {
 export function NoteAliasPopover(props: Props) {
   const { t } = useTranslation();
   const [alias, setAlias] = useState<string>("");
+  const input = useRef<HTMLInputElement>(null);
 
   const addAlias = useCallback(
     (alias: string) => {
@@ -58,13 +59,17 @@ export function NoteAliasPopover(props: Props) {
       anchorEl={props.anchorElement}
       keepMounted
       onClose={props.onClose}
+      // Kept on the page, the box is there before the popover opens, and the
+      // popover puts the focus on itself as it opens: the box takes it once
+      // the popover is in place.
+      slotProps={{ transition: { onEntered: () => input.current?.focus() } }}
     >
       <List>
         <AliasTextFieldItem>
           <TextField
             placeholder={t("general/add-an-alias")}
             fullWidth={true}
-            autoFocus={true}
+            inputRef={input}
             // Read on keydown: an Enter that confirms an input method's
             // candidate ends in a keyup like any other Enter.
             onKeyDown={(event) => {

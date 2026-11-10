@@ -217,6 +217,18 @@ test("never gives a new note the name of one that exists", async ({
   await expect(kept).toContainText("Worth keeping");
 });
 
+test("puts the caret in the alias box as it opens", async ({ app, page }) => {
+  await app.createNote();
+  await page.getByRole("button", { name: "Note menu" }).click();
+  await page.getByRole("button", { name: "Edit note alias" }).click();
+  // Each of the note's menus has an alias box of its own, kept on the page.
+  const box = page.getByPlaceholder("Add an alias").filter({ visible: true });
+  await expect(box).toBeFocused();
+  await page.keyboard.type("Typed at once");
+  await page.keyboard.press("Enter");
+  await expect(page.getByText("Typed at once", { exact: true })).toBeVisible();
+});
+
 test("lists a note's aliases in each of its menus", async ({ app, page }) => {
   const aliasPopover = page
     .getByRole("presentation")
@@ -375,4 +387,50 @@ test("says so, and keeps the note where it was, when it is moved under another n
   await expect(app.tab(name)).toBeVisible();
   await app.selectTab("Drafts");
   await expect(app.noteCards.filter({ hasText: `${name}.md` })).toBeVisible();
+});
+
+// Enter in the dialog moves the note as Save does. A move that fails at once
+// closes the dialog before the key is done with, and the menu button the
+// focus goes back to must not take the rest of it and open the menu again
+// over the message.
+test("says so, and opens nothing else, when a move by Enter fails", async ({
+  app,
+  page,
+}) => {
+  await app.createNote();
+  await expect(app.noteTitle).not.toHaveValue("");
+  await page.getByRole("button", { name: "Note menu" }).click();
+  await page.getByRole("button", { name: "Change file path" }).click();
+  const dialog = page.getByRole("dialog");
+  await dialog.getByRole("textbox").fill("README.md/child");
+  // Whether the rest of the key goes on to the menu button depends on how
+  // soon the move fails; whether the dialog kept the key does not.
+  await page.evaluate(() =>
+    document.addEventListener(
+      "keydown",
+      (event) => {
+        if (event.key === "Enter") {
+          (window as any).enterKept = event.defaultPrevented;
+        }
+      },
+      { once: true },
+    ),
+  );
+  await dialog.getByRole("textbox").press("Enter");
+  expect(await page.evaluate(() => (window as any).enterKept)).toBe(true);
+
+  // On the page, if hidden from assistive technology by a menu over it...
+  const message = page
+    .getByRole("alert", { includeHidden: true })
+    .filter({ hasText: "Failed to change file path" });
+  await expect(message).toBeVisible();
+  // ...which there is not.
+  await expect(dialog).toBeHidden();
+  await expect(
+    page.getByRole("button", { name: "Change file path" }),
+  ).toBeHidden();
+  await expect(page.getByRole("alert")).toHaveText(
+    "Failed to change file path",
+  );
+  await expect(page.getByRole("button", { name: "Note menu" })).toBeFocused();
 });
