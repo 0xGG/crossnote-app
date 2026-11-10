@@ -42,19 +42,22 @@ interface Setting {
 
 // Front matter opens on the first line and closes on a later one, each
 // nothing but three dashes. A rule of four dashes, or one with text after
-// it, is the note's text.
+// it, is the note's text. Lines end as a file's lines do anywhere: \n, \r\n,
+// or \r alone, as older Macs wrote them and the preview reads them.
 function findBlock(text: string): Block | null {
-  const open = /^---[ \t]*(\r?\n)/.exec(text);
+  const open = /^---[ \t]*(\r\n|\r|\n)/.exec(text);
   if (!open) {
     return null;
   }
   const lines: string[] = [];
   let start = open[0].length;
+  const lineEnd = /\r\n|\r|\n/g;
   while (start < text.length) {
-    const newline = text.indexOf("\n", start);
-    const end = newline === -1 ? text.length : newline + 1;
+    lineEnd.lastIndex = start;
+    const found = lineEnd.exec(text);
+    const end = found ? found.index + found[0].length : text.length;
     const line = text.slice(start, end);
-    if (/^---[ \t]*\r?\n?$/.test(line)) {
+    if (/^---[ \t]*(\r\n|\r|\n)?$/.test(line)) {
       return {
         open: open[0],
         lines,
@@ -75,7 +78,9 @@ function findBlock(text: string): Block | null {
 function readMapping(lines: string[]): Mapping | null | undefined {
   let value: unknown;
   try {
-    value = YAML.parse(lines.join(""));
+    // YAML is read line by line, and the lines read from the file may end
+    // in \r alone.
+    value = YAML.parse(lines.join("").replace(/\r\n?/g, "\n"));
   } catch (error) {
     return undefined;
   }
@@ -132,7 +137,7 @@ function splitSettings(
   keys: string[],
 ): { rest: string[]; settings: Setting[] } | null {
   const settingLine = new RegExp(
-    `^(["']?)(${keys.join("|")})\\1[ \\t]*:(?:[ \\t]|\\r?\\n|$)`,
+    `^(["']?)(${keys.join("|")})\\1[ \\t]*:(?:[ \\t]|\\r|\\n|$)`,
   );
   const rest: string[] = [];
   const settings: Setting[] = [];
@@ -146,9 +151,9 @@ function splitSettings(
       blank = [];
       setting = { key: match[2], lines: [line], value: undefined };
       settings.push(setting);
-    } else if (setting && /^[ \t]*\r?\n?$/.test(line)) {
+    } else if (setting && /^[ \t]*(\r\n|\r|\n)?$/.test(line)) {
       blank.push(line);
-    } else if (setting && /^([ \t]|-([ \t]|\r?\n|$))/.test(line)) {
+    } else if (setting && /^([ \t]|-([ \t]|\r|\n|$))/.test(line)) {
       // Indented, or a list item, which YAML lets start at the key's own
       // indentation.
       setting.lines.push(...blank, line);
@@ -348,14 +353,24 @@ export function writeNoteText(
     }
   }
 
-  const before = previous
-    ? (readFrontMatter(previous, NOTE_SETTINGS).split?.settings ?? [])
-    : [];
+  const previousFrontMatter = previous
+    ? readFrontMatter(previous, NOTE_SETTINGS)
+    : null;
+  const before = previousFrontMatter?.split?.settings ?? [];
   const order = [
     ...before.map(({ key }) => key).filter((key) => values.has(key)),
     ...[...values.keys()].filter((key) => !before.some((s) => s.key === key)),
   ];
-  const eol = block ? block.eol : (/\r?\n/.exec(body)?.[0] ?? "\n");
+  // The line ending of the front matter the text has; or else of the text's
+  // own lines, so that the settings end their lines as the rest of what is
+  // written does (the editor gives a note's text back with \n); or else, for
+  // a text of one line, of the front matter the file had (the text an editor
+  // shows has none when it held only settings).
+  const eol =
+    block?.eol ??
+    /\r\n|\r|\n/.exec(body)?.[0] ??
+    previousFrontMatter?.block?.eol ??
+    "\n";
   const written: string[] = [];
   for (const key of order) {
     const value = values.get(key);
@@ -365,7 +380,9 @@ export function writeNoteText(
     const lines = same
       ? same.lines
       : YAML.stringify({ [key]: value }).split(/(?<=\n)/);
-    written.push(...lines.map((line) => line.replace(/\r?\n$/, "") + eol));
+    written.push(
+      ...lines.map((line) => line.replace(/(\r\n|\r|\n)$/, "") + eol),
+    );
   }
 
   if (split) {

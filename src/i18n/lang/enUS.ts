@@ -98,6 +98,7 @@ export const enUS = {
     "error/invalid-git-url-prefix": "Invalid git URL prefix",
     "error/please-resolve-conflicts": "Please resolve conflicts first",
     "error/failed-to-change-file-path": "Failed to change file path",
+    "error/failed-to-print": "Failed to print the note",
     "error/link-outside-notebook": "The link leads outside the notebook",
     "error/link-inside-note": "The link leads inside a note, not a folder",
     "error/failed-to-save-note": "Failed to save the note",

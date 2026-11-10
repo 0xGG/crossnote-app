@@ -94,6 +94,82 @@ describe("writeNoteText", () => {
     );
   });
 
+  // A file whose settings did not change is written back byte for byte,
+  // whatever its lines end with.
+  it.each([
+    ["\\n", "\n"],
+    ["\\r\\n", "\r\n"],
+    ["\\r", "\r"],
+  ])("writes a file with lines ending in %s back as it was", (_, eol) => {
+    const file = ["---", "title: T", "pinned: true", "---", "Body", ""].join(
+      eol,
+    );
+    const { text, settings: read } = readNoteText(file);
+    expect(text).toBe(["---", "title: T", "---", "Body", ""].join(eol));
+    expect(read).toEqual({ pinned: true });
+    expect(writeNoteText(text, [["pinned", true]], file)).toBe(file);
+    // A new setting is written with the file's line ending too.
+    expect(
+      writeNoteText(
+        text,
+        [
+          ["pinned", true],
+          ["favorited", true],
+        ],
+        file,
+      ),
+    ).toBe(
+      [
+        "---",
+        "title: T",
+        "pinned: true",
+        "favorited: true",
+        "---",
+        "Body",
+        "",
+      ].join(eol),
+    );
+  });
+
+  // Front matter that held only settings is not in the text an editor shows:
+  // the settings go back with the line ending it had when the text has no
+  // line ending of its own.
+  it.each([
+    ["\\r", "\r"],
+    ["\\r\\n", "\r\n"],
+  ])(
+    "writes settings back with the line ending of the front matter they came from, %s",
+    (_, eol) => {
+      const file = ["---", "favorited: true", "---", "One line"].join(eol);
+      const { text } = readNoteText(file);
+      expect(text).toBe("One line");
+      expect(
+        writeNoteText(
+          text,
+          [
+            ["favorited", true],
+            ["pinned", true],
+          ],
+          file,
+        ),
+      ).toBe(
+        ["---", "favorited: true", "pinned: true", "---", "One line"].join(eol),
+      );
+    },
+  );
+
+  // The editor gives a note's text back with \n, whatever the file had: the
+  // settings end their lines as that text does, not mixed with it.
+  it("writes settings with the line ending of the text when it has lines", () => {
+    const file = "---\r\nfavorited: true\r\n---\r\nOne\r\nTwo\r\n";
+    expect(
+      writeNoteText("One\nTwo, edited\n", [["favorited", true]], file),
+    ).toBe("---\nfavorited: true\n---\nOne\nTwo, edited\n");
+    // Not edited, the text keeps the file's line endings, and so do they.
+    const { text } = readNoteText(file);
+    expect(writeNoteText(text, [["favorited", true]], file)).toBe(file);
+  });
+
   it("leaves a text without settings to write as it is", () => {
     expect(writeNoteText("---\ntitle: T\n---\nBody", [], null)).toBe(
       "---\ntitle: T\n---\nBody",

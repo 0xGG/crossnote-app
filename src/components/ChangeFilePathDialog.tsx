@@ -106,6 +106,11 @@ export default function ChangeFilePathDialog(props: Props) {
           onChange={(event) => setNewFilePath(event.target.value)}
           onKeyDown={(event) => {
             if (isFinishingEnter(event.nativeEvent)) {
+              // The key is the dialog's alone. A move that fails at once
+              // closes the dialog before the key is done with, and the rest
+              // of it would go to the note's menu button, which has the
+              // focus back by then, and open the menu again over the message.
+              event.preventDefault();
               changeFilePath(newFilePath);
             }
           }}

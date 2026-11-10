@@ -3,6 +3,7 @@ import * as git from "isomorphic-git";
 import path from "path-browserify";
 // import { isFileAnImage } from "../utilities/image";
 import { findLinks } from "../render/links";
+import { decodeLinkPath, leadsToNote } from "../render/markdown/linkTargets";
 import { NOTE_SETTINGS, readNoteText, writeNoteText } from "./frontMatter";
 import { fs, pfs } from "./fs";
 import { Mentions, Note, NoteConfig, Notes } from "./note";
@@ -151,23 +152,19 @@ export class Notebook {
         );
       }
     };
-    // A wiki link or a markdown link to a web address is not a note's, and a
-    // markdown link is one only when it names a .md file and has words.
+    // A link counts where the preview opens a note for it (leadsToNote),
+    // and a markdown link only when it names a .md file and has words. Its
+    // path is read as the preview reads it, percent-encoded or not.
     const references: Reference[] = [];
     for (const found of findLinks(note.markdown)) {
-      // A markdown link's address may be percent-encoded; one that is not
-      // well encoded is taken as it is written.
-      let link = found.target;
-      if (found.kind === "link") {
-        try {
-          link = decodeURI(found.target);
-        } catch {
-          // As it is written.
-        }
+      if (found.kind !== "tag" && !leadsToNote(found.kind, found.target)) {
+        continue;
       }
+      const link =
+        found.kind === "tag" ? found.target : decodeLinkPath(found.target);
       if (
-        (found.kind !== "tag" && link.match(/https?:\/\//)) ||
-        (found.kind === "link" && (!found.text.length || !link.endsWith(".md")))
+        found.kind === "link" &&
+        (!found.text.length || !link.endsWith(".md"))
       ) {
         continue;
       }
@@ -422,7 +419,13 @@ export class Notebook {
 
     if (refreshRelations) {
       for (let filePath in this.notes) {
-        await this.processNoteMentionsAndMentionedBy(filePath);
+        // A note whose references cannot be read leaves the rest of the
+        // notebook's in place, and the notes listed.
+        try {
+          await this.processNoteMentionsAndMentionedBy(filePath);
+        } catch (error) {
+          console.error(error);
+        }
       }
     }
 

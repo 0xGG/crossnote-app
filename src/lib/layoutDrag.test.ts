@@ -113,31 +113,31 @@ describe("guardLayoutDrags", () => {
     });
   });
 
-  it("keeps tabs from being dragged out of the hidden tabs menu", () => {
+  // The menu closes as the drag starts, and the end of the drag may go to an
+  // element no longer on the page: the next pointer move ends it, so that a
+  // drop of text into a note afterwards is the note's.
+  it("forgets a drag out of the hidden tabs menu at the next pointer move", () => {
+    release = guardLayoutDrags(root);
+    // No dragend comes.
+    menuItem.dispatchEvent(dragEvent("dragstart"));
+    window.dispatchEvent(new Event("pointermove"));
+    expect(seenAt(editor, dragEvent("drop", "some text"))).toEqual({
+      defaultPrevented: false,
+      codemirrorIgnore: undefined,
+    });
+  });
+
+  it("lets a tab dragged out of the hidden tabs menu through as well", () => {
     release = guardLayoutDrags(root);
     const layoutSaw = vi.fn();
     menuItem.addEventListener("dragstart", layoutSaw, { once: true });
     const event = dragEvent("dragstart");
     menuItem.dispatchEvent(event);
-    expect(event.defaultPrevented).toBe(true);
-    expect(layoutSaw).not.toHaveBeenCalled();
-  });
-
-  it("tells a tab strip its drag is over after other drops", () => {
-    vi.useFakeTimers();
-    release = guardLayoutDrags(root);
-    const ended = vi.fn();
-    strip.addEventListener("dragend", ended);
-    editor.dispatchEvent(dragEvent("drop", "some text"));
-    vi.runAllTimers();
-    expect(ended).toHaveBeenCalledTimes(1);
-
-    // A tab's own drop ends its drag by itself.
-    dragTab();
-    editor.dispatchEvent(dragEvent("drop", LAYOUT_DRAG_TEXT));
-    vi.runAllTimers();
-    expect(ended).toHaveBeenCalledTimes(1);
-    strip.removeEventListener("dragend", ended);
+    expect(event.defaultPrevented).toBe(false);
+    expect(layoutSaw).toHaveBeenCalledTimes(1);
+    expect(seenAt(editor, dragEvent("dragover"))).toMatchObject({
+      codemirrorIgnore: true,
+    });
   });
 
   it("stops guarding once released", () => {

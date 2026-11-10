@@ -222,18 +222,23 @@ test("prints what was typed into the note a moment before", async ({
   await app.openNotes();
   await app.createNote();
   await app.setEditorText("Saved before.\n");
-  await page.evaluate(() => {
+  await page.getByRole("button", { name: "Note menu" }).click();
+  const print = await page
+    .getByRole("button", { name: "Print / Export PDF" })
+    .elementHandle();
+  await page.evaluate((print) => {
     window.print = () => {
       const printed = Array.from(document.body.children)
         .filter((element) => element.classList.contains("preview"))
         .pop()!;
       (window as any).printed = printed.textContent;
+      (window as any).prints = ((window as any).prints ?? 0) + 1;
+      // The menu, kept on the page, is hidden once it has finished closing.
+      (window as any).menuAtPrint = getComputedStyle(
+        (print as HTMLElement).closest('[role="presentation"]')!,
+      ).visibility;
     };
-  });
-  await page.getByRole("button", { name: "Note menu" }).click();
-  const print = await page
-    .getByRole("button", { name: "Print / Export PDF" })
-    .elementHandle();
+  }, print);
   // Typed and printed in the same task: the save is still a moment away.
   await app.editor.evaluate((element, print) => {
     (element as EditorHost).editorHandle.insert("Typed last. ");
@@ -244,6 +249,15 @@ test("prints what was typed into the note a moment before", async ({
       timeout: 15000,
     })
     .toContain("Typed last.");
+  // Printed once the menu was gone, and once only: the note is read again
+  // when what was typed is saved, which could start a second print when a
+  // change of state started it. That save is 300ms after the typing; a
+  // second print would come within the second waited here.
+  expect(await page.evaluate(() => (window as any).menuAtPrint)).toBe("hidden");
+  await page.evaluate(
+    () => new Promise((resolve) => setTimeout(resolve, 1000)),
+  );
+  expect(await page.evaluate(() => (window as any).prints)).toBe(1);
 });
 
 test("shows the note's git status as it is once what was typed is saved", async ({

@@ -29,10 +29,12 @@ import {
   ViewSplitHorizontal,
   ViewSplitVertical,
 } from "mdi-material-ui";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { CrossnoteContainer } from "../containers/crossnote";
 import { Note } from "../lib/note";
+import { NotesNotSavedError } from "../lib/noteSaver";
+import { failureMessage, notify } from "../lib/notifications";
 import { mountPreview } from "../render";
 import { printPreview } from "../render/print";
 import { setPreviewTheme } from "../render/theme";
@@ -60,7 +62,6 @@ export default function NotePopover(props: Props) {
     useState<boolean>(false);
   const [changeNoteFilePathDialogOpen, setChangeNoteFilePathDialogOpen] =
     useState<boolean>(false);
-  const [needsToPrint, setNeedsToPrint] = useState<boolean>(false);
   const [shareAnchorEl, setShareAnchorEl] = useState<HTMLElement>(null);
   const [noteAliasAnchorEl, setNoteAliasAnchorEl] = useState<HTMLElement>(null);
   const [aliases, setAliases] = useState<string[]>(note.config.aliases);
@@ -79,12 +80,10 @@ export default function NotePopover(props: Props) {
         notebook._id
       }&filePath=${encodeURIComponent(note.filePath)}`;
 
-  // Print preview
-  useEffect(() => {
-    if (!note || !needsToPrint) {
-      return;
-    }
-
+  // Prints the note once, from the menu: started by the click, not by a
+  // change of state, so that nothing else the component is given (the note
+  // read again, the language, the theme) starts it a second time.
+  const printNote = (menuClosed: Promise<void>) => {
     // Printed light whatever the app's theme, without changing the page's.
     const tempPreviewElement = document.createElement("div");
     tempPreviewElement.classList.add("preview");
@@ -104,10 +103,6 @@ export default function NotePopover(props: Props) {
     bannerElement.style.zIndex = "9999";
     bannerElement.innerHTML = `<p>${t("general/please-wait")}</p>`;
 
-    const printDone = () => {
-      tempPreviewElement.remove();
-      setNeedsToPrint(false);
-    };
     // Drawn from the notebook, so what was typed a moment ago is written
     // first; a note that cannot be written is said and not printed.
     crossnoteContainer
@@ -117,25 +112,39 @@ export default function NotePopover(props: Props) {
       })
       .then(() => crossnoteContainer.getNote(note.notebookPath, note.filePath))
       .then(async (note) => {
-        // Printed as drawn, local images included: the print waits for them.
+        // Printed as drawn, local images included: the print waits for them,
+        // and for the menu to be gone from the page.
         const preview = mountPreview(tempPreviewElement, note.markdown, {
           note,
         });
         try {
-          await printPreview(tempPreviewElement, bannerElement, preview.done);
+          await printPreview(
+            tempPreviewElement,
+            bannerElement,
+            Promise.all([preview.done, menuClosed]),
+          );
         } finally {
           preview.dispose();
         }
       })
-      .catch(() => {})
-      .then(printDone);
-  }, [
-    needsToPrint,
-    note,
-    t,
-    theme.palette.background.default,
-    theme.palette.text.primary,
-  ]);
+      .catch((error) => {
+        // Already said: the note could not be written.
+        if (error instanceof NotesNotSavedError) {
+          return;
+        }
+        console.error(error);
+        notify({
+          severity: "error",
+          message: failureMessage(t("error/failed-to-print"), error),
+          duration: 5000,
+        });
+      })
+      .then(() => tempPreviewElement.remove());
+  };
+  // Settles the menu's closing once it is gone, for a print waiting on it;
+  // or once the menu leaves the page with its note's tab, closing no more.
+  const menuGone = useRef<() => void>(null);
+  useEffect(() => () => menuGone.current?.(), []);
 
   return (
     <React.Fragment>
@@ -144,6 +153,14 @@ export default function NotePopover(props: Props) {
         keepMounted
         open={Boolean(props.anchorElement)}
         onClose={props.onClose}
+        slotProps={{
+          transition: {
+            onExited: () => {
+              menuGone.current?.();
+              menuGone.current = null;
+            },
+          },
+        }}
       >
         <List>
           <ListItem disablePadding>
@@ -316,7 +333,12 @@ export default function NotePopover(props: Props) {
           <ListItem disablePadding>
             <ListItemButton
               onClick={() => {
-                setNeedsToPrint(true);
+                // A print asked for before the menu last finished closing
+                // goes on without waiting for it.
+                menuGone.current?.();
+                printNote(
+                  new Promise<void>((resolve) => (menuGone.current = resolve)),
+                );
                 props.onClose();
               }}
             >

@@ -18,6 +18,59 @@ test("creates a note that joins the notebook's list", async ({ app }) => {
   await expect(app.noteCards.first()).toContainText("Written by a robot");
 });
 
+test("starts a note made from a note's references with a link back to it", async ({
+  app,
+  page,
+}) => {
+  await app.createNote();
+  // In a folder, the note's title is its name alone: the link back has to
+  // lead to its path.
+  await page.getByRole("button", { name: "Note menu" }).click();
+  await page.getByRole("button", { name: "Change file path" }).click();
+  const dialog = page.getByRole("dialog");
+  await dialog.getByRole("textbox").fill("topics/Linked.md");
+  await dialog.getByRole("button", { name: "Save" }).click();
+  await expect(app.tab("Linked")).toHaveAttribute("aria-selected", "true");
+
+  // A note shows its references, and the button with them, once another
+  // note mentions it.
+  await app.selectTab("Drafts");
+  await app.notesPanel.getByRole("button", { name: "New note" }).click();
+  // The title box is the new note's once its tab is up.
+  await expect(app.noteTitle).not.toHaveValue("");
+  const mentioning = await app.noteTitle.inputValue();
+  // Set rather than typed: typing "[[" would open the wikilink hints.
+  await app.setEditorText(
+    "Mentions [[topics/Linked]].\n",
+    app.editor.filter({ visible: true }),
+  );
+  // The note is written a moment after the change; its card shows the
+  // text once it is.
+  await app.selectTab("Drafts");
+  await expect(
+    app.noteCards.filter({ hasText: `${mentioning}.md` }),
+  ).toContainText("Mentions");
+  await app.selectTab("Linked");
+  const references = page
+    .locator(".notes-panel")
+    .filter({ visible: true })
+    .filter({ has: page.getByRole("heading", { name: "References" }) });
+  await references.getByRole("button", { name: "New note" }).click();
+  // The new note opens in a tab of its own.
+  await expect(app.tab("Linked")).toHaveAttribute("aria-selected", "false");
+  // A note with text opens in the preview: [[topics/Linked|Linked]].
+  const link = app.preview.filter({ visible: true }).getByRole("link");
+  await expect(link).toHaveText("Linked");
+  await expect(link).toHaveAttribute("href", "topics/Linked");
+
+  // Followed, the link opens the note it was made from.
+  await link.click();
+  await expect(app.tab("Linked")).toHaveAttribute("aria-selected", "true");
+  await expect(
+    page.getByText("Drafts: topics/Linked.md").filter({ visible: true }),
+  ).toBeVisible();
+});
+
 test("sorts the list from the sort menu", async ({ app, page }) => {
   const sort = app.notesPanel.getByRole("button", { name: "Sort notes" });
   const byTitle = page.getByRole("button", { name: "Title", exact: true });
@@ -164,6 +217,18 @@ test("never gives a new note the name of one that exists", async ({
   await expect(kept).toContainText("Worth keeping");
 });
 
+test("puts the caret in the alias box as it opens", async ({ app, page }) => {
+  await app.createNote();
+  await page.getByRole("button", { name: "Note menu" }).click();
+  await page.getByRole("button", { name: "Edit note alias" }).click();
+  // Each of the note's menus has an alias box of its own, kept on the page.
+  const box = page.getByPlaceholder("Add an alias").filter({ visible: true });
+  await expect(box).toBeFocused();
+  await page.keyboard.type("Typed at once");
+  await page.keyboard.press("Enter");
+  await expect(page.getByText("Typed at once", { exact: true })).toBeVisible();
+});
+
 test("lists a note's aliases in each of its menus", async ({ app, page }) => {
   const aliasPopover = page
     .getByRole("presentation")
@@ -263,6 +328,38 @@ test("says so, and opens nothing, when a link leads outside the notebook", async
   await expect(page.getByRole("tab")).toHaveCount(tabs);
 });
 
+test("makes the folder a link leads into, but no folder under a note", async ({
+  app,
+  page,
+}) => {
+  await app.createNote();
+  await expect(app.noteTitle).not.toHaveValue("");
+  const name = await app.noteTitle.inputValue();
+  // Set rather than typed: typed, the brackets would be closed for us.
+  await app.setEditorText("[[topics/idea]]\n\n[[README.md/child]]\n");
+  await app.modeButton("Preview").click();
+  const preview = app.preview.filter({ visible: true });
+
+  // A note in a folder the notebook does not have yet: both are made.
+  await preview.getByRole("link", { name: "topics/idea" }).click();
+  await expect(app.tab("idea")).toHaveAttribute("aria-selected", "true");
+  await expect(
+    page.getByText("Drafts: topics/idea.md").filter({ visible: true }),
+  ).toBeVisible();
+  await app.expectStored(`${await app.notebookFolder()}/topics/idea.md`);
+
+  // A note is a file: nothing is made under it.
+  await app.selectTab(name);
+  const tabs = await page.getByRole("tab").count();
+  await preview.getByRole("link", { name: "README.md/child" }).click();
+  await expect(
+    page
+      .getByRole("alert")
+      .filter({ hasText: "The link leads inside a note, not a folder" }),
+  ).toBeVisible();
+  await expect(page.getByRole("tab")).toHaveCount(tabs);
+});
+
 test("says so, and keeps the note where it was, when it is moved under another note", async ({
   app,
   page,
@@ -290,4 +387,50 @@ test("says so, and keeps the note where it was, when it is moved under another n
   await expect(app.tab(name)).toBeVisible();
   await app.selectTab("Drafts");
   await expect(app.noteCards.filter({ hasText: `${name}.md` })).toBeVisible();
+});
+
+// Enter in the dialog moves the note as Save does. A move that fails at once
+// closes the dialog before the key is done with, and the menu button the
+// focus goes back to must not take the rest of it and open the menu again
+// over the message.
+test("says so, and opens nothing else, when a move by Enter fails", async ({
+  app,
+  page,
+}) => {
+  await app.createNote();
+  await expect(app.noteTitle).not.toHaveValue("");
+  await page.getByRole("button", { name: "Note menu" }).click();
+  await page.getByRole("button", { name: "Change file path" }).click();
+  const dialog = page.getByRole("dialog");
+  await dialog.getByRole("textbox").fill("README.md/child");
+  // Whether the rest of the key goes on to the menu button depends on how
+  // soon the move fails; whether the dialog kept the key does not.
+  await page.evaluate(() =>
+    document.addEventListener(
+      "keydown",
+      (event) => {
+        if (event.key === "Enter") {
+          (window as any).enterKept = event.defaultPrevented;
+        }
+      },
+      { once: true },
+    ),
+  );
+  await dialog.getByRole("textbox").press("Enter");
+  expect(await page.evaluate(() => (window as any).enterKept)).toBe(true);
+
+  // On the page, if hidden from assistive technology by a menu over it...
+  const message = page
+    .getByRole("alert", { includeHidden: true })
+    .filter({ hasText: "Failed to change file path" });
+  await expect(message).toBeVisible();
+  // ...which there is not.
+  await expect(dialog).toBeHidden();
+  await expect(
+    page.getByRole("button", { name: "Change file path" }),
+  ).toBeHidden();
+  await expect(page.getByRole("alert")).toHaveText(
+    "Failed to change file path",
+  );
+  await expect(page.getByRole("button", { name: "Note menu" })).toBeFocused();
 });

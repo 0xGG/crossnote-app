@@ -13,6 +13,7 @@ import {
   ListItemSecondaryAction,
   ListItemText,
   Tooltip,
+  useMediaQuery,
 } from "@mui/material";
 import { styled, useTheme } from "@mui/material/styles";
 import { drawerClasses } from "@mui/material/Drawer";
@@ -28,8 +29,11 @@ import AddNotebookDialog from "../components/AddNotebookDialog";
 import LanguageSelectorDialog from "../components/LanguageSelectorDialog";
 import { MainPanel } from "../components/MainPanel";
 import NotebookTreeView from "../components/NotebookTreeView";
+import ConfigureNotebookDialog from "../components/ConfigureNotebookDialog";
+import PushNotebookDialog from "../components/PushNotebookDialog";
 import { CrossnoteContainer } from "../containers/crossnote";
 import { globalContainers } from "../containers/global";
+import type { Notebook as NotebookData } from "../lib/notebook";
 
 const drawerWidth = 200;
 const Page = styled(Box)({
@@ -87,9 +91,25 @@ interface Props {
   queryParams: QueryParams;
 }
 
+interface NotebookDialog {
+  notebook: NotebookData;
+  open: boolean;
+}
+
+// Closes a notebook's dialog, and no other: an upload that ends after its
+// dialog was cancelled closes it then, when another notebook's may be open.
+const closing =
+  (notebookId: string) =>
+  (dialog: NotebookDialog | null): NotebookDialog | null =>
+    dialog && dialog.notebook._id === notebookId
+      ? { ...dialog, open: false }
+      : dialog;
+
 export function Home(props: Props) {
   const theme = useTheme();
-  // const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+  // Read at once rather than after the first render, so that a narrow
+  // screen does not draw the drawer kept beside the page first.
+  const narrow = useMediaQuery(theme.breakpoints.down("sm"), { noSsr: true });
   const [addNotebookDialogOpen, setAddNotebookDialogOpen] =
     useState<boolean>(false);
   const [addNotebookRepo, setAddNotebookRepo] = useState<string>("");
@@ -100,6 +120,29 @@ export function Home(props: Props) {
   ] = useState<boolean>(false);
 
   const [drawerOpen, setDrawerOpen] = useState<boolean>(false);
+  // The drawer over the page closes when the screen gets wide: opened again
+  // as the screen gets narrow, it would come in over a dialog left open and
+  // take its keys.
+  const narrowQuery = theme.breakpoints.down("sm").replace(/^@media\s*/, "");
+  useEffect(() => {
+    const query = window.matchMedia(narrowQuery);
+    const onChange = () => {
+      if (!query.matches) {
+        setDrawerOpen(false);
+      }
+    };
+    query.addEventListener("change", onChange);
+    return () => query.removeEventListener("change", onChange);
+  }, [narrowQuery]);
+  // Kept here rather than in the notebooks' trees, which the drawer draws
+  // anew when the width of the screen changes it: what each tree has
+  // expanded, by notebook, and a notebook's settings or upload dialog, open
+  // or closing.
+  const [expandedTrees, setExpandedTrees] = useState<Record<string, string[]>>(
+    {},
+  );
+  const [settingsDialog, setSettingsDialog] = useState<NotebookDialog>(null);
+  const [uploadDialog, setUploadDialog] = useState<NotebookDialog>(null);
   const { t } = useTranslation();
   const crossnoteContainer = CrossnoteContainer.useContainer();
 
@@ -232,6 +275,17 @@ export function Home(props: Props) {
                 <NotebookTreeView
                   notebook={notebook}
                   onCloseDrawer={() => setDrawerOpen(false)}
+                  expanded={expandedTrees[notebook._id] ?? []}
+                  onExpandedChange={(expanded) =>
+                    setExpandedTrees((trees) => ({
+                      ...trees,
+                      [notebook._id]: expanded,
+                    }))
+                  }
+                  onOpenSettings={() =>
+                    setSettingsDialog({ notebook, open: true })
+                  }
+                  onOpenUpload={() => setUploadDialog({ notebook, open: true })}
                 ></NotebookTreeView>
               </ListItem>
             );
@@ -278,7 +332,10 @@ export function Home(props: Props) {
     <Page>
       <CssBaseline></CssBaseline>
       <DrawerNav className={"drawer"}>
-        <Box sx={{ display: { xs: "block", sm: "none" } }}>
+        {/* One drawer, which a narrow screen opens over the page from a
+            button and a wider one keeps beside it: rendered once, the
+            notebooks' trees and the dialogs they open are there once. */}
+        {narrow ? (
           <SideDrawer
             variant="temporary"
             open={drawerOpen}
@@ -289,13 +346,12 @@ export function Home(props: Props) {
           >
             {drawer}
           </SideDrawer>
-        </Box>
-        <Box sx={{ display: { xs: "none", sm: "block" } }}>
+        ) : (
           <SideDrawer variant="permanent" open>
             {drawer}
           </SideDrawer>
-        </Box>
-        <Box sx={{ display: { xs: "block", sm: "none" } }}>
+        )}
+        {narrow && (
           <MenuFab
             aria-label={t("general/open-menu")}
             color="primary"
@@ -304,7 +360,7 @@ export function Home(props: Props) {
           >
             <Menu></Menu>
           </MenuFab>
-        </Box>
+        )}
       </DrawerNav>
       <MainPanel></MainPanel>
       <AddNotebookDialog
@@ -318,6 +374,24 @@ export function Home(props: Props) {
         gitBranch={addNotebookBranch}
         hideOpeningLocal={addNotebookDialogHideOpeningLocal}
       ></AddNotebookDialog>
+      {settingsDialog && (
+        <ConfigureNotebookDialog
+          key={settingsDialog.notebook._id}
+          open={settingsDialog.open}
+          onClose={() =>
+            setSettingsDialog(closing(settingsDialog.notebook._id))
+          }
+          notebook={settingsDialog.notebook}
+        ></ConfigureNotebookDialog>
+      )}
+      {uploadDialog && (
+        <PushNotebookDialog
+          key={uploadDialog.notebook._id}
+          open={uploadDialog.open}
+          onClose={() => setUploadDialog(closing(uploadDialog.notebook._id))}
+          notebook={uploadDialog.notebook}
+        ></PushNotebookDialog>
+      )}
       <LanguageSelectorDialog></LanguageSelectorDialog>
     </Page>
   );

@@ -137,6 +137,57 @@ describe("Notebook", () => {
     ).toEqual(["%E0%A4.md"]);
   });
 
+  it("reads the references of the other notes past a note it cannot read them in", async () => {
+    await notebook.writeNote("refs-unreadable.md", "[[refs-target]]\n", {
+      createdAt: new Date(),
+      modifiedAt: new Date(),
+    });
+    await notebook.writeNote("refs-readable.md", "[[refs-target]]\n", {
+      createdAt: new Date(),
+      modifiedAt: new Date(),
+    });
+    // Changed on disk, as a pull or another app changes it, and read anew
+    // with the notebook.
+    await pfs.writeFile("/notebooks/test/refs-readable.md", "[[refs-new]]\n");
+    const process = notebook.processNoteMentionsAndMentionedBy.bind(notebook);
+    const failing = vi
+      .spyOn(notebook, "processNoteMentionsAndMentionedBy")
+      .mockImplementation(async (filePath) => {
+        if (filePath === "refs-unreadable.md") {
+          throw new Error("unreadable");
+        }
+        return process(filePath);
+      });
+    const logged = vi.spyOn(console, "error").mockImplementation(() => {});
+    try {
+      await notebook.refreshNotes({ dir: "./", includeSubdirectories: true });
+      expect(logged).toHaveBeenCalledWith(new Error("unreadable"));
+    } finally {
+      failing.mockRestore();
+      logged.mockRestore();
+    }
+    expect(
+      notebook.getReferences("refs-new.md", "refs-readable.md").length,
+    ).toBe(1);
+  });
+
+  // The preview opens no note for another app's address, .md at its end or
+  // not, and reads a path percent-encoded in full, # and ? included.
+  it("counts the links the preview opens a note for, at the path it opens", async () => {
+    await notebook.writeNote(
+      "odd-links.md",
+      "[web](https://host/w.md), [ftp](ftp://host/f.md), " +
+        "[app](zotero://select/z.md), [mail](mailto:m.md), " +
+        "[colon](Re:Zero.md), [hash](a%23b.md), [space](a%20c.md) " +
+        "and [[c%3Fd]]\n",
+      { createdAt: new Date(), modifiedAt: new Date() },
+    );
+    const mentioned = Object.keys(
+      (await notebook.getNote("odd-links.md")).mentions,
+    ).sort();
+    expect(mentioned).toEqual(["Re:Zero.md", "a c.md", "a#b.md", "c?d.md"]);
+  });
+
   it("finds a tag's note at the notebook's top, as the preview opens it", async () => {
     await pfs.mkdirp(`${notebook.dir}/folder`);
     await notebook.writeNote("folder/tagging.md", "About #topic here.\n", {
@@ -275,6 +326,31 @@ describe("Notebook", () => {
     expect(await pfs.exists("/notebooks/test/under-linked.md/new.md")).toBe(
       false,
     );
+    // Nor in a folder that would be made under it.
+    await expect(
+      notebook.writeNote("under-linked.md/folder/new.md", "", {
+        createdAt: new Date(),
+        modifiedAt: new Date(),
+      }),
+    ).rejects.toThrow("ENOTDIR");
+    expect(await pfs.exists("/notebooks/test/under-linked.md/folder")).toBe(
+      false,
+    );
+  });
+
+  // As a folder on the user's disk does, and as following a link to a note
+  // in a folder not made yet needs.
+  it("makes the folders a new note's path names", async () => {
+    const note = await notebook.writeNote("made/deeper/new.md", "# New", {
+      createdAt: new Date(),
+      modifiedAt: new Date(),
+    });
+    expect(note.filePath).toBe("made/deeper/new.md");
+    expect((await notebook.getNote("made/deeper/new.md", true)).markdown).toBe(
+      "# New",
+    );
+    expect(await pfs.readdir("/notebooks/test/made")).toEqual(["deeper"]);
+    expect(await isStored("/notebooks/test/made/deeper/new.md")).toBe(true);
   });
 
   // The browser file system writes a file's content at once but its
@@ -504,6 +580,16 @@ describe("Notebook", () => {
           "---\r\ntitle: Hi\r\ntags: [a, b]\r\ncreated: <time>\r\nmodified: <time>\r\n---\r\nBody\r\nLine 2\r\nEdit",
         pinned:
           "---\r\ntitle: Hi\r\ntags: [a, b]\r\npinned: true\r\ncreated: <time>\r\nmodified: <time>\r\n---\r\nBody\r\nLine 2\r\n",
+      },
+      {
+        // As older Macs wrote them; the preview reads front matter in them.
+        layout: "line endings of \\r alone",
+        file: "---\rtitle: Hi\rpinned: true\r---\rBody\rLine 2\r",
+        opened: "---\rtitle: Hi\r---\rBody\rLine 2\r",
+        edited:
+          "---\rtitle: Hi\rpinned: true\rcreated: <time>\rmodified: <time>\r---\rBody\rLine 2\rEdit",
+        pinned:
+          "---\rtitle: Hi\rpinned: true\rcreated: <time>\rmodified: <time>\r---\rBody\rLine 2\r",
       },
       {
         layout: "a byte order mark",

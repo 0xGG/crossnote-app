@@ -133,6 +133,12 @@ for (const { layout, text, opened } of [
     text: "\uFEFF---\ntitle: T\n---\n# Kept\n",
     opened: nothingToClose,
   },
+  // With a setting, which the editor is shown without.
+  {
+    layout: "line endings of \\r alone",
+    text: "---\rtitle: T\rpinned: true\r---\r# Kept\r",
+    opened: nothingToClose,
+  },
   // Notes written for features since dropped: what they hold stays as it is.
   {
     layout: "the comments of a deck of slides",

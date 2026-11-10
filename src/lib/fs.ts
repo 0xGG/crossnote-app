@@ -1,18 +1,14 @@
 import LightningFS from "@isomorphic-git/lightning-fs";
 import path from "path-browserify";
 import { randomID } from "../utilities/utils";
-import LocalFileSystem, { ReadFileOptions } from "./localFileSystem";
+import LocalFileSystem, {
+  notAFolder,
+  ReadFileOptions,
+} from "./localFileSystem";
 
 interface AttachLocalDirectory {
   id: string;
   directoryHandle: FileSystemDirectoryHandle;
-}
-
-// What the browser file system gives for a path that goes through something
-// other than a folder, had it the check (a folder on the user's disk gives a
-// TypeMismatchError).
-function notAFolder(filePath: string): Error {
-  return Object.assign(new Error(`ENOTDIR: ${filePath}`), { code: "ENOTDIR" });
 }
 
 class FileSystem {
@@ -105,18 +101,21 @@ class FileSystem {
         });
       }
     };
-    this.writeFile = async (path: string, data: string) => {
-      if (this.lfs.isPathOfLocalFileSystem(path)) {
-        return this.lfs.writeFile(path, data);
+    this.writeFile = async (filePath: string, data: string) => {
+      if (this.lfs.isPathOfLocalFileSystem(filePath)) {
+        return this.lfs.writeFile(filePath, data);
       } else {
-        // Only a new entry can end up under a file. One already there, as an
+        // A new file gets the folders its path names and the browser file
+        // system lacks, as a folder on the user's disk makes them: a link to
+        // a note in a folder not made yet creates both. Only a new entry can
+        // end up under a file, which mkdirp refuses. One already there, as an
         // earlier version of the app could leave a note, is written over.
-        if (!(await this.exists(path))) {
-          await parentMustBeAFolder(path);
+        if (!(await this.exists(filePath))) {
+          await this.mkdirp(path.dirname(filePath));
         }
         return new Promise((resolve, reject) => {
           this.fs.writeFile(
-            path,
+            filePath,
             data,
             { encoding: "utf8" },
             (error: Error) => {

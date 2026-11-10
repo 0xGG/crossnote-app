@@ -16,7 +16,13 @@ const anchorOrigin = { vertical: "top", horizontal: "right" } as const;
 // message raised while one of them is open has to sit above it, as noty's
 // container always did, or its close button lands on the dialog's backdrop
 // and closes the dialog instead.
-const snackbarSx = { zIndex: 3002 } as const;
+// At the top right, a message stays clear of the buttons there under the
+// tab strip: those in a note's header, which ends 72px down, and the notes
+// list's sort and new note buttons, which end 110px down. 116px down, a
+// message of one line ends above the menu button of the list's first card,
+// 171px down; on a note it covers only the note's text. Given for each
+// width, as the Snackbar gives its own from sm up.
+const snackbarSx = { zIndex: 3002, top: { xs: 116, sm: 116 } } as const;
 
 // Shows the notification queue one message at a time. Mounted once under the
 // theme provider, so every message gets the same look wherever it is raised.
