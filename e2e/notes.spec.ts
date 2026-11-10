@@ -316,6 +316,38 @@ test("says so, and opens nothing, when a link leads outside the notebook", async
   await expect(page.getByRole("tab")).toHaveCount(tabs);
 });
 
+test("makes the folder a link leads into, but no folder under a note", async ({
+  app,
+  page,
+}) => {
+  await app.createNote();
+  await expect(app.noteTitle).not.toHaveValue("");
+  const name = await app.noteTitle.inputValue();
+  // Set rather than typed: typed, the brackets would be closed for us.
+  await app.setEditorText("[[topics/idea]]\n\n[[README.md/child]]\n");
+  await app.modeButton("Preview").click();
+  const preview = app.preview.filter({ visible: true });
+
+  // A note in a folder the notebook does not have yet: both are made.
+  await preview.getByRole("link", { name: "topics/idea" }).click();
+  await expect(app.tab("idea")).toHaveAttribute("aria-selected", "true");
+  await expect(
+    page.getByText("Drafts: topics/idea.md").filter({ visible: true }),
+  ).toBeVisible();
+  await app.expectStored(`${await app.notebookFolder()}/topics/idea.md`);
+
+  // A note is a file: nothing is made under it.
+  await app.selectTab(name);
+  const tabs = await page.getByRole("tab").count();
+  await preview.getByRole("link", { name: "README.md/child" }).click();
+  await expect(
+    page
+      .getByRole("alert")
+      .filter({ hasText: "The link leads inside a note, not a folder" }),
+  ).toBeVisible();
+  await expect(page.getByRole("tab")).toHaveCount(tabs);
+});
+
 test("says so, and keeps the note where it was, when it is moved under another note", async ({
   app,
   page,

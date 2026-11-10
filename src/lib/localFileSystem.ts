@@ -7,6 +7,13 @@ export interface ReadFileOptions {
   encoding?: string;
 }
 
+// What both file systems give for a path that goes through something other
+// than a folder: the browser file system has to check for it itself, a
+// folder on the user's disk gives a TypeMismatchError.
+export function notAFolder(filePath: string): Error {
+  return Object.assign(new Error(`ENOTDIR: ${filePath}`), { code: "ENOTDIR" });
+}
+
 export async function verifyPermission(
   fileHandle: FileSystemHandle,
   mode?: FileSystemPermissionMode,
@@ -101,9 +108,19 @@ export default class LocalFileSystem {
     } else {
       let i = 0;
       for (; i < pathArr.length - 1; i++) {
-        directoryHandle = await directoryHandle.getDirectoryHandle(pathArr[i], {
-          create: true,
-        });
+        try {
+          directoryHandle = await directoryHandle.getDirectoryHandle(
+            pathArr[i],
+            { create: true },
+          );
+        } catch (error) {
+          // A file where the path needs a folder: told apart from other
+          // failures the way the browser file system tells it.
+          if ((error as DOMException).name === "TypeMismatchError") {
+            throw notAFolder(pathArr.slice(0, i + 1).join("/"));
+          }
+          throw error;
+        }
       }
       const fileHandle = await directoryHandle.getFileHandle(pathArr[i], {
         create: true,

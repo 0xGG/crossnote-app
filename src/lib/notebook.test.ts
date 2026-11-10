@@ -275,6 +275,31 @@ describe("Notebook", () => {
     expect(await pfs.exists("/notebooks/test/under-linked.md/new.md")).toBe(
       false,
     );
+    // Nor in a folder that would be made under it.
+    await expect(
+      notebook.writeNote("under-linked.md/folder/new.md", "", {
+        createdAt: new Date(),
+        modifiedAt: new Date(),
+      }),
+    ).rejects.toThrow("ENOTDIR");
+    expect(await pfs.exists("/notebooks/test/under-linked.md/folder")).toBe(
+      false,
+    );
+  });
+
+  // As a folder on the user's disk does, and as following a link to a note
+  // in a folder not made yet needs.
+  it("makes the folders a new note's path names", async () => {
+    const note = await notebook.writeNote("made/deeper/new.md", "# New", {
+      createdAt: new Date(),
+      modifiedAt: new Date(),
+    });
+    expect(note.filePath).toBe("made/deeper/new.md");
+    expect((await notebook.getNote("made/deeper/new.md", true)).markdown).toBe(
+      "# New",
+    );
+    expect(await pfs.readdir("/notebooks/test/made")).toEqual(["deeper"]);
+    expect(await isStored("/notebooks/test/made/deeper/new.md")).toBe(true);
   });
 
   // The browser file system writes a file's content at once but its
