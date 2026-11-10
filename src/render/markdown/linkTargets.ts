@@ -28,6 +28,31 @@ export function noteLinkTarget(target: string): string {
     : target;
 }
 
+/**
+ * Whether a link written in a note leads to a note of the notebook, as the
+ * preview opens it, for the notebook to count among the note's references.
+ * A markdown link's address does unless it keeps a scheme once
+ * noteLinkTarget has written it: a web page, mail, another app's address
+ * (zotero://select/x.md, ftp://host/x.md) do not, Re:Zero.md does. A wiki
+ * link's target does unless it is a web address, as the sanitizer
+ * (../sanitize.ts) keeps it.
+ */
+export function leadsToNote(kind: "link" | "wikilink", target: string) {
+  return kind === "wikilink"
+    ? !/^https?:/i.test(target)
+    : !scheme.test(noteLinkTarget(target));
+}
+
+// A note's path as a link writes it, percent-encoded or not: one that is not
+// well encoded (100%.md) is taken as it is written.
+export function decodeLinkPath(link: string): string {
+  try {
+    return decodeURIComponent(link);
+  } catch {
+    return link;
+  }
+}
+
 export default function linkTargets(md: MarkdownIt) {
   md.core.ruler.push("link_targets", (state) => {
     for (const block of state.tokens) {

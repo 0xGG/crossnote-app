@@ -1,16 +1,7 @@
 import path from "path-browserify";
 import { globalContainers } from "../containers/global";
 import { Note } from "../lib/note";
-
-// A note's path as a link writes it, percent-encoded or not: one that is
-// not well encoded (100%.md) is taken as it is written.
-export function decodeLinkPath(link: string): string {
-  try {
-    return decodeURIComponent(link);
-  } catch {
-    return link;
-  }
-}
+import { decodeLinkPath } from "../render/markdown/linkTargets";
 
 export function openURL(url: string = "", note: Note) {
   if (!note || !url) {

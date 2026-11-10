@@ -137,6 +137,23 @@ describe("Notebook", () => {
     ).toEqual(["%E0%A4.md"]);
   });
 
+  // The preview opens no note for another app's address, .md at its end or
+  // not, and reads a path percent-encoded in full, # and ? included.
+  it("counts the links the preview opens a note for, at the path it opens", async () => {
+    await notebook.writeNote(
+      "odd-links.md",
+      "[web](https://host/w.md), [ftp](ftp://host/f.md), " +
+        "[app](zotero://select/z.md), [mail](mailto:m.md), " +
+        "[colon](Re:Zero.md), [hash](a%23b.md), [space](a%20c.md) " +
+        "and [[c%3Fd]]\n",
+      { createdAt: new Date(), modifiedAt: new Date() },
+    );
+    const mentioned = Object.keys(
+      (await notebook.getNote("odd-links.md")).mentions,
+    ).sort();
+    expect(mentioned).toEqual(["Re:Zero.md", "a c.md", "a#b.md", "c?d.md"]);
+  });
+
   it("finds a tag's note at the notebook's top, as the preview opens it", async () => {
     await pfs.mkdirp(`${notebook.dir}/folder`);
     await notebook.writeNote("folder/tagging.md", "About #topic here.\n", {
