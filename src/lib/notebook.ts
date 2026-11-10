@@ -419,7 +419,13 @@ export class Notebook {
 
     if (refreshRelations) {
       for (let filePath in this.notes) {
-        await this.processNoteMentionsAndMentionedBy(filePath);
+        // A note whose references cannot be read leaves the rest of the
+        // notebook's in place, and the notes listed.
+        try {
+          await this.processNoteMentionsAndMentionedBy(filePath);
+        } catch (error) {
+          console.error(error);
+        }
       }
     }
 

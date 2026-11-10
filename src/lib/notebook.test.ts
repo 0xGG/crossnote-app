@@ -137,6 +137,40 @@ describe("Notebook", () => {
     ).toEqual(["%E0%A4.md"]);
   });
 
+  it("reads the references of the other notes past a note it cannot read them in", async () => {
+    await notebook.writeNote("refs-unreadable.md", "[[refs-target]]\n", {
+      createdAt: new Date(),
+      modifiedAt: new Date(),
+    });
+    await notebook.writeNote("refs-readable.md", "[[refs-target]]\n", {
+      createdAt: new Date(),
+      modifiedAt: new Date(),
+    });
+    // Changed on disk, as a pull or another app changes it, and read anew
+    // with the notebook.
+    await pfs.writeFile("/notebooks/test/refs-readable.md", "[[refs-new]]\n");
+    const process = notebook.processNoteMentionsAndMentionedBy.bind(notebook);
+    const failing = vi
+      .spyOn(notebook, "processNoteMentionsAndMentionedBy")
+      .mockImplementation(async (filePath) => {
+        if (filePath === "refs-unreadable.md") {
+          throw new Error("unreadable");
+        }
+        return process(filePath);
+      });
+    const logged = vi.spyOn(console, "error").mockImplementation(() => {});
+    try {
+      await notebook.refreshNotes({ dir: "./", includeSubdirectories: true });
+      expect(logged).toHaveBeenCalledWith(new Error("unreadable"));
+    } finally {
+      failing.mockRestore();
+      logged.mockRestore();
+    }
+    expect(
+      notebook.getReferences("refs-new.md", "refs-readable.md").length,
+    ).toBe(1);
+  });
+
   // The preview opens no note for another app's address, .md at its end or
   // not, and reads a path percent-encoded in full, # and ? included.
   it("counts the links the preview opens a note for, at the path it opens", async () => {
@@ -546,6 +580,16 @@ describe("Notebook", () => {
           "---\r\ntitle: Hi\r\ntags: [a, b]\r\ncreated: <time>\r\nmodified: <time>\r\n---\r\nBody\r\nLine 2\r\nEdit",
         pinned:
           "---\r\ntitle: Hi\r\ntags: [a, b]\r\npinned: true\r\ncreated: <time>\r\nmodified: <time>\r\n---\r\nBody\r\nLine 2\r\n",
+      },
+      {
+        // As older Macs wrote them; the preview reads front matter in them.
+        layout: "line endings of \\r alone",
+        file: "---\rtitle: Hi\rpinned: true\r---\rBody\rLine 2\r",
+        opened: "---\rtitle: Hi\r---\rBody\rLine 2\r",
+        edited:
+          "---\rtitle: Hi\rpinned: true\rcreated: <time>\rmodified: <time>\r---\rBody\rLine 2\rEdit",
+        pinned:
+          "---\rtitle: Hi\rpinned: true\rcreated: <time>\rmodified: <time>\r---\rBody\rLine 2\r",
       },
       {
         layout: "a byte order mark",
