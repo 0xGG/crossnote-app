@@ -40,10 +40,7 @@ test("starts a note made from a note's references with a link back to it", async
   await expect(app.noteTitle).not.toHaveValue("");
   const mentioning = await app.noteTitle.inputValue();
   // Set rather than typed: typing "[[" would open the wikilink hints.
-  await app.setEditorText(
-    "Mentions [[topics/Linked]].\n",
-    app.editor.filter({ visible: true }),
-  );
+  await app.setEditorText("Mentions [[topics/Linked]].\n", app.visibleEditor);
   // The note is written a moment after the change; its card shows the
   // text once it is.
   await app.selectTab("Drafts");
@@ -84,9 +81,7 @@ test("sorts the list from the sort menu", async ({ app, page }) => {
   await page.keyboard.press("Escape");
   await expect(byTitle).toBeHidden();
 
-  await app.createNote();
-  await expect(app.noteTitle).not.toHaveValue("");
-  const name = await app.noteTitle.inputValue();
+  const name = await app.createNote();
   await app.selectTab("Drafts");
   // Newest first by default: the note just made, then README.
   await expect(app.noteCards).toHaveCount(2);
@@ -142,9 +137,7 @@ test("saves an edit that takes a note back to how it was", async ({
   app,
   page,
 }) => {
-  await app.createNote();
-  await expect(app.noteTitle).not.toHaveValue("");
-  const name = await app.noteTitle.inputValue();
+  const name = await app.createNote();
   // A note's card follows each save of the note.
   const card = app.noteCards.filter({ hasText: `${name}.md` });
   await app.typeInEditor("Typed and then taken back");
@@ -196,7 +189,7 @@ test("never gives a new note the name of one that exists", async ({
     await app.selectTab("Drafts");
   }
   expect(await newNote()).toBe("Untitled 2");
-  await app.editor.filter({ visible: true }).click();
+  await app.visibleEditor.click();
   await page.keyboard.type("Worth keeping");
   await app.selectTab("Drafts");
   const kept = app.noteCards.filter({ hasText: "Untitled 2.md" });
@@ -262,9 +255,7 @@ test("lists a note's aliases in each of its menus", async ({ app, page }) => {
 });
 
 test("keeps notes across a reload", async ({ app, page }) => {
-  await app.createNote();
-  await expect(app.noteTitle).not.toHaveValue("");
-  const name = await app.noteTitle.inputValue();
+  const name = await app.createNote();
   await app.typeInEditor("Stored in the browser file system");
   await app.selectTab("Drafts");
   const card = app.noteCards.filter({ hasText: "Stored in the browser" });
@@ -332,9 +323,7 @@ test("makes the folder a link leads into, but no folder under a note", async ({
   app,
   page,
 }) => {
-  await app.createNote();
-  await expect(app.noteTitle).not.toHaveValue("");
-  const name = await app.noteTitle.inputValue();
+  const name = await app.createNote();
   // Set rather than typed: typed, the brackets would be closed for us.
   await app.setEditorText("[[topics/idea]]\n\n[[README.md/child]]\n");
   await app.modeButton("Preview").click();
@@ -364,9 +353,7 @@ test("says so, and keeps the note where it was, when it is moved under another n
   app,
   page,
 }) => {
-  await app.createNote();
-  await expect(app.noteTitle).not.toHaveValue("");
-  const name = await app.noteTitle.inputValue();
+  const name = await app.createNote();
   const messages = await app.recordMessages();
 
   // A note is a file: nothing goes under it.

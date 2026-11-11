@@ -742,8 +742,8 @@ describe("Notebook", () => {
     // themselves when the note had no front matter.
     const lessStamps = (text: string) =>
       text
-        .replace(/^(created|modified): \S+\r?\n/gm, "")
-        .replace(/^---\r?\n---\r?\n/, "");
+        .replace(/^(created|modified): \S+(?:\r\n|\r|\n)/gm, "")
+        .replace(/^---(?:\r\n|\r|\n)---(?:\r\n|\r|\n)/, "");
 
     syntaxSamples.forEach(({ name, text }, i) => {
       it(`with ${name}`, async () => {

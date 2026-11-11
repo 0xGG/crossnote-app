@@ -315,6 +315,11 @@ export class CrossnoteApp {
     });
   }
 
+  // The editor of the note in front, where more than one note is open.
+  get visibleEditor(): Locator {
+    return this.editor.filter({ visible: true });
+  }
+
   get searchBox(): Locator {
     return this.notesPanel.getByRole("textbox", { name: "search" });
   }
@@ -323,9 +328,12 @@ export class CrossnoteApp {
     return this.notesPanel.locator(".note-card");
   }
 
-  async createNote() {
+  // Makes a note and gives its name, once the title box is the new note's.
+  async createNote(): Promise<string> {
     await this.notesPanel.getByRole("button", { name: "New note" }).click();
     await expect(this.editor).toBeVisible();
+    await expect(this.noteTitle).not.toHaveValue("");
+    return this.noteTitle.inputValue();
   }
 
   async typeInEditor(text: string) {

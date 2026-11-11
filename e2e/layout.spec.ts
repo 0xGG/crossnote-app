@@ -77,8 +77,7 @@ test("goes to the reference a note already open is opened at", async ({
 }) => {
   await app.open();
   await app.openNotes();
-  await app.createNote();
-  const title = await app.noteTitle.inputValue();
+  const title = await app.createNote();
   const line = "See [[README]] here.";
   // Set rather than typed: typing "[[" would open the wikilink hints.
   await app.setEditorText(`Intro line.\n\n${line}\n`);

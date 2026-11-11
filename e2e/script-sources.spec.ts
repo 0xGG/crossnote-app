@@ -84,7 +84,7 @@ test("loads the language of a code block without rewriting the note", async ({
   const title = app.noteTitle.filter({ visible: true });
   await expect(title).not.toHaveValue("");
   const other = `${await app.notebookFolder()}/${await title.inputValue()}.md`;
-  await app.editor.filter({ visible: true }).click();
+  await app.visibleEditor.click();
   await page.keyboard.type("x");
   await expect.poll(() => app.storedText(other)).toContain("x");
   expect(await app.storedText(readme)).toBe(text);

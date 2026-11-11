@@ -169,7 +169,7 @@ test("docks a tab dragged out of the hidden tabs menu across a note", async ({
   );
   await page.reload();
   await app.waitUntilReady();
-  const editor = app.editor.filter({ visible: true });
+  const editor = app.visibleEditor;
   await expect(editor).toBeVisible();
   const text = await app.editorText(editor);
   const tabsets = page.locator(".flexlayout__tabset");

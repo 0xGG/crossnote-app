@@ -7,7 +7,6 @@ test.beforeEach(async ({ app }) => {
   await app.open();
   await app.openNotes();
   await app.createNote();
-  await expect(app.noteTitle).not.toHaveValue("");
 });
 
 test("renames once when Enter is followed by leaving the box", async ({

@@ -102,7 +102,7 @@ async function expectUnwritten(app: CrossnoteApp, file: string, text: string) {
   const title = app.noteTitle.filter({ visible: true });
   await expect(title).not.toHaveValue("");
   const other = `${await app.notebookFolder()}/${await title.inputValue()}.md`;
-  await app.editor.filter({ visible: true }).click();
+  await app.visibleEditor.click();
   await app.page.keyboard.type("x");
   await expect.poll(() => app.storedText(other)).toContain("x");
   expect(await app.storedText(file)).toBe(text);
