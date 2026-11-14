@@ -48,6 +48,34 @@ describe("readNoteText", () => {
 });
 
 describe("writeNoteText", () => {
+  it.each(["---\npinned: false\n--\nBody", "---\npinned: [\n---\nBody"])(
+    "keeps a separate body mapping after an intermediate save: %s",
+    (edited) => {
+      const body = "---\npinned: false\n---\nBody";
+      const file = "---\npinned: true\n---\n" + body;
+      const settings: [string, unknown][] = [["pinned", true]];
+      const saved = writeNoteText(edited, settings, file);
+      expect(readNoteText(saved).text).toBe(edited);
+      const restored = writeNoteText(body, settings, saved);
+      expect(restored).toBe(file);
+      expect(readNoteText(restored).text).toBe(body);
+      expect(readNoteText(restored).settings).toEqual({ pinned: true });
+    },
+  );
+  it.each([
+    "note: {pinned: false}",
+    "favorited: true",
+    "note: {aliases: [body]}",
+  ])("does not import settings from a separate body mapping: %s", (mapping) => {
+    const file = `---\npinned: true\n---\n---\n${mapping}\n---\nBody`;
+    const read = readNoteText(file);
+    expect(writeNoteText(read.text, Object.entries(read.settings), file)).toBe(
+      file,
+    );
+    expect(
+      writeNoteText(read.text + " edited", Object.entries(read.settings), file),
+    ).toBe(file + " edited");
+  });
   it("writes settings typed into the text where the note has none", () => {
     expect(
       writeNoteText("---\ntitle: T\nfavorited: yes\n---\nBody", settings, null),
@@ -230,6 +258,65 @@ describe("layouts other writers use", () => {
   it("writes settings with the line endings of a note without front matter", () => {
     expect(writeNoteText("Body\r\nMore\r\n", settings, null)).toBe(
       `---\r\npinned: true\r\ncreated: ${created.toISOString()}\r\n---\r\nBody\r\nMore\r\n`,
+    );
+  });
+});
+
+describe("front matter that holds only the settings", () => {
+  const stamp = "created: 2026-10-26T00:00:00.000Z\n";
+  // The settings a note's file holds, with one more set.
+  const withPinned = (file: string): [string, unknown][] => [
+    ...Object.entries(readNoteText(file).settings),
+    ["pinned", true],
+  ];
+
+  // A block between rules right after it is the note's text, which an
+  // editor shows and the preview hides: the file keeps the two apart.
+  it("stays apart from a block between rules that follows it", () => {
+    const file = `---\n${stamp}---\n---\nkind: recipe\n---\nBody\n`;
+    const { text } = readNoteText(file);
+    expect(text).toBe("---\nkind: recipe\n---\nBody\n");
+    expect(writeNoteText(text, withPinned(file), file)).toBe(
+      `---\n${stamp}pinned: true\n---\n---\nkind: recipe\n---\nBody\n`,
+    );
+    // And so on, save after save.
+    const again = `---\n${stamp}pinned: true\n---\n${text}`;
+    expect(
+      writeNoteText(
+        `${text}More\n`,
+        Object.entries(readNoteText(again).settings),
+        again,
+      ),
+    ).toBe(`${again}More\n`);
+  });
+
+  it("goes into front matter typed above a text that began otherwise", () => {
+    const file = `---\n${stamp}---\nBody\n`;
+    expect(
+      writeNoteText(
+        "---\ntitle: T\n---\nBody\n",
+        Object.entries(readNoteText(file).settings),
+        file,
+      ),
+    ).toBe(`---\ntitle: T\n${stamp}---\nBody\n`);
+  });
+
+  it("keeps the rules around it as the file wrote them", () => {
+    const file = `--- \n${stamp}---  \nBody\n`;
+    expect(writeNoteText("Body\n", withPinned(file), file)).toBe(
+      `--- \n${stamp}pinned: true\n---  \nBody\n`,
+    );
+  });
+
+  it("ends without a line ending where the file ended at its closing rule", () => {
+    const file = `---\n${stamp}---`;
+    expect(readNoteText(file).text).toBe("");
+    expect(writeNoteText("", withPinned(file), file)).toBe(
+      `---\n${stamp}pinned: true\n---`,
+    );
+    // A text typed after it starts on a line of its own.
+    expect(writeNoteText("Body", withPinned(file), file)).toBe(
+      `---\n${stamp}pinned: true\n---\nBody`,
     );
   });
 });

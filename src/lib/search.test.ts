@@ -19,6 +19,8 @@ describe("tokenize", () => {
     // Other punctuation outside ASCII is a word of its own.
     ["日本語、テスト", ["日", "本", "語", "、", "テ", "ス", "ト"]],
     ["naïve café", ["na", "ï", "ve", "caf", "é"]],
+    // A character of two code units is one word.
+    ["😀 and 𠮷野家", ["😀", "and", "𠮷", "野", "家"]],
     ["", []],
   ])("splits %j into its words", (text, words) => {
     expect(tokenize(text)).toEqual(words);
@@ -32,6 +34,18 @@ describe("Search", () => {
     const results = search.search("hello");
     expect(results.length).toBeGreaterThan(0);
     expect(results[0].filePath).toBe("notes/hello.md");
+  });
+
+  it("finds an emoji by itself, not by another that shares half its code units", () => {
+    const search = new Search();
+    search.add("notes/grin.md", "Grin 😀");
+    search.add("notes/beam.md", "Beam 😁");
+    expect(search.search("😀").map(({ filePath }) => filePath)).toEqual([
+      "notes/grin.md",
+    ]);
+    expect(search.search("😁").map(({ filePath }) => filePath)).toEqual([
+      "notes/beam.md",
+    ]);
   });
 
   it("supports CJK titles", () => {

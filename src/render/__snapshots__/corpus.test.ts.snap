@@ -2,6 +2,8 @@
 
 exports[`the shared corpus, sanitized > keeps HTML as it reads 1`] = `[]`;
 
+exports[`the shared corpus, sanitized > keeps HTML comments as it reads 1`] = `[]`;
+
 exports[`the shared corpus, sanitized > keeps Windows line endings as it reads 1`] = `[]`;
 
 exports[`the shared corpus, sanitized > keeps a table as it reads 1`] = `[]`;
@@ -9,6 +11,12 @@ exports[`the shared corpus, sanitized > keeps a table as it reads 1`] = `[]`;
 exports[`the shared corpus, sanitized > keeps a table of contents marker as it reads 1`] = `[]`;
 
 exports[`the shared corpus, sanitized > keeps an import comment as it reads 1`] = `[]`;
+
+exports[`the shared corpus, sanitized > keeps blank lines and spaces at both ends as it reads 1`] = `[]`;
+
+exports[`the shared corpus, sanitized > keeps blocks left unfinished as it reads 1`] = `[]`;
+
+exports[`the shared corpus, sanitized > keeps characters of more than one code unit as it reads 1`] = `[]`;
 
 exports[`the shared corpus, sanitized > keeps code as it reads 1`] = `[]`;
 
@@ -62,7 +70,15 @@ exports[`the shared corpus, sanitized > keeps headings, one with an id and a cla
 
 exports[`the shared corpus, sanitized > keeps indented with tabs as it reads 1`] = `[]`;
 
+exports[`the shared corpus, sanitized > keeps inline HTML and a table of uneven cells as it reads 1`] = `[]`;
+
+exports[`the shared corpus, sanitized > keeps inline marks left unfinished as it reads 1`] = `[]`;
+
 exports[`the shared corpus, sanitized > keeps line breaks as it reads 1`] = `[]`;
+
+exports[`the shared corpus, sanitized > keeps line endings of the old Mac OS as it reads 1`] = `[]`;
+
+exports[`the shared corpus, sanitized > keeps line endings of two kinds as it reads 1`] = `[]`;
 
 exports[`the shared corpus, sanitized > keeps links in task items as it reads 1`] = `[]`;
 
@@ -74,11 +90,22 @@ exports[`the shared corpus, sanitized > keeps lists and task lists as it reads 1
 
 exports[`the shared corpus, sanitized > keeps math as it reads 1`] = `[]`;
 
+exports[`the shared corpus, sanitized > keeps no line ending at the end as it reads 1`] = `[]`;
+
 exports[`the shared corpus, sanitized > keeps quotes and a rule as it reads 1`] = `[]`;
+
+exports[`the shared corpus, sanitized > keeps quotes and dashes typed plain as it reads 1`] = `[]`;
 
 exports[`the shared corpus, sanitized > keeps slides and a page break as it reads 1`] = `[]`;
 
 exports[`the shared corpus, sanitized > keeps slides with presentation settings as it reads 1`] = `[]`;
+
+exports[`the shared corpus, sanitized > keeps syntax of other tools as it reads 1`] = `
+[
+  "component",
+  "component[prop]",
+]
+`;
 
 exports[`the shared corpus, sanitized > keeps the same links again as it reads 1`] = `[]`;
 

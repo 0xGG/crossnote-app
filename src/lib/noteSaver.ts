@@ -7,7 +7,8 @@ export interface NoteLocation {
 }
 
 export interface NoteSaverOptions {
-  // The tab the editor is in.
+  // The tab the note's first editor is in. A note open in more tabs has one
+  // saver, which the others join (tabs).
   tabId: string;
   location: NoteLocation;
   // The text the editor holds now.
@@ -37,6 +38,7 @@ export class NotesNotSavedError extends Error {
 }
 
 const savers = new Set<NoteSaver>();
+let made = 0;
 
 /**
  * Keeps one note editor's text on its way to the notebook: writes it a moment
@@ -57,7 +59,10 @@ const savers = new Set<NoteSaver>();
  */
 export class NoteSaver {
   location: NoteLocation;
-  readonly tabId: string;
+  // The tabs the note is open in; the saver is theirs together.
+  readonly tabs = new Set<string>();
+  // What the saver's own writes are known by, whichever tabs come and go.
+  readonly id: string;
 
   private options: NoteSaverOptions;
   private delay: number;
@@ -65,6 +70,10 @@ export class NoteSaver {
   private saving: string | null = null;
   private timer: ReturnType<typeof setTimeout> | null = null;
   private writing: Promise<void> | null = null;
+  private renaming: Promise<void> | null = null;
+  // Writes wait only on the move itself, after the old-path writes finish.
+  // A move that partly succeeded stays rejected until the note is discarded.
+  private moving: Promise<void> | null = null;
   private writes = 0;
   private failed = false;
   private lastError: unknown = null;
@@ -74,7 +83,8 @@ export class NoteSaver {
 
   constructor(options: NoteSaverOptions) {
     this.options = options;
-    this.tabId = options.tabId;
+    this.tabs.add(options.tabId);
+    this.id = `note-saver-${++made}`;
     this.location = options.location;
     this.delay = options.delay ?? 300;
     savers.add(this);
@@ -82,7 +92,12 @@ export class NoteSaver {
 
   /** Whether some of the editor's text may not be in the notebook yet. */
   get pending(): boolean {
-    return this.timer !== null || this.writing !== null || this.failed;
+    return (
+      this.renaming !== null ||
+      this.timer !== null ||
+      this.writing !== null ||
+      this.failed
+    );
   }
 
   /** Why the write started last failed, until one goes through. */
@@ -116,6 +131,15 @@ export class NoteSaver {
    * error when it fails.
    */
   async flush(): Promise<void> {
+    do {
+      if (this.renaming !== null) {
+        await this.renaming;
+      }
+      await this.flushWrites();
+    } while (this.renaming !== null);
+  }
+
+  private async flushWrites(): Promise<void> {
     if (this.timer === null && this.writing === null && this.failed) {
       this.start();
     }
@@ -143,6 +167,12 @@ export class NoteSaver {
   took(text: string) {
     this.synced = text;
     this.saving = null;
+    // An older write may still land after this read. Put the document now
+    // accepted (or anything typed after it) behind that write. A plain load
+    // with no write in flight still writes nothing.
+    if (this.writing !== null) {
+      this.changed();
+    }
   }
 
   /** The notebook now holds text this saver wrote, as it came back. */
@@ -153,6 +183,51 @@ export class NoteSaver {
   /** The note moved: write to it where it is now. */
   moveTo(location: NoteLocation) {
     this.location = location;
+  }
+
+  /**
+   * Keeps saving and closing behind a rename, including its path migration.
+   * The callback reports when the file has actually moved: a failure after
+   * that point cannot be retried as a successful write to the old path.
+   */
+  rename<T>(move: (moved: () => void) => Promise<T>): Promise<T> {
+    const ready =
+      this.renaming === null
+        ? this.flushWrites()
+        : this.renaming.then(() => this.flushWrites());
+    const rename = ready.then(() => {
+      let moved = false;
+      const operation = move(() => {
+        moved = true;
+      });
+      this.moving = operation.then(() => {});
+      this.moving.catch(() => {});
+      return operation.then(
+        (result) => {
+          this.moving = null;
+          return result;
+        },
+        (error) => {
+          if (moved) {
+            this.failed = true;
+            this.lastError = error;
+          } else {
+            this.moving = null;
+          }
+          throw error;
+        },
+      );
+    });
+    const waiting = rename.then(() => {});
+    this.renaming = waiting;
+    waiting
+      .catch(() => {})
+      .then(() => {
+        if (this.renaming === waiting) {
+          this.renaming = null;
+        }
+      });
+    return rename;
   }
 
   /**
@@ -212,7 +287,9 @@ export class NoteSaver {
     const write = ++this.writes;
     // Started now when no write is going, else once the last one settles;
     // either way to where the note is as it starts.
-    const run = () => this.options.write(this.location, text);
+    const writeHere = () => this.options.write(this.location, text);
+    const run = () =>
+      this.moving === null ? writeHere() : this.moving.then(writeHere);
     const before = this.writing;
     const writing = (
       before === null ? run() : before.catch(() => {}).then(run)
@@ -250,12 +327,14 @@ export class NoteSaver {
 }
 
 /**
- * The saver of the note editor open in a tab, if the tab has one. One the
- * tab had before, still writing what it held, is not it.
+ * The saver of the note open in a tab, if the tab is the only one the note
+ * is open in: closing it is then what leaves the note's text to the saver
+ * alone. A note open in another tab as well stays there, text and all. A
+ * saver the tab had before, still writing what it held, is not it.
  */
 export function saverOfTab(tabId: string): NoteSaver | undefined {
   for (const saver of savers) {
-    if (saver.tabId === tabId && saver.open) {
+    if (saver.open && saver.tabs.size === 1 && saver.tabs.has(tabId)) {
       return saver;
     }
   }

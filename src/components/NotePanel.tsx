@@ -1,26 +1,16 @@
-import { EmojiDefinitions } from "@0xgg/echomd/addon/emoji";
 import { renderTwemoji } from "../render/emoji";
 import {
   Box,
   Button,
   ButtonGroup,
-  Card,
   Divider,
-  IconButton,
   InputBase,
   Tooltip,
   Typography,
 } from "@mui/material";
 import { darken, styled } from "@mui/material/styles";
-import {
-  Editor as CodeMirrorEditor,
-  EditorChangeLinkedList,
-  Position as CursorPosition,
-  TextMarker,
-} from "codemirror";
 import { Actions, TabNode } from "flexlayout-react";
 import {
-  Close,
   CodeTags,
   DotsVertical,
   FilePresentationBox,
@@ -38,14 +28,10 @@ import React, {
 import { useTranslation } from "react-i18next";
 import { CrossnoteContainer } from "../containers/crossnote";
 import { SettingsContainer } from "../containers/settings";
-import { attachEditorHandle } from "../editor/handle";
-import { initMathPreview } from "../editor/views/math-preview";
-import {
-  applyCodeMirrorMode,
-  EditorMode,
-  HYPERMD_MODE,
-  markdownState,
-} from "../lib/editorMode";
+import type { TextPosition } from "../editor/handle";
+import { NoteEditor, type EditorDisplay } from "../editor/noteEditor";
+import { outline } from "../editor/outline";
+import { EditorMode } from "../lib/editorMode";
 import {
   ChangedNoteFilePathEventData,
   DeletedNotebookEventData,
@@ -58,21 +44,34 @@ import {
 import { readNoteText } from "../lib/frontMatter";
 import { Note } from "../lib/note";
 import { Notebook } from "../lib/notebook";
-import { NoteLocation, NoteSaver } from "../lib/noteSaver";
+import { tagCompletions, wikiLinkCompletions } from "../lib/noteCompletions";
 import { isFinishingEnter } from "../lib/keys";
 import { failureMessage, notify } from "../lib/notifications";
+import {
+  joinNote,
+  leaveNote,
+  moveNote,
+  type OpenNote,
+  type OpenNoteCalls,
+} from "../lib/openNotes";
 import { Reference } from "../lib/reference";
+import { onTabVisibility } from "../lib/tabVisibility";
 import { MountedPreview, mountPreview } from "../render";
 import { setTheme } from "../themes/manager";
 import { resolveNoteImageSrc } from "../utilities/image";
 import { openURL } from "../utilities/preview";
 import { debounce } from "../utilities/utils";
-import EditImageDialog from "./EditImageDialog";
+import EditImageDialog, { type EditedImage } from "./EditImageDialog";
 import { Loading } from "./Loading";
+import { NoteNotFound } from "./NoteNotFound";
 import NotePopover from "./NotePopover";
 import NotesPanel from "./NotesPanel";
+import {
+  drawSlashCommandIcon,
+  prepareSlashCommandIcons,
+  slashCommandDescription,
+} from "./slashCommands";
 import SplitPane from "./SplitPane";
-import * as EchoMD from "@0xgg/echomd/core";
 
 const previewZIndex = 99;
 // A missing or hand-edited entry parses to NaN, which would otherwise reach
@@ -86,45 +85,6 @@ let tocPanelWidth = Number.isFinite(storedTocPanelWidth)
 const tocPanelMinWidth = 150;
 const tocPanelMaxWidth = 350;
 const bottomPanelHeight = 20;
-
-const HMDFold = {
-  image: true,
-  link: true,
-  math: true,
-  html: true, // maybe dangerous
-  emoji: true,
-  widget: false,
-  code: true,
-};
-
-interface CommandHint {
-  text: string;
-  command: string;
-  description: string;
-  icon?: string;
-  render: (
-    element: HTMLElement,
-    data: CommandHint[],
-    current: CommandHint,
-  ) => void;
-}
-
-interface EmojiHint {
-  shortName: string;
-  text: string;
-  displayText: string;
-  render: (element: HTMLElement, data: EmojiHint[], current: EmojiHint) => void;
-}
-
-const codeMirrorSelectCss = {
-  background: `#5091DA !important`,
-  color: `#fff !important`,
-};
-
-// A note's title, which is its file name, as text in the table of contents'
-// HTML.
-const escapeTitle = (title: string) =>
-  title.replace(/&/g, "&amp;").replace(/</g, "&lt;");
 
 const Row = styled(Box)({
   display: "flex",
@@ -190,75 +150,33 @@ const Toc = styled("div")(({ theme }) => ({
   },
 }));
 
-// Carried over verbatim: R3 replaces CodeMirror 5, and none of these
-// class names survive that, so they all get rewritten then anyway.
+// How the editor shows a note in each of the panel's modes that has one.
+function displayOf(editorMode: EditorMode): EditorDisplay {
+  return editorMode === EditorMode.SourceCode ? "source" : "live";
+}
+
+// The editor fills the wrapper and scrolls inside itself; its colours are the
+// theme's own (editor/theme.ts).
 const EditorWrapper = styled(Box)(({ theme }) => ({
   "position": "relative",
   "flex": 1,
   "overflow": "auto",
   "backgroundColor": "inherit",
-  // "width": "800px",
-  // "margin": "0 auto",
-  // "maxWidth": "100%",
-  "& .CodeMirror-gutters": {
-    display: "none",
-  },
-  "& .CodeMirror-code": {
-    width: "100%",
-  },
-  "& .CodeMirror": {
-    // width: "800px",
+  "& .cm-editor": {
     width: "100%",
     maxWidth: "100%",
     margin: "0 auto",
     height: "100%",
     padding: theme.spacing(0, 1),
-    backgroundColor: `${theme.palette.background.paper} !important`,
     [theme.breakpoints.down("md")]: {
       padding: theme.spacing(1),
     },
-  },
-  "& .CodeMirror-vscrollbar": {
-    // display: "none !important",
-  },
-  "& .CodeMirror-placeholder": {
-    color: `${theme.palette.text.disabled} !important`,
-  },
-  /*
-    CodeMirror selected text css:
-      .CodeMirror-selected { background: red; }
-      .CodeMirror-focused .CodeMirror-selected { background: blue; }
-      .CodeMirror-crosshair { cursor: crosshair; }
-      .CodeMirror-line::selection, .CodeMirror-line > span::selection, .CodeMirror-line > span > span::selection { background: #yellow; }
-      .CodeMirror-line::-moz-selection, .CodeMirror-line > span::-moz-selection, .CodeMirror-line > span > span::-moz-selection { background: #purple; }
-    */
-  "& .CodeMirror-selected": codeMirrorSelectCss,
-  "& .CodeMirror-focused .CodeMirror-selected": codeMirrorSelectCss,
-  "& .CodeMirror-line::selection": codeMirrorSelectCss,
-  "& .CodeMirror-line > span::selection": codeMirrorSelectCss,
-  "& .CodeMirror-line > span > span::selection ": codeMirrorSelectCss,
-  "& .CodeMirror-line::-moz-selection": codeMirrorSelectCss,
-  "& .CodeMirror-line > span::-moz-selection": codeMirrorSelectCss,
-  "& .CodeMirror-line > span > span::-moz-selection": codeMirrorSelectCss,
-  /*
-    [theme.breakpoints.down("md")]: {
-      padding: theme.spacing(1),
-    },
-    */
-
-  "& .CodeMirror span.emoji": {
-    height: "1.2em !important",
-    width: "1.2em !important",
-    top: ".2em !important",
-    position: "relative",
   },
 }));
 
-const EditorTextArea = styled("textarea")({
+const EditorHost = styled("div")({
   width: "100%",
   height: "100%",
-  backgroundColor: "inherit",
-  border: "none",
 });
 
 const Preview = styled("div")(({ theme }) => ({
@@ -274,7 +192,6 @@ const Preview = styled("div")(({ theme }) => ({
   "overflow": "auto !important",
   "padding": theme.spacing(1, 2),
   "zIndex": previewZIndex,
-  "backgroundColor": `${theme.palette.background.paper} !important`,
   [theme.breakpoints.down("md")]: {
     padding: theme.spacing(1),
   },
@@ -297,33 +214,6 @@ const ControlButton = styled(Button)(({ theme }) => ({
   padding: theme.spacing(0.5, 0),
   color: theme.palette.text.secondary,
 }));
-
-const FloatWin = styled(Card)(({ theme }) => ({
-  position: "fixed",
-  zIndex: 100,
-  background: theme.palette.background.paper,
-  borderRadius: "5px",
-  overflow: "hidden",
-  minWidth: "200px",
-  maxWidth: "70%",
-}));
-
-const FloatWinTitle = styled(Box)({
-  display: "flex",
-  alignItems: "center",
-  background: "#579",
-  color: "#eee",
-});
-
-const FloatWinContent = styled(Box)({
-  maxHeight: "80vh",
-  overflow: "auto",
-  padding: "10px 20px",
-});
-
-const FloatWinClose = styled(IconButton)({
-  color: "#eee",
-});
 
 const BottomPanel = styled(Box)(({ theme }) => ({
   position: "absolute",
@@ -366,23 +256,22 @@ export default function NotePanel(props: Props) {
   const { t } = useTranslation();
   const [noteTitle, setNoteTitle] = useState<string>("");
   const [note, setNote] = useState<Note>(null);
-  const [editor, setEditor] = useState<CodeMirrorEditor>(null);
+  // The note's text, undo history and saver, shared with every other tab the
+  // note is open in; and this tab's editor of it.
+  const [openNote, setOpenNote] = useState<OpenNote>(null);
+  const [editor, setEditor] = useState<NoteEditor>(null);
   const [editorMode, setEditorMode] = useState<EditorMode>(
     settingsContainer.defaultEditorMode,
   );
   const tocElement = useRef<HTMLDivElement>(null);
   const previewElement = useRef<HTMLDivElement>(null);
   const mountedPreview = useRef<MountedPreview>(null);
-  const textAreaElement = useRef<HTMLTextAreaElement>(null);
-  const [cursorPosition, setCursorPosition] = useState<CursorPosition>({
+  const editorHost = useRef<HTMLDivElement>(null);
+  const [cursorPosition, setCursorPosition] = useState<TextPosition>({
     line: 0,
     ch: 0,
   });
-  const mathPreviewElement = useRef<HTMLDivElement>(null);
-  const [editImageElement, setEditImageElement] =
-    useState<HTMLImageElement>(null);
-  const [editImageTextMarker, setEditImageTextMarker] =
-    useState<TextMarker>(null);
+  const [editedImage, setEditedImage] = useState<EditedImage>(null);
   const [editImageDialogOpen, setEditImageDialogOpen] =
     useState<boolean>(false);
   const [notePopoverElement, setNotePopoverElement] = useState<Element>(null);
@@ -396,7 +285,23 @@ export default function NotePanel(props: Props) {
   // Tab straight after Enter does; neither may start a second rename of a
   // file the first is still moving, or has moved before the panel shows it.
   const renamingFrom = useRef<string>(null);
-
+  // What the editor, made once, reads as of the latest commit.
+  const latest = useRef<{
+    note: Note;
+    notebook: Notebook;
+    t: typeof t;
+    editorMode: EditorMode;
+    sourceCodeLineNumbers: boolean;
+  }>(null);
+  useLayoutEffect(() => {
+    latest.current = {
+      note,
+      notebook: props.notebook,
+      t,
+      editorMode,
+      sourceCodeLineNumbers: settingsContainer.sourceCodeLineNumbers,
+    };
+  });
   const confirmNoteTitle = useCallback(() => {
     const finalNoteTitle = noteTitle.trim().replace(/\//g, "-");
     if (!note || note.filePath === renamingFrom.current) {
@@ -453,14 +358,6 @@ export default function NotePanel(props: Props) {
   }, []);
 
   useEffect(() => {
-    if (!note) {
-      return () => {
-        setEditor(null);
-      };
-    }
-  }, [note]);
-
-  useEffect(() => {
     if (!note || !crossnoteContainer.layoutModel || !tabNode) {
       return;
     }
@@ -473,32 +370,19 @@ export default function NotePanel(props: Props) {
     );
   }, [note, crossnoteContainer.layoutModel, tabNode]);
 
-  // Writes what is typed to the notebook and knows which texts the notebook
-  // brings back are the editor's own; made with the editor.
-  const [saver, setSaver] = useState<NoteSaver>(null);
-  // What the saver calls on, as of the latest commit. Set in a layout effect,
-  // which runs before the effect that makes the saver.
-  const saverCalls = useRef<{
-    write: (location: NoteLocation, text: string) => Promise<void>;
-    written: () => void;
-    failed: (error: unknown) => void;
-  }>(null);
+  // What the note's saver calls on, as of this tab's latest commit. The note
+  // may be open in other tabs too: whichever drew last answers.
+  const noteCalls = useRef<OpenNoteCalls>(null);
   const [writtenCount, setWrittenCount] = useState<number>(0);
   useLayoutEffect(() => {
-    saverCalls.current = {
-      write: (location, text) =>
+    noteCalls.current = {
+      write: (writer, location, text) =>
         crossnoteContainer.updateNoteMarkdown(
-          tabNode,
+          writer,
           location.notebookPath,
           location.filePath,
           text,
         ),
-      // The status bar's git status follows what is written.
-      written: () => {
-        if (isMounted.current) {
-          setWrittenCount((count) => count + 1);
-        }
-      },
       // Said once; what was typed stays in the editor for the next change to
       // save, and the page asks before it is left with it.
       failed: (error) => {
@@ -509,72 +393,74 @@ export default function NotePanel(props: Props) {
         });
       },
     };
+    if (openNote) {
+      openNote.calls = noteCalls.current;
+    }
   });
 
+  // Joins the note's other tabs, or opens the note with the text the
+  // notebook holds, once the note has loaded; leaves with the panel.
+  const noteLoaded = !!note;
   useEffect(() => {
-    if (!saver) {
+    if (!noteLoaded) {
       return;
     }
-    // Asks while anything typed may not be written yet: a write started as
-    // the page reloads seldom lands before it is gone (none of five in a
-    // measurement; four or five of five as the page is closed).
-    const ask = (event: BeforeUnloadEvent) => {
-      if (saver.pending) {
-        event.preventDefault();
-        // Older browsers ask only when this is set.
-        event.returnValue = "";
-      }
-    };
-    // Written as the page is hidden as well, in case it is not coming back.
-    const hide = () => {
-      saver.flush().catch(() => {});
-    };
-    const hidden = () => {
-      if (document.visibilityState === "hidden") {
-        hide();
-      }
-    };
-    window.addEventListener("beforeunload", ask);
-    window.addEventListener("pagehide", hide);
-    document.addEventListener("visibilitychange", hidden);
+    const { note } = latest.current;
+    const tabId = tabNode.getId();
+    const joined = joinNote(
+      tabId,
+      { notebookPath: note.notebookPath, filePath: note.filePath },
+      note.markdown || "",
+      noteCalls.current,
+      note.lineBreak,
+    );
+    setOpenNote(joined);
     return () => {
-      window.removeEventListener("beforeunload", ask);
-      window.removeEventListener("pagehide", hide);
-      document.removeEventListener("visibilitychange", hidden);
-      saver.dispose();
+      leaveNote(joined, tabId);
+      setOpenNote(null);
     };
-  }, [saver]);
+  }, [noteLoaded, tabNode]);
+
+  // The status bar's git status follows what is written.
+  useEffect(() => {
+    if (!openNote) {
+      return;
+    }
+    return openNote.onWritten(() => {
+      if (isMounted.current) {
+        setWrittenCount((count) => count + 1);
+      }
+    });
+  }, [openNote]);
 
   useEffect(() => {
-    if (saver && note) {
-      saver.moveTo({
+    if (openNote && note) {
+      moveNote(openNote, {
         notebookPath: note.notebookPath,
         filePath: note.filePath,
       });
     }
-  }, [saver, note]);
+  }, [openNote, note]);
 
   // Emitter
   useEffect(() => {
-    if (!globalEmitter || !tabNode || !editor || !note || !saver) {
+    if (!globalEmitter || !tabNode || !note || !openNote) {
       return;
     }
 
     const modifiedMarkdownCallback = (data: ModifiedMarkdownEventData) => {
-      if (data.tabId === tabNode.getId()) {
-        saver.wrote(data.markdown);
-        return;
-      }
-      if (
+      const here =
         data.notebookPath === note.notebookPath &&
-        data.noteFilePath === note.filePath
-      ) {
+        data.noteFilePath === note.filePath;
+      if (here && data.tabId !== tabNode.getId()) {
         note.config = data.noteConfig;
-        if (editor.getValue() !== data.markdown) {
-          editor.setValue(data.markdown);
-        }
-        saver.took(data.markdown);
       }
+      openNote.written(
+        data.tabId,
+        { notebookPath: data.notebookPath, filePath: data.noteFilePath },
+        data.markdown,
+        data.lineBreak,
+      );
     };
 
     const deletedNoteCallback = (data: DeletedNoteEventData) => {
@@ -611,13 +497,14 @@ export default function NotePanel(props: Props) {
         );
         if (newNote) {
           setNote(newNote);
-          if (saver.isOwn(newNote.markdown)) {
+          if (openNote.saver.isOwn(newNote.markdown)) {
+            if (openNote.document.text() === newNote.markdown) {
+              openNote.document.load(newNote.markdown, newNote.lineBreak);
+            }
             return;
           }
-          if (editor.getValue() !== newNote.markdown) {
-            editor.setValue(newNote.markdown);
-          }
-          saver.took(newNote.markdown);
+          openNote.document.load(newNote.markdown, newNote.lineBreak);
+          openNote.saver.took(newNote.markdown);
         } else {
           crossnoteContainer.closeTabNode(tabNode.getId());
         }
@@ -656,9 +543,8 @@ export default function NotePanel(props: Props) {
     };
   }, [
     tabNode,
-    editor,
     note,
-    saver,
+    openNote,
     crossnoteContainer.layoutModel,
     crossnoteContainer.closeTabNode,
     crossnoteContainer.getNote,
@@ -666,6 +552,10 @@ export default function NotePanel(props: Props) {
 
   // get note
   const modeChosen = useRef<boolean>(false);
+  // Whether the notebook was found to have no note at the tab's path, and
+  // how many times it has been looked in again since.
+  const [missing, setMissing] = useState<boolean>(false);
+  const [lookedFor, setLookedFor] = useState<number>(0);
   useEffect(() => {
     props.notebook
       .refreshNotesIfNotLoaded({
@@ -685,11 +575,39 @@ export default function NotePanel(props: Props) {
           }
         }
         setNote(loaded);
+        // The notebook has no note at this path: the tab says so, rather
+        // than go on as if the note were still being read.
+        setMissing(!loaded);
       })
       .catch((error) => {
         console.error(error);
+        setMissing(true);
       });
-  }, [props.noteFilePath, props.notebook]);
+  }, [props.noteFilePath, props.notebook, lookedFor]);
+
+  // A note that is not there may come: pulled or restored by git, created,
+  // or another note renamed to its path. Each has the notebook looked in
+  // again.
+  useEffect(() => {
+    if (!missing) {
+      return;
+    }
+    const notebookPath = props.notebook.dir;
+    const lookAgain = () => setLookedFor((times) => times + 1);
+    const inNotebook = (data: { notebookPath: string }) => {
+      if (data.notebookPath === notebookPath) {
+        lookAgain();
+      }
+    };
+    globalEmitter.on(EventType.PerformedGitOperation, inNotebook);
+    globalEmitter.on(EventType.CreatedNote, inNotebook);
+    globalEmitter.on(EventType.ChangedNoteFilePath, inNotebook);
+    return () => {
+      globalEmitter.off(EventType.PerformedGitOperation, inNotebook);
+      globalEmitter.off(EventType.CreatedNote, inNotebook);
+      globalEmitter.off(EventType.ChangedNoteFilePath, inNotebook);
+    };
+  }, [missing, props.notebook]);
 
   // Front matter YAML cannot read is kept as it is, and the note's settings
   // are saved before it. Said once, as the note opens: front matter caught
@@ -708,102 +626,104 @@ export default function NotePanel(props: Props) {
     }
   }, [note, t]);
 
-  // Set editor
+  // The editor: one for the panel, made once the note's shared text is at
+  // hand, and taken away with it.
   useEffect(() => {
-    if (textAreaElement.current && !editor && note) {
-      const editor: CodeMirrorEditor = EchoMD.fromTextArea(
-        textAreaElement.current,
-        {
-          mode: HYPERMD_MODE,
-          // inputStyle: "textarea", // Break mobile device paste functionality
-          hmdFold: HMDFold,
-          keyMap: "sublime",
-          showCursorWhenSelecting: true,
-          inputStyle: "contenteditable",
-          // echomd's add-ons for inserting a file, converting what is pasted
-          // and showing a footnote on hover are given nothing to do here, and
-          // are off. echomd turns them on unless told otherwise; inserting
-          // files, left on for drops, would move the caret to wherever
-          // anything is dropped, a dragged tab included.
-          hmdInsertFile: false,
-          hmdPaste: false,
-          hmdHover: false,
-          hmdClick: (info: any, cm: CodeMirrorEditor) => {
-            let { text, url } = info;
-            if (info.type === "link" || info.type === "url") {
-              const footnoteRef = text.match(/\[[^[\]]+\](?:\[\])?$/); // bare link, footref or [foot][] . assume no escaping char inside
-              if (!footnoteRef && (info.ctrlKey || info.altKey) && url) {
-                // Hack: Fix a wikilink click bug when clicking text like "[[haha]]."
-                if (url.startsWith("[[")) {
-                  url = url.slice(2, url.length);
-                  const i = url.lastIndexOf("]]");
-                  if (i > 0) {
-                    url = url.slice(0, i);
-                  }
-                }
-
-                // just open URL
-                openURL(url, note);
-                return false; // Prevent default click event
-              }
-            }
-          },
-        },
-      );
-      editor.setOption("lineNumbers", false);
-      editor.setOption("foldGutter", false);
-      const handle = attachEditorHandle(editor, "note-editor");
-      editor.setValue(note.markdown || "");
-      const saver = new NoteSaver({
-        tabId: props.tabNode.getId(),
-        location: { notebookPath: note.notebookPath, filePath: note.filePath },
-        text: handle.text,
-        write: (location, text) => saverCalls.current.write(location, text),
-        onWritten: () => saverCalls.current.written(),
-        onFailed: (error) => saverCalls.current.failed(error),
-      });
-      saver.took(note.markdown || "");
-      setSaver(saver);
-      editor.on("cursorActivity", (instance) => {
-        const cursor = instance.getCursor();
-        if (cursor) {
-          setCursorPosition({
-            line: cursor.line,
-            ch: cursor.ch,
-          });
+    if (!openNote || !editorHost.current) {
+      return;
+    }
+    prepareSlashCommandIcons();
+    const created = new NoteEditor({
+      parent: editorHost.current,
+      document: openNote.document,
+      display: displayOf(latest.current.editorMode),
+      lineNumbers: latest.current.sourceCodeLineNumbers,
+      testId: "note-editor",
+      placeholder: latest.current.t("editor/placeholder"),
+      // Written at once, rather than a moment after the last key.
+      onSave: () => {
+        openNote.saver.flush().catch(() => {});
+      },
+      onSelection: (editor) => setCursorPosition(editor.caret()),
+      onLinkClick: (link) => {
+        // A link, in markdown's form or a wiki link, opens as it does in
+        // the preview.
+        if (link.kind !== "hashtag") {
+          openURL(link.target, latest.current.note);
         }
-      });
-      setEditor(editor);
-
-      if (props.tabNode.getRect()) {
-        setTocEnabled(props.tabNode.getRect().width >= 500);
-      }
+      },
+      images: {
+        loadImage: (element, src) => {
+          resolveNoteImageSrc(latest.current.note, src)
+            .then((url) => {
+              element.src = url;
+            })
+            .catch(() => {});
+        },
+        onImageClick: (image) => {
+          setEditedImage({ ...image, document: created.document.doc });
+          setEditImageDialogOpen(true);
+        },
+      },
+      completion: {
+        describeCommand: (name) => {
+          const key = slashCommandDescription(name);
+          return key ? latest.current.t(key) : "";
+        },
+        drawCommandIcon: drawSlashCommandIcon,
+        tags: (typed) =>
+          tagCompletions(latest.current.notebook, latest.current.note, typed),
+        wikiLinks: (typed) =>
+          wikiLinkCompletions(
+            latest.current.notebook,
+            latest.current.note,
+            typed,
+          ),
+      },
+    });
+    if (latest.current.editorMode === EditorMode.Preview) {
+      created.setHidden(true);
     }
-  }, [textAreaElement, note, editor, props.tabNode]);
+    setEditor(created);
+    if (tabNode.getRect()) {
+      setTocEnabled(tabNode.getRect().width >= 500);
+    }
+    return () => {
+      created.destroy();
+      setEditor(null);
+    };
+  }, [openNote, tabNode]);
 
-  // Save note info to editor
   useEffect(() => {
-    if (note && editor) {
-      (editor.setOption as any)("note", note);
-    }
-  }, [note, editor]);
-
-  // Math preview
-  useEffect(() => {
-    if (editor && mathPreviewElement) {
-      initMathPreview(editor, mathPreviewElement.current);
-    }
-  }, [editor, mathPreviewElement]);
+    editor?.refreshImages();
+  }, [editor, note?.notebookPath, note?.filePath]);
 
   // Render Preview
   useEffect(() => {
-    if (editorMode === EditorMode.Preview && editor && note && previewElement) {
-      showPreview(editor.getValue());
+    if (
+      editorMode === EditorMode.Preview &&
+      editor &&
+      openNote &&
+      note &&
+      previewElement
+    ) {
+      showPreview(openNote.document.text());
+      // Drawn again a moment after the note's text changes under it: typed
+      // in another tab, or taken from the notebook.
+      let timer: ReturnType<typeof setTimeout> = null;
+      const stop = openNote.document.onChange(() => {
+        clearTimeout(timer);
+        timer = setTimeout(() => showPreview(openNote.document.text()), 300);
+      });
       // Leaving the preview, or the panel going, disposes of the drawing:
       // images still being read are not written.
-      return () => mountedPreview.current?.dispose();
+      return () => {
+        stop();
+        clearTimeout(timer);
+        mountedPreview.current?.dispose();
+      };
     }
-  }, [editorMode, editor, previewElement, note, showPreview, t]);
+  }, [editorMode, editor, openNote, previewElement, note, showPreview, t]);
 
   // Check need to highlight reference
   useEffect(() => {
@@ -842,580 +762,102 @@ export default function NotePanel(props: Props) {
             );
           };
         }
-      } /* else if (editor) { // <= Doesn't work very well
-        const line = props.reference.lines[0];
-        console.log("refer line: ", line);
-        if (typeof line === "number") {
-          const lineText = editor.getLine(line);
-          editor.markText(
-            { line, ch: 0 },
-            { line, ch: lineText.length },
-            {
-              className: "reference-highlight",
-              clearOnEnter: true,
-              atomic: true,
-            },
-          );
-        }
-      }*/ else if (editor) {
+      } else if (editor) {
         const lineNo = props.reference.lines[0];
         if (typeof lineNo === "number") {
-          editor.setCursor({ line: editor.lastLine(), ch: 0 });
-          setTimeout(function () {
-            editor.setCursor({ line: lineNo, ch: 0 });
-          }, 10);
+          editor.revealLine(lineNo);
         }
       }
     }
   }, [props.reference, editorMode, editor, previewElement]);
 
-  // Toggle editor & preview
+  // Toggle editor & preview: the editor stays as it is under the preview,
+  // text, selection and undo history, and is shown again as the mode asks.
   useEffect(() => {
-    if (!editor || !note) return;
-    if (editorMode === EditorMode.EchoMD) {
-      applyCodeMirrorMode(
-        editor,
-        editorMode,
-        settingsContainer.plainTextSourceCode,
-      );
-      EchoMD.switchToHyperMD(editor);
-      editor.setOption("hmdFold" as any, HMDFold);
-      editor.getWrapperElement().style.display = "block";
-      editor.refresh();
-    } else if (editorMode === EditorMode.SourceCode) {
-      // Styled source by default: HyperMD keeps laying the lines out and
-      // only the folding goes. The plain text setting swaps the mode as well.
-      applyCodeMirrorMode(
-        editor,
-        editorMode,
-        settingsContainer.plainTextSourceCode,
-      );
-      EchoMD.switchToNormal(editor);
-      editor.getWrapperElement().style.display = "block";
-      editor.refresh();
-    } else if (editorMode === EditorMode.Preview) {
-      editor.getWrapperElement().style.display = "none";
+    if (!editor) {
+      return;
     }
-  }, [editorMode, editor, note, settingsContainer.plainTextSourceCode]);
-
-  // Change markdown
-  useEffect(() => {
-    if (editor && note && tabNode && saver) {
-      const changesHandler = () => {
-        // Not compared with the note the tab opened with, which saving does
-        // not replace: a change back to that text would never be saved.
-        // updateNoteMarkdown skips text the notebook already holds.
-        saver.changed();
-        if (editorMode === EditorMode.Preview) {
-          setTimeout(() => {
-            showPreview(editor.getValue());
-          }, 300);
-        }
-      };
-      editor.on("changes", changesHandler);
-
-      const imageClickedHandler = (args: any) => {
-        const marker: TextMarker = args.marker;
-        const imageElement: HTMLImageElement = args.element;
-        imageElement.setAttribute(
-          "data-marker-position",
-          JSON.stringify(marker.find()),
-        );
-        setEditImageElement(imageElement);
-        setEditImageTextMarker(marker);
-        setEditImageDialogOpen(true);
-      };
-      editor.on("imageClicked", imageClickedHandler);
-
-      const loadImage = async (args: any) => {
-        const element = args.element;
-        const imageSrc = element.getAttribute("data-src");
-        element.setAttribute("src", await resolveNoteImageSrc(note, imageSrc));
-      };
-      editor.on("imageReadyToLoad", loadImage);
-
-      return () => {
-        editor.off("changes", changesHandler);
-        editor.off("imageClicked", imageClickedHandler);
-        editor.off("imageReadyToLoad", loadImage);
-      };
+    if (editorMode === EditorMode.Preview) {
+      editor.setHidden(true);
+    } else {
+      editor.show(
+        displayOf(editorMode),
+        settingsContainer.sourceCodeLineNumbers,
+      );
+      editor.setHidden(false);
     }
-  }, [editor, note, tabNode, saver, editorMode, previewElement, showPreview]);
-
-  // Command
-  useEffect(() => {
-    if (!editor || !note) return;
-    const onChangeHandler = (
-      instance: CodeMirrorEditor,
-      changeObject: EditorChangeLinkedList,
-    ) => {
-      // Check commands
-      if (changeObject.text.length === 1 && changeObject.text[0] === "/") {
-        const aheadStr = editor
-          .getLine(changeObject.from.line)
-          .slice(0, changeObject.from.ch + 1);
-        if (!aheadStr.match(/#[^\s]+?\/$/)) {
-          // Not `/` inside a tag
-          editor.showHint({
-            closeOnUnfocus: false,
-            completeSingle: false,
-            hint: () => {
-              const cursor = editor.getCursor();
-              const token = editor.getTokenAt(cursor);
-              const line = cursor.line;
-              const lineStr = editor.getLine(line);
-              const end: number = cursor.ch;
-              let start = token.start;
-              if (lineStr[start] !== "/") {
-                start = start - 1;
-              }
-              const currentWord: string = lineStr
-                .slice(start, end)
-                .replace(/^\//, "");
-
-              const render = (
-                element: HTMLElement,
-                data: CommandHint[],
-                cur: CommandHint,
-              ) => {
-                const wrapper = document.createElement("div");
-                wrapper.style.padding = "6px 0";
-                wrapper.style.display = "flex";
-                wrapper.style.flexDirection = "row";
-                wrapper.style.alignItems = "flex-start";
-                wrapper.style.maxWidth = "100%";
-                wrapper.style.minWidth = "200px";
-
-                const leftPanel = document.createElement("div");
-                const iconWrapper = document.createElement("div");
-                iconWrapper.style.padding = "0 6px";
-                iconWrapper.style.marginRight = "6px";
-                iconWrapper.style.fontSize = "1rem";
-
-                const iconElement = document.createElement("span");
-                iconElement.classList.add("mdi");
-                iconElement.classList.add(
-                  cur.icon || "mdi-help-circle-outline",
-                );
-                iconWrapper.appendChild(iconElement);
-                leftPanel.appendChild(iconWrapper);
-
-                const rightPanel = document.createElement("div");
-
-                const descriptionElement = document.createElement("p");
-                descriptionElement.innerText = cur.description;
-                descriptionElement.style.margin = "2px 0";
-                descriptionElement.style.padding = "0";
-
-                const commandElement = document.createElement("p");
-                commandElement.innerText = cur.command;
-                commandElement.style.margin = "0";
-                commandElement.style.padding = "0";
-                commandElement.style.fontSize = "0.7rem";
-
-                rightPanel.appendChild(descriptionElement);
-                rightPanel.appendChild(commandElement);
-
-                wrapper.appendChild(leftPanel);
-                wrapper.appendChild(rightPanel);
-                element.appendChild(wrapper);
-              };
-
-              const commands: CommandHint[] = [
-                {
-                  text: "# ",
-                  command: "/h1",
-                  description: t("editor/toolbar/insert-header-1"),
-                  icon: "mdi-format-header-1",
-                  render,
-                },
-                {
-                  text: "## ",
-                  command: "/h2",
-                  description: t("editor/toolbar/insert-header-2"),
-                  icon: "mdi-format-header-2",
-                  render,
-                },
-                {
-                  text: "### ",
-                  command: "/h3",
-                  description: t("editor/toolbar/insert-header-3"),
-                  icon: "mdi-format-header-3",
-                  render,
-                },
-                {
-                  text: "#### ",
-                  command: "/h4",
-                  description: t("editor/toolbar/insert-header-4"),
-                  icon: "mdi-format-header-4",
-                  render,
-                },
-                {
-                  text: "##### ",
-                  command: "/h5",
-                  description: t("editor/toolbar/insert-header-5"),
-                  icon: "mdi-format-header-5",
-                  render,
-                },
-                {
-                  text: "###### ",
-                  command: "/h6",
-                  description: t("editor/toolbar/insert-header-6"),
-                  icon: "mdi-format-header-6",
-                  render,
-                },
-                {
-                  text: "> ",
-                  command: "/blockquote",
-                  description: t("editor/toolbar/insert-blockquote"),
-                  icon: "mdi-format-quote-open",
-                  render,
-                },
-                {
-                  text: "* ",
-                  command: "/ul",
-                  description: t("editor/toolbar/insert-unordered-list"),
-                  icon: "mdi-format-list-bulleted",
-                  render,
-                },
-                {
-                  text: "1. ",
-                  command: "/ol",
-                  description: t("editor/toolbar/insert-ordered-list"),
-                  icon: "mdi-format-list-numbered",
-                  render,
-                },
-                {
-                  text: `|   |   |
-|---|---|
-|   |   |
-`,
-                  command: "/table",
-                  description: t("editor/toolbar/insert-table"),
-                  icon: "mdi-table",
-                  render,
-                },
-              ];
-              const filtered = commands.filter(
-                (item) =>
-                  (item.command + item.description)
-                    .toLocaleLowerCase()
-                    .indexOf(currentWord.toLowerCase()) >= 0,
-              );
-              return {
-                list: filtered.length ? filtered : commands,
-                from: { line, ch: start },
-                to: { line, ch: end },
-              };
-            },
-          });
-        }
-      }
-
-      // Check emoji
-      if (
-        changeObject.text.length === 1 &&
-        changeObject.text[0].length > 0 &&
-        changeObject.text[0] !== " " &&
-        changeObject.text[0] !== ":" &&
-        changeObject.from.ch > 0 &&
-        editor.getLine(changeObject.from.line)[changeObject.from.ch - 1] === ":"
-      ) {
-        editor.showHint({
-          closeOnUnfocus: true,
-          completeSingle: false,
-          hint: () => {
-            const cursor = editor.getCursor();
-            const token = editor.getTokenAt(cursor);
-            const line = cursor.line;
-            const lineStr = editor.getLine(line);
-            const end: number = cursor.ch;
-            let start = token.start;
-            let doubleSemiColon = false;
-            if (lineStr[start] !== ":") {
-              start = start - 1;
-            }
-            if (start > 0 && lineStr[start - 1] === ":") {
-              start = start - 1;
-              doubleSemiColon = true;
-            }
-            const currentWord: string = lineStr
-              .slice(start, end)
-              .replace(/^:+/, "");
-            const render = (
-              element: HTMLElement,
-              data: EmojiHint[],
-              cur: EmojiHint,
-            ) => {
-              const wrapper = document.createElement("div");
-              wrapper.style.padding = "6px 0";
-              wrapper.style.display = "flex";
-              wrapper.style.flexDirection = "row";
-              wrapper.style.alignItems = "flex-start";
-              wrapper.style.justifyContent = "space-between";
-              wrapper.style.maxWidth = "100%";
-              wrapper.style.minWidth = "200px";
-
-              const leftPanel = document.createElement("div");
-              const shortNameWrapper = document.createElement("div");
-              shortNameWrapper.style.padding = "0 6px";
-              shortNameWrapper.style.marginRight = "6px";
-              shortNameWrapper.style.fontSize = "0.7rem";
-              shortNameWrapper.innerText = `:${cur.shortName}:`;
-              leftPanel.appendChild(shortNameWrapper);
-
-              const rightPanel = document.createElement("div");
-              rightPanel.innerText = EmojiDefinitions[cur.shortName];
-              rightPanel.style.padding = "0 6px";
-              renderTwemoji(rightPanel);
-
-              wrapper.appendChild(leftPanel);
-              wrapper.appendChild(rightPanel);
-              element.appendChild(wrapper);
-            };
-
-            const commands: EmojiHint[] = [];
-            for (const shortName in EmojiDefinitions) {
-              const emoji = EmojiDefinitions[shortName];
-              commands.push({
-                shortName,
-                text: doubleSemiColon ? `:${shortName}: ` : `${emoji} `,
-                displayText: `:${shortName}: ${emoji}`,
-                render,
-              });
-            }
-            const filtered = commands.filter(
-              (item) =>
-                item.displayText
-                  .toLocaleLowerCase()
-                  .indexOf(currentWord.toLowerCase()) >= 0,
-            );
-            return {
-              list: filtered.length ? filtered : commands,
-              from: { line, ch: start },
-              to: { line, ch: end },
-            };
-          },
-        });
-      }
-
-      // Check tag
-      if (changeObject.text.length === 1 && changeObject.text[0] === "#") {
-        editor.showHint({
-          closeOnUnfocus: true,
-          completeSingle: false,
-          hint: () => {
-            const cursor = editor.getCursor();
-            const token = editor.getTokenAt(cursor);
-            const line = cursor.line;
-            const lineStr = editor.getLine(line);
-            const end: number = cursor.ch;
-            let start = token.start;
-            if (lineStr[start] !== "#") {
-              start = start - 1;
-            }
-            const currentWord: string = lineStr
-              .slice(start, end)
-              .replace(/^#/, "");
-            const searchResults = props.notebook.search.search(currentWord, {
-              fuzzy: true,
-              filter: (result: any) => {
-                const filePath = path.relative(
-                  path.dirname(path.join(note.notebookPath, note.filePath)),
-                  path.join(note.notebookPath, result["filePath"]),
-                );
-                return result["title"] + ".md" === filePath;
-              },
-              fields: ["title"],
-            });
-            const commands: {
-              text: string;
-              displayText: string;
-            }[] = searchResults.map((searchResult: any) => {
-              const val =
-                "#" +
-                searchResult.title +
-                (searchResult.title.match(/\s/) ? "#" : "");
-              return {
-                text: val,
-                displayText: val,
-              };
-            });
-            return {
-              list: commands,
-              from: { line, ch: start },
-              to: { line, ch: end },
-            };
-          },
-        });
-      }
-
-      const withinWikiLink = function (line: number, ch: number) {
-        const aheadStr = editor.getLine(changeObject.from.line).slice(0, ch);
-        return aheadStr.lastIndexOf("[[") > aheadStr.lastIndexOf("]]");
-      };
-      // Check Wikilink
-      if (withinWikiLink(changeObject.from.line, changeObject.from.ch)) {
-        editor.showHint({
-          closeOnUnfocus: true,
-          completeSingle: false,
-          hint: () => {
-            const cursor = editor.getCursor();
-            const token = editor.getTokenAt(cursor);
-            const line = cursor.line;
-            const lineStr = editor.getLine(line);
-            const end: number = lineStr.indexOf("]]", cursor.ch);
-            let start = token.start;
-            while (lineStr[start] !== "[") {
-              start = start - 1;
-            }
-            const currentWord: string = lineStr
-              .slice(start, end)
-              .replace(/^\[+/, "");
-            const searchResults = props.notebook.search.search(currentWord, {
-              fuzzy: true,
-              fields: ["title", "aliases", "filePath"],
-            });
-            const commands: {
-              text: string;
-              displayText: string;
-            }[] = [];
-            for (let i = 0; i < searchResults.length; i++) {
-              const searchResult = searchResults[i];
-              const filtPath = path.relative(
-                path.dirname(path.join(note.notebookPath, note.filePath)),
-                path.join(note.notebookPath, searchResult.filePath),
-              );
-              const aliases = searchResult.aliases
-                .split("|")
-                .concat(searchResult.title) as string[];
-              const terms = searchResult.terms;
-              aliases.forEach((alias) => {
-                let find = true;
-                for (let i = 0; i < terms.length; i++) {
-                  const lower = alias.toLocaleLowerCase();
-                  if (lower.indexOf(terms[i]) < 0) {
-                    find = false;
-                    break;
-                  }
-                }
-                if (find) {
-                  const val =
-                    alias + ".md" === filtPath
-                      ? `[[${alias}]]`
-                      : `[[${filtPath}|${alias}]]`;
-                  commands.push({
-                    text: val,
-                    displayText: val,
-                  });
-                }
-              });
-            }
-            return {
-              list: commands,
-              from: { line, ch: start - 1 },
-              to: { line, ch: end + 2 },
-            };
-          },
-        });
-      }
-    };
-    editor.on("change", onChangeHandler);
-    return () => {
-      editor.off("change", onChangeHandler);
-    };
-  }, [editor, note, props.notebook, t]);
+  }, [editorMode, editor, settingsContainer.sourceCodeLineNumbers]);
 
   // TOC
   useEffect(() => {
-    if (!editor || !tocElement || !note || !tocEnabled) {
+    if (!editor || !openNote || !tocElement.current || !note || !tocEnabled) {
       return;
     }
+    const element = tocElement.current;
 
-    // The following code is referred from HymerPD demo/toc.js
     let lastTOC = "";
-    const update = debounce(function () {
-      let newTOC = "";
-      editor.eachLine(function (line) {
-        const tmp = /^(#+)\s+(.+)(?:\s+\1)?$/.exec(line.text);
-        if (!tmp) return;
-        const lineNo = (line as any).lineNo();
-        // Double check with the parser at the markdown level: a fenced code
-        // block runs its own mode, and a heading inside one is not the note's.
-        const state = markdownState(
-          editor.getMode(),
-          editor.getStateAfter(lineNo),
-        );
-        if (!state.header) return;
-        const level = tmp[1].length;
-        let title = tmp[2];
-        title = title.replace(/([*_]{1,2}|~~|`+)(.+?)\1/g, "$2"); // em / bold / del / code
-        title = title.replace(
-          /\\(?=.)|\[\^.+?\]|\!\[((?:[^\\\]]+|\\.)+)\](\(.+?\)| ?\[.+?\])?/g,
-          "",
-        ); // images / escaping slashes / footref
-        title = title.replace(
-          /\[((?:[^\\\]]+|\\.)+)\](\(.+?\)| ?\[.+?\])/g,
-          "$1",
-        ); // links
-        title = title.replace(/\[\[(.+?)\]\]/g, "$1"); // wikilinks
-        title = title.replace(/&/g, "&amp;");
-        title = title.replace(/</g, "&lt;");
-        title = title.replace(/:(.+?):/g, ($0, $1) => {
-          if ($1 in EmojiDefinitions) {
-            return EmojiDefinitions[$1];
-          } else {
-            return $0;
-          }
-        });
-        newTOC +=
-          '<div data-line="' +
-          lineNo +
-          '" class="toc-item" style="padding-left:' +
-          level +
-          'em">' +
-          title +
-          "</div>";
-      });
-      newTOC =
-        `<div data-line="0" class="toc-item" style="padding-left: 1em;">${escapeTitle(note.title)}</div>` +
-        newTOC;
-      if (newTOC === lastTOC) return;
-      if (tocElement && tocElement.current) {
-        tocElement.current.innerHTML = lastTOC = newTOC;
-        renderTwemoji(tocElement.current);
+    const draw = () => {
+      const items = [
+        { line: 0, level: 1, text: note.title },
+        ...outline(editor.view.state),
+      ];
+      const newTOC = JSON.stringify(items);
+      if (newTOC === lastTOC) {
+        return;
       }
-    }, 300);
+      lastTOC = newTOC;
+      element.replaceChildren(
+        ...items.map(({ line, level, text }) => {
+          const item = document.createElement("div");
+          item.className = "toc-item";
+          item.dataset.line = String(line);
+          item.style.paddingLeft = `${level}em`;
+          item.textContent = text;
+          return item;
+        }),
+      );
+      renderTwemoji(element);
+    };
+    const update = debounce(draw, 300);
 
     const tocClick = (event: Event) => {
+      const item = (event.target as HTMLElement).closest<HTMLElement>(
+        ".toc-item",
+      );
+      if (!item) {
+        return;
+      }
       event.preventDefault();
       event.stopPropagation();
-      const t = event.target as HTMLElement;
-      if (!/toc-item/.test(t.className)) return;
-      const lineNo = parseInt(t.getAttribute("data-line"));
+      const lineNo = parseInt(item.dataset.line);
       if (editorMode === EditorMode.Preview) {
-        const anchor = document.querySelector(`[data-line="${lineNo}"]`);
-        if (anchor) {
-          anchor.scrollIntoView();
-        }
+        // In this panel's preview: another tab's may show the same line.
+        previewElement.current
+          ?.querySelector(`[data-line="${lineNo}"]`)
+          ?.scrollIntoView();
       } else {
-        editor.setCursor({ line: editor.lastLine(), ch: 0 });
-        setTimeout(function () {
-          editor.setCursor({ line: lineNo, ch: 0 });
-        }, 10);
+        editor.revealLine(lineNo);
+        editor.focus();
       }
     };
 
-    editor.on("changes", update);
-    const tocElementCurrent = tocElement.current;
-    tocElementCurrent.addEventListener("click", tocClick, true);
-    update();
+    const stop = openNote.document.onChange(update);
+    element.addEventListener("click", tocClick);
+    draw();
 
     return () => {
-      editor.off("changes", update);
-      tocElementCurrent.removeEventListener("click", tocClick);
+      stop();
+      element.removeEventListener("click", tocClick);
     };
-  }, [editor, editorMode, previewElement, tocElement, note, tocEnabled]);
+  }, [
+    editor,
+    openNote,
+    editorMode,
+    previewElement,
+    tocElement,
+    note,
+    tocEnabled,
+  ]);
 
   // Git Status, read again as the note changes and once what is typed has
   // been written. A reading that git cannot give (as it may while a reset
@@ -1439,15 +881,12 @@ export default function NotePanel(props: Props) {
     };
   }, [note, writtenCount, crossnoteContainer.getStatus]);
 
-  // Set theme
+  // Set theme: the page's, which the preview and the editor both follow.
   useEffect(() => {
-    if (editor && settingsContainer.theme) {
-      setTheme({
-        editor,
-        themeName: settingsContainer.theme.name,
-      });
+    if (settingsContainer.theme) {
+      setTheme({ themeName: settingsContainer.theme.name });
     }
-  }, [settingsContainer.theme, editor]);
+  }, [settingsContainer.theme]);
 
   // TabNode becomes visible
   useEffect(() => {
@@ -1463,14 +902,14 @@ export default function NotePanel(props: Props) {
     if (!tabNode || !note || !globalEmitter) {
       return;
     }
-    tabNode.setEventListener("visibility", function (params) {
-      if (params.visible) {
-        // Options that changed while the tab was in the background (a mode
-        // swap made from the settings tab, say) are not drawn yet: CodeMirror
-        // skips hidden editors. FlexLayout fires this event while it is still
-        // rendering, so redraw once the tab has been committed to the DOM.
+    return onTabVisibility(tabNode, (visible) => {
+      if (visible) {
+        // What changed while the tab was in the background (a mode swap made
+        // from the settings tab, say) was laid out with no size. FlexLayout
+        // tells of this while it is still rendering, so measure again once
+        // the tab has been committed to the DOM.
         if (editor) {
-          setTimeout(() => editor.refresh(), 0);
+          setTimeout(() => editor.view.requestMeasure(), 0);
         }
         globalEmitter.emit(EventType.FocusedOnNote, {
           notebookPath: note.notebookPath,
@@ -1478,13 +917,17 @@ export default function NotePanel(props: Props) {
         });
       }
     });
-    return () => {
-      tabNode.removeEventListener("visibility");
-    };
   }, [tabNode, note, editor]);
 
   if (!note) {
-    return <Loading></Loading>;
+    return missing ? (
+      <NoteNotFound
+        notebookName={props.notebook.name}
+        filePath={props.noteFilePath}
+      ></NoteNotFound>
+    ) : (
+      <Loading></Loading>
+    );
   }
 
   const tocVisible = tocEnabled;
@@ -1620,11 +1063,7 @@ export default function NotePanel(props: Props) {
         >
           <EditorContentPanel>
             <EditorWrapper>
-              <EditorTextArea
-                className={"editor-textarea"}
-                placeholder={t("editor/placeholder")}
-                ref={textAreaElement}
-              ></EditorTextArea>
+              <EditorHost ref={editorHost}></EditorHost>
               {editorMode === EditorMode.Preview && editor ? (
                 <Preview
                   className={"preview"}
@@ -1670,8 +1109,7 @@ export default function NotePanel(props: Props) {
         open={editImageDialogOpen}
         onClose={() => setEditImageDialogOpen(false)}
         editor={editor}
-        imageElement={editImageElement}
-        marker={editImageTextMarker}
+        image={editedImage}
         note={note}
       ></EditImageDialog>
 
@@ -1681,26 +1119,6 @@ export default function NotePanel(props: Props) {
         anchorElement={notePopoverElement}
         onClose={() => setNotePopoverElement(null)}
       ></NotePopover>
-
-      <FloatWin
-        id="math-preview"
-        className={"float-win float-win-hidden"}
-        ref={mathPreviewElement}
-      >
-        <FloatWinTitle className={"float-win-title"}>
-          <FloatWinClose
-            aria-label={t("general/close")}
-            className={"float-win-close"}
-          >
-            <Close></Close>
-          </FloatWinClose>
-          <Typography>{t("general/math-preview")}</Typography>
-        </FloatWinTitle>
-        <FloatWinContent
-          className={"float-win-content"}
-          id="math-preview-content"
-        ></FloatWinContent>
-      </FloatWin>
     </NotePanelRoot>
   );
 }

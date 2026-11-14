@@ -47,6 +47,31 @@ async function typeAtEnd(app: CrossnoteApp, text: string) {
 // The settings the notebook writes before front matter it cannot add them to.
 const settingsBefore = /^---\ncreated: \S+\nmodified: \S+\n---\n/;
 
+test("keeps a separate body mapping after breaking and restoring its closing rule", async ({
+  app,
+}) => {
+  const body = "---\npinned: false\n---\nBody";
+  const file = "---\npinned: true\n---\n" + body;
+  const readme = await openReadme(app, file);
+  await app.modeButton("Source code").click();
+  await expect.poll(() => app.editorText()).toBe(body);
+  const incomplete = body.replace("false\n---", "false\n--");
+  await app.setEditorText(incomplete);
+  await expect
+    .poll(() => app.storedText(readme))
+    .toMatch(new RegExp("---\\npinned: false\\n--\\nBody$"));
+  await app.setEditorText(body);
+  await expect
+    .poll(() => app.storedText(readme))
+    .toMatch(new RegExp("---\\npinned: false\\n---\\nBody$"));
+  await app.page.reload();
+  await app.waitUntilReady();
+  await app.openNotes();
+  await app.noteCards.filter({ hasText: "README" }).click();
+  await app.modeButton("Source code").click();
+  await expect.poll(() => app.editorText()).toBe(body);
+});
+
 test("keeps front matter YAML cannot read when the note is edited", async ({
   app,
 }) => {
@@ -102,7 +127,7 @@ async function expectUnwritten(app: CrossnoteApp, file: string, text: string) {
   const title = app.noteTitle.filter({ visible: true });
   await expect(title).not.toHaveValue("");
   const other = `${await app.notebookFolder()}/${await title.inputValue()}.md`;
-  await app.editor.filter({ visible: true }).click();
+  await app.visibleEditor.click();
   await app.page.keyboard.type("x");
   await expect.poll(() => app.storedText(other)).toContain("x");
   expect(await app.storedText(file)).toBe(text);
@@ -113,6 +138,11 @@ async function expectUnwritten(app: CrossnoteApp, file: string, text: string) {
 const nothingToClose = async () => {};
 
 for (const { layout, text, opened } of [
+  {
+    layout: "a separate body mapping with settings-shaped keys",
+    text: "---\npinned: true\n---\n---\npinned: false\n---\n# Kept",
+    opened: nothingToClose,
+  },
   {
     layout: "values YAML reads as other types",
     text: "---\nphone: 0123456789\nversion: 1.10\n---\n# Kept\n",
@@ -126,6 +156,11 @@ for (const { layout, text, opened } of [
   {
     layout: "Windows line endings",
     text: "---\r\ntags: [a, b]\r\n---\r\n# Kept\r\n",
+    opened: nothingToClose,
+  },
+  {
+    layout: "two kinds of line ending",
+    text: "One\r\nTwo\n# Kept\n",
     opened: nothingToClose,
   },
   {
@@ -201,14 +236,33 @@ for (const { mode, setting } of [
     await expect(app.modeOn).toHaveAccessibleName(mode);
     await expect(app.editor).toBeVisible();
     // The language has come and the block is drawn with it.
-    await expect.poll(() => app.tokenTypes("echo")).toContain("builtin");
+    await expect.poll(() => app.tokenTypes("echo")).toContain("variableName");
     await expectUnwritten(app, readme, touchy);
   });
 }
 
-test("opens a note whose tab the layout brings back without writing it", async ({
-  app,
-}) => {
+// A tab the layout brings back shows its note as the page loads, while the
+// notebook is still being read: in the preview where that is the mode chosen,
+// in the editor where nothing was chosen.
+for (const { mode, notesOpenIn } of [
+  { mode: "Preview", notesOpenIn: "Preview" },
+  { mode: "Edit", notesOpenIn: null },
+] as const) {
+  test.describe(`a tab the layout brings back in ${mode}`, () => {
+    test.use({ notesOpenIn });
+
+    test(`opens a note whose tab the layout brings back in ${mode} without writing it`, async ({
+      app,
+    }) => {
+      await restoredTabUnwritten(app, mode);
+    });
+  });
+}
+
+async function restoredTabUnwritten(
+  app: CrossnoteApp,
+  mode: "Preview" | "Edit",
+) {
   await app.open();
   await app.openNotes();
   const folder = await app.notebookFolder();
@@ -237,10 +291,18 @@ test("opens a note whose tab the layout brings back without writing it", async (
   await app.page.reload();
   await app.waitUntilReady();
   await expect(app.tab("README")).toBeVisible();
-  await expect(app.preview).toContainText("Kept");
+  await expect(app.modeOn).toHaveAccessibleName(mode);
+  if (mode === "Edit") {
+    await expect(app.editor).toBeVisible();
+    await expect.poll(() => app.editorText()).toContain("# Kept");
+    // The language has come and the block is drawn with it.
+    await expect.poll(() => app.tokenTypes("echo")).toContain("variableName");
+  } else {
+    await expect(app.preview).toContainText("Kept");
+  }
   await app.openNotes();
   await expectUnwritten(app, readme, touchy);
-});
+}
 
 test("says that front matter YAML cannot read is kept as it is", async ({
   app,

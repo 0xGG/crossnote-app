@@ -172,11 +172,11 @@ export function Settings() {
               );
             }}
           >
-            <MenuItem value={EditorMode.EchoMD}>
-              {t("general/echomd") as string}
-            </MenuItem>
             <MenuItem value={EditorMode.Preview}>
               {t("editor/note-control/preview") as string}
+            </MenuItem>
+            <MenuItem value={EditorMode.EchoMD}>
+              {t("general/echomd") as string}
             </MenuItem>
             <MenuItem value={EditorMode.SourceCode}>
               {t("editor/note-control/source-code") as string}
@@ -189,15 +189,15 @@ export function Settings() {
             control={
               <Switch
                 color="primary"
-                checked={settingsContainer.plainTextSourceCode}
+                checked={settingsContainer.sourceCodeLineNumbers}
                 onChange={(event) => {
-                  settingsContainer.setPlainTextSourceCode(
+                  settingsContainer.setSourceCodeLineNumbers(
                     event.target.checked,
                   );
                 }}
               />
             }
-            label={t("settings/plain-text-source-code")}
+            label={t("settings/source-code-line-numbers")}
           />
         </Section>
 

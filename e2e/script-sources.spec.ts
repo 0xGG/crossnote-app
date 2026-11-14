@@ -10,47 +10,34 @@ test.beforeEach(async ({ context }) => {
   );
 });
 
-// The language is a CodeMirror 5 mode script, and the address it is asked for
-// at is CodeMirror 5's; an editor that replaces it loads languages its own
-// way, and this check changes with it.
-test("loads the language of a code block from the site", async ({
+// A language is a chunk of the site's own build, asked for the first time a
+// note names it. Held back here until the block has been drawn without it,
+// so that what is checked is the block being drawn again.
+test("loads the language of a code block from the site, and draws the block again with it", async ({
   app,
   page,
 }) => {
   await app.open();
   await app.openNotes();
   await app.createNote();
-  const shellMode = page.waitForRequest(/\/mode\/shell\/shell\.js$/);
+  let release = () => {};
+  const held = new Promise<void>((resolve) => (release = resolve));
+  const asked: string[] = [];
+  await page.route(/\/assets\/shell-[^/]+\.js$/, async (route) => {
+    asked.push(route.request().url());
+    await held;
+    await route.continue();
+  });
   await app.typeInEditor("```bash\necho $HOME\n```\n");
-  const request = await shellMode;
-  expect(new URL(request.url()).origin).toBe(new URL(page.url()).origin);
+  await expect.poll(() => asked).toHaveLength(1);
+  expect(new URL(asked[0]).origin).toBe(new URL(page.url()).origin);
+  // Drawn, without the language's colours, while the language is on its way.
+  await expect(app.editor).toContainText("echo $HOME");
+  expect(await app.tokenTypes("echo")).not.toContain("variableName");
+  release();
   // The language arrived and took effect.
-  await expect.poll(() => app.tokenTypes("echo")).toContain("builtin");
-});
-
-// About CodeMirror 5 only: the addons are its own, and go with it.
-test("loads a language built on CodeMirror's mode addons", async ({
-  app,
-  page,
-}) => {
-  // reStructuredText lays its markup over another mode with the overlay
-  // addon, which a mode script loaded from the site finds only if the bundle
-  // has it. Without it the mode throws while the editor draws the block, and
-  // the editor may stop taking what is typed. The highlighting check catches
-  // the missing addon whatever the timing; the typing and error checks catch
-  // an editor broken some other way.
-  const errors: string[] = [];
-  page.on("pageerror", (error) => errors.push(error.message));
-  await app.open();
-  await app.openNotes();
-  await app.createNote();
-  const rstMode = page.waitForResponse(/\/mode\/rst\/rst\.js$/);
-  await app.typeInEditor("```rst\n**bold**\n```\n\nafter");
-  await rstMode;
-  await expect.poll(() => app.tokenTypes("bold")).toContain("strong");
-  await page.keyboard.type(" typed");
-  await expect.poll(() => app.editorText()).toMatch(/after typed$/);
-  expect(errors).toEqual([]);
+  await expect.poll(() => app.tokenTypes("echo")).toContain("variableName");
+  expect(await app.editorText()).toBe("```bash\necho $HOME\n```\n");
 });
 
 test("loads the language of a code block without rewriting the note", async ({
@@ -72,7 +59,7 @@ test("loads the language of a code block without rewriting the note", async ({
   await app.openNotes();
   await app.noteCards.filter({ hasText: "README" }).click();
   await app.modeButton("Edit").click();
-  await expect.poll(() => app.tokenTypes("echo")).toContain("builtin");
+  await expect.poll(() => app.tokenTypes("echo")).toContain("variableName");
   // The app saves a change 300 ms after it. A change the language set off
   // would come no later than the highlighting just seen, so one typed into
   // another note now is saved after it, and its write to the same storage
@@ -84,7 +71,7 @@ test("loads the language of a code block without rewriting the note", async ({
   const title = app.noteTitle.filter({ visible: true });
   await expect(title).not.toHaveValue("");
   const other = `${await app.notebookFolder()}/${await title.inputValue()}.md`;
-  await app.editor.filter({ visible: true }).click();
+  await app.visibleEditor.click();
   await page.keyboard.type("x");
   await expect.poll(() => app.storedText(other)).toContain("x");
   expect(await app.storedText(readme)).toBe(text);

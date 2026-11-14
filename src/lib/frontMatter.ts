@@ -324,10 +324,24 @@ export function writeNoteText(
   ]);
   const body = text.slice(bom.length);
 
+  const previousFrontMatter = previous
+    ? readFrontMatter(previous, NOTE_SETTINGS)
+    : null;
+  const settingsOnly =
+    previousFrontMatter?.split &&
+    previousFrontMatter.split.rest.every((line) => /^\s*$/.test(line))
+      ? previousFrontMatter.block
+      : null;
+  // A block already written after separate settings is body text. Editing
+  // its closing rule or YAML must not turn its keys into settings on the
+  // next save when the block becomes readable again.
+  const apart =
+    !!settingsOnly && /^---[ \t]*(\r\n|\r|\n)/.test(settingsOnly.rest);
+
   const values = new Map(settings);
   // Settings typed into the text count where the note's settings have none.
   const typed = new Map<string, Setting>();
-  for (const setting of split ? split.settings : []) {
+  for (const setting of split && !apart ? split.settings : []) {
     if (setting.key === OLDER_SETTINGS) {
       // Taken out only when it is that form: a mapping of settings.
       for (const [key, value] of Object.entries(setting.value as Mapping)) {
@@ -353,9 +367,6 @@ export function writeNoteText(
     }
   }
 
-  const previousFrontMatter = previous
-    ? readFrontMatter(previous, NOTE_SETTINGS)
-    : null;
   const before = previousFrontMatter?.split?.settings ?? [];
   const order = [
     ...before.map(({ key }) => key).filter((key) => values.has(key)),
@@ -385,7 +396,11 @@ export function writeNoteText(
     );
   }
 
-  if (split) {
+  // A file that keeps its settings in front matter of their own and goes on
+  // with a block beginning with a rule keeps that block as its text, even
+  // when it was incomplete at the last save. New front matter above a text
+  // that began otherwise can still take the settings.
+  if (split && !apart) {
     const lines = [...split.rest, ...written];
     // Written after the rest, the settings have to read as they are, and
     // the rest as it did.
@@ -399,5 +414,22 @@ export function writeNoteText(
   if (!written.length) {
     return text;
   }
-  return bom + "---" + eol + written.join("") + "---" + eol + body;
+  // In front matter of their own, between the rules the file had around
+  // them, as it wrote those: spaces after the dashes, and no line ending
+  // after the last where the file ended there and still does. The line
+  // endings they do have are the ones the settings are written with.
+  const rule = (written: string | undefined, last: boolean) => {
+    const found = /^(---[ \t]*)(\r\n|\r|\n)?$/.exec(written ?? "");
+    if (!found) {
+      return "---" + eol;
+    }
+    return found[1] + (found[2] || (last && body.length) || !last ? eol : "");
+  };
+  return (
+    bom +
+    rule(settingsOnly?.open, false) +
+    written.join("") +
+    rule(settingsOnly?.close, true) +
+    body
+  );
 }

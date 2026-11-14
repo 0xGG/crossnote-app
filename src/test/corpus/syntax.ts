@@ -3,7 +3,8 @@
 // text, line breaks kept, footnotes, marks, insertions, sub- and
 // superscript, task lists), and what echomd and the app add on top (wiki
 // links, hashtags, math, emoji, diagrams), and what notes written for
-// features since dropped hold (block references, widgets, slides).
+// features since dropped hold (block references, widgets, slides), and what
+// a note holds half typed, or written by another tool.
 // Each is a whole file. Tests that the notebook keeps a note as written, and
 // what it renders to, run over all of them; an editor that replaces
 // CodeMirror 5 is to keep them as they are too, though no test runs one over
@@ -108,5 +109,51 @@ export const syntaxSamples: { name: string; text: string }[] = [
   {
     name: "links in task items",
     text: "- [ ] read [[Book]] #reading\n- [x] see [the notes](notes.md)\n\n> - [ ] quoted [[Book]]\n",
+  },
+  // What a note holds while it is being typed, and what other tools write:
+  // an editor keeps all of it as it is, whatever it makes of it.
+  {
+    name: "inline marks left unfinished",
+    text: "**bold without an end\n\n*em and `code without an end\n\n~~struck and ==marked without an end\n\n[text](https://example.org\n\n![alt](./images/pic.png\n\n[[a wiki link without an end\n\n$x^2 without an end\n\nA footnote[^ without an end\n",
+  },
+  {
+    name: "blocks left unfinished",
+    text: "Before.\n\n$$\nE = mc^2\n\n| a | b\n| --- \n| c\n\n<details>\n<summary>Open\n\n- [ \n- [x\n\n<!-- a comment without an end\n\n```js\nconst open = 1;\n",
+  },
+  {
+    name: "syntax of other tools",
+    text: "::: warning\nA container.\n:::\n\n> [!NOTE]\n> A callout.\n\n{{< shortcode arg >}} and {% raw %}liquid{% endraw %} and %%hidden%%.\n\n@[toc](Contents)\n\n*[HTML]: an abbreviation\n\nTerm\n: A definition\n\n<Component prop={1} />\n\n![[Embedded note]] and [[Note#Heading]] and [[Note^block]].\n\n\\begin{align}\na &= b\n\\end{align}\n",
+  },
+  {
+    name: "HTML comments",
+    text: "<!-- a plain comment -->\n\nText <!-- inline --> more.\n\n<!--\nover\nlines\n-->\n\n<!-- TODO: with -- dashes inside -->\n\n<!---->\n\nAfter.\n",
+  },
+  {
+    name: "quotes and dashes typed plain",
+    text: "\"double\" and 'single' quotes, an en -- dash, an em --- dash, an ellipsis... (c) (tm) (r) +- and a -> b <- c => d.\n",
+  },
+  {
+    name: "inline HTML and a table of uneven cells",
+    text: 'A <span style="color: red">red</span> word, an <u>underlined</u> one, a break<br>and <img src="./images/pic.png" width="100"> in a line.\n\n| 名称 | Name |\n| :-- | --: |\n| 编辑器 | editor |\n| 长一点的内容，带 `code` 与 \\| 竖线 | x |\n|||\n',
+  },
+  {
+    name: "characters of more than one code unit",
+    text: "𠮷野家 😀 👨‍👩‍👧 é and a zero-width​space, a non-breaking space, and שלום from the right.\n\n#𠮷tag [[𠮷 note]] **😀**\n",
+  },
+  {
+    name: "no line ending at the end",
+    text: "# Title\n\nThe last line, without a newline",
+  },
+  {
+    name: "blank lines and spaces at both ends",
+    text: "\n\n  \nText with spaces after it   \n\t\n\n\n",
+  },
+  {
+    name: "line endings of the old Mac OS",
+    text: "# Title\r\rText\r- item\r",
+  },
+  {
+    name: "line endings of two kinds",
+    text: "One\r\nTwo\nThree\r\n\r\nFour\n",
   },
 ];

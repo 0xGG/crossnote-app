@@ -379,6 +379,54 @@ describe("NoteSaver", () => {
   });
 });
 
+describe("renaming an open note", () => {
+  it("marks the rename pending at once, holds timed saves and closing, and leaves other notes writable", async () => {
+    const note = editor();
+    const other = editor({ notebookPath: "/n", filePath: "other.md" });
+    let release: () => void;
+    const gate = new Promise<void>((resolve) => (release = resolve));
+    const renaming = note.saver.rename(async (moved) => {
+      moved();
+      await gate;
+      note.saver.moveTo({ notebookPath: "/n", filePath: "renamed.md" });
+    });
+    expect(note.saver.pending).toBe(true);
+    let closed = false;
+    const closing = note.saver.flush().then(() => (closed = true));
+    await settle();
+    note.type("during move");
+    await vi.advanceTimersByTimeAsync(300);
+    other.type("another note");
+    const otherSave = other.saver.flush();
+    expect(other.writes).toHaveLength(1);
+    other.writes[0].resolve();
+    await otherSave;
+    expect(note.writes).toHaveLength(0);
+    expect(closed).toBe(false);
+    release!();
+    await renaming;
+    await settle();
+    expect(
+      note.writes.map(({ location, text }) => [location.filePath, text]),
+    ).toEqual([["renamed.md", "during move"]]);
+    note.writes[0].resolve();
+    await closing;
+    expect(closed).toBe(true);
+    expect(note.saver.pending).toBe(false);
+  });
+
+  it("does not write unedited text just because its note is renamed", async () => {
+    const note = editor();
+    await note.saver.rename(async (moved) => {
+      moved();
+      note.saver.moveTo({ notebookPath: "/n", filePath: "renamed.md" });
+    });
+    await note.saver.flush();
+    expect(note.writes).toHaveLength(0);
+    expect(note.saver.pending).toBe(false);
+  });
+});
+
 describe("flushNotes", () => {
   it("writes the notes open in a notebook, or one note of it, and no others", async () => {
     const a = editor({ notebookPath: "/n", filePath: "a.md" });

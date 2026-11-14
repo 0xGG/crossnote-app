@@ -203,6 +203,7 @@ export class Notebook {
   public async changeNoteFilePath(
     oldFilePath: string,
     newFilePath: string,
+    onMoved?: () => void,
   ): Promise<Note> {
     // Written plainly, relative to the notebook, which is the only form git
     // takes: notes//a.md or ./a.md would be moved and then fail.
@@ -232,6 +233,7 @@ export class Notebook {
       path.resolve(this.dir, oldFilePath),
       path.resolve(this.dir, newFilePath),
     );
+    onMoved?.();
 
     await this.removeNoteRelations(oldFilePath);
     this.search.remove(oldFilePath);
@@ -332,6 +334,10 @@ export class Notebook {
         filePath: path.relative(this.dir, absFilePath),
         title: path.basename(absFilePath).replace(/\.md$/, ""),
         markdown,
+        lineBreak:
+          typeof file === "string"
+            ? (/\r\n?|\n/.exec(file)?.[0] ?? "\n")
+            : "\n",
         config: noteConfig,
         mentions: oldMentions,
       };

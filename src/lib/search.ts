@@ -3,14 +3,16 @@ import MiniSearch, { SearchOptions, SearchResult } from "minisearch";
 /**
  * The words a note is searched by: each character outside ASCII on its own,
  * as CJK has no spaces to split at, and each run of ASCII letters and
- * digits. Punctuation, the underscore and full-width brackets, colons and
+ * digits. A character is a whole code point: one written with two code
+ * units, as an emoji is, is one word, not two halves that other emoji
+ * share. Punctuation, the underscore and full-width brackets, colons and
  * stops split words and are not searched for.
  */
 export function tokenize(text: string): string[] {
   return (
     text
       .replace(/[.\s!@#$%^&*()\-=_+~`[\]{}\\<>?/|（）【】:：，。]+/g, " ")
-      .match(/([^\x00-\x7F]|\w+)/g) || []
+      .match(/([^\x00-\x7F]|\w+)/gu) || []
   );
 }
 

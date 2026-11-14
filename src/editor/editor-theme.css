@@ -1,0 +1,90 @@
+/*
+ * The colours the editor draws code and markup with in each of the app's
+ * themes (data-preview-theme, as the preview's). Text, background, links and
+ * the rest come from the preview's own variables (render/preview-theme.css),
+ * so a note reads the same in both. The values are those of echomd 1.0.4's
+ * editor themes, by the CodeMirror 5 token each was given to:
+ *   --editor-keyword: cm-keyword      --editor-atom: cm-atom (light), cm-number
+ *   --editor-number: cm-number        --editor-definition: cm-def
+ *   --editor-variable: cm-variable    --editor-operator: cm-operator
+ *   --editor-comment: cm-comment      --editor-string: cm-string
+ *   --editor-string-2: cm-string-2    --editor-meta: cm-meta
+ *   --editor-type: cm-builtin         --editor-tag: cm-tag
+ *   --editor-attribute: cm-attribute  --editor-markup: cm-comment
+ */
+:where(:root),
+[data-preview-theme="light"] {
+  --editor-keyword: #a71d5d;
+  --editor-atom: #219;
+  --editor-number: #0086b3;
+  --editor-definition: #795da3;
+  --editor-variable: #795da3;
+  --editor-operator: #a71d5d;
+  --editor-comment: #969896;
+  --editor-string: #183691;
+  --editor-string-2: #f50;
+  --editor-meta: #ff1717;
+  --editor-type: #30a;
+  --editor-tag: #63a35c;
+  --editor-attribute: #00c;
+  --editor-markup: #969896;
+  --editor-selection: #b3d7ff;
+  --editor-gutter: #999;
+}
+
+[data-preview-theme="dark"] {
+  --editor-keyword: #66d9ef;
+  --editor-atom: #ae81ff;
+  --editor-number: #ae81ff;
+  --editor-definition: #a6e22e;
+  --editor-variable: #fff;
+  --editor-operator: #f92672;
+  --editor-comment: #75715e;
+  --editor-string: #e6db74;
+  --editor-string-2: #f50;
+  --editor-meta: #ff1717;
+  --editor-type: #009688;
+  --editor-tag: #ae81ff;
+  --editor-attribute: #9e9e9e;
+  --editor-markup: #75715e;
+  --editor-selection: #264f78;
+  --editor-gutter: #858585;
+}
+
+[data-preview-theme="one-dark"] {
+  --editor-keyword: #c678dd;
+  --editor-atom: #ae81ff;
+  --editor-number: #ae81ff;
+  --editor-definition: #61afef;
+  --editor-variable: #ccc;
+  --editor-operator: #f92672;
+  --editor-comment: #5c6370;
+  --editor-string: #98c379;
+  --editor-string-2: #f50;
+  --editor-meta: #ff9800;
+  --editor-type: #ffc107;
+  --editor-tag: #e06c75;
+  --editor-attribute: #9e9e9e;
+  --editor-markup: #5c6370;
+  --editor-selection: #3e4451;
+  --editor-gutter: #636d83;
+}
+
+[data-preview-theme="solarized-light"] {
+  --editor-keyword: #859900;
+  --editor-atom: #d33682;
+  --editor-number: #d33682;
+  --editor-definition: #61afef;
+  --editor-variable: #657b83;
+  --editor-operator: #657b83;
+  --editor-comment: #5c6370;
+  --editor-string: #2aa198;
+  --editor-string-2: #f50;
+  --editor-meta: #cb4b16;
+  --editor-type: #c17d19;
+  --editor-tag: #268bd2;
+  --editor-attribute: #607d8b;
+  --editor-markup: #93a1a1;
+  --editor-selection: #eee8d5;
+  --editor-gutter: #93a1a1;
+}

@@ -15,6 +15,7 @@ export const zhCN = {
     "general/date-modified": "修改时间",
     "general/title": "标题",
     "general/loading": "读取中 ...",
+    "general/note-not-found": "未找到这篇笔记",
     "general/update": "更新",
     "general/close": "关闭",
     "general/open-menu": "打开菜单",
@@ -120,7 +121,7 @@ export const zhCN = {
     "settings/about-this-project": "关于这个项目",
     "settings/issues-and-feature-requests": "发现了问题或者有功能请求？",
     "settings/default-editor-mode": "默认编辑器模式",
-    "settings/plain-text-source-code": "源代码模式显示纯文本",
+    "settings/source-code-line-numbers": "源代码模式显示行号",
     "settings/author-name": "作者姓名",
     "settings/author-email": "作者邮箱",
     "settings/theme": "主题",
@@ -153,6 +154,8 @@ export const zhCN = {
     "editor/toolbar/insert-unordered-list": "插入无序列表",
     "editor/toolbar/insert-ordered-list": "插入有序列表",
     "editor/toolbar/insert-table": "插入表格",
+    "editor/toolbar/insert-date-time": "插入日期与时间",
+    "editor/toolbar/insert-mermaid": "插入 Mermaid 图",
 
     // * NoteControl
     "editor/note-control/source-code": "源代码",
@@ -176,6 +179,8 @@ export const zhCN = {
     "add-notebook-dialog/disclaimer":
       "所有笔记本的数据将只会被保存于浏览器本地以供离线使用。我们不会上传任何你的笔记本数据到我们的服务器。",
     "edit-image-dialog/title": "编辑图片",
+    "edit-image-dialog/note-changed":
+      "笔记已变化。请关闭此对话框并重新选择图片。",
     "edit-image-dialog/image-url": "图片 URL",
     "edit-image-dialog/image-title": "图片标题",
     "edit-image-dialog/image-alt-text": "图片替代文本",

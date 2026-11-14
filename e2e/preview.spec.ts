@@ -191,7 +191,7 @@ test("says so when a note cannot be printed, and puts the page back", async ({
   await expect(app.modeOn).toHaveAccessibleName("Preview");
 });
 
-test("colours the preview in the theme chosen in the settings, and the editor's stylesheet with it", async ({
+test("colours the preview and the editor in the theme chosen in the settings", async ({
   app,
   page,
 }) => {
@@ -215,10 +215,35 @@ test("colours the preview in the theme chosen in the settings, and the editor's 
   // One Dark's text, and a comment in its code blocks.
   await expect(app.preview).toHaveCSS("color", "rgb(171, 178, 191)");
   await expect(comment).toHaveCSS("color", "rgb(92, 99, 112)");
-  await expect(page.locator("#echomd-editor-theme")).toHaveAttribute(
-    "href",
-    /\/editor_themes\/one-dark\.css$/,
+  // The editor takes its colours from the same theme: its text and its
+  // background are the preview's, and a comment in a code block is the
+  // theme's own.
+  await app.modeButton("Edit").click();
+  await expect(app.editor).toHaveCSS("color", "rgb(171, 178, 191)");
+  await expect(app.editor).toHaveCSS("background-color", "rgb(40, 44, 52)");
+  await expect.poll(() => app.tokenTypes("a comment")).toContain("comment");
+  await expect(app.editor.locator(".tok-comment").first()).toHaveCSS(
+    "color",
+    "rgb(92, 99, 112)",
   );
+});
+
+test("gives the preview and the editor the dark theme's own background", async ({
+  app,
+  page,
+}) => {
+  await page.addInitScript(() => {
+    localStorage.setItem("settings/theme", "dark");
+  });
+  await app.open();
+  await app.openNotes();
+  await app.createNote();
+  await app.setEditorText("Some text.\n");
+  // The theme's, not the lighter grey the panels around it have.
+  await expect(app.editor).toHaveCSS("background-color", "rgb(30, 30, 30)");
+  await app.modeButton("Preview").click();
+  await expect(app.preview).toHaveCSS("background-color", "rgb(30, 30, 30)");
+  await expect(app.preview).toHaveCSS("color", "rgb(212, 212, 212)");
 });
 
 test("prints a note light in a dark theme, and leaves the preview on the page dark", async ({

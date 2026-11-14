@@ -1,3 +1,4 @@
+import type { EditorHost } from "./crossnote";
 import { expect, test } from "./fixtures";
 
 // The title box above a note renames the note's file on Enter and when it is
@@ -7,7 +8,6 @@ test.beforeEach(async ({ app }) => {
   await app.open();
   await app.openNotes();
   await app.createNote();
-  await expect(app.noteTitle).not.toHaveValue("");
 });
 
 test("renames once when Enter is followed by leaving the box", async ({
@@ -125,4 +125,27 @@ test("leaves an Enter that confirms an input method's candidate to the title", a
   await expect(app.tab("Renamed")).toBeVisible();
   await app.expectStored(`${await app.notebookFolder()}/Renamed.md`);
   expect(await messages()).toEqual([]);
+});
+
+test("keeps what was typed just before a rename, in the renamed file", async ({
+  app,
+}) => {
+  await app.typeInEditor("Before");
+  const before = `${await app.notebookFolder()}/${await app.noteTitle.inputValue()}.md`;
+  await expect.poll(() => app.storedText(before)).toContain("Before");
+  // Typed and renamed without a pause: the save that comes a moment after
+  // the last key has not come when the file moves.
+  await app.editor.evaluate((element) => {
+    const editor = (element as EditorHost).editorHandle;
+    editor.select(editor.end());
+    editor.insert(" and just before the rename");
+  });
+  await app.noteTitle.fill("Renamed");
+  await app.noteTitle.press("Enter");
+  await expect(app.tab("Renamed")).toBeVisible();
+  const renamed = `${await app.notebookFolder()}/Renamed.md`;
+  await expect
+    .poll(() => app.storedText(renamed))
+    .toContain("Before and just before the rename");
+  expect(await app.storedText(before)).toBeUndefined();
 });

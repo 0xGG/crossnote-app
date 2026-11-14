@@ -299,7 +299,7 @@ export class CrossnoteApp {
 
   async openSettings() {
     await this.sidebar.getByRole("button", { name: "Settings" }).click();
-    await expect(this.plainTextSourceCodeSwitch).toBeVisible();
+    await expect(this.sourceLineNumbersSwitch).toBeVisible();
   }
 
   // The title box in the note header; a new note is named after its file.
@@ -309,10 +309,15 @@ export class CrossnoteApp {
 
   // MUI gives Switch the ARIA switch role; a plain checkbox role would be the
   // wrong thing to look for now, and a wrong name would still fail here.
-  get plainTextSourceCodeSwitch(): Locator {
+  get sourceLineNumbersSwitch(): Locator {
     return this.page.getByRole("switch", {
-      name: "Plain text in source code mode",
+      name: "Line numbers in source code mode",
     });
+  }
+
+  // The editor of the note in front, where more than one note is open.
+  get visibleEditor(): Locator {
+    return this.editor.filter({ visible: true });
   }
 
   get searchBox(): Locator {
@@ -323,9 +328,33 @@ export class CrossnoteApp {
     return this.notesPanel.locator(".note-card");
   }
 
-  async createNote() {
-    await this.notesPanel.getByRole("button", { name: "New note" }).click();
-    await expect(this.editor).toBeVisible();
+  // Makes a note and gives its name, once the title box is the new note's.
+  async createNote(): Promise<string> {
+    const create = this.notesPanel.getByRole("button", { name: "New note" });
+    await expect(create).toBeVisible();
+    const tabs = this.page.getByRole("tab", { includeHidden: true });
+    const before = await tabs.evaluateAll((elements) =>
+      elements.map((e) => e.id),
+    );
+    await create.click();
+    let panelId = "";
+    await expect
+      .poll(async () => {
+        panelId = await tabs.evaluateAll(
+          (elements, before) =>
+            elements
+              .find((e) => !before.includes(e.id))
+              ?.getAttribute("aria-controls") ?? "",
+          before,
+        );
+        return panelId;
+      })
+      .not.toBe("");
+    const panel = this.page.locator(`[id=${JSON.stringify(panelId)}]`);
+    await expect(panel.getByTestId("note-editor")).toBeVisible();
+    const title = panel.getByRole("textbox", { name: "Title" });
+    await expect(title).not.toHaveValue("");
+    return title.inputValue();
   }
 
   async typeInEditor(text: string) {

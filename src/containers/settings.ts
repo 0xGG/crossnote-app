@@ -1,10 +1,9 @@
-import { ThemeName } from "@0xgg/echomd/theme";
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { createContainer } from "unstated-next";
 import { EditorMode } from "../lib/editorMode";
 import { themeManager } from "../themes/manager";
-import { CrossnoteTheme } from "../themes/theme";
+import { CrossnoteTheme, type ThemeName } from "../themes/theme";
 
 type InitialState = object;
 
@@ -14,7 +13,7 @@ function useSettingsContainer(initialState: InitialState) {
   );
   const [defaultEditorMode, setDefaultEditorMode] = useState<EditorMode>(
     (localStorage.getItem("settings/defaultEditorMode") as EditorMode) ||
-      EditorMode.Preview,
+      EditorMode.EchoMD,
   );
   const [authorName, setAuthorName] = useState<string>(
     localStorage.getItem("settings/authorName") || "Anonymous",
@@ -26,8 +25,9 @@ function useSettingsContainer(initialState: InitialState) {
     themeManager.getTheme(localStorage.getItem("settings/theme")) ||
       themeManager.selectedTheme,
   );
-  const [plainTextSourceCode, setPlainTextSourceCode] = useState<boolean>(
-    localStorage.getItem("settings/plainTextSourceCode") === "true",
+  // On unless turned off: line numbers beside a note's source.
+  const [sourceCodeLineNumbers, setSourceCodeLineNumbers] = useState<boolean>(
+    localStorage.getItem("settings/sourceCodeLineNumbers") !== "false",
   );
 
   const { i18n } = useTranslation();
@@ -73,9 +73,9 @@ function useSettingsContainer(initialState: InitialState) {
     setTheme(themeManager.selectedTheme);
   }, []);
 
-  const _setPlainTextSourceCode = useCallback((enabled: boolean) => {
-    localStorage.setItem("settings/plainTextSourceCode", String(enabled));
-    setPlainTextSourceCode(enabled);
+  const _setSourceCodeLineNumbers = useCallback((enabled: boolean) => {
+    localStorage.setItem("settings/sourceCodeLineNumbers", String(enabled));
+    setSourceCodeLineNumbers(enabled);
   }, []);
 
   useEffect(() => {
@@ -96,8 +96,8 @@ function useSettingsContainer(initialState: InitialState) {
     setAuthorEmail: _setAuthorEmail,
     theme,
     setTheme: _setTheme,
-    plainTextSourceCode,
-    setPlainTextSourceCode: _setPlainTextSourceCode,
+    sourceCodeLineNumbers,
+    setSourceCodeLineNumbers: _setSourceCodeLineNumbers,
   };
 }
 

@@ -1,8 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { guardLayoutDrags, LAYOUT_DRAG_TEXT } from "./layoutDrag";
 
-type EditorDragEvent = DragEvent & { codemirrorIgnore?: boolean };
-
 // jsdom has no DragEvent; a plain event carrying the dragged text is all the
 // guard reads.
 function dragEvent(type: string, text = "") {
@@ -12,24 +10,21 @@ function dragEvent(type: string, text = "") {
       getData: (format: string) => (format === "text/plain" ? text : ""),
     },
   });
-  return event as EditorDragEvent;
+  return event as DragEvent;
 }
 
-// What a listener on the target sees while the event is on its way, which is
-// what CodeMirror, listening on its own elements, gets to see.
-function seenAt(target: Element, event: EditorDragEvent) {
-  let seen = {};
+// Whether a listener on the target finds the event prevented while it is on
+// its way, which is what a note's editor, listening on its own elements,
+// goes by.
+function preventedAt(target: Element, event: DragEvent) {
+  let prevented: boolean | undefined;
   target.addEventListener(
     event.type,
-    () =>
-      (seen = {
-        defaultPrevented: event.defaultPrevented,
-        codemirrorIgnore: event.codemirrorIgnore,
-      }),
+    () => (prevented = event.defaultPrevented),
     { once: true },
   );
   target.dispatchEvent(event);
-  return seen;
+  return prevented;
 }
 
 const element = (className: string, ...children: Element[]) => {
@@ -42,7 +37,7 @@ const element = (className: string, ...children: Element[]) => {
 describe("guardLayoutDrags", () => {
   const tab = element("flexlayout__tab_button");
   const strip = element("flexlayout__tabset_tabbar_outer", tab);
-  const editor = element("CodeMirror");
+  const editor = element("cm-editor");
   const menuItem = element("flexlayout__popup_menu_item");
   const root = element(
     "",
@@ -60,44 +55,31 @@ describe("guardLayoutDrags", () => {
 
   const dragTab = () => tab.dispatchEvent(dragEvent("dragstart"));
 
-  it("lets a dragged tab through a note's editor to the layout", () => {
+  it("keeps a dropped tab out of the pane it lands on, whatever text the drop gives", () => {
     release = guardLayoutDrags(root);
     dragTab();
-    expect(seenAt(editor, dragEvent("dragenter"))).toMatchObject({
-      codemirrorIgnore: true,
-    });
-    expect(seenAt(editor, dragEvent("dragover"))).toMatchObject({
-      codemirrorIgnore: true,
-    });
-  });
-
-  it("keeps a dropped tab's text out of the pane it lands on", () => {
-    release = guardLayoutDrags(root);
+    expect(preventedAt(editor, dragEvent("drop", LAYOUT_DRAG_TEXT))).toBe(true);
     dragTab();
-    expect(seenAt(editor, dragEvent("drop", LAYOUT_DRAG_TEXT))).toEqual({
-      defaultPrevented: true,
-      codemirrorIgnore: true,
-    });
+    expect(preventedAt(editor, dragEvent("drop"))).toBe(true);
   });
 
   it("knows a dropped tab by its text", () => {
     release = guardLayoutDrags(root);
-    expect(seenAt(editor, dragEvent("drop", LAYOUT_DRAG_TEXT))).toMatchObject({
-      defaultPrevented: true,
-    });
+    expect(preventedAt(editor, dragEvent("drop", LAYOUT_DRAG_TEXT))).toBe(true);
   });
 
   it("leaves the panes' own drags alone", () => {
     release = guardLayoutDrags(root);
     editor.dispatchEvent(dragEvent("dragstart"));
-    expect(seenAt(editor, dragEvent("dragenter"))).toEqual({
-      defaultPrevented: false,
-      codemirrorIgnore: undefined,
-    });
-    expect(seenAt(editor, dragEvent("drop", "some text"))).toEqual({
-      defaultPrevented: false,
-      codemirrorIgnore: undefined,
-    });
+    expect(preventedAt(editor, dragEvent("dragover"))).toBe(false);
+    expect(preventedAt(editor, dragEvent("drop", "some text"))).toBe(false);
+  });
+
+  it("leaves a tab's drag over the panes to the layout", () => {
+    release = guardLayoutDrags(root);
+    dragTab();
+    expect(preventedAt(editor, dragEvent("dragenter"))).toBe(false);
+    expect(preventedAt(editor, dragEvent("dragover"))).toBe(false);
   });
 
   it.each([
@@ -108,9 +90,7 @@ describe("guardLayoutDrags", () => {
     release = guardLayoutDrags(root);
     dragTab();
     end();
-    expect(seenAt(editor, dragEvent("dragenter"))).toMatchObject({
-      codemirrorIgnore: undefined,
-    });
+    expect(preventedAt(editor, dragEvent("drop", "some text"))).toBe(false);
   });
 
   // The menu closes as the drag starts, and the end of the drag may go to an
@@ -121,13 +101,10 @@ describe("guardLayoutDrags", () => {
     // No dragend comes.
     menuItem.dispatchEvent(dragEvent("dragstart"));
     window.dispatchEvent(new Event("pointermove"));
-    expect(seenAt(editor, dragEvent("drop", "some text"))).toEqual({
-      defaultPrevented: false,
-      codemirrorIgnore: undefined,
-    });
+    expect(preventedAt(editor, dragEvent("drop", "some text"))).toBe(false);
   });
 
-  it("lets a tab dragged out of the hidden tabs menu through as well", () => {
+  it("guards a tab dragged out of the hidden tabs menu as well, and leaves its start to the layout", () => {
     release = guardLayoutDrags(root);
     const layoutSaw = vi.fn();
     menuItem.addEventListener("dragstart", layoutSaw, { once: true });
@@ -135,17 +112,14 @@ describe("guardLayoutDrags", () => {
     menuItem.dispatchEvent(event);
     expect(event.defaultPrevented).toBe(false);
     expect(layoutSaw).toHaveBeenCalledTimes(1);
-    expect(seenAt(editor, dragEvent("dragover"))).toMatchObject({
-      codemirrorIgnore: true,
-    });
+    expect(preventedAt(editor, dragEvent("drop"))).toBe(true);
   });
 
   it("stops guarding once released", () => {
     guardLayoutDrags(root)();
     dragTab();
-    expect(seenAt(editor, dragEvent("drop", LAYOUT_DRAG_TEXT))).toEqual({
-      defaultPrevented: false,
-      codemirrorIgnore: undefined,
-    });
+    expect(preventedAt(editor, dragEvent("drop", LAYOUT_DRAG_TEXT))).toBe(
+      false,
+    );
   });
 });

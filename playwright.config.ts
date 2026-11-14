@@ -1,10 +1,11 @@
 import { defineConfig, devices } from "@playwright/test";
 
 // The suite drives the production build served by `vite preview`, not the
-// dev server: bundling is part of what it guards (the echomd UMD wrapper is
-// the kind of thing only the built output exercises). `pnpm test:e2e` builds
-// first; while iterating on specs, `pnpm exec playwright test` reuses the
-// existing dist/ and a preview server that is already listening.
+// dev server: bundling is part of what it guards (how a dependency is
+// wrapped and split into chunks is something only the built output shows).
+// `pnpm test:e2e` builds first; while iterating on specs, `pnpm exec
+// playwright test` reuses the existing dist/ and a preview server that is
+// already listening.
 const port = 4173;
 const baseURL = `http://localhost:${port}`;
 

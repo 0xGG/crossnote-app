@@ -1,4 +1,5 @@
 import { expect, test } from "./fixtures";
+import { layoutOf, row, tabset } from "./layouts";
 
 test.beforeEach(async ({ app }) => {
   await app.open();
@@ -40,10 +41,7 @@ test("starts a note made from a note's references with a link back to it", async
   await expect(app.noteTitle).not.toHaveValue("");
   const mentioning = await app.noteTitle.inputValue();
   // Set rather than typed: typing "[[" would open the wikilink hints.
-  await app.setEditorText(
-    "Mentions [[topics/Linked]].\n",
-    app.editor.filter({ visible: true }),
-  );
+  await app.setEditorText("Mentions [[topics/Linked]].\n", app.visibleEditor);
   // The note is written a moment after the change; its card shows the
   // text once it is.
   await app.selectTab("Drafts");
@@ -84,9 +82,7 @@ test("sorts the list from the sort menu", async ({ app, page }) => {
   await page.keyboard.press("Escape");
   await expect(byTitle).toBeHidden();
 
-  await app.createNote();
-  await expect(app.noteTitle).not.toHaveValue("");
-  const name = await app.noteTitle.inputValue();
+  const name = await app.createNote();
   await app.selectTab("Drafts");
   // Newest first by default: the note just made, then README.
   await expect(app.noteCards).toHaveCount(2);
@@ -142,9 +138,7 @@ test("saves an edit that takes a note back to how it was", async ({
   app,
   page,
 }) => {
-  await app.createNote();
-  await expect(app.noteTitle).not.toHaveValue("");
-  const name = await app.noteTitle.inputValue();
+  const name = await app.createNote();
   // A note's card follows each save of the note.
   const card = app.noteCards.filter({ hasText: `${name}.md` });
   await app.typeInEditor("Typed and then taken back");
@@ -196,7 +190,7 @@ test("never gives a new note the name of one that exists", async ({
     await app.selectTab("Drafts");
   }
   expect(await newNote()).toBe("Untitled 2");
-  await app.editor.filter({ visible: true }).click();
+  await app.visibleEditor.click();
   await page.keyboard.type("Worth keeping");
   await app.selectTab("Drafts");
   const kept = app.noteCards.filter({ hasText: "Untitled 2.md" });
@@ -262,9 +256,7 @@ test("lists a note's aliases in each of its menus", async ({ app, page }) => {
 });
 
 test("keeps notes across a reload", async ({ app, page }) => {
-  await app.createNote();
-  await expect(app.noteTitle).not.toHaveValue("");
-  const name = await app.noteTitle.inputValue();
+  const name = await app.createNote();
   await app.typeInEditor("Stored in the browser file system");
   await app.selectTab("Drafts");
   const card = app.noteCards.filter({ hasText: "Stored in the browser" });
@@ -332,9 +324,7 @@ test("makes the folder a link leads into, but no folder under a note", async ({
   app,
   page,
 }) => {
-  await app.createNote();
-  await expect(app.noteTitle).not.toHaveValue("");
-  const name = await app.noteTitle.inputValue();
+  const name = await app.createNote();
   // Set rather than typed: typed, the brackets would be closed for us.
   await app.setEditorText("[[topics/idea]]\n\n[[README.md/child]]\n");
   await app.modeButton("Preview").click();
@@ -364,9 +354,7 @@ test("says so, and keeps the note where it was, when it is moved under another n
   app,
   page,
 }) => {
-  await app.createNote();
-  await expect(app.noteTitle).not.toHaveValue("");
-  const name = await app.noteTitle.inputValue();
+  const name = await app.createNote();
   const messages = await app.recordMessages();
 
   // A note is a file: nothing goes under it.
@@ -433,4 +421,55 @@ test("says so, and opens nothing else, when a move by Enter fails", async ({
     "Failed to change file path",
   );
   await expect(page.getByRole("button", { name: "Note menu" })).toBeFocused();
+});
+
+test("says that the note a tab was left on is not there, and shows the note once it is", async ({
+  app,
+  page,
+}) => {
+  const folder = await app.notebookFolder();
+  // A tab left open on a note that has since gone from the notebook, as one
+  // renamed or deleted on another machine has after a pull.
+  await app.seedLayout(
+    layoutOf(
+      row(
+        tabset({
+          type: "tab",
+          id: "gone",
+          name: "Gone",
+          component: "Note",
+          config: {
+            component: "Note",
+            singleton: false,
+            notebookPath: folder,
+            noteFilePath: "Gone.md",
+          },
+        }),
+      ),
+    ),
+  );
+  await page.reload();
+  await app.waitUntilReady();
+  const notFound = page.getByText("The note was not found");
+  await expect(notFound).toBeVisible();
+  await expect(page.getByText("Drafts: Gone.md")).toBeVisible();
+  await expect(page.getByText("Loading")).toHaveCount(0);
+
+  // Another note takes the name: the tab shows it.
+  await app.openNotes();
+  await app.notesPanel.getByRole("button", { name: "New note" }).click();
+  const title = app.noteTitle.filter({ visible: true });
+  await expect(title).not.toHaveValue("");
+  await app.visibleEditor.click();
+  await page.keyboard.type("Here now");
+  await title.fill("Gone");
+  await title.press("Enter");
+  await expect(app.tab("Gone")).toHaveCount(2);
+  await expect(notFound).toHaveCount(0);
+  await app.tab("Gone").first().click();
+  await expect(app.noteTitle.filter({ visible: true })).toHaveValue("Gone");
+  // In the preview or in the editor, whichever the tab opened the note in.
+  await expect(
+    app.preview.or(app.editor).filter({ visible: true }),
+  ).toContainText("Here now");
 });

@@ -1,4 +1,6 @@
+import type { Text } from "@codemirror/state";
 import {
+  Alert,
   Box,
   Button,
   Dialog,
@@ -8,18 +10,26 @@ import {
   TextField,
 } from "@mui/material";
 import { styled } from "@mui/material/styles";
-import { Editor as CodeMirrorEditor, TextMarker } from "codemirror";
 import React, { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
+import type { NoteEditor } from "../editor/noteEditor";
+import type { ImageMarkup } from "../editor/widgets";
 import { Note } from "../lib/note";
 import { resolveNoteImageSrc } from "../utilities/image";
+
+/** An image of a note being edited: what its markup says, and where it is. */
+export type EditedImage = ImageMarkup & {
+  from: number;
+  to: number;
+  /** The document when this image was clicked; offsets belong to it alone. */
+  document: Text;
+};
 
 interface Props {
   open: boolean;
   onClose: () => void;
-  editor: CodeMirrorEditor;
-  marker: TextMarker;
-  imageElement: HTMLImageElement;
+  editor: NoteEditor | null;
+  image: EditedImage | null;
   note: Note;
 }
 
@@ -34,12 +44,11 @@ const ImagePreview = styled("img")({
 
 export default function EditImageDialog(props: Props) {
   const { t } = useTranslation();
-  const editor = props.editor;
-  const marker = props.marker;
-  const imageElement = props.imageElement;
+  const { editor, image } = props;
   const [imageSrc, setImageSrc] = useState<string>("");
   const [imageAlt, setImageAlt] = useState<string>("");
   const [imageTitle, setImageTitle] = useState<string>("");
+  const [changed, setChanged] = useState(false);
   // What the preview shows, with the source and the note it was looked up
   // for: a source relative to the note is resolved against its folder.
   const [preview, setPreview] = useState<{
@@ -48,51 +57,62 @@ export default function EditImageDialog(props: Props) {
     url: string;
   }>({ src: "", note: null, url: "" });
 
+  // Offsets are valid only in the document clicked. Even another picture
+  // with the same spelling at that offset is not necessarily this picture.
+  const replaceImage = useCallback(
+    (text: string) => {
+      if (!editor || !image) {
+        return false;
+      }
+      if (image.document === editor.document.doc) {
+        editor.view.dispatch({
+          changes: { from: image.from, to: image.to, insert: text },
+          userEvent: "input",
+        });
+        return true;
+      }
+      setChanged(true);
+      return false;
+    },
+    [editor, image],
+  );
+
   const deleteImage = useCallback(() => {
-    if (!imageElement || !editor || !marker) {
-      return;
+    if (replaceImage("")) {
+      props.onClose();
     }
-    const pos = marker.find();
-    editor.replaceRange("", pos.from, pos.to);
-    props.onClose();
-  }, [imageElement, editor, marker, props]);
+  }, [replaceImage, props]);
 
   const updateImage = useCallback(() => {
-    if (!imageElement || !editor || !marker) {
-      return;
+    // URL and title fields hold decoded values. Escape them once for Markdown;
+    // Whitespace, parentheses or a leading "<" need the angle-bracket form.
+    const src = imageSrc.trim();
+    const escaped = src.replace(/&/g, "&amp;").replace(/\\/g, "\\\\");
+    const destination = /[\s()]|^</.test(src)
+      ? `<${escaped.replace(/[<>]/g, "\\$&")}>`
+      : escaped;
+    const replaced = replaceImage(
+      imageTitle.trim().length
+        ? `![${imageAlt.trim()}](${destination} ${JSON.stringify(imageTitle.replace(/&/g, "&amp;"))})`
+        : `![${imageAlt.trim()}](${destination})`,
+    );
+    if (replaced) {
+      props.onClose();
     }
-    const pos = marker.find();
-    if (!pos) return;
-    if (imageTitle.trim().length) {
-      editor.replaceRange(
-        `![${imageAlt.trim()}](${imageSrc.trim()} ${JSON.stringify(
-          imageTitle,
-        )})`,
-        pos.from,
-        pos.to,
-      );
-    } else {
-      editor.replaceRange(
-        `![${imageAlt.trim()}](${imageSrc.trim()})`,
-        pos.from,
-        pos.to,
-      );
-    }
-    props.onClose();
-  }, [imageElement, editor, marker, props, imageAlt, imageSrc, imageTitle]);
+  }, [replaceImage, props, imageAlt, imageSrc, imageTitle]);
 
   // Filled from the image each time the dialog opens: the image clicked may
   // be the one a cancelled edit left its values behind for. The preview
   // follows the source, which another image may share.
   useEffect(() => {
-    if (props.open && imageElement && marker && editor) {
-      setImageSrc(
-        imageElement.getAttribute("data-src") || imageElement.src || "",
-      );
-      setImageTitle(imageElement.title || "");
-      setImageAlt(imageElement.alt || "");
+    if (props.open && image && editor) {
+      setImageSrc(image.src);
+      setImageTitle(image.title);
+      setImageAlt(image.alt);
+      setChanged(image.document !== editor.document.doc);
+      return editor.document.onChange(() => setChanged(true));
     }
-  }, [props.open, imageElement, marker, editor]);
+  }, [props.open, image, editor]);
 
   useEffect(() => {
     // A lookup can end after the source has moved on, a local file being read
@@ -110,7 +130,7 @@ export default function EditImageDialog(props: Props) {
     };
   }, [imageSrc, props.note]);
 
-  if (!editor || !marker || !imageElement) {
+  if (!editor || !image) {
     return null;
   }
 
@@ -118,6 +138,11 @@ export default function EditImageDialog(props: Props) {
     <Dialog open={props.open} onClose={props.onClose} style={{ zIndex: 3001 }}>
       <DialogTitle>{t("edit-image-dialog/title")}</DialogTitle>
       <DialogContent style={{ width: "400px", maxWidth: "100%" }}>
+        {changed && (
+          <Alert severity="warning">
+            {t("edit-image-dialog/note-changed")}
+          </Alert>
+        )}
         <ImageWrapper>
           <ImagePreview
             // Nothing until the source in the field has been looked up for
@@ -154,10 +179,20 @@ export default function EditImageDialog(props: Props) {
         ></TextField>
       </DialogContent>
       <DialogActions>
-        <Button variant={"contained"} color={"primary"} onClick={updateImage}>
+        <Button
+          disabled={changed}
+          variant={"contained"}
+          color={"primary"}
+          onClick={updateImage}
+        >
           {t("general/update")}
         </Button>
-        <Button variant={"contained"} color={"secondary"} onClick={deleteImage}>
+        <Button
+          disabled={changed}
+          variant={"contained"}
+          color={"secondary"}
+          onClick={deleteImage}
+        >
           {t("general/Delete")}
         </Button>
         <Button onClick={props.onClose}> {t("general/cancel")}</Button>

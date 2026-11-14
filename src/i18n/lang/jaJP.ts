@@ -15,6 +15,7 @@ export const jaJP = {
     "general/date-modified": "更新日",
     "general/title": "表題",
     "general/loading": "讀取中 ...",
+    "general/note-not-found": "ノートが見つかりません",
     "general/update": "更新",
     "general/close": "閉じる",
     "general/open-menu": "メニューを開く",
@@ -126,8 +127,7 @@ export const jaJP = {
     "settings/issues-and-feature-requests":
       "問題を発見したか、機能要求がありますか？",
     "settings/default-editor-mode": "既定のエディター モード",
-    "settings/plain-text-source-code":
-      "ソースコードモードでプレーンテキスト表示",
+    "settings/source-code-line-numbers": "ソースコードモードで行番号を表示",
     "settings/author-name": "著者名",
     "settings/author-email": "著者の電子メール",
     "settings/theme": "テーマ",
@@ -161,6 +161,8 @@ export const jaJP = {
     "editor/toolbar/insert-unordered-list": "順不同リストを挿入",
     "editor/toolbar/insert-ordered-list": "順序付きリストを挿入",
     "editor/toolbar/insert-table": "テーブルを挿入",
+    "editor/toolbar/insert-date-time": "日付と時刻を挿入",
+    "editor/toolbar/insert-mermaid": "Mermaid の図を挿入",
 
     // * NoteControl
     "editor/note-control/source-code": "ソースコード",
@@ -184,6 +186,8 @@ export const jaJP = {
     "add-notebook-dialog/disclaimer":
       "すべてのノートブックデータは、ブラウザにローカルに保存されます。ノートブックデータを当社のサーバーにアップロードすることはありません。",
     "edit-image-dialog/title": "画像を編集する",
+    "edit-image-dialog/note-changed":
+      "ノートが変更されました。このダイアログを閉じて、画像を選び直してください。",
     "edit-image-dialog/image-url": "画像の URL",
     "edit-image-dialog/image-title": "画像のタイトル",
     "edit-image-dialog/image-alt-text": "画像代替テキスト",

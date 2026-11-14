@@ -6,15 +6,14 @@ import { Emoji } from "emoji-mart";
 import EmojiData from "emoji-mart/data/all.json";
 import twemoji from "twemoji";
 import { EmojiBackgroundImageFn } from "../components/EmojiWrapper";
-import { setEmojiDefinitions, setReverseEmojiDefinitions } from "./echomd";
 import { enableEmoji } from "./markdown";
 
 // The emoji the markdown stage turns :short names: into, those twemoji has
 // an image for, enabled once this module has run; and the short name of
 // each code point, for the images.
+const emojiDefinitions: { [shortName: string]: string } = {};
 const emojiCodePointToShortNameMap: { [key: string]: string } = ((data) => {
   const m: { [key: string]: string } = {};
-  const emojiDefinitions: { [key: string]: string } = {};
   for (const shortName in data.emojis) {
     const emojiData: any = (data.emojis as any)[shortName];
     if (!emojiData.has_img_twitter) {
@@ -43,16 +42,21 @@ const emojiCodePointToShortNameMap: { [key: string]: string } = ((data) => {
       }
     }
   }
-  // The editor's, as echomd's preview set them.
-  setEmojiDefinitions(emojiDefinitions);
-  const reverse: { [emoji: string]: string } = {};
-  for (const shortName in emojiDefinitions) {
-    reverse[emojiDefinitions[shortName]] = shortName;
-  }
-  setReverseEmojiDefinitions(reverse);
   enableEmoji(emojiDefinitions);
   return m;
 })(EmojiData);
+
+/** The short names of the emoji with an image. */
+export function emojiShortNames(): string[] {
+  return Object.keys(emojiDefinitions);
+}
+
+/** The emoji a :short name: stands for, if it is one with an image. */
+export function emojiOfShortName(shortName: string): string | undefined {
+  return Object.prototype.hasOwnProperty.call(emojiDefinitions, shortName)
+    ? emojiDefinitions[shortName]
+    : undefined;
+}
 
 /**
  * How twemoji draws an emoji: an <img> whose background is the emoji's

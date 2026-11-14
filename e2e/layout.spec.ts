@@ -48,7 +48,7 @@ test("restores a layout saved by the previous layout engine", async ({
   await expect(
     page.getByRole("heading", { name: /Welcome to Crossnote/ }),
   ).toBeVisible();
-  await expect(app.plainTextSourceCodeSwitch).toBeVisible();
+  await expect(app.sourceLineNumbersSwitch).toBeVisible();
 
   // ...in the same three panes, with the sizes the app had: a 24px tab strip
   // (the library sizes it by content now) and 4px splitters.
@@ -77,8 +77,7 @@ test("goes to the reference a note already open is opened at", async ({
 }) => {
   await app.open();
   await app.openNotes();
-  await app.createNote();
-  const title = await app.noteTitle.inputValue();
+  const title = await app.createNote();
   const line = "See [[README]] here.";
   // Set rather than typed: typing "[[" would open the wikilink hints.
   await app.setEditorText(`Intro line.\n\n${line}\n`);
@@ -217,7 +216,7 @@ test("takes key events without a key in its stride", async ({ app, page }) => {
     .evaluate((field) =>
       field.dispatchEvent(new Event("keydown", { bubbles: true })),
     );
-  await expect(app.plainTextSourceCodeSwitch).toBeVisible();
+  await expect(app.sourceLineNumbersSwitch).toBeVisible();
   expect(errors).toEqual([]);
 });
 

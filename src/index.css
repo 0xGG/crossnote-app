@@ -22,34 +22,6 @@ body {
   }
 }
 
-.CodeMirror-code.CodeMirror-code {
-  font-family:
-    -apple-system, BlinkMacSystemFont, "Noto Sans SC", "Segoe UI", "Roboto",
-    "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans",
-    "Helvetica Neue", sans-serif !important;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
-.CodeMirror-placeholder.CodeMirror-placeholder {
-  /* font-size: 2.25rem; */
-  color: #ccc !important;
-}
-
-.HyperMD-header.HyperMD-header-1.HyperMD-header.HyperMD-header-1::after,
-.HyperMD-header.HyperMD-header-2.HyperMD-header.HyperMD-header-2::after {
-  height: 0;
-}
-
-.CodeMirror-hints {
-  font-size: 1rem !important;
-  z-index: 2000 !important;
-}
-
-.hmd-image {
-  cursor: pointer;
-}
-
 code {
   font-family:
     source-code-pro, Menlo, Monaco, Consolas, "Courier New", monospace;
@@ -76,8 +48,4 @@ code {
   background-color: rgba(150, 150, 150, 0.4);
   border: 4px solid rgba(150, 150, 150, 0.4);
   background-clip: content-box;
-}
-
-.float-win-hidden {
-  display: none;
 }

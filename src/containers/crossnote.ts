@@ -24,6 +24,7 @@ import { pruneUnknownTabs, tabsShowingNote } from "../lib/layout";
 import { Note, NoteConfig } from "../lib/note";
 import { Notebook } from "../lib/notebook";
 import { NotesNotSavedError, flushNotes } from "../lib/noteSaver";
+import { moveNote, openNoteAt } from "../lib/openNotes";
 import { failureMessage, notify } from "../lib/notifications";
 import { CrossnoteTabNode } from "../lib/tabNode";
 import { notebookInFront, tabsetForNewTab } from "../lib/tabset";
@@ -195,7 +196,9 @@ function useCrossnoteContainer(initialState: InitialState) {
 
   const updateNoteMarkdown = useCallback(
     async (
-      tabNode: TabNode,
+      // Who writes: a tab, or a note's saver, which writes for every tab
+      // the note is open in. The event that tells of the write names it.
+      writer: { getId(): string },
       notebookPath: string,
       filePath: string,
       markdown: string,
@@ -217,8 +220,9 @@ function useCrossnoteContainer(initialState: InitialState) {
           note.config,
         );
         globalEmitter.emit(EventType.ModifiedMarkdown, {
-          tabId: tabNode.getId(),
+          tabId: writer.getId(),
           markdown: newNote.markdown,
+          lineBreak: newNote.lineBreak,
           notebookPath: note.notebookPath,
           noteFilePath: note.filePath,
           noteConfig: newNote.config,
@@ -267,6 +271,7 @@ function useCrossnoteContainer(initialState: InitialState) {
         globalEmitter.emit(EventType.ModifiedMarkdown, {
           tabId: tabNode.getId(),
           markdown: newNote.markdown,
+          lineBreak: newNote.lineBreak,
           notebookPath: note.notebookPath,
           noteFilePath: note.filePath,
           noteConfig: newNote.config,
@@ -302,35 +307,58 @@ function useCrossnoteContainer(initialState: InitialState) {
       const notebook = notebooks.find((x) => x.dir === note.notebookPath);
       if (notebook) {
         const oldNoteFilePath = note.filePath;
-        const newNote = await notebook.changeNoteFilePath(
-          oldNoteFilePath,
-          newFilePath,
-        );
-        globalEmitter.emit(EventType.ChangedNoteFilePath, {
-          tabId: tabNode.getId(),
+        const old = {
           notebookPath: note.notebookPath,
-          oldNoteFilePath: oldNoteFilePath,
-          // As the notebook wrote it, which is not always as it was asked.
-          newNoteFilePath: newNote.filePath,
-        });
-        // A tab keeps the path of the note it shows, which the saved layout
-        // opens it at again and which opening the note looks for; every tab
-        // of the note follows it.
-        if (layoutModel) {
-          const tabs = tabsShowingNote(
-            layoutModel,
-            note.notebookPath,
+          filePath: oldNoteFilePath,
+        };
+        // What was just typed is written first: the save that comes a moment
+        // after the last key would look for the note at its old path once
+        // the file has moved, find none, and write nothing.
+        await flushNotes(old);
+        const open = openNoteAt(old);
+        const rename = async (onMoved?: () => void) => {
+          const newNote = await notebook.changeNoteFilePath(
             oldNoteFilePath,
+            newFilePath,
+            onMoved,
           );
-          for (const tab of tabs) {
-            layoutModel.doAction(
-              Actions.updateNodeAttributes(tab.getId(), {
-                config: { ...tab.getConfig(), noteFilePath: newNote.filePath },
-              }),
-            );
+          // Migrate the shared owner before releasing writes and closing.
+          if (open) {
+            moveNote(open, {
+              notebookPath: note.notebookPath,
+              filePath: newNote.filePath,
+            });
           }
-        }
-        return newNote;
+          globalEmitter.emit(EventType.ChangedNoteFilePath, {
+            tabId: tabNode.getId(),
+            notebookPath: note.notebookPath,
+            oldNoteFilePath: oldNoteFilePath,
+            // As the notebook wrote it, which is not always as it was asked.
+            newNoteFilePath: newNote.filePath,
+          });
+          // A tab keeps the path of the note it shows, which the saved layout
+          // opens it at again and which opening the note looks for; every tab
+          // of the note follows it.
+          if (layoutModel) {
+            const tabs = tabsShowingNote(
+              layoutModel,
+              note.notebookPath,
+              oldNoteFilePath,
+            );
+            for (const tab of tabs) {
+              layoutModel.doAction(
+                Actions.updateNodeAttributes(tab.getId(), {
+                  config: {
+                    ...tab.getConfig(),
+                    noteFilePath: newNote.filePath,
+                  },
+                }),
+              );
+            }
+          }
+          return newNote;
+        };
+        return open ? await open.saver.rename(rename) : await rename();
       } else {
         throw new Error("Notebook " + note.notebookPath + " not found");
       }
