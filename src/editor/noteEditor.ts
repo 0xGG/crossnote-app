@@ -1,42 +1,66 @@
 import { defaultKeymap } from "@codemirror/commands";
-import { markdown, markdownLanguage } from "@codemirror/lang-markdown";
-import { Compartment, EditorState, type Extension } from "@codemirror/state";
+import {
+  Compartment,
+  EditorState,
+  Prec,
+  type Extension,
+} from "@codemirror/state";
 import {
   drawSelection,
   EditorView,
   keymap,
   lineNumbers,
+  placeholder as placeholderOf,
 } from "@codemirror/view";
 import { indentation, indentOrTab, outdent, toggleMark } from "./commands";
 import type { EditorHandle, EditorHost, TextPosition } from "./handle";
+import { noteLanguage } from "./language";
+import { linkClicks, type NoteLink } from "./links";
+import {
+  livePreview,
+  livePreviewHost,
+  type LivePreviewHost,
+} from "./livePreview";
+import { mathTooltip } from "./mathTooltip";
 import type { NoteDocument } from "./noteDocument";
+import { continueTable, nextTableCell, previousTableCell } from "./tables";
 import { editorTheme } from "./theme";
 
 /**
  * How an editor shows a note: "live" hides the markup of what the caret is
  * not in and draws the rest as it will read; "source" shows every character
- * with the text's typography and line numbers; "plain" shows them as plain
- * text in one size.
+ * as plain text in one size, coloured by what it is.
  */
-export type EditorDisplay = "live" | "source" | "plain";
+export type EditorDisplay = "live" | "source";
 
 export interface NoteEditorOptions {
   /** The element the editor is put in, as its last child. */
   parent: HTMLElement;
   document: NoteDocument;
   display: EditorDisplay;
+  /** Whether the source has line numbers beside it; it has, if left out. */
+  lineNumbers?: boolean;
   /** The test id the editor's root element is named by. */
   testId: string;
   /** Ctrl+S (Cmd+S): the browser's own dialog is kept away either way. */
   onSave?: () => void;
   /** After the selection moves or the text under it changes. */
   onSelection?: (editor: NoteEditor) => void;
+  /** A click on a link with Ctrl, Cmd or Alt held. */
+  onLinkClick?: (link: NoteLink, event: MouseEvent) => void;
+  /** How images load, and what a click on one does. */
+  images?: LivePreviewHost;
+  /** What an empty note shows in place of text. */
+  placeholder?: string;
 }
 
-function displayExtensions(display: EditorDisplay): Extension {
+function displayExtensions(
+  display: EditorDisplay,
+  numbered: boolean,
+): Extension {
   return [
     EditorView.editorAttributes.of({ class: `cn-editor-${display}` }),
-    display === "live" ? [] : lineNumbers(),
+    display === "live" ? livePreview : numbered ? lineNumbers() : [],
   ];
 }
 
@@ -46,20 +70,27 @@ export class NoteEditor {
   readonly document: NoteDocument;
   readonly handle: EditorHandle;
   private shown: EditorDisplay;
+  private numbered: boolean;
   private readonly display = new Compartment();
   private readonly readOnly = new Compartment();
+  private readonly images = new Compartment();
   private readonly detach: () => void;
 
   constructor({
     parent,
     document,
     display,
+    lineNumbers,
     testId,
     onSave,
     onSelection,
+    onLinkClick,
+    images,
+    placeholder,
   }: NoteEditorOptions) {
     this.document = document;
     this.shown = display;
+    this.numbered = lineNumbers ?? true;
     this.view = new EditorView({
       parent,
       dispatchTransactions: document.dispatchTransactions,
@@ -117,10 +148,21 @@ export class NoteEditor {
               return false;
             },
           }),
-          markdown({ base: markdownLanguage }),
+          // Ahead of the keys markdown binds for lists and quotes.
+          Prec.highest(
+            keymap.of([
+              { key: "Tab", run: nextTableCell, shift: previousTableCell },
+              { key: "Enter", run: continueTable },
+            ]),
+          ),
+          noteLanguage,
+          this.images.of(livePreviewHost.of(images ?? {})),
+          mathTooltip,
+          placeholder ? placeholderOf(placeholder) : [],
+          onLinkClick ? linkClicks(onLinkClick) : [],
           EditorView.lineWrapping,
           editorTheme,
-          this.display.of(displayExtensions(display)),
+          this.display.of(displayExtensions(display, this.numbered)),
           this.readOnly.of(EditorState.readOnly.of(false)),
           EditorView.updateListener.of((update) => {
             if (update.selectionSet || update.docChanged) {
@@ -145,11 +187,14 @@ export class NoteEditor {
   }
 
   /** Changes how the note is shown; the text, selection and history stay. */
-  show(display: EditorDisplay) {
-    if (display !== this.shown) {
+  show(display: EditorDisplay, lineNumbers = this.numbered) {
+    if (display !== this.shown || lineNumbers !== this.numbered) {
       this.shown = display;
+      this.numbered = lineNumbers;
       this.view.dispatch({
-        effects: this.display.reconfigure(displayExtensions(display)),
+        effects: this.display.reconfigure(
+          displayExtensions(display, lineNumbers),
+        ),
       });
     }
   }
@@ -160,6 +205,15 @@ export class NoteEditor {
         effects: this.readOnly.reconfigure(EditorState.readOnly.of(readOnly)),
       });
     }
+  }
+
+  /** Resolves existing images again after the note's location changes. */
+  refreshImages() {
+    this.view.dispatch({
+      effects: this.images.reconfigure(
+        livePreviewHost.of({ ...this.view.state.facet(livePreviewHost) }),
+      ),
+    });
   }
 
   /**

@@ -1,5 +1,6 @@
 import { forceParsing } from "@codemirror/language";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { syntaxSamples } from "../test/corpus/syntax";
 import type { EditorHost } from "./handle";
 import { NoteDocument } from "./noteDocument";
 import {
@@ -9,6 +10,60 @@ import {
 } from "./noteEditor";
 
 const editors: NoteEditor[] = [];
+
+it("passes decoded image destinations and titles to the image host", () => {
+  const loadImage = vi.fn();
+  const editor = editorOf('\n![photo](a\\(b\\).png "A \\"quoted\\" photo")', {
+    images: { loadImage },
+  });
+  expect(loadImage).toHaveBeenCalledWith(
+    expect.any(HTMLImageElement),
+    "a(b).png",
+  );
+  expect(
+    editor.view.dom.querySelector("img.cn-image")?.getAttribute("title"),
+  ).toBe('A "quoted" photo');
+});
+
+it.each([
+  "![photo](a>)",
+  String.raw`![photo](a\>)`,
+  "![photo][p]\n\n[p]: a>",
+  String.raw`![photo][p]` + "\n\n" + String.raw`[p]: a\>`,
+])("keeps a trailing angle in the image destination: %s", (text) => {
+  const loadImage = vi.fn();
+  editorOf("\n" + text, { images: { loadImage } });
+  expect(loadImage).toHaveBeenCalledWith(expect.any(HTMLImageElement), "a>");
+});
+
+it("reloads image hosts without replacing text, selection or undo history", () => {
+  let folder = "a";
+  const loadImage = vi.fn((element: HTMLImageElement, src: string) => {
+    element.src = `https://example.com/${folder}/${src}`;
+  });
+  const editor = editorOf("\n![photo](picture.png)", { images: { loadImage } });
+  editor.view.dispatch({
+    changes: { from: 0, insert: "typed" },
+    selection: { anchor: 2 },
+  });
+  const text = editor.document.doc;
+  const changed = vi.fn();
+  const stop = editor.document.onChange(changed);
+  expect(
+    editor.view.dom.querySelector("img.cn-image")?.getAttribute("src"),
+  ).toBe("https://example.com/a/picture.png");
+  folder = "b";
+  editor.refreshImages();
+  expect(
+    editor.view.dom.querySelector("img.cn-image")?.getAttribute("src"),
+  ).toBe("https://example.com/b/picture.png");
+  expect(editor.document.doc).toBe(text);
+  expect(editor.view.state.selection.main.head).toBe(2);
+  expect(changed).not.toHaveBeenCalled();
+  stop();
+  editor.document.undo(editor.view);
+  expect(editor.document.text()).toBe("\n![photo](picture.png)");
+});
 
 function editorOf(
   text: string | NoteDocument,
@@ -123,7 +178,7 @@ describe("NoteEditor", () => {
 
   describe("how it shows a note", () => {
     const shown = (editor: NoteEditor) =>
-      (["live", "source", "plain"] as EditorDisplay[]).filter((display) =>
+      (["live", "source"] as EditorDisplay[]).filter((display) =>
         editor.view.dom.classList.contains(`cn-editor-${display}`),
       );
     const numbered = (editor: NoteEditor) =>
@@ -136,8 +191,11 @@ describe("NoteEditor", () => {
       editor.show("source");
       expect(shown(editor)).toEqual(["source"]);
       expect(numbered(editor)).toBe(true);
-      editor.show("plain");
-      expect(shown(editor)).toEqual(["plain"]);
+      // Without them where the app asks for none, and with them again.
+      editor.show("source", false);
+      expect(shown(editor)).toEqual(["source"]);
+      expect(numbered(editor)).toBe(false);
+      editor.show("source", true);
       expect(numbered(editor)).toBe(true);
       editor.show("live");
       expect(shown(editor)).toEqual(["live"]);
@@ -297,5 +355,72 @@ describe("NoteEditor", () => {
     first.handle.select(first.handle.end());
     first.handle.insert(" Two");
     expect(note.text()).toBe("One Two");
+  });
+
+  describe("its language", () => {
+    it("colours a code block in its language once the language has loaded, without touching the note", async () => {
+      const text =
+        "```js\nconst a = 1;\n```\n\n```bash {cmd=true}\necho hi\n```\n";
+      const editor = editorOf(text);
+      const changes: boolean[] = [];
+      editor.document.onChange(({ loaded }) => changes.push(loaded));
+      await vi.waitFor(
+        () => expect(editor.handle.tokenTypes("const")).toContain("keyword"),
+        { timeout: 10_000 },
+      );
+      await vi.waitFor(
+        () => expect(editor.handle.tokenTypes("echo")).not.toEqual([]),
+        { timeout: 10_000 },
+      );
+      expect(changes).toEqual([]);
+      expect(editor.handle.text()).toBe(text);
+    });
+
+    it("leaves a code block of a language it does not know plain", () => {
+      const editor = editorOf("```mermaid\ngraph TD; A-->B\n```\n");
+      expect(editor.handle.tokenTypes("graph")).toEqual(["monospace"]);
+    });
+
+    it("reads front matter as YAML, and the note under it as markdown", () => {
+      const editor = editorOf("---\ntitle: T\n---\n\n# Heading\n\n- one");
+      expect(editor.handle.tokenTypes("title")).not.toEqual([]);
+      expect(editor.handle.tokenTypes("Heading")).toContain("heading1");
+      editor.handle.select(editor.handle.end());
+      press(editor, "Enter");
+      expect(editor.handle.text()).toBe(
+        "---\ntitle: T\n---\n\n# Heading\n\n- one\n- ",
+      );
+    });
+
+    it("colours the notes' own syntax", () => {
+      const editor = editorOf("$x$ [[README]] #topic ==marked== ++in++ [^1]", {
+        display: "source",
+      });
+      expect(editor.handle.tokenTypes("x")).toContain("math");
+      expect(editor.handle.tokenTypes("README")).toContain("wikiLink");
+      expect(editor.handle.tokenTypes("#topic")).toContain("hashtag");
+      expect(editor.handle.tokenTypes("marked")).toContain("marked");
+      expect(editor.handle.tokenTypes("in")).toContain("inserted");
+      expect(editor.handle.tokenTypes("[^1]")).toContain("footnote");
+    });
+  });
+
+  describe("leaves each note of the shared corpus as it was written", () => {
+    (["live", "source"] as EditorDisplay[]).forEach((display) => {
+      syntaxSamples.forEach(({ name, text }) => {
+        it(`shown ${display}, with ${name}`, () => {
+          const note = new NoteDocument(text);
+          const changes: boolean[] = [];
+          note.onChange(({ loaded }) => changes.push(loaded));
+          const editor = editorOf(note, { display });
+          // The caret through the note, start to end.
+          editor.handle.select({ line: 0, ch: 0 });
+          editor.handle.select(editor.handle.end());
+          editor.handle.select({ line: 0, ch: 0 }, editor.handle.end());
+          expect(changes).toEqual([]);
+          expect(note.text()).toBe(text);
+        });
+      });
+    });
   });
 });
