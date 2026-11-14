@@ -1,10 +1,9 @@
-import { ThemeName } from "@0xgg/echomd/theme";
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { createContainer } from "unstated-next";
 import { EditorMode } from "../lib/editorMode";
 import { themeManager } from "../themes/manager";
-import { CrossnoteTheme } from "../themes/theme";
+import { CrossnoteTheme, type ThemeName } from "../themes/theme";
 
 type InitialState = object;
 

@@ -114,17 +114,14 @@ test("draws an architecture diagram and a mindmap within the page's policy", asy
   await expect(app.preview.locator(".language-error")).toHaveCount(0);
 });
 
-test("loads no library from the site's /deps folder but CodeMirror's languages", async ({
+test("loads no library from a /deps folder of the site", async ({
   app,
   page,
 }) => {
   const requested: string[] = [];
   page.on("request", (request) => {
     const { pathname } = new URL(request.url());
-    if (
-      pathname.startsWith("/deps/") &&
-      !pathname.startsWith("/deps/codemirror@")
-    ) {
+    if (pathname.startsWith("/deps/")) {
       requested.push(pathname);
     }
   });

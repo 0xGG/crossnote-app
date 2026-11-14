@@ -24,7 +24,6 @@
     "test:e2e": "vite build && playwright test"
   },
   "dependencies": {
-    "@0xgg/echomd": "^1.0.4",
     "@codemirror/autocomplete": "^6.20.4",
     "@codemirror/commands": "^6.11.1",
     "@codemirror/lang-markdown": "^6.5.2",
@@ -39,12 +38,10 @@
     "@lezer/common": "^1.5.5",
     "@lezer/highlight": "^1.2.5",
     "@lezer/markdown": "^1.8.1",
-    "@mdi/font": "^7.4.47",
     "@mui/material": "^9.5.0",
     "@mui/x-tree-view": "^9.17.0",
     "async-mutex": "^0.5.0",
     "buffer": "^6.0.3",
-    "codemirror": "^5.59.4",
     "d3": "^7.9.0",
     "date-fns": "^4.4.0",
     "diff3": "^0.0.3",
@@ -85,7 +82,6 @@
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "@playwright/test": "^1.64.1",
-    "@types/codemirror": "^0.0.91",
     "@types/d3": "^7.4.3",
     "@types/emoji-mart": "^3.0.4",
     "@types/node": "^24.19.2",
@@ -110,7 +106,6 @@
     "typescript": "6.0.3",
     "typescript-eslint": "^8.72.1",
     "vite": "^7.3.7",
-    "vite-plugin-static-copy": "^3.4.0",
     "vitest": "^5.0.5"
   }
 }

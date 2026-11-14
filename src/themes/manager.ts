@@ -1,10 +1,9 @@
-import { ThemeName } from "@0xgg/echomd/theme";
 import { setPreviewTheme } from "../render/theme";
 import { DarkTheme } from "./dark";
 import { LightTheme } from "./light";
 import { OneDarkTheme } from "./one-dark";
 import { SolarizedLight } from "./solarized-light";
-import { CrossnoteTheme } from "./theme";
+import { CrossnoteTheme, type ThemeName } from "./theme";
 
 // Names the page's theme, which previews and editors both take their
 // colours from (render/preview-theme.css, editor/editor-theme.css).

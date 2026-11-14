@@ -1,5 +1,7 @@
-import { ThemeName } from "@0xgg/echomd/theme";
 import { Theme, ThemeOptions, createTheme } from "@mui/material/styles";
+
+/** The app's themes, by the names the settings store. */
+export type ThemeName = "light" | "dark" | "one-dark" | "solarized-light";
 
 interface CrossnoteThemeProps {
   name: ThemeName;

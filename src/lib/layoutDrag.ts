@@ -7,9 +7,6 @@ export const LAYOUT_DRAG_TEXT = "--flexlayout--";
 const LAYOUT_DRAG_SOURCES =
   ".flexlayout__tab_button, .flexlayout__tabset_tabbar_outer, .flexlayout__popup_menu_item";
 
-// CodeMirror leaves an event marked this way to others.
-type EditorDragEvent = DragEvent & { codemirrorIgnore?: boolean };
-
 function elementOf(target: EventTarget | null): Element | null {
   if (target instanceof Element) {
     return target;
@@ -17,9 +14,9 @@ function elementOf(target: EventTarget | null): Element | null {
   return target instanceof Node ? target.parentElement : null;
 }
 
-// Keeps FlexLayout's tab drags and the drag and drop of the panes under
-// `root` out of each other's way. Listening in the capture phase gets to
-// each event before the panes do.
+// Keeps a tab FlexLayout drags from being dropped into the panes under
+// `root` as text. Listening in the capture phase gets to each event before
+// the panes do; a note's editor leaves alone a drop that has been prevented.
 export function guardLayoutDrags(root: HTMLElement): () => void {
   let tabDrag = false;
 
@@ -40,15 +37,6 @@ export function guardLayoutDrags(root: HTMLElement): () => void {
     }
   };
 
-  // CodeMirror stops the drag events that reach a note's editor, which would
-  // keep a tab dragged over one from the layout: it could not dock the tab,
-  // and its count of the drag's comings and goings would go wrong.
-  const letThrough = (event: DragEvent) => {
-    if (tabDrag) {
-      (event as EditorDragEvent).codemirrorIgnore = true;
-    }
-  };
-
   const onDrop = (event: DragEvent) => {
     if (
       tabDrag ||
@@ -56,21 +44,16 @@ export function guardLayoutDrags(root: HTMLElement): () => void {
     ) {
       // A tab dropped before the layout has covered the panes with its
       // overlay must not write its text into the pane it lands on.
-      (event as EditorDragEvent).codemirrorIgnore = true;
       event.preventDefault();
     }
     endTabDrag();
   };
 
   root.addEventListener("dragstart", onDragStart, true);
-  root.addEventListener("dragenter", letThrough, true);
-  root.addEventListener("dragover", letThrough, true);
   root.addEventListener("drop", onDrop, true);
   root.addEventListener("dragend", endTabDrag, true);
   return () => {
     root.removeEventListener("dragstart", onDragStart, true);
-    root.removeEventListener("dragenter", letThrough, true);
-    root.removeEventListener("dragover", letThrough, true);
     root.removeEventListener("drop", onDrop, true);
     root.removeEventListener("dragend", endTabDrag, true);
     endTabDrag();

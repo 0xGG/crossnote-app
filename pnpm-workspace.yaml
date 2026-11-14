@@ -5,7 +5,6 @@ allowBuilds:
   esbuild: true
   leveldown: false
 patchedDependencies:
-  "@0xgg/echomd@1.0.4": patches/@0xgg__echomd@1.0.4.patch
   # Once storage refuses a write of its directory tree, as a full disk does,
   # lightning-fs fails every operation until the page is reloaded (4.10.3
   # still does). The patch has it go on with the tree it holds in memory.
@@ -17,22 +16,13 @@ patchedDependencies:
 #   fixed on the 3.4 line (3.4.17 for the latest ones), so this floor crosses
 #   a major. The app's own preview depends on it directly, within the floor,
 #   and so does mermaid 12.
-# - sanitize-url 6.0.4 fixes the javascript: scheme bypasses.
-# - d3-color 3.1.0 fixes the ReDoS in the color-string parser. The d3 5 that
-#   mermaid's dagre-d3 brings, and the d3 1.x modules under it, ask for
-#   d3-color 1.x, inside the affected range; 3.x is API-compatible and is what
-#   the direct d3 7 dependency (GraphView) and mermaid's own d3 7 use.
-#   The mermaid 8 these two reach is echomd's, which nothing runs: the
-#   preview draws with the app's own mermaid 12.
 # Not a floor: mermaid's KaTeX is the app's. mermaid 12 asks for ^0.18.0, and
 # 0.18 to 0.19 has changes that break (npm marks 0.18.11 deprecated for
 # having them), so without this mermaid would bring a KaTeX of its own
-# besides the app's 0.19 (the editor's echomd brings a third, 0.13).
+# besides the app's 0.19.
 # Formulas in diagrams are checked in e2e/diagrams.spec.ts.
 overrides:
   "dompurify@<3.4.17": ^3.4.17
-  "@braintree/sanitize-url@<6.0.4": ^6.0.4
-  "d3-color@<3.1.0": ^3.1.0
   "mermaid>katex": ^0.19.1
 # pnpm 12 records the pnpm that packageManager pins in a YAML document of its
 # own at the head of pnpm-lock.yaml, and GitHub's dependency graph reads only

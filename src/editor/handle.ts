@@ -1,21 +1,20 @@
-import type { Editor } from "codemirror";
-
 // A place in an editor's text: the line, counted from 0, and the column on it
 // in UTF-16 code units, the way JavaScript measures a string.
 export type TextPosition = { line: number; ch: number };
 
 // The few things the end-to-end tests do to an editor and read back from it.
 // The app hangs one on the root element of each editor it makes, the element
-// its test id names, so that the tests drive whatever editor the app has the
-// same way: an editor that replaces CodeMirror 5 hangs the same handle, and
-// the specs stay as they are. A change made through it is a change of the
-// editor's text like any other, which the app answers as it answers typing.
+// its test id names (noteEditor.ts), so that the tests drive the editor
+// without knowing what it is made of. A change made through it is a change
+// of the editor's text like any other, which the app answers as it answers
+// typing.
 export interface EditorHandle {
-  // The whole text the editor holds, its lines joined with \n.
+  // The whole text of the note the editor shows, as it would be written to
+  // the note's file, line endings included.
   text(): string;
   // Puts text in place of all of it as one change. Where the caret is
-  // afterwards is up to the editor (CodeMirror 5 puts it at the start), so a
-  // test that goes on to type puts it somewhere first.
+  // afterwards is up to the editor, so a test that goes on to type puts it
+  // somewhere first.
   setText(text: string): void;
   // Puts text in place of the selection, or at the caret, as one change: the
   // text as given, without what the editor adds as keys are typed (the
@@ -30,7 +29,7 @@ export interface EditorHandle {
   selection(): string;
   focus(): void;
   // The kinds of token the editor has drawn the first piece of text that
-  // holds this text with, as the editor names them ("builtin", "strong" and
+  // holds this text with, as the editor names them ("keyword", "strong" and
   // so on): none where that piece is drawn plain or inside a widget, or
   // where no single piece holds the text (it runs across two tokens, or is
   // not drawn). What is drawn, not what the editor would work out: a
@@ -41,48 +40,3 @@ export interface EditorHandle {
 
 // The element the handle hangs on.
 export type EditorHost = HTMLElement & { editorHandle: EditorHandle };
-
-// Hangs a handle on a CodeMirror 5 editor and names its root element by test
-// id ("note-editor" for a note's editor).
-// Returns the handle, for the app's own use of the same few things.
-export function attachEditorHandle(
-  editor: Editor,
-  testId: string,
-): EditorHandle {
-  const root = editor.getWrapperElement() as EditorHost;
-  root.dataset.testid = testId;
-  root.editorHandle = {
-    text: () => editor.getValue(),
-    setText: (text) => editor.setValue(text),
-    insert: (text) => editor.replaceSelection(text),
-    caret: () => {
-      const { line, ch } = editor.getCursor();
-      return { line, ch };
-    },
-    end: () => {
-      const line = editor.lastLine();
-      return { line, ch: editor.getLine(line).length };
-    },
-    select: (anchor, head) => editor.setSelection(anchor, head ?? anchor),
-    selection: () => editor.getSelection(),
-    focus: () => editor.focus(),
-    tokenTypes: (text) => {
-      // The lines as drawn; the editor's measuring copy of a line sits
-      // beside them, not in them.
-      const lines = root.querySelector(".CodeMirror-code");
-      if (!lines) {
-        return [];
-      }
-      const walker = document.createTreeWalker(lines, NodeFilter.SHOW_TEXT);
-      for (let node = walker.nextNode(); node; node = walker.nextNode()) {
-        if (node.textContent?.includes(text)) {
-          return Array.from(node.parentElement?.classList ?? [])
-            .filter((name) => name.startsWith("cm-"))
-            .map((name) => name.slice("cm-".length));
-        }
-      }
-      return [];
-    },
-  };
-  return root.editorHandle;
-}

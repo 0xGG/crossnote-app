@@ -1,5 +1,4 @@
 import "./polyfills";
-import "@mdi/font/css/materialdesignicons.min.css";
 import { createRoot } from "react-dom/client";
 import "typeface-noto-sans-sc/index.css";
 import "typeface-roboto/index.css";
