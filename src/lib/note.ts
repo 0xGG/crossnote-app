@@ -20,6 +20,8 @@ export interface Note {
   filePath: FilePath;
   title: string;
   markdown: string;
+  // First line ending in the full file, including a stripped settings block.
+  lineBreak?: string;
   config: NoteConfig;
   /**
    * @param key: mentioned note file path

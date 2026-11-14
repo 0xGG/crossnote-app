@@ -1,5 +1,8 @@
 import * as git from "isomorphic-git";
 import { beforeAll, describe, expect, it, vi } from "vitest";
+import { EditorState } from "@codemirror/state";
+import { EditorView } from "@codemirror/view";
+import { NoteDocument } from "../editor/noteDocument";
 import {
   frontMatterSamples,
   unreadableFrontMatterSamples,
@@ -725,19 +728,73 @@ describe("Notebook", () => {
       expect(meanwhile.config.pinned).toBe(true);
       expect(meanwhile.config.createdAt).toEqual(note.config.createdAt);
 
-      // And once it is.
+      // Once completed, the body keeps the separate block established by
+      // the intermediate save instead of being merged into settings.
       await notebook.writeNote(
         "half-typed.md",
         "---\ntitle: T\ntags: [a]\n---\nBody",
         { ...meanwhile.config },
       );
       expect(await stored("half-typed.md")).toBe(
-        "---\ntitle: T\ntags: [a]\npinned: true\ncreated: <time>\nmodified: <time>\n---\nBody",
+        "---\npinned: true\ncreated: <time>\nmodified: <time>\n---\n---\ntitle: T\ntags: [a]\n---\nBody",
       );
     });
   });
 
   describe("keeps each kind of note in the shared corpus as it was written", () => {
+    it.each([
+      ["CRLF single line", "\r\n", "Body"],
+      ["CR single line", "\r", "Body"],
+      ["CRLF empty", "\r\n", ""],
+      ["CR empty", "\r", ""],
+    ])(
+      "preserves the file ending after settings are stripped: %s",
+      async (name, lineBreak, body) => {
+        const filePath = `settings-eol-${name}.md`;
+        const fullPath = `/notebooks/test/${filePath}`;
+        const original = ["---", "created: 2026-01-01", "---", body].join(
+          lineBreak,
+        );
+        await pfs.writeFile(fullPath, original);
+        const writes = vi.spyOn(pfs, "writeFile");
+        const note = await notebook.getNote(filePath, true);
+        const document = new NoteDocument(note.markdown, note.lineBreak);
+        const view = new EditorView({
+          state: EditorState.create({ doc: document.doc }),
+          dispatchTransactions: document.dispatchTransactions,
+        });
+        const detach = document.attach(view);
+        try {
+          expect(document.text()).toBe(body);
+          expect(writes).not.toHaveBeenCalled();
+          expect(await pfs.readFile(fullPath, { encoding: "utf8" })).toBe(
+            original,
+          );
+          view.dispatch({
+            changes: { from: body.length, insert: "\nNext" },
+            userEvent: "input.type",
+          });
+          await notebook.writeNote(filePath, document.text(), {
+            ...note.config,
+          });
+          const written = (await pfs.readFile(fullPath, {
+            encoding: "utf8",
+          })) as string;
+          expect(written.endsWith(`${body}${lineBreak}Next`)).toBe(true);
+          expect(
+            written.match(/\r\n?|\n/g)?.every((ending) => ending === lineBreak),
+          ).toBe(true);
+          expect((await notebook.getNote(filePath, true)).markdown).toBe(
+            `${body}${lineBreak}Next`,
+          );
+        } finally {
+          detach();
+          view.destroy();
+          writes.mockRestore();
+        }
+      },
+    );
+
     // The file less the times a save stamps, and less the block they had to
     // themselves when the note had no front matter.
     const lessStamps = (text: string) =>
