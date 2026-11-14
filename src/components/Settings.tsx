@@ -172,11 +172,11 @@ export function Settings() {
               );
             }}
           >
-            <MenuItem value={EditorMode.EchoMD}>
-              {t("general/echomd") as string}
-            </MenuItem>
             <MenuItem value={EditorMode.Preview}>
               {t("editor/note-control/preview") as string}
+            </MenuItem>
+            <MenuItem value={EditorMode.EchoMD}>
+              {t("general/echomd") as string}
             </MenuItem>
             <MenuItem value={EditorMode.SourceCode}>
               {t("editor/note-control/source-code") as string}

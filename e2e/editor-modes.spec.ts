@@ -219,3 +219,58 @@ test("keeps headings inside fenced code out of the table of contents", async ({
   await expect(app.tocItem("Real heading")).toBeVisible();
   await expect(app.tocItem("Example inside fenced code")).toHaveCount(0);
 });
+
+test.describe("the mode a note opens in", () => {
+  // As the app is before anything is chosen.
+  test.use({ notesOpenIn: null });
+
+  test("is the editor until the settings say otherwise, and the settings list the modes as the note's buttons do", async ({
+    app,
+    page,
+  }) => {
+    await app.open();
+    await app.openNotes();
+    await app.noteCards.filter({ hasText: "README" }).click();
+    await expect(app.modeOn).toHaveAccessibleName("Edit");
+    await expect(app.editor).toBeVisible();
+
+    await app.openSettings();
+    const choice = page.getByRole("combobox").filter({ hasText: /^Edit$/ });
+    await choice.click();
+    await expect(page.getByRole("option")).toHaveText([
+      "Preview",
+      "Edit",
+      "Source code",
+    ]);
+    await page.getByRole("option", { name: "Preview" }).click();
+
+    // A note opened from now on opens in the preview; one already open
+    // stays as it is.
+    await app.selectTab("README");
+    await expect(app.modeOn).toHaveAccessibleName("Edit");
+    await app.selectTab("Drafts");
+    await app.notesPanel.getByRole("button", { name: "New note" }).click();
+    const title = app.noteTitle.filter({ visible: true });
+    await expect(title).not.toHaveValue("");
+    // A new note is empty, and an empty note opens in the editor whatever
+    // the setting: something to read is needed for the preview.
+    await app.visibleEditor.click();
+    await page.keyboard.type("Something to read");
+    const name = await title.inputValue();
+    await expect
+      .poll(async () =>
+        app.storedText(`${await app.notebookFolder()}/${name}.md`),
+      )
+      .toContain("Something to read");
+    await page.reload();
+    await app.waitUntilReady();
+    await app.openNotes();
+    await app.noteCards.filter({ hasText: "Something to read" }).click();
+    await expect(
+      page
+        .getByRole("group", { name: "editor mode" })
+        .getByRole("button", { pressed: true })
+        .last(),
+    ).toHaveAccessibleName("Preview");
+  });
+});

@@ -13,7 +13,7 @@ function useSettingsContainer(initialState: InitialState) {
   );
   const [defaultEditorMode, setDefaultEditorMode] = useState<EditorMode>(
     (localStorage.getItem("settings/defaultEditorMode") as EditorMode) ||
-      EditorMode.Preview,
+      EditorMode.EchoMD,
   );
   const [authorName, setAuthorName] = useState<string>(
     localStorage.getItem("settings/authorName") || "Anonymous",

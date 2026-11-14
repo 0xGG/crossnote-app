@@ -241,9 +241,28 @@ for (const { mode, setting } of [
   });
 }
 
-test("opens a note whose tab the layout brings back without writing it", async ({
-  app,
-}) => {
+// A tab the layout brings back shows its note as the page loads, while the
+// notebook is still being read: in the preview where that is the mode chosen,
+// in the editor where nothing was chosen.
+for (const { mode, notesOpenIn } of [
+  { mode: "Preview", notesOpenIn: "Preview" },
+  { mode: "Edit", notesOpenIn: null },
+] as const) {
+  test.describe(`a tab the layout brings back in ${mode}`, () => {
+    test.use({ notesOpenIn });
+
+    test(`opens a note whose tab the layout brings back in ${mode} without writing it`, async ({
+      app,
+    }) => {
+      await restoredTabUnwritten(app, mode);
+    });
+  });
+}
+
+async function restoredTabUnwritten(
+  app: CrossnoteApp,
+  mode: "Preview" | "Edit",
+) {
   await app.open();
   await app.openNotes();
   const folder = await app.notebookFolder();
@@ -272,10 +291,18 @@ test("opens a note whose tab the layout brings back without writing it", async (
   await app.page.reload();
   await app.waitUntilReady();
   await expect(app.tab("README")).toBeVisible();
-  await expect(app.preview).toContainText("Kept");
+  await expect(app.modeOn).toHaveAccessibleName(mode);
+  if (mode === "Edit") {
+    await expect(app.editor).toBeVisible();
+    await expect.poll(() => app.editorText()).toContain("# Kept");
+    // The language has come and the block is drawn with it.
+    await expect.poll(() => app.tokenTypes("echo")).toContain("variableName");
+  } else {
+    await expect(app.preview).toContainText("Kept");
+  }
   await app.openNotes();
   await expectUnwritten(app, readme, touchy);
-});
+}
 
 test("says that front matter YAML cannot read is kept as it is", async ({
   app,

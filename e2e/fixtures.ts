@@ -4,6 +4,7 @@ import { CrossnoteApp } from "./crossnote";
 type Fixtures = {
   app: CrossnoteApp;
   firstRun: boolean;
+  notesOpenIn: "Preview" | null;
   expectPolicyViolations: string[];
   policyViolations: string[];
 };
@@ -13,11 +14,25 @@ export const test = base.extend<Fixtures>({
   // Exactly one spec is about that dialog; the others seed the choice before
   // any page script runs so they start where a returning user does.
   firstRun: [false, { option: true }],
-  page: async ({ page, firstRun }, use) => {
+  // The mode a note opens in is a setting, the editor unless it is changed.
+  // The specs open notes in the preview, as someone who chose that in the
+  // settings does: most of them are about a note that is opened and read,
+  // and go to an editor when they mean to. The spec about the setting itself
+  // starts without the choice (null). A choice the page has stored is left
+  // as it is, a reload after it was changed in the settings included.
+  notesOpenIn: ["Preview", { option: true }],
+  page: async ({ page, firstRun, notesOpenIn }, use) => {
     if (!firstRun) {
       await page.addInitScript(() => {
         window.localStorage.setItem("settings/language", "en-US");
       });
+    }
+    if (notesOpenIn) {
+      await page.addInitScript((mode) => {
+        if (!window.localStorage.getItem("settings/defaultEditorMode")) {
+          window.localStorage.setItem("settings/defaultEditorMode", mode);
+        }
+      }, notesOpenIn);
     }
     await use(page);
   },
