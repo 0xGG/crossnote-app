@@ -13,6 +13,7 @@ import {
   placeholder as placeholderOf,
 } from "@codemirror/view";
 import { indentation, indentOrTab, outdent, toggleMark } from "./commands";
+import { noteCompletion, type CompletionHost } from "./completion";
 import type { EditorHandle, EditorHost, TextPosition } from "./handle";
 import { noteLanguage } from "./language";
 import { linkClicks, type NoteLink } from "./links";
@@ -50,6 +51,8 @@ export interface NoteEditorOptions {
   onLinkClick?: (link: NoteLink, event: MouseEvent) => void;
   /** How images load, and what a click on one does. */
   images?: LivePreviewHost;
+  /** The words and lists the completions are made of. */
+  completion?: CompletionHost;
   /** What an empty note shows in place of text. */
   placeholder?: string;
 }
@@ -86,6 +89,7 @@ export class NoteEditor {
     onSelection,
     onLinkClick,
     images,
+    completion,
     placeholder,
   }: NoteEditorOptions) {
     this.document = document;
@@ -148,6 +152,9 @@ export class NoteEditor {
               return false;
             },
           }),
+          // Before the table's keys: while a list of completions is open,
+          // Enter picks from it.
+          noteCompletion(completion),
           // Ahead of the keys markdown binds for lists and quotes.
           Prec.highest(
             keymap.of([

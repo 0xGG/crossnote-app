@@ -21,6 +21,9 @@ importers:
       '@0xgg/echomd':
         specifier: ^1.0.4
         version: 1.0.4(patch_hash=6f4046f2551f28b8df973f42d008d6573e6c4b8e73cfccb13e53e768bacec91d)
+      '@codemirror/autocomplete':
+        specifier: ^6.20.4
+        version: 6.20.4
       '@codemirror/commands':
         specifier: ^6.11.1
         version: 6.11.1

@@ -25,6 +25,7 @@
   },
   "dependencies": {
     "@0xgg/echomd": "^1.0.4",
+    "@codemirror/autocomplete": "^6.20.4",
     "@codemirror/commands": "^6.11.1",
     "@codemirror/lang-markdown": "^6.5.2",
     "@codemirror/lang-yaml": "^6.1.3",

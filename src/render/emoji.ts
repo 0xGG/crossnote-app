@@ -54,6 +54,11 @@ const emojiCodePointToShortNameMap: { [key: string]: string } = ((data) => {
   return m;
 })(EmojiData);
 
+/** The short names of the emoji with an image. */
+export function emojiShortNames(): string[] {
+  return Object.keys(emojiDefinitions);
+}
+
 /** The emoji a :short name: stands for, if it is one with an image. */
 export function emojiOfShortName(shortName: string): string | undefined {
   return Object.prototype.hasOwnProperty.call(emojiDefinitions, shortName)
