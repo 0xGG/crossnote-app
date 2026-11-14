@@ -24,13 +24,14 @@ async function probeEditingKeys(
   await page.keyboard.type("three");
   await expect.poll(lastLine).toMatch(/^two\s+three$/);
   expect(await app.editorHasFocus()).toBe(true);
-  // Shift+Tab takes one indent unit off the line each time; the probe leaves
-  // the line unindented so that Enter copies no indentation later on.
+  // Shift+Tab takes one step of indentation, four spaces, off the line each
+  // time; the probe leaves the line unindented so that Enter copies no
+  // indentation later on.
   await page.keyboard.press("Enter");
-  await page.keyboard.type("    four");
-  await expect.poll(lastLine).toBe("    four");
+  await page.keyboard.type("        four");
+  await expect.poll(lastLine).toBe("        four");
   await page.keyboard.press("Shift+Tab");
-  await expect.poll(lastLine).toBe("  four");
+  await expect.poll(lastLine).toBe("    four");
   await page.keyboard.press("Shift+Tab");
   await expect.poll(lastLine).toBe("four");
   await page.keyboard.type("!");
@@ -86,11 +87,11 @@ test("switches between edit, preview and source code", async ({
   await expect.poll(() => emphasis(app)).toEqual({ markers: 0, word: 1 });
 });
 
-test("shows source code as plain text once the setting is on", async ({
+test("shows source code as plain text, with line numbers the settings turn off", async ({
   app,
   page,
 }) => {
-  // Walks through three editor states with a key probe in each and a reload
+  // Walks through two editor states with a key probe in each and a reload
   // in between; a slower browser needs more than the default timeout.
   test.slow();
   const pageErrors: string[] = [];
@@ -106,22 +107,35 @@ test("shows source code as plain text once the setting is on", async ({
   const noteTab = app.tab(await app.noteTitle.inputValue());
   await expect(noteTab).toBeVisible();
   const heading = () => app.textScale("Hello from Playwright");
+  const lineNumbers = app.editor.locator(".cm-lineNumbers");
+  const font = (text: string) =>
+    app.editor.evaluate((element, text) => {
+      const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT);
+      for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+        if (node.textContent?.includes(text)) {
+          return getComputedStyle(node.parentElement!).fontFamily;
+        }
+      }
+      return "";
+    }, text);
 
-  // Styled source is the default: the heading line keeps its typography.
-  await app.modeButton("Source code").click();
+  // The editor draws a heading in its size, and has no line numbers.
   await expect.poll(heading).toBeGreaterThan(1);
+  await expect(lineNumbers).toHaveCount(0);
+  const proseFont = await font("robot");
 
-  // Switching the setting on reaches the note that is already open.
-  await app.openSettings();
-  await app.plainTextSourceCodeSwitch.check();
-  await noteTab.click();
+  // Source code: one size, the font the text has in the editor, line numbers.
+  await app.modeButton("Source code").click();
   await expect.poll(heading).toBe(1);
+  await expect(lineNumbers).toBeVisible();
+  expect(await font("robot")).toBe(proseFont);
+  expect(await font("Hello from Playwright")).toBe(proseFont);
   // Syntax colors stay and the markers are part of the text.
   await expect
     .poll(() => app.tokenTypes("Hello from Playwright"))
-    .toContain("header");
-  await expect.poll(() => app.tokenTypes("**by**")).toContain("strong");
-  // The editing keys keep working without the HyperMD parser behind them.
+    .toContain("heading");
+  await expect.poll(() => app.tokenTypes("by")).toContain("strong");
+  expect(await app.editorText()).toContain("**by**");
   await probeEditingKeys(page, app, pageErrors);
   // Ctrl+B still toggles emphasis around the selection.
   const lastLine = async () => (await app.editorText()).split("\n").pop();
@@ -134,34 +148,40 @@ test("shows source code as plain text once the setting is on", async ({
   await expect.poll(lastLine).toBe("bold");
   expect(pageErrors).toEqual([]);
 
-  // The folding editor is not affected.
+  // Turning the line numbers off reaches the note that is already open.
+  await app.openSettings();
+  await expect(app.sourceLineNumbersSwitch).toBeChecked();
+  await app.sourceLineNumbersSwitch.uncheck();
+  await noteTab.click();
+  await expect(lineNumbers).toHaveCount(0);
+  await expect.poll(heading).toBe(1);
+
+  // The live editor is not affected.
   await app.modeButton("Edit").click();
   await expect.poll(() => emphasis(app)).toEqual({ markers: 0, word: 1 });
+  await expect.poll(heading).toBeGreaterThan(1);
   await probeEditingKeys(page, app, pageErrors);
-  await app.modeButton("Source code").click();
-  await expect.poll(heading).toBe(1);
 
   // The setting is remembered across a reload.
   await page.reload();
   await app.waitUntilReady();
   await app.openSettings();
-  await expect(app.plainTextSourceCodeSwitch).toBeChecked();
+  await expect(app.sourceLineNumbersSwitch).not.toBeChecked();
   await noteTab.click();
   await app.modeButton("Source code").click();
   await expect.poll(heading).toBe(1);
-  // The table of contents is rebuilt from the plain text parser state, so a
-  // heading typed now has to show up in it.
+  await expect(lineNumbers).toHaveCount(0);
+  // A heading typed in the source shows up in the table of contents.
   await app.editor.click();
   await page.keyboard.press("Control+End");
   await page.keyboard.type("\n\n## Second heading");
   await expect(app.tocItem("Second heading")).toBeVisible();
 
-  // Switching it off brings the styled source back, keys included.
+  // Turned on again, they are back.
   await app.openSettings();
-  await app.plainTextSourceCodeSwitch.uncheck();
+  await app.sourceLineNumbersSwitch.check();
   await noteTab.click();
-  await expect.poll(heading).toBeGreaterThan(1);
-  await probeEditingKeys(page, app, pageErrors);
+  await expect(lineNumbers).toBeVisible();
 });
 
 test("keeps headings inside fenced code out of the table of contents", async ({
@@ -188,11 +208,7 @@ test("keeps headings inside fenced code out of the table of contents", async ({
   await expect(app.tocItem("Real heading")).toBeVisible();
   await expect(app.tocItem("Example inside fenced code")).toHaveCount(0);
 
-  // Plain text source code parses the fence with its own mode as well.
-  const noteTab = app.tab(await app.noteTitle.inputValue());
-  await app.openSettings();
-  await app.plainTextSourceCodeSwitch.check();
-  await noteTab.click();
+  // The same in the source view.
   await app.modeButton("Source code").click();
   await expect.poll(() => app.textScale("Real heading")).toBe(1);
   await app.editor.click();

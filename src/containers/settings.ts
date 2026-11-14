@@ -26,8 +26,9 @@ function useSettingsContainer(initialState: InitialState) {
     themeManager.getTheme(localStorage.getItem("settings/theme")) ||
       themeManager.selectedTheme,
   );
-  const [plainTextSourceCode, setPlainTextSourceCode] = useState<boolean>(
-    localStorage.getItem("settings/plainTextSourceCode") === "true",
+  // On unless turned off: line numbers beside a note's source.
+  const [sourceCodeLineNumbers, setSourceCodeLineNumbers] = useState<boolean>(
+    localStorage.getItem("settings/sourceCodeLineNumbers") !== "false",
   );
 
   const { i18n } = useTranslation();
@@ -73,9 +74,9 @@ function useSettingsContainer(initialState: InitialState) {
     setTheme(themeManager.selectedTheme);
   }, []);
 
-  const _setPlainTextSourceCode = useCallback((enabled: boolean) => {
-    localStorage.setItem("settings/plainTextSourceCode", String(enabled));
-    setPlainTextSourceCode(enabled);
+  const _setSourceCodeLineNumbers = useCallback((enabled: boolean) => {
+    localStorage.setItem("settings/sourceCodeLineNumbers", String(enabled));
+    setSourceCodeLineNumbers(enabled);
   }, []);
 
   useEffect(() => {
@@ -96,8 +97,8 @@ function useSettingsContainer(initialState: InitialState) {
     setAuthorEmail: _setAuthorEmail,
     theme,
     setTheme: _setTheme,
-    plainTextSourceCode,
-    setPlainTextSourceCode: _setPlainTextSourceCode,
+    sourceCodeLineNumbers,
+    setSourceCodeLineNumbers: _setSourceCodeLineNumbers,
   };
 }
 

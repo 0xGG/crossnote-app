@@ -1,4 +1,5 @@
 import { expect, test } from "./fixtures";
+import { layoutOf, row, tabset } from "./layouts";
 
 test.beforeEach(async ({ app }) => {
   await app.open();
@@ -420,4 +421,55 @@ test("says so, and opens nothing else, when a move by Enter fails", async ({
     "Failed to change file path",
   );
   await expect(page.getByRole("button", { name: "Note menu" })).toBeFocused();
+});
+
+test("says that the note a tab was left on is not there, and shows the note once it is", async ({
+  app,
+  page,
+}) => {
+  const folder = await app.notebookFolder();
+  // A tab left open on a note that has since gone from the notebook, as one
+  // renamed or deleted on another machine has after a pull.
+  await app.seedLayout(
+    layoutOf(
+      row(
+        tabset({
+          type: "tab",
+          id: "gone",
+          name: "Gone",
+          component: "Note",
+          config: {
+            component: "Note",
+            singleton: false,
+            notebookPath: folder,
+            noteFilePath: "Gone.md",
+          },
+        }),
+      ),
+    ),
+  );
+  await page.reload();
+  await app.waitUntilReady();
+  const notFound = page.getByText("The note was not found");
+  await expect(notFound).toBeVisible();
+  await expect(page.getByText("Drafts: Gone.md")).toBeVisible();
+  await expect(page.getByText("Loading")).toHaveCount(0);
+
+  // Another note takes the name: the tab shows it.
+  await app.openNotes();
+  await app.notesPanel.getByRole("button", { name: "New note" }).click();
+  const title = app.noteTitle.filter({ visible: true });
+  await expect(title).not.toHaveValue("");
+  await app.visibleEditor.click();
+  await page.keyboard.type("Here now");
+  await title.fill("Gone");
+  await title.press("Enter");
+  await expect(app.tab("Gone")).toHaveCount(2);
+  await expect(notFound).toHaveCount(0);
+  await app.tab("Gone").first().click();
+  await expect(app.noteTitle.filter({ visible: true })).toHaveValue("Gone");
+  // In the preview or in the editor, whichever the tab opened the note in.
+  await expect(
+    app.preview.or(app.editor).filter({ visible: true }),
+  ).toContainText("Here now");
 });

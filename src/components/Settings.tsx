@@ -189,15 +189,15 @@ export function Settings() {
             control={
               <Switch
                 color="primary"
-                checked={settingsContainer.plainTextSourceCode}
+                checked={settingsContainer.sourceCodeLineNumbers}
                 onChange={(event) => {
-                  settingsContainer.setPlainTextSourceCode(
+                  settingsContainer.setSourceCodeLineNumbers(
                     event.target.checked,
                   );
                 }}
               />
             }
-            label={t("settings/plain-text-source-code")}
+            label={t("settings/source-code-line-numbers")}
           />
         </Section>
 

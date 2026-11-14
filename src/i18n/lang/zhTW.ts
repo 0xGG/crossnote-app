@@ -15,6 +15,7 @@ export const zhTW = {
     "general/date-modified": "修改時間",
     "general/title": "標題",
     "general/loading": "讀取中 ...",
+    "general/note-not-found": "找不到這篇筆記",
     "general/update": "更新",
     "general/close": "關閉",
     "general/open-menu": "打開選單",
@@ -120,7 +121,7 @@ export const zhTW = {
     "settings/about-this-project": "關於這個項目",
     "settings/issues-and-feature-requests": "發現左問題或者有功能請求?",
     "settings/default-editor-mode": "默认编辑器模式",
-    "settings/plain-text-source-code": "原始碼模式顯示純文字",
+    "settings/source-code-line-numbers": "原始碼模式顯示行號",
     "settings/author-name": "作者姓名",
     "settings/author-email": "作者郵箱",
     "settings/theme": "主題",
@@ -153,6 +154,8 @@ export const zhTW = {
     "editor/toolbar/insert-unordered-list": "插入無序列表",
     "editor/toolbar/insert-ordered-list": "插入有序列表",
     "editor/toolbar/insert-table": "插入表格",
+    "editor/toolbar/insert-date-time": "插入日期與時間",
+    "editor/toolbar/insert-mermaid": "插入 Mermaid 圖",
 
     // * NoteControl
     "editor/note-control/source-code": "源代碼",
@@ -176,6 +179,8 @@ export const zhTW = {
     "add-notebook-dialog/disclaimer":
       "所有筆記本的數據將只會被保存於瀏覽器本地以供離線使用。我們不會上傳任何你的筆記本數據到我們的伺服器。",
     "edit-image-dialog/title": "編輯圖片",
+    "edit-image-dialog/note-changed":
+      "筆記已變更。請關閉此對話框並重新選擇圖片。",
     "edit-image-dialog/image-url": "圖片 URL",
     "edit-image-dialog/image-title": "圖片標題",
     "edit-image-dialog/image-alt-text": "圖片替代文本",

@@ -3,7 +3,6 @@ import React, { FC } from "react";
 import "./App.css";
 import Notifications from "./components/Notifications";
 import { SettingsContainer } from "./containers/settings";
-import "./editor";
 import { Home } from "./pages/Home";
 
 // Without a router the URL only changes through a full page load, so the

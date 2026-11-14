@@ -15,6 +15,7 @@ export const enUS = {
     "general/date-modified": "Date modified",
     "general/title": "Title",
     "general/loading": "Loading ...",
+    "general/note-not-found": "The note was not found",
     "general/update": "Update",
     "general/close": "Close",
     "general/open-menu": "Open menu",
@@ -124,7 +125,7 @@ export const enUS = {
     "settings/issues-and-feature-requests":
       "Found issues or have feature requests?",
     "settings/default-editor-mode": "Default editor mode",
-    "settings/plain-text-source-code": "Plain text in source code mode",
+    "settings/source-code-line-numbers": "Line numbers in source code mode",
     "settings/author-name": "Author name",
     "settings/author-email": "Author email",
     "settings/theme": "Theme",
@@ -157,6 +158,8 @@ export const enUS = {
     "editor/toolbar/insert-unordered-list": "Insert unordered list",
     "editor/toolbar/insert-ordered-list": "Insert ordered list",
     "editor/toolbar/insert-table": "Insert table",
+    "editor/toolbar/insert-date-time": "Insert the date and time",
+    "editor/toolbar/insert-mermaid": "Insert a Mermaid diagram",
 
     // * NoteControl
     "editor/note-control/source-code": "Source code",
@@ -180,6 +183,8 @@ export const enUS = {
     "add-notebook-dialog/disclaimer":
       "Notebook data will only be stored locally in browser for offline uses. We won't upload any notebook data to our server.",
     "edit-image-dialog/title": "Edit the image",
+    "edit-image-dialog/note-changed":
+      "The note changed. Close this dialog and select the image again.",
     "edit-image-dialog/image-url": "image URL",
     "edit-image-dialog/image-title": "image title",
     "edit-image-dialog/image-alt-text": "image alt text",

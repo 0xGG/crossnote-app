@@ -15,6 +15,7 @@ export interface ModifiedMarkdownEventData {
   notebookPath: string;
   noteFilePath: string;
   markdown: string;
+  lineBreak?: string;
   noteConfig: NoteConfig;
 }
 

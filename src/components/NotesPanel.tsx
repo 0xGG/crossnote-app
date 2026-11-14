@@ -42,6 +42,7 @@ import { Notebook } from "../lib/notebook";
 import { failureMessage, notify } from "../lib/notifications";
 import { OrderBy, OrderDirection } from "../lib/order";
 import { TabNodeConfig } from "../lib/tabNode";
+import { onTabVisibility } from "../lib/tabVisibility";
 import Notes from "./Notes";
 
 const NotesPanelRoot = styled("div")(({ theme }) => ({
@@ -258,17 +259,16 @@ function NotesPanel(props: Props) {
     }
 
     setTabNodeVisible(props.tabNode.isVisible());
-    props.tabNode.setEventListener("visibility", function (params) {
-      // hack: need to wait for props.tabNode.isVisible() === params.visible to setState
+    // Shared with the note's panel, where this list is the note's
+    // references: the tab keeps one listener for the two.
+    return onTabVisibility(props.tabNode, (visible) => {
+      // hack: need to wait for props.tabNode.isVisible() === visible to setState
       setTimeout(() => {
         if (isMounted.current) {
-          setTabNodeVisible(params.visible);
+          setTabNodeVisible(visible);
         }
       }, 1000);
     });
-    return () => {
-      props.tabNode.removeEventListener("visibility");
-    };
   }, [props.tabNode, props.notebook.dir]);
 
   // Emitter

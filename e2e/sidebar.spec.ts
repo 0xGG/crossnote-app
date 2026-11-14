@@ -96,7 +96,7 @@ test("lists a notebook's favourites after its other rows, and marks the notebook
   await app.seedLayout(layoutOf(row(tabset(settingsTab))));
   await app.open();
   const drafts = app.notebook("Drafts");
-  await expect(app.plainTextSourceCodeSwitch).toBeVisible();
+  await expect(app.sourceLineNumbersSwitch).toBeVisible();
   await expect(drafts).not.toHaveAttribute("aria-current", "true");
   await app.openNotes();
   // The favourites come in once the notes are read: last, so that a click

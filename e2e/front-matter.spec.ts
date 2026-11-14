@@ -47,6 +47,31 @@ async function typeAtEnd(app: CrossnoteApp, text: string) {
 // The settings the notebook writes before front matter it cannot add them to.
 const settingsBefore = /^---\ncreated: \S+\nmodified: \S+\n---\n/;
 
+test("keeps a separate body mapping after breaking and restoring its closing rule", async ({
+  app,
+}) => {
+  const body = "---\npinned: false\n---\nBody";
+  const file = "---\npinned: true\n---\n" + body;
+  const readme = await openReadme(app, file);
+  await app.modeButton("Source code").click();
+  await expect.poll(() => app.editorText()).toBe(body);
+  const incomplete = body.replace("false\n---", "false\n--");
+  await app.setEditorText(incomplete);
+  await expect
+    .poll(() => app.storedText(readme))
+    .toMatch(new RegExp("---\\npinned: false\\n--\\nBody$"));
+  await app.setEditorText(body);
+  await expect
+    .poll(() => app.storedText(readme))
+    .toMatch(new RegExp("---\\npinned: false\\n---\\nBody$"));
+  await app.page.reload();
+  await app.waitUntilReady();
+  await app.openNotes();
+  await app.noteCards.filter({ hasText: "README" }).click();
+  await app.modeButton("Source code").click();
+  await expect.poll(() => app.editorText()).toBe(body);
+});
+
 test("keeps front matter YAML cannot read when the note is edited", async ({
   app,
 }) => {
@@ -114,6 +139,11 @@ const nothingToClose = async () => {};
 
 for (const { layout, text, opened } of [
   {
+    layout: "a separate body mapping with settings-shaped keys",
+    text: "---\npinned: true\n---\n---\npinned: false\n---\n# Kept",
+    opened: nothingToClose,
+  },
+  {
     layout: "values YAML reads as other types",
     text: "---\nphone: 0123456789\nversion: 1.10\n---\n# Kept\n",
     opened: nothingToClose,
@@ -126,6 +156,11 @@ for (const { layout, text, opened } of [
   {
     layout: "Windows line endings",
     text: "---\r\ntags: [a, b]\r\n---\r\n# Kept\r\n",
+    opened: nothingToClose,
+  },
+  {
+    layout: "two kinds of line ending",
+    text: "One\r\nTwo\n# Kept\n",
     opened: nothingToClose,
   },
   {
@@ -201,7 +236,7 @@ for (const { mode, setting } of [
     await expect(app.modeOn).toHaveAccessibleName(mode);
     await expect(app.editor).toBeVisible();
     // The language has come and the block is drawn with it.
-    await expect.poll(() => app.tokenTypes("echo")).toContain("builtin");
+    await expect.poll(() => app.tokenTypes("echo")).toContain("variableName");
     await expectUnwritten(app, readme, touchy);
   });
 }
