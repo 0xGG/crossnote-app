@@ -9,10 +9,10 @@ const sample = [
   "tags: [layout]",
   "---",
   "",
-  "普通正文 English text **Bold** *Italic* ~~Deleted~~ `inline code`",
+  "普通正文 English text **Bold** *Italic* ~~Deleted~~ `inline code` #topic H~2~O x^2^",
   "",
   "> Quote 引用",
-  "> second line",
+  "> second line `quoted code`",
   "",
   "- first item",
   "  - nested item",
@@ -121,10 +121,28 @@ for (const [theme, expectedBackground] of Object.entries({
       theme,
     );
     await openStored(app, sample);
-    const code = app.editor.locator(".cn-code");
+    const code = app.editor.locator(".cn-code").first();
     await expect(code).toHaveCSS("font-size", "13.6px");
     await expect(code).toHaveCSS("padding-left", "6px");
     const inline = await style(code);
+    const inlinePairs = [
+      [".cn-strike .tok-strikethrough", "s"],
+      [".cn-hashtag", "a.tag-topic"],
+      [".cn-sub", "sub"],
+      [".cn-sup", "sup"],
+      [".cn-quote .cn-code .tok-monospace", "blockquote code"],
+    ];
+    const inlineStyles = await Promise.all(
+      inlinePairs.map(async ([edit, preview]) => ({
+        preview,
+        style: await style(app.editor.locator(edit)),
+      })),
+    );
+    const tagStyle = await style(app.editor.locator(".cn-hashtag"));
+    await expect(app.editor.locator(".cn-strike")).toHaveCSS(
+      "text-decoration-line",
+      "line-through",
+    );
     const renderedCode = app.editor.locator(".cn-code-preview pre").first();
     await expect(renderedCode).toHaveClass(/language-javascript/);
     const codeStyle = await style(renderedCode);
@@ -144,11 +162,296 @@ for (const [theme, expectedBackground] of Object.entries({
     );
     expect(await style(app.preview.locator("pre").first())).toEqual(codeStyle);
     expect(await style(app.preview.locator("p code").first())).toEqual(inline);
+    for (const pair of inlineStyles) {
+      const rendered = await style(app.preview.locator(pair.preview));
+      expect(pair.style.color).toBe(rendered.color);
+      expect(pair.style.size).toBe(rendered.size);
+      expect(pair.style.lineHeight).toBe(rendered.lineHeight);
+    }
+    expect(await style(app.preview.locator("a.tag-topic"))).toEqual(tagStyle);
+    await expect(app.preview.locator("pre").first()).toHaveCSS(
+      "line-height",
+      "24px",
+    );
     expect(
       await style(app.preview.locator(".task-list-item-checkbox").first()),
     ).toEqual(task);
     await expect(app.preview).toHaveCSS("background-color", background);
     await page.screenshot({ path: testInfo.outputPath("preview.png") });
+  });
+}
+
+test("matches inactive rule and display formula geometry with preview", async ({
+  app,
+  page,
+}) => {
+  await page.setViewportSize({ width: 1440, height: 1100 });
+  const text =
+    "Before\n\n---\n\nAfterRule\n\n$$\n\\sum_{i=1}^{n} i = 1\n$$\n\nAfterMath\n\n$$x^2$$\n\nEND";
+  const file = await openStored(app, text);
+  await app.refuseWrites();
+  const measure = (root: Locator, rule: string) =>
+    root.evaluate((el, rule) => {
+      const origin = el.querySelector(rule)!.getBoundingClientRect();
+      const words = ["Before", "AfterRule", "AfterMath", "END"].map((word) => {
+        const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+        let node: Node | null;
+        while ((node = walker.nextNode())) {
+          const at = node.textContent?.indexOf(word) ?? -1;
+          if (at < 0) continue;
+          const range = document.createRange();
+          range.setStart(node, at);
+          range.setEnd(node, at + word.length);
+          return range.getBoundingClientRect().y - origin.y;
+        }
+        throw Error(word);
+      });
+      return {
+        ruleHeight: origin.height,
+        words,
+        math: [...el.querySelectorAll(".katex-display")].map((node) => {
+          const rect = node.getBoundingClientRect();
+          return { y: rect.y - origin.y, height: rect.height };
+        }),
+      };
+    }, rule);
+  await expect(app.editor.locator(".katex-display")).toHaveCount(2);
+  const edit = await measure(app.editor, ".cn-rule");
+  await app.modeButton("Preview").click();
+  const preview = await measure(app.preview, "hr");
+  expect(edit.ruleHeight).toBe(4);
+  expect(edit.ruleHeight).toBe(preview.ruleHeight);
+  edit.words.forEach((y, i) => expect(y).toBeCloseTo(preview.words[i], 0));
+  edit.math.forEach((math, i) => {
+    expect(math.y).toBeCloseTo(preview.math[i].y, 0);
+    expect(math.height).toBeCloseTo(preview.math[i].height, 0);
+  });
+  await app.modeButton("Edit").click();
+  await app.selectInEditor({ line: 2, ch: 1 });
+  await expect(app.editor.locator(".cn-rule")).toHaveCount(0);
+  await expect(app.editor.locator(".cm-line").nth(2)).toContainText("---");
+  expect(await app.editorText()).toBe(text);
+  expect(await app.storedText(file)).toBe(text);
+  expect(
+    (await app.refusedWrites()).filter((write) => write === "file"),
+  ).toEqual([]);
+});
+
+test("keeps nested item active throughout its leading indentation", async ({
+  app,
+  page,
+}) => {
+  const text = "- Parent\n  - Child\n  - Sibling\n\nEND";
+  await openStored(app, text);
+  const parent = app.editor.locator(".cm-line").filter({ hasText: "Parent" });
+  const child = app.editor.locator(".cm-line").filter({ hasText: "Child" });
+  const sibling = app.editor.locator(".cm-line").filter({ hasText: "Sibling" });
+  const before = await parent.boundingBox();
+  await app.selectInEditor({ line: 1, ch: 4 });
+  await app.focusEditor();
+  for (let ch = 3; ch >= 0; ch--) {
+    await page.keyboard.press("ArrowLeft");
+    expect(await app.caret()).toEqual({ line: 1, ch });
+    await expect(child).toContainText("  - Child");
+    await expect(parent.locator(".cn-list-marker")).toBeVisible();
+    await expect(sibling.locator(".cn-list-marker")).toBeVisible();
+    expect(await parent.boundingBox()).toEqual(before);
+  }
+  expect(await app.editorText()).toBe(text);
+});
+
+for (const width of [1440, 640]) {
+  for (const long of [false, true]) {
+    const text = long
+      ? "Long paragraph\n\n".repeat(80) + "END"
+      : "Short note\n\nEND";
+
+    test(`fits the outer note frame without empty overflow at width ${width}, long=${long}`, async ({
+      app,
+      page,
+    }) => {
+      await page.setViewportSize({ width, height: 900 });
+      await openStored(app, text);
+      for (const mode of ["Edit", "Source code", "Preview"] as const) {
+        await app.modeButton(mode).click();
+        await expect
+          .poll(() =>
+            page
+              .locator(".flexlayout__tab_moveable:visible")
+              .evaluateAll((elements) =>
+                elements.map((el) => el.scrollHeight - el.clientHeight),
+              ),
+          )
+          .toEqual([0]);
+        const root = {
+          "Preview": app.preview,
+          "Edit": app.editor,
+          "Source code": app.editor,
+        }[mode];
+        const outerOverflow = await root.evaluate((el) => {
+          const result: number[] = [];
+          for (
+            let parent = el.parentElement;
+            parent;
+            parent = parent.parentElement
+          ) {
+            if (/auto|scroll/.test(getComputedStyle(parent).overflowY))
+              result.push(parent.scrollHeight - parent.clientHeight);
+          }
+          return result;
+        });
+        expect(outerOverflow.every((value) => value <= 1)).toBe(true);
+        const scroller = {
+          "Preview": app.preview,
+          "Edit": app.editor.locator(".cm-scroller"),
+          "Source code": app.editor.locator(".cm-scroller"),
+        }[mode];
+        expect(
+          await scroller.evaluate((el) => el.scrollHeight > el.clientHeight),
+        ).toBe(long);
+      }
+    });
+  }
+}
+
+test("retains compact footnote labels while their code and diagrams are rendered", async ({
+  app,
+  page,
+}) => {
+  const text =
+    "See[^a] and[^b].\n\n[^a]: ```js\n    const a = 1;\n    ```\n\n[^b]: ~~~mermaid\n    graph TD\n      A --> B\n    ~~~\n\nEND";
+  const file = await openStored(app, text);
+  await app.refuseWrites();
+  await expect(app.editor.locator(".cn-code-preview")).toHaveCount(2);
+  await expect(app.editor.locator(".cn-code-preview svg")).toBeVisible();
+  const labels = app.editor
+    .locator(".cm-line")
+    .filter({ hasText: /^\[\^[ab]\]:\s*$/ });
+  await expect(labels).toHaveCount(2);
+  await app.selectInEditor({ line: 2, ch: 1 });
+  await expect(app.editor.locator(".cn-code-preview")).toHaveCount(2);
+  await app.focusEditor();
+  await page.keyboard.press("ArrowDown");
+  await expect(app.editor.locator(".cn-code-preview")).toHaveCount(1);
+  await app.selectInEditor({ line: 11, ch: 0 });
+  await expect(app.editor.locator(".cn-code-preview")).toHaveCount(2);
+  await app.selectInEditor({ line: 2, ch: 5 });
+  await app.focusEditor();
+  await page.keyboard.press("ArrowRight");
+  await expect(app.editor.locator(".cn-code-preview")).toHaveCount(1);
+  await expect(
+    app.editor.locator(".cm-line").filter({ hasText: "[^a]:" }),
+  ).toContainText("```js");
+  await app.selectInEditor({ line: 11, ch: 0 });
+  await app.editor
+    .locator(".cn-code-preview pre")
+    .click({ position: { x: 50, y: 20 } });
+  expect((await app.caret()).line).toBe(3);
+  await app.selectInEditor({ line: 11, ch: 0 });
+  await app.editor.locator(".cn-code-preview svg").click();
+  expect((await app.caret()).line).toBe(7);
+  expect(await app.editorText()).toBe(text);
+  expect(await app.storedText(file)).toBe(text);
+  expect(
+    (await app.refusedWrites()).filter((write) => write === "file"),
+  ).toEqual([]);
+});
+
+for (const [language, body, selector] of [
+  ["js", "const a = 1;", "pre"],
+  ["mermaid", "graph TD; A-->B", "svg"],
+]) {
+  test(`keeps compact ${language} footnotes still after repeated activation`, async ({
+    app,
+    page,
+  }) => {
+    await page.setViewportSize({ width: 1440, height: 1000 });
+    const text = `${"Before paragraph\n\n".repeat(35)}See[^a].\n\n[^a]: \`\`\`${language}\n    ${body}\n    \`\`\`\n\nAfterFootnote\n\n${"Later paragraph\n\n".repeat(35)}END`;
+    const file = await openStored(app, text);
+    await app.refuseWrites();
+    await app.selectInEditor({ line: 70, ch: 0 });
+    const scroller = app.editor.locator(".cm-scroller");
+    await scroller.evaluate((el) => {
+      el.scrollTop = 1480;
+    });
+    const code = app.editor.locator(`.cn-code-preview ${selector}`);
+    await code.scrollIntoViewIfNeeded();
+    const after = app.editor
+      .locator(".cm-line")
+      .filter({ hasText: /^AfterFootnote$/ });
+    const position = () =>
+      after.evaluate((el) => el.getBoundingClientRect().top);
+    const scroll = () => scroller.evaluate((el) => el.scrollTop);
+    const beforeScroll = await scroll();
+    const beforePosition = await position();
+    for (let i = 0; i < 10; i++) {
+      await code.click({ position: { x: 50, y: 20 } });
+      await expect(code).toHaveCount(0);
+      await after.click();
+      await expect(code).toBeVisible();
+      await expect.poll(scroll).toBeCloseTo(beforeScroll, 0);
+      await expect.poll(position).toBeCloseTo(beforePosition, 0);
+    }
+    expect(await app.editorText()).toBe(text);
+    expect(await app.storedText(file)).toBe(text);
+    expect(
+      (await app.refusedWrites()).filter((write) => write === "file"),
+    ).toEqual([]);
+  });
+}
+
+for (const [name, text] of Object.entries({
+  atx: "- # Heading\n\nParagraph\n\nEND",
+  setext: "1. Heading\n   =======\n\nParagraph\n\nEND",
+  nested: "- Parent\n  - ## Heading\n\nParagraph\n\nEND",
+  rule: "- Item\n\n  ***\n\n  Paragraph\n\nEND",
+})) {
+  test(`matches preview container geometry for list ${name}`, async ({
+    app,
+  }) => {
+    await openStored(app, text);
+    const markerStyle = await style(
+      app.editor.locator(".cn-list-marker").first(),
+    );
+    const measure = (root: Locator) =>
+      root.evaluate((el) => {
+        const result: Record<string, { x: number; y: number; width: number }> =
+          {};
+        for (const word of ["Heading", "Paragraph", "END"]) {
+          const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+          let node: Node | null;
+          while ((node = walker.nextNode())) {
+            const at = node.textContent?.indexOf(word) ?? -1;
+            if (at < 0) continue;
+            const range = document.createRange();
+            range.setStart(node, at);
+            range.setEnd(node, at + word.length);
+            const rect = range.getBoundingClientRect();
+            result[word] = { x: rect.x, y: rect.y, width: rect.width };
+            break;
+          }
+        }
+        const rule = el.querySelector(".cn-rule, hr");
+        if (rule) {
+          const rect = rule.getBoundingClientRect();
+          result.rule = { x: rect.x, y: rect.y, width: rect.width };
+        }
+        return result;
+      });
+    const edit = await measure(app.editor);
+    await app.modeButton("Preview").click();
+    const preview = await measure(app.preview);
+    const listStyle = await style(app.preview.locator("li").first());
+    expect(markerStyle.size).toBe(listStyle.size);
+    expect(markerStyle.weight).toBe(listStyle.weight);
+    expect(markerStyle.lineHeight).toBe(listStyle.lineHeight);
+    expect(Object.keys(edit)).toEqual(Object.keys(preview));
+    for (const key of Object.keys(preview)) {
+      expect(edit[key].x, key).toBeCloseTo(preview[key].x, 0);
+      expect(edit[key].y, key).toBeCloseTo(preview[key].y, 0);
+      expect(edit[key].width, key).toBeCloseTo(preview[key].width, 0);
+    }
+    expect(await app.editorText()).toBe(text);
   });
 }
 
@@ -219,7 +522,11 @@ test("keeps nested quote indentation and borders when markers are hidden", async
   expect(edit[2] - edit[1]).toBe(19);
   expect(edit[3]).toBe(edit[2]);
   const nested = app.editor.locator(".cm-line").filter({ hasText: "deep" });
-  await expect(nested).toHaveCSS("background-image", /linear-gradient/);
+  expect(
+    await nested.evaluate(
+      (el) => getComputedStyle(el, "::before").backgroundImage,
+    ),
+  ).toMatch(/linear-gradient/);
   await page.screenshot({
     path: testInfo.outputPath("nested-quotes-edit.png"),
   });
@@ -300,10 +607,12 @@ test("renders block markers without changing stored text, then edits and undoes 
         elements.map((el) => el.getAttribute("data-marker")),
       ),
   ).toEqual(["•", "◦", "4.", "5.", "", ""]);
-  await expect(app.editor.locator(".cn-quote").first()).toHaveCSS(
-    "background-color",
-    "rgb(240, 240, 240)",
-  );
+  expect(
+    await app.editor
+      .locator(".cn-quote")
+      .first()
+      .evaluate((el) => getComputedStyle(el, "::before").backgroundColor),
+  ).toBe("rgb(240, 240, 240)");
   await expect(app.editor.locator(".cn-setext-mark")).toHaveCount(0);
   await app.selectInEditor({ line: 7, ch: 3 });
   await expect(app.editor.locator(".cn-quote").first()).toContainText(
@@ -812,7 +1121,8 @@ for (const theme of ["light", "dark", "one-dark", "solarized-light"]) {
     await expect(selected).toContainText("Selected quote text");
     const colors = await selected.evaluate((el) => ({
       selection: getComputedStyle(el).backgroundColor,
-      quote: getComputedStyle(el.closest(".cn-quote")!).backgroundColor,
+      quote: getComputedStyle(el.closest(".cn-quote")!, "::before")
+        .backgroundColor,
     }));
     expect(colors.selection).not.toBe(colors.quote);
     expect(colors.selection).not.toBe("rgba(0, 0, 0, 0)");

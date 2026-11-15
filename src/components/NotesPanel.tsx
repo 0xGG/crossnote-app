@@ -400,7 +400,11 @@ function NotesPanel(props: Props) {
   }
 
   return (
-    <NotesPanelRoot className={"notes-panel"} ref={container}>
+    <NotesPanelRoot
+      className={"notes-panel"}
+      ref={container}
+      style={props.note ? { marginTop: "32px" } : undefined}
+    >
       <TopPanel>
         {props.title && (
           <Typography

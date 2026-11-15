@@ -14,6 +14,7 @@ interface Container {
   tag: string;
   line: number;
   start: number;
+  footnoteLabel?: string;
 }
 interface CodeBlock {
   from: number;
@@ -44,18 +45,44 @@ function blocks(state: EditorState): CodeBlock[] {
         line: token.map?.[0] ?? -1,
         start:
           Number(token.attrGet("start") ?? 1) - (token.tag === "ol" ? 1 : 0),
+        footnoteLabel:
+          token.type === "footnote_open" &&
+          typeof token.meta?.label === "string"
+            ? token.meta.label
+            : undefined,
       });
     }
     if (!token.map || !["fence", "code_block"].includes(token.type)) continue;
     const language = token.info.trim().match(/^[^\s{]*/)![0] || "text";
+    const first = state.doc.line(token.map[0] + 1);
+    let from = first.from;
+    const label = parents.find((p) => p.footnoteLabel)?.footnoteLabel;
+    if (label) {
+      const marker = `[^${label}]:`;
+      const at = first.text.indexOf(marker);
+      const end = at + marker.length;
+      const fence = first.text.indexOf(token.markup, end);
+      const compact =
+        at >= 0 &&
+        /^(?:[ \t>]|[-+*] |\d+[.)] )*$/.test(first.text.slice(0, at)) &&
+        (token.type === "fence"
+          ? fence >= end && !first.text.slice(end, fence).trim()
+          : at <= 3 && !first.text.slice(0, at).trim());
+      // Leave a compact definition's label as native, editable source.
+      // The retained line owns any leading block gap, not the widget.
+      if (compact)
+        from =
+          first.from + end + /^[ \t]*/.exec(first.text.slice(end))![0].length;
+    }
     found.push({
-      from: state.doc.line(token.map[0] + 1).from,
+      from,
       to: state.doc.line(Math.min(token.map[1], state.doc.lines)).to,
       firstLine: token.map[0],
       code: token.content,
       language,
       fenced: token.type === "fence",
-      spaceBefore: spacing.before.get(token.map[0]) ?? 0,
+      spaceBefore:
+        from === first.from ? (spacing.before.get(token.map[0]) ?? 0) : 0,
       containers: parents
         .filter((p) => ["blockquote", "ul", "ol", "li"].includes(p.tag))
         .map((p) => ({ ...p })),
@@ -84,7 +111,11 @@ export class CodePreviewWidget extends WidgetType {
       const element = document.createElement(container.tag);
       if (container.tag === "ol")
         element.setAttribute("start", String(container.start));
-      if (container.tag === "li" && container.line !== this.block.firstLine)
+      if (
+        container.tag === "li" &&
+        (container.line !== this.block.firstLine ||
+          this.block.from > view.state.doc.lineAt(this.block.from).from)
+      )
         element.style.listStyle = "none";
       parent.append(element);
       parent = element;
@@ -144,7 +175,10 @@ export class CodePreviewWidget extends WidgetType {
         root.contains(selection.anchorNode)
       )
         return;
-      const top = root.getBoundingClientRect().top;
+      const first = view.state.doc.lineAt(this.block.from);
+      // A compact footnote keeps its label above the widget. Anchor the same
+      // source line on both sides of activation, including that retained line.
+      const top = view.lineBlockAt(first.from).top + view.documentTop;
       const codeTop = drawing.element.getBoundingClientRect().top;
       const lineHeight = parseFloat(
         getComputedStyle(drawing.element).lineHeight,
@@ -160,7 +194,6 @@ export class CodePreviewWidget extends WidgetType {
                 lineHeight,
             ),
           );
-      const first = view.state.doc.lineAt(this.block.from);
       const line = view.state.doc.line(
         Math.min(
           view.state.doc.lineAt(this.block.to).number,
@@ -171,8 +204,7 @@ export class CodePreviewWidget extends WidgetType {
       view.dispatch({ selection: { anchor: line.from } });
       view.focus();
       view.requestMeasure({
-        read: () =>
-          view.lineBlockAt(this.block.from).top + view.documentTop - top,
+        read: () => view.lineBlockAt(first.from).top + view.documentTop - top,
         write: (delta) => {
           view.scrollDOM.scrollTop += delta;
         },
@@ -216,7 +248,11 @@ export const codePreview: Extension = [
           if (event.key === "ArrowUp")
             return line.number === view.state.doc.lineAt(block.to).number + 1;
           if (event.key === "ArrowDown")
-            return line.number === view.state.doc.lineAt(block.from).number - 1;
+            return (
+              line.number === view.state.doc.lineAt(block.from).number - 1 ||
+              (line.number === view.state.doc.lineAt(block.from).number &&
+                at < block.from)
+            );
           if (event.key === "ArrowLeft") return at === block.to + 1;
           if (event.key === "ArrowRight") return at === block.from - 1;
           return false;
@@ -229,7 +265,7 @@ export const codePreview: Extension = [
             view.state.selection.main.assoc || 1,
           );
           const boundary = view.coordsAtPos(
-            down ? line.to : line.from,
+            down ? Math.min(line.to, block.from) : line.from,
             down ? -1 : 1,
           );
           // Leave movement inside wrapped prose to the normal cursor command.

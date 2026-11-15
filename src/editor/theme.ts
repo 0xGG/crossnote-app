@@ -77,7 +77,12 @@ const look = EditorView.theme({
     textDecoration: "line-through",
     color: "var(--preview-subtle)",
   },
+  ".cn-strike .tok-strikethrough": {
+    textDecoration: "none",
+    color: "inherit",
+  },
   ".tok-monospace": { fontFamily: MONOSPACE },
+  ".cn-code .tok-monospace": { color: "var(--preview-strong)" },
   ".tok-link, .tok-url": { color: "var(--preview-link)" },
   ".tok-quote": { color: "var(--preview-subtle)" },
   ".tok-markup, .tok-rule": { color: "var(--editor-markup)" },
@@ -105,24 +110,20 @@ const look = EditorView.theme({
   ".tok-inserted": { textDecoration: "underline" },
 
   // The live preview's own (livePreview.ts).
-  ".cn-sub": { verticalAlign: "sub", fontSize: "0.8em" },
-  ".cn-sup": { verticalAlign: "super", fontSize: "0.8em" },
   ".cn-link": { color: "var(--preview-link)" },
   ".cn-hashtag, .cn-hashtag .tok-hashtag": {
     color: "var(--preview-tag-text)",
-  },
-  ".cn-hashtag": {
-    backgroundColor: "var(--preview-tag-background)",
-    borderRadius: "4px",
-    padding: "0 4px",
-    fontSize: "0.9em",
   },
   ".cn-math-source": { fontFamily: MONOSPACE, fontSize: "0.9em" },
   ".cn-math-display": {
     display: "inline-block",
     width: "100%",
     textAlign: "center",
+    verticalAlign: "top",
   },
+  // Block spacing already accounts for the surrounding paragraph margins.
+  // KaTeX's margins cannot collapse inside this inline-block widget.
+  ".cn-math-display > .katex-display": { margin: "0" },
   ".cn-math-error": { color: "#ee7f49", fontWeight: "500" },
   ".cn-image": { maxWidth: "100%", verticalAlign: "bottom", cursor: "pointer" },
   ".cn-emoji img.emoji": {
@@ -141,18 +142,37 @@ const look = EditorView.theme({
   },
   ".cm-line.cn-table": { fontFamily: MONOSPACE, fontSize: "0.9em" },
   ".cm-line.cn-quote": {
-    borderLeft: "4px solid var(--preview-border)",
+    position: "relative",
+    isolation: "isolate",
+    borderLeft: "4px solid transparent",
     marginLeft: "calc(var(--note-inline-padding) + var(--cn-quote-inset, 0px))",
     marginRight: "var(--note-inline-padding)",
     paddingLeft: "calc(15px + (var(--cn-quote-depth) - 1) * 19px)",
     paddingRight: "15px",
-    backgroundColor: "var(--preview-inset-background)",
-    backgroundImage:
-      "repeating-linear-gradient(to right, var(--preview-border) 0 4px, transparent 4px 19px)",
-    backgroundPosition: "15px 0",
-    backgroundSize: "calc((var(--cn-quote-depth) - 1) * 19px) 100%",
-    backgroundRepeat: "no-repeat",
     color: "var(--preview-subtle)",
+  },
+  // Paint the line and its leading gap separately, without moving the text.
+  ".cm-line.cn-quote::before, .cm-line.cn-quote::after": {
+    content: '""',
+    position: "absolute",
+    pointerEvents: "none",
+    zIndex: "-1",
+    right: "0",
+    backgroundRepeat: "no-repeat",
+  },
+  ".cm-line.cn-quote::before": {
+    left: "-4px",
+    top: "var(--cn-quote-gap, 0px)",
+    bottom: "0",
+    backgroundColor: "var(--preview-inset-background)",
+    backgroundImage: "var(--cn-quote-background)",
+  },
+  ".cm-line.cn-quote::after": {
+    left: "calc(var(--cn-quote-gap-inset, var(--cn-quote-inset, 0px)) - var(--cn-quote-inset, 0px) - 4px)",
+    top: "0",
+    height: "var(--cn-quote-gap, 0px)",
+    backgroundColor: "var(--cn-quote-gap-color, transparent)",
+    backgroundImage: "var(--cn-quote-gap-background, none)",
   },
   ".cn-source-code": { fontFamily: MONOSPACE },
   ".cn-code-preview": {
@@ -168,23 +188,31 @@ const look = EditorView.theme({
   },
   ".cn-list-marker": {
     display: "inline-block",
-    width: "2em",
+    fontSize: "16px",
+    fontWeight: "400",
+    lineHeight: "24px",
+    width: "32px",
     textIndent: "0",
     boxSizing: "border-box",
   },
   ".cn-list-marker-native": {
     display: "list-item",
     listStylePosition: "outside",
-    marginLeft: "2em",
+    marginLeft: "32px",
     width: "0",
   },
   ".cn-list-marker-native::before": { content: '"\\200b"' },
+  ".cm-line.cn-rule-line": {
+    fontSize: "0",
+    lineHeight: "4px",
+    minHeight: "4px",
+  },
   ".cn-rule": {
     display: "inline-block",
     width: "100%",
     height: "4px",
     backgroundColor: "var(--preview-border)",
-    verticalAlign: "middle",
+    verticalAlign: "top",
   },
   ".cm-line.cn-setext-mark": { fontSize: "16px", lineHeight: "1.5" },
   ".cn-setext-mark .tok-heading": {

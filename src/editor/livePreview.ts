@@ -15,6 +15,7 @@ import {
 } from "@codemirror/view";
 import type { SyntaxNode, SyntaxNodeRef } from "@lezer/common";
 import { linkDestination } from "./links";
+import { quoteBackground } from "./quoteStyle";
 import {
   EmojiWidget,
   ImageWidget,
@@ -70,11 +71,11 @@ const INLINE: Record<string, { mark: Decoration; markup: string[] }> = {
     markup: ["InsertedMark"],
   },
   Subscript: {
-    mark: Decoration.mark({ class: "cn-sub" }),
+    mark: Decoration.mark({ tagName: "sub", class: "cn-sub" }),
     markup: ["SubscriptMark"],
   },
   Superscript: {
-    mark: Decoration.mark({ class: "cn-sup" }),
+    mark: Decoration.mark({ tagName: "sup", class: "cn-sup" }),
     markup: ["SuperscriptMark"],
   },
   Autolink: {
@@ -172,6 +173,14 @@ export function livePreviewDecorations(
       (range) => range.from <= to && range.to >= from,
     );
   const itemTouched = (item: SyntaxNode) => {
+    // A nested item's leading indentation belongs to that item, even though
+    // Lezer starts its node at the list marker.
+    const withIndent = (from: number) => {
+      const line = state.doc.lineAt(from);
+      while (from > line.from && /^[ \t]$/.test(state.sliceDoc(from - 1, from)))
+        from--;
+      return from;
+    };
     const nested: SyntaxNode[] = [];
     const findLists = (parent: SyntaxNode) => {
       for (let child = parent.firstChild; child; child = child.nextSibling) {
@@ -184,8 +193,10 @@ export function livePreviewDecorations(
     return state.selection.ranges.some(
       (range) =>
         range.from <= item.to &&
-        range.to >= item.from &&
-        !nested.some((list) => range.from >= list.from && range.to <= list.to),
+        range.to >= withIndent(item.from) &&
+        !nested.some(
+          (list) => range.from >= withIndent(list.from) && range.to <= list.to,
+        ),
     );
   };
   const ranges: Range<Decoration>[] = [];
@@ -329,7 +340,7 @@ export function livePreviewDecorations(
               }
               if (opaque || !ownItem) continue;
               listLines.set(line.from, {
-                indent: depth * 2,
+                indent: depth * 32,
                 first: n === first.number,
                 quote,
               });
@@ -357,10 +368,12 @@ export function livePreviewDecorations(
         }
         if (name === "HorizontalRule") {
           const line = state.doc.lineAt(from);
-          if (!touched(line.from, line.to))
+          if (!touched(line.from, line.to)) {
             ranges.push(
+              Decoration.line({ class: "cn-rule-line" }).range(line.from),
               Decoration.replace({ widget: new RuleWidget() }).range(from, to),
             );
+          }
           return false;
         }
         if (/^SetextHeading[12]$/.test(name)) {
@@ -492,19 +505,11 @@ export function livePreviewDecorations(
   for (const [from, { depth, borders }] of quoteLines) {
     const inset = borders[0];
     const padding = borders[borders.length - 1] - inset + 15;
-    const stops = borders.slice(1).flatMap((border) => {
-      const x = border - inset - 4;
-      return [
-        `transparent ${x}px`,
-        `var(--preview-border) ${x}px ${x + 4}px`,
-        `transparent ${x + 4}px`,
-      ];
-    });
     ranges.push(
       Decoration.line({
         class: "cn-quote",
         attributes: {
-          style: `--cn-quote-depth:${depth};--cn-quote-inset:${inset}px;padding-left:${padding}px;background-position:0 0;background-image:${stops.length ? `linear-gradient(to right, ${stops.join(",")})` : "none"};background-size:100% 100%`,
+          style: `--cn-quote-depth:${depth};--cn-quote-inset:${inset}px;padding-left:${padding}px;--cn-quote-background:${quoteBackground(borders)}`,
         },
       }).range(from),
     );
@@ -519,7 +524,7 @@ export function livePreviewDecorations(
     ranges.push(
       Decoration.line({
         attributes: {
-          style: `padding-left:calc(${left} + ${indent}em);text-indent:${first ? "-2em" : "0"}`,
+          style: `padding-left:calc(${left} + ${indent}px);text-indent:${first ? "-32px" : "0"}`,
         },
       }).range(from),
     );

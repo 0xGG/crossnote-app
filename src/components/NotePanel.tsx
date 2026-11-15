@@ -243,9 +243,8 @@ const FilePath = styled(Typography)({
 });
 
 const CursorPositionInfo = styled(Box)({
-  // position: "absolute",
-  // right: "16px",
-  // bottom: "16px",
+  display: "flex",
+  alignItems: "center",
   zIndex: 150,
 });
 
@@ -1108,7 +1107,6 @@ export default function NotePanel(props: Props) {
                 ></Preview>
               ) : null}
             </EditorWrapper>
-            <Box style={{ marginTop: "32px" }}></Box>
             <NotesPanel
               title={t("general/References")}
               tabNode={props.tabNode}

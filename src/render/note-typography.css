@@ -17,10 +17,11 @@ html .preview.preview em,
 .cn-editor-live .cn-em {
   font-style: italic;
 }
+html .preview.preview s,
 html .preview.preview del,
 .cn-editor-live .cn-strike {
   text-decoration: line-through;
-  color: var(--preview-subtle);
+  color: inherit;
 }
 html .preview.preview :not(pre) > code,
 .cn-editor-live .cn-code {

@@ -22,6 +22,24 @@ const stateOf = (doc: string) =>
   });
 
 describe("inactive code blocks", () => {
+  it("leaves compact footnote labels outside the rendered code range", () => {
+    const doc = "See[^a].\n\n[^a]: ```js\n    const a = 1;\n    ```\n\nEND";
+    const state = stateOf(doc);
+    const [widget] = widgets(state);
+    expect(state.sliceDoc(state.doc.line(3).from, widget.block.from)).toBe(
+      "[^a]: ",
+    );
+    expect(widget.block.code).toBe("const a = 1;\n");
+    expect(
+      widgets(
+        state.update({ selection: { anchor: state.doc.line(3).from + 1 } })
+          .state,
+      ),
+    ).toHaveLength(1);
+    expect(
+      widgets(state.update({ selection: { anchor: widget.block.from } }).state),
+    ).toHaveLength(0);
+  });
   it("keeps early footnote code in source order before later body code", () => {
     const doc =
       "See[^a].\n\n[^a]: footnote\n\n    ```js\n    const early = 1;\n    ```\n\nLater\n\n```js\nconst late = 2;\n```\n\nEND";
@@ -31,6 +49,12 @@ describe("inactive code blocks", () => {
       "const late = 2;\n",
     ]);
     expect(found[0].block.from).toBeLessThan(found[1].block.from);
+  });
+  it("does not mistake a footnote label inside fence info for its definition", () => {
+    const doc =
+      "See[^a].\n\n[^a]: body\n\n    ~~~js [^a]: ~~~\n    const a = 1;\n    ~~~\n\nEND";
+    const state = stateOf(doc);
+    expect(widgets(state)[0].block.from).toBe(state.doc.line(5).from);
   });
   it("uses the preview's code content and container structure without changing text", () => {
     const doc =

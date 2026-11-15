@@ -13,6 +13,10 @@ function layout(doc: string, anchor = doc.length) {
 }
 
 describe("preview block spacing", () => {
+  it("keeps the first list heading's top margin without adding one to a root heading", () => {
+    expect([...layout("- # Heading\n\nEND").before]).toEqual([[0, 24]]);
+    expect([...layout("# Heading\n\nEND").before]).toEqual([]);
+  });
   it("adds missing heading gaps and counts existing separating lines", () => {
     expect([...layout("# One\n## Two\nText").before]).toEqual([
       [1, 24],

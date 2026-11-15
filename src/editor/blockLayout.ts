@@ -1,6 +1,7 @@
 import { StateField, type EditorState } from "@codemirror/state";
 import { Decoration, EditorView, WidgetType } from "@codemirror/view";
 import { md } from "../render/markdown";
+import { quoteBackground } from "./quoteStyle";
 
 interface Block {
   tag: string;
@@ -96,8 +97,21 @@ function parse(state: EditorState) {
     from: number;
     to: number;
     gap: number;
+    quoteBorders: number[];
     heading?: Heading;
   }[] = [];
+  if (leaves[0]) {
+    let gap = 0;
+    for (let p: Block | undefined = leaves[0]; p; p = p.parent)
+      gap = Math.max(gap, margins(p, true));
+    if (gap)
+      boundaries.push({
+        from: leaves[0].from,
+        to: leaves[0].from,
+        gap,
+        quoteBorders: [],
+      });
+  }
   for (let i = 1; i < leaves.length; i++) {
     const before = leaves[i - 1],
       after = leaves[i];
@@ -107,6 +121,18 @@ function parse(state: EditorState) {
       parents.add(p);
     let common = after.parent;
     while (common && !parents.has(common)) common = common.parent;
+    // Only containers shared by both blocks paint the separating space.
+    const containers: Block[] = [];
+    for (let p = common; p; p = p.parent) containers.unshift(p);
+    const quoteBorders: number[] = [];
+    let indent = 0;
+    for (const container of containers) {
+      if (container.tag === "ul" || container.tag === "ol") indent += 32;
+      if (container.tag === "blockquote") {
+        quoteBorders.push(indent);
+        indent += 19;
+      }
+    }
     let gap = 0;
     for (let p: Block | undefined = before; p && p !== common; p = p.parent)
       gap = Math.max(gap, margins(p, false));
@@ -122,6 +148,7 @@ function parse(state: EditorState) {
         from: before.to,
         to: after.from,
         gap,
+        quoteBorders,
         heading: headings.find(
           (h) => h.underline !== null && h.to === before.to,
         ),
@@ -139,6 +166,7 @@ export function blockSpacing(state: EditorState) {
   const model = state.field(noteBlocks);
   const before = new Map<number, number>();
   const blanks = new Map<number, number>();
+  const gapQuotes = new Map<number, number[]>();
   const hiddenUnderlines = new Set<number>();
   const active = (h: Heading) =>
     state.selection.ranges.some(
@@ -153,8 +181,9 @@ export function blockSpacing(state: EditorState) {
     const gap = Math.max(0, boundary.gap - reserved);
     if (boundary.from < boundary.to) blanks.set(boundary.from, gap);
     else before.set(boundary.to, gap);
+    gapQuotes.set(boundary.from, boundary.quoteBorders);
   }
-  return { before, blanks, hiddenUnderlines };
+  return { before, blanks, gapQuotes, hiddenUnderlines };
 }
 
 class HiddenUnderline extends WidgetType {
@@ -172,7 +201,14 @@ const underline = new HiddenUnderline();
 export const blockLayout = [
   noteBlocks,
   EditorView.decorations.compute([noteBlocks, "selection"], (state) => {
-    const { before, blanks, hiddenUnderlines } = blockSpacing(state);
+    const { before, blanks, gapQuotes, hiddenUnderlines } = blockSpacing(state);
+    const gapStyle = (line: number, height: number) => {
+      const borders = gapQuotes.get(line) ?? [];
+      const color = borders.length
+        ? "var(--preview-inset-background)"
+        : "transparent";
+      return `--cn-quote-gap:${height}px;--cn-quote-gap-inset:${borders[0] ?? 0}px;--cn-quote-gap-color:${color};--cn-quote-gap-background:${quoteBackground(borders)}`;
+    };
     const ranges = [];
     for (const heading of state.field(noteBlocks).headings) {
       const last = heading.underline ?? heading.to;
@@ -187,7 +223,9 @@ export const blockLayout = [
       if (height)
         ranges.push(
           Decoration.line({
-            attributes: { style: `padding-top:${height}px` },
+            attributes: {
+              style: `padding-top:${height}px;${gapStyle(n, height)}`,
+            },
           }).range(state.doc.line(n + 1).from),
         );
     for (const [n, height] of blanks)
@@ -195,7 +233,7 @@ export const blockLayout = [
         Decoration.line({
           class: "cn-block-separator",
           attributes: {
-            style: `line-height:${height}px;height:${height}px;min-height:0`,
+            style: `line-height:${height}px;height:${height}px;min-height:0;${gapStyle(n, height)}`,
           },
         }).range(state.doc.line(n + 1).from),
       );
