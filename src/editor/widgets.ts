@@ -202,7 +202,26 @@ export class ListMarkerWidget extends WidgetType {
   toDOM() {
     const span = document.createElement("span");
     span.className = "cn-list-marker";
-    span.textContent = this.label;
+    span.dataset.marker = this.label;
+    span.setAttribute("aria-hidden", "true");
+    if (this.label) {
+      const marker = document.createElement("span");
+      marker.className = "cn-list-marker-native";
+      marker.style.listStyleType =
+        this.label === "•"
+          ? "disc"
+          : this.label === "◦"
+            ? "circle"
+            : this.label === "▪"
+              ? "square"
+              : "decimal";
+      if (/^\d/.test(this.label))
+        marker.style.setProperty(
+          "counter-set",
+          `list-item ${parseInt(this.label, 10)}`,
+        );
+      span.append(marker);
+    }
     return span;
   }
   ignoreEvent() {

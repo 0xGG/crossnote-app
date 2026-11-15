@@ -30,8 +30,8 @@ import {
 // or the selection is in, which shows as typed. Markup is hidden, not taken
 // out: the text under the editor is the note's, character for character.
 //
-// Not drawn here, and shown as typed: HTML in a line or a block, diagrams,
-// and a table's columns in line.
+// HTML and table columns stay as typed. Code and diagram block widgets are
+// managed separately by codePreview.ts.
 
 /** What the app does for the live preview. */
 export type LivePreviewHost = ImageHost;
@@ -208,16 +208,7 @@ export function livePreviewDecorations(
       to: part.to,
       enter: (node) => {
         const { name, from, to } = node;
-        const lines =
-          name === "FencedCode" &&
-          state
-            .sliceDoc(
-              node.node.getChild("CodeInfo")?.from ?? from,
-              node.node.getChild("CodeInfo")?.to ?? from,
-            )
-            .trim() === "mermaid"
-            ? Decoration.line({ class: "cn-codeblock cn-diagram-source" })
-            : LINES[name];
+        const lines = LINES[name];
         if (lines) {
           // A block that ends with a line break ends on the line before it.
           const end = to > from ? to - 1 : to;

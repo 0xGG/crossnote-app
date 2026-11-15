@@ -197,6 +197,14 @@ html .preview.preview blockquote > :first-child {
 html .preview.preview blockquote > :last-child {
   margin-bottom: 0;
 }
+/* Embedded preview blocks are measured as a single CodeMirror widget.
+ * Keep child margins inside that box instead of letting them collapse out. */
+html .preview.preview.cn-code-preview pre,
+html .preview.preview.cn-code-preview blockquote,
+html .preview.preview.cn-code-preview ul,
+html .preview.preview.cn-code-preview ol {
+  margin: 0;
+}
 html .preview.preview hr {
   height: 4px;
   margin: 24px 0;

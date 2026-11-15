@@ -1,6 +1,7 @@
 import type { Locator, Route } from "@playwright/test";
 import type { CrossnoteApp } from "./crossnote";
 import { expect, test } from "./fixtures";
+import { layoutSample } from "./editor-layout-sample";
 
 const sample = [
   "---",
@@ -82,6 +83,28 @@ async function style(element: Locator) {
   });
 }
 
+async function revealEditor(app: CrossnoteApp, target: Locator) {
+  if ((await target.count()) === 0) {
+    const scroller = app.editor.locator(".cm-scroller");
+    await scroller.evaluate((el) => {
+      el.scrollTop = 0;
+    });
+    await expect
+      .poll(
+        async () => {
+          if (await target.count()) return true;
+          await scroller.evaluate((el) => {
+            el.scrollTop += el.clientHeight * 0.6;
+          });
+          return false;
+        },
+        { timeout: 15000, intervals: [50, 100] },
+      )
+      .toBe(true);
+  }
+  await target.scrollIntoViewIfNeeded();
+}
+
 for (const [theme, expectedBackground] of Object.entries({
   "light": "rgb(255, 255, 255)",
   "dark": "rgb(30, 30, 30)",
@@ -161,7 +184,10 @@ test("aligns wrapped list text and restores markers for an item selection", asyn
   await expect(app.editor.locator(".cn-list-marker")).toHaveCount(2);
   const parent = await item.boundingBox();
   await app.selectInEditor({ line: 1, ch: 6 });
-  await expect(item.locator(".cn-list-marker")).toHaveText("•");
+  await expect(item.locator(".cn-list-marker")).toHaveAttribute(
+    "data-marker",
+    "•",
+  );
   expect(await item.boundingBox()).toEqual(parent);
 });
 
@@ -267,19 +293,18 @@ test("renders block markers without changing stored text, then edits and undoes 
   const file = await openStored(app, original);
   await app.refuseWrites();
   await expect(app.editor.locator(".cn-rule")).toHaveCount(1);
-  await expect(app.editor.locator(".cn-list-marker")).toHaveText([
-    "•",
-    "◦",
-    "4.",
-    "5.",
-    "",
-    "",
-  ]);
+  expect(
+    await app.editor
+      .locator(".cn-list-marker")
+      .evaluateAll((elements) =>
+        elements.map((el) => el.getAttribute("data-marker")),
+      ),
+  ).toEqual(["•", "◦", "4.", "5.", "", ""]);
   await expect(app.editor.locator(".cn-quote").first()).toHaveCSS(
     "background-color",
     "rgb(240, 240, 240)",
   );
-  await expect(app.editor.locator(".cn-setext-mark")).toHaveText("");
+  await expect(app.editor.locator(".cn-setext-mark")).toHaveCount(0);
   await app.selectInEditor({ line: 7, ch: 3 });
   await expect(app.editor.locator(".cn-quote").first()).toContainText(
     "> Quote",
@@ -411,7 +436,7 @@ test("opens only the clicked code block as source without writing the note", asy
   ].join("\r\n");
   const file = await openStored(app, text);
   await app.refuseWrites();
-  const widgets = app.editor.locator(".cn-code-preview");
+  const widgets = app.editor.locator(".cn-code-preview:has(pre)");
   await expect(widgets).toHaveCount(3);
   const copied = await widgets
     .first()
@@ -437,9 +462,9 @@ test("opens only the clicked code block as source without writing the note", asy
   expect(copied).toBe("const value = 1;");
   await expect(widgets.nth(1)).toHaveText("literal <b> & text\n");
   await expect(widgets.nth(2).locator("pre > code")).toHaveText("indented\n");
-  await expect(app.editor.locator(".cn-diagram-source").first()).toContainText(
-    "```mermaid",
-  );
+  await expect(
+    app.editor.locator(".cn-code-preview .mermaid svg"),
+  ).toBeVisible();
   const before = await app.editor
     .locator(".cm-line")
     .filter({ hasText: /^Before$/ })
@@ -504,6 +529,7 @@ test("opens code in early footnotes without writing or reordering the source", a
   await widgets.first().locator("pre").click();
   await expect(widgets).toHaveCount(1);
   await expect(widgets.first()).toContainText("const late = 2;");
+  await expect.poll(() => app.tokenTypes("const")).toContain("keyword");
   expect(await app.editorText()).toBe(text);
   await page.clock.install();
   await page.clock.runFor(1000);
@@ -550,7 +576,10 @@ test("keeps parent list markers when activating a child inside a quote", async (
   const sibling = app.editor.locator(".cm-line").filter({ hasText: "sibling" });
   const before = await parent.boundingBox();
   await app.selectInEditor({ line: 1, ch: 8 });
-  await expect(parent.locator(".cn-list-marker")).toHaveText("•");
+  await expect(parent.locator(".cn-list-marker")).toHaveAttribute(
+    "data-marker",
+    "•",
+  );
   await expect(sibling.locator(".cn-list-marker")).toBeVisible();
   expect(await parent.boundingBox()).toEqual(before);
 });
@@ -615,6 +644,382 @@ test("gives consecutive headings and quotes space without changing active headin
       );
   });
   expect(gaps).toEqual([24, 24, 24]);
+});
+
+for (const separator of ["\n", "\n\n"]) {
+  test(`matches preview heading positions with ${separator.length} source newlines`, async ({
+    app,
+    page,
+  }) => {
+    await page.setViewportSize({ width: 1440, height: 1100 });
+    await openStored(
+      app,
+      [
+        "# HeadingOne",
+        "## HeadingTwo",
+        "### HeadingThree",
+        "TextAfter",
+        "",
+        "END",
+      ].join(separator),
+    );
+    const positions = (root: Locator) =>
+      root.evaluate((el) =>
+        ["HeadingOne", "HeadingTwo", "HeadingThree", "TextAfter"].map(
+          (word) => {
+            const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+            let node: Node | null;
+            while ((node = walker.nextNode())) {
+              const at = node.textContent?.indexOf(word) ?? -1;
+              if (at < 0) continue;
+              const range = document.createRange();
+              range.setStart(node, at);
+              range.setEnd(node, at + word.length);
+              return range.getBoundingClientRect().top;
+            }
+            throw new Error(word);
+          },
+        ),
+      );
+    const edit = await positions(app.editor);
+    await app.modeButton("Preview").click();
+    const preview = await positions(app.preview);
+    for (let i = 1; i < edit.length; i++)
+      expect(edit[i] - edit[0]).toBeCloseTo(preview[i] - preview[0], 0);
+  });
+}
+
+test("matches preview code boundaries and stays still after repeated activation", async ({
+  app,
+  page,
+}) => {
+  await page.setViewportSize({ width: 1000, height: 900 });
+  const text = `${Array.from({ length: 15 }, (_, i) => `Earlier ${i}`).join("\n\n")}\n\nBeforeCode\n\`\`\`python\ndef total():\n    return 1\n\`\`\`\nAfterCode\n\n${"Later\n\n".repeat(15)}END`;
+  await openStored(app, text);
+  const code = app.editor.locator(".cn-code-preview");
+  await code.scrollIntoViewIfNeeded();
+  const gaps = async (root: Locator, selector: string) => {
+    return root.evaluate((el, selector) => {
+      const before = [...el.querySelectorAll(selector)].find(
+        (n) => n.textContent === "BeforeCode",
+      )!;
+      const after = [...el.querySelectorAll(selector)].find(
+        (n) => n.textContent === "AfterCode",
+      )!;
+      const pre = el.querySelector("pre")!.getBoundingClientRect();
+      const afterStyle = getComputedStyle(after);
+      return [
+        pre.top - before.getBoundingClientRect().bottom,
+        after.getBoundingClientRect().top +
+          parseFloat(afterStyle.paddingTop) -
+          pre.bottom,
+      ];
+    }, selector);
+  };
+  const editGaps = await gaps(app.editor, ".cm-line");
+  const scroll = () =>
+    app.editor.locator(".cm-scroller").evaluate((el) => el.scrollTop);
+  const before = await scroll();
+  for (let i = 0; i < 10; i++) {
+    await code.locator("pre").click({ position: { x: 60, y: 20 } });
+    await expect(
+      app.editor.locator(".cm-line").filter({ hasText: "```python" }),
+    ).toBeVisible();
+    await app.editor
+      .locator(".cm-line")
+      .filter({ hasText: /^BeforeCode$/ })
+      .click();
+    await expect(code).toBeVisible();
+    await expect.poll(scroll).toBeCloseTo(before, 0);
+  }
+  await app.modeButton("Preview").click();
+  await app.preview.locator("pre").scrollIntoViewIfNeeded();
+  expect(editGaps).toEqual(await gaps(app.preview, "p"));
+  expect(editGaps).toEqual([24, 16]);
+});
+
+test("uses native list markers and preview spacing for tight and loose items", async ({
+  app,
+}) => {
+  await openStored(
+    app,
+    "- UnorderedOne\n- UnorderedTwo\n\n4. OrderedOne\n5. OrderedTwo\n\n- [ ] TaskOne\n- [x] TaskTwo\n\n- LooseOne\n\n- LooseTwo\n\nAfterLists\n\nEND",
+  );
+  const positions = (root: Locator) =>
+    root.evaluate((el) => {
+      return [
+        "UnorderedOne",
+        "UnorderedTwo",
+        "OrderedOne",
+        "OrderedTwo",
+        "TaskOne",
+        "TaskTwo",
+        "LooseOne",
+        "LooseTwo",
+        "AfterLists",
+      ].map((word) => {
+        const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+        let node: Node | null;
+        while ((node = walker.nextNode())) {
+          const at = node.textContent?.indexOf(word) ?? -1;
+          if (at < 0) continue;
+          const r = document.createRange();
+          r.setStart(node, at);
+          r.setEnd(node, at + word.length);
+          const rect = r.getBoundingClientRect();
+          return { x: rect.x, y: rect.y };
+        }
+        throw new Error(word);
+      });
+    });
+  await expect(app.editor.locator(".cn-list-marker-native").first()).toHaveCSS(
+    "display",
+    "list-item",
+  );
+  await expect(app.editor.locator(".cn-list-marker-native").first()).toHaveCSS(
+    "list-style-type",
+    "disc",
+  );
+  await expect(app.editor.locator('[data-marker="4."] > span')).toHaveCSS(
+    "list-style-type",
+    "decimal",
+  );
+  const edit = await positions(app.editor);
+  await app.modeButton("Preview").click();
+  const preview = await positions(app.preview);
+  for (let i = 0; i < edit.length; i++) {
+    expect(edit[i].x).toBeCloseTo(preview[i].x, 0);
+    expect(
+      edit[i].y - edit[0].y,
+      JSON.stringify({ i, edit, preview }),
+    ).toBeCloseTo(preview[i].y - preview[0].y, 0);
+  }
+});
+
+for (const theme of ["light", "dark", "one-dark", "solarized-light"]) {
+  test(`shows quote selection above the quote background in ${theme}`, async ({
+    app,
+    page,
+  }, testInfo) => {
+    await page.addInitScript(
+      (theme) => localStorage.setItem("settings/theme", theme),
+      theme,
+    );
+    await openStored(app, "> Selected quote text\n> second line\n\nEND");
+    await app.selectInEditor({ line: 0, ch: 2 }, { line: 1, ch: 8 });
+    await app.focusEditor();
+    const selected = app.editor.locator(".cn-selected-text").first();
+    await expect(selected).toContainText("Selected quote text");
+    const colors = await selected.evaluate((el) => ({
+      selection: getComputedStyle(el).backgroundColor,
+      quote: getComputedStyle(el.closest(".cn-quote")!).backgroundColor,
+    }));
+    expect(colors.selection).not.toBe(colors.quote);
+    expect(colors.selection).not.toBe("rgba(0, 0, 0, 0)");
+    await page.screenshot({
+      path: testInfo.outputPath("quote-selected-visible.png"),
+    });
+  });
+}
+
+test("keeps setext activation inside its own heading and separator", async ({
+  app,
+}) => {
+  await openStored(
+    app,
+    "TitleOne\n========\n\nAfterOne\n\nTitleTwo\n--------\n\nAfterTwo\n\nEND",
+  );
+  const rect = (word: string) =>
+    app.editor
+      .locator(".cm-line")
+      .filter({ hasText: new RegExp(`^${word}$`) })
+      .boundingBox();
+  const after = await rect("AfterOne");
+  const next = await rect("TitleTwo");
+  await app.editor
+    .locator(".cm-line")
+    .filter({ hasText: /^TitleOne$/ })
+    .click();
+  await expect(app.editor.locator(".cn-setext-mark")).toContainText("========");
+  expect(await rect("AfterOne")).toEqual(after);
+  expect(await rect("TitleTwo")).toEqual(next);
+  await app.selectInEditor({ line: 10, ch: 0 });
+  const editGap = after!.y - (await rect("TitleOne"))!.y;
+  await app.modeButton("Preview").click();
+  const h1 = await app.preview.locator("h1").boundingBox();
+  const p = await app.preview
+    .locator("p")
+    .filter({ hasText: /^AfterOne$/ })
+    .boundingBox();
+  expect(editGap).toBeCloseTo(p!.y - h1!.y, 0);
+});
+
+for (const width of [1920, 640]) {
+  test(`keeps real clicks and visible carets aligned throughout the mixed note at ${width}`, async ({
+    app,
+    page,
+  }) => {
+    test.setTimeout(60000);
+    await page.setViewportSize({ width, height: 1080 });
+    await openStored(app, layoutSample);
+    await page.getByRole("button", { name: "Table of contents" }).click();
+    const lines = layoutSample.split("\n");
+    async function clickLine(label: string) {
+      const line = app.editor.locator(".cm-line").filter({ hasText: label });
+      await revealEditor(app, line);
+      await line.evaluate(
+        () =>
+          new Promise((resolve) =>
+            requestAnimationFrame(() => requestAnimationFrame(resolve)),
+          ),
+      );
+      // Read actual glyphs before the click, without asking CodeMirror to
+      // measure its coordinates (which could hide a stale height map).
+      const point = await line.evaluate((el, label) => {
+        const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+        let node: Node | null;
+        while ((node = walker.nextNode())) {
+          const at = node.textContent?.indexOf(label) ?? -1;
+          if (at < 0) continue;
+          const r = document.createRange();
+          r.setStart(node, at);
+          r.setEnd(node, at + label.length);
+          const box = r.getClientRects()[0];
+          return { x: box.x + 5, y: box.y + box.height / 2 };
+        }
+        throw new Error(label);
+      }, label);
+      await page.mouse.move(point.x, point.y);
+      await page.mouse.down();
+      await page.mouse.up();
+      const hit = await page.evaluate(
+        ({ x, y }) => ({
+          x,
+          y,
+          target: document.elementFromPoint(x, y)?.outerHTML.slice(0, 200),
+          scroll: document.querySelector(".cm-scroller")?.scrollTop,
+        }),
+        point,
+      );
+      expect((await app.caret()).line, JSON.stringify({ label, hit })).toBe(
+        lines.findIndex((l) => l.includes(label)),
+      );
+      await expect
+        .poll(
+          async () => {
+            const box = await app.editor
+              .locator(".cm-cursor")
+              .first()
+              .boundingBox();
+            return Math.abs(box!.y + box!.height / 2 - point.y);
+          },
+          { message: label },
+        )
+        .toBeLessThan(3);
+    }
+    for (const label of ["A03", "B03", "B04", "C03", "E14", "E15"])
+      await clickLine(label);
+    for (let i = 0; i < 10; i++) {
+      const code = app.editor
+        .locator(".cn-code-preview")
+        .filter({ hasText: "def total" });
+      await revealEditor(app, code);
+      await code.locator("pre").click({ position: { x: 70, y: 20 } });
+      await clickLine("C03");
+    }
+    await clickLine("B04");
+    const b3 = app.editor.locator(".cm-line").filter({ hasText: "B03" });
+    await revealEditor(app, b3);
+    const box = await b3.boundingBox();
+    await page.mouse.click(box!.x + 35, box!.y + box!.height + 8);
+    await clickLine("B03");
+    const diagram = app.editor.locator(".cn-code-preview .mermaid svg");
+    await revealEditor(app, diagram);
+    await diagram.click();
+    for (const label of ["mermaid", "graph TD", "A[开始]", "B --> C[预览]"])
+      await clickLine(label);
+    expect(await app.editorText()).toBe(layoutSample);
+  });
+}
+
+test("renders Mermaid until clicked and restores the diagram after editing", async ({
+  app,
+  page,
+}, testInfo) => {
+  const text = "Before\n\n```mermaid\ngraph TD\n  A-->B\n```\n\nAfter\n\nEND";
+  const file = await openStored(app, text);
+  await app.refuseWrites();
+  const diagram = app.editor.locator(".cn-code-preview .mermaid svg");
+  await expect(diagram).toBeVisible();
+  await page.screenshot({ path: testInfo.outputPath("mermaid-inactive.png") });
+  await diagram.click();
+  const source = app.editor
+    .locator(".cm-line")
+    .filter({ hasText: "```mermaid" });
+  await expect(source).toBeVisible();
+  await expect(source).toHaveCSS("font-size", "16px");
+  await expect(source).toHaveCSS("line-height", "24px");
+  expect((await app.caret()).line).toBe(3);
+  await source.click({ position: { x: 60, y: 12 } });
+  expect((await app.caret()).line).toBe(2);
+  await app.editor
+    .locator(".cm-line")
+    .filter({ hasText: /^After$/ })
+    .click();
+  await expect(diagram).toBeVisible();
+  expect(await app.editorText()).toBe(text);
+  expect(await app.storedText(file)).toBe(text);
+  expect((await app.refusedWrites()).filter((w) => w === "file")).toEqual([]);
+});
+
+test("redraws multiple live diagrams in a changed theme and lets invalid diagrams be corrected", async ({
+  app,
+  page,
+}) => {
+  await openStored(
+    app,
+    "```mermaid\ngraph TD; A-->B\n```\n\n```mermaid\ngraph LR; C-->D\n```\n\n```mermaid\nnot a diagram\n```\n\nEND",
+  );
+  const diagrams = app.editor.locator(".cn-code-preview .mermaid svg");
+  await expect(diagrams).toHaveCount(2);
+  const lightFill = await diagrams
+    .first()
+    .locator(".node rect")
+    .first()
+    .evaluate((el) => getComputedStyle(el).fill);
+  await app.openSettings();
+  await page
+    .getByRole("combobox")
+    .filter({ hasText: /^light$/ })
+    .click();
+  await page.getByRole("option", { name: "dark", exact: true }).click();
+  await app.selectTab("README");
+  await expect(diagrams).toHaveCount(2);
+  await expect
+    .poll(() =>
+      diagrams
+        .first()
+        .locator(".node rect")
+        .first()
+        .evaluate((el) => getComputedStyle(el).fill),
+    )
+    .not.toBe(lightFill);
+  const error = app.editor.locator(".cn-code-preview .language-error");
+  await expect(error).toBeVisible();
+  await error.click();
+  await expect(
+    app.editor.locator(".cm-line").filter({ hasText: "not a diagram" }),
+  ).toBeVisible();
+  await expect(diagrams).toHaveCount(2);
+  await app.selectInEditor({ line: 9, ch: 0 }, { line: 9, ch: 13 });
+  await app.focusEditor();
+  await page.keyboard.insertText("graph TD; E-->F");
+  await app.editor.locator(".cm-line").filter({ hasText: /^END$/ }).click();
+  await expect(diagrams).toHaveCount(3);
+  await app.focusEditor();
+  await page.keyboard.press("Control+z");
+  await app.selectInEditor({ line: 12, ch: 0 });
+  await expect(error).toBeVisible();
 });
 
 test("keeps a preview anchor when an image above it finishes loading", async ({

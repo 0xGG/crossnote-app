@@ -189,8 +189,41 @@ const hashtag: MarkdownConfig = {
 // "^[text]", a footnote written in place.
 const footnote: MarkdownConfig = {
   defineNodes: [
+    {
+      name: "FootnoteDefinition",
+      block: true,
+      composite(_cx, line, indent) {
+        if (line.pos === line.text.length) return true;
+        if (line.indent < indent) return false;
+        line.moveBaseColumn(indent);
+        return true;
+      },
+    },
+    { name: "FootnoteLabel", style: noteTags.footnote },
     { name: "FootnoteReference", style: noteTags.footnote },
     { name: "InlineFootnote", style: noteTags.footnote },
+  ],
+  parseBlock: [
+    {
+      name: "FootnoteDefinition",
+      before: "LinkReference",
+      parse(cx, line) {
+        if (line.indent - line.baseIndent >= 4) return false;
+        const match = /^\[\^[^\]\s]+\]:[ \t]*/.exec(line.text.slice(line.pos));
+        if (!match) return false;
+        const from = line.pos;
+        cx.startComposite("FootnoteDefinition", from, line.baseIndent + 4);
+        line.moveBase(from + match[0].length);
+        cx.addElement(
+          cx.elt(
+            "FootnoteLabel",
+            cx.lineStart + from,
+            cx.lineStart + from + match[0].length,
+          ),
+        );
+        return null;
+      },
+    },
   ],
   parseInline: [
     {

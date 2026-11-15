@@ -56,6 +56,9 @@ const look = EditorView.theme({
     caretColor: "var(--preview-strong)",
   },
   ".cm-line": { padding: "0 var(--note-inline-padding)" },
+  ".cn-selected-text, .cn-selected-text *, .cn-selected-empty": {
+    backgroundColor: "var(--editor-selection) !important",
+  },
   ".cm-cursor, .cm-dropCursor": { borderLeftColor: "var(--preview-strong)" },
   "&.cm-focused > .cm-scroller > .cm-selectionLayer .cm-selectionBackground, .cm-selectionBackground, .cm-content ::selection":
     { backgroundColor: "var(--editor-selection)" },
@@ -87,6 +90,12 @@ const look = EditorView.theme({
   "&.cn-editor-live .tok-heading2": { fontSize: "1.75rem" },
   "&.cn-editor-live .tok-heading3": { fontSize: "1.5rem" },
   "&.cn-editor-live .tok-heading4": { fontSize: "1.24rem" },
+  ".cm-line.cn-heading-line": { lineHeight: "1.2", fontWeight: "600" },
+  ".cm-line.cn-heading-1": { fontSize: "2.25rem", paddingBottom: "0.3rem" },
+  ".cm-line.cn-heading-2": { fontSize: "1.75rem", paddingBottom: "0.3rem" },
+  ".cm-line.cn-heading-3": { fontSize: "1.5rem" },
+  ".cm-line.cn-heading-4": { fontSize: "1.24rem" },
+  ".cm-line.cn-heading-5, .cm-line.cn-heading-6": { fontSize: "1rem" },
 
   ".tok-wikiLink, .tok-footnote, .tok-hashtag": {
     color: "var(--preview-link)",
@@ -130,10 +139,6 @@ const look = EditorView.theme({
     fontFamily: MONOSPACE,
     fontSize: "16px",
   },
-  ".cm-line.cn-diagram-source": {
-    fontSize: "0.85em",
-    backgroundColor: "var(--preview-inset-background)",
-  },
   ".cm-line.cn-table": { fontFamily: MONOSPACE, fontSize: "0.9em" },
   ".cm-line.cn-quote": {
     borderLeft: "4px solid var(--preview-border)",
@@ -165,10 +170,15 @@ const look = EditorView.theme({
     display: "inline-block",
     width: "2em",
     textIndent: "0",
-    textAlign: "right",
-    paddingRight: "0.5em",
     boxSizing: "border-box",
   },
+  ".cn-list-marker-native": {
+    display: "list-item",
+    listStylePosition: "outside",
+    marginLeft: "2em",
+    width: "0",
+  },
+  ".cn-list-marker-native::before": { content: '"\\200b"' },
   ".cn-rule": {
     display: "inline-block",
     width: "100%",

@@ -61,12 +61,13 @@ describe("inactive code blocks", () => {
       )[0].block.code,
     ).toBe("changed\n");
   });
-  it("keeps diagrams, front matter and literal HTML fences as source", () => {
+  it("renders diagrams but keeps front matter and literal HTML fences as source", () => {
     const doc =
       "---\ntitle: x\n---\n\n```mermaid\ngraph TD\n```\n\n<div>\n```js\nliteral\n```\n</div>\n\n    plain\n\nEND";
     const found = widgets(stateOf(doc));
-    expect(found).toHaveLength(1);
-    expect(found[0].block.fenced).toBe(false);
-    expect(found[0].block.code).toBe("plain\n");
+    expect(found).toHaveLength(2);
+    expect(found[0].block.language).toBe("mermaid");
+    expect(found[1].block.fenced).toBe(false);
+    expect(found[1].block.code).toBe("plain\n");
   });
 });

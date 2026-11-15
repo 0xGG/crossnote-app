@@ -5,9 +5,10 @@ import {
   type Extension,
 } from "@codemirror/state";
 import { Decoration, EditorView, WidgetType } from "@codemirror/view";
-import { md } from "../render/markdown";
+import { noteBlocks, blockSpacing } from "./blockLayout";
 import { renderCodeBlock } from "../render/codeBlock";
-import { waitForDrawing } from "../render/drawing";
+import { waitForDrawing, isDarkPreview, type Drawing } from "../render/drawing";
+import { renderMermaid } from "../render/mermaid";
 
 interface Container {
   tag: string;
@@ -22,6 +23,7 @@ interface CodeBlock {
   language: string;
   fenced: boolean;
   containers: Container[];
+  spaceBefore: number;
 }
 
 // Use the preview parser's code content, including de-indentation inside
@@ -29,7 +31,8 @@ interface CodeBlock {
 function blocks(state: EditorState): CodeBlock[] {
   const found: CodeBlock[] = [];
   const parents: Container[] = [];
-  for (const token of md.parse(state.doc.toString(), {})) {
+  const spacing = blockSpacing(state);
+  for (const token of state.field(noteBlocks).tokens) {
     if (token.nesting === -1) parents.pop();
     if (token.nesting === 1) {
       if (token.tag === "li") {
@@ -45,7 +48,6 @@ function blocks(state: EditorState): CodeBlock[] {
     }
     if (!token.map || !["fence", "code_block"].includes(token.type)) continue;
     const language = token.info.trim().match(/^[^\s{]*/)![0] || "text";
-    if (language === "mermaid") continue;
     found.push({
       from: state.doc.line(token.map[0] + 1).from,
       to: state.doc.line(Math.min(token.map[1], state.doc.lines)).to,
@@ -53,6 +55,7 @@ function blocks(state: EditorState): CodeBlock[] {
       code: token.content,
       language,
       fenced: token.type === "fence",
+      spaceBefore: spacing.before.get(token.map[0]) ?? 0,
       containers: parents
         .filter((p) => ["blockquote", "ul", "ol", "li"].includes(p.tag))
         .map((p) => ({ ...p })),
@@ -75,6 +78,7 @@ export class CodePreviewWidget extends WidgetType {
   toDOM(view: EditorView) {
     const root = document.createElement("div");
     root.className = "preview cn-code-preview";
+    root.style.paddingTop = `${this.block.spaceBefore}px`;
     let parent: HTMLElement = root;
     for (const container of this.block.containers) {
       const element = document.createElement(container.tag);
@@ -85,19 +89,50 @@ export class CodePreviewWidget extends WidgetType {
       parent.append(element);
       parent = element;
     }
-    const drawing = renderCodeBlock(
-      this.block.code,
-      this.block.language,
-      !this.block.fenced,
+    const diagram = this.block.language === "mermaid";
+    let dark = isDarkPreview(view.dom);
+    let drawing: Drawing;
+    let waiting: ReturnType<typeof waitForDrawing>;
+    const draw = () => {
+      waiting?.stop();
+      drawing?.dispose();
+      drawing = diagram
+        ? renderMermaid(this.block.code, { dark })
+        : renderCodeBlock(
+            this.block.code,
+            this.block.language,
+            !this.block.fenced,
+          );
+      parent.replaceChildren(drawing.element);
+      waiting = waitForDrawing(drawing);
+      void waiting.settled.then(() => {
+        if (root.isConnected) view.requestMeasure();
+      });
+    };
+    draw();
+    const resize =
+      typeof ResizeObserver === "undefined"
+        ? null
+        : new ResizeObserver(() => view.requestMeasure());
+    resize?.observe(root);
+    const theme = diagram
+      ? new MutationObserver(() => {
+          const next = isDarkPreview(view.dom);
+          if (next !== dark) {
+            dark = next;
+            draw();
+          }
+        })
+      : null;
+    theme?.observe(
+      view.dom.closest("[data-preview-theme]") ?? document.documentElement,
+      { attributes: true, attributeFilter: ["data-preview-theme"] },
     );
-    parent.append(drawing.element);
-    const waiting = waitForDrawing(drawing);
     cleanups.set(root, () => {
       waiting.stop();
       drawing.dispose();
-    });
-    void waiting.settled.then(() => {
-      if (root.isConnected) view.requestMeasure();
+      resize?.disconnect();
+      theme?.disconnect();
     });
     root.addEventListener("click", (event) => {
       if (event.button !== 0 || event.ctrlKey || event.metaKey || event.altKey)
@@ -114,15 +149,17 @@ export class CodePreviewWidget extends WidgetType {
       const lineHeight = parseFloat(
         getComputedStyle(drawing.element).lineHeight,
       );
-      const row = Math.max(
-        0,
-        Math.floor(
-          (event.clientY -
-            codeTop -
-            parseFloat(getComputedStyle(drawing.element).paddingTop)) /
-            lineHeight,
-        ),
-      );
+      const row = diagram
+        ? 0
+        : Math.max(
+            0,
+            Math.floor(
+              (event.clientY -
+                codeTop -
+                parseFloat(getComputedStyle(drawing.element).paddingTop)) /
+                lineHeight,
+            ),
+          );
       const first = view.state.doc.lineAt(this.block.from);
       const line = view.state.doc.line(
         Math.min(
@@ -154,9 +191,11 @@ export class CodePreviewWidget extends WidgetType {
 
 const codeBlocks = StateField.define<CodeBlock[]>({
   create: blocks,
-  update: (value, tr) => (tr.docChanged ? blocks(tr.state) : value),
+  update: (value, tr) =>
+    tr.docChanged || tr.selection ? blocks(tr.state) : value,
 });
 export const codePreview: Extension = [
+  noteBlocks,
   codeBlocks,
   Prec.highest(
     EditorView.domEventHandlers({
