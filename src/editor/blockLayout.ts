@@ -65,6 +65,10 @@ function parse(state: EditorState) {
     }
   }
   leaves.sort((a, b) => a.from - b.from);
+  const setextHeadings = new Map<number, Heading>();
+  for (const heading of headings)
+    if (heading.underline !== null && !setextHeadings.has(heading.to))
+      setextHeadings.set(heading.to, heading);
   const margins = (node: Block, top: boolean): number => {
     if (node.hidden) return 0;
     const parent = node.parent;
@@ -149,9 +153,7 @@ function parse(state: EditorState) {
         to: after.from,
         gap,
         quoteBorders,
-        heading: headings.find(
-          (h) => h.underline !== null && h.to === before.to,
-        ),
+        heading: setextHeadings.get(before.to),
       });
   }
   return { tokens, headings, boundaries };

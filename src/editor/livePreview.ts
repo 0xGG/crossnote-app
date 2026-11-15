@@ -173,11 +173,14 @@ export function livePreviewDecorations(
       (range) => range.from <= to && range.to >= from,
     );
   const itemTouched = (item: SyntaxNode) => {
-    // A nested item's leading indentation belongs to that item, even though
-    // Lezer starts its node at the list marker.
+    // Leading indentation and quote prefixes belong to the nested item, even
+    // though Lezer starts its node at the list marker.
     const withIndent = (from: number) => {
       const line = state.doc.lineAt(from);
-      while (from > line.from && /^[ \t]$/.test(state.sliceDoc(from - 1, from)))
+      while (
+        from > line.from &&
+        /^[ \t>]$/.test(state.sliceDoc(from - 1, from))
+      )
         from--;
       return from;
     };

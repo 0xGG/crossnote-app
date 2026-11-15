@@ -260,6 +260,34 @@ test("keeps nested item active throughout its leading indentation", async ({
   expect(await app.editorText()).toBe(text);
 });
 
+test("keeps quoted child active when the caret crosses its container prefix", async ({
+  app,
+  page,
+}) => {
+  const text = "> - Parent\n>   - Child\n>   - Sibling\n\nEND";
+  const file = await openStored(app, text);
+  await app.refuseWrites();
+  const parent = app.editor.locator(".cm-line").filter({ hasText: "Parent" });
+  const child = app.editor.locator(".cm-line").filter({ hasText: "Child" });
+  const sibling = app.editor.locator(".cm-line").filter({ hasText: "Sibling" });
+  const before = await parent.boundingBox();
+  await app.selectInEditor({ line: 1, ch: 6 });
+  await app.focusEditor();
+  for (let ch = 5; ch >= 0; ch--) {
+    await page.keyboard.press("ArrowLeft");
+    expect(await app.caret()).toEqual({ line: 1, ch });
+    await expect(child).toContainText(">   - Child");
+    await expect(parent.locator(".cn-list-marker")).toBeVisible();
+    await expect(sibling.locator(".cn-list-marker")).toBeVisible();
+    expect(await parent.boundingBox()).toEqual(before);
+  }
+  expect(await app.editorText()).toBe(text);
+  expect(await app.storedText(file)).toBe(text);
+  expect(
+    (await app.refusedWrites()).filter((write) => write === "file"),
+  ).toEqual([]);
+});
+
 for (const width of [1440, 640]) {
   for (const long of [false, true]) {
     const text = long
@@ -350,6 +378,31 @@ test("retains compact footnote labels while their code and diagrams are rendered
   await app.selectInEditor({ line: 11, ch: 0 });
   await app.editor.locator(".cn-code-preview svg").click();
   expect((await app.caret()).line).toBe(7);
+  expect(await app.editorText()).toBe(text);
+  expect(await app.storedText(file)).toBe(text);
+  expect(
+    (await app.refusedWrites()).filter((write) => write === "file"),
+  ).toEqual([]);
+});
+
+test("opens the first row of compact indented footnote code", async ({
+  app,
+}) => {
+  const text = "See[^a].\n\n[^a]:        first row\n        second row\n\nEND";
+  const file = await openStored(app, text);
+  await app.refuseWrites();
+  const code = app.editor.locator(".cn-code-preview pre");
+  await expect(code).toContainText("first row");
+  for (let i = 0; i < 3; i++) {
+    await code.click({ position: { x: 50, y: 20 } });
+    await expect(code).toHaveCount(0);
+    expect(await app.caret()).toEqual({ line: 2, ch: 13 });
+    await expect(
+      app.editor.locator(".cm-line").filter({ hasText: "[^a]:" }),
+    ).toContainText("first row");
+    await app.selectInEditor({ line: 5, ch: 0 });
+    await expect(code).toBeVisible();
+  }
   expect(await app.editorText()).toBe(text);
   expect(await app.storedText(file)).toBe(text);
   expect(
@@ -719,6 +772,60 @@ test("keeps the reading block through mode changes in a long note", async ({
       .toBeCloseTo(offset, 0);
   }
 });
+
+for (const diagram of [false, true]) {
+  test(`keeps the reading offset valid for a ${diagram ? "collapsed source diagram" : "multiline source paragraph"}`, async ({
+    app,
+  }) => {
+    const text =
+      "Before\n\n".repeat(12) +
+      (diagram ? "```mermaid\ngraph TD; A-->B\n" : "") +
+      Array.from(
+        { length: 60 },
+        (_, i) => `${diagram ? "%% " : ""}wrapped${i}`,
+      ).join("\n") +
+      (diagram ? "\n```" : "") +
+      "\n\n" +
+      "After\n\n".repeat(40) +
+      "END";
+    const file = await openStored(app, text);
+    await app.refuseWrites();
+    await app.modeButton("Source code").click();
+    await app.selectInEditor({ line: diagram ? 61 : 59, ch: 0 });
+    const line = app.editor
+      .locator(".cm-line")
+      .filter({ hasText: diagram ? /^%% wrapped35$/ : /^wrapped35$/ });
+    await revealEditor(app, line);
+    const rowHeight = await line.evaluate(
+      (el) => el.getBoundingClientRect().height,
+    );
+    await line.evaluate((el) => {
+      const root = el.closest(".cm-scroller")!;
+      root.scrollTop +=
+        el.getBoundingClientRect().top - root.getBoundingClientRect().top;
+    });
+    await app.modeButton("Preview").click();
+    const paragraph = diagram
+      ? app.preview.locator(".mermaid")
+      : app.preview.locator("p").filter({ hasText: /^wrapped0\s/ });
+    if (diagram) await expect(paragraph.locator("svg")).toBeVisible();
+    await expect
+      .poll(() =>
+        paragraph.evaluate((el) => {
+          const root = el.closest("[data-testid=note-preview]")!;
+          return (
+            el.getBoundingClientRect().top - root.getBoundingClientRect().top
+          );
+        }),
+      )
+      .toBeCloseTo(diagram ? 0 : -35 * rowHeight, 0);
+    await expect(paragraph).toBeInViewport();
+    expect(await app.storedText(file)).toBe(text);
+    expect(
+      (await app.refusedWrites()).filter((write) => write === "file"),
+    ).toEqual([]);
+  });
+}
 
 test("opens only the clicked code block as source without writing the note", async ({
   app,

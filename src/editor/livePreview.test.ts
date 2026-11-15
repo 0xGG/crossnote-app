@@ -431,6 +431,26 @@ describe("the live preview", () => {
         view.destroy();
       }
     });
+    it.each(["> ", "> > "])(
+      "activates only the child throughout the %s container prefix",
+      (quote) => {
+        const doc = `${quote}- parent\n${quote}  - child\n${quote}  - sibling\n\nEND`;
+        const childStart = doc.indexOf("\n") + 1;
+        for (let ch = 0; ch <= quote.length + 2; ch++) {
+          const at = childStart + ch;
+          const state = stateFor(doc.slice(0, at) + "¦" + doc.slice(at));
+          const markers: string[] = [];
+          for (const set of decorations(state))
+            for (const c = set.iter(); c.value; c.next())
+              if (c.value.spec.widget instanceof ListMarkerWidget)
+                markers.push(state.sliceDoc(c.from, c.to));
+          expect(markers).toEqual(["- ", "- "]);
+          expect(shown(doc.slice(0, at) + "¦" + doc.slice(at))).toContain(
+            "- child",
+          );
+        }
+      },
+    );
   });
 
   describe("its widgets", () => {

@@ -65,11 +65,14 @@ export function restorePreviewPosition(
             : nearest,
         undefined,
       ) ?? candidates[0];
-    if (block)
+    if (block) {
+      const rect = block.getBoundingClientRect();
+      // A long source paragraph or diagram can shrink in preview. Keep its
+      // anchor visible when the old displacement would skip the whole block.
+      const offset = position.offset <= -rect.height ? 0 : position.offset;
       element.scrollTop +=
-        block.getBoundingClientRect().top -
-        element.getBoundingClientRect().top -
-        position.offset;
+        rect.top - element.getBoundingClientRect().top - offset;
+    }
   };
   const observer = new ResizeObserver(restore);
   const stop = () => {

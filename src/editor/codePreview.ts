@@ -201,7 +201,9 @@ export class CodePreviewWidget extends WidgetType {
         ),
       );
       event.preventDefault();
-      view.dispatch({ selection: { anchor: line.from } });
+      view.dispatch({
+        selection: { anchor: Math.max(line.from, this.block.from) },
+      });
       view.focus();
       view.requestMeasure({
         read: () => view.lineBlockAt(first.from).top + view.documentTop - top,
