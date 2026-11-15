@@ -9,54 +9,10 @@ import {
   failedBlock,
   isDarkPreview,
   previewTimeout,
-  startDrawing,
   waitForDrawing,
 } from "./drawing";
 import { renderTwemoji } from "./emoji";
-
-// Code, shown as it is at once and highlighted once Prism has its language;
-// as it is in a language Prism does not have, or cannot load.
-function renderCodeBlock(code: string, language: string): Drawing {
-  const pre = document.createElement("pre");
-  pre.textContent = code;
-  return startDrawing(
-    pre,
-    async (signal) => {
-      // Prism, and what it knows of its languages, load with the first block;
-      // code is shown as it is when they cannot be loaded.
-      let prism: any;
-      try {
-        const { prismWith } = await import("./prism");
-        prism = await prismWith(language);
-      } catch {
-        prism = undefined;
-      }
-      if (signal.aborted) {
-        return;
-      }
-      if (!prism) {
-        pre.classList.add("language-text");
-        return;
-      }
-      let highlighted: string;
-      try {
-        highlighted = prism.highlight(
-          code,
-          prism.languages[language],
-          language,
-        );
-      } catch {
-        pre.classList.add("language-text");
-        return;
-      }
-      // Prism escapes the code it is given; what it returns is its own markup.
-      pre.innerHTML = highlighted;
-      pre.classList.add(`language-${language}`);
-    },
-    // Code that takes too long to highlight stays as it is.
-    { keepsWhatItShows: true },
-  );
-}
+import { renderCodeBlock } from "./codeBlock";
 
 // Draws each code block, a diagram or highlighted code, in its place, and
 // returns the drawings.

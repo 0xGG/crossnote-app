@@ -222,9 +222,13 @@ const touchy =
 
 // Opened in the mode a note's tab starts in, rather than in the preview and
 // switched from there.
-for (const { mode, setting } of [
-  { mode: "Edit", setting: "EchoMD" },
-  { mode: "Source code", setting: "SourceCode" },
+for (const { mode, setting, token } of [
+  {
+    mode: "Edit",
+    setting: "EchoMD",
+    token: ".cn-code-preview pre.language-bash .token",
+  },
+  { mode: "Source code", setting: "SourceCode", token: ".tok-variableName" },
 ] as const) {
   test(`opens a note straight in ${mode} without writing it`, async ({
     app,
@@ -236,7 +240,9 @@ for (const { mode, setting } of [
     await expect(app.modeOn).toHaveAccessibleName(mode);
     await expect(app.editor).toBeVisible();
     // The language has come and the block is drawn with it.
-    await expect.poll(() => app.tokenTypes("echo")).toContain("variableName");
+    await expect(
+      app.editor.locator(token).filter({ hasText: "echo" }).first(),
+    ).toBeVisible();
     await expectUnwritten(app, readme, touchy);
   });
 }
@@ -296,7 +302,9 @@ async function restoredTabUnwritten(
     await expect(app.editor).toBeVisible();
     await expect.poll(() => app.editorText()).toContain("# Kept");
     // The language has come and the block is drawn with it.
-    await expect.poll(() => app.tokenTypes("echo")).toContain("variableName");
+    await expect(
+      app.editor.locator(".cn-code-preview pre.language-bash .token").first(),
+    ).toBeVisible();
   } else {
     await expect(app.preview).toContainText("Kept");
   }

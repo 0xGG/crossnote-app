@@ -102,6 +102,9 @@ for (const [theme, expectedBackground] of Object.entries({
     await expect(code).toHaveCSS("font-size", "13.6px");
     await expect(code).toHaveCSS("padding-left", "6px");
     const inline = await style(code);
+    const renderedCode = app.editor.locator(".cn-code-preview pre").first();
+    await expect(renderedCode).toHaveClass(/language-javascript/);
+    const codeStyle = await style(renderedCode);
     await expect(app.editor.locator(".cn-strong")).toHaveCSS(
       "font-weight",
       "700",
@@ -113,6 +116,10 @@ for (const [theme, expectedBackground] of Object.entries({
     expect(background).toBe(expectedBackground);
     await page.screenshot({ path: testInfo.outputPath("edit.png") });
     await app.modeButton("Preview").click();
+    await expect(app.preview.locator("pre").first()).toHaveClass(
+      /language-javascript/,
+    );
+    expect(await style(app.preview.locator("pre").first())).toEqual(codeStyle);
     expect(await style(app.preview.locator("p code").first())).toEqual(inline);
     expect(
       await style(app.preview.locator(".task-list-item-checkbox").first()),
@@ -152,6 +159,10 @@ test("aligns wrapped list text and restores markers for an item selection", asyn
   expect(await app.editorText()).toBe(text);
   await app.selectInEditor({ line: 3, ch: 0 });
   await expect(app.editor.locator(".cn-list-marker")).toHaveCount(2);
+  const parent = await item.boundingBox();
+  await app.selectInEditor({ line: 1, ch: 6 });
+  await expect(item.locator(".cn-list-marker")).toHaveText("•");
+  expect(await item.boundingBox()).toEqual(parent);
 });
 
 test("keeps nested quote indentation and borders when markers are hidden", async ({
@@ -182,7 +193,7 @@ test("keeps nested quote indentation and borders when markers are hidden", async
   expect(edit[2] - edit[1]).toBe(19);
   expect(edit[3]).toBe(edit[2]);
   const nested = app.editor.locator(".cm-line").filter({ hasText: "deep" });
-  await expect(nested).toHaveCSS("background-size", "38px 100%");
+  await expect(nested).toHaveCSS("background-image", /linear-gradient/);
   await page.screenshot({
     path: testInfo.outputPath("nested-quotes-edit.png"),
   });
@@ -373,6 +384,237 @@ test("keeps the reading block through mode changes in a long note", async ({
       )
       .toBeCloseTo(offset, 0);
   }
+});
+
+test("opens only the clicked code block as source without writing the note", async ({
+  app,
+  page,
+}, testInfo) => {
+  const text = [
+    "Before",
+    "",
+    "```javascript",
+    "const value = 1;",
+    "```",
+    "",
+    "```unknown",
+    "literal <b> & text",
+    "```",
+    "",
+    "    indented",
+    "",
+    "```mermaid",
+    "graph TD; A-->B",
+    "```",
+    "",
+    "END",
+  ].join("\r\n");
+  const file = await openStored(app, text);
+  await app.refuseWrites();
+  const widgets = app.editor.locator(".cn-code-preview");
+  await expect(widgets).toHaveCount(3);
+  const copied = await widgets
+    .first()
+    .locator("pre")
+    .evaluate((pre) => {
+      const selection = window.getSelection()!;
+      const range = document.createRange();
+      range.selectNodeContents(pre);
+      selection.removeAllRanges();
+      selection.addRange(range);
+      const clipboardData = new DataTransfer();
+      pre.closest(".cm-content")!.dispatchEvent(
+        new ClipboardEvent("copy", {
+          bubbles: true,
+          cancelable: true,
+          clipboardData,
+        }),
+      );
+      const text = clipboardData.getData("text/plain");
+      selection.removeAllRanges();
+      return text;
+    });
+  expect(copied).toBe("const value = 1;");
+  await expect(widgets.nth(1)).toHaveText("literal <b> & text\n");
+  await expect(widgets.nth(2).locator("pre > code")).toHaveText("indented\n");
+  await expect(app.editor.locator(".cn-diagram-source").first()).toContainText(
+    "```mermaid",
+  );
+  const before = await app.editor
+    .locator(".cm-line")
+    .filter({ hasText: /^Before$/ })
+    .boundingBox();
+  await page.screenshot({ path: testInfo.outputPath("code-inactive.png") });
+  await widgets
+    .first()
+    .locator("pre")
+    .click({ position: { x: 35, y: 20 } });
+  await expect(widgets).toHaveCount(2);
+  const active = app.editor
+    .locator(".cm-line")
+    .filter({ hasText: /^const value/ });
+  await expect(active).toHaveCSS("font-size", "16px");
+  await expect(active).toHaveCSS("line-height", "24px");
+  await expect(
+    app.editor.locator(".cm-line").filter({ hasText: "```javascript" }),
+  ).toBeVisible();
+  expect(
+    await app.editor
+      .locator(".cm-line")
+      .filter({ hasText: /^Before$/ })
+      .boundingBox(),
+  ).toEqual(before);
+  await page.screenshot({ path: testInfo.outputPath("code-active.png") });
+  await app.selectInEditor({ line: 16, ch: 0 });
+  await expect(widgets).toHaveCount(3);
+  await app.selectInEditor({ line: 5, ch: 0 });
+  await app.focusEditor();
+  await page.keyboard.press("ArrowUp");
+  await expect(widgets).toHaveCount(2);
+  await app.selectInEditor({ line: 16, ch: 0 });
+  await app.modeButton("Source code").click();
+  await expect(active).toHaveCSS("font-size", "16px");
+  await app.modeButton("Edit").click();
+  await expect(widgets).toHaveCount(3);
+  await page.clock.install();
+  await page.clock.runFor(1000);
+  expect((await app.refusedWrites()).filter((w) => w === "file")).toEqual([]);
+  expect(await app.storedText(file)).toBe(text);
+  expect(await app.editorText()).toBe(text);
+  await app.refuseWrites(false);
+  await app.selectInEditor({ line: 3, ch: 0 });
+  await app.focusEditor();
+  await page.keyboard.type("// ");
+  await page.keyboard.press("Control+z");
+  expect(await app.editorText()).toBe(text);
+});
+
+test("opens code in early footnotes without writing or reordering the source", async ({
+  app,
+  page,
+}) => {
+  const text =
+    "See[^a].\n\n[^a]: footnote\n\n    ```js\n    const early = 1;\n    ```\n\nLater\n\n```js\nconst late = 2;\n```\n\nEND";
+  const file = await openStored(app, text);
+  await app.refuseWrites();
+  const widgets = app.editor.locator(".cn-code-preview");
+  await expect(widgets).toHaveCount(2);
+  await expect(widgets.first()).toContainText("const early = 1;");
+  await expect(widgets.last()).toContainText("const late = 2;");
+  await widgets.first().locator("pre").click();
+  await expect(widgets).toHaveCount(1);
+  await expect(widgets.first()).toContainText("const late = 2;");
+  expect(await app.editorText()).toBe(text);
+  await page.clock.install();
+  await page.clock.runFor(1000);
+  expect((await app.refusedWrites()).filter((w) => w === "file")).toEqual([]);
+  expect(await app.storedText(file)).toBe(text);
+});
+
+test("moves through wrapped prose before entering adjacent code", async ({
+  app,
+  page,
+}) => {
+  await page.setViewportSize({ width: 800, height: 900 });
+  const paragraph = "Long adjacent paragraph ".repeat(22);
+  const text = `${paragraph}\n\`\`\`js\nconst code = 1;\n\`\`\`\n${paragraph}\n\nEND`;
+  await openStored(app, text);
+  const widgets = app.editor.locator(".cn-code-preview");
+  await app.selectInEditor({ line: 0, ch: 0 });
+  await app.focusEditor();
+  await page.keyboard.press("ArrowDown");
+  expect((await app.caret()).line).toBe(0);
+  expect((await app.caret()).ch).toBeGreaterThan(0);
+  await expect(widgets).toHaveCount(1);
+  await app.selectInEditor({ line: 0, ch: paragraph.length });
+  await page.keyboard.press("ArrowDown");
+  expect((await app.caret()).line).toBe(1);
+  await expect(widgets).toHaveCount(0);
+  await app.selectInEditor({ line: 4, ch: paragraph.length });
+  await page.keyboard.press("ArrowUp");
+  expect((await app.caret()).line).toBe(4);
+  expect((await app.caret()).ch).toBeLessThan(paragraph.length);
+  await expect(widgets).toHaveCount(1);
+  await app.selectInEditor({ line: 4, ch: 0 });
+  await page.keyboard.press("ArrowUp");
+  expect((await app.caret()).line).toBe(3);
+  await expect(widgets).toHaveCount(0);
+  expect(await app.editorText()).toBe(text);
+});
+
+test("keeps parent list markers when activating a child inside a quote", async ({
+  app,
+}) => {
+  await openStored(app, "- parent\n  > - child\n  > - sibling\n\nEND");
+  const parent = app.editor.locator(".cm-line").filter({ hasText: "parent" });
+  const sibling = app.editor.locator(".cm-line").filter({ hasText: "sibling" });
+  const before = await parent.boundingBox();
+  await app.selectInEditor({ line: 1, ch: 8 });
+  await expect(parent.locator(".cn-list-marker")).toHaveText("•");
+  await expect(sibling.locator(".cn-list-marker")).toBeVisible();
+  expect(await parent.boundingBox()).toEqual(before);
+});
+
+test("preserves quote depth inside a list and nested code content", async ({
+  app,
+}) => {
+  const text =
+    "- item\n  > outer\n  > > inner\n  > > > deep\n\n  > ```js\n  > const nested = 2;\n  > ```\n\nEND";
+  await openStored(app, text);
+  const positions = async (root: Locator) =>
+    root.evaluate((el) =>
+      ["outer", "inner", "deep"].map((word) => {
+        const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+        let node: Node | null;
+        while ((node = walker.nextNode())) {
+          const at = node.textContent?.indexOf(word) ?? -1;
+          if (at < 0) continue;
+          const r = document.createRange();
+          r.setStart(node, at);
+          r.setEnd(node, at + word.length);
+          return r.getBoundingClientRect().x;
+        }
+        throw Error(word);
+      }),
+    );
+  const edit = await positions(app.editor);
+  expect(edit[1] - edit[0]).toBe(19);
+  expect(edit[2] - edit[1]).toBe(19);
+  await expect(app.editor.locator(".cn-code-preview pre")).toHaveText(
+    "const nested = 2;\n",
+  );
+  await app.modeButton("Preview").click();
+  expect(await positions(app.preview)).toEqual(edit);
+  await app.modeButton("Edit").click();
+  await app.editor.locator(".cn-code-preview pre").click();
+  await expect(
+    app.editor.locator(".cm-line").filter({ hasText: "const nested" }),
+  ).toContainText("> const nested");
+  expect(await app.editorText()).toBe(text);
+});
+
+test("gives consecutive headings and quotes space without changing active heading typography", async ({
+  app,
+}) => {
+  await openStored(app, "# First\n\n## Second\n\n> Quote\n\nAfter\n\nEND");
+  const heading = app.editor.locator(".tok-heading1").last();
+  const inactive = await style(heading);
+  await app.selectInEditor({ line: 0, ch: 3 });
+  expect(await style(app.editor.locator(".tok-heading1").last())).toEqual(
+    inactive,
+  );
+  await app.modeButton("Preview").click();
+  const gaps = await app.preview.evaluate((root) => {
+    const nodes = [...root.children];
+    return nodes
+      .slice(1, 4)
+      .map(
+        (n, i) =>
+          n.getBoundingClientRect().top -
+          nodes[i].getBoundingClientRect().bottom,
+      );
+  });
+  expect(gaps).toEqual([24, 24, 24]);
 });
 
 test("keeps a preview anchor when an image above it finishes loading", async ({

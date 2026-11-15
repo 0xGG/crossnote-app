@@ -101,7 +101,7 @@ html .preview.preview h4,
 html .preview.preview h5,
 html .preview.preview h6 {
   line-height: 1.2;
-  margin: 0;
+  margin: 24px 0;
   color: var(--preview-strong);
 }
 html .preview.preview h1 {
@@ -299,6 +299,18 @@ html .preview.preview ul {
 }
 html .preview.preview > p {
   margin-bottom: 24px;
+}
+/* Match the editor's blank line around a quote without stacking margins. */
+html .preview.preview blockquote {
+  margin-top: 24px;
+  margin-bottom: 24px;
+}
+html .preview.preview > :first-child,
+html .preview.preview blockquote > :first-child {
+  margin-top: 0;
+}
+html .preview.preview blockquote > :last-child {
+  margin-bottom: 0;
 }
 html .preview.preview kbd {
   color: var(--preview-strong);

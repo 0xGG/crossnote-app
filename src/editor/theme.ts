@@ -128,13 +128,16 @@ const look = EditorView.theme({
   },
   ".cm-line.cn-codeblock": {
     fontFamily: MONOSPACE,
+    fontSize: "16px",
+  },
+  ".cm-line.cn-diagram-source": {
     fontSize: "0.85em",
     backgroundColor: "var(--preview-inset-background)",
   },
   ".cm-line.cn-table": { fontFamily: MONOSPACE, fontSize: "0.9em" },
   ".cm-line.cn-quote": {
     borderLeft: "4px solid var(--preview-border)",
-    marginLeft: "var(--note-inline-padding)",
+    marginLeft: "calc(var(--note-inline-padding) + var(--cn-quote-inset, 0px))",
     marginRight: "var(--note-inline-padding)",
     paddingLeft: "calc(15px + (var(--cn-quote-depth) - 1) * 19px)",
     paddingRight: "15px",
@@ -147,6 +150,17 @@ const look = EditorView.theme({
     color: "var(--preview-subtle)",
   },
   ".cn-source-code": { fontFamily: MONOSPACE },
+  ".cn-code-preview": {
+    padding: "0 var(--note-inline-padding)",
+    cursor: "text",
+    userSelect: "text",
+    whiteSpace: "normal",
+  },
+  ".cn-code-preview pre": { marginBottom: "0" },
+  ".cn-code-preview blockquote, .cn-code-preview ul, .cn-code-preview ol": {
+    marginTop: "0",
+    marginBottom: "0",
+  },
   ".cn-list-marker": {
     display: "inline-block",
     width: "2em",

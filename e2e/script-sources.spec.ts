@@ -29,6 +29,9 @@ test("loads the language of a code block from the site, and draws the block agai
     await route.continue();
   });
   await app.typeInEditor("```bash\necho $HOME\n```\n");
+  // Select the block to check the editor's delayed language, rather than
+  // the independent highlighter used by its inactive rendering.
+  await app.selectInEditor({ line: 1, ch: 0 });
   await expect.poll(() => asked).toHaveLength(1);
   expect(new URL(asked[0]).origin).toBe(new URL(page.url()).origin);
   // Drawn, without the language's colours, while the language is on its way.
@@ -59,6 +62,10 @@ test("loads the language of a code block without rewriting the note", async ({
   await app.openNotes();
   await app.noteCards.filter({ hasText: "README" }).click();
   await app.modeButton("Edit").click();
+  await expect(
+    app.editor.locator(".cn-code-preview pre.language-bash"),
+  ).toBeVisible();
+  await app.editor.locator(".cn-code-preview pre").click();
   await expect.poll(() => app.tokenTypes("echo")).toContain("variableName");
   // The app saves a change 300 ms after it. A change the language set off
   // would come no later than the highlighting just seen, so one typed into

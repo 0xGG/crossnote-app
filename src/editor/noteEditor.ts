@@ -2,6 +2,7 @@ import { defaultKeymap } from "@codemirror/commands";
 import { syntaxTree } from "@codemirror/language";
 import { sourceCodeFont } from "./codeFont";
 import type { ReadingPosition } from "../render/readingPosition";
+import { codePreview } from "./codePreview";
 import {
   Compartment,
   EditorState,
@@ -67,7 +68,7 @@ function displayExtensions(
   return [
     EditorView.editorAttributes.of({ class: `cn-editor-${display}` }),
     display === "live"
-      ? livePreview
+      ? [livePreview, codePreview]
       : [sourceCodeFont, numbered ? lineNumbers() : []],
   ];
 }

@@ -171,9 +171,26 @@ export function livePreviewDecorations(
     state.selection.ranges.some(
       (range) => range.from <= to && range.to >= from,
     );
+  const itemTouched = (item: SyntaxNode) => {
+    const nested: SyntaxNode[] = [];
+    const findLists = (parent: SyntaxNode) => {
+      for (let child = parent.firstChild; child; child = child.nextSibling) {
+        if (child.name === "BulletList" || child.name === "OrderedList")
+          nested.push(child);
+        else findLists(child);
+      }
+    };
+    findLists(item);
+    return state.selection.ranges.some(
+      (range) =>
+        range.from <= item.to &&
+        range.to >= item.from &&
+        !nested.some((list) => range.from >= list.from && range.to <= list.to),
+    );
+  };
   const ranges: Range<Decoration>[] = [];
   const hiddenRanges = new Set<string>();
-  const quoteLines = new Map<number, number>();
+  const quoteLines = new Map<number, { depth: number; borders: number[] }>();
   const listLines = new Map<
     number,
     { indent: number; first: boolean; quote: boolean }
@@ -191,7 +208,16 @@ export function livePreviewDecorations(
       to: part.to,
       enter: (node) => {
         const { name, from, to } = node;
-        const lines = LINES[name];
+        const lines =
+          name === "FencedCode" &&
+          state
+            .sliceDoc(
+              node.node.getChild("CodeInfo")?.from ?? from,
+              node.node.getChild("CodeInfo")?.to ?? from,
+            )
+            .trim() === "mermaid"
+            ? Decoration.line({ class: "cn-codeblock cn-diagram-source" })
+            : LINES[name];
         if (lines) {
           // A block that ends with a line break ends on the line before it.
           const end = to > from ? to - 1 : to;
@@ -208,10 +234,25 @@ export function livePreviewDecorations(
           return false;
         }
         if (name === "Blockquote") {
-          let depth = 1;
-          for (let parent = node.node.parent; parent; parent = parent.parent) {
-            if (parent.name === "Blockquote") depth++;
+          const containers: string[] = [];
+          for (
+            let parent: SyntaxNode | null = node.node;
+            parent;
+            parent = parent.parent
+          ) {
+            containers.unshift(parent.name);
           }
+          const borders: number[] = [];
+          let indent = 0;
+          for (const container of containers) {
+            if (container === "Blockquote") {
+              borders.push(indent);
+              indent += 19;
+            }
+            if (container === "BulletList" || container === "OrderedList")
+              indent += 32;
+          }
+          const depth = borders.length;
           const last = state.doc.lineAt(Math.min(to - 1, part.to)).number;
           for (
             let n = state.doc.lineAt(Math.max(from, part.from)).number;
@@ -219,7 +260,8 @@ export function livePreviewDecorations(
             n++
           ) {
             const at = state.doc.line(n).from;
-            quoteLines.set(at, Math.max(quoteLines.get(at) ?? 0, depth));
+            if ((quoteLines.get(at)?.depth ?? 0) < depth)
+              quoteLines.set(at, { depth, borders });
           }
         }
         if (name === "ListItem") {
@@ -235,7 +277,7 @@ export function livePreviewDecorations(
           }
           const first = state.doc.lineAt(from);
           const last = state.doc.lineAt(to - 1).number;
-          if (!touched(from, to)) {
+          if (!itemTouched(item)) {
             const ordered = item.parent?.name === "OrderedList";
             let number = 1;
             if (ordered) {
@@ -275,6 +317,8 @@ export function livePreviewDecorations(
               if (line.to < part.from || line.from > part.to) continue;
               const prefix = /^(?:\s*> ?)*[ \t]*/.exec(line.text)![0];
               let opaque = false;
+              let ownItem = true;
+              let nearestItem = false;
               for (
                 let inner: SyntaxNode | null = syntaxTree(state).resolveInner(
                   line.from + prefix.length,
@@ -283,30 +327,34 @@ export function livePreviewDecorations(
                 inner;
                 inner = inner.parent
               ) {
+                if (inner.name === "ListItem" && !nearestItem) {
+                  nearestItem = true;
+                  ownItem = inner.from === item.from && inner.to === item.to;
+                }
                 if (OPAQUE.has(inner.name)) {
                   opaque = true;
                   break;
                 }
               }
-              if (opaque) continue;
+              if (opaque || !ownItem) continue;
               listLines.set(line.from, {
                 indent: depth * 2,
                 first: n === first.number,
                 quote,
               });
-              // Container marks are hidden separately. Only remove indentation
-              // after them, leaving code and other non-whitespace text intact.
-              const afterQuote = prefix.lastIndexOf(">") + 1;
-              const whitespaceFrom =
-                line.from +
-                (afterQuote
-                  ? afterQuote + (prefix[afterQuote] === " " ? 1 : 0)
-                  : 0);
-              const whitespaceTo = Math.min(
-                line.from + prefix.length,
-                n === first.number ? mark.from : line.to,
-              );
-              hide(whitespaceFrom, whitespaceTo);
+              // Hide every indentation segment, including before quote marks.
+              // QuoteMark decorations own only '>' and its following space.
+              for (const match of prefix.matchAll(/[ \t]+/g)) {
+                const start = match.index!;
+                const skip =
+                  start > 0 && prefix[start - 1] === ">" && match[0][0] === " "
+                    ? 1
+                    : 0;
+                hide(
+                  line.from + start + skip,
+                  line.from + start + match[0].length,
+                );
+              }
             }
           }
         }
@@ -432,7 +480,7 @@ export function livePreviewDecorations(
               !touched(from, to) &&
               (() => {
                 for (let p = node.node.parent; p; p = p.parent) {
-                  if (p.name === "ListItem") return !touched(p.from, p.to);
+                  if (p.name === "ListItem") return !itemTouched(p);
                 }
                 return true;
               })()
@@ -450,19 +498,37 @@ export function livePreviewDecorations(
       },
     });
   }
-  for (const [from, depth] of quoteLines) {
+  for (const [from, { depth, borders }] of quoteLines) {
+    const inset = borders[0];
+    const padding = borders[borders.length - 1] - inset + 15;
+    const stops = borders.slice(1).flatMap((border) => {
+      const x = border - inset - 4;
+      return [
+        `transparent ${x}px`,
+        `var(--preview-border) ${x}px ${x + 4}px`,
+        `transparent ${x + 4}px`,
+      ];
+    });
     ranges.push(
       Decoration.line({
         class: "cn-quote",
-        attributes: { style: `--cn-quote-depth:${depth}` },
+        attributes: {
+          style: `--cn-quote-depth:${depth};--cn-quote-inset:${inset}px;padding-left:${padding}px;background-position:0 0;background-image:${stops.length ? `linear-gradient(to right, ${stops.join(",")})` : "none"};background-size:100% 100%`,
+        },
       }).range(from),
     );
   }
   for (const [from, { indent, first, quote }] of listLines) {
+    const container = quoteLines.get(from);
+    const left = container
+      ? `${15 + (container.depth - 1) * 19 - container.borders[0]}px`
+      : quote
+        ? "15px"
+        : "var(--note-inline-padding)";
     ranges.push(
       Decoration.line({
         attributes: {
-          style: `padding-left:calc(${quote ? "15px + (var(--cn-quote-depth) - 1) * 19px" : "var(--note-inline-padding)"} + ${indent}em);text-indent:${first ? "-2em" : "0"}`,
+          style: `padding-left:calc(${left} + ${indent}em);text-indent:${first ? "-2em" : "0"}`,
         },
       }).range(from),
     );
