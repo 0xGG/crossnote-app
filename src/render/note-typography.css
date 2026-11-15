@@ -1,0 +1,55 @@
+/* Shared by the reading preview and the editor's inactive inline syntax. */
+:root {
+  --note-text-font:
+    -apple-system, BlinkMacSystemFont, "Noto Sans SC", "Segoe UI", Roboto,
+    Oxygen, Ubuntu, Cantarell, "Fira Sans", "Droid Sans", "Helvetica Neue",
+    sans-serif;
+  --note-code-font: Consolas, "Liberation Mono", Menlo, Courier, monospace;
+  --note-inline-padding: 13px;
+}
+
+html .preview.preview strong,
+.cn-editor-live .cn-strong {
+  font-weight: 700;
+  color: var(--preview-strong);
+}
+html .preview.preview em,
+.cn-editor-live .cn-em {
+  font-style: italic;
+}
+html .preview.preview del,
+.cn-editor-live .cn-strike {
+  text-decoration: line-through;
+  color: var(--preview-subtle);
+}
+html .preview.preview :not(pre) > code,
+.cn-editor-live .cn-code {
+  font-family: var(--note-code-font);
+  font-size: 0.85em;
+  color: var(--preview-strong);
+  background-color: var(--preview-inset-background);
+  border-radius: 3px;
+  padding: 0.2em 6px;
+  vertical-align: middle;
+}
+html .preview.preview .task-list-item-checkbox,
+.cn-editor-live .cn-task {
+  vertical-align: middle;
+  margin: 0 0.4em 0 0;
+  height: 16px;
+  width: 16px;
+  appearance: none;
+  -webkit-appearance: none;
+  border: 1px solid #454545;
+  border-radius: 3px;
+  background: transparent;
+  color: var(--preview-text);
+}
+html .preview.preview .task-list-item-checkbox:checked::before,
+.cn-editor-live .cn-task:checked::before {
+  content: "✔";
+  display: block;
+  font: 14px/14px var(--note-text-font);
+  text-align: center;
+  color: var(--preview-text);
+}

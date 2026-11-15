@@ -30,8 +30,7 @@ const markdownHighlighter = tagHighlighter([
   { tag: noteTags.inserted, class: "tok-inserted" },
 ]);
 
-const MONOSPACE =
-  'Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace';
+const MONOSPACE = "var(--note-code-font)";
 
 // One look for the four themes: every colour is a variable the page sets by
 // theme. The editor's root has one of two classes, by how it shows a note:
@@ -47,17 +46,16 @@ const look = EditorView.theme({
   },
   "&.cm-focused": { outline: "none" },
   ".cm-scroller": {
-    fontFamily:
-      '-apple-system, BlinkMacSystemFont, "Noto Sans SC", "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif',
-    lineHeight: "1.6",
+    fontFamily: "var(--note-text-font)",
+    lineHeight: "1.5",
     WebkitFontSmoothing: "antialiased",
     MozOsxFontSmoothing: "grayscale",
   },
   ".cm-content": {
-    padding: "16px 0",
+    padding: "4px 0",
     caretColor: "var(--preview-strong)",
   },
-  ".cm-line": { padding: "0 16px" },
+  ".cm-line": { padding: "0 var(--note-inline-padding)" },
   ".cm-cursor, .cm-dropCursor": { borderLeftColor: "var(--preview-strong)" },
   "&.cm-focused > .cm-scroller > .cm-selectionLayer .cm-selectionBackground, .cm-selectionBackground, .cm-content ::selection":
     { backgroundColor: "var(--editor-selection)" },
@@ -70,7 +68,7 @@ const look = EditorView.theme({
   },
   ".cm-lineNumbers .cm-gutterElement": { padding: "0 8px 0 16px" },
 
-  ".tok-strong": { fontWeight: "600", color: "var(--preview-strong)" },
+  ".tok-strong": { fontWeight: "700", color: "var(--preview-strong)" },
   ".tok-emphasis": { fontStyle: "italic" },
   ".tok-strikethrough": {
     textDecoration: "line-through",
@@ -98,13 +96,6 @@ const look = EditorView.theme({
   ".tok-inserted": { textDecoration: "underline" },
 
   // The live preview's own (livePreview.ts).
-  ".cn-code": {
-    fontFamily: MONOSPACE,
-    fontSize: "0.85em",
-    backgroundColor: "var(--preview-inset-background)",
-    borderRadius: "3px",
-    padding: "0.2em 0",
-  },
   ".cn-sub": { verticalAlign: "sub", fontSize: "0.8em" },
   ".cn-sup": { verticalAlign: "super", fontSize: "0.8em" },
   ".cn-link": { color: "var(--preview-link)" },
@@ -143,8 +134,38 @@ const look = EditorView.theme({
   ".cm-line.cn-table": { fontFamily: MONOSPACE, fontSize: "0.9em" },
   ".cm-line.cn-quote": {
     borderLeft: "4px solid var(--preview-border)",
-    paddingLeft: "12px",
+    marginLeft: "var(--note-inline-padding)",
+    marginRight: "var(--note-inline-padding)",
+    paddingLeft: "calc(15px + (var(--cn-quote-depth) - 1) * 19px)",
+    paddingRight: "15px",
+    backgroundColor: "var(--preview-inset-background)",
+    backgroundImage:
+      "repeating-linear-gradient(to right, var(--preview-border) 0 4px, transparent 4px 19px)",
+    backgroundPosition: "15px 0",
+    backgroundSize: "calc((var(--cn-quote-depth) - 1) * 19px) 100%",
+    backgroundRepeat: "no-repeat",
     color: "var(--preview-subtle)",
+  },
+  ".cn-source-code": { fontFamily: MONOSPACE },
+  ".cn-list-marker": {
+    display: "inline-block",
+    width: "2em",
+    textIndent: "0",
+    textAlign: "right",
+    paddingRight: "0.5em",
+    boxSizing: "border-box",
+  },
+  ".cn-rule": {
+    display: "inline-block",
+    width: "100%",
+    height: "4px",
+    backgroundColor: "var(--preview-border)",
+    verticalAlign: "middle",
+  },
+  ".cm-line.cn-setext-mark": { fontSize: "16px", lineHeight: "1.5" },
+  ".cn-setext-mark .tok-heading": {
+    fontSize: "inherit",
+    lineHeight: "inherit",
   },
   ".cm-line.cn-frontmatter": {
     fontFamily: MONOSPACE,

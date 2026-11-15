@@ -23,11 +23,12 @@ export default function fence(md: MarkdownIt) {
     const token = tokens[idx];
     const language = token.info.trim().match(/^[^\s{]*/)[0];
     const content = escapeString(token.content);
+    const source = `data-source-line="${token.map?.[0] ?? 0}"`;
     const finalBreak =
       idx < tokens.length && tokens[idx].type === "list_item_close" ? "\n" : "";
     if (language === "mermaid") {
-      return `<div class="vickeymd-fence mermaid" data-language="mermaid">${content}</div>`;
+      return `<div class="vickeymd-fence mermaid" data-language="mermaid" ${source}>${content}</div>`;
     }
-    return `<pre class="vickeymd-fence" data-language="${escapeString(language)}">${content}</pre>${finalBreak}`;
+    return `<pre class="vickeymd-fence" data-language="${escapeString(language)}" ${source}>${content}</pre>${finalBreak}`;
   };
 }

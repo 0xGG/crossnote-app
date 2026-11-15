@@ -81,10 +81,22 @@ function renderCodeFences(
       } else {
         drawing = renderCodeBlock(code, language);
       }
+      if (fence.hasAttribute("data-source-line")) {
+        drawing.element.setAttribute(
+          "data-source-line",
+          fence.getAttribute("data-source-line")!,
+        );
+      }
       fence.replaceWith(drawing.element);
       drawings.push(drawing);
     } catch (error) {
-      fence.replaceWith(failedBlock(error));
+      const failure = failedBlock(error);
+      if (fence.hasAttribute("data-source-line"))
+        failure.setAttribute(
+          "data-source-line",
+          fence.getAttribute("data-source-line")!,
+        );
+      fence.replaceWith(failure);
     }
   }
   return drawings;

@@ -8,7 +8,14 @@ import {
   longFormulas,
 } from "./livePreview";
 import { stateOf } from "./testText";
-import { EmojiWidget, ImageWidget, MathWidget, TaskWidget } from "./widgets";
+import {
+  EmojiWidget,
+  ImageWidget,
+  MathWidget,
+  TaskWidget,
+  ListMarkerWidget,
+  RuleWidget,
+} from "./widgets";
 
 // "¦" is the caret, or the two ends of the selection.
 const stateFor = (marked: string) =>
@@ -26,6 +33,8 @@ function decorations(state: EditorState): DecorationSet[] {
 }
 
 function describeWidget(widget: unknown) {
+  if (widget instanceof ListMarkerWidget) return widget.label;
+  if (widget instanceof RuleWidget) return "<rule>";
   if (widget instanceof MathWidget) {
     return `<math${widget.display ? "!" : ""} ${widget.tex}>`;
   }
@@ -151,8 +160,10 @@ describe("the live preview", () => {
       expect(shown("# Tit¦le\n\n## Section\n")).toBe("# Title\n\nSection\n");
     });
 
-    it("keep the line of signs under an underlined one", () => {
-      expect(shown("Title\n===\n\ntext¦")).toBe("Title\n===\n\ntext");
+    it("hides Setext marks away from the heading and restores them while editing", () => {
+      expect(shown("Title\n===\n\ntext¦")).toBe("Title\n\n\ntext");
+      expect(shown("Tit¦le\n===\n\ntext")).toBe("Title\n===\n\ntext");
+      expect(shown("Title\n=¦==\n\ntext")).toBe("Title\n===\n\ntext");
     });
   });
 
@@ -318,7 +329,7 @@ describe("the live preview", () => {
   describe("tasks", () => {
     it("have a box in place of their brackets", () => {
       expect(shown("- [ ] to do\n- [x] done\n- [X] too\n\n¦")).toBe(
-        "- <task> to do\n- <task x> done\n- <task x> too\n\n",
+        "<task> to do\n<task x> done\n<task x> too\n\n",
       );
     });
 
@@ -359,7 +370,7 @@ describe("the live preview", () => {
 
     it("draw what is in a table's cells and a quote's lines", () => {
       expect(shown("| **a** | $x$ |\n| - | - |\n\n> **quoted**\n\n¦")).toBe(
-        "| a | <math x> |\n| - | - |\n\n> quoted\n\n",
+        "| a | <math x> |\n| - | - |\n\nquoted\n\n",
       );
     });
   });
@@ -374,6 +385,52 @@ describe("the live preview", () => {
       }
     }
     expect(found).toEqual(["**two**"]);
+  });
+
+  describe("block markup", () => {
+    it("distinguishes rules, front matter, Setext and fenced source", () => {
+      expect(
+        shown("---\ntitle: T\n---\n\n---\n\nTitle\n---\n\n```\n---\n```\n\n¦"),
+      ).toBe("---\ntitle: T\n---\n\n<rule>\n\nTitle\n\n\n```\n---\n```\n\n");
+      expect(shown("--¦-\n")).toBe("---\n");
+    });
+    it("hides quote marks per line, including nested quotes", () => {
+      expect(shown("> first\n> > nested\n> cu¦rrent")).toBe(
+        "first\nnested\n> current",
+      );
+    });
+    it("numbers ordered items by their start and position, preserving source", () => {
+      expect(shown("4. first\n9. second\n1. third\n\n¦")).toBe(
+        "4.first\n5.second\n6.third\n\n",
+      );
+      expect(shown("4. fi¦rst\n9. second\n\n")).toBe("4. first\n5.second\n\n");
+    });
+    it("renders nested and multiline list content and restores the whole active item", () => {
+      expect(shown("- [ ]not a task\n\n¦")).toBe("•[ ]not a task\n\n");
+      expect(shown("- first\n  continued\n  - nested\n\n¦")).toBe(
+        "•first\ncontinued\n◦nested\n\n",
+      );
+      expect(shown("- first\n  contin¦ued\n\n")).toBe(
+        "- first\n  continued\n\n",
+      );
+      expect(shown("- [ ] tas¦k\n\n")).toBe("- [ ] task\n\n");
+    });
+    it("renders nested containers without overlapping replacements", () => {
+      const view = new EditorView({
+        state: stateFor("> - first\n>   - nested\n>     more\n\n¦"),
+        parent: document.body,
+      });
+      try {
+        expect(
+          view.contentDOM.querySelectorAll(".cn-list-marker"),
+        ).toHaveLength(2);
+        expect(view.state.doc.toString()).toBe(
+          "> - first\n>   - nested\n>     more\n\n",
+        );
+      } finally {
+        view.destroy();
+      }
+    });
   });
 
   describe("its widgets", () => {

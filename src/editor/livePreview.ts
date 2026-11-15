@@ -20,6 +20,8 @@ import {
   ImageWidget,
   MathWidget,
   TaskWidget,
+  ListMarkerWidget,
+  RuleWidget,
   type ImageHost,
   type ImageMarkup,
 } from "./widgets";
@@ -91,7 +93,6 @@ const LINES: Record<string, Decoration> = {
   FencedCode: Decoration.line({ class: "cn-codeblock" }),
   CodeBlock: Decoration.line({ class: "cn-codeblock" }),
   Table: Decoration.line({ class: "cn-table" }),
-  Blockquote: Decoration.line({ class: "cn-quote" }),
   Frontmatter: Decoration.line({ class: "cn-frontmatter" }),
 };
 
@@ -171,8 +172,16 @@ export function livePreviewDecorations(
       (range) => range.from <= to && range.to >= from,
     );
   const ranges: Range<Decoration>[] = [];
+  const hiddenRanges = new Set<string>();
+  const quoteLines = new Map<number, number>();
+  const listLines = new Map<
+    number,
+    { indent: number; first: boolean; quote: boolean }
+  >();
   const hide = (from: number, to: number) => {
-    if (to > from) {
+    const key = `${from}:${to}`;
+    if (to > from && !hiddenRanges.has(key)) {
+      hiddenRanges.add(key);
       ranges.push(hidden.range(from, to));
     }
   };
@@ -197,6 +206,133 @@ export function livePreviewDecorations(
         }
         if (OPAQUE.has(name)) {
           return false;
+        }
+        if (name === "Blockquote") {
+          let depth = 1;
+          for (let parent = node.node.parent; parent; parent = parent.parent) {
+            if (parent.name === "Blockquote") depth++;
+          }
+          const last = state.doc.lineAt(Math.min(to - 1, part.to)).number;
+          for (
+            let n = state.doc.lineAt(Math.max(from, part.from)).number;
+            n <= last;
+            n++
+          ) {
+            const at = state.doc.line(n).from;
+            quoteLines.set(at, Math.max(quoteLines.get(at) ?? 0, depth));
+          }
+        }
+        if (name === "ListItem") {
+          const item = node.node;
+          const mark = item.getChild("ListMark");
+          if (!mark) return;
+          let depth = 0;
+          let quote = false;
+          for (let parent = item.parent; parent; parent = parent.parent) {
+            if (parent.name === "BulletList" || parent.name === "OrderedList")
+              depth++;
+            if (parent.name === "Blockquote") quote = true;
+          }
+          const first = state.doc.lineAt(from);
+          const last = state.doc.lineAt(to - 1).number;
+          if (!touched(from, to)) {
+            const ordered = item.parent?.name === "OrderedList";
+            let number = 1;
+            if (ordered) {
+              const start = item.parent!.firstChild?.getChild("ListMark");
+              number = start
+                ? parseInt(state.sliceDoc(start.from, start.to), 10)
+                : 1;
+              for (
+                let sibling = item.prevSibling;
+                sibling;
+                sibling = sibling.prevSibling
+              ) {
+                if (sibling.name === "ListItem") number++;
+              }
+            }
+            const task = !!item.getChild("Task")?.getChild("TaskMarker");
+            const after =
+              mark.to +
+              /^\s*/.exec(state.sliceDoc(mark.to, first.to))![0].length;
+            ranges.push(
+              Decoration.replace({
+                widget: new ListMarkerWidget(
+                  task
+                    ? ""
+                    : ordered
+                      ? `${number}.`
+                      : depth === 1
+                        ? "•"
+                        : depth === 2
+                          ? "◦"
+                          : "▪",
+                ),
+              }).range(mark.from, after),
+            );
+            for (let n = first.number; n <= last; n++) {
+              const line = state.doc.line(n);
+              if (line.to < part.from || line.from > part.to) continue;
+              const prefix = /^(?:\s*> ?)*[ \t]*/.exec(line.text)![0];
+              let opaque = false;
+              for (
+                let inner: SyntaxNode | null = syntaxTree(state).resolveInner(
+                  line.from + prefix.length,
+                  1,
+                );
+                inner;
+                inner = inner.parent
+              ) {
+                if (OPAQUE.has(inner.name)) {
+                  opaque = true;
+                  break;
+                }
+              }
+              if (opaque) continue;
+              listLines.set(line.from, {
+                indent: depth * 2,
+                first: n === first.number,
+                quote,
+              });
+              // Container marks are hidden separately. Only remove indentation
+              // after them, leaving code and other non-whitespace text intact.
+              const afterQuote = prefix.lastIndexOf(">") + 1;
+              const whitespaceFrom =
+                line.from +
+                (afterQuote
+                  ? afterQuote + (prefix[afterQuote] === " " ? 1 : 0)
+                  : 0);
+              const whitespaceTo = Math.min(
+                line.from + prefix.length,
+                n === first.number ? mark.from : line.to,
+              );
+              hide(whitespaceFrom, whitespaceTo);
+            }
+          }
+        }
+        if (name === "QuoteMark") {
+          const line = state.doc.lineAt(from);
+          if (!touched(line.from, line.to))
+            hide(from, to + (state.sliceDoc(to, to + 1) === " " ? 1 : 0));
+          return false;
+        }
+        if (name === "HorizontalRule") {
+          const line = state.doc.lineAt(from);
+          if (!touched(line.from, line.to))
+            ranges.push(
+              Decoration.replace({ widget: new RuleWidget() }).range(from, to),
+            );
+          return false;
+        }
+        if (/^SetextHeading[12]$/.test(name)) {
+          const mark = node.node.getChild("HeaderMark");
+          if (mark) {
+            const line = state.doc.lineAt(mark.from);
+            ranges.push(
+              Decoration.line({ class: "cn-setext-mark" }).range(line.from),
+            );
+            if (!touched(from, to)) hide(mark.from, mark.to);
+          }
         }
         const element = INLINE[name];
         if (element) {
@@ -292,7 +428,15 @@ export function livePreviewDecorations(
             return false;
           }
           case "TaskMarker":
-            if (!touched(from, to)) {
+            if (
+              !touched(from, to) &&
+              (() => {
+                for (let p = node.node.parent; p; p = p.parent) {
+                  if (p.name === "ListItem") return !touched(p.from, p.to);
+                }
+                return true;
+              })()
+            ) {
               ranges.push(
                 Decoration.replace({
                   widget: new TaskWidget(
@@ -305,6 +449,23 @@ export function livePreviewDecorations(
         }
       },
     });
+  }
+  for (const [from, depth] of quoteLines) {
+    ranges.push(
+      Decoration.line({
+        class: "cn-quote",
+        attributes: { style: `--cn-quote-depth:${depth}` },
+      }).range(from),
+    );
+  }
+  for (const [from, { indent, first, quote }] of listLines) {
+    ranges.push(
+      Decoration.line({
+        attributes: {
+          style: `padding-left:calc(${quote ? "15px + (var(--cn-quote-depth) - 1) * 19px" : "var(--note-inline-padding)"} + ${indent}em);text-indent:${first ? "-2em" : "0"}`,
+        },
+      }).range(from),
+    );
   }
   return Decoration.set(ranges, true);
 }
