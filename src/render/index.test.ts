@@ -38,6 +38,23 @@ afterEach(() => {
 });
 
 describe("mountPreview", () => {
+  it("keeps source anchors through code highlighting and failed diagrams without Prism line highlighting", async () => {
+    const element = document.createElement("div");
+    await mountPreview(
+      element,
+      "---\ntitle: T\n---\n\nParagraph\n\n```javascript\nconst x = 1;\n```\n\n    indented\n\n```mermaid\ninvalid\n```",
+      { note: null },
+    ).done;
+    expect(
+      Array.from(
+        element.querySelectorAll("[data-source-line], [data-line]"),
+      ).map(
+        (el) =>
+          el.getAttribute("data-source-line") ?? el.getAttribute("data-line"),
+      ),
+    ).toEqual(["4", "6", "10", "12"]);
+    expect(element.querySelector("pre[data-line]")).toBeNull();
+  });
   it("keeps what a note's HTML says, less what the sanitizer takes out", async () => {
     const element = document.createElement("div");
     await mountPreview(

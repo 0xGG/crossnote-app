@@ -1,3 +1,5 @@
+@import "./note-typography.css";
+
 /*
  * The preview's look in each of the app's themes (data-preview-theme on
  * the page or on a preview of its own). Taken from echomd 1.0.4's
@@ -64,7 +66,7 @@
 
 [data-preview-theme="solarized-light"] {
   --preview-text: #657b83;
-  --preview-background: #fdf6e3;
+  --preview-background: #fdf6e4;
   --preview-strong: #1e2427;
   --preview-subtle: #90a3a9;
   --preview-link: #08c;
@@ -78,14 +80,11 @@
 }
 
 html .preview.preview {
-  font-family:
-    -apple-system, BlinkMacSystemFont, "Noto Sans SC", "Segoe UI", Roboto,
-    Oxygen, Ubuntu, Cantarell, "Fira Sans", "Droid Sans", "Helvetica Neue",
-    sans-serif;
+  font-family: var(--note-text-font);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   font-size: 16px;
-  line-height: 1.6;
+  line-height: 1.5;
   color: var(--preview-text);
   background-color: var(--preview-background);
   overflow: initial;
@@ -102,7 +101,7 @@ html .preview.preview h4,
 html .preview.preview h5,
 html .preview.preview h6 {
   line-height: 1.2;
-  margin: 0;
+  margin: 24px 0;
   color: var(--preview-strong);
 }
 html .preview.preview h1 {
@@ -151,7 +150,7 @@ html .preview.preview img {
 }
 html .preview.preview > p {
   margin-top: 0;
-  margin-bottom: 16px;
+  margin-bottom: 24px;
   word-wrap: break-word;
 }
 html .preview.preview > ol,
@@ -184,25 +183,6 @@ html .preview.preview li > p {
   margin-top: 0;
   margin-bottom: 0;
 }
-html .preview.preview .task-list-item-checkbox {
-  vertical-align: middle;
-  margin-top: 0;
-  height: 16px;
-  width: 16px;
-  appearance: none;
-  -webkit-appearance: none;
-  border: 1px solid #454545;
-  border-radius: 3px;
-}
-html .preview.preview .task-list-item-checkbox[checked]:before {
-  content: "✔";
-  white-space: pre;
-  display: inline-block;
-  line-height: 1em;
-  min-width: 1em;
-  text-align: center;
-  color: var(--preview-text);
-}
 html .preview.preview blockquote {
   margin: 16px 0;
   font-size: inherit;
@@ -216,6 +196,14 @@ html .preview.preview blockquote > :first-child {
 }
 html .preview.preview blockquote > :last-child {
   margin-bottom: 0;
+}
+/* Embedded preview blocks are measured as a single CodeMirror widget.
+ * Keep child margins inside that box instead of letting them collapse out. */
+html .preview.preview.cn-code-preview pre,
+html .preview.preview.cn-code-preview blockquote,
+html .preview.preview.cn-code-preview ul,
+html .preview.preview.cn-code-preview ol {
+  margin: 0;
 }
 html .preview.preview hr {
   height: 4px;
@@ -257,7 +245,7 @@ html .preview.preview dl dd {
   margin-bottom: 16px;
 }
 html .preview.preview code {
-  font-family: Consolas, "Liberation Mono", Menlo, Courier, monospace;
+  font-family: var(--note-code-font);
   font-size: 0.85em !important;
   color: var(--preview-strong);
   background-color: var(--preview-inset-background);
@@ -282,7 +270,7 @@ html .preview.preview pre {
   font-family: Consolas, "Liberation Mono", Menlo, Courier, monospace;
   padding: 1em;
   overflow: auto;
-  line-height: 1.45;
+  line-height: 1.5;
   border: var(--preview-border);
   border-radius: 3px;
 }
@@ -317,6 +305,21 @@ html .preview.preview ul {
   margin-top: 0;
   margin-bottom: 16px;
 }
+html .preview.preview > p {
+  margin-bottom: 24px;
+}
+/* Match the editor's blank line around a quote without stacking margins. */
+html .preview.preview blockquote {
+  margin-top: 24px;
+  margin-bottom: 24px;
+}
+html .preview.preview > :first-child,
+html .preview.preview blockquote > :first-child {
+  margin-top: 0;
+}
+html .preview.preview blockquote > :last-child {
+  margin-bottom: 0;
+}
 html .preview.preview kbd {
   color: var(--preview-strong);
   border: 1px solid var(--preview-border);
@@ -325,7 +328,8 @@ html .preview.preview kbd {
   background-color: var(--preview-kbd-background);
   border-radius: 3px;
 }
-html .preview.preview a.tag.tag-topic {
+html .preview.preview a.tag.tag-topic,
+.cn-editor-live .cn-hashtag {
   background-color: var(--preview-tag-background);
   color: var(--preview-tag-text);
   font-size: 0.84em;

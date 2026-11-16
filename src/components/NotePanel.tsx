@@ -8,7 +8,7 @@ import {
   Tooltip,
   Typography,
 } from "@mui/material";
-import { darken, styled } from "@mui/material/styles";
+import { darken, styled, type Theme } from "@mui/material/styles";
 import { Actions, TabNode } from "flexlayout-react";
 import {
   CodeTags,
@@ -57,6 +57,11 @@ import {
 import { Reference } from "../lib/reference";
 import { onTabVisibility } from "../lib/tabVisibility";
 import { MountedPreview, mountPreview } from "../render";
+import {
+  previewPosition,
+  restorePreviewPosition,
+  type ReadingPosition,
+} from "../render/readingPosition";
 import { setTheme } from "../themes/manager";
 import { resolveNoteImageSrc } from "../utilities/image";
 import { openURL } from "../utilities/preview";
@@ -157,29 +162,36 @@ function displayOf(editorMode: EditorMode): EditorDisplay {
 
 // The editor fills the wrapper and scrolls inside itself; its colours are the
 // theme's own (editor/theme.ts).
+const noteLayout = (theme: Theme) => ({
+  "--note-inline-padding": "13px",
+  [theme.breakpoints.down("md")]: { "--note-inline-padding": "8px" },
+});
+
 const EditorWrapper = styled(Box)(({ theme }) => ({
+  ...noteLayout(theme),
   "position": "relative",
   "flex": 1,
-  "overflow": "auto",
+  "display": "grid",
+  "gridTemplateRows": "minmax(0, 1fr)",
+  "maxHeight": "100%",
+  "overflow": "hidden",
   "backgroundColor": "inherit",
   "& .cm-editor": {
     width: "100%",
     maxWidth: "100%",
     margin: "0 auto",
     height: "100%",
-    padding: theme.spacing(0, 1),
-    [theme.breakpoints.down("md")]: {
-      padding: theme.spacing(1),
-    },
   },
 }));
 
 const EditorHost = styled("div")({
   width: "100%",
   height: "100%",
+  minHeight: 0,
 });
 
 const Preview = styled("div")(({ theme }) => ({
+  ...noteLayout(theme),
   "position": "relative",
   "left": "0",
   "top": "0",
@@ -190,11 +202,8 @@ const Preview = styled("div")(({ theme }) => ({
   "height": "100%",
   "border": "none",
   "overflow": "auto !important",
-  "padding": theme.spacing(1, 2),
+  "padding": "4px var(--note-inline-padding)",
   "zIndex": previewZIndex,
-  [theme.breakpoints.down("md")]: {
-    padding: theme.spacing(1),
-  },
   "& span.emoji": {
     height: "1.2em !important",
     width: "1.2em !important",
@@ -234,9 +243,8 @@ const FilePath = styled(Typography)({
 });
 
 const CursorPositionInfo = styled(Box)({
-  // position: "absolute",
-  // right: "16px",
-  // bottom: "16px",
+  display: "flex",
+  alignItems: "center",
   zIndex: 150,
 });
 
@@ -266,6 +274,8 @@ export default function NotePanel(props: Props) {
   const tocElement = useRef<HTMLDivElement>(null);
   const previewElement = useRef<HTMLDivElement>(null);
   const mountedPreview = useRef<MountedPreview>(null);
+  const readingPosition = useRef<ReadingPosition>(null);
+  const stopRestoringPreview = useRef<() => void>(() => {});
   const editorHost = useRef<HTMLDivElement>(null);
   const [cursorPosition, setCursorPosition] = useState<TextPosition>({
     line: 0,
@@ -342,10 +352,13 @@ export default function NotePanel(props: Props) {
       }
       // The preview element is a new one each time the preview shows, so
       // what was drawn into the last one is disposed of here.
+      const position = readingPosition.current ?? previewPosition(element);
+      readingPosition.current = null;
+      stopRestoringPreview.current();
       mountedPreview.current?.dispose();
       const preview = mountPreview(element, text, { note });
       mountedPreview.current = preview;
-      element.scrollTop = 0;
+      stopRestoringPreview.current = restorePreviewPosition(element, position);
     },
     [note],
   );
@@ -633,6 +646,7 @@ export default function NotePanel(props: Props) {
       return;
     }
     prepareSlashCommandIcons();
+    readingPosition.current = null;
     const created = new NoteEditor({
       parent: editorHost.current,
       document: openNote.document,
@@ -721,6 +735,7 @@ export default function NotePanel(props: Props) {
         stop();
         clearTimeout(timer);
         mountedPreview.current?.dispose();
+        stopRestoringPreview.current();
       };
     }
   }, [editorMode, editor, openNote, previewElement, note, showPreview, t]);
@@ -728,6 +743,7 @@ export default function NotePanel(props: Props) {
   // Check need to highlight reference
   useEffect(() => {
     if (props.reference) {
+      stopRestoringPreview.current();
       if (editorMode === EditorMode.Preview && previewElement.current) {
         const highlightedElements = previewElement.current.querySelectorAll(
           ".reference-highlight",
@@ -785,8 +801,21 @@ export default function NotePanel(props: Props) {
         settingsContainer.sourceCodeLineNumbers,
       );
       editor.setHidden(false);
+      if (readingPosition.current) {
+        editor.restoreReadingPosition(readingPosition.current);
+        readingPosition.current = null;
+      }
     }
   }, [editorMode, editor, settingsContainer.sourceCodeLineNumbers]);
+
+  const changeEditorMode = (mode: EditorMode) => {
+    if (mode === editorMode) return;
+    readingPosition.current =
+      editorMode === EditorMode.Preview && previewElement.current
+        ? previewPosition(previewElement.current)
+        : (editor?.readingPosition() ?? null);
+    setEditorMode(mode);
+  };
 
   // TOC
   useEffect(() => {
@@ -829,6 +858,7 @@ export default function NotePanel(props: Props) {
       }
       event.preventDefault();
       event.stopPropagation();
+      stopRestoringPreview.current();
       const lineNo = parseInt(item.dataset.line);
       if (editorMode === EditorMode.Preview) {
         // In this panel's preview: another tab's may show the same line.
@@ -980,7 +1010,7 @@ export default function NotePanel(props: Props) {
                 color={
                   editorMode === EditorMode.Preview ? "primary" : "inherit"
                 }
-                onClick={() => setEditorMode(EditorMode.Preview)}
+                onClick={() => changeEditorMode(EditorMode.Preview)}
               >
                 <FilePresentationBox></FilePresentationBox>
               </ControlButton>
@@ -995,7 +1025,7 @@ export default function NotePanel(props: Props) {
                     : undefined
                 }
                 color={editorMode === EditorMode.EchoMD ? "primary" : "inherit"}
-                onClick={() => setEditorMode(EditorMode.EchoMD)}
+                onClick={() => changeEditorMode(EditorMode.EchoMD)}
               >
                 <Pencil></Pencil>
               </ControlButton>
@@ -1012,7 +1042,7 @@ export default function NotePanel(props: Props) {
                 color={
                   editorMode === EditorMode.SourceCode ? "primary" : "inherit"
                 }
-                onClick={() => setEditorMode(EditorMode.SourceCode)}
+                onClick={() => changeEditorMode(EditorMode.SourceCode)}
               >
                 <CodeTags></CodeTags>
               </ControlButton>
@@ -1063,7 +1093,12 @@ export default function NotePanel(props: Props) {
         >
           <EditorContentPanel>
             <EditorWrapper>
-              <EditorHost ref={editorHost}></EditorHost>
+              <EditorHost
+                ref={editorHost}
+                style={{
+                  display: editorMode === EditorMode.Preview ? "none" : "block",
+                }}
+              ></EditorHost>
               {editorMode === EditorMode.Preview && editor ? (
                 <Preview
                   className={"preview"}
@@ -1072,7 +1107,6 @@ export default function NotePanel(props: Props) {
                 ></Preview>
               ) : null}
             </EditorWrapper>
-            <Box style={{ marginTop: "32px" }}></Box>
             <NotesPanel
               title={t("general/References")}
               tabNode={props.tabNode}

@@ -190,3 +190,53 @@ export class TaskWidget extends WidgetType {
     return true;
   }
 }
+
+/** A list marker keeps its source position, including on pointer clicks. */
+export class ListMarkerWidget extends WidgetType {
+  constructor(readonly label: string) {
+    super();
+  }
+  eq(other: ListMarkerWidget) {
+    return this.label === other.label;
+  }
+  toDOM() {
+    const span = document.createElement("span");
+    span.className = "cn-list-marker";
+    span.dataset.marker = this.label;
+    span.setAttribute("aria-hidden", "true");
+    if (this.label) {
+      const marker = document.createElement("span");
+      marker.className = "cn-list-marker-native";
+      marker.style.listStyleType =
+        this.label === "•"
+          ? "disc"
+          : this.label === "◦"
+            ? "circle"
+            : this.label === "▪"
+              ? "square"
+              : "decimal";
+      if (/^\d/.test(this.label))
+        marker.style.setProperty(
+          "counter-set",
+          `list-item ${parseInt(this.label, 10)}`,
+        );
+      span.append(marker);
+    }
+    return span;
+  }
+  ignoreEvent() {
+    return false;
+  }
+}
+
+export class RuleWidget extends WidgetType {
+  toDOM() {
+    const span = document.createElement("span");
+    span.className = "cn-rule";
+    span.setAttribute("role", "separator");
+    return span;
+  }
+  ignoreEvent() {
+    return false;
+  }
+}

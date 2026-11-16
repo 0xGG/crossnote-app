@@ -30,8 +30,7 @@ const markdownHighlighter = tagHighlighter([
   { tag: noteTags.inserted, class: "tok-inserted" },
 ]);
 
-const MONOSPACE =
-  'Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace';
+const MONOSPACE = "var(--note-code-font)";
 
 // One look for the four themes: every colour is a variable the page sets by
 // theme. The editor's root has one of two classes, by how it shows a note:
@@ -47,17 +46,19 @@ const look = EditorView.theme({
   },
   "&.cm-focused": { outline: "none" },
   ".cm-scroller": {
-    fontFamily:
-      '-apple-system, BlinkMacSystemFont, "Noto Sans SC", "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif',
-    lineHeight: "1.6",
+    fontFamily: "var(--note-text-font)",
+    lineHeight: "1.5",
     WebkitFontSmoothing: "antialiased",
     MozOsxFontSmoothing: "grayscale",
   },
   ".cm-content": {
-    padding: "16px 0",
+    padding: "4px 0",
     caretColor: "var(--preview-strong)",
   },
-  ".cm-line": { padding: "0 16px" },
+  ".cm-line": { padding: "0 var(--note-inline-padding)" },
+  ".cn-selected-text, .cn-selected-text *, .cn-selected-empty": {
+    backgroundColor: "var(--editor-selection) !important",
+  },
   ".cm-cursor, .cm-dropCursor": { borderLeftColor: "var(--preview-strong)" },
   "&.cm-focused > .cm-scroller > .cm-selectionLayer .cm-selectionBackground, .cm-selectionBackground, .cm-content ::selection":
     { backgroundColor: "var(--editor-selection)" },
@@ -70,13 +71,18 @@ const look = EditorView.theme({
   },
   ".cm-lineNumbers .cm-gutterElement": { padding: "0 8px 0 16px" },
 
-  ".tok-strong": { fontWeight: "600", color: "var(--preview-strong)" },
+  ".tok-strong": { fontWeight: "700", color: "var(--preview-strong)" },
   ".tok-emphasis": { fontStyle: "italic" },
   ".tok-strikethrough": {
     textDecoration: "line-through",
     color: "var(--preview-subtle)",
   },
+  ".cn-strike .tok-strikethrough": {
+    textDecoration: "none",
+    color: "inherit",
+  },
   ".tok-monospace": { fontFamily: MONOSPACE },
+  ".cn-code .tok-monospace": { color: "var(--preview-strong)" },
   ".tok-link, .tok-url": { color: "var(--preview-link)" },
   ".tok-quote": { color: "var(--preview-subtle)" },
   ".tok-markup, .tok-rule": { color: "var(--editor-markup)" },
@@ -89,6 +95,12 @@ const look = EditorView.theme({
   "&.cn-editor-live .tok-heading2": { fontSize: "1.75rem" },
   "&.cn-editor-live .tok-heading3": { fontSize: "1.5rem" },
   "&.cn-editor-live .tok-heading4": { fontSize: "1.24rem" },
+  ".cm-line.cn-heading-line": { lineHeight: "1.2", fontWeight: "600" },
+  ".cm-line.cn-heading-1": { fontSize: "2.25rem", paddingBottom: "0.3rem" },
+  ".cm-line.cn-heading-2": { fontSize: "1.75rem", paddingBottom: "0.3rem" },
+  ".cm-line.cn-heading-3": { fontSize: "1.5rem" },
+  ".cm-line.cn-heading-4": { fontSize: "1.24rem" },
+  ".cm-line.cn-heading-5, .cm-line.cn-heading-6": { fontSize: "1rem" },
 
   ".tok-wikiLink, .tok-footnote, .tok-hashtag": {
     color: "var(--preview-link)",
@@ -98,31 +110,20 @@ const look = EditorView.theme({
   ".tok-inserted": { textDecoration: "underline" },
 
   // The live preview's own (livePreview.ts).
-  ".cn-code": {
-    fontFamily: MONOSPACE,
-    fontSize: "0.85em",
-    backgroundColor: "var(--preview-inset-background)",
-    borderRadius: "3px",
-    padding: "0.2em 0",
-  },
-  ".cn-sub": { verticalAlign: "sub", fontSize: "0.8em" },
-  ".cn-sup": { verticalAlign: "super", fontSize: "0.8em" },
   ".cn-link": { color: "var(--preview-link)" },
   ".cn-hashtag, .cn-hashtag .tok-hashtag": {
     color: "var(--preview-tag-text)",
-  },
-  ".cn-hashtag": {
-    backgroundColor: "var(--preview-tag-background)",
-    borderRadius: "4px",
-    padding: "0 4px",
-    fontSize: "0.9em",
   },
   ".cn-math-source": { fontFamily: MONOSPACE, fontSize: "0.9em" },
   ".cn-math-display": {
     display: "inline-block",
     width: "100%",
     textAlign: "center",
+    verticalAlign: "top",
   },
+  // Block spacing already accounts for the surrounding paragraph margins.
+  // KaTeX's margins cannot collapse inside this inline-block widget.
+  ".cn-math-display > .katex-display": { margin: "0" },
   ".cn-math-error": { color: "#ee7f49", fontWeight: "500" },
   ".cn-image": { maxWidth: "100%", verticalAlign: "bottom", cursor: "pointer" },
   ".cn-emoji img.emoji": {
@@ -137,14 +138,86 @@ const look = EditorView.theme({
   },
   ".cm-line.cn-codeblock": {
     fontFamily: MONOSPACE,
-    fontSize: "0.85em",
-    backgroundColor: "var(--preview-inset-background)",
+    fontSize: "16px",
   },
   ".cm-line.cn-table": { fontFamily: MONOSPACE, fontSize: "0.9em" },
   ".cm-line.cn-quote": {
-    borderLeft: "4px solid var(--preview-border)",
-    paddingLeft: "12px",
+    position: "relative",
+    isolation: "isolate",
+    borderLeft: "4px solid transparent",
+    marginLeft: "calc(var(--note-inline-padding) + var(--cn-quote-inset, 0px))",
+    marginRight: "var(--note-inline-padding)",
+    paddingLeft: "calc(15px + (var(--cn-quote-depth) - 1) * 19px)",
+    paddingRight: "15px",
     color: "var(--preview-subtle)",
+  },
+  // Paint the line and its leading gap separately, without moving the text.
+  ".cm-line.cn-quote::before, .cm-line.cn-quote::after": {
+    content: '""',
+    position: "absolute",
+    pointerEvents: "none",
+    zIndex: "-1",
+    right: "0",
+    backgroundRepeat: "no-repeat",
+  },
+  ".cm-line.cn-quote::before": {
+    left: "-4px",
+    top: "var(--cn-quote-gap, 0px)",
+    bottom: "0",
+    backgroundColor: "var(--preview-inset-background)",
+    backgroundImage: "var(--cn-quote-background)",
+  },
+  ".cm-line.cn-quote::after": {
+    left: "calc(var(--cn-quote-gap-inset, var(--cn-quote-inset, 0px)) - var(--cn-quote-inset, 0px) - 4px)",
+    top: "0",
+    height: "var(--cn-quote-gap, 0px)",
+    backgroundColor: "var(--cn-quote-gap-color, transparent)",
+    backgroundImage: "var(--cn-quote-gap-background, none)",
+  },
+  ".cn-source-code": { fontFamily: MONOSPACE },
+  ".cn-code-preview": {
+    padding: "0 var(--note-inline-padding)",
+    cursor: "text",
+    userSelect: "text",
+    whiteSpace: "normal",
+  },
+  ".cn-code-preview pre": { marginBottom: "0" },
+  ".cn-code-preview blockquote, .cn-code-preview ul, .cn-code-preview ol": {
+    marginTop: "0",
+    marginBottom: "0",
+  },
+  ".cn-list-marker": {
+    display: "inline-block",
+    fontSize: "16px",
+    fontWeight: "400",
+    lineHeight: "24px",
+    width: "32px",
+    textIndent: "0",
+    boxSizing: "border-box",
+  },
+  ".cn-list-marker-native": {
+    display: "list-item",
+    listStylePosition: "outside",
+    marginLeft: "32px",
+    width: "0",
+  },
+  ".cn-list-marker-native::before": { content: '"\\200b"' },
+  ".cm-line.cn-rule-line": {
+    fontSize: "0",
+    lineHeight: "4px",
+    minHeight: "4px",
+  },
+  ".cn-rule": {
+    display: "inline-block",
+    width: "100%",
+    height: "4px",
+    backgroundColor: "var(--preview-border)",
+    verticalAlign: "top",
+  },
+  ".cm-line.cn-setext-mark": { fontSize: "16px", lineHeight: "1.5" },
+  ".cn-setext-mark .tok-heading": {
+    fontSize: "inherit",
+    lineHeight: "inherit",
   },
   ".cm-line.cn-frontmatter": {
     fontFamily: MONOSPACE,

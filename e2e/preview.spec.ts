@@ -221,6 +221,11 @@ test("colours the preview and the editor in the theme chosen in the settings", a
   await app.modeButton("Edit").click();
   await expect(app.editor).toHaveCSS("color", "rgb(171, 178, 191)");
   await expect(app.editor).toHaveCSS("background-color", "rgb(40, 44, 52)");
+  await expect(app.editor.locator(".cn-code-preview .token.comment")).toHaveCSS(
+    "color",
+    "rgb(92, 99, 112)",
+  );
+  await app.editor.locator(".cn-code-preview pre").click();
   await expect.poll(() => app.tokenTypes("a comment")).toContain("comment");
   await expect(app.editor.locator(".tok-comment").first()).toHaveCSS(
     "color",

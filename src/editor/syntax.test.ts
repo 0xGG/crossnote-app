@@ -110,8 +110,18 @@ describe("the notes' syntax", () => {
     it("are a label after a caret in brackets, or text in brackets after a caret", () => {
       const text =
         "Text with a note[^1] and an inline one^[inline note].\n\n[^1]: The note.\n";
-      expect(texts(text, "FootnoteReference")).toEqual(["[^1]", "[^1]"]);
+      expect(texts(text, "FootnoteReference")).toEqual(["[^1]"]);
+      expect(texts(text, "FootnoteLabel")).toEqual(["[^1]: "]);
       expect(texts(text, "InlineFootnote")).toEqual(["^[inline note]"]);
+    });
+
+    it("parses fenced languages inside a footnote without consuming later body code", () => {
+      const text =
+        "See[^a].\n\n[^a]: note\n\n    ```js\n    const early = 1;\n    ```\n\n```python\nprint(2)\n```";
+      expect(texts(text, "CodeInfo")).toEqual(["js", "python"]);
+      expect(texts(text, "FencedCode")).toHaveLength(2);
+      expect(texts(text, "FootnoteDefinition")[0]).not.toContain("python");
+      expect(texts(text, "CodeBlock")).toEqual([]);
     });
 
     it("leave a caret's superscript as it is", () => {

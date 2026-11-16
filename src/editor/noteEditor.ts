@@ -1,4 +1,10 @@
 import { defaultKeymap } from "@codemirror/commands";
+import { syntaxTree } from "@codemirror/language";
+import { sourceCodeFont } from "./codeFont";
+import type { ReadingPosition } from "../render/readingPosition";
+import { codePreview } from "./codePreview";
+import { visibleSelection } from "./selection";
+import { blockLayout } from "./blockLayout";
 import {
   Compartment,
   EditorState,
@@ -63,7 +69,9 @@ function displayExtensions(
 ): Extension {
   return [
     EditorView.editorAttributes.of({ class: `cn-editor-${display}` }),
-    display === "live" ? livePreview : numbered ? lineNumbers() : [],
+    display === "live"
+      ? [livePreview, blockLayout, codePreview, visibleSelection]
+      : [sourceCodeFont, numbered ? lineNumbers() : []],
   ];
 }
 
@@ -191,6 +199,59 @@ export class NoteEditor {
 
   get shownAs(): EditorDisplay {
     return this.shown;
+  }
+
+  readingPosition(): ReadingPosition {
+    const view = this.view;
+    if (view.scrollDOM.scrollTop === 0) return { line: 0, offset: 0 };
+    const top = view.scrollDOM.getBoundingClientRect().top;
+    let block = view.lineBlockAtHeight(top - view.documentTop);
+    let line = view.state.doc.lineAt(block.from);
+    if (!line.text.trim() && line.number < view.state.doc.lines)
+      line = view.state.doc.line(line.number + 1);
+    // The preview maps a paragraph (including hard-wrapped source lines) or
+    // code block as one element. Measure that same block in the editor.
+    for (
+      let node = syntaxTree(view.state).resolveInner(line.from, 1);
+      node;
+      node = node.parent!
+    ) {
+      if (["Paragraph", "FencedCode", "CodeBlock"].includes(node.name)) {
+        line = view.state.doc.lineAt(node.from);
+        break;
+      }
+    }
+    block = view.lineBlockAt(line.from);
+    return {
+      line: line.number - 1,
+      offset: block.top + view.documentTop - top,
+    };
+  }
+
+  restoreReadingPosition(position: ReadingPosition) {
+    const view = this.view;
+    const at = this.offset({ line: position.line, ch: 0 });
+    // Scrolling the editor alone must not scroll its ancestors (including
+    // the panel and the document). The measure also realizes virtual lines.
+    let measures = 0;
+    const measure = {
+      key: this,
+      read: () =>
+        view.scrollDOM.scrollTop +
+        view.lineBlockAt(at).top +
+        view.documentTop -
+        view.scrollDOM.getBoundingClientRect().top -
+        position.offset,
+      write: (offset: number) => {
+        if (position.line === 0 && position.offset === 0)
+          view.scrollDOM.scrollTop = 0;
+        else view.scrollDOM.scrollTop = offset;
+        // The first scroll brings virtual lines into the DOM. Measure those
+        // actual wrapped heights before considering the anchor restored.
+        if (++measures < 3) view.requestMeasure(measure);
+      },
+    };
+    view.requestMeasure(measure);
   }
 
   /** Changes how the note is shown; the text, selection and history stay. */

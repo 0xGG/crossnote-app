@@ -368,6 +368,8 @@ describe("NoteEditor", () => {
         () => expect(editor.handle.tokenTypes("const")).toContain("keyword"),
         { timeout: 10_000 },
       );
+      // The second block is rendered until it is selected for editing.
+      editor.handle.select({ line: 5, ch: 0 });
       await vi.waitFor(
         () => expect(editor.handle.tokenTypes("echo")).not.toEqual([]),
         { timeout: 10_000 },

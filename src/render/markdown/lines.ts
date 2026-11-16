@@ -24,4 +24,9 @@ export default function lines(md: MarkdownIt) {
       }
     }
   });
+  // A distinct attribute avoids Prism's pre[data-line] highlighting CSS.
+  md.renderer.rules.code_block = (tokens, index) => {
+    const token = tokens[index];
+    return `<pre data-source-line="${token.map?.[0] ?? 0}"><code>${md.utils.escapeHtml(token.content)}</code></pre>\n`;
+  };
 }
