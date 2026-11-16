@@ -1,6 +1,4 @@
 import { DEFAULT_CORS_PROXY } from "../config";
-// @ts-ignore
-import diff3Merge from "diff3";
 import * as git from "isomorphic-git";
 import http from "isomorphic-git/http/web";
 import path from "path-browserify";
@@ -9,11 +7,21 @@ import PouchdbFind from "pouchdb-find";
 import { notebookNameFromGitURL, randomID } from "../utilities/utils";
 import { fs, pfs } from "./fs";
 import { Notebook } from "./notebook";
-
-// Shared UTF-8 decoder for git blob contents; TextDecoder keeps no state
-// across non-streaming decode() calls, so one instance serves all call
-// sites (pullNotebook decodes two blobs per changed file).
-const utf8Decoder = new TextDecoder();
+import { needsRecovery, notebookOperation } from "./notebookOperation";
+import {
+  hasTextConflicts,
+  mergeFile,
+  NotebookConflictError,
+  sameBytes,
+} from "./mergeFiles";
+import {
+  deletePullRecovery,
+  readPullRecovery,
+  savePullRecovery,
+  type FileBytes,
+  type ConflictDeletions,
+  type PullRecovery,
+} from "./pullRecovery";
 
 /*
 export interface Attachment {
@@ -65,14 +73,11 @@ export type FetchNotebookArgs = PullNotebookArgs;
 interface PullNotebookResult {
   numConflicts: number;
   cache: Cache;
+  conflicts: string[];
+  deletions?: ConflictDeletions;
 }
 
-type Cache = {
-  [key: string]: {
-    status: string;
-    markdown: string;
-  };
-};
+type Cache = Record<string, FileBytes>;
 
 interface NotebookDBEntry {
   // basic info
@@ -338,55 +343,31 @@ export default class Crossnote {
   }
 
   private async generateChangesCache(notebook: Notebook): Promise<Cache> {
-    const cache: Cache = {};
-    const createCache = async (stagedFiles: string[]) => {
-      for (let i = 0; i < stagedFiles.length; i++) {
-        if (stagedFiles[i] in cache) {
-          continue;
-        }
-        const status = await git.status({
-          fs: fs,
-          dir: notebook.dir,
-          filepath: stagedFiles[i],
-        });
-        if (status.match(/^\*?(modified|added)/)) {
-          cache[stagedFiles[i]] = {
-            status,
-            markdown: (await pfs.readFile(
-              path.resolve(notebook.dir, stagedFiles[i]),
-              { encoding: "utf8" },
-            )) as string,
-          };
-        } else if (status.match(/^\*?(deleted)/)) {
-          cache[stagedFiles[i]] = {
-            status,
-            markdown: "",
-          };
-        }
-      }
-    };
-
-    await createCache(
-      // Check previous staged file for `delete` status
-      await git.listFiles({
-        fs: fs,
-        dir: notebook.dir,
-        ref: "HEAD",
-      }),
-    );
-
-    await createCache(
-      // Check current staged file for `add` status
-      await git.listFiles({
-        fs: fs,
-        dir: notebook.dir,
-      }),
-    );
-
+    const cache: Cache = Object.create(null);
+    for (const [file, head, work] of await git.statusMatrix({
+      fs,
+      dir: notebook.dir,
+    })) {
+      if (head === work) continue;
+      cache[file] =
+        work === 0
+          ? null
+          : new Uint8Array(
+              (await pfs.readFile(
+                path.resolve(notebook.dir, file),
+              )) as Uint8Array,
+            );
+    }
     return cache;
   }
 
-  public async pushNotebook({
+  public pushNotebook(args: PushNotebookArgs): Promise<null | git.PushResult> {
+    return notebookOperation(args.notebook.dir, () =>
+      this.pushNotebookUnlocked(args),
+    );
+  }
+
+  private async pushNotebookUnlocked({
     notebook,
     authorName = "crossnote",
     authorEmail = "anonymous@crossnote.com",
@@ -399,7 +380,7 @@ export default class Crossnote {
     onAuthSuccess,
   }: PushNotebookArgs): Promise<null | git.PushResult> {
     // Pull notebook first
-    const pullNotebookResult = await this.pullNotebook({
+    const pullNotebookResult = await this.pullNotebookUnlocked({
       notebook,
       onProgress,
       onAuthFailure,
@@ -408,7 +389,10 @@ export default class Crossnote {
     });
 
     if (pullNotebookResult.numConflicts > 0) {
-      throw new Error("error/please-resolve-conflicts");
+      throw new NotebookConflictError(
+        pullNotebookResult.conflicts,
+        pullNotebookResult.deletions,
+      );
     }
 
     const localSha = notebook.localSha;
@@ -433,46 +417,52 @@ export default class Crossnote {
     };
 
     // console.log(sha);
-    const pushResult = await git.push({
-      fs: fs,
-      http,
-      onAuth: (url, auth) => {
-        return {
-          username: username, // || notebook.gitUsername,
-          password: password, // || notebook.gitPassword
-        };
-      },
-      onProgress: (progress) => {
-        if (onProgress) {
-          onProgress(progress);
-        }
-      },
-      onMessage: (message) => {
-        if (onMessage) {
-          onMessage(message);
-        }
-      },
-      onAuthFailure: (url, auth) => {
-        if (onAuthFailure) {
-          onAuthFailure(url);
-        }
-        restoreSHA();
-      },
-      onAuthSuccess: (url, auth) => {
-        if (onAuthSuccess) {
-          onAuthSuccess(url);
-        }
-      },
-      url: notebook.gitURL,
-      dir: notebook.dir,
-      ref: notebook.gitBranch,
-      corsProxy: notebook.gitCorsProxy,
-    });
-
-    // console.log("pushResult: ", pushResult);
+    let pushResult: git.PushResult;
+    try {
+      pushResult = await git.push({
+        fs: fs,
+        http,
+        onAuth: (url, auth) => {
+          return {
+            username: username, // || notebook.gitUsername,
+            password: password, // || notebook.gitPassword
+          };
+        },
+        onProgress: (progress) => {
+          if (onProgress) {
+            onProgress(progress);
+          }
+        },
+        onMessage: (message) => {
+          if (onMessage) {
+            onMessage(message);
+          }
+        },
+        onAuthFailure: (url, auth) => {
+          if (onAuthFailure) {
+            onAuthFailure(url);
+          }
+        },
+        onAuthSuccess: (url, auth) => {
+          if (onAuthSuccess) {
+            onAuthSuccess(url);
+          }
+        },
+        url: notebook.gitURL,
+        dir: notebook.dir,
+        ref: notebook.gitBranch,
+        corsProxy: notebook.gitCorsProxy,
+      });
+    } catch (error) {
+      await restoreSHA();
+      await pfs.storeTree(notebook.dir);
+      throw error;
+    }
 
     if (pushResult.error) {
-      restoreSHA();
+      await restoreSHA();
+      await pfs.storeTree(notebook.dir);
+      throw new Error(pushResult.error);
     }
     // The commit is made here whether or not the push went through.
     await pfs.storeTree(notebook.dir);
@@ -505,209 +495,289 @@ export default class Crossnote {
     }
   }
 
-  public async hardResetNotebook(notebook: Notebook, sha: string) {
+  public async hardResetNotebook(
+    notebook: Notebook,
+    sha: string,
+    force = false,
+  ) {
     await pfs.writeFile(
       path.resolve(notebook.dir, `.git/refs/heads/${notebook.gitBranch}`),
       sha,
     );
-    await pfs.unlink(path.resolve(notebook.dir, `.git/index`));
+    const index = path.resolve(notebook.dir, `.git/index`);
+    if (await pfs.exists(index)) await pfs.unlink(index);
     await git.checkout({
       dir: notebook.dir,
       fs: fs,
       ref: notebook.gitBranch || "master",
+      force,
     });
     await pfs.storeTree(notebook.dir);
+  }
+
+  private checkedPath(notebook: Notebook, file: string): string {
+    if (
+      !file ||
+      file
+        .split("/")
+        .some(
+          (part) =>
+            !part ||
+            part === "." ||
+            part === ".." ||
+            part.toLowerCase() === ".git",
+        ) ||
+      /\\/.test(file)
+    ) {
+      throw new Error("Invalid recovery file path");
+    }
+    return path.resolve(notebook.dir, file);
   }
 
   private async restoreFilesFromCache(
     cache: Cache,
     notebook: Notebook,
-  ): Promise<number> {
-    let numConflicts = 0;
-    // console.log("same");
-    for (const filePath in cache) {
-      if (cache[filePath].status === "deleted") {
-        await notebook.deleteNote(filePath);
-        continue;
-      }
-      const markdown = cache[filePath].markdown;
-      const dirname = path.dirname(path.resolve(notebook.dir, filePath));
-      await pfs.mkdirp(dirname);
-      await pfs.writeFile(path.resolve(notebook.dir, filePath), markdown);
-      await git.add({
-        fs: fs,
-        dir: notebook.dir,
-        filepath: filePath,
-      });
-      if (this.markdownHasConflicts(markdown)) {
-        numConflicts += 1;
+  ): Promise<void> {
+    for (const [file, bytes] of Object.entries(cache)) {
+      const target = this.checkedPath(notebook, file);
+      if (bytes === null) {
+        if (await pfs.exists(target)) await pfs.unlink(target);
+        await git.remove({ fs, dir: notebook.dir, filepath: file });
+      } else {
+        await pfs.mkdirp(path.dirname(target));
+        await pfs.writeFile(target, bytes);
+        await git.add({ fs, dir: notebook.dir, filepath: file });
       }
     }
-    return numConflicts;
   }
 
-  public async pullNotebook({
+  private async pendingPull(
+    notebook: Notebook,
+  ): Promise<PullRecovery | undefined> {
+    const pending = await readPullRecovery(notebook._id);
+    if (pending) {
+      if (pending.version !== 1)
+        throw new Error("Unknown pull recovery version");
+      return pending;
+    }
+    const legacy = localStorage.getItem(`pending/pull/${notebook._id}`);
+    if (!legacy) return;
+    const old = JSON.parse(legacy) as {
+      localSha: string;
+      cache: Record<string, { status: string; markdown: string }>;
+    };
+    const files: Cache = Object.create(null);
+    for (const [file, entry] of Object.entries(old.cache)) {
+      this.checkedPath(notebook, file);
+      files[file] =
+        entry.status.replace(/^\*/, "") === "deleted"
+          ? null
+          : new TextEncoder().encode(entry.markdown);
+    }
+    const upgraded: PullRecovery = {
+      version: 1,
+      localSha: old.localSha || notebook.localSha,
+      remoteSha: old.localSha || notebook.localSha,
+      files,
+      conflicts: [],
+    };
+    await savePullRecovery(notebook._id, upgraded);
+    return upgraded;
+  }
+
+  private async finishPull(
+    notebook: Notebook,
+    recovery: PullRecovery,
+  ): Promise<void> {
+    // Replay the same planned bytes, including stable conflict-copy names.
+    // Nothing deletes the recovery record on a failed reset, write or flush.
+    needsRecovery(notebook.dir, true);
+    const remoteFiles = new Set(
+      await git.listFiles({ fs, dir: notebook.dir, ref: recovery.remoteSha }),
+    );
+    const baseFiles = await git.listFiles({
+      fs,
+      dir: notebook.dir,
+      ref: recovery.localSha,
+    });
+    for (const file of baseFiles) {
+      if (
+        !remoteFiles.has(file) &&
+        !Object.prototype.hasOwnProperty.call(recovery.files, file)
+      ) {
+        const target = this.checkedPath(notebook, file);
+        if (await pfs.exists(target)) await pfs.unlink(target);
+      }
+    }
+    await this.hardResetNotebook(notebook, recovery.remoteSha, true);
+    // A reset removes the old index. Include every remote file before applying
+    // local additions/deletions, so the next commit cannot drop untouched files.
+    for (const file of remoteFiles) {
+      // This git version logs individual checkout write failures and resolves.
+      // Never stage stale working bytes as the downloaded remote version.
+      if (!Object.prototype.hasOwnProperty.call(recovery.files, file)) {
+        const expected = await git.readBlob({
+          fs,
+          dir: notebook.dir,
+          oid: recovery.remoteSha,
+          filepath: file,
+        });
+        const target = this.checkedPath(notebook, file);
+        const actual = (await pfs.exists(target))
+          ? ((await pfs.readFile(target)) as Uint8Array)
+          : null;
+        if (!sameBytes(actual, expected.blob))
+          throw new Error(`Git checkout did not restore ${file}`);
+      }
+      await git.add({ fs, dir: notebook.dir, filepath: file });
+    }
+    await this.restoreFilesFromCache(recovery.files, notebook);
+    await pfs.storeTree(notebook.dir);
+    notebook.localSha = recovery.remoteSha;
+    notebook.remoteSha = recovery.remoteSha;
+    notebook.fetchedAt = new Date();
+    await this.updateNotebook(notebook);
+    // Delete legacy data first: failure leaves the committed new record.
+    localStorage.removeItem(`pending/pull/${notebook._id}`);
+    await deletePullRecovery(notebook._id);
+    needsRecovery(notebook.dir, false);
+  }
+
+  public async resumeNotebook(notebook: Notebook): Promise<void> {
+    await notebookOperation(notebook.dir, async () => {
+      const pending = await this.pendingPull(notebook);
+      if (pending) {
+        await this.finishPull(notebook, pending);
+        if (pending.conflicts.length)
+          throw new NotebookConflictError(pending.conflicts, pending.deletions);
+      }
+    });
+  }
+
+  public pullNotebook(args: PullNotebookArgs): Promise<PullNotebookResult> {
+    return notebookOperation(args.notebook.dir, () =>
+      this.pullNotebookUnlocked(args),
+    );
+  }
+
+  private async pullNotebookUnlocked({
     notebook,
     onProgress,
     onAuthFailure,
     onAuthSuccess,
     onMessage,
   }: PullNotebookArgs): Promise<PullNotebookResult> {
-    // Stop using git.pull as merge will cause error
-    const result = await git.fetch({
-      fs: fs,
+    const previous = await this.pendingPull(notebook);
+    if (previous) {
+      await this.finishPull(notebook, previous);
+      // A retried interrupted pull must still stop this push on conflicts.
+      if (previous.conflicts.length)
+        return {
+          numConflicts: previous.conflicts.length,
+          conflicts: previous.conflicts,
+          deletions: previous.deletions,
+          cache: previous.files,
+        };
+    }
+    const fetched = await git.fetch({
+      fs,
       http,
       dir: notebook.dir,
       singleBranch: true,
       corsProxy: notebook.gitCorsProxy,
       ref: notebook.gitBranch || "master",
-      onAuth: (url, auth) => {
-        return {
-          username: notebook.gitUsername,
-          password: notebook.gitPassword,
-        };
-      },
+      onAuth: () => ({
+        username: notebook.gitUsername,
+        password: notebook.gitPassword,
+      }),
       onProgress,
       onAuthFailure,
       onAuthSuccess,
       onMessage,
     });
-
-    // NOTE: Seems like diff3 not working as I expected. Therefore I might create my own type of diff
-    const cache: {
-      [key: string]: {
-        status: string;
-        markdown: string;
-      };
-    } = await this.generateChangesCache(notebook);
+    const cache = await this.generateChangesCache(notebook);
     const localSha = notebook.localSha;
-
-    // Save cache in case of system crash
-    localStorage.setItem(
-      `pending/pull/${notebook._id}`,
-      JSON.stringify({
-        cache,
-        localSha,
-      }),
+    const remoteSha = fetched.fetchHead;
+    const baseFiles = new Set(
+      await git.listFiles({ fs, dir: notebook.dir, ref: localSha }),
     );
-
-    // Perform a hard reset
-    const remoteSha = result.fetchHead;
-    await this.hardResetNotebook(notebook, remoteSha);
-
-    let numConflicts = 0;
-    if (localSha === remoteSha) {
-      // Restore from cache
-      numConflicts = await this.restoreFilesFromCache(cache, notebook);
-    } else {
-      // Check conflicted notes
-      // console.log("check conflicted");
-      const LINEBREAKS = /^.*(\r?\n|$)/gm;
-      const markerSize = 7;
-      const ourName = "ours";
-      const theirName = "theirs";
-      // const baseName = "base";
-      for (const filePath in cache) {
-        const ourContent = cache[filePath].markdown;
-        if (await pfs.exists(path.resolve(notebook.dir, filePath))) {
-          let baseContent: string = "";
-          let theirContent: string = "";
-          try {
-            const baseContentBlobResult = await git.readBlob({
-              fs: fs,
+    const remoteFiles = new Set(
+      await git.listFiles({ fs, dir: notebook.dir, ref: remoteSha }),
+    );
+    const reserved = new Set([
+      ...baseFiles,
+      ...remoteFiles,
+      ...Object.keys(cache),
+    ]);
+    const files: Cache = Object.create(null);
+    const conflicts: string[] = [];
+    const deletions: ConflictDeletions = Object.create(null);
+    const blob = async (
+      sha: string,
+      file: string,
+      listed: Set<string>,
+    ): Promise<FileBytes> =>
+      listed.has(file)
+        ? (
+            await git.readBlob({
+              fs,
               dir: notebook.dir,
-              oid: localSha,
-              filepath: filePath,
-            });
-            baseContent = utf8Decoder.decode(baseContentBlobResult.blob);
-          } catch (error) {}
-          try {
-            const theirContentBlobTresult = await git.readBlob({
-              fs: fs,
-              dir: notebook.dir,
-              oid: remoteSha,
-              filepath: filePath,
-            });
-            theirContent = utf8Decoder.decode(theirContentBlobTresult.blob);
-          } catch (error) {}
-          // console.log("ourContent: ", ourContent);
-          // console.log("theirContent: ", theirContent);
-          // console.log("baseContent: ", baseContent);
-
-          // TODO: clean front-matter
-
-          // Refered from https://github.com/isomorphic-git/isomorphic-git/blob/4e66704d05042624bbc78b85ee5110d5ee7ec3e2/src/utils/mergeFile.js
-          const ours = ourContent.match(LINEBREAKS);
-          const base = baseContent.match(LINEBREAKS);
-          const theirs = theirContent.match(LINEBREAKS);
-
-          // Here we let the diff3 library do the heavy lifting.
-          const result = diff3Merge(ours, base, theirs);
-
-          // Here we note whether there are conflicts and format the results
-          let mergedText = "";
-          let hasConflict = false;
-          for (const item of result) {
-            if (item.ok) {
-              mergedText += item.ok.join("");
-            }
-            if (item.conflict) {
-              hasConflict = true;
-              mergedText += `\\<${"<".repeat(markerSize - 1)} ${ourName}\n`;
-              mergedText += item.conflict.a.join("") + "\n";
-              // if (format === "diff3") {
-              //mergedText += `\\|${"|".repeat(markerSize - 1)} ${baseName}\n`;
-              //mergedText += item.conflict.o.join("");
-              // }
-              mergedText += `\\=${"=".repeat(markerSize - 1)}\n`;
-              mergedText += item.conflict.b.join("") + "\n";
-              mergedText += `\\>${">".repeat(markerSize - 1)} ${theirName}\n`;
-            }
-          }
-          if (hasConflict) {
-            numConflicts += 1;
-          }
-
-          // console.log("mergedText: ", mergedText);
-          const dirname = path.dirname(path.resolve(notebook.dir, filePath));
-          await pfs.mkdirp(dirname);
-          await pfs.writeFile(path.resolve(notebook.dir, filePath), mergedText);
-          await git.add({
-            fs: fs,
-            dir: notebook.dir,
-            filepath: filePath,
-          });
-        } else {
-          const markdown = cache[filePath].markdown;
-          const dirname = path.dirname(path.resolve(notebook.dir, filePath));
-          await pfs.mkdirp(dirname);
-          await pfs.writeFile(path.resolve(notebook.dir, filePath), markdown);
-          await git.add({
-            fs: fs,
-            dir: notebook.dir,
-            filepath: filePath,
-          });
-        }
+              oid: sha,
+              filepath: file,
+            })
+          ).blob
+        : null;
+    for (const [file, ours] of Object.entries(cache)) {
+      this.checkedPath(notebook, file);
+      const merged = mergeFile(
+        file,
+        await blob(localSha, file, baseFiles),
+        ours,
+        await blob(remoteSha, file, remoteFiles),
+      );
+      files[file] = merged.bytes;
+      if (merged.conflict) conflicts.push(file);
+      if (merged.deleted) deletions[file] = merged.deleted;
+      if (merged.copy) {
+        const ext = path.extname(file);
+        const stem = file.slice(0, file.length - ext.length);
+        let copy: string;
+        let suffix = 0;
+        do {
+          copy = `${stem}.remote-${remoteSha.slice(0, 8)}${suffix ? `-${suffix}` : ""}${ext}`;
+          suffix++;
+        } while (
+          reserved.has(copy) ||
+          (await pfs.exists(this.checkedPath(notebook, copy)))
+        );
+        reserved.add(copy);
+        files[copy] = merged.copy;
+        conflicts.push(copy);
       }
     }
-
-    await pfs.storeTree(notebook.dir);
-
-    // Update notebook
-    notebook.fetchedAt = new Date();
-    notebook.localSha = remoteSha;
-    notebook.remoteSha = remoteSha;
-    await this.updateNotebook(notebook);
-
-    localStorage.removeItem(`pending/pull/${notebook._id}`);
-
-    return {
-      numConflicts,
-      cache,
+    const recovery: PullRecovery = {
+      version: 1,
+      localSha,
+      remoteSha,
+      files,
+      conflicts,
+      deletions,
     };
+    // Recovery references the fetched commit and its objects. Persist their
+    // directory entries before publishing a plan a new page must replay.
+    await pfs.storeTree(notebook.dir);
+    await savePullRecovery(notebook._id, recovery);
+    await this.finishPull(notebook, recovery);
+    return { numConflicts: conflicts.length, conflicts, deletions, cache };
   }
 
-  public async fetchNotebook({
+  public fetchNotebook(args: FetchNotebookArgs): Promise<boolean> {
+    return notebookOperation(args.notebook.dir, () =>
+      this.fetchNotebookUnlocked(args),
+    );
+  }
+
+  private async fetchNotebookUnlocked({
     notebook,
     onProgress,
     onAuthFailure,
@@ -749,10 +819,7 @@ export default class Crossnote {
   }
 
   public markdownHasConflicts(markdown: string): boolean {
-    const m1 = markdown.match(/^\\<+\s/gm);
-    const m2 = markdown.match(/^\\=+\s/gm);
-    const m3 = markdown.match(/^\\>+\s/gm);
-    return m1 && m1.length > 0 && m2 && m2.length > 0 && m3 && m3.length > 0;
+    return hasTextConflicts(markdown);
   }
 
   public async listNotebooks(): Promise<Notebook[]> {
@@ -831,19 +898,8 @@ export default class Crossnote {
             sha,
           );
 
-          // Restore cached files from failed `git` pull event
-          const pendingPull = localStorage.getItem(
-            `pending/pull/${notebook._id}`,
-          );
-          if (pendingPull) {
-            try {
-              await this.restoreFilesFromCache(
-                JSON.parse(pendingPull).cache,
-                notebook,
-              );
-            } catch (error) {}
-            localStorage.removeItem(`pending/pull/${notebook._id}`);
-          }
+          const pendingPull = await this.pendingPull(notebook);
+          if (pendingPull) await this.finishPull(notebook, pendingPull);
 
           const status = await git.status({
             fs: fs,

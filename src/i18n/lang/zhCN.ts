@@ -104,6 +104,12 @@ export const zhCN = {
     "error/failed-to-create-note": "新建笔记失败",
     "error/failed-to-delete-note": "删除笔记失败",
     "error/failed-to-save-note-settings": "保存笔记设置失败",
+    "error/notebook-sync-conflicts":
+      "同步冲突：{{files}}。你的修改已保留，请检查这些文件后再上传。",
+    "error/notebook-file-deleted-local":
+      "{{file}}（本地请求删除，已保留远端修改）",
+    "error/notebook-file-deleted-remote":
+      "{{file}}（远端请求删除，已保留本地修改）",
     "error/notes-not-saved": "没有执行：{{notes}} 没能保存",
 
     // Success

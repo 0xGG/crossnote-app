@@ -106,6 +106,12 @@ export const enUS = {
     "error/failed-to-create-note": "Failed to create the note",
     "error/failed-to-delete-note": "Failed to delete the note",
     "error/failed-to-save-note-settings": "Failed to save the note's settings",
+    "error/notebook-sync-conflicts":
+      "Sync conflicts: {{files}}. Your changes were kept. Review the files before uploading again.",
+    "error/notebook-file-deleted-local":
+      "{{file}} (deleted locally, remote changes kept)",
+    "error/notebook-file-deleted-remote":
+      "{{file}} (deleted remotely, local changes kept)",
     "error/notes-not-saved":
       "Nothing was done, as {{notes}} could not be saved",
 

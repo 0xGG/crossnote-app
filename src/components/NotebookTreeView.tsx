@@ -16,6 +16,7 @@ import {
 import { Note, Notes } from "../lib/note";
 import { Notebook } from "../lib/notebook";
 import { NotesNotSavedError } from "../lib/noteSaver";
+import { NotebookConflictError } from "../lib/mergeFiles";
 import { notify } from "../lib/notifications";
 import { Emoji } from "./EmojiWrapper";
 
@@ -335,10 +336,19 @@ export default function NotebookTreeView(props: Props) {
           });
         },
       })
-      .then(() => {
+      .then((result) => {
         notify({
-          severity: "success",
-          message: t("success/notebook-downloaded"),
+          severity: result?.numConflicts ? "warning" : "success",
+          message: result?.numConflicts
+            ? t("error/notebook-sync-conflicts", {
+                files: new NotebookConflictError(
+                  result.conflicts,
+                  result.deletions,
+                ).describe((file, side) =>
+                  t(`error/notebook-file-deleted-${side}`, { file }),
+                ),
+              })
+            : t("success/notebook-downloaded"),
         });
       })
       .catch((error) => {
@@ -349,7 +359,14 @@ export default function NotebookTreeView(props: Props) {
         }
         notify({
           severity: "error",
-          message: t("error/failed-to-download-notebook"),
+          message:
+            error instanceof NotebookConflictError
+              ? t("error/notebook-sync-conflicts", {
+                  files: error.describe((file, side) =>
+                    t(`error/notebook-file-deleted-${side}`, { file }),
+                  ),
+                })
+              : t("error/failed-to-download-notebook"),
         });
       });
   };

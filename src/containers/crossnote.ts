@@ -738,7 +738,7 @@ function useCrossnoteContainer(initialState: InitialState) {
       try {
         await saveOpenNotes({ notebookPath: args.notebook.dir });
         // NOTE: Code here might have bug
-        await crossnote.pullNotebook(args);
+        const result = await crossnote.pullNotebook(args);
         await args.notebook.refreshNotes({
           dir: "./",
           includeSubdirectories: true,
@@ -747,6 +747,7 @@ function useCrossnoteContainer(initialState: InitialState) {
           notebookPath: args.notebook.dir,
         });
         setIsPullingNotebook(false);
+        return result;
       } catch (error) {
         setIsPullingNotebook(false);
         throw error;
