@@ -290,7 +290,7 @@ it("keeps directory-ignored recovery bytes out of replay and later upload commit
   await restarted.pullNotebook({ notebook: reopened });
   await git.add({ fs, dir: notebook.dir, filepath: "." });
   expect(await git.listFiles({ fs, dir: notebook.dir })).not.toContain(copy);
-  vi.spyOn(git, "push").mockResolvedValue({ ok: true, refs: {} });
+  vi.spyOn(git, "push").mockResolvedValue({ ok: true, error: null, refs: {} });
   await restarted.pushNotebook({
     notebook: reopened,
     authorName: author.name,
