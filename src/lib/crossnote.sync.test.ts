@@ -213,9 +213,11 @@ it("preserves changed and ignored children when a remote file replaces their dir
   expect(result.conflicts).toContain("assets/a.bin");
   expect(await read("assets")).toEqual([...bytes("remote file")]);
   expect(await read(`a.local-${theirs.slice(0, 8)}.bin`)).toEqual([...changed]);
-  expect(await read(`private.local-${theirs.slice(0, 8)}.ignored`)).toEqual([
-    ...bytes("keep ignored"),
-  ]);
+  expect(
+    await read(
+      `.crossnote-recovery.local-${theirs.slice(0, 8)}/private.local-${theirs.slice(0, 8)}.ignored`,
+    ),
+  ).toEqual([...bytes("keep ignored")]);
   expect(await recovery.readPullRecovery(notebook._id)).toBeUndefined();
 });
 
@@ -230,10 +232,95 @@ it("keeps an ignored local file when the remote introduces a directory at its pa
   );
   const result = await app.pullNotebook({ notebook });
   expect(result.conflicts).toContain("private.ignored");
-  expect(await read(`private.local-${theirs.slice(0, 8)}.ignored`)).toEqual([
-    ...bytes("private bytes"),
-  ]);
+  expect(
+    await read(
+      `.crossnote-recovery.local-${theirs.slice(0, 8)}/private.local-${theirs.slice(0, 8)}.ignored`,
+    ),
+  ).toEqual([...bytes("private bytes")]);
   expect(await read("private.ignored/remote.md")).toEqual([...bytes("remote")]);
+});
+
+it("keeps directory-ignored recovery bytes out of replay and later upload commits", async () => {
+  const { app, notebook, theirs, read } = await repository({
+    "private": bytes("remote file"),
+    ".gitignore": bytes("private/\n"),
+  });
+  await pfs.writeFile(`${notebook.dir}/.gitignore`, "private/\n");
+  await pfs.writeFile(
+    `${notebook.dir}/private/credentials.txt`,
+    bytes("secret"),
+  );
+  const occupied = `.crossnote-recovery.local-${theirs.slice(0, 8)}`;
+  await pfs.writeFile(
+    `${notebook.dir}/${occupied}/keep.txt`,
+    bytes("unrelated"),
+  );
+  const write = pfs.writeFile.bind(pfs);
+  const failing = vi
+    .spyOn(pfs, "writeFile")
+    .mockImplementation(async (file, data) => {
+      if (file.includes(`credentials.local-${theirs.slice(0, 8)}`))
+        throw new Error("Private copy write failed");
+      return write(file, data);
+    });
+  await expect(app.pullNotebook({ notebook })).rejects.toThrow(
+    "Private copy write failed",
+  );
+  const plan = await recovery.readPullRecovery(notebook._id);
+  const copy = plan!.conflicts.find((file) =>
+    file.endsWith(`credentials.local-${theirs.slice(0, 8)}.txt`),
+  )!;
+  expect([...plan!.files[copy]!]).toEqual([...bytes("secret")]);
+  failing.mockRestore();
+  const restarted = new Crossnote();
+  const reopened = (await restarted.listNotebooks()).find(
+    (n) => n._id === notebook._id,
+  )!;
+  expect(reopened.localSha).toBe(theirs);
+  expect(await read(copy)).toEqual([...bytes("secret")]);
+  expect(await read("private")).toEqual([...bytes("remote file")]);
+  expect(await read(`${occupied}/keep.txt`)).toEqual([...bytes("unrelated")]);
+  expect(await git.listFiles({ fs, dir: notebook.dir })).not.toContain(copy);
+  expect(await git.status({ fs, dir: notebook.dir, filepath: copy })).toBe(
+    "ignored",
+  );
+  expect(await recovery.readPullRecovery(notebook._id)).toBeUndefined();
+  // The plan is gone now: the next pull and a recursive add must still leave
+  // these bytes out of the index, rather than protecting just the first replay.
+  await restarted.pullNotebook({ notebook: reopened });
+  await git.add({ fs, dir: notebook.dir, filepath: "." });
+  expect(await git.listFiles({ fs, dir: notebook.dir })).not.toContain(copy);
+  vi.spyOn(git, "push").mockResolvedValue({ ok: true, refs: {} });
+  await restarted.pushNotebook({
+    notebook: reopened,
+    authorName: author.name,
+    authorEmail: author.email,
+  });
+  const committed = await git.listFiles({ fs, dir: notebook.dir, ref: "HEAD" });
+  expect(committed).not.toContain(copy);
+  expect(
+    committed.some((file) =>
+      file.startsWith(`${copy.slice(0, copy.lastIndexOf("/"))}/`),
+    ),
+  ).toBe(false);
+  expect(await read(copy)).toEqual([...bytes("secret")]);
+});
+
+it("keeps a path-ignored file private when it must move for a remote directory", async () => {
+  const { app, notebook, theirs, read } = await repository({
+    "private.txt/remote.md": bytes("remote"),
+  });
+  await pfs.writeFile(`${notebook.dir}/.gitignore`, "/private.txt\n");
+  await pfs.writeFile(`${notebook.dir}/private.txt`, bytes("secret"));
+  const result = await app.pullNotebook({ notebook });
+  const copy = result.conflicts.find((file) =>
+    file.endsWith(`private.local-${theirs.slice(0, 8)}.txt`),
+  )!;
+  expect(await read(copy)).toEqual([...bytes("secret")]);
+  expect(await git.listFiles({ fs, dir: notebook.dir })).not.toContain(copy);
+  await app.pullNotebook({ notebook });
+  expect(await git.listFiles({ fs, dir: notebook.dir })).not.toContain(copy);
+  expect(await read("private.txt/remote.md")).toEqual([...bytes("remote")]);
 });
 
 it("does not replay a local deletion over a remote directory", async () => {

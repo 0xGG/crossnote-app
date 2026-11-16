@@ -805,6 +805,25 @@ export default class Crossnote {
       reserved.add(copy);
       return copy;
     };
+    let ignoredCopiesDirectory: string | undefined;
+    const localCopyPath = async (file: string) => {
+      const copy = await copyPath(file, "local");
+      if (
+        (await git.status({ fs, dir: notebook.dir, filepath: file })) !==
+        "ignored"
+      )
+        return copy;
+      // Moving a file out of a directory-scoped ignore rule must not make it
+      // eligible for the next upload. Keep these copies in a separate ignored
+      // directory, including its ignore file in the durable plan before bytes.
+      // Skipping add only during replay would let the next pull stage them.
+      if (!ignoredCopiesDirectory) {
+        ignoredCopiesDirectory = await copyPath(".crossnote-recovery", "local");
+        files[`${ignoredCopiesDirectory}/.gitignore`] =
+          new TextEncoder().encode("*\n");
+      }
+      return `${ignoredCopiesDirectory}/${copy}`;
+    };
     const blob = async (
       sha: string,
       file: string,
@@ -837,7 +856,7 @@ export default class Crossnote {
         // remove its ancestor from the index. Nonempty local versions move to
         // stable, non-conflicting names before the plan is published.
         if (merged.bytes !== null) {
-          const copy = await copyPath(file, "local");
+          const copy = await localCopyPath(file);
           files[copy] = merged.bytes;
           relocated.push(file);
           conflicts.push(file, copy);
