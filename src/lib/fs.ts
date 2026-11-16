@@ -19,7 +19,7 @@ class FileSystem {
     path: string,
     opts?: ReadFileOptions,
   ) => Promise<string | Uint8Array>;
-  public writeFile: (path: string, data: string) => Promise<void>;
+  public writeFile: (path: string, data: string | Uint8Array) => Promise<void>;
   public readdir: (path: string) => Promise<string[]>;
   public unlink: (path: string) => Promise<void>;
   public stats: (path: string) => Promise<LightningFS.Stats>;
@@ -101,7 +101,7 @@ class FileSystem {
         });
       }
     };
-    this.writeFile = async (filePath: string, data: string) => {
+    this.writeFile = async (filePath: string, data: string | Uint8Array) => {
       if (this.lfs.isPathOfLocalFileSystem(filePath)) {
         return this.lfs.writeFile(filePath, data);
       } else {
@@ -117,7 +117,7 @@ class FileSystem {
           this.fs.writeFile(
             filePath,
             data,
-            { encoding: "utf8" },
+            typeof data === "string" ? { encoding: "utf8" } : {},
             (error: Error) => {
               if (error) {
                 return reject(error);

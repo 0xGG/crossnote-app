@@ -42,6 +42,39 @@ describe("Notebook", () => {
     await notebook.refreshNotes({ dir: "./", includeSubdirectories: true });
   });
 
+  it("reads disk during refresh even when a concurrent save has repopulated the cache", async () => {
+    const scanning = new Notebook();
+    scanning.dir = "/notebooks/refresh-cache";
+    scanning.isLocal = true;
+    scanning.initSearch();
+    await pfs.writeFile(`${scanning.dir}/a.md`, "O");
+    await scanning.getNote("a.md", true);
+    let release!: () => void;
+    let reach!: () => void;
+    const held = new Promise<void>((resolve) => (release = resolve));
+    const reached = new Promise<void>((resolve) => (reach = resolve));
+    const readdir = pfs.readdir.bind(pfs);
+    const reading = vi
+      .spyOn(pfs, "readdir")
+      .mockImplementationOnce(async (dir) => {
+        reach();
+        await held;
+        return readdir(dir);
+      });
+    const refresh = scanning.refreshNotes({ dir: "./" });
+    await reached;
+    try {
+      await scanning.getNote("a.md", true);
+      await pfs.writeFile(`${scanning.dir}/a.md`, "B");
+      release();
+      await refresh;
+      expect(scanning.notes["a.md"].markdown).toBe("B");
+    } finally {
+      release();
+      reading.mockRestore();
+    }
+  });
+
   it("writes a note and reads it back without front matter", async () => {
     const note = await notebook.writeNote(
       "roundtrip.md",

@@ -1,5 +1,7 @@
 import { NoteDocument } from "../editor/noteDocument";
 import { NoteSaver, type NoteLocation } from "./noteSaver";
+import { pendingNoteWrites } from "./noteWrites";
+import { mergeFile, NotebookConflictError } from "./mergeFiles";
 
 // The notes open in editors, one entry for each note however many tabs show
 // it: the tabs share the note's text, its undo history and the saver that
@@ -64,6 +66,37 @@ export class OpenNote {
     return () => {
       this.writtenListeners.delete(listener);
     };
+  }
+
+  /** Reconcile input queued during git with the file git has just restored.
+   * Apply it synchronously before starting the write, so typing during that
+   * write builds on the merged document instead of being replaced afterwards.
+   */
+  reconcileFile(
+    text: string,
+    lineBreak?: string,
+  ): { text: string; conflict: boolean } {
+    if (this.saver.isOwn(text))
+      return { text: this.document.text(), conflict: false };
+    const encode = (value: string) => new TextEncoder().encode(value);
+    const merged = mergeFile(
+      this.saver.location.filePath,
+      encode(this.saver.savedText ?? text),
+      encode(this.document.text()),
+      encode(text),
+    );
+    // The caller writes this result over the downloaded file. When text cannot
+    // be merged, leave both the disk and the dirty editor untouched, including
+    // the saver's base, so retries cannot silently discard either version.
+    if (merged.copy) {
+      throw new NotebookConflictError([this.saver.location.filePath]);
+    }
+    const reconciled = new TextDecoder("utf-8", { ignoreBOM: true }).decode(
+      merged.bytes!,
+    );
+    this.document.load(reconciled, lineBreak);
+    this.saver.wrote(text);
+    return { text: reconciled, conflict: merged.conflict };
   }
 
   /**
@@ -180,6 +213,11 @@ export function openNoteAt(location: NoteLocation): OpenNote | undefined {
 // Written as the page is hidden as well, in case it is not coming back.
 if (typeof window !== "undefined") {
   window.addEventListener("beforeunload", (event) => {
+    if (pendingNoteWrites().length > 0) {
+      event.preventDefault();
+      event.returnValue = "";
+      return;
+    }
     for (const note of open.values()) {
       if (note.saver.pending) {
         event.preventDefault();

@@ -104,6 +104,12 @@ export const zhTW = {
     "error/failed-to-create-note": "新增筆記失敗",
     "error/failed-to-delete-note": "刪除筆記失敗",
     "error/failed-to-save-note-settings": "儲存筆記設定失敗",
+    "error/notebook-sync-conflicts":
+      "同步衝突：{{files}}。你的修改已保留，請檢查這些檔案後再上傳。",
+    "error/notebook-file-deleted-local":
+      "{{file}}（本機要求刪除，已保留遠端修改）",
+    "error/notebook-file-deleted-remote":
+      "{{file}}（遠端要求刪除，已保留本機修改）",
     "error/notes-not-saved": "沒有執行：{{notes}} 沒能儲存",
 
     // Success

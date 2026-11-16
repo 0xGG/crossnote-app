@@ -27,9 +27,16 @@ export default defineConfig({
     trace: "on-first-retry",
   },
   projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
-  webServer: {
-    command: `pnpm exec vite preview --port ${port} --strictPort`,
-    url: baseURL,
-    reuseExistingServer: !process.env.CI,
-  },
+  webServer: [
+    {
+      command: `pnpm exec vite preview --port ${port} --strictPort`,
+      url: baseURL,
+      reuseExistingServer: !process.env.CI,
+    },
+    {
+      command: "node scripts/git-fixture.mjs",
+      url: "http://127.0.0.1:4174/health",
+      reuseExistingServer: false,
+    },
+  ],
 });

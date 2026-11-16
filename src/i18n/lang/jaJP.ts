@@ -108,6 +108,12 @@ export const jaJP = {
     "error/failed-to-create-note": "ノートを作成できませんでした",
     "error/failed-to-delete-note": "ノートを削除できませんでした",
     "error/failed-to-save-note-settings": "ノートの設定を保存できませんでした",
+    "error/notebook-sync-conflicts":
+      "同期の競合: {{files}}。変更は保持されています。再度アップロードする前にファイルを確認してください。",
+    "error/notebook-file-deleted-local":
+      "{{file}}（ローカルで削除、リモートの変更を保持）",
+    "error/notebook-file-deleted-remote":
+      "{{file}}（リモートで削除、ローカルの変更を保持）",
     "error/notes-not-saved":
       "{{notes}} を保存できなかったため、実行しませんでした",
 

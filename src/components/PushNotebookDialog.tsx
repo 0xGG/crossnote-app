@@ -18,6 +18,7 @@ import { CrossnoteContainer } from "../containers/crossnote";
 import { SettingsContainer } from "../containers/settings";
 import { Notebook } from "../lib/notebook";
 import { NotesNotSavedError } from "../lib/noteSaver";
+import { NotebookConflictError } from "../lib/mergeFiles";
 import { notify } from "../lib/notifications";
 
 const SpacedTextField = styled(TextField)(({ theme }) => ({
@@ -83,9 +84,16 @@ export default function PushNotebookDialog(props: Props) {
         }
         notify({
           severity: "error",
-          message: error.message.match(/^error\//)
-            ? t(error.message)
-            : t("error/failed-to-upload-notebook"),
+          message:
+            error instanceof NotebookConflictError
+              ? t("error/notebook-sync-conflicts", {
+                  files: error.describe((file, side) =>
+                    t(`error/notebook-file-deleted-${side}`, { file }),
+                  ),
+                })
+              : error.message.match(/^error\//)
+                ? t(error.message)
+                : t("error/failed-to-upload-notebook"),
         });
       });
   }, [

@@ -283,8 +283,9 @@ export class Notebook {
   public async getNote(
     filePath: string,
     refreshNoteRelations = false,
+    readFromDisk = false,
   ): Promise<Note> {
-    if (!refreshNoteRelations && filePath in this.notes) {
+    if (!refreshNoteRelations && !readFromDisk && filePath in this.notes) {
       return this.notes[filePath];
     }
     const absFilePath = path.resolve(this.dir, filePath);
@@ -399,7 +400,14 @@ export class Notebook {
       }
 
       const absFilePath = path.resolve(this.dir, dir, file);
-      const note = await this.getNote(path.relative(this.dir, absFilePath));
+      // A save can repopulate the cache while this directory scan awaits I/O.
+      // Refresh must still read external changes, without rebuilding relations
+      // until the complete set of notes has been collected below.
+      const note = await this.getNote(
+        path.relative(this.dir, absFilePath),
+        false,
+        true,
+      );
       if (note) {
         this.notes[note.filePath] = note;
         this.search.add(note.filePath, note.title, note.config.aliases);
@@ -459,6 +467,16 @@ export class Notebook {
       absFilePath,
       writeNoteText(markdown, noteSettings(noteConfig), previous),
     );
+    await this.storeNote(filePath);
+
+    const note = await this.getNote(filePath, true);
+    note.markdown = markdown;
+    return note;
+  }
+
+  // An explicit save can retry after the content write succeeded but staging
+  // or tree persistence failed. Equal on-disk text does not prove durability.
+  public async storeNote(filePath: string): Promise<void> {
     if (!this.isLocal) {
       // Stages the note, which writes its text as a new object file.
       await git.add({
@@ -468,10 +486,6 @@ export class Notebook {
       });
     }
     await pfs.storeTree(this.dir);
-
-    const note = await this.getNote(filePath, true);
-    note.markdown = markdown;
-    return note;
   }
 
   public async removeNoteRelations(filePath: string) {
