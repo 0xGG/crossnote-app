@@ -1,4 +1,5 @@
 import { sameNoteText } from "./notebook";
+import { pendingNoteWrites } from "./noteWrites";
 
 // Where a note is: the notebook's folder and the note's path in it.
 export interface NoteLocation {
@@ -105,6 +106,11 @@ export class NoteSaver {
     return this.failed ? this.lastError : null;
   }
 
+  /** The last text accepted from, or successfully written to, the file. */
+  get savedText(): string | null {
+    return this.synced;
+  }
+
   /** Whether the editor is still there: not disposed or discarded. */
   get open(): boolean {
     return !this.disposed;
@@ -136,7 +142,15 @@ export class NoteSaver {
         await this.renaming;
       }
       await this.flushWrites();
-    } while (this.renaming !== null);
+      await Promise.all(
+        pendingNoteWrites(this.location).map((entry) => entry.done),
+      );
+    } while (
+      this.renaming !== null ||
+      this.timer !== null ||
+      this.writing !== null ||
+      pendingNoteWrites(this.location).length > 0
+    );
   }
 
   private async flushWrites(): Promise<void> {
@@ -349,21 +363,36 @@ export async function flushNotes(where: {
   notebookPath: string;
   filePath?: string;
 }): Promise<void> {
+  do {
+    await flushNoteBatch(where);
+  } while (pendingNoteWrites(where).length > 0);
+}
+
+async function flushNoteBatch(where: {
+  notebookPath: string;
+  filePath?: string;
+}): Promise<void> {
   const chosen = [...savers].filter(
     (saver) =>
       saver.location.notebookPath === where.notebookPath &&
       (where.filePath === undefined ||
         saver.location.filePath === where.filePath),
   );
-  const results = await Promise.allSettled(
-    chosen.map((saver) => saver.flush()),
-  );
+  const pending = pendingNoteWrites(where);
+  const locations = [
+    ...chosen.map((saver) => saver.location),
+    ...pending.map((entry) => entry.location),
+  ];
+  const results = await Promise.allSettled([
+    ...chosen.map((saver) => saver.flush()),
+    ...pending.map((entry) => entry.done),
+  ]);
   const failed = results
-    .map((result, i) => ({ result, saver: chosen[i] }))
+    .map((result, i) => ({ result, location: locations[i] }))
     .filter(({ result }) => result.status === "rejected");
   if (failed.length > 0) {
     throw new NotesNotSavedError(
-      failed.map(({ saver }) => saver.location),
+      failed.map(({ location }) => location),
       failed.map(({ result }) => (result as PromiseRejectedResult).reason),
     );
   }

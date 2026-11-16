@@ -24,8 +24,10 @@ import { pruneUnknownTabs, tabsShowingNote } from "../lib/layout";
 import { Note, NoteConfig } from "../lib/note";
 import { Notebook } from "../lib/notebook";
 import { NotesNotSavedError, flushNotes } from "../lib/noteSaver";
+import { writeNoteOperation } from "../lib/noteWrites";
 import { moveNote, openNoteAt } from "../lib/openNotes";
 import { failureMessage, notify } from "../lib/notifications";
+import { NotebookConflictError } from "../lib/mergeFiles";
 import { CrossnoteTabNode } from "../lib/tabNode";
 import { notebookInFront, tabsetForNewTab } from "../lib/tabset";
 import { getTodayName } from "../utilities/utils";
@@ -202,34 +204,53 @@ function useCrossnoteContainer(initialState: InitialState) {
       notebookPath: string,
       filePath: string,
       markdown: string,
-    ) => {
-      // The save comes a moment after the last keystroke, by when the
-      // notebook, or the note, may have been deleted or the note renamed.
-      const notebook = getNotebookAtPath(notebookPath);
-      if (!notebook) {
-        return;
-      }
-      const note = await notebook.getNote(filePath);
-      if (!note) {
-        return;
-      }
-      if (note.markdown !== markdown) {
-        const newNote = await notebook.writeNote(
-          note.filePath,
-          markdown,
-          note.config,
-        );
-        globalEmitter.emit(EventType.ModifiedMarkdown, {
-          tabId: writer.getId(),
-          markdown: newNote.markdown,
-          lineBreak: newNote.lineBreak,
-          notebookPath: note.notebookPath,
-          noteFilePath: note.filePath,
-          noteConfig: newNote.config,
-        });
-      }
-    },
-    [getNotebookAtPath],
+    ) =>
+      writeNoteOperation({ notebookPath, filePath }, async () => {
+        // The save comes a moment after the last keystroke, by when the
+        // notebook, or the note, may have been deleted or the note renamed.
+        const notebook = getNotebookAtPath(notebookPath);
+        if (!notebook) {
+          return;
+        }
+        const cached = await notebook.getNote(filePath);
+        if (!cached) return;
+        const open = openNoteAt({ notebookPath, filePath });
+        const fresh = await notebook.getNote(filePath, true);
+        // A file deleted by git while its open editor was being edited keeps
+        // those new edits. An explicit local deletion removes the cache first.
+        const note =
+          fresh ?? (open?.saver.id === writer.getId() ? cached : null);
+        if (!note) return;
+        if (open?.saver.id === writer.getId()) {
+          const merged = open.reconcileFile(note.markdown, note.lineBreak);
+          markdown = merged.text;
+          if (merged.conflict || !fresh)
+            notify({
+              severity: "warning",
+              message: t("error/notebook-sync-conflicts", { files: filePath }),
+            });
+        }
+        if (!fresh || note.markdown !== markdown) {
+          const newNote = await notebook.writeNote(
+            note.filePath,
+            markdown,
+            note.config,
+          );
+          open?.saver.wrote(newNote.markdown);
+          globalEmitter.emit(EventType.ModifiedMarkdown, {
+            tabId: writer.getId(),
+            markdown: newNote.markdown,
+            lineBreak: newNote.lineBreak,
+            notebookPath: note.notebookPath,
+            noteFilePath: note.filePath,
+            noteConfig: newNote.config,
+          });
+        } else {
+          await notebook.storeNote(filePath);
+          open?.saver.wrote(note.markdown);
+        }
+      }),
+    [getNotebookAtPath, t],
   );
 
   // Saves a note's settings, saying so when they cannot be saved. Whether
@@ -239,66 +260,99 @@ function useCrossnoteContainer(initialState: InitialState) {
       tabNode: TabNode,
       notebookPath: string,
       filePath: string,
-      noteConfig: NoteConfig,
+      change: NoteConfig | ((current: NoteConfig) => NoteConfig),
     ): Promise<boolean> => {
-      const notebook = getNotebookAtPath(notebookPath);
-      if (!notebook) {
-        return false;
-      }
-      const note = await notebook.getNote(filePath);
-      if (!note) {
-        return false;
-      }
-      if (JSON.stringify(note.config) !== JSON.stringify(noteConfig)) {
-        let newNote: Note;
-        try {
-          newNote = await notebook.writeNote(
-            note.filePath,
-            note.markdown,
-            noteConfig,
-          );
-        } catch (error) {
-          notify({
-            severity: "error",
-            message: failureMessage(
-              t("error/failed-to-save-note-settings"),
-              error,
-            ),
-            duration: 5000,
-          });
-          return false;
-        }
-        globalEmitter.emit(EventType.ModifiedMarkdown, {
-          tabId: tabNode.getId(),
-          markdown: newNote.markdown,
-          lineBreak: newNote.lineBreak,
-          notebookPath: note.notebookPath,
-          noteFilePath: note.filePath,
-          noteConfig: newNote.config,
+      const owner = openNoteAt({ notebookPath, filePath });
+      try {
+        return await writeNoteOperation(
+          { notebookPath, filePath },
+          async () => {
+            // An open note can move while this operation waits behind its rename.
+            const location = owner?.saver.location ?? {
+              notebookPath,
+              filePath,
+            };
+            notebookPath = location.notebookPath;
+            filePath = location.filePath;
+            const notebook = getNotebookAtPath(notebookPath);
+            if (!notebook) {
+              return false;
+            }
+            const note = await notebook.getNote(filePath, true);
+            if (!note) {
+              return false;
+            }
+            const noteConfig =
+              typeof change === "function"
+                ? change({ ...note.config })
+                : change;
+            const open = openNoteAt(location);
+            const merged = open?.reconcileFile(note.markdown, note.lineBreak);
+            if (merged?.conflict)
+              notify({
+                severity: "warning",
+                message: t("error/notebook-sync-conflicts", {
+                  files: filePath,
+                }),
+              });
+            if (
+              JSON.stringify(note.config) !== JSON.stringify(noteConfig) ||
+              (merged && merged.text !== note.markdown)
+            ) {
+              const newNote = await notebook.writeNote(
+                note.filePath,
+                merged?.text ?? note.markdown,
+                noteConfig,
+              );
+              open?.saver.wrote(newNote.markdown);
+              globalEmitter.emit(EventType.ModifiedMarkdown, {
+                tabId: openNoteAt(location)?.saver.id ?? tabNode.getId(),
+                markdown: newNote.markdown,
+                lineBreak: newNote.lineBreak,
+                notebookPath: note.notebookPath,
+                noteFilePath: note.filePath,
+                noteConfig: newNote.config,
+              });
+            } else {
+              await notebook.storeNote(filePath);
+              open?.saver.wrote(note.markdown);
+            }
+            return true;
+          },
+        );
+      } catch (error) {
+        notify({
+          severity: "error",
+          message: failureMessage(
+            t("error/failed-to-save-note-settings"),
+            error,
+          ),
+          duration: 5000,
         });
+        return false;
       }
-      return true;
     },
     [getNotebookAtPath, t],
   );
 
   const deleteNote = useCallback(
-    async (tabNode: TabNode, notebookPath: string, noteFilePath: string) => {
-      const notebook = getNotebookAtPath(notebookPath);
-      if (!notebook) {
-        return;
-      }
-      await notebook.deleteNote(noteFilePath);
-      await notebook.refreshNotes({
-        dir: "./",
-        includeSubdirectories: true,
-      });
-      globalEmitter.emit(EventType.DeletedNote, {
-        tabId: tabNode.getId(),
-        notebookPath: notebookPath,
-        noteFilePath: noteFilePath,
-      });
-    },
+    async (tabNode: TabNode, notebookPath: string, noteFilePath: string) =>
+      writeNoteOperation({ notebookPath, filePath: noteFilePath }, async () => {
+        const notebook = getNotebookAtPath(notebookPath);
+        if (!notebook) {
+          return;
+        }
+        await notebook.deleteNote(noteFilePath);
+        await notebook.refreshNotes({
+          dir: "./",
+          includeSubdirectories: true,
+        });
+        globalEmitter.emit(EventType.DeletedNote, {
+          tabId: tabNode.getId(),
+          notebookPath: notebookPath,
+          noteFilePath: noteFilePath,
+        });
+      }),
     [getNotebookAtPath],
   );
 
@@ -316,48 +370,49 @@ function useCrossnoteContainer(initialState: InitialState) {
         // the file has moved, find none, and write nothing.
         await flushNotes(old);
         const open = openNoteAt(old);
-        const rename = async (onMoved?: () => void) => {
-          const newNote = await notebook.changeNoteFilePath(
-            oldNoteFilePath,
-            newFilePath,
-            onMoved,
-          );
-          // Migrate the shared owner before releasing writes and closing.
-          if (open) {
-            moveNote(open, {
-              notebookPath: note.notebookPath,
-              filePath: newNote.filePath,
-            });
-          }
-          globalEmitter.emit(EventType.ChangedNoteFilePath, {
-            tabId: tabNode.getId(),
-            notebookPath: note.notebookPath,
-            oldNoteFilePath: oldNoteFilePath,
-            // As the notebook wrote it, which is not always as it was asked.
-            newNoteFilePath: newNote.filePath,
-          });
-          // A tab keeps the path of the note it shows, which the saved layout
-          // opens it at again and which opening the note looks for; every tab
-          // of the note follows it.
-          if (layoutModel) {
-            const tabs = tabsShowingNote(
-              layoutModel,
-              note.notebookPath,
+        const rename = (onMoved?: () => void) =>
+          writeNoteOperation(old, async () => {
+            const newNote = await notebook.changeNoteFilePath(
               oldNoteFilePath,
+              newFilePath,
+              onMoved,
             );
-            for (const tab of tabs) {
-              layoutModel.doAction(
-                Actions.updateNodeAttributes(tab.getId(), {
-                  config: {
-                    ...tab.getConfig(),
-                    noteFilePath: newNote.filePath,
-                  },
-                }),
-              );
+            // Migrate the shared owner before releasing writes and closing.
+            if (open) {
+              moveNote(open, {
+                notebookPath: note.notebookPath,
+                filePath: newNote.filePath,
+              });
             }
-          }
-          return newNote;
-        };
+            globalEmitter.emit(EventType.ChangedNoteFilePath, {
+              tabId: tabNode.getId(),
+              notebookPath: note.notebookPath,
+              oldNoteFilePath: oldNoteFilePath,
+              // As the notebook wrote it, which is not always as it was asked.
+              newNoteFilePath: newNote.filePath,
+            });
+            // A tab keeps the path of the note it shows, which the saved layout
+            // opens it at again and which opening the note looks for; every tab
+            // of the note follows it.
+            if (layoutModel) {
+              const tabs = tabsShowingNote(
+                layoutModel,
+                note.notebookPath,
+                oldNoteFilePath,
+              );
+              for (const tab of tabs) {
+                layoutModel.doAction(
+                  Actions.updateNodeAttributes(tab.getId(), {
+                    config: {
+                      ...tab.getConfig(),
+                      noteFilePath: newNote.filePath,
+                    },
+                  }),
+                );
+              }
+            }
+            return newNote;
+          });
         return open ? await open.saver.rename(rename) : await rename();
       } else {
         throw new Error("Notebook " + note.notebookPath + " not found");
@@ -463,7 +518,10 @@ function useCrossnoteContainer(initialState: InitialState) {
   const createNewNote = useCallback(
     (notebook: Notebook, fileName: string = "", markdown: string = "") =>
       creatingNote.runExclusive(() =>
-        nameAndWriteNote(notebook, fileName, markdown),
+        writeNoteOperation(
+          { notebookPath: notebook.dir, filePath: fileName },
+          () => nameAndWriteNote(notebook, fileName, markdown),
+        ),
       ),
     [nameAndWriteNote],
   );
@@ -637,9 +695,23 @@ function useCrossnoteContainer(initialState: InitialState) {
   const saveOpenNotes = useCallback(
     async (where: { notebookPath: string; filePath?: string }) => {
       try {
+        const notebook = getNotebookAtPath(where.notebookPath);
+        if (notebook) await crossnote?.resumeNotebook?.(notebook);
         await flushNotes(where);
       } catch (error) {
-        const notSaved = error as NotesNotSavedError;
+        if (error instanceof NotebookConflictError) throw error;
+        const notSaved =
+          error instanceof NotesNotSavedError
+            ? error
+            : new NotesNotSavedError(
+                [
+                  {
+                    notebookPath: where.notebookPath,
+                    filePath: where.filePath ?? where.notebookPath,
+                  },
+                ],
+                [error],
+              );
         notify({
           severity: "error",
           message: failureMessage(
@@ -652,10 +724,10 @@ function useCrossnoteContainer(initialState: InitialState) {
           ),
           duration: 5000,
         });
-        throw error;
+        throw notSaved;
       }
     },
-    [t],
+    [t, crossnote, getNotebookAtPath],
   );
 
   // Reads a notebook's notes again from disk, and has its open editors take
@@ -713,6 +785,7 @@ function useCrossnoteContainer(initialState: InitialState) {
       try {
         await saveOpenNotes({ notebookPath: args.notebook.dir });
         await crossnote.pushNotebook(args);
+        await flushNotes({ notebookPath: args.notebook.dir });
         await args.notebook.refreshNotes({
           dir: "./",
           includeSubdirectories: true,
@@ -723,10 +796,14 @@ function useCrossnoteContainer(initialState: InitialState) {
         setIsPushingNotebook(false);
       } catch (error) {
         setIsPushingNotebook(false);
+        if (error instanceof NotebookConflictError) {
+          await flushNotes({ notebookPath: args.notebook.dir });
+          await readNotebookAgain(args.notebook);
+        }
         throw error;
       }
     },
-    [crossnote, saveOpenNotes],
+    [crossnote, saveOpenNotes, readNotebookAgain],
   );
 
   const pullNotebook = useCallback(
@@ -737,8 +814,8 @@ function useCrossnoteContainer(initialState: InitialState) {
       setIsPullingNotebook(true);
       try {
         await saveOpenNotes({ notebookPath: args.notebook.dir });
-        // NOTE: Code here might have bug
         const result = await crossnote.pullNotebook(args);
+        await flushNotes({ notebookPath: args.notebook.dir });
         await args.notebook.refreshNotes({
           dir: "./",
           includeSubdirectories: true,
@@ -796,38 +873,24 @@ function useCrossnoteContainer(initialState: InitialState) {
 
   const togglePin = useCallback(
     async (tabNode: TabNode, notebookPath: string, noteFilePath: string) => {
-      const notebook = getNotebookAtPath(notebookPath);
-      if (!notebook) {
-        return;
-      }
-      const note = await notebook.getNote(noteFilePath);
-      const newConfig = Object.assign({}, note.config, {
-        pinned: !note.config.pinned,
+      await updateNoteConfig(tabNode, notebookPath, noteFilePath, (current) => {
+        if (current.pinned) delete current.pinned;
+        else current.pinned = true;
+        return current;
       });
-      if (!newConfig.pinned) {
-        delete newConfig.pinned;
-      }
-      await updateNoteConfig(tabNode, notebookPath, noteFilePath, newConfig);
     },
-    [getNotebookAtPath, updateNoteConfig],
+    [updateNoteConfig],
   );
 
   const toggleFavorite = useCallback(
     async (tabNode: TabNode, notebookPath: string, noteFilePath: string) => {
-      const notebook = getNotebookAtPath(notebookPath);
-      if (!notebook) {
-        return;
-      }
-      const note = await notebook.getNote(noteFilePath);
-      const newConfig = Object.assign({}, note.config, {
-        favorited: !note.config.favorited,
+      await updateNoteConfig(tabNode, notebookPath, noteFilePath, (current) => {
+        if (current.favorited) delete current.favorited;
+        else current.favorited = true;
+        return current;
       });
-      if (!newConfig.favorited) {
-        delete newConfig.favorited;
-      }
-      await updateNoteConfig(tabNode, notebookPath, noteFilePath, newConfig);
     },
-    [getNotebookAtPath, updateNoteConfig],
+    [updateNoteConfig],
   );
 
   const addNoteAlias = useCallback(
@@ -843,16 +906,16 @@ function useCrossnoteContainer(initialState: InitialState) {
       }
       const note = await notebook.getNote(noteFilePath);
       const aliases: string[] = note.config.aliases || [];
-      const newAliases = aliases.concat(alias);
-      const newConfig = Object.assign({}, note.config, {
-        aliases: newAliases,
-      });
+      let newAliases: string[] = [];
       if (
         !(await updateNoteConfig(
           tabNode,
           notebookPath,
           noteFilePath,
-          newConfig,
+          (current) => {
+            newAliases = [...(current.aliases ?? []), alias];
+            return { ...current, aliases: newAliases };
+          },
         ))
       ) {
         return aliases;
@@ -876,19 +939,18 @@ function useCrossnoteContainer(initialState: InitialState) {
       }
       const note = await notebook.getNote(noteFilePath);
       const aliases: string[] = note.config.aliases || [];
-      const newAliases = aliases.filter((a) => a !== alias);
-      const newConfig = Object.assign({}, note.config, {
-        aliases: newAliases,
-      });
-      if (!newAliases.length) {
-        delete newConfig.aliases;
-      }
+      let newAliases: string[] = [];
       if (
         !(await updateNoteConfig(
           tabNode,
           notebookPath,
           noteFilePath,
-          newConfig,
+          (current) => {
+            newAliases = (current.aliases ?? []).filter((a) => a !== alias);
+            if (newAliases.length) current.aliases = newAliases;
+            else delete current.aliases;
+            return current;
+          },
         ))
       ) {
         return aliases;

@@ -280,7 +280,10 @@ export class CrossnoteApp {
   async openNotes(notebookName = "Drafts") {
     const notebook = this.notebook(notebookName);
     // Only the chevron expands a notebook; clicking its label refreshes it.
-    await notebook.getByRole("button").first().click();
+    if ((await notebook.getAttribute("aria-expanded")) !== "true")
+      await notebook
+        .getByRole("button", { name: "Expand", exact: true })
+        .click();
     await notebook
       .getByRole("group")
       .getByRole("treeitem", { name: /Notes/ })

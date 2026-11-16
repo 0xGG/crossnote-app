@@ -1,18 +1,22 @@
 import { EditorState } from "@codemirror/state";
 import { EditorView } from "@codemirror/view";
 import type { TabNode } from "flexlayout-react";
+import * as git from "isomorphic-git";
 import moment from "moment";
 import React, { act, useEffect } from "react";
 import { createRoot, Root } from "react-dom/client";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import "../i18n/i18n";
 import type Crossnote from "../lib/crossnote";
-import { pfs } from "../lib/fs";
+import { fs, pfs } from "../lib/fs";
 import type { Note } from "../lib/note";
 import { Notebook } from "../lib/notebook";
-import { NoteSaver, NotesNotSavedError } from "../lib/noteSaver";
+import { NoteSaver, NotesNotSavedError, flushNotes } from "../lib/noteSaver";
 import { getNotificationState, resetNotifications } from "../lib/notifications";
 import { joinNote, leaveNote, openNoteAt } from "../lib/openNotes";
+import { notebookOperation } from "../lib/notebookOperation";
+import { pendingNoteWrites } from "../lib/noteWrites";
+import { NotebookConflictError } from "../lib/mergeFiles";
 import { CrossnoteContainer } from "./crossnote";
 
 // Tells React it runs under a test, so act() flushes renders and effects.
@@ -429,6 +433,327 @@ const body = async (notebook: Notebook, fileName: string) =>
     /^---\n(?:.*\n)*?---\n/,
     "",
   );
+
+function holdNextNoteWrite(notebook: Notebook) {
+  let reach!: () => void;
+  let release!: () => void;
+  const reached = new Promise<void>((resolve) => (reach = resolve));
+  const held = new Promise<void>((resolve) => (release = resolve));
+  const write = notebook.writeNote.bind(notebook);
+  vi.spyOn(notebook, "writeNote").mockImplementationOnce(async (...args) => {
+    reach();
+    await held;
+    return write(...args);
+  });
+  return { reached, release };
+}
+
+it.each(["settings", "text"])(
+  "keeps text and settings when the %s write settles last",
+  async (first) => {
+    const notebook = await notebookAt(`/notebooks/interleaved-${first}`);
+    await pfs.writeFile(`${notebook.dir}/a.md`, "A");
+    const { open, type, close } = openForTyping(notebook, "a.md", "A");
+    joinNote("other", open.saver.location, "A", open.calls);
+    const hold = holdNextNoteWrite(notebook);
+    try {
+      if (first === "text") type("B");
+      const firstWrite =
+        first === "settings"
+          ? crossnote.togglePin(tab, notebook.dir, "a.md")
+          : open.saver.flush();
+      await hold.reached;
+      if (first === "settings") type("B");
+      const secondWrite =
+        first === "settings"
+          ? open.saver.flush()
+          : crossnote.togglePin(tab, notebook.dir, "a.md");
+      type("C");
+      hold.release();
+      await Promise.all([firstWrite, secondWrite]);
+      await flushNotes({ notebookPath: notebook.dir });
+      expect(await body(notebook, "a.md")).toBe("ABC");
+      expect((await notebook.getNote("a.md", true)).config.pinned).toBe(true);
+      expect(open.document.text()).toBe("ABC");
+    } finally {
+      hold.release();
+      leaveNote(open, "other");
+      close();
+    }
+  },
+);
+
+it("merges independent settings of an unopened note without reverting text or other settings", async () => {
+  const notebook = await notebookAt("/notebooks/unopened-interleaved-settings");
+  const raw = '---\r\ncustom: "kept"\r\n---\r\nA\r\n';
+  await pfs.writeFile(`${notebook.dir}/a.md`, raw);
+  const hold = holdNextNoteWrite(notebook);
+  const pin = crossnote.togglePin(tab, notebook.dir, "a.md");
+  await hold.reached;
+  const favorite = crossnote.toggleFavorite(tab, notebook.dir, "a.md");
+  const aliases = Promise.all([
+    crossnote.addNoteAlias(tab, notebook.dir, "a.md", "one"),
+    crossnote.addNoteAlias(tab, notebook.dir, "a.md", "two"),
+  ]);
+  hold.release();
+  await Promise.all([pin, favorite, aliases]);
+  await crossnote.deleteNoteAlias(tab, notebook.dir, "a.md", "one");
+  const note = await notebook.getNote("a.md", true);
+  expect(note.config).toMatchObject({
+    pinned: true,
+    favorited: true,
+    aliases: ["two"],
+  });
+  const stored = await read(notebook, "a.md");
+  expect(stored).toContain('custom: "kept"\r\n');
+  expect(stored).toContain("A\r\n");
+  expect(String(stored).replaceAll("\r\n", "")).not.toContain("\n");
+});
+
+it("keeps newer typing after a settings write fails and lets the setting be retried", async () => {
+  const notebook = await notebookAt("/notebooks/settings-retry");
+  await pfs.writeFile(`${notebook.dir}/a.md`, "A");
+  const { open, type, close } = openForTyping(notebook, "a.md", "A");
+  vi.spyOn(notebook, "writeNote").mockRejectedValueOnce(new Error("Disk full"));
+  resetNotifications();
+  try {
+    await crossnote.togglePin(tab, notebook.dir, "a.md");
+    expect(getNotificationState().current?.message).toContain(
+      "Failed to save the note's settings",
+    );
+    type("B");
+    await open.saver.flush();
+    await crossnote.togglePin(tab, notebook.dir, "a.md");
+    const note = await notebook.getNote("a.md", true);
+    expect(note.markdown).toBe("AB");
+    expect(note.config.pinned).toBe(true);
+  } finally {
+    close();
+  }
+});
+
+it.each(["stage", "tree"] as const)(
+  "retries %s durability after text or settings already reached the file",
+  async (phase) => {
+    const notebook = await notebookAt(`/notebooks/retry-durability-${phase}`);
+    notebook.isLocal = false;
+    await git.init({ fs, dir: notebook.dir });
+    await pfs.writeFile(`${notebook.dir}/a.md`, "A");
+    await notebook.getNote("a.md", true);
+    const { open, type, close } = openForTyping(notebook, "a.md", "A");
+    const failTwice = () => {
+      const failure = new Error(`${phase} refused`);
+      const spy =
+        phase === "stage" ? vi.spyOn(git, "add") : vi.spyOn(pfs, "storeTree");
+      spy.mockRejectedValueOnce(failure).mockRejectedValueOnce(failure);
+      return { failure, spy };
+    };
+    try {
+      const text = failTwice();
+      type("B");
+      await expect(open.saver.flush()).rejects.toBe(text.failure);
+      expect(await body(notebook, "a.md")).toBe("AB");
+      await expect(open.saver.flush()).rejects.toBe(text.failure);
+      expect(open.saver.pending).toBe(true);
+      await open.saver.flush();
+      expect(text.spy).toHaveBeenCalledTimes(3);
+      expect(open.saver.pending).toBe(false);
+      text.spy.mockRestore();
+      type("C");
+      await open.saver.flush();
+      expect(await body(notebook, "a.md")).toBe("ABC");
+      expect(open.saver.savedText).toBe("ABC");
+
+      const settings = failTwice();
+      const pin = () =>
+        crossnote.updateNoteConfig(tab, notebook.dir, "a.md", (current) => ({
+          ...current,
+          pinned: true,
+        }));
+      expect(await pin()).toBe(false);
+      expect((await notebook.getNote("a.md", true)).config.pinned).toBe(true);
+      expect(await pin()).toBe(false);
+      expect(await pin()).toBe(true);
+      expect(settings.spy).toHaveBeenCalledTimes(3);
+      expect(await git.listFiles({ fs, dir: notebook.dir })).toContain("a.md");
+    } finally {
+      close();
+    }
+  },
+);
+
+it("waits for an unopened note's settings before flushing a notebook for git", async () => {
+  const notebook = await notebookAt("/notebooks/settings-before-git");
+  await pfs.writeFile(`${notebook.dir}/a.md`, "A");
+  const hold = holdNextNoteWrite(notebook);
+  const pin = crossnote.togglePin(tab, notebook.dir, "a.md");
+  await hold.reached;
+  let flushed = false;
+  const flushing = flushNotes({ notebookPath: notebook.dir }).then(() => {
+    flushed = true;
+  });
+  await Promise.resolve();
+  expect(flushed).toBe(false);
+  hold.release();
+  await Promise.all([pin, flushing]);
+  expect((await notebook.getNote("a.md", true)).config.pinned).toBe(true);
+});
+
+it("merges input queued during git with the downloaded text before it saves", async () => {
+  const notebook = await notebookAt("/notebooks/typing-during-git");
+  const initial = "First\nMiddle\nLast\n";
+  await pfs.writeFile(`${notebook.dir}/a.md`, initial);
+  await notebook.getNote("a.md", true);
+  const { open, type, close } = openForTyping(notebook, "a.md", initial);
+  let release!: () => void;
+  let reach!: () => void;
+  const reached = new Promise<void>((resolve) => (reach = resolve));
+  const held = new Promise<void>((resolve) => (release = resolve));
+  const syncing = notebookOperation(notebook.dir, async () => {
+    reach();
+    await held;
+    await pfs.writeFile(`${notebook.dir}/a.md`, "Remote first\nMiddle\nLast\n");
+  });
+  await reached;
+  try {
+    type("Typed during sync\n");
+    const saving = open.saver.flush();
+    release();
+    await Promise.all([syncing, saving]);
+    expect(await body(notebook, "a.md")).toBe(
+      "Remote first\nMiddle\nLast\nTyped during sync\n",
+    );
+    expect(open.document.text()).toBe(
+      "Remote first\nMiddle\nLast\nTyped during sync\n",
+    );
+    type("More\n");
+    await open.saver.flush();
+    expect(await body(notebook, "a.md")).toBe(
+      "Remote first\nMiddle\nLast\nTyped during sync\nMore\n",
+    );
+  } finally {
+    release();
+    close();
+  }
+});
+
+it("reconciles typing when a queued alias removal is already present in downloaded settings", async () => {
+  const notebook = await notebookAt("/notebooks/noop-settings-during-git");
+  const initial = "First\nMiddle\nLast\n";
+  const note = await notebook.writeNote("a.md", initial, {
+    aliases: ["x", "y"],
+    createdAt: new Date(),
+    modifiedAt: new Date(),
+  });
+  const { open, type, close } = openForTyping(notebook, "a.md", initial);
+  let reach!: () => void;
+  let release!: () => void;
+  const reached = new Promise<void>((resolve) => (reach = resolve));
+  const held = new Promise<void>((resolve) => (release = resolve));
+  const syncing = notebookOperation(notebook.dir, async () => {
+    reach();
+    await held;
+    await notebook.writeNote("a.md", "Remote\nMiddle\nLast\n", {
+      ...note.config,
+      aliases: ["y"],
+    });
+  });
+  await reached;
+  try {
+    const settings = crossnote.deleteNoteAlias(tab, notebook.dir, "a.md", "x");
+    // deleteNoteAlias first awaits a cached read. Hold git until the settings
+    // operation has actually queued ahead of the later text save.
+    await vi.waitFor(() =>
+      expect(
+        pendingNoteWrites({ notebookPath: notebook.dir, filePath: "a.md" }),
+      ).toHaveLength(1),
+    );
+    type("Typed during sync\n");
+    const saving = open.saver.flush();
+    release();
+    await Promise.all([syncing, settings, saving]);
+    expect(await body(notebook, "a.md")).toBe(
+      "Remote\nMiddle\nLast\nTyped during sync\n",
+    );
+    expect(open.document.text()).toBe(await body(notebook, "a.md"));
+    expect((await notebook.getNote("a.md", true)).config.aliases).toEqual([
+      "y",
+    ]);
+  } finally {
+    release();
+    close();
+  }
+});
+
+it("chooses a new note's path only after git has restored the notebook", async () => {
+  const notebook = await notebookAt("/notebooks/creating-during-git");
+  let reach!: () => void;
+  let release!: () => void;
+  const reached = new Promise<void>((resolve) => (reach = resolve));
+  const held = new Promise<void>((resolve) => (release = resolve));
+  const syncing = notebookOperation(notebook.dir, async () => {
+    reach();
+    await held;
+    await pfs.writeFile(`${notebook.dir}/remote.md`, "Downloaded");
+  });
+  await reached;
+  try {
+    const creating = crossnote.createNewNote(notebook, "remote.md", "New");
+    await Promise.resolve();
+    release();
+    await syncing;
+    const note = await creating;
+    expect(note.markdown).toBe("Downloaded");
+    expect(await read(notebook, "remote.md")).toBe("Downloaded");
+  } finally {
+    release();
+  }
+});
+
+it("saves input made during a conflicting upload before refreshing editors", async () => {
+  let reach!: () => void;
+  let release!: () => void;
+  const reached = new Promise<void>((resolve) => (reach = resolve));
+  const held = new Promise<void>((resolve) => (release = resolve));
+  const conflict = new NotebookConflictError(["assets/a.bin"]);
+  const notebook = await notebookAt("/notebooks/typing-during-conflict", {
+    pushNotebook: async () => {
+      reach();
+      await held;
+      await pfs.writeFile(`${notebook.dir}/a.md`, "Remote\nMiddle\nLast\n");
+      throw conflict;
+    },
+  });
+  const initial = "First\nMiddle\nLast\n";
+  await pfs.writeFile(`${notebook.dir}/a.md`, initial);
+  await notebook.getNote("a.md", true);
+  const { open, type, close } = openForTyping(notebook, "a.md", initial);
+  try {
+    await act(async () => {
+      const pushing = crossnote.pushNotebook({
+        notebook,
+        message: "Save",
+        authorName: "Test",
+        authorEmail: "test@example.test",
+        username: "Test",
+        password: "",
+      });
+      const rejected = expect(pushing).rejects.toBe(conflict);
+      await reached;
+      type("Typed during sync\n");
+      release();
+      await rejected;
+    });
+    expect(await body(notebook, "a.md")).toBe(
+      "Remote\nMiddle\nLast\nTyped during sync\n",
+    );
+    expect(open.document.text()).toBe(await body(notebook, "a.md"));
+    expect(open.saver.pending).toBe(false);
+  } finally {
+    release();
+    close();
+  }
+});
 
 it("writes what was just typed into a note before renaming it, and saves it under its new name from then on", async () => {
   const notebook = await notebookAt("/notebooks/renaming");
