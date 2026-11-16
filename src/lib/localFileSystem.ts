@@ -101,7 +101,10 @@ export default class LocalFileSystem {
     }
   }
 
-  public async writeFile(path: string, data: string): Promise<void> {
+  public async writeFile(
+    path: string,
+    data: string | Uint8Array,
+  ): Promise<void> {
     let [directoryHandle, pathArr] = await this.helper(path, "readwrite");
     if (!directoryHandle) {
       throw new Error(`${path} is not valid`);
@@ -126,7 +129,9 @@ export default class LocalFileSystem {
         create: true,
       });
       const writable = await fileHandle.createWritable();
-      await writable.write(data);
+      await writable.write(
+        typeof data === "string" ? data : new Uint8Array(data),
+      );
       await writable.close();
     }
   }
