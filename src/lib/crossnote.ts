@@ -348,8 +348,8 @@ export default class Crossnote {
       fs,
       dir: notebook.dir,
     })) {
-      if (head === work) continue;
-      cache[file] =
+      if (head === 0 && work === 0) continue;
+      const bytes =
         work === 0
           ? null
           : new Uint8Array(
@@ -357,6 +357,19 @@ export default class Crossnote {
                 path.resolve(notebook.dir, file),
               )) as Uint8Array,
             );
+      // Git's stat shortcut compares timestamps only to whole seconds. An
+      // equal-sized edit within that second can look unchanged. Before reset,
+      // compare the bytes even for files the matrix calls clean.
+      if (head === work) {
+        const base = await git.readBlob({
+          fs,
+          dir: notebook.dir,
+          oid: notebook.localSha,
+          filepath: file,
+        });
+        if (sameBytes(bytes, base.blob)) continue;
+      }
+      cache[file] = bytes;
     }
     return cache;
   }
@@ -600,14 +613,35 @@ export default class Crossnote {
       dir: notebook.dir,
       ref: recovery.localSha,
     });
-    for (const file of baseFiles) {
+    for (const file of new Set([...baseFiles, ...(recovery.relocated ?? [])])) {
       if (
         !remoteFiles.has(file) &&
         !Object.prototype.hasOwnProperty.call(recovery.files, file)
       ) {
         const target = this.checkedPath(notebook, file);
-        if (await pfs.exists(target)) await pfs.unlink(target);
+        if (
+          (await pfs.exists(target)) &&
+          !(await pfs.stats(target)).isDirectory()
+        )
+          await pfs.unlink(target);
       }
+    }
+    // Checkout cannot write a file over a directory, even when all its former
+    // files have been removed. Only empty directories are disposable: an
+    // unexpected file must stop recovery rather than be recursively deleted.
+    const removeEmptyDirectory = async (dir: string): Promise<void> => {
+      for (const entry of await pfs.readdir(dir)) {
+        const child = path.join(dir, entry);
+        if (!(await pfs.stats(child)).isDirectory())
+          throw new Error(`Unplanned file blocks Git checkout: ${child}`);
+        await removeEmptyDirectory(child);
+      }
+      await pfs.rmdir(dir);
+    };
+    for (const file of remoteFiles) {
+      const target = this.checkedPath(notebook, file);
+      if ((await pfs.exists(target)) && (await pfs.stats(target)).isDirectory())
+        await removeEmptyDirectory(target);
     }
     await this.hardResetNotebook(notebook, recovery.remoteSha, true);
     // A reset removes the old index. Include every remote file before applying
@@ -704,6 +738,40 @@ export default class Crossnote {
     const remoteFiles = new Set(
       await git.listFiles({ fs, dir: notebook.dir, ref: remoteSha }),
     );
+    // A remote file may replace a local directory. Preserve untracked/ignored
+    // children too; Git's status matrix need not include those files.
+    const collectUntracked = async (dir: string): Promise<void> => {
+      for (const name of await pfs.readdir(this.checkedPath(notebook, dir))) {
+        const file = `${dir}/${name}`;
+        const target = this.checkedPath(notebook, file);
+        if ((await pfs.stats(target)).isDirectory())
+          await collectUntracked(file);
+        else if (!baseFiles.has(file) && !(file in cache))
+          cache[file] = new Uint8Array(
+            (await pfs.readFile(target)) as Uint8Array,
+          );
+      }
+    };
+    for (const file of remoteFiles) {
+      const target = this.checkedPath(notebook, file);
+      if ((await pfs.exists(target)) && (await pfs.stats(target)).isDirectory())
+        await collectUntracked(file);
+      const parts = file.split("/");
+      parts.pop();
+      while (parts.length) {
+        const ancestor = parts.join("/");
+        const target = this.checkedPath(notebook, ancestor);
+        if (
+          (await pfs.exists(target)) &&
+          !(await pfs.stats(target)).isDirectory() &&
+          !(ancestor in cache)
+        )
+          cache[ancestor] = new Uint8Array(
+            (await pfs.readFile(target)) as Uint8Array,
+          );
+        parts.pop();
+      }
+    }
     const reserved = new Set([
       ...baseFiles,
       ...remoteFiles,
@@ -712,6 +780,31 @@ export default class Crossnote {
     const files: Cache = Object.create(null);
     const conflicts: string[] = [];
     const deletions: ConflictDeletions = Object.create(null);
+    const relocated: string[] = [];
+    const overlaps = (a: string, b: string) =>
+      a === b || a.startsWith(`${b}/`) || b.startsWith(`${a}/`);
+    const copyPath = async (file: string, side: "local" | "remote") => {
+      // A relocated local file cannot retain an ancestor that is now a remote
+      // file. Put it at the notebook root and report both paths to the user.
+      const name =
+        side === "local" ||
+        [...reserved].some((entry) => file.startsWith(`${entry}/`))
+          ? path.basename(file)
+          : file;
+      const ext = path.extname(name);
+      const stem = name.slice(0, name.length - ext.length);
+      let copy: string;
+      let suffix = 0;
+      do {
+        copy = `${stem}.${side}-${remoteSha.slice(0, 8)}${suffix ? `-${suffix}` : ""}${ext}`;
+        suffix++;
+      } while (
+        [...reserved].some((entry) => overlaps(entry, copy)) ||
+        (await pfs.exists(this.checkedPath(notebook, copy)))
+      );
+      reserved.add(copy);
+      return copy;
+    };
     const blob = async (
       sha: string,
       file: string,
@@ -735,22 +828,27 @@ export default class Crossnote {
         ours,
         await blob(remoteSha, file, remoteFiles),
       );
+      if (
+        [...remoteFiles].some(
+          (remote) => remote !== file && overlaps(remote, file),
+        )
+      ) {
+        // A deletion at this path must not unlink the new remote directory or
+        // remove its ancestor from the index. Nonempty local versions move to
+        // stable, non-conflicting names before the plan is published.
+        if (merged.bytes !== null) {
+          const copy = await copyPath(file, "local");
+          files[copy] = merged.bytes;
+          relocated.push(file);
+          conflicts.push(file, copy);
+        }
+        continue;
+      }
       files[file] = merged.bytes;
       if (merged.conflict) conflicts.push(file);
       if (merged.deleted) deletions[file] = merged.deleted;
       if (merged.copy) {
-        const ext = path.extname(file);
-        const stem = file.slice(0, file.length - ext.length);
-        let copy: string;
-        let suffix = 0;
-        do {
-          copy = `${stem}.remote-${remoteSha.slice(0, 8)}${suffix ? `-${suffix}` : ""}${ext}`;
-          suffix++;
-        } while (
-          reserved.has(copy) ||
-          (await pfs.exists(this.checkedPath(notebook, copy)))
-        );
-        reserved.add(copy);
+        const copy = await copyPath(file, "remote");
         files[copy] = merged.copy;
         conflicts.push(copy);
       }
@@ -762,6 +860,7 @@ export default class Crossnote {
       files,
       conflicts,
       deletions,
+      relocated,
     };
     // Recovery references the fetched commit and its objects. Persist their
     // directory entries before publishing a plan a new page must replay.

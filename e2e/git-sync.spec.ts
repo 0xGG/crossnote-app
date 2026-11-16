@@ -296,6 +296,7 @@ test("finishing a cancelled upload does not close another notebook's upload dial
   await app.open();
   const dir = await cloneRemote(app, a);
   await cloneRemote(app, b);
+  const messages = await app.recordMessages();
   await localBytes(page, `${dir}/README.md`, bytes("Changed A\n"));
   let release!: () => void;
   let reached!: () => void;
@@ -324,6 +325,7 @@ test("finishing a cancelled upload does not close another notebook's upload dial
     await expect
       .poll(() => remoteBytes(request, a, "README.md"))
       .toEqual(bytes("Changed A\n"));
+    await expect.poll(messages).toContain("Notebook uploaded");
     await expect(
       dialog.getByRole("button", { name: "Upload", exact: true }),
     ).toBeEnabled();

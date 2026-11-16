@@ -76,7 +76,10 @@ export function mergeFile(
     const text = mergeableText(file, ours);
     return { bytes: ours, conflict: text !== null && hasTextConflicts(text) };
   }
-  if (sameBytes(base, ours)) return { bytes: theirs, conflict: false };
+  if (sameBytes(base, ours)) {
+    const text = mergeableText(file, theirs);
+    return { bytes: theirs, conflict: text !== null && hasTextConflicts(text) };
+  }
   const a = mergeableText(file, ours);
   const b = base === null ? "" : mergeableText(file, base);
   const c = mergeableText(file, theirs);

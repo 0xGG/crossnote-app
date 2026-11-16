@@ -7,6 +7,9 @@ export interface PullRecovery {
   files: Record<string, FileBytes>;
   conflicts: string[];
   deletions?: ConflictDeletions;
+  // These local paths have durable copies at safe paths in files. Remove the
+  // originals before checkout so remote files and directories can replace them.
+  relocated?: string[];
 }
 
 // Kept outside the git working tree. A resolved write means the transaction,

@@ -21,11 +21,23 @@ const remoteBytes = new Uint8Array([137, 80, 0, 253, 130, 2]);
 async function repository(remote: Record<string, Uint8Array | null> = {}) {
   const app = new Crossnote();
   const notebook = await app.addNotebook({ name: "Sync", gitURL: "" });
-  for (const [file, data] of Object.entries({
+  const initial = {
     "README.md": bytes("# Kept\n"),
     "assets/a.bin": binary,
     "removed.txt": bytes("delete me\n"),
-  })) {
+  };
+  const removeFile = async (file: string) => {
+    await pfs.unlink(`${notebook.dir}/${file}`);
+    const parts = file.split("/");
+    parts.pop();
+    while (parts.length) {
+      const dir = `${notebook.dir}/${parts.join("/")}`;
+      if ((await pfs.readdir(dir)).length) break;
+      await pfs.rmdir(dir);
+      parts.pop();
+    }
+  };
+  for (const [file, data] of Object.entries(initial)) {
     await pfs.writeFile(`${notebook.dir}/${file}`, data);
     await git.add({ fs, dir: notebook.dir, filepath: file });
   }
@@ -39,7 +51,7 @@ async function repository(remote: Record<string, Uint8Array | null> = {}) {
   if (Object.keys(remote).length) {
     for (const [file, data] of Object.entries(remote)) {
       if (data === null) {
-        await pfs.unlink(`${notebook.dir}/${file}`);
+        await removeFile(file);
         await git.remove({ fs, dir: notebook.dir, filepath: file });
       } else {
         await pfs.writeFile(`${notebook.dir}/${file}`, data);
@@ -52,7 +64,14 @@ async function repository(remote: Record<string, Uint8Array | null> = {}) {
       message: "Remote",
       author,
     });
+    // Return this fixture to its original shape before simulating a fetch.
+    for (const [file, data] of Object.entries(remote)) {
+      if (data !== null && !(file in initial)) await removeFile(file);
+    }
     await app.hardResetNotebook(notebook, base, true);
+    for (const [file, data] of Object.entries(initial)) {
+      await pfs.writeFile(`${notebook.dir}/${file}`, data);
+    }
     await git.add({ fs, dir: notebook.dir, filepath: "." });
   }
   notebook.gitURL = "http://fixture.test/notebook.git";
@@ -130,6 +149,107 @@ it("keeps both binary sides, avoids an existing copy name and stops this push", 
     ...remoteBytes,
   ]);
   expect(await pfs.exists(`${notebook.dir}/removed.txt`)).toBe(false);
+});
+
+it("preserves equal-sized edits made in the same second as checkout", async () => {
+  vi.spyOn(Date, "now").mockReturnValue(1700000000100);
+  const ours = new Uint8Array([137, 80, 0, 254, 129]);
+  const { app, notebook, read } = await repository();
+  await pfs.writeFile(`${notebook.dir}/assets/a.bin`, ours);
+  await app.pullNotebook({ notebook });
+  expect(await read("assets/a.bin")).toEqual([...ours]);
+});
+
+it("moves a local file aside when the remote replaces it with a directory and replays the same plan", async () => {
+  const { app, notebook, theirs, read } = await repository({
+    "removed.txt": null,
+    "removed.txt/child.md": bytes("remote child"),
+  });
+  await pfs.writeFile(`${notebook.dir}/removed.txt`, bytes("local edit"));
+  const copy = `removed.local-${theirs.slice(0, 8)}.txt`;
+  // A directory at the first proposed copy name must also be avoided.
+  await pfs.writeFile(`${notebook.dir}/${copy}/keep.md`, bytes("unrelated"));
+  const kept = `removed.local-${theirs.slice(0, 8)}-1.txt`;
+  const write = pfs.writeFile.bind(pfs);
+  const failing = vi
+    .spyOn(pfs, "writeFile")
+    .mockImplementation(async (file, data) => {
+      if (file.endsWith(kept)) throw new Error("Copy write failed");
+      return write(file, data);
+    });
+  await expect(app.pullNotebook({ notebook })).rejects.toThrow(
+    "Copy write failed",
+  );
+  const plan = await recovery.readPullRecovery(notebook._id);
+  expect(plan?.relocated).toEqual(["removed.txt"]);
+  expect(plan?.files["removed.txt"]).toBeUndefined();
+  expect([...plan!.files[kept]!]).toEqual([...bytes("local edit")]);
+  failing.mockRestore();
+  const reopened = (await new Crossnote().listNotebooks()).find(
+    (n) => n._id === notebook._id,
+  );
+  expect(reopened?.localSha).toBe(theirs);
+  expect(await read(kept)).toEqual([...bytes("local edit")]);
+  expect(await read("removed.txt/child.md")).toEqual([
+    ...bytes("remote child"),
+  ]);
+  expect(await read(`${copy}/keep.md`)).toEqual([...bytes("unrelated")]);
+  expect(await recovery.readPullRecovery(notebook._id)).toBeUndefined();
+});
+
+it("preserves changed and ignored children when a remote file replaces their directory", async () => {
+  const { app, notebook, theirs, read } = await repository({
+    "assets/a.bin": null,
+    "assets": bytes("remote file"),
+    ".gitignore": bytes("*.ignored\n"),
+  });
+  await pfs.writeFile(`${notebook.dir}/assets/a.bin`, changed);
+  await pfs.writeFile(`${notebook.dir}/.gitignore`, "*.ignored\n");
+  await pfs.writeFile(
+    `${notebook.dir}/assets/nested/private.ignored`,
+    bytes("keep ignored"),
+  );
+  const result = await app.pullNotebook({ notebook });
+  expect(result.conflicts).toContain("assets/a.bin");
+  expect(await read("assets")).toEqual([...bytes("remote file")]);
+  expect(await read(`a.local-${theirs.slice(0, 8)}.bin`)).toEqual([...changed]);
+  expect(await read(`private.local-${theirs.slice(0, 8)}.ignored`)).toEqual([
+    ...bytes("keep ignored"),
+  ]);
+  expect(await recovery.readPullRecovery(notebook._id)).toBeUndefined();
+});
+
+it("keeps an ignored local file when the remote introduces a directory at its path", async () => {
+  const { app, notebook, theirs, read } = await repository({
+    "private.ignored/remote.md": bytes("remote"),
+  });
+  await pfs.writeFile(`${notebook.dir}/.gitignore`, "*.ignored\n");
+  await pfs.writeFile(
+    `${notebook.dir}/private.ignored`,
+    bytes("private bytes"),
+  );
+  const result = await app.pullNotebook({ notebook });
+  expect(result.conflicts).toContain("private.ignored");
+  expect(await read(`private.local-${theirs.slice(0, 8)}.ignored`)).toEqual([
+    ...bytes("private bytes"),
+  ]);
+  expect(await read("private.ignored/remote.md")).toEqual([...bytes("remote")]);
+});
+
+it("does not replay a local deletion over a remote directory", async () => {
+  const { app, notebook, read } = await repository({
+    "removed.txt": null,
+    "removed.txt/child.md": bytes("remote child"),
+  });
+  await pfs.unlink(`${notebook.dir}/removed.txt`);
+  const result = await app.pullNotebook({ notebook });
+  expect(result.numConflicts).toBe(0);
+  expect(await read("removed.txt/child.md")).toEqual([
+    ...bytes("remote child"),
+  ]);
+  expect(await git.listFiles({ fs, dir: notebook.dir })).toContain(
+    "removed.txt/child.md",
+  );
 });
 
 it("keeps recovery after a failed restore, retries at startup and reuses the same conflict copy", async () => {

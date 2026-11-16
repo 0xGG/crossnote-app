@@ -1,7 +1,7 @@
 import { NoteDocument } from "../editor/noteDocument";
 import { NoteSaver, type NoteLocation } from "./noteSaver";
 import { pendingNoteWrites } from "./noteWrites";
-import { mergeFile } from "./mergeFiles";
+import { mergeFile, NotebookConflictError } from "./mergeFiles";
 
 // The notes open in editors, one entry for each note however many tabs show
 // it: the tabs share the note's text, its undo history and the saver that
@@ -85,6 +85,12 @@ export class OpenNote {
       encode(this.document.text()),
       encode(text),
     );
+    // The caller writes this result over the downloaded file. When text cannot
+    // be merged, leave both the disk and the dirty editor untouched, including
+    // the saver's base, so retries cannot silently discard either version.
+    if (merged.copy) {
+      throw new NotebookConflictError([this.saver.location.filePath]);
+    }
     const reconciled = new TextDecoder("utf-8", { ignoreBOM: true }).decode(
       merged.bytes!,
     );

@@ -637,6 +637,45 @@ it("merges input queued during git with the downloaded text before it saves", as
   }
 });
 
+it.each(["text", "settings"])(
+  "preserves the disk and dirty editor when %s cannot reconcile downloaded bytes",
+  async (save) => {
+    const notebook = await notebookAt(`/notebooks/unmergeable-${save}`);
+    const initial = "Base\0\n";
+    const remote = "Downloaded\0\n";
+    await pfs.writeFile(`${notebook.dir}/a.md`, initial);
+    await notebook.getNote("a.md", true);
+    const { open, type, close } = openForTyping(notebook, "a.md", initial);
+    try {
+      type("Local input\n");
+      await pfs.writeFile(`${notebook.dir}/a.md`, remote);
+      const write = vi.spyOn(notebook, "writeNote");
+      if (save === "settings") {
+        resetNotifications();
+        await crossnote.togglePin(tab, notebook.dir, "a.md");
+        expect(getNotificationState().current?.message).toContain(
+          "Failed to save the note's settings",
+        );
+      }
+      await expect(open.saver.flush()).rejects.toBeInstanceOf(
+        NotebookConflictError,
+      );
+      // Repeating the save must not advance the base and turn this into a
+      // one-sided overwrite. Keep local input available for manual resolution.
+      await expect(open.saver.flush()).rejects.toBeInstanceOf(
+        NotebookConflictError,
+      );
+      expect(write).not.toHaveBeenCalled();
+      expect(await read(notebook, "a.md")).toBe(remote);
+      expect(open.document.text()).toBe(initial + "Local input\n");
+      expect(open.saver.savedText).toBe(initial);
+      expect(open.saver.pending).toBe(true);
+    } finally {
+      close();
+    }
+  },
+);
+
 it("reconciles typing when a queued alias removal is already present in downloaded settings", async () => {
   const notebook = await notebookAt("/notebooks/noop-settings-during-git");
   const initial = "First\nMiddle\nLast\n";

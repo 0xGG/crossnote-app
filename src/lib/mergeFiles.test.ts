@@ -93,6 +93,14 @@ describe("file merge policy", () => {
     expect(merged.conflict).toBe(true);
     expect(text(merged.bytes)).toContain("\\<<<<<<< ours\nours\n");
     expect(text(merged.bytes)).toContain("theirs\n");
+    const incoming = mergeFile(
+      "a.md",
+      bytes("base\n"),
+      bytes("base\n"),
+      merged.bytes,
+    );
+    expect(incoming.conflict).toBe(true);
+    expect(incoming.bytes).toBe(merged.bytes);
     expect(
       mergeFile("a.md", bytes("theirs\n"), merged.bytes, bytes("theirs\n"))
         .conflict,
