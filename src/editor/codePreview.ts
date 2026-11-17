@@ -171,6 +171,7 @@ export class CodePreviewWidget extends WidgetType {
       const selection = root.ownerDocument.getSelection();
       if (
         selection &&
+        !event.shiftKey &&
         !selection.isCollapsed &&
         root.contains(selection.anchorNode)
       )
@@ -183,7 +184,7 @@ export class CodePreviewWidget extends WidgetType {
       const lineHeight = parseFloat(
         getComputedStyle(drawing.element).lineHeight,
       );
-      const row = diagram
+      let row = diagram
         ? 0
         : Math.max(
             0,
@@ -194,15 +195,43 @@ export class CodePreviewWidget extends WidgetType {
                 lineHeight,
             ),
           );
+      let column = 0;
+      if (!diagram) {
+        // Read the actual caret in Prism's text, including wrapped lines and
+        // nested token spans, before replacing the widget with editable source.
+        const caret = root.ownerDocument.caretRangeFromPoint?.(
+          event.clientX,
+          event.clientY,
+        );
+        if (caret && drawing.element.contains(caret.startContainer)) {
+          const before = root.ownerDocument.createRange();
+          before.selectNodeContents(drawing.element);
+          before.setEnd(caret.startContainer, caret.startOffset);
+          const lines = before.toString().split("\n");
+          row = lines.length - 1;
+          column = lines[lines.length - 1].length;
+        }
+      }
       const line = view.state.doc.line(
         Math.min(
           view.state.doc.lineAt(this.block.to).number,
           first.number + row + (this.block.fenced ? 1 : 0),
         ),
       );
+      const renderedLine = this.block.code.split("\n")[row] ?? "";
+      const prefix = renderedLine
+        ? Math.max(0, line.text.lastIndexOf(renderedLine))
+        : 0;
+      const head = Math.min(
+        line.to,
+        Math.max(this.block.from, line.from + prefix + column),
+      );
       event.preventDefault();
       view.dispatch({
-        selection: { anchor: Math.max(line.from, this.block.from) },
+        selection: {
+          anchor: event.shiftKey ? view.state.selection.main.anchor : head,
+          head,
+        },
       });
       view.focus();
       view.requestMeasure({
