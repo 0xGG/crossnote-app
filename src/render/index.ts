@@ -46,7 +46,7 @@ export interface MountedPreview {
   /**
    * Settles once the note is drawn: its HTML in the element, finished, its
    * images read from the notebook, and its code blocks drawn, each given up
-   * to 10 seconds from its turn (a mermaid diagram waits for the one before
+   * to 10 seconds, or 20 for Mermaid, from its turn (a mermaid diagram waits for the one before
    * it) and all of them up to 30 seconds, before a diagram shows that it
    * took too long (one still waiting its turn as well) and code still being
    * highlighted stays as it was written. Rejects when
