@@ -107,7 +107,7 @@ export class Notebook {
     if (filePath in this.referenceMap.map) {
       const map = this.referenceMap.map[filePath];
       const notes: Notes = {};
-      for (let rFilePath in map) {
+      for (const rFilePath in map) {
         if (rFilePath === filePath) {
           // Don't include self
           continue;
@@ -182,7 +182,7 @@ export class Notebook {
     const oldMentions = note.mentions;
 
     // Remove old references
-    for (let filePath in oldMentions) {
+    for (const filePath in oldMentions) {
       this.referenceMap.deleteReferences(filePath, note.filePath);
     }
 
@@ -382,7 +382,7 @@ export class Notebook {
       this.referenceMap = new ReferenceMap();
       this.initSearch();
     }
-    let files: string[] = [];
+    let files: string[];
     try {
       files = await pfs.readdir(path.resolve(this.dir, dir));
     } catch (error) {
@@ -432,7 +432,7 @@ export class Notebook {
     await Promise.all(refreshNotesPromises);
 
     if (refreshRelations) {
-      for (let filePath in this.notes) {
+      for (const filePath in this.notes) {
         // A note whose references cannot be read leaves the rest of the
         // notebook's in place, and the notes listed.
         try {
@@ -494,7 +494,7 @@ export class Notebook {
       return;
     }
     const mentions = note.mentions;
-    for (let filePath in mentions) {
+    for (const filePath in mentions) {
       this.referenceMap.deleteReferences(filePath, note.filePath);
     }
     delete this.notes[note.filePath];

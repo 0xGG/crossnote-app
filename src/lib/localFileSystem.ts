@@ -36,12 +36,7 @@ export async function verifyPermission(
 
 export default class LocalFileSystem {
   private directoryHandleMap: { [key: string]: FileSystemDirectoryHandle } = {};
-  private _prefix: string;
-
-  constructor() {
-    // this._prefix = randomID(); // cause the caching error of the layout model
-    this._prefix = "lfs";
-  }
+  private readonly _prefix = "lfs";
 
   public async attachLocalDirectory(
     rootDir: string,
@@ -74,185 +69,124 @@ export default class LocalFileSystem {
     const pathArr = path.replace(/\/+$/, "").split("/");
     const rootDir = "/" + pathArr[1] + "/" + pathArr[2] + "/";
     const directoryHandle = this.directoryHandleMap[rootDir];
+    if (!directoryHandle) throw new Error(`${path} is not valid`);
     await verifyPermission(directoryHandle, mode);
     return [directoryHandle, pathArr.slice(3, pathArr.length)];
+  }
+
+  private async directoryAt(
+    directory: FileSystemDirectoryHandle,
+    parts: string[],
+  ) {
+    for (const name of parts) {
+      directory = await directory.getDirectoryHandle(name);
+    }
+    return directory;
+  }
+
+  private async parentOf(path: string, mode: FileSystemPermissionMode) {
+    const [root, parts] = await this.helper(path, mode);
+    return {
+      directory: await this.directoryAt(root, parts.slice(0, -1)),
+      name: parts[parts.length - 1],
+    };
   }
 
   public async readFile(
     path: string,
     opts: ReadFileOptions = { encoding: "" },
   ): Promise<string | Uint8Array> {
-    let [directoryHandle, pathArr] = await this.helper(path, "read");
-    if (!directoryHandle) {
-      throw new Error(`${path} is not valid`);
-    } else {
-      let i = 0;
-      for (; i < pathArr.length - 1; i++) {
-        directoryHandle = await directoryHandle.getDirectoryHandle(pathArr[i]);
-      }
-      const file = await (
-        await directoryHandle.getFileHandle(pathArr[i])
-      ).getFile();
-      if (opts.encoding && opts.encoding.match(/^utf-?8$/i)) {
-        return file.text();
-      } else {
-        return new Uint8Array(await file.arrayBuffer());
-      }
-    }
+    const { directory, name } = await this.parentOf(path, "read");
+    const file = await (await directory.getFileHandle(name)).getFile();
+    return /^utf-?8$/i.test(opts.encoding ?? "")
+      ? file.text()
+      : new Uint8Array(await file.arrayBuffer());
   }
 
   public async writeFile(
     path: string,
     data: string | Uint8Array,
   ): Promise<void> {
-    let [directoryHandle, pathArr] = await this.helper(path, "readwrite");
-    if (!directoryHandle) {
-      throw new Error(`${path} is not valid`);
-    } else {
-      let i = 0;
-      for (; i < pathArr.length - 1; i++) {
-        try {
-          directoryHandle = await directoryHandle.getDirectoryHandle(
-            pathArr[i],
-            { create: true },
-          );
-        } catch (error) {
-          // A file where the path needs a folder: told apart from other
-          // failures the way the browser file system tells it.
-          if ((error as DOMException).name === "TypeMismatchError") {
-            throw notAFolder(pathArr.slice(0, i + 1).join("/"));
-          }
-          throw error;
+    const [root, parts] = await this.helper(path, "readwrite");
+    let directory = root;
+    for (let i = 0; i < parts.length - 1; i++) {
+      try {
+        directory = await directory.getDirectoryHandle(parts[i], {
+          create: true,
+        });
+      } catch (error) {
+        if ((error as DOMException).name === "TypeMismatchError") {
+          throw notAFolder(parts.slice(0, i + 1).join("/"));
         }
+        throw error;
       }
-      const fileHandle = await directoryHandle.getFileHandle(pathArr[i], {
-        create: true,
-      });
-      const writable = await fileHandle.createWritable();
-      await writable.write(
-        typeof data === "string" ? data : new Uint8Array(data),
-      );
-      await writable.close();
     }
+    const fileHandle = await directory.getFileHandle(parts[parts.length - 1], {
+      create: true,
+    });
+    const writable = await fileHandle.createWritable();
+    await writable.write(
+      typeof data === "string" ? data : new Uint8Array(data),
+    );
+    await writable.close();
   }
 
   public async readdir(path: string): Promise<string[]> {
-    let [directoryHandle, pathArr] = await this.helper(path, "read");
-    if (!directoryHandle) {
-      throw new Error(`${path} is not valid`);
-    } else {
-      let i = 0;
-      for (; i < pathArr.length; i++) {
-        directoryHandle = await directoryHandle.getDirectoryHandle(pathArr[i]);
-      }
-      const names = [];
-      for await (const entry of directoryHandle.values()) {
-        names.push(entry.name);
-      }
-      return names;
-    }
+    const [root, parts] = await this.helper(path, "read");
+    const directory = await this.directoryAt(root, parts);
+    const names = [];
+    for await (const entry of directory.values()) names.push(entry.name);
+    return names;
   }
 
   public async unlink(path: string): Promise<void> {
-    let [directoryHandle, pathArr] = await this.helper(path, "readwrite");
-    if (!directoryHandle) {
-      throw new Error(`${path} is not valid`);
-    } else {
-      let i = 0;
-      for (; i < pathArr.length - 1; i++) {
-        directoryHandle = await directoryHandle.getDirectoryHandle(pathArr[i]);
-      }
-      return await directoryHandle.removeEntry(pathArr[i], { recursive: true });
-    }
+    const { directory, name } = await this.parentOf(path, "readwrite");
+    await directory.removeEntry(name, { recursive: true });
   }
 
   public async stats(path: string): Promise<LightningFS.Stats> {
-    let [directoryHandle, pathArr] = await this.helper(path, "read");
-    if (!directoryHandle) {
-      throw new Error(`${path} is not valid`);
-    } else {
-      let i = 0;
-      for (; i < pathArr.length - 1; i++) {
-        directoryHandle = await directoryHandle.getDirectoryHandle(pathArr[i]);
-      }
-      let fHandle: FileSystemFileHandle = null;
-      let dHandle: FileSystemDirectoryHandle = null;
-      try {
-        dHandle = await directoryHandle.getDirectoryHandle(pathArr[i]);
-      } catch (error) {
-        try {
-          fHandle = await directoryHandle.getFileHandle(pathArr[i]);
-        } catch (error) {
-          throw error;
-        }
-      }
-      const stats: any = {
-        isDirectory: () => {
-          return !!dHandle;
-        },
-        isFile: () => {
-          return !!fHandle;
-        },
-        ctimeMs: fHandle ? (await fHandle.getFile()).lastModified : Date.now(),
-        mtimeMs: fHandle ? (await fHandle.getFile()).lastModified : Date.now(),
-      };
-      return stats;
+    const { directory, name } = await this.parentOf(path, "read");
+    let file: File | undefined;
+    try {
+      await directory.getDirectoryHandle(name);
+    } catch {
+      file = await (await directory.getFileHandle(name)).getFile();
     }
+    const time = file?.lastModified ?? Date.now();
+    return {
+      isDirectory: () => !file,
+      isFile: () => !!file,
+      ctimeMs: time,
+      mtimeMs: time,
+    } as LightningFS.Stats;
   }
 
   public async mkdir(path: string): Promise<void> {
-    let [directoryHandle, pathArr] = await this.helper(path, "readwrite");
-    if (!directoryHandle) {
-      throw new Error(`${path} is not valid`);
-    } else {
-      for (let i = 0; i < pathArr.length; i++) {
-        directoryHandle = await directoryHandle.getDirectoryHandle(pathArr[i], {
-          create: true,
-        });
-      }
+    const [root, parts] = await this.helper(path, "readwrite");
+    let directory = root;
+    for (const name of parts) {
+      directory = await directory.getDirectoryHandle(name, { create: true });
     }
   }
 
   public async exists(path: string): Promise<boolean> {
-    let [directoryHandle, pathArr] = await this.helper(path, "read");
-    if (!directoryHandle) {
-      throw new Error(`${path} is not valid`);
-    } else {
-      let i = 0;
-      for (; i < pathArr.length - 1; i++) {
-        try {
-          directoryHandle = await directoryHandle.getDirectoryHandle(
-            pathArr[i],
-          );
-        } catch (error) {
-          return false;
-        }
-      }
+    const [root, parts] = await this.helper(path, "read");
+    try {
+      const directory = await this.directoryAt(root, parts.slice(0, -1));
+      const name = parts[parts.length - 1];
       try {
-        await directoryHandle.getFileHandle(pathArr[i]);
-        return true;
-      } catch (error) {
-        try {
-          await directoryHandle.getDirectoryHandle(pathArr[i]);
-          return true;
-        } catch (error) {
-          return false;
-        }
+        await directory.getFileHandle(name);
+      } catch {
+        await directory.getDirectoryHandle(name);
       }
+      return true;
+    } catch {
+      return false;
     }
   }
 
-  public async rmdir(path: string): Promise<void> {
-    let [directoryHandle, pathArr] = await this.helper(path, "readwrite");
-    if (!directoryHandle) {
-      throw new Error(`${path} is not valid`);
-    } else {
-      let i = 0;
-      for (; i < pathArr.length - 1; i++) {
-        directoryHandle = await directoryHandle.getDirectoryHandle(pathArr[i]);
-      }
-      return await directoryHandle.removeEntry(pathArr[i], { recursive: true });
-    }
+  public rmdir(path: string): Promise<void> {
+    return this.unlink(path);
   }
 
   public mkdirp = this.mkdir;
