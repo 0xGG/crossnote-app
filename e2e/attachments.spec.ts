@@ -160,10 +160,21 @@ test("imports unknown UTF-8 text files in order at the drop position", async ({
       type: "application/octet-stream",
       bytes: [...Buffer.from("第四段")],
     },
+    { name: "run.sh", type: "application/x-sh", bytes: [...Buffer.from("sh")] },
+    {
+      name: "page.php",
+      type: "application/x-httpd-php",
+      bytes: [...Buffer.from("php")],
+    },
+    {
+      name: "table.csv",
+      type: "application/vnd.ms-excel",
+      bytes: [...Buffer.from("a,b")],
+    },
   ]);
   await expect
     .poll(() => app.editorText(app.visibleEditor))
-    .toBe("Sta第一段\n第二段\n第三段\n第四段rt");
+    .toBe("Sta第一段\n第二段\n第三段\n第四段\nsh\nphp\na,brt");
   expect(await messages()).toEqual([]);
   const assets = await page.evaluate(async (dir) => {
     const fs = (
@@ -254,6 +265,17 @@ for (const binary of [
   { label: "odd-length UTF-16LE", type: "", bytes: [255, 254, 65] },
   { label: "invalid UTF-8 without BOM", type: "", bytes: [195, 40] },
   { label: "NUL in declared text", type: "text/plain", bytes: [65, 0, 66] },
+  {
+    label: "binary spreadsheet",
+    type: "application/vnd.ms-excel",
+    bytes: [0xd0, 0xcf, 0x11, 0xe0],
+  },
+  {
+    label: "ASCII PDF",
+    type: "application/pdf",
+    bytes: [...Buffer.from("%PDF-1.4\n1 0 obj\n<<>>\nendobj\n%%EOF")],
+  },
+  { label: "PNG image", type: "image/png", bytes: png },
 ]) {
   test(`rejects an entire dropped batch containing ${binary.label} bytes`, async ({
     app,

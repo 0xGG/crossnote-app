@@ -16,14 +16,14 @@ type Insertion = { from: number; to: number; valid: boolean };
 function dropKind(file: File): "text" | "unknown" | "attachment" {
   if (fileMediaType(file.name)) return "attachment";
   const mime = file.type.split(";", 1)[0].trim().toLowerCase();
-  if (!mime || mime === "application/octet-stream") return "unknown";
+  if (/^(?:image|audio|video)\//.test(mime)) return "attachment";
   if (
     mime.startsWith("text/") ||
     /^application\/(?:x-)?(?:yaml|toml|sql|javascript)$/.test(mime) ||
     /^application\/(?:[\w.+-]+\+)?(?:json|xml)$/.test(mime)
   )
     return "text";
-  return "attachment";
+  return "unknown";
 }
 
 function checkedText(text: string): string {
@@ -57,6 +57,12 @@ async function readDroppedFile(file: File): Promise<string> {
     const end = Math.min(offset + chunkSize, file.size);
     const bytes = new Uint8Array(await file.slice(offset, end).arrayBuffer());
     if (!decoder) {
+      // A PDF can consist entirely of ASCII, including its header and trailer.
+      if (
+        /^application\/pdf(?:\s*;|$)/i.test(file.type) &&
+        new TextDecoder().decode(bytes.subarray(0, 5)) === "%PDF-"
+      )
+        throw new AttachmentError("type");
       let encoding = "utf-8";
       if (bytes[0] === 0xff && bytes[1] === 0xfe) encoding = "utf-16le";
       if (bytes[0] === 0xfe && bytes[1] === 0xff) encoding = "utf-16be";
