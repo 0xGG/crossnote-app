@@ -1,4 +1,3 @@
-import hash from "object-hash";
 import path from "path-browserify";
 import { Notebook } from "./notebook";
 export interface GraphViewNode {
@@ -12,7 +11,7 @@ export interface GraphViewLink {
 }
 
 export interface GraphViewData {
-  hash: string;
+  signature: string;
   nodes: GraphViewNode[];
   links: GraphViewLink[];
 }
@@ -21,9 +20,9 @@ export function constructGraphView(notebook: Notebook): GraphViewData {
   const nodes: GraphViewNode[] = [];
   const links: GraphViewLink[] = [];
 
-  const addedNodes: { [key: string]: boolean } = {};
+  const addedNodes = new Set<string>();
   const addNode = (filePath: string) => {
-    if (filePath in addedNodes) {
+    if (addedNodes.has(filePath)) {
       return;
     }
     const note = notebook.notes[filePath];
@@ -43,7 +42,7 @@ export function constructGraphView(notebook: Notebook): GraphViewData {
         label: path.basename(label),
       });
     }
-    addedNodes[filePath] = true;
+    addedNodes.add(filePath);
   };
 
   for (const filePath in notebook.referenceMap.map) {
@@ -58,7 +57,7 @@ export function constructGraphView(notebook: Notebook): GraphViewData {
   }
 
   return {
-    hash: hash({ nodes, links }),
+    signature: JSON.stringify({ nodes, links }),
     nodes,
     links,
   };
