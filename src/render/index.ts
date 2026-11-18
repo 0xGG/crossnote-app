@@ -3,6 +3,7 @@ import { Note } from "../lib/note";
 import "./emoji";
 import * as markdown from "./markdown";
 import { finishPreview } from "./preview";
+import { filterPreviewImages } from "./previewImages";
 import { sanitizeHTML } from "./sanitize";
 
 // How a note is drawn: the preview and printing both go
@@ -80,7 +81,12 @@ export function mountPreview(
   try {
     const rendered = renderMarkdown(text);
     element.style.height = "100%";
-    element.innerHTML = sanitizeHTML(rendered.html);
+    // Prepare inert content first so unsupported HTTP images never start a
+    // request while the asynchronous notebook resolver replaces their src.
+    const content = document.createElement("template");
+    content.innerHTML = sanitizeHTML(rendered.html);
+    filterPreviewImages(content.content);
+    element.replaceChildren(content.content);
     done = finishPreview(element, options.note, isCurrent, cleanups);
   } catch (error) {
     element.textContent = String(error);

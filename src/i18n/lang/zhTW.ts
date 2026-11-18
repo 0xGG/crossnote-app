@@ -1,5 +1,7 @@
 export const zhTW = {
   translation: {
+    "attachment/playback-failed":
+      "無法播放此媒體，請檢查檔案、網路或瀏覽器的格式支援。",
     "search/notes": "搜尋筆記",
 
     // Account

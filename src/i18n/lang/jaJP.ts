@@ -1,5 +1,7 @@
 export const jaJP = {
   translation: {
+    "attachment/playback-failed":
+      "再生できません。ファイル、接続、ブラウザーの対応形式を確認してください。",
     "search/notes": "ノートを検索する",
 
     // Account

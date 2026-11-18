@@ -4,6 +4,8 @@ import type { SyntaxNode } from "@lezer/common";
 import katex from "katex";
 import "katex/dist/katex.min.css";
 import { emojiOfShortName, renderTwemoji } from "../render/emoji";
+import { mediaKind, type MediaSource } from "../utilities/media";
+import { mountMediaPlayer } from "../render/media";
 
 // What the editor draws in place of a piece of a note's text while the caret
 // is elsewhere. Each is equal to another of the same text, so that an editor
@@ -78,6 +80,9 @@ export interface ImageMarkup {
 }
 
 export interface ImageHost {
+  /** Hidden editors keep their text, but must not retain media players. */
+  mediaEnabled?: boolean;
+  loadMedia?: (src: string) => Promise<MediaSource>;
   /** Gives an image element what to show for an address in a note. */
   loadImage?: (element: HTMLImageElement, src: string) => void;
   /** A click on an image; from and to are where its markup is now. */
@@ -88,6 +93,7 @@ export interface ImageHost {
 }
 
 /** An image, in place of its markup. */
+const mediaCleanups = new WeakMap<HTMLElement, () => void>();
 export class ImageWidget extends WidgetType {
   constructor(
     readonly image: ImageMarkup,
@@ -106,6 +112,23 @@ export class ImageWidget extends WidgetType {
   }
 
   toDOM(view: EditorView) {
+    const kind = mediaKind(this.image.src);
+    if (kind === "audio" || kind === "video") {
+      if (this.host.mediaEnabled === false)
+        return document.createElement("span");
+      const mounted = mountMediaPlayer(
+        kind,
+        this.image.alt,
+        () =>
+          this.host.loadMedia
+            ? this.host.loadMedia(this.image.src)
+            : Promise.reject(new Error("No media loader")),
+        () => view.requestMeasure(),
+      );
+      if (this.image.title) mounted.element.title = this.image.title;
+      mediaCleanups.set(mounted.element, mounted.dispose);
+      return mounted.element;
+    }
     const element = document.createElement("img");
     element.className = "cn-image";
     element.alt = this.image.alt;
@@ -145,7 +168,12 @@ export class ImageWidget extends WidgetType {
   // The image answers its own clicks, where the app asked to be told of
   // them; otherwise the caret goes to it and its markup shows.
   ignoreEvent(event: Event) {
+    const kind = mediaKind(this.image.src);
+    if (kind === "audio" || kind === "video") return true;
     return !!this.host.onImageClick && event.type === "mousedown";
+  }
+  destroy(dom: HTMLElement) {
+    mediaCleanups.get(dom)?.();
   }
 }
 

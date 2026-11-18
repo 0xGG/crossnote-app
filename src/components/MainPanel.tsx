@@ -33,7 +33,6 @@ import { layoutShowsNotebook } from "../lib/layout";
 import { saverOfTab } from "../lib/noteSaver";
 import { guardLayoutDrags } from "../lib/layoutDrag";
 import { translateLayoutLabel } from "../lib/layoutLabels";
-import { toReference } from "../lib/reference";
 import { TabNodeComponent, TabNodeConfig } from "../lib/tabNode";
 import { CloseUnsavedNoteDialog } from "./CloseUnsavedNoteDialog";
 import { Emoji } from "./EmojiWrapper";
@@ -259,7 +258,7 @@ export function MainPanel() {
               notebook={notebook}
               noteFilePath={config.noteFilePath}
               tabNode={node}
-              reference={toReference(config.reference)}
+              reference={config.reference}
             ></NotePanel>
           );
         }

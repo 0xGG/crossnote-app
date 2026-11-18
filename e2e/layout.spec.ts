@@ -109,6 +109,75 @@ test("goes to the reference a note already open is opened at", async ({
   await expect(app.highlightedReference).toBeVisible();
 });
 
+test("keeps the moved caret when returning to an editor opened at a reference", async ({
+  app,
+  page,
+}) => {
+  await app.open();
+  await app.openNotes();
+  const title = await app.createNote();
+  const line = "See [[README]] here.";
+  await app.setEditorText(`Intro line.\n\n${line}\n`);
+  await app.selectTab("Drafts");
+  await expect(app.noteCards.filter({ hasText: `${title}.md` })).toContainText(
+    "Intro line.",
+  );
+  await app.noteCards
+    .filter({ hasText: "README.md" })
+    .getByText("README", { exact: true })
+    .click();
+  const reference = page
+    .getByText(line, { exact: true })
+    .filter({ visible: true });
+  await expect(reference).toBeVisible({ timeout: 15000 });
+  await reference.click();
+  await expect(app.tab(title)).toHaveAttribute("aria-selected", "true");
+  await expect(app.modeOn).toHaveAccessibleName("Edit");
+  await expect
+    .poll(() => app.caret(app.visibleEditor))
+    .toEqual({ line: 2, ch: 0 });
+  await app.focusEditor(app.visibleEditor);
+  await page.keyboard.press("Control+Home");
+  await page.keyboard.press("ArrowRight");
+  await expect
+    .poll(() => app.caret(app.visibleEditor))
+    .toEqual({ line: 0, ch: 1 });
+  await app.selectTab("README");
+  await app.selectTab(title);
+  await expect
+    .poll(() => app.caret(app.visibleEditor))
+    .toEqual({ line: 0, ch: 1 });
+  await app.noteTitle.fill("Renamed reference note");
+  await app.noteTitle.press("Enter");
+  await expect(app.tab("Renamed reference note")).toBeVisible();
+  await expect
+    .poll(() => app.caret(app.visibleEditor))
+    .toEqual({ line: 0, ch: 1 });
+  // Reopen README so its references are read after the rename. The renamed
+  // card proves that the click below uses the current note path.
+  await app.selectTab("README");
+  await app.tab("README").locator(".flexlayout__tab_button_trailing").click();
+  await expect(app.tab("README")).toBeHidden();
+  await app.openNotes();
+  await app.noteCards
+    .filter({ hasText: "README.md" })
+    .getByText("README", { exact: true })
+    .click();
+  const renamedReference = page
+    .locator(".note-card")
+    .filter({ visible: true, hasText: "Renamed reference note" })
+    .getByText(line, { exact: true });
+  await expect(renamedReference).toBeVisible({ timeout: 15000 });
+  await renamedReference.click();
+  await expect(app.tab("Renamed reference note")).toHaveAttribute(
+    "aria-selected",
+    "true",
+  );
+  await expect
+    .poll(() => app.caret(app.visibleEditor))
+    .toEqual({ line: 2, ch: 0 });
+});
+
 test("keeps a long tab name from scrolling the layout sideways", async ({
   app,
   page,

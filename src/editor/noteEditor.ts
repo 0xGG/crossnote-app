@@ -290,6 +290,14 @@ export class NoteEditor {
    * element itself gets past.
    */
   setHidden(hidden: boolean) {
+    const host = this.view.state.facet(livePreviewHost);
+    if ((host.mediaEnabled !== false) === hidden) {
+      this.view.dispatch({
+        effects: this.images.reconfigure(
+          livePreviewHost.of({ ...host, mediaEnabled: !hidden }),
+        ),
+      });
+    }
     if (hidden) {
       this.view.dom.style.setProperty("display", "none", "important");
     } else {

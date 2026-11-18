@@ -1,5 +1,7 @@
 export const zhCN = {
   translation: {
+    "attachment/playback-failed":
+      "无法播放此媒体，请检查文件、网络或浏览器的格式支持。",
     "search/notes": "搜索笔记",
 
     // Account

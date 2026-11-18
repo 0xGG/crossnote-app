@@ -1,5 +1,7 @@
 export const enUS = {
   translation: {
+    "attachment/playback-failed":
+      "This media could not be played. Check the file, connection or browser format support.",
     "search/notes": "Search Notes",
 
     // Account

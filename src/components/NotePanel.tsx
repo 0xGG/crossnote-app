@@ -22,6 +22,7 @@ import React, {
   useCallback,
   useEffect,
   useLayoutEffect,
+  useMemo,
   useRef,
   useState,
 } from "react";
@@ -54,7 +55,7 @@ import {
   type OpenNote,
   type OpenNoteCalls,
 } from "../lib/openNotes";
-import { Reference } from "../lib/reference";
+import { toReference, type Reference } from "../lib/reference";
 import { onTabVisibility } from "../lib/tabVisibility";
 import { MountedPreview, mountPreview } from "../render";
 import {
@@ -64,6 +65,7 @@ import {
 } from "../render/readingPosition";
 import { setTheme } from "../themes/manager";
 import { resolveNoteImageSrc } from "../utilities/image";
+import { resolveNoteMedia } from "../utilities/media";
 import { openURL } from "../utilities/preview";
 import { debounce } from "../utilities/utils";
 import EditImageDialog, { type EditedImage } from "./EditImageDialog";
@@ -259,6 +261,16 @@ interface Props {
 }
 export default function NotePanel(props: Props) {
   const tabNode = props.tabNode;
+  // An explicit navigation supplies a fresh reference. Renaming the tab
+  // copies its config but keeps the original navigation request.
+  const reference = useMemo(
+    () => toReference(props.reference),
+    [props.reference],
+  );
+  const revealed = useRef<{ editor: NoteEditor; reference: Reference } | null>(
+    null,
+  );
+  const [tabVisible, setTabVisible] = useState(tabNode.isVisible());
   const crossnoteContainer = CrossnoteContainer.useContainer();
   const settingsContainer = SettingsContainer.useContainer();
   const { t } = useTranslation();
@@ -667,6 +679,7 @@ export default function NotePanel(props: Props) {
         }
       },
       images: {
+        loadMedia: (src) => resolveNoteMedia({ ...latest.current.note }, src),
         loadImage: (element, src) => {
           resolveNoteImageSrc(latest.current.note, src)
             .then((url) => {
@@ -695,7 +708,10 @@ export default function NotePanel(props: Props) {
           ),
       },
     });
-    if (latest.current.editorMode === EditorMode.Preview) {
+    if (
+      latest.current.editorMode === EditorMode.Preview ||
+      !tabNode.isVisible()
+    ) {
       created.setHidden(true);
     }
     setEditor(created);
@@ -715,6 +731,7 @@ export default function NotePanel(props: Props) {
   // Render Preview
   useEffect(() => {
     if (
+      tabVisible &&
       editorMode === EditorMode.Preview &&
       editor &&
       openNote &&
@@ -738,13 +755,22 @@ export default function NotePanel(props: Props) {
         stopRestoringPreview.current();
       };
     }
-  }, [editorMode, editor, openNote, previewElement, note, showPreview, t]);
+  }, [
+    tabVisible,
+    editorMode,
+    editor,
+    openNote,
+    previewElement,
+    note,
+    showPreview,
+    t,
+  ]);
 
-  // Check need to highlight reference
+  // Apply the reference after a newly visible preview has been remounted.
   useEffect(() => {
-    if (props.reference) {
-      stopRestoringPreview.current();
+    if (reference && tabVisible) {
       if (editorMode === EditorMode.Preview && previewElement.current) {
+        stopRestoringPreview.current();
         const highlightedElements = previewElement.current.querySelectorAll(
           ".reference-highlight",
         );
@@ -754,9 +780,9 @@ export default function NotePanel(props: Props) {
 
         // The id comes from the note's text and may not be a valid
         // selector as it is.
-        const element = props.reference.elementId
+        const element = reference.elementId
           ? previewElement.current.querySelector(
-              `#${CSS.escape(props.reference.elementId)}`,
+              `#${CSS.escape(reference.elementId)}`,
             )
           : null;
         if (element) {
@@ -778,14 +804,19 @@ export default function NotePanel(props: Props) {
             );
           };
         }
-      } else if (editor) {
-        const lineNo = props.reference.lines[0];
+      } else if (
+        editor &&
+        (revealed.current?.editor !== editor ||
+          revealed.current.reference !== reference)
+      ) {
+        const lineNo = reference.lines[0];
         if (typeof lineNo === "number") {
+          revealed.current = { editor, reference };
           editor.revealLine(lineNo);
         }
       }
     }
-  }, [props.reference, editorMode, editor, previewElement]);
+  }, [reference, tabVisible, editorMode, editor, previewElement]);
 
   // Toggle editor & preview: the editor stays as it is under the preview,
   // text, selection and undo history, and is shown again as the mode asks.
@@ -800,13 +831,13 @@ export default function NotePanel(props: Props) {
         displayOf(editorMode),
         settingsContainer.sourceCodeLineNumbers,
       );
-      editor.setHidden(false);
+      editor.setHidden(!tabVisible);
       if (readingPosition.current) {
         editor.restoreReadingPosition(readingPosition.current);
         readingPosition.current = null;
       }
     }
-  }, [editorMode, editor, settingsContainer.sourceCodeLineNumbers]);
+  }, [editorMode, editor, tabVisible, settingsContainer.sourceCodeLineNumbers]);
 
   const changeEditorMode = (mode: EditorMode) => {
     if (mode === editorMode) return;
@@ -932,7 +963,14 @@ export default function NotePanel(props: Props) {
     if (!tabNode || !note || !globalEmitter) {
       return;
     }
-    return onTabVisibility(tabNode, (visible) => {
+    let visibilityTimer = setTimeout(
+      () => setTabVisible(tabNode.isVisible()),
+      0,
+    );
+    const stop = onTabVisibility(tabNode, (visible) => {
+      // FlexLayout emits while rendering. Update React after that commit.
+      clearTimeout(visibilityTimer);
+      visibilityTimer = setTimeout(() => setTabVisible(visible), 0);
       if (visible) {
         // What changed while the tab was in the background (a mode swap made
         // from the settings tab, say) was laid out with no size. FlexLayout
@@ -947,6 +985,10 @@ export default function NotePanel(props: Props) {
         });
       }
     });
+    return () => {
+      stop();
+      clearTimeout(visibilityTimer);
+    };
   }, [tabNode, note, editor]);
 
   if (!note) {

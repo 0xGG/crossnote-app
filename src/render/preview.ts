@@ -1,6 +1,8 @@
 import { globalContainers } from "../containers/global";
 import { Note } from "../lib/note";
 import { resolveNoteImageSrc } from "../utilities/image";
+import { mediaKind, resolveNoteMedia } from "../utilities/media";
+import { mountMediaPlayer } from "./media";
 import { openURL } from "../utilities/preview";
 import { diagramRenderers } from "./diagrams";
 import {
@@ -108,6 +110,7 @@ async function resolveImages(
   container: HTMLElement,
   note: Note | null,
   isCurrent: () => boolean,
+  cleanups: (() => void)[],
 ) {
   const images = Array.from(container.getElementsByTagName("img"));
   await Promise.all(
@@ -116,11 +119,19 @@ async function resolveImages(
       if (src === null) {
         return;
       }
-      try {
-        const resolved = await resolveNoteImageSrc(
-          note,
-          decodeURIComponent(src),
+      const kind = mediaKind(src);
+      if (kind === "audio" || kind === "video") {
+        const mounted = mountMediaPlayer(kind, image.alt, () =>
+          resolveNoteMedia(note, src),
         );
+        if (image.title) mounted.element.title = image.title;
+        image.replaceWith(mounted.element);
+        cleanups.push(mounted.dispose);
+        await mounted.done;
+        return;
+      }
+      try {
+        const resolved = await resolveNoteImageSrc(note, src);
         // A note drawn again, or closed, meanwhile keeps what it has now.
         if (isCurrent()) {
           image.setAttribute("src", resolved);
@@ -170,7 +181,7 @@ export async function finishPreview(
   handleLinks(container, note);
   try {
     await Promise.all([
-      resolveImages(container, note, isCurrent),
+      resolveImages(container, note, isCurrent, cleanups),
       ...waits.map((wait) => wait.settled),
     ]);
   } finally {
