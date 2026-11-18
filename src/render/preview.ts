@@ -155,6 +155,7 @@ export async function finishPreview(
   note: Note | null,
   isCurrent: () => boolean,
   cleanups: (() => void)[],
+  forPrint = false,
 ) {
   const drawings = renderCodeFences(container, {
     dark: isDarkPreview(container),
@@ -173,14 +174,16 @@ export async function finishPreview(
     waits.forEach((wait) => wait.stop());
     drawings.forEach((drawing) => drawing.dispose());
   });
+  let printedEmoji: Promise<void> | undefined;
   try {
-    renderTwemoji(container);
+    printedEmoji = renderTwemoji(container, forPrint);
   } catch {
     // The emoji stay as text.
   }
   handleLinks(container, note);
   try {
     await Promise.all([
+      printedEmoji,
       resolveImages(container, note, isCurrent, cleanups),
       ...waits.map((wait) => wait.settled),
     ]);

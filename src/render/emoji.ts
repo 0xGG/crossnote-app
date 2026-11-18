@@ -57,7 +57,12 @@ for (const [name, text] of Object.entries(names)) {
 function pictureOf(text: string) {
   const cell = cellOf(text);
   if (cell === undefined) return;
-  return { text, label: labels.get(cell) ?? text, style: pictureStyle(cell) };
+  return {
+    cell,
+    text,
+    label: labels.get(cell) ?? text,
+    style: pictureStyle(cell),
+  };
 }
 
 export function shortNamePicture(shortName: string) {
@@ -70,9 +75,49 @@ const graphemes =
     ? new Intl.Segmenter(undefined, { granularity: "grapheme" })
     : undefined;
 
+interface PrintedEmoji {
+  fallback: Text;
+  cell: number;
+  label: string;
+}
+
+async function paintPrintedEmoji(targets: PrintedEmoji[]) {
+  const sheet = new Image();
+  sheet.src = sheetUrl;
+  try {
+    await sheet.decode();
+  } catch {
+    // The original characters remain printable when the sheet cannot load.
+    return;
+  }
+  for (const { fallback, cell, label } of targets) {
+    if (!fallback.parentNode?.isConnected) continue;
+    const canvas = document.createElement("canvas");
+    canvas.width = picture;
+    canvas.height = picture;
+    const context = canvas.getContext("2d");
+    if (!context) continue;
+    context.drawImage(
+      sheet,
+      Math.floor(cell / grid) * stride + 1,
+      (cell % grid) * stride + 1,
+      picture,
+      picture,
+      0,
+      0,
+      picture,
+      picture,
+    );
+    canvas.className = "emoji";
+    canvas.setAttribute("role", "img");
+    canvas.setAttribute("aria-label", label);
+    fallback.replaceWith(canvas);
+  }
+}
+
 // Twemoji can recognize only the variation selector in sequences such as ☝️.
 // Look up the whole grapheme so the image covers the base and its modifiers.
-export function renderTwemoji(element: HTMLElement) {
+export function renderTwemoji(element: HTMLElement, forPrint = false) {
   if (!graphemes) return;
   const walker = document.createTreeWalker(
     element,
@@ -89,6 +134,7 @@ export function renderTwemoji(element: HTMLElement) {
       },
     },
   );
+  const printed: PrintedEmoji[] = [];
   const textNodes: Text[] = [];
   for (let node = walker.nextNode(); node; node = walker.nextNode()) {
     if (twemoji.test(node.textContent)) textNodes.push(node as Text);
@@ -101,6 +147,14 @@ export function renderTwemoji(element: HTMLElement) {
       if (!twemoji.test(segment)) continue;
       const picture = pictureOf(segment);
       if (!picture) continue;
+      fragment.append(text.slice(end, index));
+      end = index + segment.length;
+      if (forPrint) {
+        const fallback = document.createTextNode(segment);
+        fragment.append(fallback);
+        printed.push({ fallback, cell: picture.cell, label: picture.label });
+        continue;
+      }
       const image = document.createElement("img");
       image.className = "emoji";
       image.alt = segment;
@@ -111,12 +165,12 @@ export function renderTwemoji(element: HTMLElement) {
         width: "1.2em",
         height: "1.2em",
       });
-      fragment.append(text.slice(end, index), image);
-      end = index + segment.length;
+      fragment.append(image);
     }
     if (end) {
       fragment.append(text.slice(end));
       node.replaceWith(fragment);
     }
   }
+  if (printed.length) return paintPrintedEmoji(printed);
 }

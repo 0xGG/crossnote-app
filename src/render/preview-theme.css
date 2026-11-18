@@ -382,6 +382,10 @@ html .preview.preview a.tag.tag-topic,
     white-space: pre-wrap;
   }
 }
+html .preview.preview canvas.emoji {
+  width: 1.2em;
+}
+html .preview.preview canvas.emoji,
 html .preview.preview img.emoji {
   height: 1.2em;
   top: 0.2em;

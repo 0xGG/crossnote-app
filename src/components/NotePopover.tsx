@@ -116,6 +116,7 @@ export default function NotePopover(props: Props) {
         // and for the menu to be gone from the page.
         const preview = mountPreview(tempPreviewElement, note.markdown, {
           note,
+          forPrint: true,
         });
         try {
           await printPreview(

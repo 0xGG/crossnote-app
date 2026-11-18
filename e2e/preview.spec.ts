@@ -171,8 +171,15 @@ test("prints a note with its local images and page breaks", async ({
         .pop()!;
       (window as any).printed = {
         image: printed.querySelector("img")!.getAttribute("src"),
-        emojiPrintColor: getComputedStyle(printed.querySelector("img.emoji")!)
-          .printColorAdjust,
+        emojiHasColor: Array.from(
+          printed
+            .querySelector<HTMLCanvasElement>("canvas.emoji")!
+            .getContext("2d")!
+            .getImageData(0, 0, 64, 64).data,
+        ).some(
+          (red, i, rgba) =>
+            i % 4 === 0 && red > rgba[i + 2] + 30 && rgba[i + 3] > 128,
+        ),
         breakAfter: getComputedStyle(printed.querySelector(".pagebreak")!)
           .breakAfter,
         // A long line of code wraps at the edge of the paper, a long word
@@ -204,7 +211,7 @@ test("prints a note with its local images and page breaks", async ({
     })
     .toEqual({
       image: expect.stringMatching(/^data:image\/md;base64,/),
-      emojiPrintColor: "exact",
+      emojiHasColor: true,
       breakAfter: "page",
       // The fenced block's pre, the indented block's pre and its code.
       codeWraps: ["pre-wrap", "pre-wrap", "pre-wrap"],

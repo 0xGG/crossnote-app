@@ -68,7 +68,7 @@ const mounted = new WeakMap<HTMLElement, MountedPreview>();
 export function mountPreview(
   element: HTMLElement,
   text: string,
-  options: { note: Note | null },
+  options: { note: Note | null; forPrint?: boolean },
 ): MountedPreview {
   mounted.get(element)?.dispose();
   let disposed = false;
@@ -85,7 +85,13 @@ export function mountPreview(
     content.innerHTML = sanitizeHTML(rendered.html);
     filterPreviewImages(content.content);
     element.replaceChildren(content.content);
-    done = finishPreview(element, options.note, isCurrent, cleanups);
+    done = finishPreview(
+      element,
+      options.note,
+      isCurrent,
+      cleanups,
+      options.forPrint,
+    );
   } catch (error) {
     element.textContent = String(error);
     done = Promise.reject(error);
