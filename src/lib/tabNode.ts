@@ -31,3 +31,9 @@ export interface CrossnoteTabNode {
   config: TabNodeConfig;
   id?: string;
 }
+
+// Shared by tab creation and rendering; note and notebook names remain custom.
+export const builtInTabLabels = {
+  Settings: "general/Settings",
+  Graph: "general/graph-view",
+} as const;

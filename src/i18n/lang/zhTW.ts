@@ -1,3 +1,5 @@
+import type { enUS } from "./enUS";
+
 export const zhTW = {
   translation: {
     "attachment/insert-image": "插入圖片",
@@ -59,7 +61,7 @@ export const zhTW = {
     "general/Download": "下載",
     "general/Notebooks": "筆記本",
     "general/add-a-notebook": "添加一個筆記本",
-    "general/add-a-note": "添加一个筆記",
+    "general/add-a-note": "新增一則筆記",
     "general/configure-the-notebook": "設置筆記本",
     "general/notebook-name": "筆記本名稱",
     "general/git-repository": "git 倉庫",
@@ -136,7 +138,7 @@ export const zhTW = {
     // Settings
     "settings/about-this-project": "關於這個項目",
     "settings/issues-and-feature-requests": "發現左問題或者有功能請求?",
-    "settings/default-editor-mode": "默认编辑器模式",
+    "settings/default-editor-mode": "預設編輯器模式",
     "settings/source-code-line-numbers": "原始碼模式顯示行號",
     "settings/author-name": "作者姓名",
     "settings/author-email": "作者郵箱",
@@ -215,6 +217,8 @@ export const zhTW = {
     "git/status/*unmodified": "*未變更",
     "git/status/*absent": "*缺失",
     "git/status/*undeleted": "*未刪除",
+    "git/status/*undeletemodified": "*undeletemodified",
+    "git/status/": "",
 
     // graph view
     "graph-view/node": "節點",
@@ -228,4 +232,4 @@ export const zhTW = {
     "layout/error-rendering-component": "渲染元件時發生錯誤",
     "layout/retry": "重試",
   },
-};
+} satisfies typeof enUS;

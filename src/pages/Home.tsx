@@ -29,6 +29,7 @@ import AddNotebookDialog from "../components/AddNotebookDialog";
 import LanguageSelectorDialog from "../components/LanguageSelectorDialog";
 import { MainPanel } from "../components/MainPanel";
 import NotebookTreeView from "../components/NotebookTreeView";
+import { builtInTabLabels } from "../lib/tabNode";
 import ConfigureNotebookDialog from "../components/ConfigureNotebookDialog";
 import PushNotebookDialog from "../components/PushNotebookDialog";
 import { CrossnoteContainer } from "../containers/crossnote";
@@ -307,7 +308,7 @@ export function Home(props: Props) {
                 crossnoteContainer.addTabNode({
                   type: "tab",
                   component: "Settings",
-                  name: t("general/Settings"),
+                  name: t(builtInTabLabels.Settings),
                   id: "Settings",
                   config: {
                     component: "Settings",

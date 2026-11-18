@@ -1,3 +1,5 @@
+import i18next from "i18next";
+import { isAppErrorKey } from "../i18n/i18n";
 import {
   Box,
   Button,
@@ -12,7 +14,7 @@ import {
 } from "@mui/material";
 import { styled } from "@mui/material/styles";
 import { Eye, EyeOff } from "mdi-material-ui";
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { CrossnoteContainer } from "../containers/crossnote";
 import { SettingsContainer } from "../containers/settings";
@@ -63,7 +65,7 @@ export default function PushNotebookDialog(props: Props) {
         onAuthFailure: () => {
           notify({
             severity: "error",
-            message: t("error/authentication-failed"),
+            message: i18next.t("error/authentication-failed"),
             duration: 5000,
           });
         },
@@ -72,7 +74,7 @@ export default function PushNotebookDialog(props: Props) {
         close();
         notify({
           severity: "success",
-          message: t("success/notebook-uploaded"),
+          message: i18next.t("success/notebook-uploaded"),
         });
       })
       .catch((error: Error) => {
@@ -86,14 +88,14 @@ export default function PushNotebookDialog(props: Props) {
           severity: "error",
           message:
             error instanceof NotebookConflictError
-              ? t("error/notebook-sync-conflicts", {
+              ? i18next.t("error/notebook-sync-conflicts", {
                   files: error.describe((file, side) =>
-                    t(`error/notebook-file-deleted-${side}`, { file }),
+                    i18next.t(`error/notebook-file-deleted-${side}`, { file }),
                   ),
                 })
-              : error.message.match(/^error\//)
-                ? t(error.message)
-                : t("error/failed-to-upload-notebook"),
+              : isAppErrorKey(error.message)
+                ? i18next.t(error.message)
+                : i18next.t("error/failed-to-upload-notebook"),
         });
       });
   }, [
@@ -104,17 +106,35 @@ export default function PushNotebookDialog(props: Props) {
     notebook,
     commitMessage,
     close,
-    t,
-    crossnoteContainer.pushNotebook,
+    crossnoteContainer,
   ]);
 
-  useEffect(() => {
-    setGitUsername(notebook.gitUsername);
-  }, [notebook.gitUsername, props.open]);
-
-  useEffect(() => {
-    setGitPassword(notebook.gitPassword);
-  }, [notebook.gitPassword, props.open]);
+  const [previousCredentials, setPreviousCredentials] = useState({
+    username: notebook.gitUsername,
+    password: notebook.gitPassword,
+    open: props.open,
+  });
+  if (
+    previousCredentials.username !== notebook.gitUsername ||
+    previousCredentials.password !== notebook.gitPassword ||
+    previousCredentials.open !== props.open
+  ) {
+    if (
+      previousCredentials.username !== notebook.gitUsername ||
+      previousCredentials.open !== props.open
+    )
+      setGitUsername(notebook.gitUsername);
+    if (
+      previousCredentials.password !== notebook.gitPassword ||
+      previousCredentials.open !== props.open
+    )
+      setGitPassword(notebook.gitPassword);
+    setPreviousCredentials({
+      username: notebook.gitUsername,
+      password: notebook.gitPassword,
+      open: props.open,
+    });
+  }
 
   return (
     <Dialog

@@ -1,3 +1,4 @@
+import i18next from "i18next";
 import {
   Button,
   Dialog,
@@ -63,7 +64,7 @@ export function DeleteNoteDialog(props: Props) {
               notify({
                 severity: "error",
                 message: failureMessage(
-                  t("error/failed-to-delete-note"),
+                  i18next.t("error/failed-to-delete-note"),
                   error,
                 ),
                 duration: 5000,

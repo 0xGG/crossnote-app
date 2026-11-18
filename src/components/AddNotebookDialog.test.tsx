@@ -1,5 +1,10 @@
 import React, { act } from "react";
-import { createRoot, Root } from "react-dom/client";
+import { Root } from "react-dom/client";
+import {
+  mountTestRoot,
+  unmountTestRoot,
+  buttonByText,
+} from "../test/component";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import "../i18n/i18n";
 import AddNotebookDialog from "./AddNotebookDialog";
@@ -29,14 +34,11 @@ let root: Root;
 
 beforeEach(() => {
   addNotebook.mockClear();
-  container = document.createElement("div");
-  document.body.appendChild(container);
-  root = createRoot(container);
+  ({ container, root } = mountTestRoot());
 });
 
 afterEach(() => {
-  act(() => root.unmount());
-  container.remove();
+  unmountTestRoot(container, root);
 });
 
 it("names a notebook from a link after its repository", async () => {
@@ -54,9 +56,7 @@ it("names a notebook from a link after its repository", async () => {
       />,
     ),
   );
-  const add = Array.from(document.querySelectorAll("button")).find(
-    (button) => button.textContent === "Add",
-  );
+  const add = buttonByText(document, "Add");
   await act(async () => add.click());
 
   expect(addNotebook).toHaveBeenCalledTimes(1);
@@ -71,4 +71,46 @@ it("opens with no repository to name the notebook after", () => {
     ),
   );
   expect(document.querySelector('[role="dialog"]')).not.toBeNull();
+});
+import i18next from "i18next";
+import * as notifications from "../lib/notifications";
+
+it("uses the language at completion", async () => {
+  let rejectAdd: (reason: Error) => void;
+  addNotebook.mockImplementationOnce(
+    () =>
+      new Promise<never>((_, reject) => {
+        rejectAdd = reject;
+      }),
+  );
+  const notify = vi.spyOn(notifications, "notify");
+  await act(() => i18next.changeLanguage("en-US"));
+  act(() =>
+    root.render(<AddNotebookDialog open onClose={() => {}} canCancel />),
+  );
+  await act(async () => buttonByText(document, "Add").click());
+  await act(() => i18next.changeLanguage("zh-CN"));
+  await act(async () =>
+    rejectAdd(new Error("error/failed-to-download-notebook")),
+  );
+  expect(notify).toHaveBeenCalledWith(
+    expect.objectContaining({ message: "下载笔记本失败" }),
+  );
+  notify.mockRestore();
+  await act(() => i18next.changeLanguage("en-US"));
+});
+
+it("preserves an external error message", async () => {
+  addNotebook.mockImplementationOnce(() =>
+    Promise.reject(new Error("error/external-server-detail")),
+  );
+  const notify = vi.spyOn(notifications, "notify");
+  act(() =>
+    root.render(<AddNotebookDialog open onClose={() => {}} canCancel />),
+  );
+  await act(async () => buttonByText(document, "Add").click());
+  expect(notify).toHaveBeenCalledWith(
+    expect.objectContaining({ message: "error/external-server-detail" }),
+  );
+  notify.mockRestore();
 });

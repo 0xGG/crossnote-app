@@ -30,10 +30,13 @@ export default function LanguageSelectorDialog() {
   );
   const [titleLanguage, setTitleLanguage] = useState<string>(languages[0]);
 
-  const chooseLanguage = useCallback((language: string) => {
-    settingsContainer.setLanguage(language);
-    setOpen(false);
-  }, []);
+  const chooseLanguage = useCallback(
+    (language: string) => {
+      settingsContainer.setLanguage(language);
+      setOpen(false);
+    },
+    [settingsContainer],
+  );
 
   useInterval(() => {
     let index = languages.findIndex((x) => x === titleLanguage);

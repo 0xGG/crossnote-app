@@ -1,3 +1,5 @@
+import type { enUS } from "./enUS";
+
 export const zhCN = {
   translation: {
     "attachment/insert-image": "插入图片",
@@ -215,6 +217,8 @@ export const zhCN = {
     "git/status/*unmodified": "*未修改",
     "git/status/*absent": "*缺失",
     "git/status/*undeleted": "*未删除",
+    "git/status/*undeletemodified": "*undeletemodified",
+    "git/status/": "",
 
     // graph view
     "graph-view/node": "节点",
@@ -228,4 +232,4 @@ export const zhCN = {
     "layout/error-rendering-component": "渲染组件时出错",
     "layout/retry": "重试",
   },
-};
+} satisfies typeof enUS;
