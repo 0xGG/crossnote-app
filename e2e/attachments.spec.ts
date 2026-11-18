@@ -152,7 +152,7 @@ test("imports unknown UTF-8 text files in order at the drop position", async ({
     {
       name: "manual.rst",
       type: "application/octet-stream",
-      bytes: [...Buffer.from("第二段")],
+      bytes: [...Buffer.from("%PDF-like text")],
     },
     { name: "NOTES", type: "", bytes: [...Buffer.from("第三段")] },
     {
@@ -174,7 +174,7 @@ test("imports unknown UTF-8 text files in order at the drop position", async ({
   ]);
   await expect
     .poll(() => app.editorText(app.visibleEditor))
-    .toBe("Sta第一段\n第二段\n第三段\n第四段\nsh\nphp\na,brt");
+    .toBe("Sta第一段\n%PDF-like text\n第三段\n第四段\nsh\nphp\na,brt");
   expect(await messages()).toEqual([]);
   const assets = await page.evaluate(async (dir) => {
     const fs = (
@@ -270,11 +270,11 @@ for (const binary of [
     type: "application/vnd.ms-excel",
     bytes: [0xd0, 0xcf, 0x11, 0xe0],
   },
-  {
-    label: "ASCII PDF",
-    type: "application/pdf",
+  ...["application/pdf", "application/x-pdf", ""].map((type) => ({
+    label: `ASCII PDF with ${type || "no MIME type"}`,
+    type,
     bytes: [...Buffer.from("%PDF-1.4\n1 0 obj\n<<>>\nendobj\n%%EOF")],
-  },
+  })),
   { label: "PNG image", type: "image/png", bytes: png },
 ]) {
   test(`rejects an entire dropped batch containing ${binary.label} bytes`, async ({

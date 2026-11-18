@@ -57,12 +57,9 @@ async function readDroppedFile(file: File): Promise<string> {
     const end = Math.min(offset + chunkSize, file.size);
     const bytes = new Uint8Array(await file.slice(offset, end).arrayBuffer());
     if (!decoder) {
-      // A PDF can consist entirely of ASCII, including its header and trailer.
-      if (
-        /^application\/pdf(?:\s*;|$)/i.test(file.type) &&
-        new TextDecoder().decode(bytes.subarray(0, 5)) === "%PDF-"
-      )
-        throw new AttachmentError("type");
+      // An ASCII-only PDF still has a version header, regardless of its MIME.
+      const header = String.fromCharCode(...bytes.subarray(0, 9));
+      if (/^%PDF-\d\.\d[\r\n]/.test(header)) throw new AttachmentError("type");
       let encoding = "utf-8";
       if (bytes[0] === 0xff && bytes[1] === 0xfe) encoding = "utf-16le";
       if (bytes[0] === 0xfe && bytes[1] === 0xff) encoding = "utf-16be";
