@@ -45,10 +45,23 @@ const ImagePreview = styled("img")({
 export default function EditImageDialog(props: Props) {
   const { t } = useTranslation();
   const { editor, image } = props;
-  const [imageSrc, setImageSrc] = useState<string>("");
-  const [imageAlt, setImageAlt] = useState<string>("");
-  const [imageTitle, setImageTitle] = useState<string>("");
-  const [changed, setChanged] = useState(false);
+  const selected = props.open && editor ? image : null;
+  const [previous, setPrevious] = useState(selected);
+  const [imageSrc, setImageSrc] = useState(selected?.src ?? "");
+  const [imageAlt, setImageAlt] = useState(selected?.alt ?? "");
+  const [imageTitle, setImageTitle] = useState(selected?.title ?? "");
+  const [changed, setChanged] = useState(
+    !!selected && selected.document !== editor.document.doc,
+  );
+  if (selected !== previous) {
+    setPrevious(selected);
+    if (selected) {
+      setImageSrc(selected.src);
+      setImageAlt(selected.alt);
+      setImageTitle(selected.title);
+      setChanged(selected.document !== editor.document.doc);
+    }
+  }
   // What the preview shows, with the source and the note it was looked up
   // for: a source relative to the note is resolved against its folder.
   const [preview, setPreview] = useState<{
@@ -101,22 +114,14 @@ export default function EditImageDialog(props: Props) {
     }
   }, [replaceImage, props, imageAlt, imageSrc, imageTitle]);
 
-  // Filled from the image each time the dialog opens: the image clicked may
-  // be the one a cancelled edit left its values behind for. The preview
-  // follows the source, which another image may share.
   useEffect(() => {
-    if (props.open && image && editor) {
-      setImageSrc(image.src);
-      setImageTitle(image.title);
-      setImageAlt(image.alt);
-      setChanged(image.document !== editor.document.doc);
-      return editor.document.onChange(() => setChanged(true));
-    }
-  }, [props.open, image, editor]);
+    if (selected) return editor.document.onChange(() => setChanged(true));
+  }, [selected, editor]);
 
   useEffect(() => {
     // A lookup can end after the source has moved on, a local file being read
     // more slowly than a web address is resolved; only the latest one counts.
+    if (!props.open || !imageSrc) return;
     let latest = true;
     resolveNoteImageSrc(props.note, imageSrc)
       .catch(() => "")
@@ -128,7 +133,7 @@ export default function EditImageDialog(props: Props) {
     return () => {
       latest = false;
     };
-  }, [imageSrc, props.note]);
+  }, [imageSrc, props.note, props.open]);
 
   if (!editor || !image) {
     return null;

@@ -1,6 +1,7 @@
 import type { TabNode } from "flexlayout-react";
 import React, { act } from "react";
-import { createRoot, Root } from "react-dom/client";
+import { Root } from "react-dom/client";
+import { mountTestRoot, unmountTestRoot, typeInput } from "../test/component";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import "../i18n/i18n";
 import type { Note } from "../lib/note";
@@ -29,14 +30,11 @@ let root: Root;
 
 beforeEach(() => {
   changeNoteFilePath.mockClear();
-  container = document.createElement("div");
-  document.body.appendChild(container);
-  root = createRoot(container);
+  ({ container, root } = mountTestRoot());
 });
 
 afterEach(() => {
-  act(() => root.unmount());
-  container.remove();
+  unmountTestRoot(container, root);
 });
 
 function show(forNote: Note) {
@@ -55,17 +53,9 @@ function show(forNote: Note) {
 // The dialog renders in a portal with its one text field.
 const pathField = () => document.querySelector("input") as HTMLInputElement;
 
-function type(input: HTMLInputElement, value: string) {
-  Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value").set.call(
-    input,
-    value,
-  );
-  input.dispatchEvent(new Event("input", { bubbles: true }));
-}
-
 it("keeps what is typed when the note is reloaded unchanged", () => {
   show(note);
-  act(() => type(pathField(), "b.md"));
+  act(() => typeInput(pathField(), "b.md"));
   // Every reload of the notebook, a pull finishing among them, hands the
   // panel a new note object with the same path.
   show({ ...note });
@@ -74,7 +64,7 @@ it("keeps what is typed when the note is reloaded unchanged", () => {
 
 it("leaves an Enter that confirms an input method's candidate alone", () => {
   show(note);
-  act(() => type(pathField(), "b.md"));
+  act(() => typeInput(pathField(), "b.md"));
   // What Chromium sends when Enter commits a composition: a keydown flagged
   // as composing, then a plain keyup once the composition has ended.
   act(() => {
@@ -109,7 +99,7 @@ it("moves the note once however often it is asked while moving it", () => {
   // A move that has not finished yet: the dialog stays open until it has.
   changeNoteFilePath.mockReturnValueOnce(new Promise(() => {}));
   show(note);
-  act(() => type(pathField(), "b.md"));
+  act(() => typeInput(pathField(), "b.md"));
   const enter = (init: KeyboardEventInit = {}) =>
     pathField().dispatchEvent(
       new KeyboardEvent("keydown", {

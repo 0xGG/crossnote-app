@@ -1,3 +1,4 @@
+import { typeInput } from "../test/component";
 import React, { act } from "react";
 import { createRoot, Root } from "react-dom/client";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
@@ -29,14 +30,6 @@ afterEach(() => {
 // The popover renders in a portal with its one text field.
 const aliasField = () => document.querySelector("input") as HTMLInputElement;
 
-function type(input: HTMLInputElement, value: string) {
-  Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value").set.call(
-    input,
-    value,
-  );
-  input.dispatchEvent(new Event("input", { bubbles: true }));
-}
-
 it("leaves an Enter that confirms an input method's candidate alone", () => {
   act(() =>
     root.render(
@@ -51,7 +44,7 @@ it("leaves an Enter that confirms an input method's candidate alone", () => {
   );
   // Half of 会議メモ, its first word just confirmed: Chromium sends a keydown
   // flagged as composing, then a plain keyup once the composition has ended.
-  act(() => type(aliasField(), "会議"));
+  act(() => typeInput(aliasField(), "会議"));
   act(() => {
     aliasField().dispatchEvent(
       new KeyboardEvent("keydown", {
@@ -69,7 +62,7 @@ it("leaves an Enter that confirms an input method's candidate alone", () => {
   expect(aliasField().value).toBe("会議");
 
   // The rest of the alias, then a plain Enter adds it.
-  act(() => type(aliasField(), "会議メモ"));
+  act(() => typeInput(aliasField(), "会議メモ"));
   act(() => {
     aliasField().dispatchEvent(
       new KeyboardEvent("keydown", {
