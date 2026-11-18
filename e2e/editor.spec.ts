@@ -560,15 +560,13 @@ test.describe("completion", () => {
     await app.openNotes();
     await app.createNote();
     await app.typeInEditor("/");
-    await expect(completions(page)).toHaveCount(12);
+    await expect(completions(page)).toHaveCount(13);
     await expect(completions(page).first()).toContainText("/h1");
     await expect(completions(page).first()).toContainText("Insert header 1");
     await expect(
       completions(page).locator(".cn-completion-icon svg"),
-    ).toHaveCount(12);
-    await expect(completions(page).last()).toContainText(
-      "Insert a Mermaid diagram",
-    );
+    ).toHaveCount(13);
+    await expect(completions(page).last()).toContainText("Insert image");
     await page.keyboard.type("h2");
     await expect(completions(page)).toHaveCount(1);
     await pick(page);

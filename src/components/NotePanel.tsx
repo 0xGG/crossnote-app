@@ -66,6 +66,11 @@ import {
 import { setTheme } from "../themes/manager";
 import { resolveNoteImageSrc } from "../utilities/image";
 import { resolveNoteMedia } from "../utilities/media";
+import {
+  AttachmentError,
+  validateAttachment,
+  writeAttachment,
+} from "../lib/attachments";
 import { openURL } from "../utilities/preview";
 import { debounce } from "../utilities/utils";
 import EditImageDialog, { type EditedImage } from "./EditImageDialog";
@@ -659,6 +664,7 @@ export default function NotePanel(props: Props) {
     }
     prepareSlashCommandIcons();
     readingPosition.current = null;
+    let alive = true;
     const created = new NoteEditor({
       parent: editorHost.current,
       document: openNote.document,
@@ -692,6 +698,37 @@ export default function NotePanel(props: Props) {
           setEditImageDialogOpen(true);
         },
       },
+      attachments: {
+        upload: async (files) => {
+          files.forEach(validateAttachment);
+          const notebook = latest.current.notebook;
+          const location = { ...openNote.saver.location };
+          const current = () =>
+            alive &&
+            openNote.saver.location.notebookPath === location.notebookPath &&
+            openNote.saver.location.filePath === location.filePath;
+          const links: string[] = [];
+          for (const file of files)
+            links.push(await writeAttachment(notebook, file, current));
+          if (!current()) throw new AttachmentError("location");
+          return links;
+        },
+        failed: (error) => {
+          const key =
+            error instanceof AttachmentError
+              ? `attachment/${error.reason}`
+              : "attachment/failed";
+          const message = latest.current.t(key);
+          notify({
+            severity: "error",
+            message:
+              error instanceof AttachmentError
+                ? message
+                : failureMessage(message, error),
+            duration: 6000,
+          });
+        },
+      },
       completion: {
         describeCommand: (name) => {
           const key = slashCommandDescription(name);
@@ -719,6 +756,7 @@ export default function NotePanel(props: Props) {
       setTocEnabled(tabNode.getRect().width >= 500);
     }
     return () => {
+      alive = false;
       created.destroy();
       setEditor(null);
     };

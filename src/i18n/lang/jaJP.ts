@@ -1,5 +1,16 @@
 export const jaJP = {
   translation: {
+    "attachment/insert-image": "画像を挿入",
+    "attachment/ignored":
+      "この添付ファイルのパスは Git で無視されています。リンクは挿入されず、保存済みファイルは assets に残ります。ノートブックの除外ルールを確認してください。",
+    "attachment/size":
+      "添付ファイルは 20 MiB 以下にしてください。リンクは挿入されませんでした。",
+    "attachment/type":
+      "このファイル形式はサポートされていません。画像、音声、動画を選択してください。",
+    "attachment/location":
+      "ノートまたは挿入位置が変更されました。リンクは挿入されず、保存済みファイルは assets に残ります。",
+    "attachment/failed":
+      "添付ファイルを保存できませんでした。リンクは挿入されませんでした",
     "attachment/playback-failed":
       "再生できません。ファイル、接続、ブラウザーの対応形式を確認してください。",
     "search/notes": "ノートを検索する",

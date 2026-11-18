@@ -11,6 +11,7 @@ import {
   FormatListNumbered,
   FormatQuoteOpen,
   Table,
+  ImageOutline,
 } from "mdi-material-ui";
 import React from "react";
 import { createRoot } from "react-dom/client";
@@ -40,6 +41,7 @@ const COMMANDS: Record<
     Icon: FormatListNumbered,
   },
   table: { description: "editor/toolbar/insert-table", Icon: Table },
+  image: { description: "attachment/insert-image", Icon: ImageOutline },
   now: { description: "editor/toolbar/insert-date-time", Icon: ClockOutline },
   mermaid: {
     description: "editor/toolbar/insert-mermaid",

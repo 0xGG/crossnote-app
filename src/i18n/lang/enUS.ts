@@ -1,5 +1,16 @@
 export const enUS = {
   translation: {
+    "attachment/insert-image": "Insert image",
+    "attachment/ignored":
+      "This attachment path is ignored by Git. No links were inserted; any files already saved remain in assets. Check the notebook's ignore rules.",
+    "attachment/size":
+      "Each attachment must be 20 MiB or smaller. No link was inserted.",
+    "attachment/type":
+      "This file type is not supported. Choose an image, audio or video file.",
+    "attachment/location":
+      "The note or insertion point changed. No link was inserted; any files already saved remain in assets.",
+    "attachment/failed":
+      "The attachment could not be saved. No link was inserted",
     "attachment/playback-failed":
       "This media could not be played. Check the file, connection or browser format support.",
     "search/notes": "Search Notes",

@@ -47,6 +47,18 @@ export function mediaKind(
     "image" | "audio" | "video" | undefined;
 }
 
+export const imageFileAccept = Object.keys(types)
+  .filter((ext) => types[ext].startsWith("image/"))
+  .map((ext) => `.${ext}`)
+  .join(",");
+
+export function extensionForMediaType(type: string): string | undefined {
+  const entry = Object.entries(types).find(
+    ([, mime]) => mime === type.toLowerCase(),
+  );
+  return entry ? `.${entry[0]}` : undefined;
+}
+
 /** Resolve once-decoded paths without ever reading outside this notebook. */
 export function notebookMediaPath(
   notebookPath: string,
