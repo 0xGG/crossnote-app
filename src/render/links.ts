@@ -1,7 +1,4 @@
 import type { Token } from "markdown-it";
-// The emoji the markdown stage turns :short names: into change how it names
-// links and what follows a link, so they are set up here as for the preview.
-import "./emoji";
 import { md } from "./markdown";
 
 // What a note links to, as the markdown stage reads it: the notebook keeps

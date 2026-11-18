@@ -16,9 +16,6 @@ vi.mock("./NoteCard", () => ({
     return <div className={"note-card"}>{note.markdown}</div>;
   },
 }));
-vi.mock("react-lazyload", () => ({
-  default: ({ children }: { children: React.ReactNode }) => <>{children}</>,
-}));
 vi.mock("../containers/crossnote", () => ({
   CrossnoteContainer: { useContainer: () => ({}) },
 }));

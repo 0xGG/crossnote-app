@@ -13,3 +13,4 @@ declare module "markdown-it-sub";
 declare module "markdown-it-sup";
 // Prism's core, which puts itself on the page as window.Prism
 declare module "prismjs/components/prism-core";
+declare const __TWEMOJI_CELLS__: Record<string, number>;

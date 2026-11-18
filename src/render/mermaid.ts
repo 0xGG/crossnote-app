@@ -81,6 +81,6 @@ export const renderMermaid: Renderer = (code, { dark }) => {
       }
     },
     // The time a diagram is given counts from its turn.
-    { waitsItsTurn: true, timeout: 20000 },
+    { waitsItsTurn: true, timeout: 30000 },
   );
 };

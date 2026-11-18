@@ -1,18 +1,30 @@
 import { expect, test } from "./fixtures";
 
-// The emoji sheet is fetched by URL at run time. Both the preview server and
-// the static host answer a path that does not exist with the app's own page
-// and a 200, so a wrong path only shows as blank emoji. Hence the check
-// looks at where it is asked for, not at the status alone.
-
-// Only the address is checked here: the CI builds these tests run on skip
-// downloading the sheet itself, and the job that builds the site for
-// publishing checks that the sheet in its build is a PNG.
-test("draws emoji from the sheet at the root", async ({ app, page }) => {
+test("draws a UI icon from a decodable same-origin emoji sheet", async ({
+  app,
+  page,
+}) => {
   await app.open();
-  const emoji = page.locator(".emoji-mart-emoji > span").first();
-  await expect(emoji).toHaveCSS(
-    "background-image",
-    `url("${new URL("/assets/emoji/twitter/64.png", page.url()).href}")`,
-  );
+  const icon = page.locator("img.emoji").first();
+  await expect(icon).toBeVisible();
+  await expect(icon).toHaveAttribute("alt", /\S/);
+  const sheet = await icon.evaluate(async (element) => {
+    const background = getComputedStyle(element).backgroundImage;
+    const match = background.match(/^url\(["']?(.*?)["']?\)$/);
+    if (!match) throw new Error(`No emoji background: ${background}`);
+    const url = new URL(match[1], document.baseURI);
+    const image = new Image();
+    image.src = url.href;
+    await image.decode();
+    return {
+      origin: url.origin,
+      width: image.naturalWidth,
+      height: image.naturalHeight,
+    };
+  });
+  expect(sheet).toEqual({
+    origin: new URL(page.url()).origin,
+    width: 4092,
+    height: 4092,
+  });
 });

@@ -45,26 +45,28 @@ function mount(mode: "editor" | "preview") {
 describe.each(["editor", "preview"] as const)(
   "Mermaid budget in %s",
   (mode) => {
-    it("accepts completion after ten seconds but before twenty", async () => {
+    it("accepts completion after twenty seconds but before thirty", async () => {
       vi.useFakeTimers();
       const parent = mount(mode);
       await vi.dynamicImportSettled();
       await vi.advanceTimersByTimeAsync(0);
       expect(finish).toBeTypeOf("function");
-      await vi.advanceTimersByTimeAsync(15000);
+      await vi.advanceTimersByTimeAsync(25000);
       expect(parent.textContent).not.toContain("took more than");
       finish!();
       await vi.advanceTimersByTimeAsync(1);
       expect(parent.querySelector(".mermaid svg")?.textContent).toBe("ready");
     });
-    it("times out at twenty seconds and discards the late result", async () => {
+    const deadline =
+      mode === "preview" ? "page deadline" : "per-drawing timeout";
+    it(`discards a late result at the thirty-second ${deadline}`, async () => {
       vi.useFakeTimers();
       const parent = mount(mode);
       await vi.dynamicImportSettled();
-      await vi.advanceTimersByTimeAsync(19999);
+      await vi.advanceTimersByTimeAsync(29999);
       expect(parent.textContent).not.toContain("took more than");
       await vi.advanceTimersByTimeAsync(1);
-      expect(parent.textContent).toContain("more than 20 seconds");
+      expect(parent.textContent).toContain("more than 30 seconds");
       finish!();
       await vi.advanceTimersByTimeAsync(1);
       expect(parent.querySelector(".mermaid svg")).toBeNull();

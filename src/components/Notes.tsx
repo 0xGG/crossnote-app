@@ -1,13 +1,11 @@
 import { Box, Chip, Skeleton, Typography } from "@mui/material";
 import { styled, useTheme } from "@mui/material/styles";
 import { TabNode } from "flexlayout-react";
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import LazyLoad from "react-lazyload";
 import { CrossnoteContainer } from "../containers/crossnote";
 import { Note } from "../lib/note";
 import { Notebook } from "../lib/notebook";
-import { TabNodeConfig } from "../lib/tabNode";
 import NoteCard, { NoteCardMargin } from "./NoteCard";
 
 const lazyLoadPlaceholderHeight = 92 + 2 * NoteCardMargin;
@@ -50,45 +48,70 @@ interface Props {
   scrollElement: HTMLElement;
 }
 
+// Share one observer across the list. A card keeps its state after the first intersection.
+function observeCards(root: HTMLElement | null) {
+  if (typeof IntersectionObserver === "undefined") return undefined;
+  const visible = new WeakMap<Element, () => void>();
+  const observer = new IntersectionObserver(
+    (entries) => {
+      for (const entry of entries) {
+        if (entry.isIntersecting) visible.get(entry.target)?.();
+      }
+    },
+    { root },
+  );
+  return (element: Element, show: () => void) => {
+    visible.set(element, show);
+    observer.observe(element);
+    return () => {
+      observer.unobserve(element);
+      visible.delete(element);
+    };
+  };
+}
+
+function LazyNoteCard({
+  observe,
+  children,
+}: {
+  observe: ReturnType<typeof observeCards>;
+  children: React.ReactNode;
+}) {
+  const [shown, setShown] = useState(false);
+  const placeholder = useRef<HTMLDivElement>(null);
+  const theme = useTheme();
+  useEffect(() => {
+    if (!shown && observe && placeholder.current) {
+      return observe(placeholder.current, () => setShown(true));
+    }
+  }, [observe, shown]);
+  if (shown || !observe) return children;
+  return (
+    <Box
+      ref={placeholder}
+      style={{
+        maxWidth: "100%",
+        margin: `${NoteCardMargin}px auto`,
+        padding: theme.spacing(2, 0.5, 0),
+        height: `${lazyLoadPlaceholderHeight}px`,
+      }}
+      className="note-card lazyload-placeholder"
+    >
+      <Skeleton />
+      <Skeleton animation={false} />
+      <Skeleton animation="wave" />
+    </Box>
+  );
+}
+
 export default function Notes(props: Props) {
   const { t } = useTranslation();
-  const theme = useTheme();
   const crossnoteContainer = CrossnoteContainer.useContainer();
   const [notes, setNotes] = useState<Note[]>([]);
-
-  // Hack: fix note cards not displaying bug when searchValue is not empty
-  const hack = useCallback(() => {
-    if (props.scrollElement) {
-      const scrollElement = props.scrollElement;
-      const initialHeight = scrollElement.style.height;
-      const initialFlex = scrollElement.style.flex;
-      scrollElement.style.flex = "initial";
-      scrollElement.style.height = "10px";
-      scrollElement.scrollTop += 1;
-      scrollElement.scrollTop -= 1;
-      scrollElement.style.height = initialHeight;
-      scrollElement.style.flex = initialFlex;
-    }
-  }, [props.scrollElement]);
-
-  useEffect(() => {
-    if (props.tabNode) {
-      const tabNodeConfig: TabNodeConfig = props.tabNode.getConfig();
-      if (
-        (tabNodeConfig.component !== "Notes" &&
-          tabNodeConfig.component !== "Note") ||
-        tabNodeConfig.notebookPath !== props.notebook.dir
-      ) {
-        return;
-      }
-
-      props.tabNode.setEventListener("resize", hack);
-      hack();
-      return () => {
-        props.tabNode.removeEventListener("resize");
-      };
-    }
-  }, [props.tabNode, props.notebook.dir, hack]);
+  const observe = useMemo(
+    () => observeCards(props.scrollElement),
+    [props.scrollElement],
+  );
 
   useEffect(() => {
     const newNotes = props.notes;
@@ -139,55 +162,6 @@ export default function Notes(props: Props) {
     }
   }, [props.notes, props.searchValue]);
 
-  useEffect(() => {
-    if (props.scrollElement) {
-      window.addEventListener("resize", hack);
-      hack();
-      return () => {
-        window.removeEventListener("resize", hack);
-      };
-    }
-  }, [notes, props.scrollElement]);
-
-  const notesComponent = useMemo(() => {
-    return (notes || []).map((note) => {
-      return (
-        <LazyLoad
-          key={"lazy-load-note-card-" + note.filePath}
-          placeholder={
-            <Box
-              style={{
-                maxWidth: "100%",
-                margin: `${NoteCardMargin}px auto`,
-                padding: theme.spacing(2, 0.5, 0),
-                height: `${lazyLoadPlaceholderHeight}px`,
-              }}
-              className={"note-card lazyload-placeholder"}
-            >
-              <Skeleton />
-              <Skeleton animation={false} />
-              <Skeleton animation="wave" />
-            </Box>
-          }
-          height={lazyLoadPlaceholderHeight}
-          overflow={true}
-          once={true}
-          scrollContainer={props.scrollElement}
-          resize={true}
-        >
-          <MemoizedNoteCard
-            key={"note-card-" + note.filePath}
-            tabNode={props.tabNode}
-            note={note}
-            referredNote={props.referredNote}
-          ></MemoizedNoteCard>
-        </LazyLoad>
-
-        //   <NoteCard key={"note-card-" + note.filePath} note={note}></NoteCard>
-      );
-    });
-  }, [notes, props.referredNote, props.scrollElement, props.tabNode]);
-
   return (
     <React.Fragment>
       <Box style={{ textAlign: "center" }}>
@@ -199,7 +173,15 @@ export default function Notes(props: Props) {
         ></Chip>
       </Box>
       <NotesList>
-        {notesComponent}
+        {notes.map((note) => (
+          <LazyNoteCard key={note.filePath} observe={observe}>
+            <MemoizedNoteCard
+              tabNode={props.tabNode}
+              note={note}
+              referredNote={props.referredNote}
+            />
+          </LazyNoteCard>
+        ))}
         {crossnoteContainer.initialized &&
           props.notebook.hasLoadedNotes &&
           notes.length === 0 && (

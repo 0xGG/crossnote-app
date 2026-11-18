@@ -1,6 +1,7 @@
 import react from "@vitejs/plugin-react";
 import { execSync } from "node:child_process";
 import { defineConfig } from "vitest/config";
+import { emojiSheetCells } from "./emoji-sheet";
 import { siteHeaders } from "./site-headers";
 
 // Build metadata shown in the Settings panel (replaces the legacy
@@ -20,6 +21,7 @@ export default defineConfig({
   plugins: [react(), siteHeaders()],
   define: {
     __GIT_COMMIT__: JSON.stringify(getGitCommit()),
+    __TWEMOJI_CELLS__: JSON.stringify(emojiSheetCells()),
     // Some browser bundles (PouchDB and friends) still reference the Node
     // `global` object; map it to the standard globalThis.
     global: "globalThis",
@@ -38,12 +40,5 @@ export default defineConfig({
     // invariant rather than a one-off verification; Vitest prints the seed on
     // failure for reproduction.
     sequence: { shuffle: true },
-    // emoji-mart loaded as the bundle loads it, as ES modules: it unpacks its
-    // emoji data in place as it loads, and only that way is the data it
-    // unpacks the one the app reads (src/render/emoji.ts).
-    alias: [
-      { find: /^emoji-mart$/, replacement: "emoji-mart/dist-es/index.js" },
-    ],
-    server: { deps: { inline: ["emoji-mart"] } },
   },
 });

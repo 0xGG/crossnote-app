@@ -54,14 +54,6 @@ jobs:
       - name: Typecheck
         run: pnpm typecheck
 
-      # The dev/build hooks run this script on every developer machine, but the
-      # matrix job below calls vite build directly and never triggers it. The
-      # dry run covers what actually breaks - the deep import of emoji-mart
-      # internals and the sheet URL it derives - without fetching 2.5MB from a
-      # CDN on every pipeline run.
-      - name: Check the emoji sheet script
-        run: node scripts/download-emoji-sheet.mjs --dry-run
-
   test-build:
     runs-on: ubuntu-latest
     timeout-minutes: 20
@@ -86,9 +78,7 @@ jobs:
       - name: Test
         run: pnpm test
 
-      # vite build directly: the quality job already owns the tsc gate that
-      # the build script would repeat, and skipping the prebuild hook keeps
-      # CI off the emoji CDN (the sheet is a picker asset, not build input).
+      # The quality job already runs the type checker.
       - name: Build
         run: pnpm exec vite build
 
@@ -138,9 +128,7 @@ jobs:
 
   # Builds the site the deploy job publishes, on main only, alongside the
   # checks. It declares no environment, so the project's dependencies and
-  # build tools never run where the Cloudflare secrets are. It goes through
-  # the build script so that the prebuild hook fetches the emoji sheet the
-  # other jobs skip.
+  # build tools never run where the Cloudflare secrets are.
   build-site:
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
@@ -162,11 +150,6 @@ jobs:
 
       - name: Build
         run: pnpm build
-
-      # The download script only warns when the CDN fails. The picker and every
-      # emoji icon draw from this sheet, so do not publish a build without it.
-      - name: Check that the emoji sheet is in the build
-        run: test "$(file --brief --mime-type dist/assets/emoji/twitter/64.png)" = image/png
 
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
