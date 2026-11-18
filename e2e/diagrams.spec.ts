@@ -30,11 +30,18 @@ test("highlights a code block in its language", async ({ app }) => {
 test.describe("hostile markup in a diagram", () => {
   // The browser reports the handler in the label as refused while the
   // sanitizer parses it, inert.
-  test.use({ expectPolicyViolations: ["script-src-attr"] });
+  test.use({
+    expectPolicyViolations: {
+      violations: [
+        { directive: "script-src-attr", blocked: "inline", document: "/" },
+      ],
+    },
+  });
 
   test("draws a mermaid diagram with a formula in it, drawn by KaTeX", async ({
     app,
     page,
+    policyViolations,
   }) => {
     const vendored = app.recordVendoredRequests("mermaid");
     await app.open();
@@ -74,6 +81,7 @@ test.describe("hostile markup in a diagram", () => {
       await page.evaluate(() => (window as any).fromMermaid),
     ).toBeUndefined();
     expect(vendored()).toEqual([]);
+    await expect.poll(() => policyViolations.length).toBeGreaterThan(0);
   });
 });
 

@@ -1,12 +1,29 @@
 import { test as base, expect } from "@playwright/test";
 import { CrossnoteApp } from "./crossnote";
 
+export type PolicyViolation = {
+  directive: string;
+  blocked: string;
+  document: string;
+};
+
+// Deduplicate repeated browser reports, but preserve every distinct source and document.
+export function policyViolationKeys(violations: PolicyViolation[]): string[] {
+  return [
+    ...new Set(
+      violations.map(({ directive, blocked, document }) =>
+        JSON.stringify([directive, blocked, document]),
+      ),
+    ),
+  ].sort();
+}
+
 type Fixtures = {
   app: CrossnoteApp;
   firstRun: boolean;
   notesOpenIn: "Preview" | null;
-  expectPolicyViolations: string[];
-  policyViolations: string[];
+  expectPolicyViolations: { violations: PolicyViolation[] };
+  policyViolations: PolicyViolation[];
 };
 
 export const test = base.extend<Fixtures>({
@@ -47,24 +64,25 @@ export const test = base.extend<Fixtures>({
   // it (the browser reports an event handler attribute in hostile markup as
   // the sanitizer parses it, inert, as refused). Not seen: what a worker's
   // policy refuses.
-  expectPolicyViolations: [[], { option: true }],
+  expectPolicyViolations: [{ violations: [] }, { option: true }],
   policyViolations: [
-    async ({ context, expectPolicyViolations }, use) => {
-      const violations: string[] = [];
+    async ({ context, expectPolicyViolations, baseURL }, use) => {
+      const violations: PolicyViolation[] = [];
       await context.exposeBinding(
         "reportPolicyViolation",
-        ({ frame }, violation: string) =>
-          violations.push(`${violation} (in ${frame.url()})`),
+        (_source, violation: PolicyViolation) => violations.push(violation),
       );
       await context.addInitScript(() => {
         document.addEventListener("securitypolicyviolation", (event) =>
           (
             window as unknown as {
-              reportPolicyViolation: (violation: string) => void;
+              reportPolicyViolation: (violation: PolicyViolation) => void;
             }
-          ).reportPolicyViolation(
-            `${event.effectiveDirective} ${event.blockedURI}`,
-          ),
+          ).reportPolicyViolation({
+            directive: event.effectiveDirective,
+            blocked: event.blockedURI,
+            document: event.documentURI,
+          }),
         );
       });
       await use(violations);
@@ -83,13 +101,20 @@ export const test = base.extend<Fixtures>({
           )
           .catch(() => {});
       }
-      const directives = [
-        ...new Set(violations.map((violation) => violation.split(" ")[0])),
-      ];
       expect(
-        directives.sort(),
+        policyViolationKeys(violations),
         `refused: ${JSON.stringify(violations)}`,
-      ).toEqual([...expectPolicyViolations].sort());
+      ).toEqual(
+        policyViolationKeys(
+          expectPolicyViolations.violations.map((violation) => ({
+            ...violation,
+            document: new URL(violation.document, baseURL).href,
+            blocked: violation.blocked.startsWith("/")
+              ? new URL(violation.blocked, baseURL).href
+              : violation.blocked,
+          })),
+        ),
+      );
     },
     { auto: true },
   ],
