@@ -9,7 +9,7 @@ import {
 } from "@mui/material";
 import { styled } from "@mui/material/styles";
 import { TrashCan } from "mdi-material-ui";
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { isFinishingEnter } from "../lib/keys";
 
@@ -49,9 +49,11 @@ export function NoteAliasPopover(props: Props) {
     [props],
   );
 
-  useEffect(() => {
+  const [previousAnchor, setPreviousAnchor] = useState(props.anchorElement);
+  if (previousAnchor !== props.anchorElement) {
+    setPreviousAnchor(props.anchorElement);
     setAlias("");
-  }, [props.anchorElement]);
+  }
 
   return (
     <Popover

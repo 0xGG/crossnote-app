@@ -45,7 +45,16 @@ interface CloneNotebookArgs {
   directoryHandle?: FileSystemDirectoryHandle;
 }
 
-// type ListAttachmentsArgs = ListNotesArgs;
+export type NotebookSettings = Pick<
+  Notebook,
+  | "name"
+  | "gitURL"
+  | "gitBranch"
+  | "gitCorsProxy"
+  | "gitUsername"
+  | "gitPassword"
+  | "autoFetchPeriod"
+>;
 
 export interface PushNotebookArgs {
   notebook: Notebook;
@@ -305,15 +314,17 @@ export default class Crossnote {
     return notebook;
   }
 
-  public async exportNotebookToJSON(notebook: Notebook): Promise<string> {
-    return "";
+  public saveNotebookSettings(notebook: Notebook, settings: NotebookSettings) {
+    return notebookOperation(notebook.dir, async () => {
+      const record = await this.notebookDB.get(notebook._id);
+      await this.notebookDB.put({ ...record, ...settings });
+      Object.assign(notebook, settings);
+    });
   }
 
-  public async importNotebookFromJSON(notebook: Notebook): Promise<string> {
-    return "";
-  }
-
-  public async deleteNotebook(notebookID: string) {
+  public async deleteNotebook(
+    notebookID: string,
+  ): Promise<void | { cleanupError: unknown }> {
     const notebook = await this.notebookDB.get(notebookID);
     // The record goes first. Removing the folder first could leave a record
     // whose folder is gone, a notebook that can take no notes, whenever the
@@ -321,10 +332,14 @@ export default class Crossnote {
     // second after the last change. The other way round, a failure leaves at
     // most a folder nothing lists.
     await this.notebookDB.remove(notebook);
-    if (!notebook.directoryHandle) {
-      await pfs.rmdir(notebook.dir);
+    try {
+      if (!notebook.directoryHandle) {
+        await pfs.rmdir(notebook.dir);
+      }
+      await pfs.storeTree(notebook.dir);
+    } catch (cleanupError) {
+      return { cleanupError };
     }
-    await pfs.storeTree(notebook.dir);
   }
   public async updateNotebook(notebook: Notebook) {
     const nb = await this.notebookDB.get(notebook._id);
@@ -492,7 +507,7 @@ export default class Crossnote {
 
   public async getGitSHA(dir: string, ref: string = "master"): Promise<string> {
     try {
-      let logs = await git.log({
+      const logs = await git.log({
         fs: fs,
         dir: dir,
         ref: ref,

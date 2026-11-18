@@ -24,7 +24,7 @@ export interface OpenNoteCalls {
 export class OpenNote {
   readonly document: NoteDocument;
   readonly saver: NoteSaver;
-  calls: OpenNoteCalls;
+  private calls: OpenNoteCalls;
   private readonly writtenListeners = new Set<() => void>();
 
   constructor(
@@ -58,6 +58,10 @@ export class OpenNote {
         this.saver.changed();
       }
     });
+  }
+
+  setCalls(calls: OpenNoteCalls) {
+    this.calls = calls;
   }
 
   /** Calls back after each write that leaves the notebook with the text. */
@@ -160,7 +164,7 @@ export function joinNote(
   const existing = open.get(key);
   if (existing?.saver.open) {
     existing.saver.tabs.add(tabId);
-    existing.calls = calls;
+    existing.setCalls(calls);
     return existing;
   }
   const note = new OpenNote(tabId, location, text, calls, lineBreak);

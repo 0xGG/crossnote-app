@@ -1,3 +1,4 @@
+import i18next from "i18next";
 import {
   Button,
   Dialog,
@@ -54,7 +55,7 @@ export default function ChangeFilePathDialog(props: Props) {
           } catch (error) {
             notify({
               severity: "error",
-              message: t("error/failed-to-change-file-path"),
+              message: i18next.t("error/failed-to-change-file-path"),
               duration: 5000,
             });
           }
@@ -63,7 +64,7 @@ export default function ChangeFilePathDialog(props: Props) {
         props.onClose();
       })();
     },
-    [note, tabNode, props, t],
+    [note, tabNode, props, crossnoteContainer],
   );
 
   useEffect(() => {
@@ -77,11 +78,14 @@ export default function ChangeFilePathDialog(props: Props) {
   // finishing while the dialog is open among them, which is no reason to
   // throw away what is being typed.
   const filePath = note ? note.filePath : "";
-  useEffect(() => {
-    if (filePath) {
-      setNewFilePath(filePath);
-    }
-  }, [filePath, props.open]);
+  const [previousPath, setPreviousPath] = useState({
+    filePath,
+    open: props.open,
+  });
+  if (previousPath.filePath !== filePath || previousPath.open !== props.open) {
+    setPreviousPath({ filePath, open: props.open });
+    if (filePath) setNewFilePath(filePath);
+  }
 
   useEffect(() => {
     if (!inputEl) return;

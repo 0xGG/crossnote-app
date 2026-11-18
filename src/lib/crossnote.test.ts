@@ -24,6 +24,55 @@ describe("Crossnote keeps the stored directory tree in step", () => {
     crossnote = new Crossnote();
   });
 
+  it("changes the shared settings only after their record has been saved", async () => {
+    const notebook = await crossnote.addNotebook({
+      name: "Original",
+      gitURL: "",
+    });
+    const changes = {
+      name: "Edited",
+      gitURL: "",
+      gitBranch: "master",
+      gitUsername: "",
+      gitPassword: "",
+      gitCorsProxy: "",
+      autoFetchPeriod: 0,
+    };
+    const records = crossnote["notebookDB"];
+    vi.spyOn(records, "put").mockRejectedValueOnce(new Error("disk full"));
+    try {
+      await expect(
+        crossnote.saveNotebookSettings(notebook, changes),
+      ).rejects.toThrow("disk full");
+      expect(notebook.name).toBe("Original");
+      expect((await records.get(notebook._id)).name).toBe("Original");
+      await crossnote.saveNotebookSettings(notebook, changes);
+      expect(notebook.name).toBe("Edited");
+      expect((await records.get(notebook._id)).name).toBe("Edited");
+    } finally {
+      vi.restoreAllMocks();
+    }
+  });
+
+  it("reports a cleanup failure after removing the notebook record", async () => {
+    const notebook = await crossnote.addNotebook({
+      name: "Cleanup fails",
+      gitURL: "",
+    });
+    const failure = new Error("storage unavailable");
+    const remove = vi.spyOn(pfs, "rmdir").mockRejectedValueOnce(failure);
+    try {
+      expect(await crossnote.deleteNotebook(notebook._id)).toEqual({
+        cleanupError: failure,
+      });
+      await expect(
+        crossnote["notebookDB"].get(notebook._id),
+      ).rejects.toMatchObject({ status: 404 });
+    } finally {
+      remove.mockRestore();
+    }
+  });
+
   it("with a new notebook's folder, before it records the notebook", async () => {
     // A record without its folder is a notebook that can take no notes.
     const records = crossnote["notebookDB"];

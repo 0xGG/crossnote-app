@@ -2,6 +2,67 @@ import type { Page } from "@playwright/test";
 import { expect, test } from "./fixtures";
 import { layoutOf, row, settingsTab, tabset } from "./layouts";
 
+test("removes all hidden tabs of a deleted notebook and keeps other tabs", async ({
+  app,
+  page,
+}) => {
+  await app.open();
+  // Use an isolated browser-owned folder as the other notebook. Only the OS
+  // picker is replaced; the app registers a real File System Access handle.
+  await page.evaluate(async () => {
+    const root = await navigator.storage.getDirectory();
+    const folder = await root.getDirectoryHandle("OtherFolder", {
+      create: true,
+    });
+    (
+      window as unknown as {
+        showDirectoryPicker: () => Promise<FileSystemDirectoryHandle>;
+      }
+    ).showDirectoryPicker = async () => folder;
+  });
+  await app.sidebar.getByRole("button", { name: "Add a notebook" }).click();
+  await page.getByRole("button", { name: "Open a Local Folder" }).click();
+  await expect(app.notebook("OtherFolder")).toBeVisible();
+  await app.openNotes();
+  const folder = await app.notebookFolder();
+  await app.noteCards.filter({ hasText: "README" }).click();
+  await expect(app.tab("README")).toBeVisible();
+  const drafts = app.notebook("Drafts");
+  await drafts.getByRole("treeitem", { name: /Graph view/ }).click();
+  await expect(app.tab("Graph view")).toBeVisible();
+  await app.openSettings();
+  const savedLayout = () =>
+    page.evaluate(() => localStorage.getItem("layoutModel"));
+  await expect.poll(savedLayout).toContain(JSON.stringify(folder));
+  await expect(app.tab("Settings")).toHaveAttribute("aria-selected", "true");
+  await expect(app.tab("Drafts")).toHaveAttribute("aria-selected", "false");
+  await expect(app.tab("README")).toHaveAttribute("aria-selected", "false");
+  await expect(app.tab("Graph view")).toHaveAttribute("aria-selected", "false");
+  await drafts
+    .getByRole("group")
+    .getByRole("treeitem", { name: /Settings/ })
+    .click();
+  const dialog = page.getByRole("dialog");
+  for (const name of ["Delete", "Delete 2", "Delete 1"]) {
+    await dialog.getByRole("button", { name, exact: true }).click();
+  }
+  await expect(drafts).toHaveCount(0);
+  await expect(dialog).toBeHidden();
+  await expect(app.notebook("OtherFolder")).toBeVisible();
+  await expect(app.tab("Settings")).toHaveAttribute("aria-selected", "true");
+  // Include saved tabs whose panels never mounted.
+  await expect.poll(savedLayout).not.toContain(JSON.stringify(folder));
+  await page.reload();
+  await expect(app.notebook("OtherFolder")).toBeVisible();
+  await expect(app.tab("Settings")).toBeVisible();
+  await expect.poll(savedLayout).not.toContain(JSON.stringify(folder));
+  for (const name of ["Drafts", "README", "Graph view"]) {
+    await expect(
+      page.getByRole("tab", { name, exact: true, includeHidden: true }),
+    ).toHaveCount(0);
+  }
+});
+
 // The notebook tree in the sidebar lists a notebook's favourite notes, each
 // with the number of notes that refer to it.
 test("shows a favourite's whole title and its reference count however long the title", async ({

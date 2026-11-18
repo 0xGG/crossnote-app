@@ -27,11 +27,11 @@ export function layoutShowsNotebook(
   return found;
 }
 
-// The tabs that show a note, wherever they sit in the layout.
-export function tabsShowingNote(
+// Includes hidden and restored tabs, whether their panels have mounted or not.
+export function tabsInNotebook(
   model: Model,
   notebookPath: string,
-  noteFilePath: string,
+  noteFilePath?: string,
 ): TabNode[] {
   const tabs: TabNode[] = [];
   model.visitNodes((node) => {
@@ -39,7 +39,7 @@ export function tabsShowingNote(
       const config: TabNodeConfig | undefined = (node as TabNode).getConfig();
       if (
         config?.notebookPath === notebookPath &&
-        config?.noteFilePath === noteFilePath
+        (noteFilePath === undefined || config.noteFilePath === noteFilePath)
       ) {
         tabs.push(node as TabNode);
       }

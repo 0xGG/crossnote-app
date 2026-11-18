@@ -1,5 +1,12 @@
+import i18next from "i18next";
+import * as notifications from "../lib/notifications";
 import React, { act } from "react";
-import { createRoot, Root } from "react-dom/client";
+import { Root } from "react-dom/client";
+import {
+  mountTestRoot,
+  unmountTestRoot,
+  buttonByText,
+} from "../test/component";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import "../i18n/i18n";
 import { Notebook } from "../lib/notebook";
@@ -7,7 +14,7 @@ import PushNotebookDialog from "./PushNotebookDialog";
 
 // A push that never settles, so the dialog stays as it is after the click.
 const { pushNotebook, settings } = vi.hoisted(() => ({
-  pushNotebook: vi.fn(() => new Promise<never>(() => {})),
+  pushNotebook: vi.fn(() => new Promise<void>(() => {})),
   settings: { authorName: "", authorEmail: "" },
 }));
 
@@ -39,14 +46,11 @@ beforeEach(() => {
   pushNotebook.mockClear();
   settings.authorName = "Ada Lovelace";
   settings.authorEmail = "ada@example.com";
-  container = document.createElement("div");
-  document.body.appendChild(container);
-  root = createRoot(container);
+  ({ container, root } = mountTestRoot());
 });
 
 afterEach(() => {
-  act(() => root.unmount());
-  container.remove();
+  unmountTestRoot(container, root);
 });
 
 const notebook = {
@@ -63,9 +67,7 @@ function upload() {
       <PushNotebookDialog open={true} onClose={() => {}} notebook={notebook} />,
     ),
   );
-  const button = Array.from(document.querySelectorAll("button")).find(
-    (button) => button.textContent === "Upload",
-  );
+  const button = buttonByText(document, "Upload");
   act(() => button.click());
 }
 
@@ -86,4 +88,24 @@ it("commits under the name the settings start with when the name is cleared", ()
   expect(pushNotebook).toHaveBeenCalledWith(
     expect.objectContaining({ authorName: "Anonymous" }),
   );
+});
+
+it("reports completion in the language selected during upload", async () => {
+  let resolvePush: () => void;
+  pushNotebook.mockImplementationOnce(
+    () =>
+      new Promise<void>((resolve) => {
+        resolvePush = resolve;
+      }),
+  );
+  const notify = vi.spyOn(notifications, "notify");
+  await act(() => i18next.changeLanguage("en-US"));
+  upload();
+  await act(() => i18next.changeLanguage("zh-CN"));
+  await act(async () => resolvePush());
+  expect(notify).toHaveBeenCalledWith(
+    expect.objectContaining({ message: "笔记本已上传" }),
+  );
+  notify.mockRestore();
+  await act(() => i18next.changeLanguage("en-US"));
 });

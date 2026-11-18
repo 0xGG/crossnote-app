@@ -1,10 +1,9 @@
-import { globalContainers } from "../containers/global";
 import { Note } from "../lib/note";
 import { resolveNoteImageSrc } from "../utilities/image";
 import { mediaKind, resolveNoteMedia } from "../utilities/media";
 import { mountMediaPlayer } from "./media";
 import { openURL } from "../utilities/preview";
-import { diagramRenderers } from "./diagrams";
+import { renderMermaid } from "./mermaid";
 import {
   Drawing,
   DrawingContext,
@@ -27,15 +26,12 @@ function renderCodeFences(
   for (const fence of fences) {
     const code = fence.textContent;
     const language = fence.getAttribute("data-language") || "text";
-    const diagram = diagramRenderers.find(([pattern]) =>
-      pattern.test(language),
-    );
     // One block that cannot be drawn shows why, in its place; the rest of
     // the note is drawn all the same.
     try {
       let drawing: Drawing;
-      if (diagram) {
-        drawing = diagram[1](code, context);
+      if (language === "mermaid") {
+        drawing = renderMermaid(code, context);
       } else {
         drawing = renderCodeBlock(code, language);
       }
@@ -60,7 +56,11 @@ function renderCodeFences(
   return drawings;
 }
 
-function handleLinks(container: HTMLElement, note: Note | null) {
+function handleLinks(
+  container: HTMLElement,
+  note: Note | null,
+  openNote?: (filePath: string) => void,
+) {
   const links = Array.from(container.getElementsByTagName("a"));
   for (const link of links) {
     link.onclick = (event) => {
@@ -92,15 +92,10 @@ function handleLinks(container: HTMLElement, note: Note | null) {
       } else if (link.hasAttribute("data-topic")) {
         const tag = link.getAttribute("data-topic");
         if (tag.length && note) {
-          globalContainers.crossnoteContainer.openNoteAtPath(
-            globalContainers.crossnoteContainer.getNotebookAtPath(
-              note.notebookPath,
-            ),
-            tag,
-          );
+          openNote?.(tag);
         }
       } else {
-        openURL(link.getAttribute("href"), note);
+        openURL(href, note, openNote);
       }
     };
   }
@@ -155,6 +150,8 @@ export async function finishPreview(
   note: Note | null,
   isCurrent: () => boolean,
   cleanups: (() => void)[],
+  forPrint = false,
+  openNote?: (filePath: string) => void,
 ) {
   const drawings = renderCodeFences(container, {
     dark: isDarkPreview(container),
@@ -173,14 +170,16 @@ export async function finishPreview(
     waits.forEach((wait) => wait.stop());
     drawings.forEach((drawing) => drawing.dispose());
   });
+  let printedEmoji: Promise<void> | undefined;
   try {
-    renderTwemoji(container);
+    printedEmoji = renderTwemoji(container, forPrint);
   } catch {
     // The emoji stay as text.
   }
-  handleLinks(container, note);
+  handleLinks(container, note, openNote);
   try {
     await Promise.all([
+      printedEmoji,
       resolveImages(container, note, isCurrent, cleanups),
       ...waits.map((wait) => wait.settled),
     ]);

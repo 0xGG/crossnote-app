@@ -33,7 +33,11 @@ import { layoutShowsNotebook } from "../lib/layout";
 import { saverOfTab } from "../lib/noteSaver";
 import { guardLayoutDrags } from "../lib/layoutDrag";
 import { translateLayoutLabel } from "../lib/layoutLabels";
-import { TabNodeComponent, TabNodeConfig } from "../lib/tabNode";
+import {
+  builtInTabLabels,
+  TabNodeComponent,
+  TabNodeConfig,
+} from "../lib/tabNode";
 import { CloseUnsavedNoteDialog } from "./CloseUnsavedNoteDialog";
 import { Emoji } from "./EmojiWrapper";
 import { Loading } from "./Loading";
@@ -155,14 +159,6 @@ const GraphView = lazy(() =>
   import("./GraphView").catch(() => ({ default: GraphViewUnavailable })),
 );
 
-// Tabs named after what they show rather than after a note or a notebook.
-// The name a tab is saved with is in the language it was opened under, so
-// these are named afresh each time they are drawn.
-const builtInTabLabels: Partial<Record<TabNodeComponent, string>> = {
-  Settings: "general/Settings",
-  Graph: "general/graph-view",
-};
-
 // The emoji a tab shows, by what it shows. Each note has the same one; an
 // emoji a layout saved before kept in a tab's config is no longer read.
 const tabIcons: Record<TabNodeComponent, string> = {
@@ -283,13 +279,7 @@ export function MainPanel() {
         </ThemeProvider>
       );
     },
-    [
-      ready,
-      t,
-      settingsContainer.theme.muiTheme,
-      crossnoteContainer.initialized,
-      crossnoteContainer.getNotebookAtPath,
-    ],
+    [ready, t, settingsContainer.theme.muiTheme, crossnoteContainer],
   );
 
   // FlexLayout hands the translator to its model after a render, so one
@@ -310,10 +300,15 @@ export function MainPanel() {
     setReady(true);
   }, []);
 
-  useEffect(() => {
-    if (crossnoteContainer.layoutModel) {
+  const [previousLayoutModel, setPreviousLayoutModel] = useState(
+    null as typeof crossnoteContainer.layoutModel,
+  );
+  if (previousLayoutModel !== crossnoteContainer.layoutModel) {
+    const model = crossnoteContainer.layoutModel;
+    setPreviousLayoutModel(model);
+    if (model) {
       if (
-        layoutShowsNotebook(crossnoteContainer.layoutModel, (notebookPath) =>
+        layoutShowsNotebook(model, (notebookPath) =>
           pfs.isPathOfLocalFileSystem(notebookPath),
         )
       ) {
@@ -322,7 +317,7 @@ export function MainPanel() {
         setReady(true);
       }
     }
-  }, [container, crossnoteContainer.layoutModel]);
+  }
 
   return (
     <MainPanelRoot ref={container} id="main-panel">
@@ -347,7 +342,9 @@ export function MainPanel() {
             tabIcons[node.getComponent() as TabNodeComponent] ?? ":memo:";
           renderValues.leading = <Emoji size={16} emoji={emoji}></Emoji>;
           const label =
-            builtInTabLabels[node.getComponent() as TabNodeComponent];
+            builtInTabLabels[
+              node.getComponent() as keyof typeof builtInTabLabels
+            ];
           if (label) {
             // The tab shows the content. Its accessible name, and its entry
             // in the menu of hidden tabs, come from the name, which the

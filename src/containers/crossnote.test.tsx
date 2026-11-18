@@ -13,7 +13,12 @@ import type { Note } from "../lib/note";
 import { Notebook } from "../lib/notebook";
 import { NoteSaver, NotesNotSavedError, flushNotes } from "../lib/noteSaver";
 import { getNotificationState, resetNotifications } from "../lib/notifications";
-import { joinNote, leaveNote, openNoteAt } from "../lib/openNotes";
+import {
+  joinNote,
+  leaveNote,
+  openNoteAt,
+  type OpenNoteCalls,
+} from "../lib/openNotes";
 import { notebookOperation } from "../lib/notebookOperation";
 import { pendingNoteWrites } from "../lib/noteWrites";
 import { NotebookConflictError } from "../lib/mergeFiles";
@@ -401,7 +406,7 @@ it("reads the notebook again after a hard reset once what is typed during it has
 // it as an editor of it would.
 function openForTyping(notebook: Notebook, filePath: string, text: string) {
   const location = { notebookPath: notebook.dir, filePath };
-  const open = joinNote("tab", location, text, {
+  const calls: OpenNoteCalls = {
     write: (writer, to, written) =>
       crossnote.updateNoteMarkdown(
         writer,
@@ -410,7 +415,8 @@ function openForTyping(notebook: Notebook, filePath: string, text: string) {
         written,
       ),
     failed: () => {},
-  });
+  };
+  const open = joinNote("tab", location, text, calls);
   const type = (typed: string) => {
     const view = new EditorView({
       dispatchTransactions: open.document.dispatchTransactions,
@@ -424,7 +430,7 @@ function openForTyping(notebook: Notebook, filePath: string, text: string) {
     detach();
     view.destroy();
   };
-  return { open, type, close: () => leaveNote(open, "tab") };
+  return { open, calls, type, close: () => leaveNote(open, "tab") };
 }
 
 // The text of a stored note, less the front matter a save puts before it.
@@ -453,8 +459,8 @@ it.each(["settings", "text"])(
   async (first) => {
     const notebook = await notebookAt(`/notebooks/interleaved-${first}`);
     await pfs.writeFile(`${notebook.dir}/a.md`, "A");
-    const { open, type, close } = openForTyping(notebook, "a.md", "A");
-    joinNote("other", open.saver.location, "A", open.calls);
+    const { open, calls, type, close } = openForTyping(notebook, "a.md", "A");
+    joinNote("other", open.saver.location, "A", calls);
     const hold = holdNextNoteWrite(notebook);
     try {
       if (first === "text") type("B");
@@ -828,13 +834,13 @@ it.each([1, 2])(
     );
     await pfs.writeFile(`${notebook.dir}/a.md`, "# A");
     const note = await notebook.getNote("a.md", true);
-    const { open, type, close } = openForTyping(
+    const { open, calls, type, close } = openForTyping(
       notebook,
       "a.md",
       note.markdown,
     );
     if (tabs === 2) {
-      joinNote("other", open.saver.location, note.markdown, open.calls);
+      joinNote("other", open.saver.location, note.markdown, calls);
     }
     let reach: () => void;
     let release: () => void;
@@ -960,12 +966,12 @@ it("does not rename a note whose text cannot be written first", async () => {
   await pfs.writeFile(`${notebook.dir}/a.md`, "# A");
   const note = await notebook.getNote("a.md", true);
   const { open, type, close } = openForTyping(notebook, "a.md", note.markdown);
-  open.calls = {
+  open.setCalls({
     write: async () => {
       throw new Error("disk full");
     },
     failed: () => {},
-  };
+  });
   try {
     type(" typed");
     await expect(
@@ -975,6 +981,90 @@ it("does not rename a note whose text cannot be written first", async () => {
     expect(await pfs.exists(`${notebook.dir}/b.md`)).toBe(false);
   } finally {
     open.saver.discard();
+    close();
+  }
+});
+
+function addUnrenderedTabs(notebook: Notebook) {
+  for (const component of ["Note", "Notes", "Graph"] as const) {
+    crossnote.addTabNode({
+      id: component,
+      type: "tab",
+      component,
+      name: component,
+      config: {
+        singleton: false,
+        component,
+        notebookPath: notebook.dir,
+        noteFilePath: component === "Note" ? "a.md" : undefined,
+      },
+    });
+  }
+  crossnote.addTabNode({
+    id: "other",
+    type: "tab",
+    component: "Notes",
+    name: "Other notebook",
+    config: {
+      singleton: false,
+      component: "Notes",
+      notebookPath: "/notebooks/other",
+    },
+  });
+}
+
+it("keeps a notebook and its tabs listed when deletion is rejected", async () => {
+  const failure = new Error("record still exists");
+  const notebook = await notebookAt("/notebooks/delete-rejected", {
+    deleteNotebook: async () => {
+      throw failure;
+    },
+  });
+  addUnrenderedTabs(notebook);
+  await expect(crossnote.deleteNotebook(notebook)).rejects.toBe(failure);
+  expect(crossnote.notebooks).toContain(notebook);
+  for (const id of ["Note", "Notes", "Graph", "other"]) {
+    expect(crossnote.layoutModel.getNodeById(id)).toBeDefined();
+  }
+});
+
+it("removes even unrendered tabs and reports cleanup failure once the record is gone", async () => {
+  resetNotifications();
+  const notebook = await notebookAt("/notebooks/delete-committed", {
+    deleteNotebook: async () => ({
+      cleanupError: new Error("could not clear folder"),
+    }),
+  });
+  addUnrenderedTabs(notebook);
+  try {
+    await act(() => crossnote.deleteNotebook(notebook));
+    expect(crossnote.notebooks).not.toContain(notebook);
+    for (const id of ["Note", "Notes", "Graph"]) {
+      expect(crossnote.layoutModel.getNodeById(id)).toBeUndefined();
+    }
+    expect(crossnote.layoutModel.getNodeById("other")).toBeDefined();
+    expect(getNotificationState().current?.message).toContain(
+      "could not clear folder",
+    );
+  } finally {
+    resetNotifications();
+  }
+});
+
+it("writes the last edit before unregistering a local notebook", async () => {
+  const dir = "/notebooks/delete-local-dirty";
+  const remove = vi.fn(async () => {
+    expect(await body(notebook, "a.md")).toBe("A kept");
+  });
+  const notebook = await notebookAt(dir, { deleteNotebook: remove });
+  await pfs.writeFile(`${dir}/a.md`, "A");
+  const { type, close } = openForTyping(notebook, "a.md", "A");
+  try {
+    type(" kept");
+    await act(() => crossnote.deleteNotebook(notebook));
+    expect(remove).toHaveBeenCalledOnce();
+    expect(crossnote.notebooks).not.toContain(notebook);
+  } finally {
     close();
   }
 });

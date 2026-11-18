@@ -107,59 +107,31 @@ function LazyNoteCard({
 export default function Notes(props: Props) {
   const { t } = useTranslation();
   const crossnoteContainer = CrossnoteContainer.useContainer();
-  const [notes, setNotes] = useState<Note[]>([]);
+
   const observe = useMemo(
     () => observeCards(props.scrollElement),
     [props.scrollElement],
   );
 
-  useEffect(() => {
-    const newNotes = props.notes;
-    const searchValue = props.searchValue;
+  const notes = useMemo(() => {
+    const terms = props.searchValue.trim();
+    const regexp = terms
+      ? new RegExp(
+          terms
+            .split(/\s+/g)
+            .map((term) => term.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"))
+            .join("|"),
+          "i",
+        )
+      : null;
     const pinned: Note[] = [];
     const unpinned: Note[] = [];
-    newNotes.forEach((note) => {
-      // TODO: Convert to use MiniSearch for searching
-      if (searchValue.trim().length) {
-        const regexp = new RegExp(
-          "(" +
-            searchValue
-              .trim()
-              .split(/\s+/g)
-              // Every character a pattern reads as more than itself.
-              .map((s) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"))
-              .join("|") +
-            ")",
-          "i",
-        );
-
-        if (note.markdown.match(regexp) || note.filePath.match(regexp)) {
-          if (note.config.pinned) {
-            pinned.push(note);
-          } else {
-            unpinned.push(note);
-          }
-        }
-      } else {
-        if (note.config.pinned) {
-          pinned.push(note);
-        } else {
-          unpinned.push(note);
-        }
+    for (const note of props.notes) {
+      if (!regexp || regexp.test(note.markdown) || regexp.test(note.filePath)) {
+        (note.config.pinned ? pinned : unpinned).push(note);
       }
-    });
-
-    const mergedNotes = [...pinned, ...unpinned];
-
-    // Compared as objects: a reload of the notebook hands out new notes for
-    // the same files, and a card only follows its note when handed the new
-    // one.
-    if (
-      mergedNotes.length !== notes.length ||
-      mergedNotes.some((mergedNote, index) => mergedNote !== notes[index])
-    ) {
-      setNotes(mergedNotes);
     }
+    return [...pinned, ...unpinned];
   }, [props.notes, props.searchValue]);
 
   return (

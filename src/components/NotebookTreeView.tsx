@@ -1,3 +1,5 @@
+import { builtInTabLabels } from "../lib/tabNode";
+import i18next from "i18next";
 import { Box, Chip, IconButton, Tooltip, Typography } from "@mui/material";
 import { darken, styled } from "@mui/material/styles";
 import { SimpleTreeView, TreeItem, treeItemClasses } from "@mui/x-tree-view";
@@ -142,21 +144,25 @@ function onEnter(action: () => void) {
   };
 }
 
+function quickAccessNotes(notes: Notes): Notes {
+  const favorites: Notes = {};
+  for (const filePath in notes) {
+    const note = notes[filePath];
+    if (note.config.favorited) favorites[note.filePath] = note;
+  }
+  return favorites;
+}
+
 export default function NotebookTreeView(props: Props) {
   const { onExpandedChange } = props;
-  const [favoritedNotes, setFavoritedNotes] = useState<Notes>({});
+  const [favoritedNotes, setFavoritedNotes] = useState<Notes>(() =>
+    quickAccessNotes(props.notebook.notes),
+  );
   const crossnoteContainer = CrossnoteContainer.useContainer();
   const { t } = useTranslation();
 
   const refreshQuickAccessNotes = useCallback((notes: Notes) => {
-    const favoritedNotes: Notes = {};
-    for (let filePath in notes) {
-      const note = notes[filePath];
-      if (note.config.favorited) {
-        favoritedNotes[note.filePath] = note;
-      }
-    }
-    setFavoritedNotes(favoritedNotes);
+    setFavoritedNotes(quickAccessNotes(notes));
   }, []);
 
   const handleChange = useCallback(
@@ -256,9 +262,11 @@ export default function NotebookTreeView(props: Props) {
     };
   }, [props.notebook, refreshQuickAccessNotes, favoritedNotes]);
 
-  useEffect(() => {
-    refreshQuickAccessNotes(props.notebook.notes);
-  }, [props.notebook, refreshQuickAccessNotes]);
+  const [previousNotebook, setPreviousNotebook] = useState(props.notebook);
+  if (previousNotebook !== props.notebook) {
+    setPreviousNotebook(props.notebook);
+    setFavoritedNotes(quickAccessNotes(props.notebook.notes));
+  }
 
   /*
   useEffect(() => {
@@ -278,7 +286,7 @@ export default function NotebookTreeView(props: Props) {
       type: "tab",
       component: "Graph",
       id: "Graph: " + props.notebook.dir,
-      name: t("general/graph-view"),
+      name: t(builtInTabLabels.Graph),
       config: {
         component: "Graph",
         singleton: true,
@@ -331,7 +339,7 @@ export default function NotebookTreeView(props: Props) {
         onAuthFailure: () => {
           notify({
             severity: "error",
-            message: t("error/authentication-failed"),
+            message: i18next.t("error/authentication-failed"),
             duration: 5000,
           });
         },
@@ -340,15 +348,15 @@ export default function NotebookTreeView(props: Props) {
         notify({
           severity: result?.numConflicts ? "warning" : "success",
           message: result?.numConflicts
-            ? t("error/notebook-sync-conflicts", {
+            ? i18next.t("error/notebook-sync-conflicts", {
                 files: new NotebookConflictError(
                   result.conflicts,
                   result.deletions,
                 ).describe((file, side) =>
-                  t(`error/notebook-file-deleted-${side}`, { file }),
+                  i18next.t(`error/notebook-file-deleted-${side}`, { file }),
                 ),
               })
-            : t("success/notebook-downloaded"),
+            : i18next.t("success/notebook-downloaded"),
         });
       })
       .catch((error) => {
@@ -361,12 +369,12 @@ export default function NotebookTreeView(props: Props) {
           severity: "error",
           message:
             error instanceof NotebookConflictError
-              ? t("error/notebook-sync-conflicts", {
+              ? i18next.t("error/notebook-sync-conflicts", {
                   files: error.describe((file, side) =>
-                    t(`error/notebook-file-deleted-${side}`, { file }),
+                    i18next.t(`error/notebook-file-deleted-${side}`, { file }),
                   ),
                 })
-              : t("error/failed-to-download-notebook"),
+              : i18next.t("error/failed-to-download-notebook"),
         });
       });
   };

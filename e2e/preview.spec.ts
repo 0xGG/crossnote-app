@@ -7,6 +7,35 @@ test.beforeEach(async ({ context }) => {
   );
 });
 
+test("keeps expanded details when pinning the note", async ({ app, page }) => {
+  await app.open();
+  await app.openNotes();
+  const readme = `${await app.notebookFolder()}/README.md`;
+  await app.storedText(
+    readme,
+    "<details><summary>More</summary>\n\nVisible detail\n\n</details>\n",
+  );
+  await page.reload();
+  await app.waitUntilReady();
+  await app.openNotes();
+  await app.noteCards.filter({ hasText: "README" }).click();
+  const details = app.preview.filter({ visible: true }).locator("details");
+  await details.locator("summary").click();
+  await expect(details).toHaveAttribute("open", "");
+  await expect(details.getByText("Visible detail")).toBeVisible();
+
+  await page.getByRole("button", { name: "Note menu" }).click();
+  await page.getByRole("button", { name: "Pin the note", exact: true }).click();
+  await expect.poll(() => app.storedText(readme)).toContain("pinned: true");
+  await page.getByRole("button", { name: "Note menu" }).click();
+  await expect(
+    page.getByRole("button", { name: "Unpin the note", exact: true }),
+  ).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect.soft(details).toHaveAttribute("open", "");
+  await expect.soft(details.getByText("Visible detail")).toBeVisible();
+});
+
 test("draws a note that was a deck of slides as any other note", async ({
   app,
 }) => {
@@ -171,8 +200,15 @@ test("prints a note with its local images and page breaks", async ({
         .pop()!;
       (window as any).printed = {
         image: printed.querySelector("img")!.getAttribute("src"),
-        emojiPrintColor: getComputedStyle(printed.querySelector("img.emoji")!)
-          .printColorAdjust,
+        emojiHasColor: Array.from(
+          printed
+            .querySelector<HTMLCanvasElement>("canvas.emoji")!
+            .getContext("2d")!
+            .getImageData(0, 0, 64, 64).data,
+        ).some(
+          (red, i, rgba) =>
+            i % 4 === 0 && red > rgba[i + 2] + 30 && rgba[i + 3] > 128,
+        ),
         breakAfter: getComputedStyle(printed.querySelector(".pagebreak")!)
           .breakAfter,
         // A long line of code wraps at the edge of the paper, a long word
@@ -204,7 +240,7 @@ test("prints a note with its local images and page breaks", async ({
     })
     .toEqual({
       image: expect.stringMatching(/^data:image\/md;base64,/),
-      emojiPrintColor: "exact",
+      emojiHasColor: true,
       breakAfter: "page",
       // The fenced block's pre, the indented block's pre and its code.
       codeWraps: ["pre-wrap", "pre-wrap", "pre-wrap"],

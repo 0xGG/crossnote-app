@@ -93,7 +93,7 @@ describe("headingText", () => {
   });
 
   it("leaves out images, footnote references and the backslash of an escape", () => {
-    expect(headingText("A ![alt](a.png) picture[^1] \# sign")).toBe(
+    expect(headingText("A ![alt](a.png) picture[^1] \\# sign")).toBe(
       "A  picture # sign",
     );
   });

@@ -1,3 +1,5 @@
+import type { enUS } from "./enUS";
+
 export const zhCN = {
   translation: {
     "attachment/insert-image": "插入图片",
@@ -108,6 +110,9 @@ export const zhCN = {
     "error/please-resolve-conflicts": "请先解决冲突",
     "error/failed-to-change-file-path": "更改文件路径失败",
     "error/failed-to-print": "无法打印笔记",
+    "error/failed-to-save-notebook-settings": "保存笔记本设置失败",
+    "error/failed-to-remove-notebook": "移除笔记本失败",
+    "error/notebook-cleanup-failed": "笔记本已移除，但无法清理其存储空间",
     "error/link-outside-notebook": "链接指向笔记本之外",
     "error/link-inside-note": "链接指向笔记内部，而不是文件夹",
     "error/failed-to-save-note": "保存笔记失败",
@@ -215,6 +220,8 @@ export const zhCN = {
     "git/status/*unmodified": "*未修改",
     "git/status/*absent": "*缺失",
     "git/status/*undeleted": "*未删除",
+    "git/status/*undeletemodified": "*undeletemodified",
+    "git/status/": "",
 
     // graph view
     "graph-view/node": "节点",
@@ -228,4 +235,4 @@ export const zhCN = {
     "layout/error-rendering-component": "渲染组件时出错",
     "layout/retry": "重试",
   },
-};
+} satisfies typeof enUS;

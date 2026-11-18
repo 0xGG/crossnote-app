@@ -1,3 +1,5 @@
+import type { enUS } from "./enUS";
+
 export const jaJP = {
   translation: {
     "attachment/insert-image": "画像を挿入",
@@ -115,6 +117,11 @@ export const jaJP = {
     "error/please-resolve-conflicts": "最初に競合を解決してください",
     "error/failed-to-change-file-path": "ファイル パスの変更に失敗しました",
     "error/failed-to-print": "ノートを印刷できませんでした",
+    "error/failed-to-save-notebook-settings":
+      "ノートブックの設定を保存できませんでした",
+    "error/failed-to-remove-notebook": "ノートブックを削除できませんでした",
+    "error/notebook-cleanup-failed":
+      "ノートブックは削除されましたが、ストレージをクリーンアップできませんでした",
     "error/link-outside-notebook": "リンク先がノートブックの外にあります",
     "error/link-inside-note": "リンク先がフォルダではなくノートの中にあります",
     "error/failed-to-save-note": "ノートを保存できませんでした",
@@ -225,6 +232,8 @@ export const jaJP = {
     "git/status/*unmodified": "*未変更",
     "git/status/*absent": "*欠落",
     "git/status/*undeleted": "*削除されませんでした",
+    "git/status/*undeletemodified": "*undeletemodified",
+    "git/status/": "",
 
     // graph view
     "graph-view/node": "ノード",
@@ -239,4 +248,4 @@ export const jaJP = {
       "コンポーネントの描画中にエラーが発生しました",
     "layout/retry": "再試行",
   },
-};
+} satisfies typeof enUS;

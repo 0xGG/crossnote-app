@@ -113,6 +113,11 @@ export const enUS = {
     "error/please-resolve-conflicts": "Please resolve conflicts first",
     "error/failed-to-change-file-path": "Failed to change file path",
     "error/failed-to-print": "Failed to print the note",
+    "error/failed-to-save-notebook-settings":
+      "Failed to save the notebook settings",
+    "error/failed-to-remove-notebook": "Failed to remove the notebook",
+    "error/notebook-cleanup-failed":
+      "The notebook was removed, but its storage could not be cleaned up",
     "error/link-outside-notebook": "The link leads outside the notebook",
     "error/link-inside-note": "The link leads inside a note, not a folder",
     "error/failed-to-save-note": "Failed to save the note",

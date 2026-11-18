@@ -1,3 +1,4 @@
+import type { TranslationKey } from "../i18n/i18n";
 import {
   ChartTimeline,
   ClockOutline,
@@ -20,7 +21,10 @@ import { createRoot } from "react-dom/client";
 // description in the language files, and its picture.
 const COMMANDS: Record<
   string,
-  { description: string; Icon: React.ComponentType<{ fontSize?: "small" }> }
+  {
+    description: TranslationKey;
+    Icon: React.ComponentType<{ fontSize?: "small" }>;
+  }
 > = {
   h1: { description: "editor/toolbar/insert-header-1", Icon: FormatHeader1 },
   h2: { description: "editor/toolbar/insert-header-2", Icon: FormatHeader2 },
@@ -50,7 +54,9 @@ const COMMANDS: Record<
 };
 
 /** The key of a command's description in the language files. */
-export function slashCommandDescription(name: string): string | undefined {
+export function slashCommandDescription(
+  name: string,
+): TranslationKey | undefined {
   return COMMANDS[name]?.description;
 }
 

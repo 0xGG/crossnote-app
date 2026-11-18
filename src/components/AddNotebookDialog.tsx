@@ -1,3 +1,5 @@
+import i18next from "i18next";
+import { isAppErrorKey } from "../i18n/i18n";
 import { DEFAULT_CORS_PROXY } from "../config";
 import {
   Accordion,
@@ -20,7 +22,7 @@ import {
 } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import { ChevronDown, Eye, EyeOff, FolderOpen } from "mdi-material-ui";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { CrossnoteContainer } from "../containers/crossnote";
 import { notify } from "../lib/notifications";
@@ -38,7 +40,9 @@ interface Props {
 
 export default function AddNotebookDialog(props: Props) {
   const crossnoteContainer = CrossnoteContainer.useContainer();
-  const [notebookName, setNotebookName] = useState<string>("");
+  const [notebookName, setNotebookName] = useState<string>(
+    props.notebookName || notebookNameFromGitURL(props.gitURL ?? ""),
+  );
   const [expanded, setExpanded] = useState<boolean>(true);
   const [gitURL, setGitURL] = useState<string>(props.gitURL || "");
   const [gitBranch, setGitBranch] = useState<string>(props.gitBranch || "");
@@ -90,12 +94,12 @@ export default function AddNotebookDialog(props: Props) {
         severity: "error",
         // The app's own errors carry a key of the language packs; the rest,
         // such as a git server's reply, are shown as they come.
-        message: /^error\//.test(message) ? t(message) : message,
+        message: isAppErrorKey(message) ? i18next.t(message) : message,
       });
       close();
     }
   }, [
-    props,
+    crossnoteContainer,
     notebookName,
     gitURL,
     gitBranch,
@@ -107,14 +111,28 @@ export default function AddNotebookDialog(props: Props) {
     t,
   ]);
 
-  // A caller may leave the repository out, as its props allow.
-  useEffect(() => {
+  // Reset only when the incoming defaults change, not while editing the form.
+  const [previousDefaults, setPreviousDefaults] = useState({
+    gitURL: props.gitURL,
+    gitBranch: props.gitBranch,
+    notebookName: props.notebookName,
+  });
+  if (
+    previousDefaults.gitURL !== props.gitURL ||
+    previousDefaults.gitBranch !== props.gitBranch ||
+    previousDefaults.notebookName !== props.notebookName
+  ) {
     const gitURL = props.gitURL ?? "";
+    setPreviousDefaults({
+      gitURL: props.gitURL,
+      gitBranch: props.gitBranch,
+      notebookName: props.notebookName,
+    });
     setNotebookName(props.notebookName || notebookNameFromGitURL(gitURL));
     setGitURL(gitURL);
     setGitBranch(props.gitBranch ?? "");
     setExpanded(true);
-  }, [props.gitURL, props.gitBranch, props.notebookName]);
+  }
 
   return (
     <Dialog

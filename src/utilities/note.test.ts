@@ -15,4 +15,14 @@ describe("generateSummaryFromMarkdown", () => {
     );
     expect(summary).toContain("Intro paragraph");
   });
+  it("skips unrecognized image destinations and retains later images and the cover order", () => {
+    expect(
+      generateSummaryFromMarkdown(
+        '![bad]("quoted")\n![cover](cover.png)\n# Title\nHello\n![other](other.png)\n![cover](cover.png)',
+      ),
+    ).toEqual({
+      summary: "Hello",
+      images: ["cover.png", "other.png"],
+    });
+  });
 });

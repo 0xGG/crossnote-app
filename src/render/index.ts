@@ -45,7 +45,7 @@ export interface MountedPreview {
   /**
    * Settles once the note is drawn: its HTML in the element, finished, its
    * images read from the notebook, and its code blocks drawn, each given up
-   * to 10 seconds, or 20 for Mermaid, from its turn (a mermaid diagram waits for the one before
+   * to 10 seconds, or 30 for Mermaid, from its turn (a mermaid diagram waits for the one before
    * it) and all of them up to 30 seconds, before a diagram shows that it
    * took too long (one still waiting its turn as well) and code still being
    * highlighted stays as it was written. Rejects when
@@ -68,7 +68,11 @@ const mounted = new WeakMap<HTMLElement, MountedPreview>();
 export function mountPreview(
   element: HTMLElement,
   text: string,
-  options: { note: Note | null },
+  options: {
+    note: Note | null;
+    forPrint?: boolean;
+    openNote?: (filePath: string) => void;
+  },
 ): MountedPreview {
   mounted.get(element)?.dispose();
   let disposed = false;
@@ -85,7 +89,14 @@ export function mountPreview(
     content.innerHTML = sanitizeHTML(rendered.html);
     filterPreviewImages(content.content);
     element.replaceChildren(content.content);
-    done = finishPreview(element, options.note, isCurrent, cleanups);
+    done = finishPreview(
+      element,
+      options.note,
+      isCurrent,
+      cleanups,
+      options.forPrint,
+      options.openNote,
+    );
   } catch (error) {
     element.textContent = String(error);
     done = Promise.reject(error);

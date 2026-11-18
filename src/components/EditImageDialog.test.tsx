@@ -1,3 +1,4 @@
+import { typeInput } from "../test/component";
 import { ensureSyntaxTree } from "@codemirror/language";
 import type { SyntaxNode } from "@lezer/common";
 import React, { act } from "react";
@@ -100,19 +101,11 @@ async function show(
 const urlField = () => document.querySelector("input") as HTMLInputElement;
 const preview = () => document.querySelector("img").getAttribute("src");
 
-function type(input: HTMLInputElement, value: string) {
-  Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value").set.call(
-    input,
-    value,
-  );
-  input.dispatchEvent(new Event("input", { bubbles: true }));
-}
-
 it("shows the image as it is each time it opens, not a cancelled edit", async () => {
   const picture = image("https://example.com/a.png");
   await show(true, picture);
   expect(urlField().value).toBe("https://example.com/a.png");
-  act(() => type(urlField(), "https://example.com/typo.png"));
+  act(() => typeInput(urlField(), "https://example.com/typo.png"));
 
   await show(false, picture);
   await show(true, picture);
@@ -201,7 +194,7 @@ it.each([
 it("keeps a leading angle bracket in an image URL entered through Update", async () => {
   editor.document.load("![photo](https://example.com/a.png)");
   await show(true, image("https://example.com/a.png"));
-  act(() => type(urlField(), "<photo>.png"));
+  act(() => typeInput(urlField(), "<photo>.png"));
   act(() => action("Update").click());
   const rendered = document.createElement("div");
   rendered.innerHTML = renderMarkdown(editor.document.text()).html;
@@ -284,13 +277,12 @@ it("previews an image that shares its source with the one opened before", async 
 });
 
 it("keeps the preview on the source when an earlier lookup ends later", async () => {
-  // Opened as it mounts, with the lookup for the empty source it starts with
-  // ending after the image's own, as reading the note's folder can.
   const endFirstLookup = holdNextLookup();
+  await show(true, image("./slow.png"));
   await show(true, image("https://example.com/a.png"));
   expect(preview()).toBe("https://example.com/a.png");
 
-  await endFirstLookup("");
+  await endFirstLookup("data:image/png;base64,QQ==");
   expect(preview()).toBe("https://example.com/a.png");
 });
 

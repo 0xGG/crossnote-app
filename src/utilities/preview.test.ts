@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { globalContainers } from "../containers/global";
 import { Note } from "../lib/note";
 import { openURL } from "./preview";
 
@@ -13,21 +12,16 @@ describe("openURL", () => {
   let open: ReturnType<typeof vi.spyOn>;
 
   beforeEach(() => {
-    globalContainers.crossnoteContainer = {
-      openNoteAtPath,
-      getNotebookAtPath: () => "notebook",
-    } as any;
     open = vi.spyOn(window, "open").mockReturnValue(null);
   });
 
   afterEach(() => {
-    globalContainers.crossnoteContainer = null;
     openNoteAtPath.mockReset();
     open.mockRestore();
   });
 
   it("opens another site in a new tab without a handle on this one", () => {
-    openURL("https://example.org/page", note);
+    openURL("https://example.org/page", note, openNoteAtPath);
     expect(open).toHaveBeenCalledWith(
       "https://example.org/page",
       "_blank",
@@ -37,14 +31,14 @@ describe("openURL", () => {
   });
 
   it("opens a note by its path, from the notebook or from the note", () => {
-    openURL("/top.md", note);
-    openURL("sibling%20note.md", note);
+    openURL("/top.md", note, openNoteAtPath);
+    openURL("sibling%20note.md", note, openNoteAtPath);
     // A wiki link's target that starts like a scheme, as the preview keeps it.
-    openURL("./Todo: groceries", note);
+    openURL("./Todo: groceries", note, openNoteAtPath);
     expect(openNoteAtPath.mock.calls).toEqual([
-      ["notebook", "top.md"],
-      ["notebook", "folder/sibling note.md"],
-      ["notebook", "folder/Todo: groceries"],
+      ["top.md"],
+      ["folder/sibling note.md"],
+      ["folder/Todo: groceries"],
     ]);
     expect(open).not.toHaveBeenCalled();
   });
@@ -56,7 +50,7 @@ describe("openURL", () => {
         .spyOn(HTMLAnchorElement.prototype, "click")
         .mockImplementation(() => {});
       try {
-        openURL(url, note);
+        openURL(url, note, openNoteAtPath);
         expect(click).toHaveBeenCalledTimes(1);
         expect((click.mock.contexts[0] as HTMLAnchorElement).href).toBe(url);
         expect(open).not.toHaveBeenCalled();
@@ -68,8 +62,8 @@ describe("openURL", () => {
   );
 
   it("opens a note whose address is not well percent-encoded as it is written", () => {
-    openURL("100%.md", note);
-    expect(openNoteAtPath).toHaveBeenCalledWith("notebook", "folder/100%.md");
+    openURL("100%.md", note, openNoteAtPath);
+    expect(openNoteAtPath).toHaveBeenCalledWith("folder/100%.md");
   });
 
   it.each([
@@ -78,7 +72,7 @@ describe("openURL", () => {
     "data:text/html,https://example.org/",
     "#a-heading",
   ])("neither opens nor creates anything for %s", (url) => {
-    openURL(url, note);
+    openURL(url, note, openNoteAtPath);
     expect(open).not.toHaveBeenCalled();
     expect(openNoteAtPath).not.toHaveBeenCalled();
   });

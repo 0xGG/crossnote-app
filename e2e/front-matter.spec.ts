@@ -260,12 +260,12 @@ for (const { mode, notesOpenIn } of [
     test(`opens a note whose tab the layout brings back in ${mode} without writing it`, async ({
       app,
     }) => {
-      await restoredTabUnwritten(app, mode);
+      await expectRestoredTabUnwritten(app, mode);
     });
   });
 }
 
-async function restoredTabUnwritten(
+async function expectRestoredTabUnwritten(
   app: CrossnoteApp,
   mode: "Preview" | "Edit",
 ) {

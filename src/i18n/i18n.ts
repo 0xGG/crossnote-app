@@ -49,3 +49,21 @@ export function languageCodeToDateFNSLocale(code: string) {
     return enUS;
   }
 }
+
+export type TranslationKey = keyof typeof enUSLanguage.translation;
+
+export function isTranslationKey(key: string): key is TranslationKey {
+  return Object.prototype.hasOwnProperty.call(enUSLanguage.translation, key);
+}
+
+export function isAppErrorKey(key: string): key is TranslationKey {
+  return key.startsWith("error/") && isTranslationKey(key);
+}
+
+export function gitStatusLabel(
+  status: string,
+  t: (key: TranslationKey) => string,
+): string {
+  const key = `git/status/${status}`;
+  return isTranslationKey(key) ? t(key) : key;
+}

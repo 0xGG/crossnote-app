@@ -81,9 +81,10 @@ function useSettingsContainer(initialState: InitialState) {
   useEffect(() => {
     const themeName = localStorage.getItem("settings/theme") as ThemeName;
     if (themeName) {
-      _setTheme(themeName);
+      themeManager.selectTheme(themeName);
+      localStorage.setItem("settings/theme", themeManager.selectedTheme.name);
     }
-  }, [_setTheme]);
+  }, []);
 
   return {
     language,

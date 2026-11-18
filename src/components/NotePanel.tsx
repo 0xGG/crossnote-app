@@ -26,6 +26,7 @@ import React, {
   useRef,
   useState,
 } from "react";
+import i18next, { gitStatusLabel } from "../i18n/i18n";
 import { useTranslation } from "react-i18next";
 import { CrossnoteContainer } from "../containers/crossnote";
 import { SettingsContainer } from "../containers/settings";
@@ -35,7 +36,6 @@ import { outline } from "../editor/outline";
 import { EditorMode } from "../lib/editorMode";
 import {
   ChangedNoteFilePathEventData,
-  DeletedNotebookEventData,
   DeletedNoteEventData,
   EventType,
   globalEmitter,
@@ -279,8 +279,21 @@ export default function NotePanel(props: Props) {
   const crossnoteContainer = CrossnoteContainer.useContainer();
   const settingsContainer = SettingsContainer.useContainer();
   const { t } = useTranslation();
-  const [noteTitle, setNoteTitle] = useState<string>("");
+  const [titleDraft, setTitleDraft] = useState<{
+    filePath: string;
+    title: string;
+  } | null>(null);
   const [note, setNote] = useState<Note>(null);
+  // A metadata write changes the menu. The mounted preview keeps its own
+  // interactive content until the document or its location changes.
+  const [menuConfig, setMenuConfig] = useState<{
+    note: Note;
+    config: Note["config"];
+  }>();
+  const noteTitle =
+    titleDraft && titleDraft.filePath === note?.filePath
+      ? titleDraft.title
+      : (note?.title ?? "");
   // The note's text, undo history and saver, shared with every other tab the
   // note is open in; and this tab's editor of it.
   const [openNote, setOpenNote] = useState<OpenNote>(null);
@@ -319,6 +332,7 @@ export default function NotePanel(props: Props) {
     t: typeof t;
     editorMode: EditorMode;
     sourceCodeLineNumbers: boolean;
+    openNoteAtPath: typeof crossnoteContainer.openNoteAtPath;
   }>(null);
   useLayoutEffect(() => {
     latest.current = {
@@ -327,8 +341,15 @@ export default function NotePanel(props: Props) {
       t,
       editorMode,
       sourceCodeLineNumbers: settingsContainer.sourceCodeLineNumbers,
+      openNoteAtPath: crossnoteContainer.openNoteAtPath,
     };
   });
+  const openLinkedNote = useCallback((filePath: string) => {
+    const { openNoteAtPath, notebook } = latest.current;
+    void openNoteAtPath(notebook, filePath);
+  }, []);
+  const { changeNoteFilePath, closeTabNode, getNote, getStatus } =
+    crossnoteContainer;
   const confirmNoteTitle = useCallback(() => {
     const finalNoteTitle = noteTitle.trim().replace(/\//g, "-");
     if (!note || note.filePath === renamingFrom.current) {
@@ -336,30 +357,30 @@ export default function NotePanel(props: Props) {
     }
     if (!finalNoteTitle.length || note.title.trim() === finalNoteTitle) {
       // Nothing to rename to: show the name the note has.
-      setNoteTitle(note.title);
+      setTitleDraft(null);
       return;
     }
 
     renamingFrom.current = note.filePath;
-    crossnoteContainer
-      .changeNoteFilePath(
-        tabNode,
-        note,
-        path.join(path.dirname(note.filePath), `${finalNoteTitle}.md`),
-      )
+    changeNoteFilePath(
+      tabNode,
+      note,
+      path.join(path.dirname(note.filePath), `${finalNoteTitle}.md`),
+    )
       .then((note) => {
+        setTitleDraft(null);
         setNote(note);
       })
       .catch((error) => {
         renamingFrom.current = null;
         notify({
           severity: "error",
-          message: t("error/failed-to-change-file-path"),
+          message: i18next.t("error/failed-to-change-file-path"),
           duration: 5000,
         });
-        setNoteTitle(note.title);
+        setTitleDraft(null);
       });
-  }, [noteTitle, note, tabNode, t]);
+  }, [noteTitle, note, tabNode, changeNoteFilePath]);
 
   const showPreview = useCallback(
     (text: string) => {
@@ -373,11 +394,14 @@ export default function NotePanel(props: Props) {
       readingPosition.current = null;
       stopRestoringPreview.current();
       mountedPreview.current?.dispose();
-      const preview = mountPreview(element, text, { note });
+      const preview = mountPreview(element, text, {
+        note,
+        openNote: openLinkedNote,
+      });
       mountedPreview.current = preview;
       stopRestoringPreview.current = restorePreviewPosition(element, position);
     },
-    [note],
+    [note, openLinkedNote],
   );
 
   useEffect(() => {
@@ -394,7 +418,6 @@ export default function NotePanel(props: Props) {
     if (note.filePath !== renamingFrom.current) {
       renamingFrom.current = null;
     }
-    setNoteTitle(note.title);
     crossnoteContainer.layoutModel.doAction(
       Actions.renameTab(tabNode.getId(), note.title),
     );
@@ -418,13 +441,16 @@ export default function NotePanel(props: Props) {
       failed: (error) => {
         notify({
           severity: "error",
-          message: failureMessage(t("error/failed-to-save-note"), error),
+          message: failureMessage(
+            i18next.t("error/failed-to-save-note"),
+            error,
+          ),
           duration: 5000,
         });
       },
     };
     if (openNote) {
-      openNote.calls = noteCalls.current;
+      openNote.setCalls(noteCalls.current);
     }
   });
 
@@ -483,7 +509,7 @@ export default function NotePanel(props: Props) {
         data.notebookPath === note.notebookPath &&
         data.noteFilePath === note.filePath;
       if (here && data.tabId !== tabNode.getId()) {
-        note.config = data.noteConfig;
+        setMenuConfig({ note, config: data.noteConfig });
       }
       openNote.written(
         data.tabId,
@@ -498,7 +524,7 @@ export default function NotePanel(props: Props) {
         data.notebookPath === note.notebookPath &&
         data.noteFilePath === note.filePath
       ) {
-        crossnoteContainer.closeTabNode(tabNode.getId());
+        closeTabNode(tabNode.getId());
       }
     };
 
@@ -509,10 +535,7 @@ export default function NotePanel(props: Props) {
         data.notebookPath === note.notebookPath &&
         data.oldNoteFilePath === note.filePath
       ) {
-        const newNote = await crossnoteContainer.getNote(
-          data.notebookPath,
-          data.newNoteFilePath,
-        );
+        const newNote = await getNote(data.notebookPath, data.newNoteFilePath);
         setNote(newNote);
       }
     };
@@ -521,10 +544,7 @@ export default function NotePanel(props: Props) {
       data: PerformedGitOperationEventData,
     ) => {
       if (data.notebookPath === note.notebookPath) {
-        const newNote = await crossnoteContainer.getNote(
-          data.notebookPath,
-          note.filePath,
-        );
+        const newNote = await getNote(data.notebookPath, note.filePath);
         if (newNote) {
           setNote(newNote);
           if (openNote.saver.isOwn(newNote.markdown)) {
@@ -536,14 +556,8 @@ export default function NotePanel(props: Props) {
           openNote.document.load(newNote.markdown, newNote.lineBreak);
           openNote.saver.took(newNote.markdown);
         } else {
-          crossnoteContainer.closeTabNode(tabNode.getId());
+          closeTabNode(tabNode.getId());
         }
-      }
-    };
-
-    const deletedNotebookCallback = (data: DeletedNotebookEventData) => {
-      if (data.notebookPath === note.notebookPath) {
-        crossnoteContainer.closeTabNode(tabNode.getId());
       }
     };
 
@@ -557,7 +571,6 @@ export default function NotePanel(props: Props) {
       EventType.PerformedGitOperation,
       performedGitOperationCallback,
     );
-    globalEmitter.on(EventType.DeletedNotebook, deletedNotebookCallback);
     return () => {
       globalEmitter.off(EventType.ModifiedMarkdown, modifiedMarkdownCallback);
       globalEmitter.off(EventType.DeletedNote, deletedNoteCallback);
@@ -569,16 +582,8 @@ export default function NotePanel(props: Props) {
         EventType.PerformedGitOperation,
         performedGitOperationCallback,
       );
-      globalEmitter.off(EventType.DeletedNotebook, deletedNotebookCallback);
     };
-  }, [
-    tabNode,
-    note,
-    openNote,
-    crossnoteContainer.layoutModel,
-    crossnoteContainer.closeTabNode,
-    crossnoteContainer.getNote,
-  ]);
+  }, [tabNode, note, openNote, closeTabNode, getNote]);
 
   // get note
   const modeChosen = useRef<boolean>(false);
@@ -681,7 +686,7 @@ export default function NotePanel(props: Props) {
         // A link, in markdown's form or a wiki link, opens as it does in
         // the preview.
         if (link.kind !== "hashtag") {
-          openURL(link.target, latest.current.note);
+          openURL(link.target, latest.current.note, openLinkedNote);
         }
       },
       images: {
@@ -716,7 +721,7 @@ export default function NotePanel(props: Props) {
         failed: (error) => {
           const key =
             error instanceof AttachmentError
-              ? `attachment/${error.reason}`
+              ? (`attachment/${error.reason}` as const)
               : "attachment/failed";
           const message = latest.current.t(key);
           notify({
@@ -760,7 +765,7 @@ export default function NotePanel(props: Props) {
       created.destroy();
       setEditor(null);
     };
-  }, [openNote, tabNode]);
+  }, [openNote, tabNode, openLinkedNote]);
 
   useEffect(() => {
     editor?.refreshImages();
@@ -967,8 +972,7 @@ export default function NotePanel(props: Props) {
       return;
     }
     let latest = true;
-    crossnoteContainer
-      .getStatus(note.notebookPath, note.filePath)
+    getStatus(note.notebookPath, note.filePath)
       .then((status) => {
         if (latest) {
           setGitStatus(status);
@@ -978,7 +982,7 @@ export default function NotePanel(props: Props) {
     return () => {
       latest = false;
     };
-  }, [note, writtenCount, crossnoteContainer.getStatus]);
+  }, [note, writtenCount, getStatus]);
 
   // Set theme: the page's, which the preview and the editor both follow.
   useEffect(() => {
@@ -1040,8 +1044,6 @@ export default function NotePanel(props: Props) {
     );
   }
 
-  const tocVisible = tocEnabled;
-
   return (
     <NotePanelRoot>
       <TopPanel
@@ -1061,7 +1063,12 @@ export default function NotePanel(props: Props) {
             }}
             placeholder={t("general/title")}
             fullWidth={true}
-            onChange={(event) => setNoteTitle(event.currentTarget.value)}
+            onChange={(event) =>
+              setTitleDraft({
+                filePath: note?.filePath,
+                title: event.currentTarget.value,
+              })
+            }
             // Enter renames the note, and so does leaving the box. An Enter
             // that confirms an input method's candidate is part of typing the
             // title.
@@ -1164,7 +1171,7 @@ export default function NotePanel(props: Props) {
           defaultSize={tocPanelWidth}
           minSize={tocPanelMinWidth}
           maxSize={tocPanelMaxWidth}
-          sizedPaneHidden={!tocVisible}
+          sizedPaneHidden={!tocEnabled}
           label={t("general/table-of-contents")}
           onResizeEnd={(newSize: number) => {
             tocPanelWidth = newSize;
@@ -1205,7 +1212,7 @@ export default function NotePanel(props: Props) {
             {props.notebook.name +
               ": " +
               note.filePath +
-              (gitStatus ? " - " + t(`git/status/${gitStatus}`) : "")}
+              (gitStatus ? " - " + gitStatusLabel(gitStatus, t) : "")}
           </FilePath>
         </Row>
         {editorMode !== EditorMode.Preview && (
@@ -1229,7 +1236,11 @@ export default function NotePanel(props: Props) {
 
       <NotePopover
         tabNode={props.tabNode}
-        note={note}
+        note={
+          menuConfig?.note === note
+            ? { ...note, config: menuConfig.config }
+            : note
+        }
         anchorElement={notePopoverElement}
         onClose={() => setNotePopoverElement(null)}
       ></NotePopover>

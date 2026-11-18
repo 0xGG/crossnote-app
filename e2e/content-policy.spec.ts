@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { appPolicy, headersFile } from "../site-headers";
-import { expect, test } from "./fixtures";
+import { expect, policyViolationKeys, test } from "./fixtures";
 
 // The policy comes with the page's response, from site-headers.ts, which
 // also writes the _headers file the deployed site is served by; the page
@@ -70,7 +70,19 @@ test("lets the app connect to git remotes on the web and on this machine", async
 });
 
 test.describe("connections elsewhere over plain http", () => {
-  test.use({ expectPolicyViolations: ["connect-src"] });
+  test.use({
+    expectPolicyViolations: {
+      violations: [
+        "http://192.0.2.1:9/",
+        "http://git.localhost:9/",
+        "http://[::1]:9/",
+      ].map((blocked) => ({
+        directive: "connect-src",
+        blocked,
+        document: "/",
+      })),
+    },
+  });
 
   // Another machine's address over plain http, a name under .localhost, and
   // this machine's IPv6 address, which a policy cannot name.
@@ -85,8 +97,8 @@ test.describe("connections elsewhere over plain http", () => {
     // Each refused, and nothing else: the directive and the address.
     await expect
       .poll(() =>
-        policyViolations.map((violation) =>
-          violation.split(" ").slice(0, 2).join(" "),
+        policyViolations.map(
+          (violation) => `${violation.directive} ${violation.blocked}`,
         ),
       )
       .toEqual(
@@ -100,7 +112,17 @@ test.describe("connections elsewhere over plain http", () => {
 
 test.describe("a base address elsewhere, plugin content and frames", () => {
   test.use({
-    expectPolicyViolations: ["base-uri", "object-src", "frame-src"],
+    expectPolicyViolations: {
+      violations: [
+        {
+          directive: "base-uri",
+          blocked: "https://example.org/",
+          document: "/",
+        },
+        { directive: "object-src", blocked: "/favicon.ico", document: "/" },
+        { directive: "frame-src", blocked: "/favicon.ico", document: "/" },
+      ],
+    },
   });
 
   // What the page's policy holds the page to, whatever ends up in it.
@@ -124,7 +146,7 @@ test.describe("a base address elsewhere, plugin content and frames", () => {
     // The object's and the frame's are reported once they try to load.
     await expect
       .poll(() =>
-        policyViolations.map((violation) => violation.split(" ")[0]).sort(),
+        policyViolations.map((violation) => violation.directive).sort(),
       )
       .toEqual(["base-uri", "frame-src", "object-src"]);
   });
@@ -150,11 +172,22 @@ const evalInPage = () =>
   });
 
 test.describe("code made from text", () => {
-  test.use({ expectPolicyViolations: ["script-src", "script-src-elem"] });
+  test.use({
+    expectPolicyViolations: {
+      violations: [
+        { directive: "script-src", blocked: "eval", document: "/" },
+        { directive: "script-src-elem", blocked: "inline", document: "/" },
+      ],
+    },
+  });
 
   // Whatever a note or a library brings into the page, no code made from
   // text runs: neither eval nor a script written into the page.
-  test("runs none of it on the page", async ({ app, page }) => {
+  test("runs none of it on the page", async ({
+    app,
+    page,
+    policyViolations,
+  }) => {
     await app.open();
     const evaluated = await page.evaluate(evalInPage);
     expect(
@@ -168,5 +201,32 @@ test.describe("code made from text", () => {
         };
       }, evaluated),
     ).toEqual({ evaluated: "EvalError", script: "refused" });
+    await expect.poll(() => policyViolations.length).toBeGreaterThanOrEqual(2);
   });
+});
+
+// The filter must reject a missing event, an extra source, or another document.
+test("compares the complete policy report", () => {
+  const expected = [
+    {
+      directive: "connect-src",
+      blocked: "http://example.test/",
+      document: "http://localhost/",
+    },
+  ];
+  expect(policyViolationKeys([...expected, ...expected])).toEqual(
+    policyViolationKeys(expected),
+  );
+  expect(policyViolationKeys([])).not.toEqual(policyViolationKeys(expected));
+  expect(
+    policyViolationKeys([
+      ...expected,
+      { ...expected[0], blocked: "http://other.test/" },
+    ]),
+  ).not.toEqual(policyViolationKeys(expected));
+  expect(
+    policyViolationKeys([
+      { ...expected[0], document: "http://localhost/other" },
+    ]),
+  ).not.toEqual(policyViolationKeys(expected));
 });

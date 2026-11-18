@@ -1,10 +1,11 @@
+import type { TranslationKey } from "../i18n/i18n";
 import { I18nLabel } from "flexlayout-react";
 
 // FlexLayout's own words that can show in this app, mapped to the language
 // packs. The rest of its labels belong to features the app leaves off:
 // popouts, floating panels, maximizing, renaming, pinning, tab groups, the
 // active tabset marker, the tabset close button and context menus.
-export const layoutLabelKeys: Partial<Record<I18nLabel, string>> = {
+export const layoutLabelKeys: Partial<Record<I18nLabel, TranslationKey>> = {
   [I18nLabel.Close_Tab]: "general/close",
   [I18nLabel.Overflow_Menu_Tooltip]: "layout/hidden-tabs",
   [I18nLabel.Splitter]: "layout/resize",
@@ -21,7 +22,7 @@ export const layoutLabelKeys: Partial<Record<I18nLabel, string>> = {
 // it is. A tab can be named anything, "toString" or "constructor" too, so
 // only the table's own keys count.
 export function translateLayoutLabel(
-  t: (key: string) => string,
+  t: (key: TranslationKey) => string,
   key: string,
 ): string {
   return Object.prototype.hasOwnProperty.call(layoutLabelKeys, key)

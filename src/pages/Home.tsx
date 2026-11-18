@@ -23,16 +23,16 @@ import {
   Notebook,
   PlusCircleOutline,
 } from "mdi-material-ui";
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useEffectEvent, useState } from "react";
 import { useTranslation } from "react-i18next";
 import AddNotebookDialog from "../components/AddNotebookDialog";
 import LanguageSelectorDialog from "../components/LanguageSelectorDialog";
 import { MainPanel } from "../components/MainPanel";
 import NotebookTreeView from "../components/NotebookTreeView";
+import { builtInTabLabels } from "../lib/tabNode";
 import ConfigureNotebookDialog from "../components/ConfigureNotebookDialog";
 import PushNotebookDialog from "../components/PushNotebookDialog";
 import { CrossnoteContainer } from "../containers/crossnote";
-import { globalContainers } from "../containers/global";
 import type { Notebook as NotebookData } from "../lib/notebook";
 
 const drawerWidth = 200;
@@ -99,11 +99,9 @@ interface NotebookDialog {
 // Closes a notebook's dialog, and no other: an upload that ends after its
 // dialog was cancelled closes it then, when another notebook's may be open.
 const closing =
-  (notebookId: string) =>
+  (visit: NotebookDialog) =>
   (dialog: NotebookDialog | null): NotebookDialog | null =>
-    dialog && dialog.notebook._id === notebookId
-      ? { ...dialog, open: false }
-      : dialog;
+    dialog === visit ? { ...dialog, open: false } : dialog;
 
 export function Home(props: Props) {
   const theme = useTheme();
@@ -146,92 +144,70 @@ export function Home(props: Props) {
   const { t } = useTranslation();
   const crossnoteContainer = CrossnoteContainer.useContainer();
 
-  // HACK: Register globalContainers for the preview, which opens notes
-  globalContainers.crossnoteContainer = crossnoteContainer;
-
   const toggleDrawer = useCallback(() => {
     setDrawerOpen(!drawerOpen);
   }, [drawerOpen]);
 
-  useEffect(() => {
-    if (!crossnoteContainer.initialized) {
-      return;
+  // A launch URL is consumed when the notebook list first becomes available.
+  // Later list or language changes must not reopen its dialog or tab.
+  const [launchTarget, setLaunchTarget] = useState<{
+    notebook: NotebookData;
+    filePath?: string;
+  } | null>();
+  if (launchTarget === undefined && crossnoteContainer.initialized) {
+    const { repo, branch, filePath } = props.queryParams ?? {};
+    const notebook =
+      repo &&
+      branch &&
+      crossnoteContainer.notebooks.find(
+        (nb) => nb.gitURL === repo && nb.gitBranch === branch,
+      );
+    setLaunchTarget(notebook ? { notebook, filePath } : null);
+    if (repo && branch && !notebook) {
+      setAddNotebookRepo(repo);
+      setAddNotebookBranch(branch);
+      setAddNotebookDialogHideOpeningLocal(true);
+      setAddNotebookDialogOpen(true);
     }
-    if (props.queryParams) {
-      if (props.queryParams.repo && props.queryParams.branch) {
-        // The query values are already percent-decoded by URLSearchParams;
-        // decoding again would corrupt values containing a literal "%" and
-        // throw URIError on malformed sequences.
-        const repo = props.queryParams.repo || "";
-        const branch = props.queryParams.branch || "";
-        const filePath = props.queryParams.filePath || "";
-        const notebook = crossnoteContainer.notebooks.find(
-          (nb) => nb.gitURL === repo && nb.gitBranch === branch,
-        );
-        if (notebook) {
-          notebook
-            .refreshNotesIfNotLoaded({
-              dir: "./",
-              includeSubdirectories: true,
-            })
-            .then((notes) => {
-              if (filePath) {
-                const note = notes[filePath];
-                if (note) {
-                  crossnoteContainer.addTabNode({
-                    type: "tab",
-                    component: "Note",
-                    config: {
-                      component: "Note",
-
-                      singleton: false,
-                      noteFilePath: note.filePath,
-                      notebookPath: note.notebookPath,
-                    },
-                    name: note.title,
-                  });
-                } else {
-                  //note not found
-                  crossnoteContainer.addTabNode({
-                    type: "tab",
-                    component: "Notes",
-                    id: "Notes: " + notebook.dir,
-                    name: notebook.name,
-                    config: {
-                      component: "Note",
-
-                      singleton: true,
-                      notebookPath: notebook.dir,
-                    },
-                  });
-                }
-              } else {
-                crossnoteContainer.addTabNode({
-                  type: "tab",
-                  component: "Notes",
-                  id: "Notes: " + notebook.dir,
-                  name: notebook.name,
-                  config: {
-                    component: "Notes",
-                    singleton: true,
-                    notebookPath: notebook.dir,
-                  },
-                });
-              }
-            })
-            .catch((error) => {
-              console.error(error);
+  }
+  const followLaunchLink = useEffectEvent(
+    ({ notebook, filePath }: NonNullable<typeof launchTarget>) => {
+      notebook
+        .refreshNotesIfNotLoaded({ dir: "./", includeSubdirectories: true })
+        .then((notes) => {
+          const note = filePath && notes[filePath];
+          if (note) {
+            crossnoteContainer.addTabNode({
+              type: "tab",
+              component: "Note",
+              name: note.title,
+              config: {
+                component: "Note",
+                singleton: false,
+                noteFilePath: note.filePath,
+                notebookPath: note.notebookPath,
+              },
             });
-        } else {
-          // Show dialog
-          setAddNotebookRepo(repo);
-          setAddNotebookBranch(branch);
-          setAddNotebookDialogHideOpeningLocal(true);
-          setAddNotebookDialogOpen(true);
-        }
-      }
-    }
-  }, [props.queryParams, crossnoteContainer.initialized]);
+          } else {
+            crossnoteContainer.addTabNode({
+              type: "tab",
+              component: "Notes",
+              name: notebook.name,
+              id: "Notes: " + notebook.dir,
+              config: {
+                component: "Notes",
+                singleton: true,
+                notebookPath: notebook.dir,
+              },
+            });
+          }
+        })
+        .catch(console.error);
+    },
+  );
+  useEffect(() => {
+    if (launchTarget) followLaunchLink(launchTarget);
+  }, [launchTarget]);
 
   const drawer = (
     <React.Fragment>
@@ -307,7 +283,7 @@ export function Home(props: Props) {
                 crossnoteContainer.addTabNode({
                   type: "tab",
                   component: "Settings",
-                  name: t("general/Settings"),
+                  name: t(builtInTabLabels.Settings),
                   id: "Settings",
                   config: {
                     component: "Settings",
@@ -378,9 +354,7 @@ export function Home(props: Props) {
         <ConfigureNotebookDialog
           key={settingsDialog.notebook._id}
           open={settingsDialog.open}
-          onClose={() =>
-            setSettingsDialog(closing(settingsDialog.notebook._id))
-          }
+          onClose={() => setSettingsDialog(closing(settingsDialog))}
           notebook={settingsDialog.notebook}
         ></ConfigureNotebookDialog>
       )}
@@ -388,7 +362,7 @@ export function Home(props: Props) {
         <PushNotebookDialog
           key={uploadDialog.notebook._id}
           open={uploadDialog.open}
-          onClose={() => setUploadDialog(closing(uploadDialog.notebook._id))}
+          onClose={() => setUploadDialog(closing(uploadDialog))}
           notebook={uploadDialog.notebook}
         ></PushNotebookDialog>
       )}

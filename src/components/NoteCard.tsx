@@ -3,11 +3,11 @@ import { darken, styled, useTheme } from "@mui/material/styles";
 import { formatDistanceStrict, formatRelative } from "date-fns";
 import { TabNode } from "flexlayout-react";
 import { DotsVertical, Pin } from "mdi-material-ui";
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { CrossnoteContainer } from "../containers/crossnote";
 import { SettingsContainer } from "../containers/settings";
-import { languageCodeToDateFNSLocale } from "../i18n/i18n";
+import { languageCodeToDateFNSLocale, gitStatusLabel } from "../i18n/i18n";
 import {
   EventType,
   globalEmitter,
@@ -16,7 +16,7 @@ import {
 import { Note } from "../lib/note";
 import { Reference } from "../lib/reference";
 import { resolveNoteImageSrc } from "../utilities/image";
-import { generateSummaryFromMarkdown, Summary } from "../utilities/note";
+import { generateSummaryFromMarkdown } from "../utilities/note";
 import { Emoji } from "./EmojiWrapper";
 import NotePopover from "./NotePopover";
 
@@ -136,14 +136,29 @@ export default function NoteCard(props: Props) {
   const theme = useTheme();
   const crossnoteContainer = CrossnoteContainer.useContainer();
   const settingsContainer = SettingsContainer.useContainer();
-  const [header, setHeader] = useState<string>("");
-  const [summary, setSummary] = useState<Summary>(null);
-  const [images, setImages] = useState<string[]>([]);
-  const [gitStatus, setGitStatus] = useState<string>("");
+  const [imageResult, setImageResult] = useState<{
+    note: Note;
+    summary: object;
+    images: string[];
+  }>();
+  const [statusResult, setStatusResult] = useState<{
+    note: Note;
+    status: string;
+  }>();
   const [popoverElement, setPopoverElement] = useState<Element>(null);
-  const [note, setNote] = useState<Note>(props.note);
-  const [references, setReferences] = useState<Reference[]>([]);
+  const [updated, setUpdated] = useState<{ source: Note; note: Note }>();
+  const note = updated?.source === props.note ? updated.note : props.note;
+  const { addTabNode, getNote, getNotebookAtPath, getStatus } =
+    crossnoteContainer;
+  const references = props.referredNote
+    ? getNotebookAtPath(note.notebookPath)?.getReferences(
+        props.referredNote.filePath,
+        note.filePath,
+      ) || []
+    : [];
   const { t } = useTranslation();
+  // Relative time is sampled whenever this card refreshes, without a timer per card.
+  // eslint-disable-next-line react-hooks/purity
   const duration = formatDistanceStrict(note.config.modifiedAt, Date.now())
     .replace(/\sseconds?/, "s")
     .replace(/\sminutes?/, "m")
@@ -155,7 +170,7 @@ export default function NoteCard(props: Props) {
 
   const openNote = useCallback(() => {
     if (note) {
-      crossnoteContainer.addTabNode({
+      addTabNode({
         type: "tab",
         component: "Note",
         config: {
@@ -167,16 +182,14 @@ export default function NoteCard(props: Props) {
         name: note.title,
       });
     }
-  }, [note, crossnoteContainer.addTabNode]);
-
-  useEffect(() => {
-    setNote(props.note);
-  }, [props.note]);
+  }, [note, addTabNode]);
 
   useEffect(() => {
     if (!note) {
       return;
     }
+    let current = true;
+    let sequence = 0;
     const modifiedMarkdownCallback = async (
       data: ModifiedMarkdownEventData,
     ) => {
@@ -184,64 +197,61 @@ export default function NoteCard(props: Props) {
         note.filePath === data.noteFilePath &&
         note.notebookPath === data.notebookPath
       ) {
-        const newNote = await crossnoteContainer.getNote(
-          data.notebookPath,
-          data.noteFilePath,
-        );
-        setNote(newNote);
+        const request = ++sequence;
+        const newNote = await getNote(data.notebookPath, data.noteFilePath);
+        if (newNote && current && request === sequence)
+          setUpdated({ source: props.note, note: newNote });
       }
     };
 
     globalEmitter.on(EventType.ModifiedMarkdown, modifiedMarkdownCallback);
     return () => {
+      current = false;
       globalEmitter.off(EventType.ModifiedMarkdown, modifiedMarkdownCallback);
     };
-  }, [note]);
+  }, [note, props.note, getNote]);
+
+  const summary = useMemo(
+    () =>
+      generateSummaryFromMarkdown(
+        note.markdown.trim() || t("general/this-note-is-empty"),
+      ),
+    [note.markdown, t],
+  );
 
   useEffect(() => {
-    if (props.referredNote && note) {
-      const notebook = crossnoteContainer.getNotebookAtPath(note.notebookPath);
-      if (!notebook) {
-        return;
-      }
-      setReferences(
-        notebook.getReferences(props.referredNote.filePath, note.filePath) ||
-          [],
-      );
-    }
-  }, [note, props.referredNote, crossnoteContainer.getNotebookAtPath]);
+    let current = true;
+    const sources = summary.images.map((image) =>
+      resolveNoteImageSrc(note, image).catch(() => ""),
+    );
+    Promise.all(sources).then((images) => {
+      if (current)
+        setImageResult({
+          note,
+          summary,
+          images: images.filter(Boolean).slice(0, 3),
+        });
+    });
+    return () => {
+      current = false;
+    };
+  }, [note, summary]);
 
   useEffect(() => {
-    setHeader(`${note.title}`);
-    generateSummaryFromMarkdown(
-      note.markdown.trim() || t("general/this-note-is-empty"),
-    )
-      .then((summary) => {
-        setSummary(summary);
+    let current = true;
+    getStatus(note.notebookPath, note.filePath).then((status) => {
+      if (current) setStatusResult({ note, status });
+    });
+    return () => {
+      current = false;
+    };
+  }, [note, getStatus]);
 
-        // render images
-        const imagePromises = Promise.all(
-          summary.images.map((image) => resolveNoteImageSrc(note, image)),
-        );
-        imagePromises
-          .then((imageSrcs) => {
-            imageSrcs = imageSrcs.filter((x) => x).slice(0, 3);
-            setImages(imageSrcs || []);
-          })
-          .catch((error) => {
-            setImages([]);
-          });
-      })
-      .catch((error) => {});
-  }, [note.markdown, note, crossnoteContainer.crossnote, t]);
-
-  useEffect(() => {
-    crossnoteContainer
-      .getStatus(note.notebookPath, note.filePath)
-      .then((status) => {
-        setGitStatus(status);
-      });
-  }, [note.markdown, note.config.modifiedAt, note]);
+  const images =
+    imageResult?.note === note && imageResult.summary === summary
+      ? imageResult.images
+      : [];
+  const gitStatus = statusResult?.note === note ? statusResult.status : "";
 
   return (
     <React.Fragment>
@@ -304,7 +314,7 @@ export default function NoteCard(props: Props) {
                 }}
                 variant={"body1"}
               >
-                {header}
+                {note.title}
               </Typography>
             </Header>
             <Box style={{ display: "flex", alignItems: "center" }}>
@@ -376,7 +386,7 @@ export default function NoteCard(props: Props) {
                 <ReferencePreview
                   onClick={() => {
                     if (note) {
-                      crossnoteContainer.addTabNode({
+                      addTabNode({
                         type: "tab",
                         component: "Note",
                         config: {
@@ -400,7 +410,7 @@ export default function NoteCard(props: Props) {
           })}
           <FilePath variant={"caption"}>
             {note.filePath +
-              (gitStatus ? " - " + t(`git/status/${gitStatus}`) : "")}
+              (gitStatus ? " - " + gitStatusLabel(gitStatus, t) : "")}
           </FilePath>
         </RightPanel>
       </NoteCardRoot>

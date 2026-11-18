@@ -781,28 +781,56 @@ test("keeps the reading block through mode changes in a long note", async ({
   }
 });
 
-for (const diagram of [false, true]) {
-  test(`keeps the reading offset valid for a ${diagram ? "collapsed source diagram" : "multiline source paragraph"}`, async ({
+// Both source shapes exercise the same scroll contract.
+const offsetSamples = [
+  {
+    name: "multiline source paragraph",
+    prefix: "",
+    rowPrefix: "",
+    suffix: "",
+    selectionLine: 59,
+    lineText: /^wrapped35$/,
+    paragraph: (app: CrossnoteApp) =>
+      app.preview.locator("p").filter({ hasText: /^wrapped0\s/ }),
+    expectReady: async (paragraph: Locator) => expect(paragraph).toBeVisible(),
+    offset: (rowHeight: number) => -35 * rowHeight,
+  },
+  {
+    name: "collapsed source diagram",
+    prefix: "```mermaid\ngraph TD; A-->B\n",
+    rowPrefix: "%% ",
+    suffix: "\n```",
+    selectionLine: 61,
+    lineText: /^%% wrapped35$/,
+    paragraph: (app: CrossnoteApp) => app.preview.locator(".mermaid"),
+    expectReady: async (paragraph: Locator) =>
+      expect(paragraph.locator("svg")).toBeVisible(),
+    offset: (_rowHeight: number) => 0,
+  },
+];
+
+for (const sample of offsetSamples) {
+  const text =
+    "Before\n\n".repeat(12) +
+    sample.prefix +
+    Array.from({ length: 60 }, (_, i) => `${sample.rowPrefix}wrapped${i}`).join(
+      "\n",
+    ) +
+    sample.suffix +
+    "\n\n" +
+    "After\n\n".repeat(40) +
+    "END";
+
+  test(`keeps the reading offset valid for a ${sample.name}`, async ({
     app,
   }) => {
-    const text =
-      "Before\n\n".repeat(12) +
-      (diagram ? "```mermaid\ngraph TD; A-->B\n" : "") +
-      Array.from(
-        { length: 60 },
-        (_, i) => `${diagram ? "%% " : ""}wrapped${i}`,
-      ).join("\n") +
-      (diagram ? "\n```" : "") +
-      "\n\n" +
-      "After\n\n".repeat(40) +
-      "END";
     const file = await openStored(app, text);
     await app.refuseWrites();
     await app.modeButton("Source code").click();
-    await app.selectInEditor({ line: diagram ? 61 : 59, ch: 0 });
+    await app.selectInEditor({ line: sample.selectionLine, ch: 0 });
     const line = app.editor
       .locator(".cm-line")
-      .filter({ hasText: diagram ? /^%% wrapped35$/ : /^wrapped35$/ });
+      .filter({ hasText: sample.lineText });
     await revealEditor(app, line);
     const rowHeight = await line.evaluate(
       (el) => el.getBoundingClientRect().height,
@@ -813,10 +841,8 @@ for (const diagram of [false, true]) {
         el.getBoundingClientRect().top - root.getBoundingClientRect().top;
     });
     await app.modeButton("Preview").click();
-    const paragraph = diagram
-      ? app.preview.locator(".mermaid")
-      : app.preview.locator("p").filter({ hasText: /^wrapped0\s/ });
-    if (diagram) await expect(paragraph.locator("svg")).toBeVisible();
+    const paragraph = sample.paragraph(app);
+    await sample.expectReady(paragraph);
     await expect
       .poll(() =>
         paragraph.evaluate((el) => {
@@ -826,7 +852,7 @@ for (const diagram of [false, true]) {
           );
         }),
       )
-      .toBeCloseTo(diagram ? 0 : -35 * rowHeight, 0);
+      .toBeCloseTo(sample.offset(rowHeight), 0);
     await expect(paragraph).toBeInViewport();
     expect(await app.storedText(file)).toBe(text);
     expect(

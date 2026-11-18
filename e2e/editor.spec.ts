@@ -143,6 +143,8 @@ test("opens decoded Markdown note destinations from the editor", async ({
 // Enter on the list. The list takes no key for a moment after it opens, so
 // that one meant for the text is not taken for a choice.
 async function pick(page: Page) {
+  // The completion menu deliberately ignores keys for its opening interval.
+  // eslint-disable-next-line playwright/no-wait-for-timeout
   await page.waitForTimeout(150);
   await page.keyboard.press("Enter");
 }
@@ -436,6 +438,7 @@ test.describe("the editor's keys", () => {
     await placeCaret(app, { line: 0, ch: 5 });
     await page.keyboard.type(" one");
     // Apart in time, so that the two are two steps to undo.
+    // eslint-disable-next-line playwright/no-wait-for-timeout
     await page.waitForTimeout(700);
     await page.keyboard.type(" two");
     await expect.poll(() => app.editorText()).toBe("Start one two\n");
@@ -474,6 +477,7 @@ test.describe("the editor's keys", () => {
     try {
       await page.keyboard.type(" typed");
       await expect.poll(() => app.editorText()).toBe("Start typed\n");
+      // eslint-disable-next-line playwright/no-wait-for-timeout
       await page.waitForTimeout(600);
       expect(await storedBody(app, readme)).toBe("Start\n");
       await page.keyboard.press("Control+s");
@@ -607,6 +611,7 @@ test.describe("completion", () => {
     await app.typeInEditor("folder/");
     await page.keyboard.type("x https:/");
     // Time for a list to open, were one going to.
+    // eslint-disable-next-line playwright/no-wait-for-timeout
     await page.waitForTimeout(500);
     await expect(completions(page)).toHaveCount(0);
     expect(await app.editorText()).toBe("folder/x https:/");
@@ -667,6 +672,8 @@ test.describe("the table of contents", () => {
       "# One\n\ntext\n\n## Two :smile:\n\n```md\n# Not a heading\n```\n\n### Three\n";
     await openNote(app, text);
     await page.setViewportSize({ width: 1400, height: 800 });
+    // The restored layout may already show the panel.
+    // eslint-disable-next-line playwright/no-conditional-in-test
     if (!(await app.tocItem("One").isVisible())) {
       await page.getByRole("button", { name: "Table of contents" }).click();
     }
@@ -739,6 +746,7 @@ test.describe("a note open in two tabs", () => {
       await page.getByRole("button", { name: "Pin the note" }).click();
       await expect.poll(() => app.storedText(readme)).toMatch(/pinned: true/);
       // Time for a save set off by the settings' to come, were one going to.
+      // eslint-disable-next-line playwright/no-wait-for-timeout
       await page.waitForTimeout(1000);
       expect(await storedBody(app, readme)).toBe(text);
     });

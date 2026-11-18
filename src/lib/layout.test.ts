@@ -11,7 +11,7 @@ import { describe, expect, it } from "vitest";
 import {
   layoutShowsNotebook,
   pruneUnknownTabs,
-  tabsShowingNote,
+  tabsInNotebook,
 } from "./layout";
 import savedByOldEngine from "./layout-0.5.21.json";
 
@@ -224,7 +224,7 @@ describe("layoutShowsNotebook", () => {
   });
 });
 
-describe("tabsShowingNote", () => {
+describe("tabsInNotebook", () => {
   const noteTab = (
     notebookPath: string,
     noteFilePath: string,
@@ -256,7 +256,7 @@ describe("tabsShowingNote", () => {
       children: [noteTab("/notebooks/a", "a.md", "side")],
     };
     const model = Model.fromJson({ global: {}, borders: [border], layout });
-    const found = tabsShowingNote(model, "/notebooks/a", "a.md");
+    const found = tabsInNotebook(model, "/notebooks/a", "a.md");
     expect(found.map((node) => node.getId()).sort()).toEqual(["first", "side"]);
   });
 });
