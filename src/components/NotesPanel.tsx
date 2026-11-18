@@ -160,7 +160,10 @@ function NotesPanel(props: Props) {
     useState<ReturnType<typeof setTimeout>>(null);
   const [finalSearchValue, setFinalSearchValue] = useState<string>("");
   const [tabNodeVisible, setTabNodeVisible] = useState<boolean>(false);
-  const container = useRef<HTMLDivElement>(null);
+  const [scrollElement, setScrollElement] = useState<HTMLElement | null>(null);
+  const listRoot = useCallback((element: HTMLDivElement | null) => {
+    setScrollElement(element?.parentElement ?? null);
+  }, []);
   const isMounted = useRef<boolean>(false);
 
   const createNewNote = useCallback(() => {
@@ -402,7 +405,7 @@ function NotesPanel(props: Props) {
   return (
     <NotesPanelRoot
       className={"notes-panel"}
-      ref={container}
+      ref={listRoot}
       style={props.note ? { marginTop: "32px" } : undefined}
     >
       <TopPanel>
@@ -523,9 +526,7 @@ function NotesPanel(props: Props) {
           notes={notes}
           referredNote={props.note}
           searchValue={finalSearchValue}
-          scrollElement={
-            container && container.current && container.current.parentElement
-          }
+          scrollElement={scrollElement}
         ></Notes>
       ) : (
         <Loading></Loading>

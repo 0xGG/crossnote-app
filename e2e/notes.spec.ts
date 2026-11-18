@@ -134,6 +134,98 @@ test("keeps the search box in view while the list scrolls", async ({
   expect(button!.y).toBeGreaterThanOrEqual(bar!.y + bar!.height);
 });
 
+test("loads cards in the scrolling list and keeps them when scrolled away", async ({
+  app,
+  page,
+}) => {
+  await page.setViewportSize({ width: 1280, height: 400 });
+  let newestTitle = "";
+  for (let count = 2; count <= 5; count++) {
+    newestTitle = await app.createNote();
+    await app.selectTab("Drafts");
+    await expect(app.noteCards).toHaveCount(count);
+  }
+  await expect(app.noteCards.last()).toContainText("README");
+
+  // Each new card was visible at the top when it was created. Open the
+  // populated list afresh to observe a card that has never been on screen.
+  await page.reload();
+  await app.waitUntilReady();
+  await app.openNotes();
+  await expect(app.noteCards).toHaveCount(5);
+  const first = app.noteCards.first();
+  const last = app.noteCards.last();
+  await expect(first).not.toHaveClass(/lazyload-placeholder/);
+  const cardTitle = first.getByText(newestTitle, { exact: true });
+  await expect(cardTitle).toBeVisible();
+  const state = await first.evaluateHandle((element) => {
+    const pane = element.closest(".notes-panel")!.parentElement!;
+    const state: { node: Element; entered: boolean; exitGap: number | null } = {
+      node: element,
+      entered: false,
+      exitGap: null,
+    };
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) state.entered = true;
+        else if (state.entered) {
+          state.exitGap =
+            entry.rootBounds!.top - entry.boundingClientRect.bottom;
+          observer.disconnect();
+        }
+      },
+      { root: pane },
+    );
+    observer.observe(element);
+    return state;
+  });
+  await expect.poll(() => state.evaluate((value) => value.entered)).toBe(true);
+  const beforeScroll = await last.evaluate((element) => {
+    const pane = element.closest(".notes-panel")!.parentElement!;
+    const rect = element.getBoundingClientRect();
+    const snapshot = {
+      placeholder: element.classList.contains("lazyload-placeholder"),
+      height: rect.height,
+      gap: rect.top - pane.getBoundingClientRect().bottom,
+    };
+    pane.scrollTop = pane.scrollHeight;
+    return { ...snapshot, scrollTop: pane.scrollTop };
+  });
+  expect(beforeScroll.placeholder).toBe(true);
+  expect(beforeScroll.height).toBeGreaterThan(0);
+  expect(beforeScroll.gap).toBeGreaterThan(0);
+  expect(beforeScroll.scrollTop).toBeGreaterThan(0);
+  await expect(last).not.toHaveClass(/lazyload-placeholder/);
+  await expect
+    .poll(() => state.evaluate((value) => value.exitGap))
+    .toBeGreaterThan(0);
+  await page.evaluate(() => new Promise(requestAnimationFrame));
+  expect(
+    await first.evaluate((element, value) => element === value.node, state),
+  ).toBe(true);
+  await expect(first).not.toHaveClass(/lazyload-placeholder/);
+  await expect(cardTitle).toBeVisible();
+  // Start with a fresh list so README has not already been mounted by scrolling.
+  await page.reload();
+  await app.waitUntilReady();
+  await app.openNotes();
+  await expect(app.noteCards).toHaveCount(5);
+  // README is the oldest card and has not been mounted in this fresh list.
+  await expect(app.noteCards.last()).toHaveClass(/lazyload-placeholder/);
+  // The observer uses the panel's parent as its root with no root margin.
+  const readmeBelowPane = await app.noteCards.last().evaluate((element) => {
+    const root = element.closest(".notes-panel")!.parentElement!;
+    return (
+      element.getBoundingClientRect().top > root.getBoundingClientRect().bottom
+    );
+  });
+  expect(readmeBelowPane).toBe(true);
+  await app.searchBox.fill("README");
+  await expect(app.noteCards).toHaveCount(1);
+  await expect(app.noteCards.first()).toContainText("README");
+  await expect(app.noteCards.first()).not.toHaveClass(/lazyload-placeholder/);
+});
+
 test("saves an edit that takes a note back to how it was", async ({
   app,
   page,

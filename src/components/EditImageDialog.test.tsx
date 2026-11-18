@@ -304,7 +304,7 @@ it("shows nothing of the image opened before while the next is looked up", async
   // while.
   const endLookup = holdNextLookup();
   await show(true, image("./b.png"));
-  expect(preview()).toBe("");
+  expect(preview()).toBeNull();
 
   await endLookup("data:image/png;base64,Yg==");
   expect(preview()).toBe("data:image/png;base64,Yg==");
@@ -323,7 +323,7 @@ it("shows nothing of another note's picture while this note's is looked up", asy
 
   const endLookup = holdNextLookup();
   await show(true, image("./p.png"), other);
-  expect(preview()).toBe("");
+  expect(preview()).toBeNull();
 
   await endLookup("data:image/png;base64,Qg==");
   expect(preview()).toBe("data:image/png;base64,Qg==");

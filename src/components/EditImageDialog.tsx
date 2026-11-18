@@ -149,8 +149,8 @@ export default function EditImageDialog(props: Props) {
             // this note, rather than the image looked up before it.
             src={
               preview.src === imageSrc && preview.note === props.note
-                ? preview.url
-                : ""
+                ? preview.url || undefined
+                : undefined
             }
             alt={imageAlt}
             title={imageTitle}
