@@ -1,5 +1,15 @@
 export const zhTW = {
   translation: {
+    "attachment/insert-image": "插入圖片",
+    "attachment/ignored":
+      "此附件路徑被 Git 忽略，未插入連結；已儲存的檔案仍保留在 assets 中。請檢查筆記本的忽略規則。",
+    "attachment/size": "單個附件不能超過 20 MiB，未插入連結。",
+    "attachment/type": "不支援此檔案類型，請選擇圖片、音訊或影片。",
+    "attachment/location":
+      "筆記或插入位置已變更，未插入連結；已儲存的檔案仍保留在 assets 中。",
+    "attachment/failed": "附件無法儲存，未插入連結",
+    "attachment/playback-failed":
+      "無法播放此媒體，請檢查檔案、網路或瀏覽器的格式支援。",
     "search/notes": "搜尋筆記",
 
     // Account

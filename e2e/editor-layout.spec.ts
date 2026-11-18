@@ -385,7 +385,7 @@ test("retains compact footnote labels while their code and diagrams are rendered
   ).toEqual([]);
 });
 
-test("opens the first row of compact indented footnote code", async ({
+test("opens the first row of compact indented footnote code at the clicked glyph", async ({
   app,
 }) => {
   const text = "See[^a].\n\n[^a]:        first row\n        second row\n\nEND";
@@ -394,9 +394,17 @@ test("opens the first row of compact indented footnote code", async ({
   const code = app.editor.locator(".cn-code-preview pre");
   await expect(code).toContainText("first row");
   for (let i = 0; i < 3; i++) {
-    await code.click({ position: { x: 50, y: 20 } });
+    const point = await code.evaluate((el) => {
+      const node = el.querySelector("code")!.firstChild!;
+      const range = document.createRange();
+      range.setStart(node, 4);
+      range.setEnd(node, 5);
+      const box = range.getBoundingClientRect();
+      return { x: box.left + 0.2, y: (box.top + box.bottom) / 2 };
+    });
+    await app.page.mouse.click(point.x, point.y);
     await expect(code).toHaveCount(0);
-    expect(await app.caret()).toEqual({ line: 2, ch: 13 });
+    expect(await app.caret()).toEqual({ line: 2, ch: 17 });
     await expect(
       app.editor.locator(".cm-line").filter({ hasText: "[^a]:" }),
     ).toContainText("first row");

@@ -3,6 +3,7 @@ import { Note } from "../lib/note";
 import "./emoji";
 import * as markdown from "./markdown";
 import { finishPreview } from "./preview";
+import { filterPreviewImages } from "./previewImages";
 import { sanitizeHTML } from "./sanitize";
 
 // How a note is drawn: the preview and printing both go
@@ -46,7 +47,7 @@ export interface MountedPreview {
   /**
    * Settles once the note is drawn: its HTML in the element, finished, its
    * images read from the notebook, and its code blocks drawn, each given up
-   * to 10 seconds from its turn (a mermaid diagram waits for the one before
+   * to 10 seconds, or 20 for Mermaid, from its turn (a mermaid diagram waits for the one before
    * it) and all of them up to 30 seconds, before a diagram shows that it
    * took too long (one still waiting its turn as well) and code still being
    * highlighted stays as it was written. Rejects when
@@ -80,7 +81,12 @@ export function mountPreview(
   try {
     const rendered = renderMarkdown(text);
     element.style.height = "100%";
-    element.innerHTML = sanitizeHTML(rendered.html);
+    // Prepare inert content first so unsupported HTTP images never start a
+    // request while the asynchronous notebook resolver replaces their src.
+    const content = document.createElement("template");
+    content.innerHTML = sanitizeHTML(rendered.html);
+    filterPreviewImages(content.content);
+    element.replaceChildren(content.content);
     done = finishPreview(element, options.note, isCurrent, cleanups);
   } catch (error) {
     element.textContent = String(error);

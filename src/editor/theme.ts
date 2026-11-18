@@ -59,6 +59,11 @@ const look = EditorView.theme({
   ".cn-selected-text, .cn-selected-text *, .cn-selected-empty": {
     backgroundColor: "var(--editor-selection) !important",
   },
+  ".cn-quote .cn-selected-text, .cn-quote .cn-selected-text *, .cn-quote .cn-selected-empty":
+    {
+      backgroundColor:
+        "var(--editor-quote-selection, var(--editor-selection)) !important",
+    },
   ".cm-cursor, .cm-dropCursor": { borderLeftColor: "var(--preview-strong)" },
   "&.cm-focused > .cm-scroller > .cm-selectionLayer .cm-selectionBackground, .cm-selectionBackground, .cm-content ::selection":
     { backgroundColor: "var(--editor-selection)" },

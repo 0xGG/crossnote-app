@@ -9,7 +9,7 @@ import {
   type CompletionSource,
 } from "@codemirror/autocomplete";
 import { Prec, type Extension } from "@codemirror/state";
-import { keymap } from "@codemirror/view";
+import { keymap, type EditorView } from "@codemirror/view";
 import {
   emojiOfShortName,
   emojiShortNames,
@@ -59,6 +59,7 @@ export const SLASH_COMMANDS: SlashCommand[] = [
 ];
 
 export interface CompletionHost {
+  pickImage?: (view: EditorView, from: number, to: number) => void;
   /** What a command of the "/" menu is called, in the user's language. */
   describeCommand?: (name: string) => string;
   /** Draws a command's picture into an element. */
@@ -91,7 +92,10 @@ function slashCommands(host: CompletionHost): CompletionSource {
     }
     const typed = found[1].toLocaleLowerCase();
     const from = context.pos - found[1].length - 1;
-    const all = SLASH_COMMANDS.map((command): Completion & { hay: string } => {
+    const commands = host.pickImage
+      ? [...SLASH_COMMANDS, { name: "image", insert: "" }]
+      : SLASH_COMMANDS;
+    const all = commands.map((command): Completion & { hay: string } => {
       const detail = host.describeCommand?.(command.name) ?? "";
       return {
         label: `/${command.name}`,
@@ -99,6 +103,10 @@ function slashCommands(host: CompletionHost): CompletionSource {
         type: `command-${command.name}`,
         hay: `/${command.name}${detail}`.toLocaleLowerCase(),
         apply: (view, _completion, start, end) => {
+          if (command.name === "image" && host.pickImage) {
+            host.pickImage(view, start, end);
+            return;
+          }
           const insert =
             typeof command.insert === "string"
               ? command.insert

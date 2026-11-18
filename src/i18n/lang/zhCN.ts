@@ -1,5 +1,15 @@
 export const zhCN = {
   translation: {
+    "attachment/insert-image": "插入图片",
+    "attachment/ignored":
+      "此附件路径被 Git 忽略，未插入链接；已保存的文件仍保留在 assets 中。请检查笔记本的忽略规则。",
+    "attachment/size": "单个附件不能超过 20 MiB，未插入链接。",
+    "attachment/type": "不支持此文件类型，请选择图片、音频或视频。",
+    "attachment/location":
+      "笔记或插入位置已变化，未插入链接；已保存的文件仍保留在 assets 中。",
+    "attachment/failed": "附件未能保存，未插入链接",
+    "attachment/playback-failed":
+      "无法播放此媒体，请检查文件、网络或浏览器的格式支持。",
     "search/notes": "搜索笔记",
 
     // Account

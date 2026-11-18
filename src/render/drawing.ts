@@ -3,6 +3,8 @@
  * element takes the block's place at once and is drawn into, then or later.
  */
 export interface Drawing {
+  /** A renderer-specific single drawing budget, counted from started. */
+  timeout?: number;
   element: HTMLElement;
   /**
    * Settles once the drawing is finished, or has failed and its element
@@ -63,7 +65,11 @@ export function failedBlock(error: unknown): HTMLElement {
 export function startDrawing(
   element: HTMLElement,
   draw: (signal: AbortSignal, begin: () => void) => void | Promise<void>,
-  options: { waitsItsTurn?: boolean; keepsWhatItShows?: boolean } = {},
+  options: {
+    waitsItsTurn?: boolean;
+    keepsWhatItShows?: boolean;
+    timeout?: number;
+  } = {},
 ): Drawing {
   const controller = new AbortController();
   const { signal } = controller;
@@ -88,6 +94,7 @@ export function startDrawing(
       }
     });
   return {
+    timeout: options.timeout,
     element,
     done: Promise.race([drawn, disposed]),
     started,
@@ -113,7 +120,7 @@ export function startDrawing(
  */
 export function waitForDrawing(
   drawing: Drawing,
-  timeout = drawingTimeout,
+  timeout = drawing.timeout ?? drawingTimeout,
   deadline?: Promise<void>,
 ): { settled: Promise<void>; stop(): void } {
   let timer: number | undefined;

@@ -38,6 +38,30 @@ afterEach(() => {
 });
 
 describe("mountPreview", () => {
+  it("filters HTTP image candidates before mounting responsive pictures", async () => {
+    const element = document.createElement("div");
+    const previous = element.replaceChildren.bind(element);
+    let seen: string[] = [];
+    vi.spyOn(element, "replaceChildren").mockImplementation((...nodes) => {
+      const fragment = nodes[0] as DocumentFragment;
+      seen = Array.from(
+        fragment.querySelectorAll("source, img"),
+        (node) => node.getAttribute("srcset") ?? "",
+      );
+      previous(...nodes);
+    });
+    await mountPreview(
+      element,
+      '<picture><source srcset="http://example.com/a.png 1x, https://example.com/b,c.png 2x"><img srcset="https://example.com/small.png 480w, http://example.com/c.png 640w, https://example.com/large.png 800w"></picture>\n\n<img srcset="http://example.com/only.png">\n\n<img srcset="https://example.com/name\u00a0 , HTTP://example.com/old.png 2x">',
+      { note: null },
+    ).done;
+    expect(seen).toEqual([
+      "https://example.com/b,c.png 2x",
+      "https://example.com/small.png 480w, https://example.com/large.png 800w",
+      "",
+      "https://example.com/name\u00a0",
+    ]);
+  });
   it("keeps source anchors through code highlighting and failed diagrams without Prism line highlighting", async () => {
     const element = document.createElement("div");
     await mountPreview(
@@ -156,7 +180,8 @@ describe("mountPreview", () => {
     preview.done.then(() => (settled = true));
     await Promise.resolve();
     expect(settled).toBe(false);
-    expect(resolveNoteImageSrc).toHaveBeenCalledWith(note, "a b.png");
+    // Decode once inside the notebook path boundary, shared with the editor.
+    expect(resolveNoteImageSrc).toHaveBeenCalledWith(note, "a%20b.png");
     finish("data:image/png;base64,AAAA");
     await preview.done;
     expect(element.querySelector("img").getAttribute("src")).toBe(

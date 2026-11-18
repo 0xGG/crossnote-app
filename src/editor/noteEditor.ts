@@ -32,6 +32,12 @@ import { mathTooltip } from "./mathTooltip";
 import type { NoteDocument } from "./noteDocument";
 import { continueTable, nextTableCell, previousTableCell } from "./tables";
 import { editorTheme } from "./theme";
+import {
+  attachmentInput,
+  attachmentHost,
+  pickImage,
+  type AttachmentHost,
+} from "./attachments";
 
 /**
  * How an editor shows a note: "live" hides the markup of what the caret is
@@ -57,6 +63,7 @@ export interface NoteEditorOptions {
   onLinkClick?: (link: NoteLink, event: MouseEvent) => void;
   /** How images load, and what a click on one does. */
   images?: LivePreviewHost;
+  attachments?: AttachmentHost;
   /** The words and lists the completions are made of. */
   completion?: CompletionHost;
   /** What an empty note shows in place of text. */
@@ -97,6 +104,7 @@ export class NoteEditor {
     onSelection,
     onLinkClick,
     images,
+    attachments,
     completion,
     placeholder,
   }: NoteEditorOptions) {
@@ -162,7 +170,11 @@ export class NoteEditor {
           }),
           // Before the table's keys: while a list of completions is open,
           // Enter picks from it.
-          noteCompletion(completion),
+          noteCompletion({
+            ...completion,
+            pickImage: attachments ? pickImage : undefined,
+          }),
+          attachments ? [attachmentHost.of(attachments), attachmentInput] : [],
           // Ahead of the keys markdown binds for lists and quotes.
           Prec.highest(
             keymap.of([
@@ -290,6 +302,14 @@ export class NoteEditor {
    * element itself gets past.
    */
   setHidden(hidden: boolean) {
+    const host = this.view.state.facet(livePreviewHost);
+    if ((host.mediaEnabled !== false) === hidden) {
+      this.view.dispatch({
+        effects: this.images.reconfigure(
+          livePreviewHost.of({ ...host, mediaEnabled: !hidden }),
+        ),
+      });
+    }
     if (hidden) {
       this.view.dom.style.setProperty("display", "none", "important");
     } else {

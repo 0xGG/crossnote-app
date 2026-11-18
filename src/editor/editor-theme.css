@@ -29,6 +29,7 @@
   --editor-attribute: #00c;
   --editor-markup: #969896;
   --editor-selection: #b3d7ff;
+  --editor-quote-selection: var(--editor-selection);
   --editor-gutter: #999;
 }
 
@@ -48,6 +49,7 @@
   --editor-attribute: #9e9e9e;
   --editor-markup: #75715e;
   --editor-selection: #264f78;
+  --editor-quote-selection: var(--editor-selection);
   --editor-gutter: #858585;
 }
 
@@ -67,6 +69,7 @@
   --editor-attribute: #9e9e9e;
   --editor-markup: #5c6370;
   --editor-selection: #3e4451;
+  --editor-quote-selection: #526d96;
   --editor-gutter: #636d83;
 }
 
@@ -86,5 +89,6 @@
   --editor-attribute: #607d8b;
   --editor-markup: #93a1a1;
   --editor-selection: #eee8d5;
+  --editor-quote-selection: var(--editor-selection);
   --editor-gutter: #93a1a1;
 }

@@ -29,6 +29,8 @@ async function renameWhileTyping(app: CrossnoteApp, page: Page) {
     )
     .toBe(false);
   // Hold a real rename after the file has moved and its old cache is gone.
+  const beforeRename = await app.storedText(`${folder}/${title}.md`);
+  expect(beforeRename).toContain("Before");
   await page.evaluate(() => {
     const win = window as unknown as RenameWindow;
     const storeTree = win.pfs.storeTree;
@@ -65,7 +67,7 @@ async function renameWhileTyping(app: CrossnoteApp, page: Page) {
     (element as EditorHost).editorHandle.insert(" during rename");
     (close as HTMLElement).click();
   }, close);
-  return { title, folder };
+  return { title, folder, beforeRename };
 }
 
 test("closing during rename saves the latest text at the new path before releasing the last tab", async ({
@@ -91,7 +93,7 @@ test("a rename failure after moving keeps the last tab and text through repeated
   app,
   page,
 }) => {
-  const { title, folder } = await renameWhileTyping(app, page);
+  const { title, folder, beforeRename } = await renameWhileTyping(app, page);
   await page.evaluate(() =>
     (window as unknown as RenameWindow).releaseRename("tree write refused"),
   );
@@ -104,8 +106,14 @@ test("a rename failure after moving keeps the last tab and text through repeated
   await expect(dialog).toContainText("Close this note without saving?");
   await dialog.getByRole("button", { name: "Close anyway" }).click();
   await expect(app.tab(title)).toBeHidden();
-  expect(await app.storedText(`${folder}/${title}.md`)).toBeUndefined();
-  expect(await app.storedText(`${folder}/After.md`)).not.toContain(
-    "during rename",
-  );
+  // The injected store failure leaves the IndexedDB directory update to
+  // LightningFS's background flush, which can follow the tab closing.
+  await expect
+    .poll(() =>
+      Promise.all([
+        app.storedText(`${folder}/${title}.md`),
+        app.storedText(`${folder}/After.md`),
+      ]),
+    )
+    .toEqual([undefined, beforeRename]);
 });
