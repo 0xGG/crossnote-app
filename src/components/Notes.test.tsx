@@ -104,3 +104,17 @@ it("searches for text that a pattern would read as more than text", () => {
   expect(container.textContent).toContain("C:\\Users");
   expect(container.textContent).not.toContain("Why? Because.");
 });
+
+it("keeps the given order within pinned and unpinned groups", () => {
+  const a = note("A", "a.md");
+  const b = note("B", "b.md");
+  const c = note("C", "c.md");
+  b.config.pinned = true;
+  c.config.pinned = true;
+  show([a, c, b]);
+  expect(
+    Array.from(container.querySelectorAll(".note-card")).map(
+      (card) => card.textContent,
+    ),
+  ).toEqual(["C", "B", "A"]);
+});

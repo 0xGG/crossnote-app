@@ -12,7 +12,7 @@ export function tokenize(text: string): string[] {
   return (
     text
       .replace(/[.\s!@#$%^&*()\-=_+~`[\]{}\\<>?/|（）【】:：，。]+/g, " ")
-      .match(/([^\x00-\x7F]|\w+)/gu) || []
+      .match(/(\P{ASCII}|\w+)/gu) || []
   );
 }
 

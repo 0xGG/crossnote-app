@@ -1,3 +1,4 @@
+import i18next from "i18next";
 import {
   Box,
   Divider,
@@ -48,6 +49,15 @@ const Row = styled(Box)({
   flexDirection: "row",
   alignItems: "center",
 });
+
+// Keep the list item and button structure identical for keyboard and screen readers.
+function MenuRow(props: React.ComponentProps<typeof ListItemButton>) {
+  return (
+    <ListItem disablePadding>
+      <ListItemButton {...props} />
+    </ListItem>
+  );
+}
 
 interface Props {
   tabNode: TabNode;
@@ -136,7 +146,7 @@ export default function NotePopover(props: Props) {
         console.error(error);
         notify({
           severity: "error",
-          message: failureMessage(t("error/failed-to-print"), error),
+          message: failureMessage(i18next.t("error/failed-to-print"), error),
           duration: 5000,
         });
       })
@@ -164,191 +174,167 @@ export default function NotePopover(props: Props) {
         }}
       >
         <List>
-          <ListItem disablePadding>
-            <ListItemButton
-              onClick={() => {
-                crossnoteContainer.togglePin(
-                  props.tabNode,
-                  note.notebookPath,
-                  note.filePath,
-                );
-                props.onClose();
+          <MenuRow
+            onClick={() => {
+              crossnoteContainer.togglePin(
+                props.tabNode,
+                note.notebookPath,
+                note.filePath,
+              );
+              props.onClose();
+            }}
+          >
+            <ListItemIcon
+              sx={{ ...(note.config.pinned && { color: "secondary.main" }) }}
+            >
+              {note.config.pinned ? <Pin></Pin> : <PinOutline></PinOutline>}
+            </ListItemIcon>
+            <ListItemText
+              primary={
+                note.config.pinned
+                  ? t("general/unpin-the-note")
+                  : t("general/pin-the-note")
+              }
+            ></ListItemText>
+          </MenuRow>
+          <MenuRow
+            onClick={() => {
+              crossnoteContainer.toggleFavorite(
+                props.tabNode,
+                note.notebookPath,
+                note.filePath,
+              );
+              props.onClose();
+            }}
+          >
+            <ListItemIcon
+              sx={{
+                ...(note.config.favorited && { color: "secondary.main" }),
               }}
             >
-              <ListItemIcon
-                sx={{ ...(note.config.pinned && { color: "secondary.main" }) }}
-              >
-                {note.config.pinned ? <Pin></Pin> : <PinOutline></PinOutline>}
-              </ListItemIcon>
-              <ListItemText
-                primary={
-                  note.config.pinned
-                    ? t("general/unpin-the-note")
-                    : t("general/pin-the-note")
-                }
-              ></ListItemText>
-            </ListItemButton>
-          </ListItem>
-          <ListItem disablePadding>
-            <ListItemButton
-              onClick={() => {
-                crossnoteContainer.toggleFavorite(
-                  props.tabNode,
-                  note.notebookPath,
-                  note.filePath,
-                );
-                props.onClose();
-              }}
-            >
-              <ListItemIcon
-                sx={{
-                  ...(note.config.favorited && { color: "secondary.main" }),
-                }}
-              >
-                {note.config.favorited ? (
-                  <Star></Star>
-                ) : (
-                  <StarOutline></StarOutline>
-                )}
-              </ListItemIcon>
-              <ListItemText
-                primary={
-                  note.config.favorited
-                    ? t("general/remove-from-quick-access")
-                    : t("general/add-to-quick-access")
-                }
-              ></ListItemText>
-            </ListItemButton>
-          </ListItem>
+              {note.config.favorited ? (
+                <Star></Star>
+              ) : (
+                <StarOutline></StarOutline>
+              )}
+            </ListItemIcon>
+            <ListItemText
+              primary={
+                note.config.favorited
+                  ? t("general/remove-from-quick-access")
+                  : t("general/add-to-quick-access")
+              }
+            ></ListItemText>
+          </MenuRow>
           {/* A line between groups, hidden from assistive technology: as an li,
               MUI gives it the separator role, which a list may not hold. */}
           <Divider component="li" aria-hidden></Divider>
-          <ListItem disablePadding>
-            <ListItemButton
-              onClick={() => {
-                crossnoteContainer.splitNoteVertically(note);
-                props.onClose();
-              }}
-            >
-              <ListItemIcon>
-                <ViewSplitVertical></ViewSplitVertical>
-              </ListItemIcon>
-              <ListItemText>{t("editor/split-vertically")}</ListItemText>
-            </ListItemButton>
-          </ListItem>
-          <ListItem disablePadding>
-            <ListItemButton
-              onClick={() => {
-                crossnoteContainer.splitNoteHorizontally(note, props.tabNode);
-                props.onClose();
-              }}
-            >
-              <ListItemIcon>
-                <ViewSplitHorizontal></ViewSplitHorizontal>
-              </ListItemIcon>
-              <ListItemText>{t("editor/split-horizontally")}</ListItemText>
-            </ListItemButton>
-          </ListItem>
+          <MenuRow
+            onClick={() => {
+              crossnoteContainer.splitNoteVertically(note);
+              props.onClose();
+            }}
+          >
+            <ListItemIcon>
+              <ViewSplitVertical></ViewSplitVertical>
+            </ListItemIcon>
+            <ListItemText>{t("editor/split-vertically")}</ListItemText>
+          </MenuRow>
+          <MenuRow
+            onClick={() => {
+              crossnoteContainer.splitNoteHorizontally(note, props.tabNode);
+              props.onClose();
+            }}
+          >
+            <ListItemIcon>
+              <ViewSplitHorizontal></ViewSplitHorizontal>
+            </ListItemIcon>
+            <ListItemText>{t("editor/split-horizontally")}</ListItemText>
+          </MenuRow>
           <Divider component="li" aria-hidden></Divider>
-          <ListItem disablePadding>
-            <ListItemButton
-              onClick={() => {
-                setChangeNoteFilePathDialogOpen(true);
-                props.onClose();
-              }}
-            >
-              <ListItemIcon>
-                <RenameBox></RenameBox>
-              </ListItemIcon>
-              <ListItemText
-                primary={t("general/change-file-path")}
-              ></ListItemText>
-            </ListItemButton>
-          </ListItem>
-          <ListItem disablePadding>
-            <ListItemButton
-              onClick={(event) => {
-                setNoteAliasAnchorEl(event.currentTarget);
-                // Another copy of this menu, the note panel's or a card's,
-                // may have changed the aliases since this one was made.
-                crossnoteContainer
-                  .getNote(note.notebookPath, note.filePath)
-                  .then((latest) => {
-                    if (latest) {
-                      setAliases(latest.config.aliases);
-                    }
-                  });
-              }}
-            >
-              <ListItemIcon>
-                <TooltipEdit></TooltipEdit>
-              </ListItemIcon>
-              <ListItemText
-                primary={t("general/edit-note-alias")}
-              ></ListItemText>
-            </ListItemButton>
-          </ListItem>
-          <ListItem disablePadding>
-            <ListItemButton
-              onClick={() => {
-                setDeleteNoteDialogOpen(true);
-                props.onClose();
-              }}
-            >
-              <ListItemIcon>
-                <Delete></Delete>
-              </ListItemIcon>
-              <ListItemText primary={t("general/Delete")}></ListItemText>
-            </ListItemButton>
-          </ListItem>
+          <MenuRow
+            onClick={() => {
+              setChangeNoteFilePathDialogOpen(true);
+              props.onClose();
+            }}
+          >
+            <ListItemIcon>
+              <RenameBox></RenameBox>
+            </ListItemIcon>
+            <ListItemText
+              primary={t("general/change-file-path")}
+            ></ListItemText>
+          </MenuRow>
+          <MenuRow
+            onClick={(event) => {
+              setNoteAliasAnchorEl(event.currentTarget);
+              // Another copy of this menu, the note panel's or a card's,
+              // may have changed the aliases since this one was made.
+              crossnoteContainer
+                .getNote(note.notebookPath, note.filePath)
+                .then((latest) => {
+                  if (latest) {
+                    setAliases(latest.config.aliases);
+                  }
+                });
+            }}
+          >
+            <ListItemIcon>
+              <TooltipEdit></TooltipEdit>
+            </ListItemIcon>
+            <ListItemText primary={t("general/edit-note-alias")}></ListItemText>
+          </MenuRow>
+          <MenuRow
+            onClick={() => {
+              setDeleteNoteDialogOpen(true);
+              props.onClose();
+            }}
+          >
+            <ListItemIcon>
+              <Delete></Delete>
+            </ListItemIcon>
+            <ListItemText primary={t("general/Delete")}></ListItemText>
+          </MenuRow>
           {!isLocal && (
-            <ListItem disablePadding>
-              <ListItemButton
-                onClick={() => {
-                  crossnoteContainer.checkoutNote(note);
-                  props.onClose();
-                }}
-              >
-                <ListItemIcon>
-                  <Restore></Restore>
-                </ListItemIcon>
-                <ListItemText
-                  primary={t("general/restore-checkout")}
-                ></ListItemText>
-              </ListItemButton>
-            </ListItem>
+            <MenuRow
+              onClick={() => {
+                crossnoteContainer.checkoutNote(note);
+                props.onClose();
+              }}
+            >
+              <ListItemIcon>
+                <Restore></Restore>
+              </ListItemIcon>
+              <ListItemText
+                primary={t("general/restore-checkout")}
+              ></ListItemText>
+            </MenuRow>
           )}
           <Divider component="li" aria-hidden></Divider>
           {!isLocal && notebook && notebook.gitURL && (
-            <ListItem disablePadding>
-              <ListItemButton
-                onClick={(event) => setShareAnchorEl(event.currentTarget)}
-              >
-                <ListItemIcon>
-                  <ShareVariant></ShareVariant>
-                </ListItemIcon>
-                <ListItemText primary={t("general/Share")}></ListItemText>
-              </ListItemButton>
-            </ListItem>
-          )}
-          <ListItem disablePadding>
-            <ListItemButton
-              onClick={() => {
-                // A print asked for before the menu last finished closing
-                // goes on without waiting for it.
-                menuGone.current?.();
-                printNote(
-                  new Promise<void>((resolve) => (menuGone.current = resolve)),
-                );
-                props.onClose();
-              }}
-            >
+            <MenuRow onClick={(event) => setShareAnchorEl(event.currentTarget)}>
               <ListItemIcon>
-                <Printer></Printer>
+                <ShareVariant></ShareVariant>
               </ListItemIcon>
-              <ListItemText primary={t("general/Print")}></ListItemText>
-            </ListItemButton>
-          </ListItem>
+              <ListItemText primary={t("general/Share")}></ListItemText>
+            </MenuRow>
+          )}
+          <MenuRow
+            onClick={() => {
+              // A print asked for before the menu last finished closing
+              // goes on without waiting for it.
+              menuGone.current?.();
+              printNote(
+                new Promise<void>((resolve) => (menuGone.current = resolve)),
+              );
+              props.onClose();
+            }}
+          >
+            <ListItemIcon>
+              <Printer></Printer>
+            </ListItemIcon>
+            <ListItemText primary={t("general/Print")}></ListItemText>
+          </MenuRow>
         </List>
       </Popover>
       <DeleteNoteDialog

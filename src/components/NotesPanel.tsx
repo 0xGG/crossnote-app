@@ -24,18 +24,20 @@ import {
   SortDescending,
   SortVariant,
 } from "mdi-material-ui";
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { useTranslation } from "react-i18next";
+import i18next from "../i18n/i18n";
 import { CrossnoteContainer } from "../containers/crossnote";
 import {
-  ChangedNoteFilePathEventData,
-  CreatedNoteEventData,
-  DeletedNotebookEventData,
-  DeletedNoteEventData,
   EventType,
   globalEmitter,
   ModifiedMarkdownEventData,
-  PerformedGitOperationEventData,
 } from "../lib/event";
 import { Note, Notes as NotesValue } from "../lib/note";
 import { Notebook } from "../lib/notebook";
@@ -148,16 +150,15 @@ function NotesPanel(props: Props) {
     OrderDirection.DESC,
   );
   const [rawNotesMap, setRawNotesMap] = useState<NotesValue>({});
-  const [notes, setNotes] = useState<Note[]>([]);
   const [needsToRefreshRawNotes, setNeedsToRefreshRawNotes] =
     useState<boolean>(false);
   const theme = useTheme();
   const crossnoteContainer = CrossnoteContainer.useContainer();
+  const { createNewNote: createNote, openNoteAtPath } = crossnoteContainer;
   const [searchValue, setSearchValue] =
     useState<string> // Search
     (props.initialSearchValue || "");
-  const [searchValueInputTimeout, setSearchValueInputTimeout] =
-    useState<ReturnType<typeof setTimeout>>(null);
+  const searchValueInputTimeout = useRef<ReturnType<typeof setTimeout>>(null);
   const [finalSearchValue, setFinalSearchValue] = useState<string>("");
   const [tabNodeVisible, setTabNodeVisible] = useState<boolean>(false);
   const [scrollElement, setScrollElement] = useState<HTMLElement | null>(null);
@@ -165,6 +166,7 @@ function NotesPanel(props: Props) {
     setScrollElement(element?.parentElement ?? null);
   }, []);
   const isMounted = useRef<boolean>(false);
+  const refreshSequence = useRef(0);
 
   const createNewNote = useCallback(() => {
     setIsCreatingNote(true);
@@ -178,61 +180,52 @@ function NotesPanel(props: Props) {
           ? `[[${target}]]`
           : `[[${target}|${props.note.title}]]`;
     }
-    crossnoteContainer
-      .createNewNote(props.notebook, "", markdown)
+    createNote(props.notebook, "", markdown)
       .then((note) => {
-        crossnoteContainer.openNoteAtPath(props.notebook, note.filePath);
+        openNoteAtPath(props.notebook, note.filePath);
         setIsCreatingNote(false);
       })
       .catch((error) => {
         notify({
           severity: "error",
-          message: failureMessage(t("error/failed-to-create-note"), error),
+          message: failureMessage(
+            i18next.t("error/failed-to-create-note"),
+            error,
+          ),
           duration: 5000,
         });
         setIsCreatingNote(false);
       });
-    // The container's functions change with the language, which names a new
-    // note Untitled in the words of the moment.
-  }, [
-    props.notebook,
-    props.note,
-    crossnoteContainer.createNewNote,
-    crossnoteContainer.openNoteAtPath,
-    t,
-  ]);
+  }, [props.notebook, props.note, createNote, openNoteAtPath]);
 
   const onChangeSearchValue = useCallback(
     (event: React.ChangeEvent<HTMLTextAreaElement | HTMLInputElement>) => {
       const value = event.target.value;
       setSearchValue(value);
-      if (searchValueInputTimeout) {
-        clearTimeout(searchValueInputTimeout);
-      }
-      const timeout = setTimeout(() => {
-        setFinalSearchValue(value);
-      }, 400);
-      setSearchValueInputTimeout(timeout);
+      clearTimeout(searchValueInputTimeout.current);
+      searchValueInputTimeout.current = setTimeout(
+        () => setFinalSearchValue(value),
+        400,
+      );
     },
-    [searchValueInputTimeout],
+    [],
   );
 
   const refreshRawNotes = useCallback(async () => {
     if (!isMounted.current || !tabNodeVisible) {
       return;
     }
+    const request = ++refreshSequence.current;
     await props.notebook.refreshNotesIfNotLoaded({
       dir: "./",
       includeSubdirectories: true,
     });
-    setRawNotesMap(
-      Object.assign(
-        {},
-        props.note
-          ? await props.notebook.getReferredByNotes(props.note.filePath)
-          : props.notebook.notes,
-      ) as any,
-    );
+    const notes = props.note
+      ? await props.notebook.getReferredByNotes(props.note.filePath)
+      : props.notebook.notes;
+    if (isMounted.current && request === refreshSequence.current) {
+      setRawNotesMap({ ...notes });
+    }
   }, [props.notebook, props.note, tabNodeVisible]);
 
   useEffect(() => {
@@ -243,8 +236,11 @@ function NotesPanel(props: Props) {
   }, []);
 
   useEffect(() => {
+    // Reset the search when the external notebook changes.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setSearchValue("");
     setFinalSearchValue("");
+    return () => clearTimeout(searchValueInputTimeout.current);
   }, [props.notebook]);
 
   // Visibility
@@ -261,17 +257,18 @@ function NotesPanel(props: Props) {
       return;
     }
 
-    setTabNodeVisible(props.tabNode.isVisible());
-    // Shared with the note's panel, where this list is the note's
-    // references: the tab keeps one listener for the two.
-    return onTabVisibility(props.tabNode, (visible) => {
-      // hack: need to wait for props.tabNode.isVisible() === visible to setState
-      setTimeout(() => {
-        if (isMounted.current) {
-          setTabNodeVisible(visible);
-        }
-      }, 1000);
+    let timer = setTimeout(
+      () => setTabNodeVisible(props.tabNode.isVisible()),
+      0,
+    );
+    const stop = onTabVisibility(props.tabNode, (visible) => {
+      clearTimeout(timer);
+      timer = setTimeout(() => setTabNodeVisible(visible), 0);
     });
+    return () => {
+      stop();
+      clearTimeout(timer);
+    };
   }, [props.tabNode, props.notebook.dir]);
 
   // Emitter
@@ -279,69 +276,32 @@ function NotesPanel(props: Props) {
     if (!globalEmitter || !tabNodeVisible) {
       return;
     }
-    const modifiedMarkdownCallback = async (
-      data: ModifiedMarkdownEventData,
-    ) => {
+    const modifiedMarkdownCallback = (data: ModifiedMarkdownEventData) => {
       if (props.notebook.dir === data.notebookPath) {
-        setNeedsToRefreshRawNotes(true);
+        if (finalSearchValue.trim()) {
+          // A matching card may not be mounted to hear this save. Keep an
+          // active search in sync instead of waiting for the batch interval.
+          refreshRawNotes();
+        } else {
+          setNeedsToRefreshRawNotes(true);
+        }
       }
     };
-    const createdNoteCallback = (data: CreatedNoteEventData) => {
-      if (props.notebook.dir === data.notebookPath) {
-        refreshRawNotes();
-      }
-    };
-    const deletedNoteCallback = (data: DeletedNoteEventData) => {
-      if (props.notebook.dir === data.notebookPath) {
-        refreshRawNotes();
-      }
-    };
-    const changedNoteFilePathCallback = (
-      data: ChangedNoteFilePathEventData,
-    ) => {
-      if (props.notebook.dir === data.notebookPath) {
-        refreshRawNotes();
-      }
-    };
-    const performedGitOperationCallback = (
-      data: PerformedGitOperationEventData,
-    ) => {
-      if (props.notebook.dir === data.notebookPath) {
-        refreshRawNotes();
-      }
-    };
-    const deletedNotebookCallback = (data: DeletedNotebookEventData) => {
-      if (props.notebook.dir === data.notebookPath) {
-        crossnoteContainer.closeTabNode(props.tabNode.getId());
-      }
+    const refreshNotebook = ({ notebookPath }: { notebookPath: string }) => {
+      if (props.notebook.dir === notebookPath) refreshRawNotes();
     };
 
-    // TODO: Delay the modifiedMarkdownCallback
     globalEmitter.on(EventType.ModifiedMarkdown, modifiedMarkdownCallback);
-    globalEmitter.on(EventType.CreatedNote, createdNoteCallback);
-    globalEmitter.on(EventType.DeletedNote, deletedNoteCallback);
-    globalEmitter.on(EventType.DeletedNotebook, deletedNotebookCallback);
-    globalEmitter.on(
-      EventType.ChangedNoteFilePath,
-      changedNoteFilePathCallback,
-    );
-    globalEmitter.on(
-      EventType.PerformedGitOperation,
-      performedGitOperationCallback,
-    );
+    globalEmitter.on(EventType.CreatedNote, refreshNotebook);
+    globalEmitter.on(EventType.DeletedNote, refreshNotebook);
+    globalEmitter.on(EventType.ChangedNoteFilePath, refreshNotebook);
+    globalEmitter.on(EventType.PerformedGitOperation, refreshNotebook);
     return () => {
       globalEmitter.off(EventType.ModifiedMarkdown, modifiedMarkdownCallback);
-      globalEmitter.off(EventType.CreatedNote, createdNoteCallback);
-      globalEmitter.off(EventType.DeletedNote, deletedNoteCallback);
-      globalEmitter.off(
-        EventType.ChangedNoteFilePath,
-        changedNoteFilePathCallback,
-      );
-      globalEmitter.off(
-        EventType.PerformedGitOperation,
-        performedGitOperationCallback,
-      );
-      globalEmitter.off(EventType.DeletedNotebook, deletedNotebookCallback);
+      globalEmitter.off(EventType.CreatedNote, refreshNotebook);
+      globalEmitter.off(EventType.DeletedNote, refreshNotebook);
+      globalEmitter.off(EventType.ChangedNoteFilePath, refreshNotebook);
+      globalEmitter.off(EventType.PerformedGitOperation, refreshNotebook);
     };
   }, [
     refreshRawNotes,
@@ -349,46 +309,39 @@ function NotesPanel(props: Props) {
     props.note,
     props.tabNode,
     tabNodeVisible,
+    finalSearchValue,
   ]);
 
   useEffect(() => {
-    if (refreshRawNotes) {
-      refreshRawNotes();
-    }
-  }, [refreshRawNotes, props.note]);
+    // Search must use the newest saved notes, including saves completed while
+    // the tab was hidden or before the search debounce expired.
+    const sequence = refreshSequence;
+    refreshRawNotes();
+    return () => {
+      sequence.current++;
+    };
+  }, [refreshRawNotes, finalSearchValue]);
 
-  useEffect(() => {
-    const newNotes = Object.values(rawNotesMap);
-    if (orderBy === OrderBy.ModifiedAt) {
-      if (orderDirection === OrderDirection.DESC) {
-        newNotes.sort(
-          (a, b) =>
-            b.config.modifiedAt.getTime() - a.config.modifiedAt.getTime(),
-        );
-      } else {
-        newNotes.sort(
-          (a, b) =>
-            a.config.modifiedAt.getTime() - b.config.modifiedAt.getTime(),
-        );
+  const notes = useMemo(() => {
+    const direction = orderDirection === OrderDirection.DESC ? -1 : 1;
+    return Object.values(rawNotesMap).sort((a, b) => {
+      switch (orderBy) {
+        case OrderBy.Title:
+          return direction * a.title.localeCompare(b.title);
+        case OrderBy.CreatedAt:
+          return (
+            direction *
+            (a.config.createdAt.getTime() - b.config.createdAt.getTime())
+          );
+        case OrderBy.ModifiedAt:
+          return (
+            direction *
+            (a.config.modifiedAt.getTime() - b.config.modifiedAt.getTime())
+          );
+        default:
+          return 0;
       }
-    } else if (orderBy === OrderBy.CreatedAt) {
-      if (orderDirection === OrderDirection.DESC) {
-        newNotes.sort(
-          (a, b) => b.config.createdAt.getTime() - a.config.createdAt.getTime(),
-        );
-      } else {
-        newNotes.sort(
-          (a, b) => a.config.createdAt.getTime() - b.config.createdAt.getTime(),
-        );
-      }
-    } else if (orderBy === OrderBy.Title) {
-      if (orderDirection === OrderDirection.DESC) {
-        newNotes.sort((a, b) => b.title.localeCompare(a.title));
-      } else {
-        newNotes.sort((a, b) => a.title.localeCompare(b.title));
-      }
-    }
-    setNotes(newNotes);
+    });
   }, [rawNotesMap, orderBy, orderDirection]);
 
   useInterval(() => {
@@ -434,15 +387,17 @@ function NotesPanel(props: Props) {
               autoCorrect={"off"}
             />
           </SearchBox>
-          <IconButton
-            aria-label={t("general/new-note")}
-            onClick={createNewNote}
-            disabled={!crossnoteContainer.initialized || isCreatingNote}
-          >
-            <Tooltip title={t("general/new-note")}>
-              <FileEditOutline></FileEditOutline>
-            </Tooltip>
-          </IconButton>
+          <Tooltip title={t("general/new-note")}>
+            <span>
+              <IconButton
+                aria-label={t("general/new-note")}
+                onClick={createNewNote}
+                disabled={!crossnoteContainer.initialized || isCreatingNote}
+              >
+                <FileEditOutline />
+              </IconButton>
+            </span>
+          </Tooltip>
           <IconButton
             aria-label={t("general/sort-notes")}
             onClick={(event) => setSortMenuAnchorEl(event.currentTarget)}
@@ -459,63 +414,43 @@ function NotesPanel(props: Props) {
         onClose={() => setSortMenuAnchorEl(null)}
       >
         <List>
-          <ListItem disablePadding>
-            <ListItemButton
-              onClick={() => setOrderBy(OrderBy.ModifiedAt)}
-              sx={orderBy === OrderBy.ModifiedAt ? sortSelectedSx : undefined}
-            >
-              <ListItemText primary={t("general/date-modified")}></ListItemText>
-            </ListItemButton>
-          </ListItem>
-          <ListItem disablePadding>
-            <ListItemButton
-              onClick={() => setOrderBy(OrderBy.CreatedAt)}
-              sx={orderBy === OrderBy.CreatedAt ? sortSelectedSx : undefined}
-            >
-              <ListItemText primary={t("general/date-created")}></ListItemText>
-            </ListItemButton>
-          </ListItem>
-          <ListItem disablePadding>
-            <ListItemButton
-              onClick={() => setOrderBy(OrderBy.Title)}
-              sx={orderBy === OrderBy.Title ? sortSelectedSx : undefined}
-            >
-              <ListItemText primary={t("general/title")}></ListItemText>
-            </ListItemButton>
-          </ListItem>
+          {(
+            [
+              [OrderBy.ModifiedAt, "general/date-modified"],
+              [OrderBy.CreatedAt, "general/date-created"],
+              [OrderBy.Title, "general/title"],
+            ] as const
+          ).map(([value, label]) => (
+            <ListItem disablePadding key={value}>
+              <ListItemButton
+                onClick={() => setOrderBy(value)}
+                sx={orderBy === value ? sortSelectedSx : undefined}
+              >
+                <ListItemText primary={t(label)} />
+              </ListItemButton>
+            </ListItem>
+          ))}
           {/* A line between groups, hidden from assistive technology: as an li,
               MUI gives it the separator role, which a list may not hold. */}
           <Divider component="li" aria-hidden></Divider>
-          <ListItem disablePadding>
-            <ListItemButton
-              onClick={() => setOrderDirection(OrderDirection.DESC)}
-              sx={
-                orderDirection === OrderDirection.DESC
-                  ? sortSelectedSx
-                  : undefined
-              }
-            >
-              <ListItemText primary={t("general/Desc")}></ListItemText>
-              <ListItemIcon style={{ marginLeft: "8px" }}>
-                <SortDescending></SortDescending>
-              </ListItemIcon>
-            </ListItemButton>
-          </ListItem>
-          <ListItem disablePadding>
-            <ListItemButton
-              onClick={() => setOrderDirection(OrderDirection.ASC)}
-              sx={
-                orderDirection === OrderDirection.ASC
-                  ? sortSelectedSx
-                  : undefined
-              }
-            >
-              <ListItemText primary={t("general/Asc")}></ListItemText>
-              <ListItemIcon style={{ marginLeft: "8px" }}>
-                <SortAscending></SortAscending>
-              </ListItemIcon>
-            </ListItemButton>
-          </ListItem>
+          {(
+            [
+              [OrderDirection.DESC, "general/Desc", SortDescending],
+              [OrderDirection.ASC, "general/Asc", SortAscending],
+            ] as const
+          ).map(([value, label, Icon]) => (
+            <ListItem disablePadding key={value}>
+              <ListItemButton
+                onClick={() => setOrderDirection(value)}
+                sx={orderDirection === value ? sortSelectedSx : undefined}
+              >
+                <ListItemText primary={t(label)} />
+                <ListItemIcon style={{ marginLeft: "8px" }}>
+                  <Icon />
+                </ListItemIcon>
+              </ListItemButton>
+            </ListItem>
+          ))}
         </List>
       </Popover>
 

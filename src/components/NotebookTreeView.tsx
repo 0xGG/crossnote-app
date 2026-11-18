@@ -144,21 +144,25 @@ function onEnter(action: () => void) {
   };
 }
 
+function quickAccessNotes(notes: Notes): Notes {
+  const favorites: Notes = {};
+  for (const filePath in notes) {
+    const note = notes[filePath];
+    if (note.config.favorited) favorites[note.filePath] = note;
+  }
+  return favorites;
+}
+
 export default function NotebookTreeView(props: Props) {
   const { onExpandedChange } = props;
-  const [favoritedNotes, setFavoritedNotes] = useState<Notes>({});
+  const [favoritedNotes, setFavoritedNotes] = useState<Notes>(() =>
+    quickAccessNotes(props.notebook.notes),
+  );
   const crossnoteContainer = CrossnoteContainer.useContainer();
   const { t } = useTranslation();
 
   const refreshQuickAccessNotes = useCallback((notes: Notes) => {
-    const favoritedNotes: Notes = {};
-    for (let filePath in notes) {
-      const note = notes[filePath];
-      if (note.config.favorited) {
-        favoritedNotes[note.filePath] = note;
-      }
-    }
-    setFavoritedNotes(favoritedNotes);
+    setFavoritedNotes(quickAccessNotes(notes));
   }, []);
 
   const handleChange = useCallback(
@@ -258,9 +262,11 @@ export default function NotebookTreeView(props: Props) {
     };
   }, [props.notebook, refreshQuickAccessNotes, favoritedNotes]);
 
-  useEffect(() => {
-    refreshQuickAccessNotes(props.notebook.notes);
-  }, [props.notebook, refreshQuickAccessNotes]);
+  const [previousNotebook, setPreviousNotebook] = useState(props.notebook);
+  if (previousNotebook !== props.notebook) {
+    setPreviousNotebook(props.notebook);
+    setFavoritedNotes(quickAccessNotes(props.notebook.notes));
+  }
 
   /*
   useEffect(() => {
