@@ -13,7 +13,12 @@ import type { Note } from "../lib/note";
 import { Notebook } from "../lib/notebook";
 import { NoteSaver, NotesNotSavedError, flushNotes } from "../lib/noteSaver";
 import { getNotificationState, resetNotifications } from "../lib/notifications";
-import { joinNote, leaveNote, openNoteAt } from "../lib/openNotes";
+import {
+  joinNote,
+  leaveNote,
+  openNoteAt,
+  type OpenNoteCalls,
+} from "../lib/openNotes";
 import { notebookOperation } from "../lib/notebookOperation";
 import { pendingNoteWrites } from "../lib/noteWrites";
 import { NotebookConflictError } from "../lib/mergeFiles";
@@ -401,7 +406,7 @@ it("reads the notebook again after a hard reset once what is typed during it has
 // it as an editor of it would.
 function openForTyping(notebook: Notebook, filePath: string, text: string) {
   const location = { notebookPath: notebook.dir, filePath };
-  const open = joinNote("tab", location, text, {
+  const calls: OpenNoteCalls = {
     write: (writer, to, written) =>
       crossnote.updateNoteMarkdown(
         writer,
@@ -410,7 +415,8 @@ function openForTyping(notebook: Notebook, filePath: string, text: string) {
         written,
       ),
     failed: () => {},
-  });
+  };
+  const open = joinNote("tab", location, text, calls);
   const type = (typed: string) => {
     const view = new EditorView({
       dispatchTransactions: open.document.dispatchTransactions,
@@ -424,7 +430,7 @@ function openForTyping(notebook: Notebook, filePath: string, text: string) {
     detach();
     view.destroy();
   };
-  return { open, type, close: () => leaveNote(open, "tab") };
+  return { open, calls, type, close: () => leaveNote(open, "tab") };
 }
 
 // The text of a stored note, less the front matter a save puts before it.
@@ -453,8 +459,8 @@ it.each(["settings", "text"])(
   async (first) => {
     const notebook = await notebookAt(`/notebooks/interleaved-${first}`);
     await pfs.writeFile(`${notebook.dir}/a.md`, "A");
-    const { open, type, close } = openForTyping(notebook, "a.md", "A");
-    joinNote("other", open.saver.location, "A", open.calls);
+    const { open, calls, type, close } = openForTyping(notebook, "a.md", "A");
+    joinNote("other", open.saver.location, "A", calls);
     const hold = holdNextNoteWrite(notebook);
     try {
       if (first === "text") type("B");
@@ -828,13 +834,13 @@ it.each([1, 2])(
     );
     await pfs.writeFile(`${notebook.dir}/a.md`, "# A");
     const note = await notebook.getNote("a.md", true);
-    const { open, type, close } = openForTyping(
+    const { open, calls, type, close } = openForTyping(
       notebook,
       "a.md",
       note.markdown,
     );
     if (tabs === 2) {
-      joinNote("other", open.saver.location, note.markdown, open.calls);
+      joinNote("other", open.saver.location, note.markdown, calls);
     }
     let reach: () => void;
     let release: () => void;
@@ -960,12 +966,12 @@ it("does not rename a note whose text cannot be written first", async () => {
   await pfs.writeFile(`${notebook.dir}/a.md`, "# A");
   const note = await notebook.getNote("a.md", true);
   const { open, type, close } = openForTyping(notebook, "a.md", note.markdown);
-  open.calls = {
+  open.setCalls({
     write: async () => {
       throw new Error("disk full");
     },
     failed: () => {},
-  };
+  });
   try {
     type(" typed");
     await expect(

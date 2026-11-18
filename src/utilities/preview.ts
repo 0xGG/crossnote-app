@@ -1,9 +1,12 @@
 import path from "path-browserify";
-import { globalContainers } from "../containers/global";
 import { Note } from "../lib/note";
 import { decodeLinkPath } from "../render/markdown/linkTargets";
 
-export function openURL(url: string = "", note: Note) {
+export function openURL(
+  url: string,
+  note: Note,
+  openNote?: (filePath: string) => void,
+) {
   if (!note || !url) {
     return;
   }
@@ -44,26 +47,10 @@ export function openURL(url: string = "", note: Note) {
       // on this tab that it could send elsewhere.
       window.open(url, "_blank", "noopener");
     }
-  } else if (url.startsWith("/")) {
-    let filePath = path.relative(
-      note.notebookPath,
-      path.resolve(note.notebookPath, url.replace(/^\//, "")),
-    );
-    globalContainers.crossnoteContainer.openNoteAtPath(
-      globalContainers.crossnoteContainer.getNotebookAtPath(note.notebookPath),
-      decodeLinkPath(filePath),
-    );
   } else {
-    let filePath = path.relative(
-      note.notebookPath,
-      path.resolve(
-        path.dirname(path.resolve(note.notebookPath, note.filePath)),
-        url,
-      ),
-    );
-    globalContainers.crossnoteContainer.openNoteAtPath(
-      globalContainers.crossnoteContainer.getNotebookAtPath(note.notebookPath),
-      decodeLinkPath(filePath),
-    );
+    const file = url.startsWith("/")
+      ? path.resolve(note.notebookPath, url.slice(1))
+      : path.resolve(note.notebookPath, path.dirname(note.filePath), url);
+    openNote?.(decodeLinkPath(path.relative(note.notebookPath, file)));
   }
 }

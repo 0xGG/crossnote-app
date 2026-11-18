@@ -18,56 +18,46 @@ const drawings: {
   released: () => boolean;
 }[] = [];
 
-vi.mock("./diagrams", () => ({
-  diagramRenderers: [
-    [
-      /^test$/,
-      (code: string, context: DrawingContext) => {
-        const element = document.createElement("div");
-        let finish = () => {};
-        let released = false;
-        const drawing = startDrawing(element, (signal) => {
-          signal.addEventListener("abort", () => (released = true));
-          return new Promise<void>((resolve) => {
-            finish = () => {
-              element.textContent = `drawn: ${code.trim()}`;
-              resolve();
-            };
-          });
-        });
-        drawings.push({
-          drawing,
-          context,
-          finish: () => finish(),
-          released: () => released,
-        });
-        return drawing;
-      },
-      true,
-    ],
-    [
-      /^turn$/,
-      () => {
-        const before = turns;
-        let release = () => {};
-        turns = new Promise<void>((resolve) => (release = resolve));
-        return startDrawing(
-          document.createElement("div"),
-          async (signal, begin) => {
-            signal.addEventListener("abort", () => release());
-            await before;
-            begin();
-            await new Promise(() => {});
-          },
-          { waitsItsTurn: true },
-        );
-      },
-      true,
-    ],
-  ],
+vi.mock("./mermaid", () => ({
+  renderMermaid(code: string, context: DrawingContext) {
+    if (code.startsWith("queued ")) {
+      const before = turns;
+      let release = () => {};
+      turns = new Promise<void>((resolve) => (release = resolve));
+      return startDrawing(
+        document.createElement("div"),
+        async (signal, begin) => {
+          signal.addEventListener("abort", () => release());
+          await before;
+          begin();
+          await new Promise(() => {});
+        },
+        { waitsItsTurn: true },
+      );
+    }
+    const element = document.createElement("div");
+    let finish = () => {};
+    let released = false;
+    const drawing = startDrawing(element, (signal) => {
+      signal.addEventListener("abort", () => (released = true));
+      return new Promise<void>((resolve) => {
+        finish = () => {
+          element.textContent = `drawn: ${code.trim()}`;
+          resolve();
+        };
+      });
+    });
+    drawings.push({
+      drawing,
+      context,
+      finish: () => finish(),
+      released: () => released,
+    });
+    return drawing;
+  },
 }));
 
-const note = "Before.\n\n```test\nA\n```\n\n```test\nB\n```\n";
+const note = "Before.\n\n```mermaid\nA\n```\n\n```mermaid\nB\n```\n";
 
 afterEach(() => {
   turns = Promise.resolve();
@@ -122,7 +112,7 @@ describe("mountPreview with blocks drawn later", () => {
     document.body.appendChild(element);
     const preview = mountPreview(
       element,
-      "```turn\nA\n```\n\n```turn\nB\n```\n\n```turn\nC\n```\n\n```turn\nD\n```\n",
+      "```mermaid\nqueued A\n```\n\n```mermaid\nqueued B\n```\n\n```mermaid\nqueued C\n```\n\n```mermaid\nqueued D\n```\n",
       { note: null },
     );
     let settled = false;
@@ -169,7 +159,7 @@ describe("mountPreview with blocks drawn later", () => {
     document.body.appendChild(element);
     const preview = mountPreview(
       element,
-      '```test {width=1}\nA\n```\n\n<pre class="vickeymd-fence">B</pre>\n\n<pre class="vickeymd-fence" data-language="{&quot;toString&quot;:1}">C</pre>\n',
+      '```mermaid {width=1}\nA\n```\n\n<pre class="vickeymd-fence">B</pre>\n\n<pre class="vickeymd-fence" data-language="{&quot;toString&quot;:1}">C</pre>\n',
       { note: null },
     );
     await vi.waitFor(() => expect(drawings).toHaveLength(1));
