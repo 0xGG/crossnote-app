@@ -100,11 +100,9 @@ interface NotebookDialog {
 // Closes a notebook's dialog, and no other: an upload that ends after its
 // dialog was cancelled closes it then, when another notebook's may be open.
 const closing =
-  (notebookId: string) =>
+  (visit: NotebookDialog) =>
   (dialog: NotebookDialog | null): NotebookDialog | null =>
-    dialog && dialog.notebook._id === notebookId
-      ? { ...dialog, open: false }
-      : dialog;
+    dialog === visit ? { ...dialog, open: false } : dialog;
 
 export function Home(props: Props) {
   const theme = useTheme();
@@ -379,9 +377,7 @@ export function Home(props: Props) {
         <ConfigureNotebookDialog
           key={settingsDialog.notebook._id}
           open={settingsDialog.open}
-          onClose={() =>
-            setSettingsDialog(closing(settingsDialog.notebook._id))
-          }
+          onClose={() => setSettingsDialog(closing(settingsDialog))}
           notebook={settingsDialog.notebook}
         ></ConfigureNotebookDialog>
       )}
@@ -389,7 +385,7 @@ export function Home(props: Props) {
         <PushNotebookDialog
           key={uploadDialog.notebook._id}
           open={uploadDialog.open}
-          onClose={() => setUploadDialog(closing(uploadDialog.notebook._id))}
+          onClose={() => setUploadDialog(closing(uploadDialog))}
           notebook={uploadDialog.notebook}
         ></PushNotebookDialog>
       )}

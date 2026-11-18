@@ -1,5 +1,11 @@
 import React, { act } from "react";
-import { createRoot, Root } from "react-dom/client";
+import type { Root } from "react-dom/client";
+import {
+  mountTestRoot,
+  unmountTestRoot,
+  buttonByText,
+  typeInput,
+} from "../test/component";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import "../i18n/i18n";
 import type { Notebook } from "../lib/notebook";
@@ -30,27 +36,16 @@ let root: Root;
 
 beforeEach(() => {
   updateNotebook.mockClear();
-  container = document.createElement("div");
-  document.body.appendChild(container);
-  root = createRoot(container);
+  ({ container, root } = mountTestRoot());
 });
 
 afterEach(() => {
-  act(() => root.unmount());
-  container.remove();
+  unmountTestRoot(container, root);
 });
-
-function type(input: HTMLInputElement, value: string) {
-  Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value").set.call(
-    input,
-    value,
-  );
-  input.dispatchEvent(new Event("input", { bubbles: true }));
-}
 
 // Only a notebook cloned from git is checked for updates. Opens its dialog
 // and hands back the notebook and the minutes field.
-function openGitNotebook() {
+function openGitNotebook(onClose = vi.fn()) {
   const notebook = {
     name: "Notes",
     gitURL: "https://example.com/notes.git",
@@ -64,7 +59,7 @@ function openGitNotebook() {
     root.render(
       <ConfigureNotebookDialog
         open={true}
-        onClose={() => {}}
+        onClose={onClose}
         notebook={notebook}
       />,
     ),
@@ -80,16 +75,18 @@ it("takes a period between checks for updates with a decimal point", async () =>
 
   // Typed a key at a time, as a user does.
   for (const value of ["1", "1.", "1.5"]) {
-    act(() => type(minutes, value));
+    act(() => typeInput(minutes, value));
     expect(minutes.value).toBe(value);
   }
 
-  const save = Array.from(document.querySelectorAll("button")).find(
-    (button) => button.textContent === "Save",
-  );
+  const save = buttonByText(document, "Save");
   await act(async () => save.click());
   expect(updateNotebook).toHaveBeenCalledTimes(1);
-  expect(notebook.autoFetchPeriod).toBe(90000);
+  expect(updateNotebook).toHaveBeenCalledWith(
+    notebook,
+    expect.objectContaining({ autoFetchPeriod: 90000 }),
+  );
+  expect(notebook.autoFetchPeriod).toBe(60 * 60000);
 });
 
 it("takes nothing but a number for the period between checks", async () => {
@@ -99,13 +96,29 @@ it("takes nothing but a number for the period between checks", async () => {
   // digits past what a number can hold: the field keeps the period it shows,
   // so what it shows is what is saved.
   for (const value of ["1,5", "１．５", "abc", "-5", "9".repeat(400)]) {
-    act(() => type(minutes, value));
+    act(() => typeInput(minutes, value));
     expect(minutes.value).toBe("60");
   }
 
-  const save = Array.from(document.querySelectorAll("button")).find(
-    (button) => button.textContent === "Save",
-  );
+  const save = buttonByText(document, "Save");
   await act(async () => save.click());
   expect(notebook.autoFetchPeriod).toBe(60 * 60000);
+});
+
+it("keeps a draft when the notebook settings cannot be saved and retries it", async () => {
+  const close = vi.fn();
+  const { notebook, minutes } = openGitNotebook(close);
+  act(() => typeInput(minutes, "2"));
+  const save = buttonByText(document, "Save");
+  updateNotebook.mockRejectedValueOnce(new Error("disk full"));
+  await act(async () => save.click());
+  expect(close).not.toHaveBeenCalled();
+  expect(notebook.autoFetchPeriod).toBe(60 * 60000);
+  expect(minutes.value).toBe("2");
+  await act(async () => save.click());
+  expect(updateNotebook).toHaveBeenLastCalledWith(
+    notebook,
+    expect.objectContaining({ autoFetchPeriod: 120000 }),
+  );
+  expect(close).toHaveBeenCalledTimes(1);
 });

@@ -978,3 +978,87 @@ it("does not rename a note whose text cannot be written first", async () => {
     close();
   }
 });
+
+function addUnrenderedTabs(notebook: Notebook) {
+  for (const component of ["Note", "Notes", "Graph"] as const) {
+    crossnote.addTabNode({
+      id: component,
+      type: "tab",
+      component,
+      name: component,
+      config: {
+        singleton: false,
+        component,
+        notebookPath: notebook.dir,
+        noteFilePath: component === "Note" ? "a.md" : undefined,
+      },
+    });
+  }
+  crossnote.addTabNode({
+    id: "other",
+    type: "tab",
+    component: "Notes",
+    name: "Other notebook",
+    config: {
+      singleton: false,
+      component: "Notes",
+      notebookPath: "/notebooks/other",
+    },
+  });
+}
+
+it("keeps a notebook and its tabs listed when deletion is rejected", async () => {
+  const failure = new Error("record still exists");
+  const notebook = await notebookAt("/notebooks/delete-rejected", {
+    deleteNotebook: async () => {
+      throw failure;
+    },
+  });
+  addUnrenderedTabs(notebook);
+  await expect(crossnote.deleteNotebook(notebook)).rejects.toBe(failure);
+  expect(crossnote.notebooks).toContain(notebook);
+  for (const id of ["Note", "Notes", "Graph", "other"]) {
+    expect(crossnote.layoutModel.getNodeById(id)).toBeDefined();
+  }
+});
+
+it("removes even unrendered tabs and reports cleanup failure once the record is gone", async () => {
+  resetNotifications();
+  const notebook = await notebookAt("/notebooks/delete-committed", {
+    deleteNotebook: async () => ({
+      cleanupError: new Error("could not clear folder"),
+    }),
+  });
+  addUnrenderedTabs(notebook);
+  try {
+    await act(() => crossnote.deleteNotebook(notebook));
+    expect(crossnote.notebooks).not.toContain(notebook);
+    for (const id of ["Note", "Notes", "Graph"]) {
+      expect(crossnote.layoutModel.getNodeById(id)).toBeUndefined();
+    }
+    expect(crossnote.layoutModel.getNodeById("other")).toBeDefined();
+    expect(getNotificationState().current?.message).toContain(
+      "could not clear folder",
+    );
+  } finally {
+    resetNotifications();
+  }
+});
+
+it("writes the last edit before unregistering a local notebook", async () => {
+  const dir = "/notebooks/delete-local-dirty";
+  const remove = vi.fn(async () => {
+    expect(await body(notebook, "a.md")).toBe("A kept");
+  });
+  const notebook = await notebookAt(dir, { deleteNotebook: remove });
+  await pfs.writeFile(`${dir}/a.md`, "A");
+  const { type, close } = openForTyping(notebook, "a.md", "A");
+  try {
+    type(" kept");
+    await act(() => crossnote.deleteNotebook(notebook));
+    expect(remove).toHaveBeenCalledOnce();
+    expect(crossnote.notebooks).not.toContain(notebook);
+  } finally {
+    close();
+  }
+});

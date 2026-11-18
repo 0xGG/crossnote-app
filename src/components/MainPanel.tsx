@@ -300,10 +300,15 @@ export function MainPanel() {
     setReady(true);
   }, []);
 
-  useEffect(() => {
-    if (crossnoteContainer.layoutModel) {
+  const [previousLayoutModel, setPreviousLayoutModel] = useState(
+    null as typeof crossnoteContainer.layoutModel,
+  );
+  if (previousLayoutModel !== crossnoteContainer.layoutModel) {
+    const model = crossnoteContainer.layoutModel;
+    setPreviousLayoutModel(model);
+    if (model) {
       if (
-        layoutShowsNotebook(crossnoteContainer.layoutModel, (notebookPath) =>
+        layoutShowsNotebook(model, (notebookPath) =>
           pfs.isPathOfLocalFileSystem(notebookPath),
         )
       ) {
@@ -312,7 +317,7 @@ export function MainPanel() {
         setReady(true);
       }
     }
-  }, [container, crossnoteContainer.layoutModel]);
+  }
 
   return (
     <MainPanelRoot ref={container} id="main-panel">

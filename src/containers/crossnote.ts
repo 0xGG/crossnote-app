@@ -14,12 +14,13 @@ import path from "path-browserify";
 import { useCallback, useEffect, useState } from "react";
 import { createContainer } from "unstated-next";
 import Crossnote, {
+  type NotebookSettings,
   PullNotebookArgs,
   PushNotebookArgs,
 } from "../lib/crossnote";
 import { EventType, globalEmitter } from "../lib/event";
 import { pfs } from "../lib/fs";
-import { pruneUnknownTabs, tabsShowingNote } from "../lib/layout";
+import { pruneUnknownTabs, tabsInNotebook } from "../lib/layout";
 import { Note, NoteConfig } from "../lib/note";
 import { Notebook } from "../lib/notebook";
 import { NotesNotSavedError, flushNotes } from "../lib/noteSaver";
@@ -27,6 +28,7 @@ import { writeNoteOperation } from "../lib/noteWrites";
 import { moveNote, openNoteAt } from "../lib/openNotes";
 import { failureMessage, notify } from "../lib/notifications";
 import i18next from "../i18n/i18n";
+import { notebookOperation } from "../lib/notebookOperation";
 import { NotebookConflictError } from "../lib/mergeFiles";
 import { CrossnoteTabNode } from "../lib/tabNode";
 import { notebookInFront, tabsetForNewTab } from "../lib/tabset";
@@ -111,7 +113,7 @@ function useCrossnoteContainer(initialState: InitialState) {
   const [isPullingNotebook, setIsPullingNotebook] = useState<boolean>(false);
   const [isPerformingAutoFetch, setIsPerformingAutoFetch] =
     useState<boolean>(false);
-  const [layoutModel, setLayoutModel] = useState<Model>(() =>
+  const [layoutModel] = useState<Model>(() =>
     Model.fromJson(getlayoutModelFromLocalStrorage()),
   );
   // The notebook the sidebar marks as the current one: that of the tab in
@@ -396,7 +398,7 @@ function useCrossnoteContainer(initialState: InitialState) {
             // opens it at again and which opening the note looks for; every tab
             // of the note follows it.
             if (layoutModel) {
-              const tabs = tabsShowingNote(
+              const tabs = tabsInNotebook(
                 layoutModel,
                 note.notebookPath,
                 oldNoteFilePath,
@@ -652,42 +654,36 @@ function useCrossnoteContainer(initialState: InitialState) {
   }, [crossnote]);
 
   const updateNotebook = useCallback(
-    async (notebook: Notebook) => {
-      if (!crossnote) {
-        return;
-      }
-      try {
-        await crossnote.updateNotebook(notebook);
-        setNotebooks((notebooks) => [...notebooks]);
-      } catch (error) {}
+    async (notebook: Notebook, settings: NotebookSettings) => {
+      await crossnote.saveNotebookSettings(notebook, settings);
+      setNotebooks((notebooks) => [...notebooks]);
     },
     [crossnote],
   );
 
   const deleteNotebook = useCallback(
     async (notebook: Notebook) => {
-      if (!crossnote) {
-        return;
-      }
-      try {
-        globalEmitter.emit(EventType.DeletedNotebook, {
-          notebookPath: notebook.dir,
-        });
-        await crossnote.deleteNotebook(notebook._id);
-      } catch (error) {
-        console.error(error);
-      }
-      let selectedNotebook: Notebook = null;
-      setNotebooks((notebooks) =>
-        notebooks.filter((n) => {
-          if (!selectedNotebook && n._id !== notebook._id) {
-            selectedNotebook = n;
-          }
-          return n._id !== notebook._id;
-        }),
+      await flushNotes({ notebookPath: notebook.dir });
+      const removed = await notebookOperation(notebook.dir, () =>
+        crossnote.deleteNotebook(notebook._id),
       );
+      for (const tab of tabsInNotebook(layoutModel, notebook.dir)) {
+        closeTabNode(tab.getId());
+      }
+      setNotebooks((notebooks) =>
+        notebooks.filter((n) => n._id !== notebook._id),
+      );
+      if (removed) {
+        notify({
+          severity: "warning",
+          message: failureMessage(
+            i18next.t("error/notebook-cleanup-failed"),
+            removed.cleanupError,
+          ),
+        });
+      }
     },
-    [crossnote],
+    [crossnote, layoutModel, closeTabNode],
   );
 
   // Writes out what the editors open in a notebook, or on one note of it,
@@ -983,16 +979,10 @@ function useCrossnoteContainer(initialState: InitialState) {
     }
   }, [layoutModel]);
 
-  const removeNodeID = useCallback((node: any) => {
-    delete node.id;
-    const children = node.children || [];
-    children.forEach((child: any) => removeNodeID(child));
-  }, []);
-
   const splitNoteHorizontally = useCallback(
     (note: Note, tabNode: TabNode) => {
       if (layoutModel) {
-        let activeTabset: TabSetNode = layoutModel.getActiveTabset();
+        const activeTabset: TabSetNode = layoutModel.getActiveTabset();
         if (!activeTabset) {
           return;
         }
@@ -1023,7 +1013,7 @@ function useCrossnoteContainer(initialState: InitialState) {
   const splitNoteVertically = useCallback(
     (note: Note) => {
       if (layoutModel) {
-        let activeTabset: TabSetNode = layoutModel.getActiveTabset();
+        const activeTabset: TabSetNode = layoutModel.getActiveTabset();
         if (!activeTabset) {
           return;
         }
@@ -1058,23 +1048,11 @@ function useCrossnoteContainer(initialState: InitialState) {
 
     (async () => {
       const notebooks = await crossnote.listNotebooks();
-      let notebook: Notebook = null;
       if (notebooks.length) {
         setNotebooks(notebooks);
-        const selectedNotebookID = localStorage.getItem("selectedNotebookID");
-        notebook = notebooks.find((n) => n._id === selectedNotebookID);
-        if (!notebook) {
-          notebook = notebooks[0];
-        }
         setInitialized(true);
       } else {
-        /*
-        notebook = await crossnote.cloneNotebook({
-          corsProxy: "https://cors.isomorphic-git.org",
-          gitURL: "https://github.com/0xGG/crossnote-doc.git"
-        });
-        */
-        notebook = await crossnote.addNotebook({
+        const notebook = await crossnote.addNotebook({
           name: "Drafts",
           corsProxy: DEFAULT_CORS_PROXY,
           gitURL: "",
@@ -1154,7 +1132,6 @@ favorited: true
     openNoteAtPath,
     openTodayNote,
     layoutModel,
-    setLayoutModel,
     splitNoteHorizontally,
     splitNoteVertically,
     addTabNode,

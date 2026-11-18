@@ -17,9 +17,11 @@ import {
   Typography,
 } from "@mui/material";
 import { ChevronDown, Eye, EyeOff } from "mdi-material-ui";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { CrossnoteContainer } from "../containers/crossnote";
+import i18next from "../i18n/i18n";
+import { failureMessage, notify } from "../lib/notifications";
 import { Notebook } from "../lib/notebook";
 
 interface Props {
@@ -29,139 +31,101 @@ interface Props {
 }
 
 const MaxClickDeleteCount = 3;
+function settingsFrom(notebook: Notebook) {
+  return {
+    name: notebook.name,
+    gitUsername: notebook.gitUsername ?? "",
+    gitPassword: notebook.gitPassword ?? "",
+    gitCorsProxy: notebook.gitCorsProxy ?? "",
+    minutes: String(notebook.autoFetchPeriod / 60000),
+  };
+}
+
 export default function ConfigureNotebookDialog(props: Props) {
+  const { notebook, open, onClose: close } = props;
   const crossnoteContainer = CrossnoteContainer.useContainer();
-  const [notebookName, setNotebookName] = useState<string>("");
-  const [expanded, setExpanded] = useState<boolean>(false);
-  const [gitURL, setGitURL] = useState<string>("");
-  const [gitBranch, setGitBranch] = useState<string>("");
-  const [gitUsername, setGitUsername] = useState<string>("");
-  const [gitPassword, setGitPassword] = useState<string>("");
-  const [gitCorsProxy, setGitCorsProxy] = useState<string>(DEFAULT_CORS_PROXY);
-  const [showUsername, setShowUsername] = useState<boolean>(false);
-  const [showPassword, setShowPassword] = useState<boolean>(false);
-  // Minutes as typed, so that a decimal point can be typed; read as a number
-  // when the notebook is saved.
-  const [autoFetchPeriod, setAutoFetchPeriod] = useState<string>("0");
-  const [clickDeleteCount, setClickDeleteCount] =
-    useState<number>(MaxClickDeleteCount);
-  const [clickHardResetCount, setClickHardResetCount] =
-    useState<number>(MaxClickDeleteCount);
-  const isMounted = useRef<boolean>(false);
   const { t } = useTranslation();
-
-  const close = useCallback(() => {
-    setShowUsername(false);
-    setShowPassword(false);
-    props.onClose();
-  }, [props]);
-
-  useEffect(() => {
-    isMounted.current = true;
-    return () => {
-      isMounted.current = false;
-    };
-  }, []);
-
-  useEffect(() => {
-    setClickDeleteCount(MaxClickDeleteCount);
-    setClickHardResetCount(MaxClickDeleteCount);
-  }, [props.open]);
-
-  // Filled from the notebook each time the dialog opens. It stays mounted, so
-  // whatever a cancelled edit left in the fields would otherwise show, and be
-  // saved, the next time.
-  useEffect(() => {
-    const notebook = props.notebook;
-    if (!notebook || !props.open) {
-      return;
+  const [draft, setDraft] = useState(() => settingsFrom(notebook));
+  const [expanded, setExpanded] = useState(false);
+  const [showUsername, setShowUsername] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [clickDeleteCount, setClickDeleteCount] = useState(MaxClickDeleteCount);
+  const [clickHardResetCount, setClickHardResetCount] =
+    useState(MaxClickDeleteCount);
+  // Home keeps the dialog for its exit transition. A new visit starts with
+  // the saved values, even when the same notebook opens again.
+  const [wasOpen, setWasOpen] = useState(open);
+  if (open !== wasOpen) {
+    setWasOpen(open);
+    if (open) {
+      setDraft(settingsFrom(notebook));
+      setShowUsername(false);
+      setShowPassword(false);
+      setClickDeleteCount(MaxClickDeleteCount);
+      setClickHardResetCount(MaxClickDeleteCount);
     }
-    setNotebookName(notebook.name);
-    setGitURL(notebook.gitURL);
-    setGitBranch(notebook.gitBranch || "master");
-    setGitUsername(notebook.gitUsername);
-    setGitPassword(notebook.gitPassword);
-    setGitCorsProxy(notebook.gitCorsProxy);
-    setAutoFetchPeriod(String(notebook.autoFetchPeriod / 60000));
-    setShowUsername(false);
-    setShowPassword(false);
-  }, [props.notebook, props.open]);
+  }
 
-  const updateNotebook = useCallback(async () => {
-    const notebook = props.notebook;
-    if (!notebook) {
-      close();
-      return;
-    }
-    notebook.name = notebookName.trim();
-    notebook.gitURL = gitURL.trim();
-    notebook.gitBranch = gitBranch.trim();
-    notebook.gitUsername = gitUsername.trim();
-    notebook.gitPassword = gitPassword;
-    notebook.gitCorsProxy = gitCorsProxy.trim();
-    // The field takes only digits and a decimal point, so the one thing it
-    // can hold that is no number is nothing at all, or the point alone: no
-    // checks, as an empty field has always meant.
-    notebook.autoFetchPeriod = (parseFloat(autoFetchPeriod) || 0) * 60000;
+  async function updateNotebook() {
     try {
-      await crossnoteContainer.updateNotebook(notebook);
-    } catch (error) {}
-    if (isMounted.current) {
+      await crossnoteContainer.updateNotebook(notebook, {
+        name: draft.name.trim(),
+        gitURL: notebook.gitURL.trim(),
+        gitBranch: (notebook.gitBranch || "master").trim(),
+        gitUsername: draft.gitUsername.trim(),
+        gitPassword: draft.gitPassword,
+        gitCorsProxy: draft.gitCorsProxy.trim(),
+        autoFetchPeriod: (parseFloat(draft.minutes) || 0) * 60000,
+      });
       close();
+    } catch (error) {
+      notify({
+        severity: "error",
+        message: failureMessage(
+          i18next.t("error/failed-to-save-notebook-settings"),
+          error,
+        ),
+      });
     }
-  }, [
-    props,
-    props.notebook,
-    notebookName,
-    gitURL,
-    gitBranch,
-    gitUsername,
-    gitPassword,
-    gitCorsProxy,
-    autoFetchPeriod,
-    close,
-  ]);
+  }
 
-  const deleteNotebook = useCallback(async () => {
-    const notebook = props.notebook;
+  async function deleteNotebook() {
     try {
       await crossnoteContainer.deleteNotebook(notebook);
-    } catch (error) {}
-    if (isMounted.current) {
       close();
+    } catch (error) {
+      setClickDeleteCount(MaxClickDeleteCount);
+      notify({
+        severity: "error",
+        message: failureMessage(
+          i18next.t("error/failed-to-remove-notebook"),
+          error,
+        ),
+      });
     }
-  }, [props.notebook, props, close]);
+  }
 
-  const hardResetNotebook = useCallback(async () => {
-    const notebook = props.notebook;
-    try {
-      await crossnoteContainer.hardResetNotebook(notebook);
-    } catch (error) {}
-    if (isMounted.current) {
-      close();
-    }
-  }, [props.notebook, props, close]);
-
-  useEffect(() => {
-    setClickDeleteCount(MaxClickDeleteCount);
-  }, [props.notebook]);
+  async function hardResetNotebook() {
+    await crossnoteContainer.hardResetNotebook(notebook);
+    close();
+  }
 
   return (
-    <Dialog open={props.open} onClose={!clickDeleteCount ? null : close}>
+    <Dialog open={open} onClose={!clickDeleteCount ? null : close}>
       <DialogTitle>{t("general/configure-the-notebook")}</DialogTitle>
       <DialogContent>
         <TextField
           label={t("general/notebook-name")}
-          value={notebookName}
+          value={draft.name}
           fullWidth={true}
           onChange={(event) => {
-            setNotebookName(event.target.value);
+            setDraft({ ...draft, name: event.target.value });
           }}
           style={{ marginBottom: "16px" }}
           autoComplete={"off"}
           autoCorrect={"off"}
         ></TextField>
-        {!props.notebook.isLocal && (
+        {!notebook.isLocal && (
           <Accordion
             elevation={2}
             expanded={expanded}
@@ -179,16 +143,14 @@ export default function ConfigureNotebookDialog(props: Props) {
                   placeholder={"https://abc/def.git"}
                   disabled={true}
                   fullWidth={true}
-                  value={gitURL}
-                  onChange={(event) => setGitURL(event.target.value)}
+                  value={notebook.gitURL}
                 ></TextField>
                 <TextField
                   label={t("general/branch")}
                   placeholder={"master"}
                   disabled={true}
                   fullWidth={true}
-                  value={gitBranch}
-                  onChange={(event) => setGitBranch(event.target.value)}
+                  value={notebook.gitBranch || "master"}
                 ></TextField>
                 <TextField
                   label={`${t("general/Username")} (${t("general/optional")})`}
@@ -197,8 +159,10 @@ export default function ConfigureNotebookDialog(props: Props) {
                   )})`}
                   type={showUsername ? "text" : "password"}
                   fullWidth={true}
-                  value={gitUsername}
-                  onChange={(event) => setGitUsername(event.target.value)}
+                  value={draft.gitUsername}
+                  onChange={(event) =>
+                    setDraft({ ...draft, gitUsername: event.target.value })
+                  }
                   slotProps={{
                     input: {
                       endAdornment: (
@@ -226,8 +190,10 @@ export default function ConfigureNotebookDialog(props: Props) {
                   )})`}
                   type={showPassword ? "text" : "password"}
                   fullWidth={true}
-                  value={gitPassword}
-                  onChange={(event) => setGitPassword(event.target.value)}
+                  value={draft.gitPassword}
+                  onChange={(event) =>
+                    setDraft({ ...draft, gitPassword: event.target.value })
+                  }
                   slotProps={{
                     input: {
                       endAdornment: (
@@ -252,8 +218,10 @@ export default function ConfigureNotebookDialog(props: Props) {
                   label={t("general/cors-proxy")}
                   placeholder={DEFAULT_CORS_PROXY}
                   fullWidth={true}
-                  value={gitCorsProxy}
-                  onChange={(event) => setGitCorsProxy(event.target.value)}
+                  value={draft.gitCorsProxy}
+                  onChange={(event) =>
+                    setDraft({ ...draft, gitCorsProxy: event.target.value })
+                  }
                 ></TextField>
                 <Link
                   href={
@@ -263,13 +231,13 @@ export default function ConfigureNotebookDialog(props: Props) {
                 >
                   {t("general/why-cors-proxy")}
                 </Link>
-                {props.notebook && props.notebook.gitURL ? (
+                {notebook.gitURL ? (
                   <Box style={{ marginTop: "16px" }}>
                     <Typography>
                       {t("general/check-notebook-updates-periodically")}
                     </Typography>
                     <Input
-                      value={autoFetchPeriod}
+                      value={draft.minutes}
                       // Kept as typed, so that 1. can become 1.5, and only
                       // when it is a number or on its way to one, and one the
                       // notebook can keep in milliseconds.
@@ -279,7 +247,7 @@ export default function ConfigureNotebookDialog(props: Props) {
                           /^\d*\.?\d*$/.test(text) &&
                           Number.isFinite((parseFloat(text) || 0) * 60000)
                         ) {
-                          setAutoFetchPeriod(text);
+                          setDraft({ ...draft, minutes: text });
                         }
                       }}
                       endAdornment={
@@ -302,34 +270,24 @@ export default function ConfigureNotebookDialog(props: Props) {
             color={"secondary"}
             disabled={!clickDeleteCount}
             onClick={() => {
-              if (clickDeleteCount === 1) {
-                deleteNotebook();
-                setClickDeleteCount(clickDeleteCount - 1);
-              } else {
-                setClickDeleteCount(clickDeleteCount - 1);
-              }
+              setClickDeleteCount(clickDeleteCount - 1);
+              if (clickDeleteCount === 1) void deleteNotebook();
             }}
           >
-            {(props.notebook.isLocal
-              ? t("general/close")
-              : t("general/Delete")) +
+            {(notebook.isLocal ? t("general/close") : t("general/Delete")) +
               (clickDeleteCount < MaxClickDeleteCount
                 ? ` ${clickDeleteCount}`
                 : "")}
           </Button>
         )}
-        {props.notebook && props.notebook.gitURL.length > 0 && (
+        {notebook.gitURL.length > 0 && (
           <Button
             variant={"contained"}
             color={"secondary"}
             disabled={!clickHardResetCount || !clickDeleteCount}
             onClick={() => {
-              if (clickHardResetCount === 1) {
-                hardResetNotebook();
-                setClickHardResetCount(clickHardResetCount - 1);
-              } else {
-                setClickHardResetCount(clickHardResetCount - 1);
-              }
+              setClickHardResetCount(clickHardResetCount - 1);
+              if (clickHardResetCount === 1) void hardResetNotebook();
             }}
           >
             {t("general/hard-reset") +

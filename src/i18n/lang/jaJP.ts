@@ -117,6 +117,11 @@ export const jaJP = {
     "error/please-resolve-conflicts": "最初に競合を解決してください",
     "error/failed-to-change-file-path": "ファイル パスの変更に失敗しました",
     "error/failed-to-print": "ノートを印刷できませんでした",
+    "error/failed-to-save-notebook-settings":
+      "ノートブックの設定を保存できませんでした",
+    "error/failed-to-remove-notebook": "ノートブックを削除できませんでした",
+    "error/notebook-cleanup-failed":
+      "ノートブックは削除されましたが、ストレージをクリーンアップできませんでした",
     "error/link-outside-notebook": "リンク先がノートブックの外にあります",
     "error/link-inside-note": "リンク先がフォルダではなくノートの中にあります",
     "error/failed-to-save-note": "ノートを保存できませんでした",
