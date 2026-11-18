@@ -1,0 +1,7 @@
+Twemoji graphics by Twitter, Inc. and other contributors.
+https://github.com/jdecked/twemoji
+
+Licensed under CC BY 4.0.
+https://creativecommons.org/licenses/by/4.0/
+
+This application displays the 256-color Twitter sprite sheet distributed by emoji-datasource-twitter.

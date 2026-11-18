@@ -1,6 +1,4 @@
 import { describe, expect, it } from "vitest";
-// The emoji the app enables, as the preview and the notebook have them.
-import "../emoji";
 import { renderMarkdown } from "./index";
 
 const parse = (text: string) => {

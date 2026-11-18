@@ -87,11 +87,56 @@ test("draws a note's emoji from the sheet", async ({ app, page }) => {
   await expect(emoji).toHaveCount(1);
   await expect(emoji).toHaveJSProperty("tagName", "IMG");
   await expect(emoji).toHaveAttribute("alt", "😄");
-  await expect(emoji).toHaveCSS(
-    "background-image",
-    `url("${new URL("/assets/emoji/twitter/64.png", page.url()).href}")`,
+  const drawing = await emoji.evaluate(async (element) => {
+    const style = getComputedStyle(element);
+    const match = style.backgroundImage.match(/^url\(["']?(.*?)["']?\)$/);
+    if (!match)
+      throw new Error(`No emoji background: ${style.backgroundImage}`);
+    const url = new URL(match[1], document.baseURI);
+    const image = new Image();
+    image.src = url.href;
+    await image.decode();
+    return {
+      origin: url.origin,
+      width: image.naturalWidth,
+      height: image.naturalHeight,
+      size: style.backgroundSize,
+      x: style.backgroundPositionX,
+      y: style.backgroundPositionY,
+    };
+  });
+  expect(drawing.origin).toBe(new URL(page.url()).origin);
+  expect([drawing.width, drawing.height]).toEqual([4092, 4092]);
+  // 64px artwork inside each 66px grid cell, with a one-pixel border.
+  // Browsers may serialize the automatic height explicitly.
+  expect(drawing.size).toMatch(/^[\d.]+%(?: auto)?$/);
+  expect(drawing.x).toMatch(/%$/);
+  expect(drawing.y).toMatch(/%$/);
+  expect(parseFloat(drawing.size)).toBeCloseTo((4092 / 64) * 100, 2);
+  expect(parseFloat(drawing.x)).toBeCloseTo(
+    ((66 * 32 + 1) / (4092 - 64)) * 100,
+    3,
   );
-  await expect(emoji).toHaveCSS("background-position", "53.5714% 69.6429%");
+  expect(parseFloat(drawing.y)).toBeCloseTo(
+    ((66 * 51 + 1) / (4092 - 64)) * 100,
+    3,
+  );
+});
+
+test("opens notes and previews native emoji without Intl.Segmenter", async ({
+  app,
+  page,
+}) => {
+  await page.addInitScript(() => {
+    Reflect.deleteProperty(Intl, "Segmenter");
+  });
+  await app.open();
+  await app.openNotes();
+  await app.createNote();
+  await app.setEditorText("Hello :smile: ☝️\n");
+  await app.modeButton("Preview").click();
+  await expect(app.preview).toContainText("Hello 😄 ☝️");
+  await expect(app.preview.locator("img.emoji")).toHaveCount(0);
 });
 
 test("prints a note with its local images and page breaks", async ({
@@ -105,7 +150,7 @@ test("prints a note with its local images and page breaks", async ({
   const readme = `${await app.notebookFolder()}/README.md`;
   await app.storedText(
     readme,
-    "![picture](README.md)\n\nBefore.\n\n<!-- pagebreak -->\n\nAfter.\n\n```js\n" +
+    "![picture](README.md)\n\nBefore :smile:.\n\n<!-- pagebreak -->\n\nAfter.\n\n```js\n" +
       `const line = "${"x".repeat(400)}";\n` +
       "```\n\n" +
       // An indented block, drawn as a pre with a code element in it.
@@ -126,6 +171,8 @@ test("prints a note with its local images and page breaks", async ({
         .pop()!;
       (window as any).printed = {
         image: printed.querySelector("img")!.getAttribute("src"),
+        emojiPrintColor: getComputedStyle(printed.querySelector("img.emoji")!)
+          .printColorAdjust,
         breakAfter: getComputedStyle(printed.querySelector(".pagebreak")!)
           .breakAfter,
         // A long line of code wraps at the edge of the paper, a long word
@@ -157,6 +204,7 @@ test("prints a note with its local images and page breaks", async ({
     })
     .toEqual({
       image: expect.stringMatching(/^data:image\/md;base64,/),
+      emojiPrintColor: "exact",
       breakAfter: "page",
       // The fenced block's pre, the indented block's pre and its code.
       codeWraps: ["pre-wrap", "pre-wrap", "pre-wrap"],

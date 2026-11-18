@@ -1,20 +1,23 @@
-import { Emoji as EmojiMarketEmoji } from "emoji-mart";
-
-export const EmojiBackgroundImageFn = (set: string, sheetSize: number) => {
-  return "/assets/emoji/twitter/64.png";
-};
+import { shortNamePicture, transparentPixel } from "../render/emoji";
 
 interface EmojiProps {
   size?: number;
   emoji?: string;
 }
-export function Emoji(props: EmojiProps) {
+
+export function Emoji({ emoji = "", size = 16 }: EmojiProps) {
+  const picture = shortNamePicture(emoji.replace(/^:|:$/g, ""));
+  if (!picture) return null;
   return (
-    <EmojiMarketEmoji
-      set={"twitter"}
-      size={props.size || 16}
-      emoji={props.emoji}
-      backgroundImageFn={EmojiBackgroundImageFn}
-    ></EmojiMarketEmoji>
+    <img
+      className="emoji"
+      src={transparentPixel}
+      alt={picture.text}
+      aria-label={picture.label}
+      draggable={false}
+      width={size}
+      height={size}
+      style={picture.style}
+    />
   );
 }

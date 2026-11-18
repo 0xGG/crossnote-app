@@ -1,6 +1,4 @@
 import { Note } from "../lib/note";
-// Enables the markdown stage's emoji.
-import "./emoji";
 import * as markdown from "./markdown";
 import { finishPreview } from "./preview";
 import { filterPreviewImages } from "./previewImages";

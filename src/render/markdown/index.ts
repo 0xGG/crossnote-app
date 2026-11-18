@@ -1,5 +1,6 @@
 import MarkdownIt from "markdown-it";
 import { bare as emoji } from "markdown-it-emoji";
+import emojiDefinitions from "../emoji-short-names.json";
 import footnote from "markdown-it-footnote";
 import ins from "markdown-it-ins";
 import mark from "markdown-it-mark";
@@ -49,13 +50,8 @@ linkTargets(md);
 // (README.md) or an e-mail address does not.
 md.linkify.set({ fuzzyEmail: false });
 
-/**
- * Turns :short_name: into the emoji it names, from then on. Shortcuts such
- * as :) and <3 stay text.
- */
-export function enableEmoji(emojiDefinitions: { [shortName: string]: string }) {
-  md.use(emoji, { defs: emojiDefinitions });
-}
+// Parse the same historical short names in the preview and the notebook index.
+md.use(emoji, { defs: emojiDefinitions });
 
 export interface MarkdownStageOutput {
   html: string;

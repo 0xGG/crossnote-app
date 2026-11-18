@@ -63,6 +63,9 @@ importers:
       '@mui/x-tree-view':
         specifier: ^9.17.0
         version: 9.17.0(@emotion/react@11.14.0(@types/react@18.3.31)(react@18.3.1)(supports-color@5.5.0))(@emotion/styled@11.14.1(@emotion/react@11.14.0(@types/react@18.3.31)(react@18.3.1)(supports-color@5.5.0))(@types/react@18.3.31)(react@18.3.1)(supports-color@5.5.0))(@mui/material@9.5.0(@emotion/react@11.14.0(@types/react@18.3.31)(react@18.3.1)(supports-color@5.5.0))(@emotion/styled@11.14.1(@emotion/react@11.14.0(@types/react@18.3.31)(react@18.3.1)(supports-color@5.5.0))(@types/react@18.3.31)(react@18.3.1)(supports-color@5.5.0))(@types/react@18.3.31)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(@mui/system@9.5.0(@emotion/react@11.14.0(@types/react@18.3.31)(react@18.3.1)(supports-color@5.5.0))(@emotion/styled@11.14.1(@emotion/react@11.14.0(@types/react@18.3.31)(react@18.3.1)(supports-color@5.5.0))(@types/react@18.3.31)(react@18.3.1)(supports-color@5.5.0))(@types/react@18.3.31)(react@18.3.1))(@types/react@18.3.31)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      '@twemoji/api':
+        specifier: 17.0.3
+        version: 17.0.3
       async-mutex:
         specifier: ^0.5.0
         version: 0.5.0
@@ -81,9 +84,9 @@ importers:
       dompurify:
         specifier: ^3.4.17
         version: 3.4.17
-      emoji-mart:
-        specifier: ^3.0.0
-        version: 3.0.1(react@18.3.1)
+      emoji-datasource-twitter:
+        specifier: 16.0.0
+        version: 16.0.0
       events:
         specifier: ^3.3.0
         version: 3.3.0
@@ -162,9 +165,6 @@ importers:
       react-lazyload:
         specifier: ^3.1.0
         version: 3.2.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
-      twemoji:
-        specifier: ^13.0.2
-        version: 13.1.1
       typeface-noto-sans-sc:
         specifier: ^1.1.13
         version: 1.1.13
@@ -187,9 +187,6 @@ importers:
       '@types/d3':
         specifier: ^7.4.3
         version: 7.4.3
-      '@types/emoji-mart':
-        specifier: ^3.0.4
-        version: 3.0.14
       '@types/node':
         specifier: ^24.19.2
         version: 24.19.2
@@ -211,9 +208,6 @@ importers:
       '@types/react-lazyload':
         specifier: ^3.0.0
         version: 3.2.3
-      '@types/twemoji':
-        specifier: ^12.1.1
-        version: 12.1.2
       '@types/wicg-file-system-access':
         specifier: ^2023.10.7
         version: 2023.10.7
@@ -1166,6 +1160,12 @@ packages:
     cpu: [x64]
     os: [win32]
 
+  '@twemoji/api@17.0.3':
+    resolution: {integrity: sha512-iwERjxY0QgPGVwT6b1OKG0Oa9nIfHhJw+Ij1TapTBMKTvVCU6qdXPXX/XKwxKx5QZIJW5GwELUCtw8wlaIQ2ug==}
+
+  '@twemoji/parser@17.0.2':
+    resolution: {integrity: sha512-X/P7pHsGOxnrupQYUVetIeuxBGgffFu8CLwoPMMjH9CWmQvlXiCpbTW/BXxMOCWXQojgHdmgdvm6IsCqAQ5nxA==}
+
   '@types/babel__core@7.20.5':
     resolution: {integrity: sha512-qoQprZvz5wQFJwMDqeseRXWv3rqMvhgpbXFfVyWhbx9X47POIA6i/+dXefEmZKoAgOaTdaIgNSMqMIU61yRyzA==}
 
@@ -1280,9 +1280,6 @@ packages:
   '@types/deep-eql@4.0.2':
     resolution: {integrity: sha512-c9h9dVVMigMPc4bwTvC5dxqtqJZwQPePsWjPlpSOnojbor6pGqdk541lfA7AqFQr5pB1BRdq0juY9db81BwyFw==}
 
-  '@types/emoji-mart@3.0.14':
-    resolution: {integrity: sha512-/vMkVnet466bK37ugf2jry9ldCZklFPXYMB2m+qNo3vkP2I7L0cvtNFPKAjfcHgPg9Z8pbYqVqZn7AgsC0qf+g==}
-
   '@types/esrecurse@4.3.1':
     resolution: {integrity: sha512-xJBAbDifo5hpffDBuHl0Y8ywswbiAp/Wi7Y/GtAgSlZyIABppyurxVueOPE8LUQOxdlgi6Zqce7uoEpqNTeiUw==}
 
@@ -1382,9 +1379,6 @@ packages:
 
   '@types/trusted-types@2.0.7':
     resolution: {integrity: sha512-ScaPdn1dQczgbl0QFTeTOmVHFULt394XJgOQNoyVhZ6r2vLnMLJfBPd53SB52T/3G36VI1/g2MZaX0cwDuXsfw==}
-
-  '@types/twemoji@12.1.2':
-    resolution: {integrity: sha512-3eMyKenMi0R1CeKzBYtk/Z2JIHsTMQrIrTah0q54o45pHTpWVNofU2oHx0jS8tqsDRhis2TbB6238WP9oh2l2w==}
 
   '@types/wicg-file-system-access@2023.10.7':
     resolution: {integrity: sha512-g49ijasEJvCd7ifmAY2D0wdEtt1xRjBbA33PJTiv8mKBr7DoMsPeISoJ8oQOTopSRi+FBWPpPW5ouDj2QPKtGA==}
@@ -1888,10 +1882,8 @@ packages:
   elkjs@0.12.1:
     resolution: {integrity: sha512-IhMYKHE4S2vtx0QrhBP3lYOIKDeIiJXBrdq9MGYkuB8ZHqhrBnHNfSUndjXFewrX1CPK8chwq+2NA0K0hliYuw==}
 
-  emoji-mart@3.0.1:
-    resolution: {integrity: sha512-sxpmMKxqLvcscu6mFn9ITHeZNkGzIvD0BSNFE/LJESPbCA8s1jM6bCDPjWbV31xHq7JXaxgpHxLB54RCbBZSlg==}
-    peerDependencies:
-      react: ^0.14.0 || ^15.0.0-0 || ^16.0.0 || ^17.0.0
+  emoji-datasource-twitter@16.0.0:
+    resolution: {integrity: sha512-7F+uCuHH+7Qnrc15P5tnbvKkg9E6tlzi4MnT2uW1RlN4pLYTza6cP/dstIfSDMtpjFLWuZewWg8jBbuL2eyELQ==}
 
   encoding-down@6.3.0:
     resolution: {integrity: sha512-QKrV0iKR6MZVJV08QY0wp1e7vF6QbhnbQhb07bwpEyuz4uZiZgPlEGdkCROuFkUwdxlFaiPIhjyarH1ee/3vhw==}
@@ -2994,12 +2986,6 @@ packages:
 
   tslib@2.9.1:
     resolution: {integrity: sha512-a4Ux9VKuIMHsOS7ENbEq6hK2ZGYIT27Rtl0E4eD9KqwxhKiQeMZE/9xb3IdYwWaSOyIBQLExhQgXDTYoiCxnWA==}
-
-  twemoji-parser@13.1.0:
-    resolution: {integrity: sha512-AQOzLJpYlpWMy8n+0ATyKKZzWlZBJN+G0C+5lhX7Ftc2PeEVdUU/7ns2Pn2vVje26AIZ/OHwFoUbdv6YYD/wGg==}
-
-  twemoji@13.1.1:
-    resolution: {integrity: sha512-IIIoq+n1lk1M1+evBKZD3DO0ud02fDQ4ssbgAv8rp3YBWUeNmskjlisFUPPDacQ50XS3bhrd4Kq9Q2gqhxb0dg==}
 
   type-check@0.4.0:
     resolution: {integrity: sha512-XleUoc9uwGXqjWwXaUTZAmzMcFZ5858QA2vvx1Ur5xIcixXIP+8LnFDgRplU30us6teqdlskFfu+ae4K79Ooew==}
@@ -4257,6 +4243,15 @@ snapshots:
   '@rollup/rollup-win32-x64-msvc@4.67.4':
     optional: true
 
+  '@twemoji/api@17.0.3':
+    dependencies:
+      '@twemoji/parser': 17.0.2
+      fs-extra: 8.1.0
+      jsonfile: 5.0.0
+      universalify: 0.1.2
+
+  '@twemoji/parser@17.0.2': {}
+
   '@types/babel__core@7.20.5':
     dependencies:
       '@babel/parser': 7.29.12
@@ -4406,10 +4401,6 @@ snapshots:
 
   '@types/deep-eql@4.0.2': {}
 
-  '@types/emoji-mart@3.0.14':
-    dependencies:
-      '@types/react': 18.3.31
-
   '@types/esrecurse@4.3.1': {}
 
   '@types/estree@1.0.10': {}
@@ -4546,8 +4537,6 @@ snapshots:
 
   '@types/trusted-types@2.0.7':
     optional: true
-
-  '@types/twemoji@12.1.2': {}
 
   '@types/wicg-file-system-access@2023.10.7': {}
 
@@ -5117,11 +5106,7 @@ snapshots:
 
   elkjs@0.12.1: {}
 
-  emoji-mart@3.0.1(react@18.3.1):
-    dependencies:
-      '@babel/runtime': 7.29.10
-      prop-types: 15.8.1
-      react: 18.3.1
+  emoji-datasource-twitter@16.0.0: {}
 
   encoding-down@6.3.0:
     dependencies:
@@ -6267,15 +6252,6 @@ snapshots:
   ts-dedent@2.3.0: {}
 
   tslib@2.9.1: {}
-
-  twemoji-parser@13.1.0: {}
-
-  twemoji@13.1.1:
-    dependencies:
-      fs-extra: 8.1.0
-      jsonfile: 5.0.0
-      twemoji-parser: 13.1.0
-      universalify: 0.1.2
 
   type-check@0.4.0:
     dependencies:
