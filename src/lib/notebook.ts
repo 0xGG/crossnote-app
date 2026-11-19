@@ -204,6 +204,7 @@ export class Notebook {
     oldFilePath: string,
     newFilePath: string,
     onMoved?: () => void,
+    isPathInUse?: (filePath: string) => boolean,
   ): Promise<Note> {
     // Written plainly, relative to the notebook, which is the only form git
     // takes: notes//a.md or ./a.md would be moved and then fail.
@@ -221,14 +222,12 @@ export class Notebook {
     // Checked before anything changes: a rename that cannot happen has to
     // leave the note listed, searchable and linked.
     const exists = await pfs.exists(path.resolve(this.dir, newFilePath));
-    if (exists) {
+    if (exists || isPathInUse?.(newFilePath)) {
       throw new Error("error/target-file-already-exists");
     }
 
     // The file moves first, for the same reason: a folder on the user's disk
     // can still refuse a name it does not allow.
-    const newDirPath = path.dirname(path.resolve(this.dir, newFilePath));
-    await pfs.mkdirp(newDirPath);
     await pfs.rename(
       path.resolve(this.dir, oldFilePath),
       path.resolve(this.dir, newFilePath),

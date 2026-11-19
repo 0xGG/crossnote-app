@@ -35,7 +35,7 @@ import {
   saverOfWriter,
 } from "../lib/noteSaver";
 import { writeNoteOperation } from "../lib/noteWrites";
-import { moveNote, openNoteAt } from "../lib/openNotes";
+import { moveNote, openNoteAt, retainedNoteAt } from "../lib/openNotes";
 import { failureMessage, notify } from "../lib/notifications";
 import i18next from "../i18n/i18n";
 import { notebookOperation } from "../lib/notebookOperation";
@@ -256,21 +256,18 @@ function useCrossnoteContainer(initialState: InitialState) {
           return;
         }
         const cached = await notebook.getNote(filePath);
-        const open = openNoteAt({ notebookPath, filePath });
-        if (!cached) {
-          // The saver followed a move whose destination the editor has not
-          // read yet. Keep its draft pending until that file is available.
-          if (filePath !== loadedFilePath && open?.saver.id === writer.getId())
-            throw new Error(i18next.t("general/note-not-found"));
-          return;
-        }
-        const fresh = await notebook.getNote(filePath, true);
+        const open = retainedNoteAt({ notebookPath, filePath });
+        const saving = open?.saver.id === writer.getId();
+        const awaitingDestination = saving && filePath !== loadedFilePath;
+        const fresh = cached && (await notebook.getNote(filePath, true));
+        // Keep the draft until the new file can be read and reconciled.
+        if (!fresh && awaitingDestination)
+          throw new Error(i18next.t("general/note-not-found"));
         // A file deleted by git while its open editor was being edited keeps
         // those new edits. An explicit local deletion removes the cache first.
-        const note =
-          fresh ?? (open?.saver.id === writer.getId() ? cached : null);
+        const note = fresh ?? (saving && open.saver.open ? cached : null);
         if (!note) return;
-        if (open?.saver.id === writer.getId()) {
+        if (saving) {
           const merged = open.reconcileFile(note.markdown, note.lineBreak);
           markdown = merged.text;
           if (merged.conflict || !fresh)
@@ -394,6 +391,7 @@ function useCrossnoteContainer(initialState: InitialState) {
             return;
           }
           await notebook.deleteNote(noteFilePath);
+          retainedNoteAt(location)?.saver.discard();
           await notebook.refreshNotes({
             dir: "./",
             includeSubdirectories: true,
@@ -416,7 +414,7 @@ function useCrossnoteContainer(initialState: InitialState) {
     }: ChangedNoteFilePathEventData) => {
       const from = { notebookPath, filePath: oldNoteFilePath };
       const to = { notebookPath, filePath: newNoteFilePath };
-      const open = openNoteAt(from);
+      const open = retainedNoteAt(from);
       if (open) moveNote(open, to);
       moveNoteSavers(from, to);
       if (layoutModel) {
@@ -459,6 +457,8 @@ function useCrossnoteContainer(initialState: InitialState) {
                 oldNoteFilePath,
                 newFilePath,
                 onMoved,
+                (filePath) =>
+                  !!retainedNoteAt({ notebookPath: notebook.dir, filePath }),
               );
               globalEmitter.emit(EventType.ChangedNoteFilePath, {
                 tabId: tabNode.getId(),

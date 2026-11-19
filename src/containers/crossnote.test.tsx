@@ -470,6 +470,122 @@ it("keeps a moved editor's write pending until its destination can be read", asy
   }
 });
 
+it.each(["closed", "reopened"])(
+  "retries a %s draft at the restored destination through the app",
+  async (state) => {
+    const notebook = await notebookAt(`/notebooks/restored-draft-${state}`);
+    const original = "Title\n\nFirst paragraph\n\nLast paragraph";
+    const moved = { notebookPath: notebook.dir, filePath: "moved.md" };
+    await pfs.writeFile(`${notebook.dir}/old.md`, original);
+    const { open, type, close } = openForTyping(notebook, "old.md", original);
+    const write = vi.spyOn(notebook, "writeNote");
+    try {
+      await notebookOperation(notebook.dir, async () => {
+        type(" edited");
+        close();
+        expect(
+          pendingNoteWrites({ ...moved, filePath: "old.md" }),
+        ).toHaveLength(1);
+        globalEmitter.emit(EventType.ChangedNoteFilePath, {
+          notebookPath: notebook.dir,
+          oldNoteFilePath: "old.md",
+          newNoteFilePath: moved.filePath,
+        });
+      });
+      await expect(crossnote.getNoteForPrint(moved)).rejects.toBeInstanceOf(
+        NotesNotSavedError,
+      );
+      expect(write).not.toHaveBeenCalled();
+
+      const restored = original.replace("Title", "Updated title");
+      await pfs.writeFile(`${notebook.dir}/moved.md`, restored);
+      if (state === "reopened") {
+        const { open: reopened } = openForTyping(
+          notebook,
+          moved.filePath,
+          restored,
+        );
+        expect(reopened.document.text()).toBe(original + " edited");
+      }
+      const printed = await crossnote.getNoteForPrint(moved);
+      expect(printed.markdown).toBe(restored + " edited");
+      expect(write.mock.calls.map(([path]) => path)).toEqual([moved.filePath]);
+      expect(await read(notebook, "old.md")).toBe(original);
+      expect(await body(notebook, moved.filePath)).toBe(restored + " edited");
+      expect(open.saver.pending).toBe(false);
+    } finally {
+      open.saver.discard();
+      close();
+    }
+  },
+);
+
+it("reserves a closed draft's path until the draft is released", async () => {
+  const notebook = await notebookAt("/notebooks/reserved-rename");
+  const source = await notebook.writeNote("source.md", "Source", {
+    createdAt: new Date(),
+    modifiedAt: new Date(),
+  });
+  const folder = `${notebook.dir}/drafts`;
+  const target = "drafts/draft.md";
+  await pfs.writeFile(`${notebook.dir}/${target}`, "Draft");
+  const { open, type, close } = openForTyping(notebook, target, "Draft");
+  const write = vi
+    .spyOn(notebook, "writeNote")
+    .mockRejectedValue(new Error("Busy"));
+  try {
+    type(" pending");
+    close();
+    await expect(flushNotes(open.saver.location)).rejects.toBeInstanceOf(
+      NotesNotSavedError,
+    );
+    await pfs.rmdir(folder);
+    const rename = () =>
+      crossnote.changeNoteFilePath(tab, source, "./drafts/draft");
+    await expect(rename()).rejects.toThrow("error/target-file-already-exists");
+    expect(await pfs.exists(folder)).toBe(false);
+    expect(await body(notebook, "source.md")).toBe("Source");
+    expect(open.document.text()).toBe("Draft pending");
+    expect(open.saver.pending).toBe(true);
+    open.saver.discard();
+    await rename();
+    expect(await body(notebook, target)).toBe("Source");
+  } finally {
+    open.saver.discard();
+    write.mockRestore();
+  }
+});
+
+it("releases a closed draft when its note is explicitly deleted", async () => {
+  const notebook = await notebookAt("/notebooks/delete-closed-draft");
+  const note = await notebook.writeNote("example.md", "Example", {
+    createdAt: new Date(),
+    modifiedAt: new Date(),
+  });
+  const { open, type, close } = openForTyping(
+    notebook,
+    note.filePath,
+    note.markdown,
+  );
+  const write = vi
+    .spyOn(notebook, "writeNote")
+    .mockRejectedValueOnce(new Error("Try again"));
+  try {
+    type(" edited");
+    close();
+    await expect(flushNotes(open.saver.location)).rejects.toBeInstanceOf(
+      NotesNotSavedError,
+    );
+    await crossnote.deleteNote(tab, notebook.dir, note.filePath);
+    await flushNotes(open.saver.location);
+    expect(open.saver.pending).toBe(false);
+    expect(write).toHaveBeenCalledTimes(1);
+    expect(await pfs.exists(`${notebook.dir}/example.md`)).toBe(false);
+  } finally {
+    open.saver.discard();
+  }
+});
+
 it.each(["rename", "delete", "checkout", "print"])(
   "cancels a waiting %s from a card when the note moves",
   async (action) => {
