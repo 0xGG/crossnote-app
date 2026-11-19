@@ -28,6 +28,7 @@ export const zhCN = {
     "general/title": "标题",
     "general/loading": "读取中 ...",
     "general/note-not-found": "未找到这篇笔记",
+    "error/failed-to-load-note": "无法加载这篇笔记",
     "general/update": "更新",
     "general/close": "关闭",
     "general/open-menu": "打开菜单",

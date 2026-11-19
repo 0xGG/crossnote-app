@@ -281,7 +281,14 @@ export default function NotePanel(props: Props) {
     filePath: string;
     title: string;
   } | null>(null);
-  const [note, setNote] = useState<Note>(null);
+  const [loadedNote, setNote] = useState<Note>(null);
+  // A move retargets the shared saver before its destination metadata loads.
+  // Only metadata for the tab's current location can supply path-based actions.
+  const note =
+    loadedNote?.filePath === props.noteFilePath &&
+    loadedNote.notebookPath === props.notebook.dir
+      ? loadedNote
+      : null;
   // A metadata write changes the menu. The mounted preview keeps its own
   // interactive content until the document or its location changes.
   const [menuConfig, setMenuConfig] = useState<{
@@ -326,6 +333,7 @@ export default function NotePanel(props: Props) {
   // What the editor, made once, reads as of the latest commit.
   const latest = useRef<{
     note: Note;
+    openNote: OpenNote;
     notebook: Notebook;
     t: typeof t;
     editorMode: EditorMode;
@@ -335,6 +343,7 @@ export default function NotePanel(props: Props) {
   useLayoutEffect(() => {
     latest.current = {
       note,
+      openNote,
       notebook: props.notebook,
       t,
       editorMode,
@@ -350,7 +359,11 @@ export default function NotePanel(props: Props) {
     crossnoteContainer;
   const confirmNoteTitle = useCallback(() => {
     const finalNoteTitle = noteTitle.trim().replace(/\//g, "-");
-    if (!note || note.filePath === renamingFrom.current) {
+    if (
+      !note ||
+      note.filePath !== tabNode.getConfig().noteFilePath ||
+      note.filePath === renamingFrom.current
+    ) {
       return;
     }
     if (!finalNoteTitle.length || note.title.trim() === finalNoteTitle) {
@@ -365,9 +378,8 @@ export default function NotePanel(props: Props) {
       note,
       path.join(path.dirname(note.filePath), `${finalNoteTitle}.md`),
     )
-      .then((note) => {
+      .then(() => {
         setTitleDraft(null);
-        setNote(note);
       })
       .catch((error) => {
         renamingFrom.current = null;
@@ -433,6 +445,7 @@ export default function NotePanel(props: Props) {
           location.notebookPath,
           location.filePath,
           text,
+          loadedNote?.filePath,
         ),
       // Said once; what was typed stays in the editor for the next change to
       // save, and the page asks before it is left with it.
@@ -452,14 +465,12 @@ export default function NotePanel(props: Props) {
     }
   });
 
-  // Joins the note's other tabs, or opens the note with the text the
-  // notebook holds, once the note has loaded; leaves with the panel.
-  const noteLoaded = !!note;
+  // Wait for metadata at this tab's location before joining. Once joined,
+  // keep the same document and saver while a move loads the new location.
+  const readyToJoin = !!(note || openNote);
   useEffect(() => {
-    if (!noteLoaded) {
-      return;
-    }
     const { note } = latest.current;
+    if (!readyToJoin || !note) return;
     const tabId = tabNode.getId();
     const joined = joinNote(
       tabId,
@@ -473,7 +484,7 @@ export default function NotePanel(props: Props) {
       leaveNote(joined, tabId);
       setOpenNote(null);
     };
-  }, [noteLoaded, tabNode]);
+  }, [readyToJoin, tabNode]);
 
   // The status bar's git status follows what is written.
   useEffect(() => {
@@ -489,13 +500,13 @@ export default function NotePanel(props: Props) {
 
   // Emitter
   useEffect(() => {
-    if (!globalEmitter || !tabNode || !note || !openNote) {
+    if (!globalEmitter || !tabNode || !openNote) {
       return;
     }
 
     const modifiedMarkdownCallback = (data: ModifiedMarkdownEventData) => {
       const here =
-        data.notebookPath === note.notebookPath &&
+        data.notebookPath === note?.notebookPath &&
         data.noteFilePath === note.filePath;
       if (here && data.tabId !== tabNode.getId()) {
         setMenuConfig({ note, config: data.noteConfig });
@@ -510,21 +521,32 @@ export default function NotePanel(props: Props) {
 
     const deletedNoteCallback = (data: DeletedNoteEventData) => {
       if (
-        data.notebookPath === note.notebookPath &&
-        data.noteFilePath === note.filePath
+        data.notebookPath === openNote.saver.location.notebookPath &&
+        data.noteFilePath === openNote.saver.location.filePath
       ) {
         closeTabNode(tabNode.getId());
       }
     };
 
+    let active = true;
     const performedGitOperationCallback = async (
       data: PerformedGitOperationEventData,
     ) => {
-      if (data.notebookPath === note.notebookPath) {
-        const newNote = await getNote(
-          data.notebookPath,
-          openNote.saver.location.filePath,
-        );
+      const location = openNote.saver.location;
+      // While a move is loading, its lookup below owns the retry. A Git
+      // refresh of the previous location cannot replace or close this editor.
+      if (
+        data.notebookPath === note?.notebookPath &&
+        note.filePath === location.filePath
+      ) {
+        let newNote: Note;
+        try {
+          newNote = await getNote(location.notebookPath, location.filePath);
+        } catch (error) {
+          console.error(error);
+          return;
+        }
+        if (!active || openNote.saver.location !== location) return;
         if (newNote) {
           setNote(newNote);
           if (openNote.saver.isOwn(newNote.markdown)) {
@@ -548,6 +570,7 @@ export default function NotePanel(props: Props) {
       performedGitOperationCallback,
     );
     return () => {
+      active = false;
       globalEmitter.off(EventType.ModifiedMarkdown, modifiedMarkdownCallback);
       globalEmitter.off(EventType.DeletedNote, deletedNoteCallback);
       globalEmitter.off(
@@ -563,8 +586,19 @@ export default function NotePanel(props: Props) {
   // how many times it has been looked in again since.
   const [missing, setMissing] = useState<boolean>(false);
   const [lookedFor, setLookedFor] = useState<number>(0);
+  const [previousPath, setPreviousPath] = useState(props.noteFilePath);
+  if (previousPath !== props.noteFilePath) {
+    setPreviousPath(props.noteFilePath);
+    setMissing(false);
+    setTitleDraft(null);
+    setEditImageDialogOpen(false);
+    setNotePopoverElement(null);
+  }
   useEffect(() => {
     let current = true;
+    const moved = !latest.current.note ? latest.current.openNote : null;
+    const documentBeforeRead = moved?.document.doc;
+    const savedBeforeRead = moved?.saver.savedText;
     props.notebook
       .refreshNotesIfNotLoaded({
         dir: "./",
@@ -586,7 +620,22 @@ export default function NotePanel(props: Props) {
             setEditorMode(EditorMode.EchoMD);
           }
         }
-        setNote(loaded);
+        if (loaded) {
+          // Read a restored destination into the same clean editor. Typing
+          // and saves that raced the lookup keep their own document and base.
+          if (
+            moved &&
+            moved.saver.location.filePath === loaded.filePath &&
+            moved.saver.location.notebookPath === loaded.notebookPath &&
+            !moved.saver.pending &&
+            moved.document.doc === documentBeforeRead &&
+            moved.saver.savedText === savedBeforeRead
+          ) {
+            moved.document.load(loaded.markdown, loaded.lineBreak);
+            moved.saver.took(loaded.markdown);
+          }
+          setNote(loaded);
+        }
         // The notebook has no note at this path: the tab says so, rather
         // than go on as if the note were still being read.
         setMissing(!loaded);
@@ -666,13 +715,14 @@ export default function NotePanel(props: Props) {
       onLinkClick: (link) => {
         // A link, in markdown's form or a wiki link, opens as it does in
         // the preview.
-        if (link.kind !== "hashtag") {
+        if (latest.current.note && link.kind !== "hashtag") {
           openURL(link.target, latest.current.note, openLinkedNote);
         }
       },
       images: {
-        loadMedia: (src) => resolveNoteMedia({ ...latest.current.note }, src),
+        loadMedia: (src) => resolveNoteMedia(latest.current.note, src),
         loadImage: (element, src) => {
+          if (!latest.current.note) return;
           resolveNoteImageSrc(latest.current.note, src)
             .then((url) => {
               element.src = url;
@@ -680,12 +730,14 @@ export default function NotePanel(props: Props) {
             .catch(() => {});
         },
         onImageClick: (image) => {
+          if (!latest.current.note) return;
           setEditedImage({ ...image, document: created.document.doc });
           setEditImageDialogOpen(true);
         },
       },
       attachments: {
         upload: async (files) => {
+          if (!latest.current.note) throw new AttachmentError("location");
           files.forEach(validateAttachment);
           const notebook = latest.current.notebook;
           const location = { ...openNote.saver.location };
@@ -724,11 +776,13 @@ export default function NotePanel(props: Props) {
         tags: (typed) =>
           tagCompletions(latest.current.notebook, latest.current.note, typed),
         wikiLinks: (typed) =>
-          wikiLinkCompletions(
-            latest.current.notebook,
-            latest.current.note,
-            typed,
-          ),
+          latest.current.note
+            ? wikiLinkCompletions(
+                latest.current.notebook,
+                latest.current.note,
+                typed,
+              )
+            : [],
       },
     });
     if (
@@ -974,18 +1028,15 @@ export default function NotePanel(props: Props) {
 
   // TabNode becomes visible
   useEffect(() => {
-    if (!tabNode || !note) {
+    if (!tabVisible || !openNote) {
       return;
     }
     globalEmitter.emit(EventType.FocusedOnNote, {
-      notebookPath: note.notebookPath,
-      noteFilePath: note.filePath,
+      notebookPath: props.notebook.dir,
+      noteFilePath: props.noteFilePath,
     });
-  }, [note, tabNode]);
+  }, [tabVisible, openNote, props.notebook.dir, props.noteFilePath]);
   useEffect(() => {
-    if (!tabNode || !note || !globalEmitter) {
-      return;
-    }
     let visibilityTimer = setTimeout(
       () => setTabVisible(tabNode.isVisible()),
       0,
@@ -994,31 +1045,26 @@ export default function NotePanel(props: Props) {
       // FlexLayout emits while rendering. Update React after that commit.
       clearTimeout(visibilityTimer);
       visibilityTimer = setTimeout(() => setTabVisible(visible), 0);
-      if (visible) {
+      if (visible && editor) {
         // What changed while the tab was in the background (a mode swap made
         // from the settings tab, say) was laid out with no size. FlexLayout
         // tells of this while it is still rendering, so measure again once
         // the tab has been committed to the DOM.
-        if (editor) {
-          setTimeout(() => editor.view.requestMeasure(), 0);
-        }
-        globalEmitter.emit(EventType.FocusedOnNote, {
-          notebookPath: note.notebookPath,
-          noteFilePath: note.filePath,
-        });
+        setTimeout(() => editor.view.requestMeasure(), 0);
       }
     });
     return () => {
       stop();
       clearTimeout(visibilityTimer);
     };
-  }, [tabNode, note, editor]);
+  }, [tabNode, editor]);
 
-  if (!note) {
+  if (!note && !openNote) {
     return missing ? (
       <NoteNotFound
         notebookName={props.notebook.name}
         filePath={props.noteFilePath}
+        onRetry={() => setLookedFor((times) => times + 1)}
       ></NoteNotFound>
     ) : (
       <Loading></Loading>
@@ -1036,7 +1082,9 @@ export default function NotePanel(props: Props) {
       >
         <Row style={{ width: "100%" }}>
           <InputBase
-            value={noteTitle}
+            value={note ? noteTitle : props.noteFilePath}
+            readOnly={!note}
+            slotProps={{ input: { "aria-disabled": !note || undefined } }}
             style={{
               fontSize: "1.5rem",
               fontWeight: 400,
@@ -1060,6 +1108,16 @@ export default function NotePanel(props: Props) {
               }
             }}
           ></InputBase>
+          {!note && missing && (
+            <>
+              <Typography role="status" variant="caption">
+                {t("error/failed-to-load-note")}
+              </Typography>
+              <Button onClick={() => setLookedFor((times) => times + 1)}>
+                {t("layout/retry")}
+              </Button>
+            </>
+          )}
           <ButtonGroup
             variant="text"
             color="inherit"
@@ -1124,6 +1182,7 @@ export default function NotePanel(props: Props) {
           >
             <ControlButton
               aria-label={t("general/note-menu")}
+              disabled={!note}
               onClick={(event) => setNotePopoverElement(event.currentTarget)}
             >
               <DotsVertical></DotsVertical>
@@ -1167,7 +1226,7 @@ export default function NotePanel(props: Props) {
                   display: editorMode === EditorMode.Preview ? "none" : "block",
                 }}
               ></EditorHost>
-              {editorMode === EditorMode.Preview && editor ? (
+              {editorMode === EditorMode.Preview && editor && note ? (
                 <Preview
                   className={"preview"}
                   data-testid="note-preview"
@@ -1175,12 +1234,14 @@ export default function NotePanel(props: Props) {
                 ></Preview>
               ) : null}
             </EditorWrapper>
-            <NotesPanel
-              title={t("general/References")}
-              tabNode={props.tabNode}
-              notebook={props.notebook}
-              note={note}
-            ></NotesPanel>
+            {note && (
+              <NotesPanel
+                title={t("general/References")}
+                tabNode={props.tabNode}
+                notebook={props.notebook}
+                note={note}
+              ></NotesPanel>
+            )}
           </EditorContentPanel>
           <TocPanel>
             <Toc ref={tocElement}></Toc>
@@ -1192,8 +1253,8 @@ export default function NotePanel(props: Props) {
           <FilePath variant={"caption"}>
             {props.notebook.name +
               ": " +
-              note.filePath +
-              (gitStatus ? " - " + gitStatusLabel(gitStatus, t) : "")}
+              props.noteFilePath +
+              (note && gitStatus ? " - " + gitStatusLabel(gitStatus, t) : "")}
           </FilePath>
         </Row>
         {editorMode !== EditorMode.Preview && (
@@ -1207,24 +1268,28 @@ export default function NotePanel(props: Props) {
         )}
       </BottomPanel>
 
-      <EditImageDialog
-        open={editImageDialogOpen}
-        onClose={() => setEditImageDialogOpen(false)}
-        editor={editor}
-        image={editedImage}
-        note={note}
-      ></EditImageDialog>
+      {note && (
+        <EditImageDialog
+          open={editImageDialogOpen}
+          onClose={() => setEditImageDialogOpen(false)}
+          editor={editor}
+          image={editedImage}
+          note={note}
+        ></EditImageDialog>
+      )}
 
-      <NotePopover
-        tabNode={props.tabNode}
-        note={
-          menuConfig?.note === note
-            ? { ...note, config: menuConfig.config }
-            : note
-        }
-        anchorElement={notePopoverElement}
-        onClose={() => setNotePopoverElement(null)}
-      ></NotePopover>
+      {note && (
+        <NotePopover
+          tabNode={props.tabNode}
+          note={
+            menuConfig?.note === note
+              ? { ...note, config: menuConfig.config }
+              : note
+          }
+          anchorElement={notePopoverElement}
+          onClose={() => setNotePopoverElement(null)}
+        ></NotePopover>
+      )}
     </NotePanelRoot>
   );
 }

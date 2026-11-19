@@ -244,6 +244,7 @@ function useCrossnoteContainer(initialState: InitialState) {
       notebookPath: string,
       filePath: string,
       markdown: string,
+      loadedFilePath = filePath,
     ) =>
       writeNoteOperation({ notebookPath, filePath }, async () => {
         // A queued write can acquire the lock after Git has moved its note.
@@ -255,8 +256,14 @@ function useCrossnoteContainer(initialState: InitialState) {
           return;
         }
         const cached = await notebook.getNote(filePath);
-        if (!cached) return;
         const open = openNoteAt({ notebookPath, filePath });
+        if (!cached) {
+          // The saver followed a move whose destination the editor has not
+          // read yet. Keep its draft pending until that file is available.
+          if (filePath !== loadedFilePath && open?.saver.id === writer.getId())
+            throw new Error(i18next.t("general/note-not-found"));
+          return;
+        }
         const fresh = await notebook.getNote(filePath, true);
         // A file deleted by git while its open editor was being edited keeps
         // those new edits. An explicit local deletion removes the cache first.

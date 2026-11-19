@@ -29,6 +29,7 @@ export const enUS = {
     "general/title": "Title",
     "general/loading": "Loading ...",
     "general/note-not-found": "The note was not found",
+    "error/failed-to-load-note": "Could not load the note",
     "general/update": "Update",
     "general/close": "Close",
     "general/open-menu": "Open menu",

@@ -28,6 +28,7 @@ export const zhTW = {
     "general/title": "標題",
     "general/loading": "讀取中 ...",
     "general/note-not-found": "找不到這篇筆記",
+    "error/failed-to-load-note": "無法載入這篇筆記",
     "general/update": "更新",
     "general/close": "關閉",
     "general/open-menu": "打開選單",

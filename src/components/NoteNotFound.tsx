@@ -1,13 +1,14 @@
-import { Box, Typography } from "@mui/material";
+import { Box, Button, Typography } from "@mui/material";
 import { useTranslation } from "react-i18next";
 
 interface Props {
   notebookName: string;
   filePath: string;
+  onRetry: () => void;
 }
 
 /** What a note's tab shows when its notebook has no note at the tab's path. */
-export function NoteNotFound({ notebookName, filePath }: Props) {
+export function NoteNotFound({ notebookName, filePath, onRetry }: Props) {
   const { t } = useTranslation();
 
   return (
@@ -31,6 +32,7 @@ export function NoteNotFound({ notebookName, filePath }: Props) {
         >
           {`${notebookName}: ${filePath}`}
         </Typography>
+        <Button onClick={onRetry}>{t("layout/retry")}</Button>
       </Box>
     </Box>
   );

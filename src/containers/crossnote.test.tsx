@@ -425,6 +425,7 @@ function openForTyping(notebook: Notebook, filePath: string, text: string) {
         to.notebookPath,
         to.filePath,
         written,
+        filePath,
       ),
     failed: () => {},
   };
@@ -444,6 +445,30 @@ function openForTyping(notebook: Notebook, filePath: string, text: string) {
   };
   return { open, calls, type, close: () => leaveNote(open, "tab") };
 }
+
+it("keeps a moved editor's write pending until its destination can be read", async () => {
+  const notebook = await notebookAt("/notebooks/pending-destination");
+  await pfs.writeFile(`${notebook.dir}/old.md`, "Original");
+  const { open, type, close } = openForTyping(notebook, "old.md", "Original");
+  try {
+    type(" draft");
+    globalEmitter.emit(EventType.ChangedNoteFilePath, {
+      notebookPath: notebook.dir,
+      oldNoteFilePath: "old.md",
+      newNoteFilePath: "moved.md",
+    });
+    await expect(open.saver.flush()).rejects.toThrow();
+    expect(open.saver.pending).toBe(true);
+    expect(open.document.text()).toBe("Original draft");
+    await pfs.writeFile(`${notebook.dir}/moved.md`, "Original");
+    await open.saver.flush();
+    expect(open.saver.pending).toBe(false);
+    expect(await read(notebook, "moved.md")).toContain("Original draft");
+    expect(await read(notebook, "old.md")).toBe("Original");
+  } finally {
+    close();
+  }
+});
 
 it.each(["rename", "delete", "checkout"])(
   "cancels a waiting %s from a card when the note moves",

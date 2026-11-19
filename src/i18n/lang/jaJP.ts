@@ -31,6 +31,7 @@ export const jaJP = {
     "general/title": "表題",
     "general/loading": "讀取中 ...",
     "general/note-not-found": "ノートが見つかりません",
+    "error/failed-to-load-note": "ノートを読み込めませんでした",
     "general/update": "更新",
     "general/close": "閉じる",
     "general/open-menu": "メニューを開く",
