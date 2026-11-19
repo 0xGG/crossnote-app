@@ -120,6 +120,17 @@ it("writes no note outside its notebook", async () => {
   expect(await pfs.exists("/notebooks/outside.md")).toBe(false);
 });
 
+it("preserves an existing note when its name cannot be checked for creation", async () => {
+  const notebook = await notebookAt("/notebooks/unreadable-name");
+  await pfs.writeFile(`${notebook.dir}/Plans.md`, "# Original");
+  const error = new Error("Could not inspect entry");
+  vi.spyOn(pfs, "stats").mockRejectedValueOnce(error);
+  await expect(
+    crossnote.createNewNote(notebook, "Plans.md", "New"),
+  ).rejects.toBe(error);
+  expect(await read(notebook, "Plans.md")).toBe("# Original");
+});
+
 it("opens no note a link leads to outside the notebook, and says so", async () => {
   const notebook = await notebookAt("/notebooks/linking");
   // A note of the notebook next door.
@@ -642,6 +653,69 @@ it("merges input queued during git with the downloaded text before it saves", as
     close();
   }
 });
+
+it("restores same-page input when sync removes the edited note and its parent", async () => {
+  const notebook = await notebookAt("/notebooks/typing-during-removal");
+  const file = "nested/note.md";
+  const initial = "First\n";
+  await pfs.writeFile(`${notebook.dir}/${file}`, initial);
+  await notebook.getNote(file, true);
+  const { open, type, close } = openForTyping(notebook, file, initial);
+  try {
+    await notebookOperation(notebook.dir, async () => {
+      type("Typed during sync\n");
+      await pfs.rmdir(`${notebook.dir}/nested`);
+    });
+    await open.saver.flush();
+    expect(await body(notebook, file)).toBe(initial + "Typed during sync\n");
+    expect(open.saver.pending).toBe(false);
+  } finally {
+    close();
+  }
+});
+
+it.each(["stat", "read original"])(
+  "keeps external edits and pending input when the save cannot %s",
+  async (failure) => {
+    const notebook = await notebookAt(`/notebooks/failed-save-${failure}`);
+    const initial = "First\nMiddle\nLast\n";
+    const settings = "---\npinned: true # keep my comment\n---\n";
+    const path = `${notebook.dir}/a.md`;
+    await pfs.writeFile(path, settings + initial);
+    const note = await notebook.getNote("a.md", true);
+    const { open, type, close } = openForTyping(
+      notebook,
+      "a.md",
+      note.markdown,
+    );
+    try {
+      const external = "External first\nMiddle\nLast\n";
+      await pfs.writeFile(path, settings + external);
+      type("Appended\n");
+      const refused = new Error("storage unavailable");
+      if (failure === "stat") {
+        vi.spyOn(pfs, "stats").mockRejectedValueOnce(refused);
+      } else {
+        const readFile = pfs.readFile.bind(pfs);
+        vi.spyOn(pfs, "readFile")
+          .mockImplementationOnce(readFile)
+          .mockRejectedValueOnce(refused);
+      }
+      await expect(open.saver.flush()).rejects.toBe(refused);
+      expect(await read(notebook, "a.md")).toBe(settings + external);
+      expect(open.document.text()).toContain("Appended\n");
+      expect(open.saver.pending).toBe(true);
+      await open.saver.flush();
+      expect(await body(notebook, "a.md")).toBe(external + "Appended\n");
+      expect(await read(notebook, "a.md")).toContain(
+        "pinned: true # keep my comment\n",
+      );
+      expect(open.saver.pending).toBe(false);
+    } finally {
+      close();
+    }
+  },
+);
 
 it.each(["text", "settings"])(
   "preserves the disk and dirty editor when %s cannot reconcile downloaded bytes",

@@ -19,7 +19,7 @@ import Crossnote, {
   PushNotebookArgs,
 } from "../lib/crossnote";
 import { EventType, globalEmitter } from "../lib/event";
-import { pfs } from "../lib/fs";
+import { missingFileOrThrow, pfs } from "../lib/fs";
 import { pruneUnknownTabs, tabsInNotebook } from "../lib/layout";
 import { Note, NoteConfig } from "../lib/note";
 import { Notebook } from "../lib/notebook";
@@ -445,7 +445,9 @@ function useCrossnoteContainer(initialState: InitialState) {
       // being read again at this moment, and a note written at a taken path
       // empties the note there.
       const taken = (fileName: string) =>
-        pfs.exists(path.resolve(notebook.dir, fileName));
+        pfs
+          .stats(path.resolve(notebook.dir, fileName))
+          .catch(missingFileOrThrow);
       if (!fileName) {
         const today = moment().format("YYYY-MM-DD"); // TODO: Allow user to customize this
         const untitled = i18next.t("general/Untitled");

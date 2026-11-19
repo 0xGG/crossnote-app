@@ -1,5 +1,7 @@
-import { expect, it } from "vitest";
+import { expect, it, vi } from "vitest";
+import { pfs } from "./fs";
 import LocalFileSystem from "./localFileSystem";
+import { Notebook } from "./notebook";
 
 // A folder on the user's disk, held in memory, with the part of the File
 // System Access API the writes go through: asking for a folder where a file
@@ -10,6 +12,10 @@ class Folder {
 
   async queryPermission() {
     return "granted";
+  }
+
+  async requestPermission() {
+    return "denied";
   }
 
   async getDirectoryHandle(name: string, { create = false } = {}) {
@@ -40,6 +46,10 @@ class Folder {
       this.entries.set(name, "");
     }
     return {
+      getFile: async () => ({
+        lastModified: Date.now(),
+        text: async () => this.entries.get(name) as string,
+      }),
       createWritable: async () => {
         let written = "";
         return {
@@ -54,6 +64,39 @@ class Folder {
     };
   }
 }
+
+it("creates a note with missing parents and preserves it when folder access fails", async () => {
+  const root = new Folder();
+  const notebook = new Notebook();
+  notebook.dir = await pfs.attachLocalDirectory({
+    id: "note-access",
+    directoryHandle: root as unknown as FileSystemDirectoryHandle,
+  });
+  notebook.isLocal = true;
+  notebook.initSearch();
+  const path = "missing/note.md";
+  expect(await notebook.getNote(path)).toBeNull();
+  const note = await notebook.writeNote(path, "Original", {
+    createdAt: new Date(),
+    modifiedAt: new Date(),
+  });
+  const folder = root.entries.get("missing") as Folder;
+  const stored = folder.entries.get("note.md");
+  const failure = new DOMException(
+    "Could not inspect entry",
+    "NotReadableError",
+  );
+  vi.spyOn(folder, "getDirectoryHandle").mockRejectedValueOnce(failure);
+  await expect(notebook.getNote(path, true)).rejects.toBe(failure);
+  vi.spyOn(root, "queryPermission").mockResolvedValue("denied");
+  await expect(notebook.getNote(path, true)).rejects.toMatchObject({
+    name: "NotAllowedError",
+  });
+  await expect(
+    notebook.writeNote(path, "Edited", note.config),
+  ).rejects.toMatchObject({ name: "NotAllowedError" });
+  expect(folder.entries.get("note.md")).toBe(stored);
+});
 
 async function attached() {
   const lfs = new LocalFileSystem();
