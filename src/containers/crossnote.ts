@@ -932,6 +932,18 @@ function useCrossnoteContainer(initialState: InitialState) {
     [getNotebookAtPath],
   );
 
+  const getNoteForPrint = useCallback(
+    ({ notebookPath, filePath }: NoteLocation) =>
+      withNotePath({ notebookPath, filePath }, async (location) => {
+        await saveOpenNotes({ notebookPath, filePath });
+        return notebookOperation(notebookPath, () => {
+          requireOriginalPath(filePath, location);
+          return getNote(location.notebookPath, location.filePath);
+        });
+      }),
+    [getNote, saveOpenNotes],
+  );
+
   const togglePin = useCallback(
     async (tabNode: TabNode, notebookPath: string, noteFilePath: string) => {
       await updateNoteConfig(tabNode, notebookPath, noteFilePath, (current) => {
@@ -1188,7 +1200,7 @@ favorited: true
     pushNotebook,
     pullNotebook,
     checkoutNote,
-    saveOpenNotes,
+    getNoteForPrint,
     getNote,
     openNoteAtPath,
     openTodayNote,

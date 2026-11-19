@@ -470,7 +470,7 @@ it("keeps a moved editor's write pending until its destination can be read", asy
   }
 });
 
-it.each(["rename", "delete", "checkout"])(
+it.each(["rename", "delete", "checkout", "print"])(
   "cancels a waiting %s from a card when the note moves",
   async (action) => {
     const notebook = await notebookAt(`/notebooks/card-${action}`);
@@ -485,6 +485,7 @@ it.each(["rename", "delete", "checkout"])(
       .spyOn(notebook, "deleteNote")
       .mockResolvedValue(undefined);
     const checkout = vi.spyOn(notebook, "checkoutNote").mockResolvedValue(note);
+    const readNote = vi.spyOn(notebook, "getNote");
     notebook.isLocal = false;
     let pending!: Promise<unknown>;
     await notebookOperation(notebook.dir, async () => {
@@ -493,6 +494,7 @@ it.each(["rename", "delete", "checkout"])(
       if (action === "delete")
         pending = crossnote.deleteNote(tab, notebook.dir, note.filePath);
       if (action === "checkout") pending = crossnote.checkoutNote(note);
+      if (action === "print") pending = crossnote.getNoteForPrint(note);
       globalEmitter.emit(EventType.ChangedNoteFilePath, {
         notebookPath: notebook.dir,
         oldNoteFilePath: note.filePath,
@@ -503,6 +505,7 @@ it.each(["rename", "delete", "checkout"])(
     expect(rename).not.toHaveBeenCalled();
     expect(remove).not.toHaveBeenCalled();
     expect(checkout).not.toHaveBeenCalled();
+    expect(readNote).not.toHaveBeenCalled();
   },
 );
 
