@@ -104,6 +104,7 @@ export const zhCN = {
     // Error
     "error/authentication-failed": "认证失败",
     "error/failed-to-upload-notebook": "上传笔记本失败",
+    "error/remote-has-no-commits": "远端仓库还没有提交。",
     "error/failed-to-download-notebook": "下载笔记本失败",
     "error/notebook-already-exists": "笔记本已经存在",
     "error/invalid-git-url-prefix": "无效的 git URL 前缀",

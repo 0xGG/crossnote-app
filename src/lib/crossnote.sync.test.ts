@@ -1,4 +1,5 @@
 import * as git from "isomorphic-git";
+import http from "isomorphic-git/http/web";
 import { afterEach, expect, it, vi } from "vitest";
 import { isStored, readStored } from "../test/storedTree";
 import Crossnote from "./crossnote";
@@ -95,6 +96,322 @@ async function repository(remote: Record<string, Uint8Array | null> = {}) {
       Array.from((await pfs.readFile(`${notebook.dir}/${file}`)) as Uint8Array),
   };
 }
+
+const emptyRemote: git.FetchResult = {
+  fetchHead: null,
+  fetchHeadDescription: null,
+  defaultBranch: null,
+};
+
+it("records an empty remote check and lets a manual pull retry immediately", async () => {
+  const { app, notebook, base, theirs, read } = await repository({
+    "new.md": bytes("remote"),
+  });
+  await pfs.writeFile(`${notebook.dir}/README.md`, "local edit");
+  await pfs.storeTree(notebook.dir);
+  notebook.fetchedAt = new Date(0);
+  notebook.autoFetchPeriod = 3600000;
+  await app.updateNotebook(notebook);
+  // Another tab can change settings while this notebook is still open.
+  const registered = await app["notebookDB"].get(notebook._id);
+  await app["notebookDB"].put({ ...registered, name: "Renamed" });
+  const before = await app["notebookDB"].get(notebook._id);
+  const started = Date.now();
+  const write = vi.spyOn(pfs, "writeFile");
+  vi.mocked(git.fetch)
+    .mockResolvedValueOnce(emptyRemote)
+    .mockResolvedValueOnce(emptyRemote);
+  expect(await app.fetchNotebook({ notebook })).toBe(false);
+  await expect(app.pullNotebook({ notebook })).rejects.toThrow(
+    "error/remote-has-no-commits",
+  );
+  const checked = await app["notebookDB"].get(notebook._id);
+  expect(notebook.fetchedAt.getTime()).toBeGreaterThanOrEqual(started);
+  expect(new Date(checked.fetchedAt)).toEqual(notebook.fetchedAt);
+  expect(checked).toEqual({
+    ...before,
+    fetchedAt: checked.fetchedAt,
+    _rev: checked._rev,
+  });
+  expect(await recovery.readPullRecovery(notebook._id)).toBeUndefined();
+  expect(write).not.toHaveBeenCalled();
+  expect(await git.resolveRef({ fs, dir: notebook.dir, ref: "HEAD" })).toBe(
+    base,
+  );
+  await app.pullNotebook({ notebook });
+  expect(notebook.localSha).toBe(theirs);
+  expect(await read("README.md")).toEqual([...bytes("local edit")]);
+  expect(await read("new.md")).toEqual([...bytes("remote")]);
+});
+
+it("pulls a first commit into an empty clone with a staged local note", async () => {
+  vi.spyOn(http, "request").mockImplementationOnce(async ({ url }) => ({
+    url,
+    statusCode: 200,
+    statusMessage: "OK",
+    headers: { "content-type": "application/x-git-upload-pack-advertisement" },
+    body: [bytes("001e# service=git-upload-pack\n00000000")],
+  }));
+  const app = new Crossnote();
+  const notebook = await app.cloneNotebook({
+    gitURL: "http://fixture.test/empty.git",
+    corsProxy: "",
+  });
+  expect(notebook.localSha).toBe("");
+  const args = { fs, dir: notebook.dir };
+  await pfs.writeFile(`${notebook.dir}/local.md`, "staged locally");
+  await git.add({ ...args, filepath: "local.md" });
+  expect(await git.listFiles(args)).toEqual(["local.md"]);
+
+  // Supply the fetched objects without changing this clone's index or HEAD.
+  const oid = await git.writeBlob({ ...args, blob: bytes("remote first") });
+  const tree = await git.writeTree({
+    ...args,
+    tree: [{ mode: "100644", path: "remote.md", type: "blob", oid }],
+  });
+  const signature = { ...author, timestamp: 1700000000, timezoneOffset: 0 };
+  const first = await git.writeCommit({
+    ...args,
+    commit: {
+      tree,
+      parent: [],
+      author: signature,
+      committer: signature,
+      message: "First",
+    },
+  });
+  vi.spyOn(git, "fetch").mockResolvedValue({
+    fetchHead: first,
+    fetchHeadDescription: "master",
+    defaultBranch: "master",
+  });
+  const write = pfs.writeFile.bind(pfs);
+  const interrupt = vi
+    .spyOn(pfs, "writeFile")
+    .mockImplementation(async (file, data) => {
+      if (file === `${notebook.dir}/local.md`)
+        throw new Error("Interrupted first pull");
+      return write(file, data);
+    });
+  await expect(app.pullNotebook({ notebook })).rejects.toThrow(
+    "Interrupted first pull",
+  );
+  expect((await recovery.readPullRecovery(notebook._id))?.localSha).toBe("");
+  interrupt.mockRestore();
+  const reopened = (await app.listNotebooks()).find(
+    (n) => n._id === notebook._id,
+  )!;
+  expect(reopened.localSha).toBe(first);
+  expect(
+    await pfs.readFile(`${notebook.dir}/local.md`, { encoding: "utf8" }),
+  ).toBe("staged locally");
+  expect(
+    await pfs.readFile(`${notebook.dir}/remote.md`, { encoding: "utf8" }),
+  ).toBe("remote first");
+  vi.spyOn(git, "push").mockResolvedValue({ ok: true, error: null, refs: {} });
+  await app.pushNotebook({
+    notebook: reopened,
+    authorName: author.name,
+    authorEmail: author.email,
+  });
+  expect(await git.listFiles({ ...args, ref: "HEAD" })).toEqual([
+    "local.md",
+    "remote.md",
+  ]);
+});
+
+it("recovers a legacy cache without resetting an unborn branch", async () => {
+  const app = new Crossnote();
+  const notebook = await app.addNotebook({ name: "Unborn", gitURL: "" });
+  notebook.gitURL = "http://fixture.test/empty.git";
+  await app.updateNotebook(notebook);
+  const key = `pending/pull/${notebook._id}`;
+  localStorage.setItem(
+    key,
+    JSON.stringify({
+      localSha: "",
+      cache: {
+        "legacy.md": {
+          status: "added",
+          markdown: "saved before a first commit",
+        },
+      },
+    }),
+  );
+  const reopened = (await app.listNotebooks()).find(
+    (n) => n._id === notebook._id,
+  )!;
+  expect(reopened.localSha).toBe("");
+  expect(await pfs.exists(`${notebook.dir}/.git/refs/heads/master`)).toBe(
+    false,
+  );
+  expect(
+    await pfs.readFile(`${notebook.dir}/legacy.md`, { encoding: "utf8" }),
+  ).toBe("saved before a first commit");
+  expect(localStorage.getItem(key)).toBeNull();
+  expect(await recovery.readPullRecovery(notebook._id)).toBeUndefined();
+});
+
+it("reopens a notebook left with only an empty fetch marker and retries its background check", async () => {
+  const { app, notebook, base, theirs } = await repository({
+    "new.md": bytes("remote"),
+  });
+  await app["notebookDB"].put({
+    ...(await app["notebookDB"].get(notebook._id)),
+    remoteSha: null,
+  });
+  const write = vi.spyOn(pfs, "writeFile");
+  const reopened = (await app.listNotebooks()).find(
+    (n) => n._id === notebook._id,
+  )!;
+  expect(reopened.remoteSha).toBe(base);
+  expect(
+    write.mock.calls.filter(
+      ([file]) =>
+        file.startsWith(notebook.dir + "/") &&
+        !file.startsWith(notebook.dir + "/.git/"),
+    ),
+  ).toEqual([]);
+  vi.mocked(git.fetch).mockResolvedValueOnce(emptyRemote);
+  expect(await app.fetchNotebook({ notebook: reopened })).toBe(false);
+  expect((await app["notebookDB"].get(notebook._id)).remoteSha).toBe(base);
+  expect(await app.fetchNotebook({ notebook: reopened })).toBe(true);
+  expect((await app["notebookDB"].get(notebook._id)).remoteSha).toBe(theirs);
+});
+
+it.each(["missing", "known"])(
+  "preserves newer registry settings when recovering a %s remote revision",
+  async (revision) => {
+    const { app, notebook, base, theirs } = await repository({
+      "new.md": bytes("remote"),
+    });
+    const plan: recovery.PullRecovery = {
+      version: 1,
+      localSha: base,
+      remoteSha: base,
+      files: {},
+      conflicts: [],
+    };
+    Reflect.set(plan, "remoteSha", null);
+    await recovery.savePullRecovery(notebook._id, plan);
+
+    // A second tab has updated the registry since this notebook was opened.
+    const db = app["notebookDB"];
+    await db.put({
+      ...(await db.get(notebook._id)),
+      name: "Renamed",
+      gitURL: "https://example.test/renamed.git",
+      localSha: revision === "missing" ? theirs : base,
+      remoteSha: revision === "missing" ? null : theirs,
+    });
+    const before = await db.get(notebook._id);
+    await app.resumeNotebook(notebook);
+    const after = await db.get(notebook._id);
+    expect(after).toEqual({ ...before, remoteSha: theirs, _rev: after._rev });
+    if (revision === "known") expect(after._rev).toBe(before._rev);
+    expect(notebook.remoteSha).toBe(theirs);
+    expect(await recovery.readPullRecovery(notebook._id)).toBeUndefined();
+  },
+);
+
+it("reopens an old empty-remote plan without losing working, committed or recovery-only bytes", async () => {
+  const { app, notebook, base, theirs, read } = await repository({
+    "new.md": bytes("remote"),
+  });
+  await app["notebookDB"].put({
+    ...(await app["notebookDB"].get(notebook._id)),
+    remoteSha: null,
+  });
+  // listFiles(null) read the index. With a tracked file removed from that
+  // index but still on disk, the old replay unlinked it before reset failed.
+  await git.remove({ fs, dir: notebook.dir, filepath: "README.md" });
+  await pfs.unlink(`${notebook.dir}/README.md`);
+  await pfs.writeFile(`${notebook.dir}/.gitignore`, "/live.md\n");
+  await pfs.writeFile(`${notebook.dir}/live.md`, "newer working text");
+  await pfs.writeFile(`${notebook.dir}/folder`, "now a file");
+  await pfs.writeFile(
+    `${notebook.dir}/.crossnote-recovered/keep.md`,
+    "unrelated folder",
+  );
+  // Existing files are protected here, but the pending copies would be visible.
+  await pfs.writeFile(
+    `${notebook.dir}/.crossnote-recovered/.gitignore`,
+    "# Crossnote recovered files\n*\n!recovered-*.md\n",
+  );
+  await pfs.unlink(`${notebook.dir}/removed.txt`);
+  await git.remove({ fs, dir: notebook.dir, filepath: "removed.txt" });
+  const oldPlan: recovery.PullRecovery = {
+    version: 1,
+    localSha: base,
+    remoteSha: base,
+    files: {
+      "missing/cache.bin": changed,
+      "folder/old.md": bytes("child from before"),
+      "live.md": bytes("earlier recovery text"),
+      "removed.txt": null,
+    },
+    conflicts: [],
+  };
+  // Reproduce the old persisted shape through the same IndexedDB store.
+  Reflect.set(oldPlan, "remoteSha", null);
+  await recovery.savePullRecovery(notebook._id, oldPlan);
+  const remove = vi
+    .spyOn(recovery, "deletePullRecovery")
+    .mockRejectedValueOnce(new Error("Interrupted cleanup"));
+  await expect(app.resumeNotebook(notebook)).rejects.toThrow(
+    "Interrupted cleanup",
+  );
+  const interrupted = await recovery.readPullRecovery(notebook._id);
+  expect(interrupted?.remoteSha).toBeNull();
+  expect(Array.from(interrupted!.files["missing/cache.bin"]!)).toEqual([
+    ...changed,
+  ]);
+  expect(
+    Array.from((await readStored(`${notebook.dir}/missing/cache.bin`))!),
+  ).toEqual([...changed]);
+  remove.mockRestore();
+  const reopened = (await app.listNotebooks()).find(
+    (n) => n._id === notebook._id,
+  );
+  expect(reopened).toBeDefined();
+  expect(reopened!.remoteSha).toBe(base);
+  expect((await app["notebookDB"].get(notebook._id)).remoteSha).toBe(base);
+  expect(await read("README.md")).toEqual([...bytes("# Kept\n")]);
+  expect(await read("missing/cache.bin")).toEqual([...changed]);
+  expect(await read("live.md")).toEqual([...bytes("newer working text")]);
+  const copies = ".crossnote-recovered-1";
+  expect(await read(`${copies}/recovered-live.md`)).toEqual([
+    ...bytes("earlier recovery text"),
+  ]);
+  expect(await read(`${copies}/recovered-old.md`)).toEqual([
+    ...bytes("child from before"),
+  ]);
+  expect(await read("folder")).toEqual([...bytes("now a file")]);
+  expect(await read(".crossnote-recovered/keep.md")).toEqual([
+    ...bytes("unrelated folder"),
+  ]);
+  expect(await pfs.exists(`${notebook.dir}/.crossnote-recovered-2`)).toBe(
+    false,
+  );
+  expect(await pfs.exists(`${notebook.dir}/removed.txt`)).toBe(false);
+  expect(await recovery.readPullRecovery(notebook._id)).toBeUndefined();
+  expect(await git.resolveRef({ fs, dir: notebook.dir, ref: "HEAD" })).toBe(
+    base,
+  );
+  await app.pullNotebook({ notebook: reopened! });
+  expect(reopened!.localSha).toBe(theirs);
+  expect(await read("missing/cache.bin")).toEqual([...changed]);
+  vi.spyOn(git, "push").mockResolvedValue({ ok: true, error: null, refs: {} });
+  await app.pushNotebook({
+    notebook: reopened!,
+    authorName: author.name,
+    authorEmail: author.email,
+  });
+  const committed = await git.listFiles({ fs, dir: notebook.dir, ref: "HEAD" });
+  expect(committed.filter((file) => file.startsWith(copies + "/"))).toEqual([]);
+  expect(committed).not.toContain("live.md");
+  expect(committed).not.toContain("removed.txt");
+});
 
 it("restores changed and newly staged bytes, deletions and untouched files on an unchanged remote", async () => {
   const { app, notebook, read } = await repository();

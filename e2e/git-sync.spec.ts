@@ -1,3 +1,4 @@
+import type { Page } from "@playwright/test";
 import { expect, test } from "./fixtures";
 import {
   bytes,
@@ -44,6 +45,77 @@ test.afterEach(async ({ page }, info) => {
       body: (browserEvents.get(page) ?? []).join("\n"),
       contentType: "text/plain",
     });
+});
+
+const advertisement = "**/info/refs?service=git-upload-pack";
+
+async function advertiseEmptyRemote(page: Page) {
+  await page.route(advertisement, (route) =>
+    route.fulfill({
+      contentType: "application/x-git-upload-pack-advertisement",
+      headers: { "Access-Control-Allow-Origin": "*" },
+      body: "001e# service=git-upload-pack\n00000000",
+    }),
+  );
+}
+
+test("downloads the first remote commit and uploads a note made in the empty clone", async ({
+  app,
+  page,
+  request,
+}) => {
+  const first = bytes("First remote commit\n");
+  const remote = await createRemote(request, { "remote.md": first });
+  await advertiseEmptyRemote(page);
+  await app.open();
+  const dir = await cloneRemote(app, remote);
+  const title = await app.createNote();
+  await app.typeInEditor("Saved before the first remote commit");
+  await page.unroute(advertisement);
+  await download(app, remote);
+  expect(await localBytes(page, `${dir}/remote.md`)).toEqual(first);
+  await upload(app, remote);
+  expect(
+    new TextDecoder().decode(
+      new Uint8Array(await remoteBytes(request, remote, title + ".md")),
+    ),
+  ).toContain("Saved before the first remote commit");
+  expect(await remoteBytes(request, remote, "remote.md")).toEqual(first);
+});
+
+test("explains an empty remote and retries the download without losing a local edit", async ({
+  app,
+  page,
+  request,
+}) => {
+  const remote = await createRemote(request, { "README.md": bytes("Base\n") });
+  await app.open();
+  const dir = await cloneRemote(app, remote);
+  const edited = bytes("Local edit\n");
+  await localBytes(page, `${dir}/README.md`, edited);
+
+  await advertiseEmptyRemote(page);
+  const messages = await app.recordMessages();
+  await app
+    .notebook(remote.id)
+    .getByRole("treeitem", { name: /Download/ })
+    .click();
+  await expect
+    .poll(messages)
+    .toContain("The remote repository has no commits yet.");
+  await page.unroute(advertisement);
+  await page.reload();
+  await app.waitUntilReady();
+  await expect(app.notebook(remote.id)).toBeVisible();
+  expect(await localBytes(page, `${dir}/README.md`)).toEqual(edited);
+
+  await app.openNotes(remote.id);
+  await changeRemote(request, remote, { "new.md": bytes("Remote addition\n") });
+  await download(app, remote);
+  expect(await localBytes(page, `${dir}/README.md`)).toEqual(edited);
+  expect(await localBytes(page, `${dir}/new.md`)).toEqual(
+    bytes("Remote addition\n"),
+  );
 });
 
 test("clones, merges text and pushes a note created from a nested link", async ({

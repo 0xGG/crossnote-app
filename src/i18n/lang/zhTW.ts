@@ -104,6 +104,7 @@ export const zhTW = {
     // Error
     "error/authentication-failed": "認証失敗",
     "error/failed-to-upload-notebook": "上傳筆記本失敗",
+    "error/remote-has-no-commits": "遠端儲存庫還沒有提交。",
     "error/failed-to-download-notebook": "下載筆記本失敗",
     "error/notebook-already-exists": "筆記本已經存在",
     "error/invalid-git-url-prefix": "無效的 git URL 前綴",

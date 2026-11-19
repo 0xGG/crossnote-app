@@ -1,4 +1,5 @@
 import { builtInTabLabels } from "../lib/tabNode";
+import { isAppErrorKey } from "../i18n/i18n";
 import i18next from "i18next";
 import { Box, Chip, IconButton, Tooltip, Typography } from "@mui/material";
 import { darken, styled } from "@mui/material/styles";
@@ -374,7 +375,9 @@ export default function NotebookTreeView(props: Props) {
                     i18next.t(`error/notebook-file-deleted-${side}`, { file }),
                   ),
                 })
-              : i18next.t("error/failed-to-download-notebook"),
+              : error instanceof Error && isAppErrorKey(error.message)
+                ? i18next.t(error.message)
+                : i18next.t("error/failed-to-download-notebook"),
         });
       });
   };

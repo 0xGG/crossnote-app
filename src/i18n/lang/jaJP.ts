@@ -110,6 +110,8 @@ export const jaJP = {
     "error/authentication-failed": "認証に失敗しました",
     "error/failed-to-upload-notebook":
       "ノートブックをアップロードできませんでした",
+    "error/remote-has-no-commits":
+      "リモートリポジトリにはまだコミットがありません。",
     "error/failed-to-download-notebook":
       "ノートブックをダウンロードできませんでした ...",
     "error/notebook-already-exists": "ノートブックは既に存在します",

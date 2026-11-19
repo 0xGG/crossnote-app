@@ -12,6 +12,11 @@ export interface PullRecovery {
   relocated?: string[];
 }
 
+// Earlier versions could publish a plan after Git advertised no refs.
+export type StoredPullRecovery = Omit<PullRecovery, "remoteSha"> & {
+  remoteSha: string | null;
+};
+
 // Kept outside the git working tree. A resolved write means the transaction,
 // not just its put request, committed before any destructive git operation.
 async function database(): Promise<IDBDatabase> {
@@ -47,7 +52,7 @@ async function transaction<T>(
 
 export const readPullRecovery = (
   id: string,
-): Promise<PullRecovery | undefined> =>
+): Promise<StoredPullRecovery | undefined> =>
   transaction("readonly", (store) => store.get(id));
 export const savePullRecovery = (id: string, recovery: PullRecovery) =>
   transaction("readwrite", (store) => store.put(recovery, id));

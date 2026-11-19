@@ -107,6 +107,7 @@ export const enUS = {
     // Error
     "error/authentication-failed": "Authentication failed",
     "error/failed-to-upload-notebook": "Failed to upload notebook",
+    "error/remote-has-no-commits": "The remote repository has no commits yet.",
     "error/failed-to-download-notebook": "Failed to download notebook",
     "error/notebook-already-exists": "Notebook already exists",
     "error/invalid-git-url-prefix": "Invalid git URL prefix",
