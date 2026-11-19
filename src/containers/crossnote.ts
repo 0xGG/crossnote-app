@@ -338,38 +338,33 @@ function useCrossnoteContainer(initialState: InitialState) {
                   files: filePath,
                 }),
               });
-            if (
+            const changed =
               JSON.stringify(note.config) !== JSON.stringify(noteConfig) ||
-              (merged && merged.text !== note.markdown)
-            ) {
-              const newNote = await notebook.writeNote(
+              (merged && merged.text !== note.markdown);
+            let saved = note;
+            if (changed) {
+              saved = await notebook.writeNote(
                 note.filePath,
                 merged?.text ?? note.markdown,
                 noteConfig,
               );
-              if (
-                JSON.stringify(note.config.aliases) !==
-                JSON.stringify(newNote.config.aliases)
-              ) {
-                notebook.search.remove(filePath);
-                notebook.search.add(
-                  filePath,
-                  newNote.title,
-                  newNote.config.aliases,
-                );
-              }
-              open?.saver.wrote(newNote.markdown);
-              globalEmitter.emit(EventType.ModifiedMarkdown, {
-                tabId: openNoteAt(location)?.saver.id ?? tabNode.getId(),
-                markdown: newNote.markdown,
-                lineBreak: newNote.lineBreak,
-                notebookPath: note.notebookPath,
-                noteFilePath: note.filePath,
-                noteConfig: newNote.config,
-              });
             } else {
               await notebook.storeNote(filePath);
-              open?.saver.wrote(note.markdown);
+            }
+            // A retry can finish persisting an earlier write. The search
+            // index still needs the aliases even if the file already has them.
+            notebook.search.remove(filePath);
+            notebook.search.add(filePath, saved.title, saved.config.aliases);
+            open?.saver.wrote(saved.markdown);
+            if (changed) {
+              globalEmitter.emit(EventType.ModifiedMarkdown, {
+                tabId: openNoteAt(location)?.saver.id ?? tabNode.getId(),
+                markdown: saved.markdown,
+                lineBreak: saved.lineBreak,
+                notebookPath: saved.notebookPath,
+                noteFilePath: saved.filePath,
+                noteConfig: saved.config,
+              });
             }
             return true;
           }),
@@ -979,7 +974,9 @@ function useCrossnoteContainer(initialState: InitialState) {
           noteFilePath,
           (current) => {
             aliases = current.aliases ?? [];
-            newAliases = [...aliases, alias];
+            newAliases = aliases.includes(alias)
+              ? aliases
+              : [...aliases, alias];
             return { ...current, aliases: newAliases };
           },
         ))

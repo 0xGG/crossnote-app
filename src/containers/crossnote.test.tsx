@@ -645,6 +645,37 @@ it("merges independent settings of an unopened note without reverting text or ot
   expect(String(stored).replaceAll("\r\n", "")).not.toContain("\n");
 });
 
+it("updates the alias search index when a settings write is retried", async () => {
+  const notebook = await notebookAt("/notebooks/retried-alias");
+  const file = "a.md";
+  await pfs.writeFile(
+    `${notebook.dir}/${file}`,
+    "---\naliases: [original, retained]\n---\nA",
+  );
+  await notebook.getNote(file, true);
+  const hits = (alias: string) =>
+    notebook.search.search(alias).map((result) => result.filePath);
+  expect(hits("original")).toEqual([file]);
+
+  vi.spyOn(pfs, "storeTree").mockRejectedValueOnce(new Error("Store refused"));
+  const remove = () =>
+    crossnote.deleteNoteAlias(tab, notebook.dir, file, "original");
+  expect(await remove()).toEqual(["original", "retained"]);
+  expect(await remove()).toEqual(["retained"]);
+  expect(hits("original")).toEqual([]);
+  expect(hits("retained")).toEqual([file]);
+
+  vi.spyOn(pfs, "storeTree").mockRejectedValueOnce(new Error("Store refused"));
+  const add = () => crossnote.addNoteAlias(tab, notebook.dir, file, "newalias");
+  expect(await add()).toEqual(["retained"]);
+  expect(await add()).toEqual(["retained", "newalias"]);
+  expect(hits("newalias")).toEqual([file]);
+  expect((await notebook.getNote(file, true)).config.aliases).toEqual([
+    "retained",
+    "newalias",
+  ]);
+});
+
 it("keeps newer typing after a settings write fails and lets the setting be retried", async () => {
   const notebook = await notebookAt("/notebooks/settings-retry");
   await pfs.writeFile(`${notebook.dir}/a.md`, "A");
