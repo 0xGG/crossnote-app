@@ -118,6 +118,8 @@ export const jaJP = {
     "error/invalid-git-url-prefix": "無効な git URL プレフィックス",
     "error/please-resolve-conflicts": "最初に競合を解決してください",
     "error/failed-to-change-file-path": "ファイル パスの変更に失敗しました",
+    "error/note-moved-retry":
+      "ノートは {{path}} に移動しました。移動先で開いてもう一度お試しください。",
     "error/failed-to-print": "ノートを印刷できませんでした",
     "error/failed-to-save-notebook-settings":
       "ノートブックの設定を保存できませんでした",

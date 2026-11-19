@@ -445,6 +445,65 @@ function openForTyping(notebook: Notebook, filePath: string, text: string) {
   return { open, calls, type, close: () => leaveNote(open, "tab") };
 }
 
+it.each(["rename", "delete", "checkout"])(
+  "cancels a waiting %s from a card when the note moves",
+  async (action) => {
+    const notebook = await notebookAt(`/notebooks/card-${action}`);
+    const note = await notebook.writeNote("old.md", "Example", {
+      createdAt: new Date(),
+      modifiedAt: new Date(),
+    });
+    const rename = vi
+      .spyOn(notebook, "changeNoteFilePath")
+      .mockResolvedValue(note);
+    const remove = vi
+      .spyOn(notebook, "deleteNote")
+      .mockResolvedValue(undefined);
+    const checkout = vi.spyOn(notebook, "checkoutNote").mockResolvedValue(note);
+    notebook.isLocal = false;
+    let pending!: Promise<unknown>;
+    await notebookOperation(notebook.dir, async () => {
+      if (action === "rename")
+        pending = crossnote.changeNoteFilePath(tab, note, "renamed.md");
+      if (action === "delete")
+        pending = crossnote.deleteNote(tab, notebook.dir, note.filePath);
+      if (action === "checkout") pending = crossnote.checkoutNote(note);
+      globalEmitter.emit(EventType.ChangedNoteFilePath, {
+        notebookPath: notebook.dir,
+        oldNoteFilePath: note.filePath,
+        newNoteFilePath: "moved.md",
+      });
+    });
+    await expect(pending).rejects.toThrow("The note moved to moved.md");
+    expect(rename).not.toHaveBeenCalled();
+    expect(remove).not.toHaveBeenCalled();
+    expect(checkout).not.toHaveBeenCalled();
+  },
+);
+
+it("updates the moved card's settings and search entry while preserving its replacement", async () => {
+  const notebook = await notebookAt("/notebooks/moved-card-settings");
+  await pfs.writeFile(`${notebook.dir}/old.md`, "Replacement");
+  await pfs.writeFile(`${notebook.dir}/moved.md`, "Example");
+  let settings!: Promise<string[]>;
+  await notebookOperation(notebook.dir, async () => {
+    settings = crossnote.addNoteAlias(tab, notebook.dir, "old.md", "Reminder");
+    globalEmitter.emit(EventType.ChangedNoteFilePath, {
+      notebookPath: notebook.dir,
+      oldNoteFilePath: "old.md",
+      newNoteFilePath: "moved.md",
+    });
+  });
+  await expect(settings).resolves.toEqual(["Reminder"]);
+  expect(await read(notebook, "old.md")).toBe("Replacement");
+  expect((await notebook.getNote("moved.md", true)).config.aliases).toEqual([
+    "Reminder",
+  ]);
+  expect(notebook.search.search("Reminder").map((hit) => hit.filePath)).toEqual(
+    ["moved.md"],
+  );
+});
+
 it("applies a recovery move to the shared editor and its waiting save", async () => {
   const notebook = await notebookAt("/notebooks/moved-editor");
   const original = ".crossnote-recovered/recovered-example.md";
@@ -814,8 +873,7 @@ it("reconciles typing when a queued alias removal is already present in download
   await reached;
   try {
     const settings = crossnote.deleteNoteAlias(tab, notebook.dir, "a.md", "x");
-    // deleteNoteAlias first awaits a cached read. Hold git until the settings
-    // operation has actually queued ahead of the later text save.
+    // Hold Git until the settings operation is queued ahead of the text save.
     await vi.waitFor(() =>
       expect(
         pendingNoteWrites({ notebookPath: notebook.dir, filePath: "a.md" }),

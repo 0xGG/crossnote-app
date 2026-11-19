@@ -4,7 +4,8 @@ import { Root } from "react-dom/client";
 import { mountTestRoot, unmountTestRoot, typeInput } from "../test/component";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import "../i18n/i18n";
-import type { Note } from "../lib/note";
+import { type Note, NoteMovedError } from "../lib/note";
+import { getNotificationState, resetNotifications } from "../lib/notifications";
 import ChangeFilePathDialog from "./ChangeFilePathDialog";
 
 const { changeNoteFilePath } = vi.hoisted(() => ({
@@ -121,4 +122,25 @@ it("moves the note once however often it is asked while moving it", () => {
   act(() => save.click());
   act(() => save.click());
   expect(changeNoteFilePath).toHaveBeenCalledTimes(1);
+});
+
+it("shows the new location when a queued rename was cancelled by a move", async () => {
+  const moved = new NoteMovedError(
+    "The note moved to saved/b.md. Open it there and try again.",
+  );
+  changeNoteFilePath.mockRejectedValueOnce(moved);
+  resetNotifications();
+  show(note);
+  act(() => typeInput(pathField(), "b.md"));
+  await act(async () => {
+    pathField().dispatchEvent(
+      new KeyboardEvent("keydown", {
+        key: "Enter",
+        keyCode: 13,
+        bubbles: true,
+      }),
+    );
+  });
+  expect(getNotificationState().current?.message).toBe(moved.message);
+  resetNotifications();
 });

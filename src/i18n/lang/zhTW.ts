@@ -110,6 +110,7 @@ export const zhTW = {
     "error/invalid-git-url-prefix": "無效的 git URL 前綴",
     "error/please-resolve-conflicts": "請先解決沖突",
     "error/failed-to-change-file-path": "更改文件路徑失敗",
+    "error/note-moved-retry": "筆記已移至 {{path}}。請從新位置開啟筆記並重試。",
     "error/failed-to-print": "無法列印筆記",
     "error/failed-to-save-notebook-settings": "儲存筆記本設定失敗",
     "error/failed-to-remove-notebook": "移除筆記本失敗",

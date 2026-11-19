@@ -1,4 +1,5 @@
 import { expect, test } from "./fixtures";
+import type { Emitter, EventType } from "../src/lib/event";
 
 // Creating, deleting or pinning a note writes to the browser's storage too;
 // when that is refused, as by a full disk, the app has to say so.
@@ -7,6 +8,32 @@ test.beforeEach(async ({ app }) => {
   await app.open();
   await app.openNotes();
 });
+
+for (const action of ["Delete", "Change file path"]) {
+  test(`dismisses an unopened note's ${action} dialog if the note moves before confirmation`, async ({
+    app,
+    page,
+  }) => {
+    const dir = await app.notebookFolder();
+    const original = await app.storedText(`${dir}/README.md`);
+    const card = app.noteCards.filter({ hasText: "README" });
+    await card.hover();
+    await card.getByRole("button", { name: "Note menu" }).click();
+    await page.getByRole("button", { name: action, exact: true }).click();
+    const dialog = page.getByRole("dialog");
+    await expect(dialog).toBeVisible();
+    await page.evaluate((notebookPath) => {
+      const { globalEmitter } = window as unknown as { globalEmitter: Emitter };
+      globalEmitter.emit("ChangedNoteFilePath" as EventType, {
+        notebookPath,
+        oldNoteFilePath: "README.md",
+        newNoteFilePath: "moved.md",
+      });
+    }, dir);
+    await expect(dialog).toBeHidden();
+    expect(await app.storedText(`${dir}/README.md`)).toBe(original);
+  });
+}
 
 test("says when a note cannot be created, and leaves no trace of it", async ({
   app,

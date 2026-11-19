@@ -34,6 +34,11 @@ import React, { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { CrossnoteContainer } from "../containers/crossnote";
 import { Note } from "../lib/note";
+import {
+  EventType,
+  globalEmitter,
+  type ChangedNoteFilePathEventData,
+} from "../lib/event";
 import { NotesNotSavedError } from "../lib/noteSaver";
 import { failureMessage, notify } from "../lib/notifications";
 import { mountPreview } from "../render";
@@ -80,6 +85,34 @@ export default function NotePopover(props: Props) {
   const crossnoteContainer = CrossnoteContainer.useContainer();
   const notebook = crossnoteContainer.getNotebookAtPath(note.notebookPath);
   const isLocal = notebook && notebook.isLocal;
+  const actionsOpen = Boolean(
+    props.anchorElement ||
+    deleteNoteDialogOpen ||
+    changeNoteFilePathDialogOpen ||
+    noteAliasAnchorEl ||
+    shareAnchorEl,
+  );
+  const { onClose } = props;
+  useEffect(() => {
+    if (!actionsOpen) return;
+    const closeMovedNote = (event: ChangedNoteFilePathEventData) => {
+      if (
+        event.notebookPath !== note.notebookPath ||
+        event.oldNoteFilePath !== note.filePath
+      )
+        return;
+      // An outstanding confirmation names the old note. Reopen actions from
+      // the new location instead of retrying against a replacement.
+      setDeleteNoteDialogOpen(false);
+      setChangeNoteFilePathDialogOpen(false);
+      setNoteAliasAnchorEl(null);
+      setShareAnchorEl(null);
+      onClose();
+    };
+    globalEmitter.on(EventType.ChangedNoteFilePath, closeMovedNote);
+    return () =>
+      globalEmitter.off(EventType.ChangedNoteFilePath, closeMovedNote);
+  }, [actionsOpen, note.filePath, note.notebookPath, onClose]);
   const shareableLink = notebook.gitURL
     ? `${window.location.origin}/?repo=${encodeURIComponent(
         notebook.gitURL,
@@ -298,7 +331,15 @@ export default function NotePopover(props: Props) {
           {!isLocal && (
             <MenuRow
               onClick={() => {
-                crossnoteContainer.checkoutNote(note);
+                crossnoteContainer.checkoutNote(note).catch((error) => {
+                  notify({
+                    severity: "error",
+                    message: failureMessage(
+                      t("general/restore-checkout"),
+                      error,
+                    ),
+                  });
+                });
                 props.onClose();
               }}
             >

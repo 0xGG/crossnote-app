@@ -1,4 +1,5 @@
-import type { Page } from "@playwright/test";
+import type { APIRequestContext, Page } from "@playwright/test";
+import type { CrossnoteApp } from "./crossnote";
 import { expect, test } from "./fixtures";
 import {
   bytes,
@@ -49,11 +50,12 @@ test.afterEach(async ({ page }, info) => {
 
 const advertisement = "**/info/refs?service=git-upload-pack";
 
-test("keeps the editor and queued typing with a note moved during Download", async ({
-  app,
-  page,
-  request,
-}) => {
+async function moveDuringDownload(
+  app: CrossnoteApp,
+  request: APIRequestContext,
+  action: () => Promise<void>,
+) {
+  const page = app.page;
   const remote = await createRemote(request, { "Story.md": bytes("Base") });
   await app.open();
   const dir = await cloneRemote(app, remote);
@@ -71,7 +73,8 @@ test("keeps the editor and queued typing with a note moved during Download", asy
     await request.get(`${fixtureURL}/repos/${remote.id}`)
   ).json();
   const moved = `Story.local-${meta.sha.slice(0, 8)}`;
-  // Hold the fetch until the real editor has dispatched input.
+  // Hold the fetch until the user's edit or rename has been dispatched.
+  const messages = await app.recordMessages();
   const fetchStarted = page.waitForRequest(advertisement);
   let release!: () => void;
   const gate = new Promise<void>((resolve) => (release = resolve));
@@ -89,13 +92,24 @@ test("keeps the editor and queued typing with a note moved during Download", asy
     .click();
   try {
     await fetchStarted;
-    await app.visibleEditor.click();
-    await page.keyboard.press("Control+End");
-    await page.keyboard.type(" queued");
+    await action();
   } finally {
     release();
   }
   await expect(app.tab(moved)).toHaveAttribute("aria-selected", "true");
+  return { dir, moved, messages };
+}
+
+test("keeps the editor and queued typing with a note moved during Download", async ({
+  app,
+  page,
+  request,
+}) => {
+  const { dir, moved } = await moveDuringDownload(app, request, async () => {
+    await app.visibleEditor.click();
+    await page.keyboard.press("Control+End");
+    await page.keyboard.type(" queued");
+  });
   await expect
     .poll(() => app.storedText(`${dir}/${moved}.md`))
     .toContain("Local story queued");
@@ -108,6 +122,41 @@ test("keeps the editor and queued typing with a note moved during Download", asy
   await expect(app.tab(moved)).toHaveAttribute("aria-selected", "true");
   await expect(app.preview).toContainText("Local story queued");
 });
+
+for (const { name, rename } of [
+  {
+    name: "title",
+    rename: async (app: CrossnoteApp) => {
+      await app.noteTitle.fill("Renamed");
+      await app.noteTitle.press("Enter");
+    },
+  },
+  {
+    name: "path dialog",
+    rename: async (app: CrossnoteApp) => {
+      await app.page.getByRole("button", { name: "Note menu" }).click();
+      await app.page.getByRole("button", { name: "Change file path" }).click();
+      const dialog = app.page.getByRole("dialog");
+      await dialog.getByRole("textbox").fill("Renamed");
+      await dialog.getByRole("button", { name: "Save", exact: true }).click();
+    },
+  },
+]) {
+  test(`reports the new path when a rename from the ${name} waits behind Download`, async ({
+    app,
+    request,
+  }) => {
+    const { dir, moved, messages } = await moveDuringDownload(
+      app,
+      request,
+      () => rename(app),
+    );
+    await expect
+      .poll(messages)
+      .toContain(`The note moved to ${moved}.md. Open it there and try again.`);
+    expect(await app.storedText(`${dir}/Renamed.md`)).toBeUndefined();
+  });
+}
 
 async function advertiseEmptyRemote(page: Page) {
   await page.route(advertisement, (route) =>

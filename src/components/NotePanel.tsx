@@ -42,7 +42,7 @@ import {
   PerformedGitOperationEventData,
 } from "../lib/event";
 import { readNoteText } from "../lib/frontMatter";
-import { Note } from "../lib/note";
+import { Note, renameFailureMessage } from "../lib/note";
 import { Notebook } from "../lib/notebook";
 import { tagCompletions, wikiLinkCompletions } from "../lib/noteCompletions";
 import { isFinishingEnter } from "../lib/keys";
@@ -373,7 +373,7 @@ export default function NotePanel(props: Props) {
         renamingFrom.current = null;
         notify({
           severity: "error",
-          message: i18next.t("error/failed-to-change-file-path"),
+          message: renameFailureMessage(error),
           duration: 5000,
         });
         setTitleDraft(null);
