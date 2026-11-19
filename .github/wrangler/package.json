@@ -3,6 +3,6 @@
   "private": true,
   "description": "Wrangler for the deploy job in .github/workflows/ci.yml, pinned with its whole dependency tree and kept apart from the app's dependencies.",
   "dependencies": {
-    "wrangler": "4.156.2"
+    "wrangler": "4.165.0"
   }
 }
