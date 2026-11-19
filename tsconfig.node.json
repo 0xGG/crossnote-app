@@ -1,8 +1,18 @@
 {
   "extends": "./tsconfig.json",
   "compilerOptions": {
+    "target": "ES2024",
+    "lib": ["ES2024"],
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "allowImportingTsExtensions": true,
     "types": ["node"],
     "strictNullChecks": true
   },
-  "include": ["vite.config.ts", "site-headers.ts"]
+  "include": [
+    "vite.config.ts",
+    "playwright.config.ts",
+    "site-headers.ts",
+    "emoji-sheet.ts"
+  ]
 }

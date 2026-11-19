@@ -1,0 +1,8 @@
+{
+  "extends": "../tsconfig.json",
+  "compilerOptions": {
+    "types": ["vite/client", "wicg-file-system-access"]
+  },
+  "include": ["."],
+  "exclude": ["**/*.test.*", "test", "editor/testText.ts"]
+}

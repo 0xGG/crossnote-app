@@ -1,8 +1,8 @@
 import react from "@vitejs/plugin-react";
 import { execSync } from "node:child_process";
 import { defineConfig } from "vitest/config";
-import { emojiSheetCells } from "./emoji-sheet";
-import { siteHeaders } from "./site-headers";
+import { emojiSheetCells } from "./emoji-sheet.ts";
+import { siteHeaders } from "./site-headers.ts";
 
 // Build metadata shown in the Settings panel (replaces the legacy
 // `yarn git-info` script that generated src/_git_commit.js).

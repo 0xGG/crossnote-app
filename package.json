@@ -10,9 +10,10 @@
   "packageManager": "pnpm@12.16.1",
   "scripts": {
     "dev": "vite",
-    "build": "tsc --noEmit && vite build",
+    "build": "pnpm typecheck:src && vite build",
     "preview": "vite preview",
-    "typecheck": "tsc --noEmit && tsc --noEmit -p e2e && tsc --noEmit -p tsconfig.node.json",
+    "typecheck": "pnpm typecheck:src && tsc -p tsconfig.node.json && tsc -p e2e",
+    "typecheck:src": "tsc -p src && tsc -p tsconfig.test.json",
     "lint": "eslint . --max-warnings 0",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
