@@ -49,6 +49,66 @@ test.afterEach(async ({ page }, info) => {
 
 const advertisement = "**/info/refs?service=git-upload-pack";
 
+test("keeps the editor and queued typing with a note moved during Download", async ({
+  app,
+  page,
+  request,
+}) => {
+  const remote = await createRemote(request, { "Story.md": bytes("Base") });
+  await app.open();
+  const dir = await cloneRemote(app, remote);
+  await app.noteCards.getByText("Story", { exact: true }).click();
+  await app.modeButton("Edit").click();
+  await app.setEditorText("Local story", app.visibleEditor);
+  await expect
+    .poll(() => app.storedText(`${dir}/Story.md`))
+    .toContain("Local story");
+  await changeRemote(request, remote, {
+    "Story.md": null,
+    "Story.md/chapter.md": bytes("Remote chapter"),
+  });
+  const meta = await (
+    await request.get(`${fixtureURL}/repos/${remote.id}`)
+  ).json();
+  const moved = `Story.local-${meta.sha.slice(0, 8)}`;
+  // Hold the fetch until the real editor has dispatched input.
+  const fetchStarted = page.waitForRequest(advertisement);
+  let release!: () => void;
+  const gate = new Promise<void>((resolve) => (release = resolve));
+  await page.route(
+    advertisement,
+    async (route) => {
+      await gate;
+      await route.continue();
+    },
+    { times: 1 },
+  );
+  await app
+    .notebook(remote.id)
+    .getByRole("treeitem", { name: /Download/ })
+    .click();
+  try {
+    await fetchStarted;
+    await app.visibleEditor.click();
+    await page.keyboard.press("Control+End");
+    await page.keyboard.type(" queued");
+  } finally {
+    release();
+  }
+  await expect(app.tab(moved)).toHaveAttribute("aria-selected", "true");
+  await expect
+    .poll(() => app.storedText(`${dir}/${moved}.md`))
+    .toContain("Local story queued");
+  expect(await app.editorText(app.visibleEditor)).toBe("Local story queued");
+  expect(await localBytes(page, `${dir}/Story.md/chapter.md`)).toEqual(
+    bytes("Remote chapter"),
+  );
+  await page.reload();
+  await app.waitUntilReady();
+  await expect(app.tab(moved)).toHaveAttribute("aria-selected", "true");
+  await expect(app.preview).toContainText("Local story queued");
+});
+
 async function advertiseEmptyRemote(page: Page) {
   await page.route(advertisement, (route) =>
     route.fulfill({

@@ -18,12 +18,21 @@ import Crossnote, {
   PullNotebookArgs,
   PushNotebookArgs,
 } from "../lib/crossnote";
-import { EventType, globalEmitter } from "../lib/event";
+import {
+  type ChangedNoteFilePathEventData,
+  EventType,
+  globalEmitter,
+} from "../lib/event";
 import { missingFileOrThrow, pfs } from "../lib/fs";
 import { pruneUnknownTabs, tabsInNotebook } from "../lib/layout";
 import { Note, NoteConfig } from "../lib/note";
 import { Notebook } from "../lib/notebook";
-import { NotesNotSavedError, flushNotes } from "../lib/noteSaver";
+import {
+  NotesNotSavedError,
+  flushNotes,
+  moveNoteSavers,
+  saverOfWriter,
+} from "../lib/noteSaver";
 import { writeNoteOperation } from "../lib/noteWrites";
 import { moveNote, openNoteAt } from "../lib/openNotes";
 import { failureMessage, notify } from "../lib/notifications";
@@ -207,6 +216,8 @@ function useCrossnoteContainer(initialState: InitialState) {
       markdown: string,
     ) =>
       writeNoteOperation({ notebookPath, filePath }, async () => {
+        // A queued write can acquire the lock after Git has moved its note.
+        filePath = saverOfWriter(writer.getId())?.location.filePath ?? filePath;
         // The save comes a moment after the last keystroke, by when the
         // notebook, or the note, may have been deleted or the note renamed.
         const notebook = getNotebookAtPath(notebookPath);
@@ -359,6 +370,35 @@ function useCrossnoteContainer(initialState: InitialState) {
     [getNotebookAtPath],
   );
 
+  useEffect(() => {
+    const followMove = ({
+      notebookPath,
+      oldNoteFilePath,
+      newNoteFilePath,
+    }: ChangedNoteFilePathEventData) => {
+      const from = { notebookPath, filePath: oldNoteFilePath };
+      const to = { notebookPath, filePath: newNoteFilePath };
+      const open = openNoteAt(from);
+      if (open) moveNote(open, to);
+      moveNoteSavers(from, to);
+      if (layoutModel) {
+        for (const tab of tabsInNotebook(
+          layoutModel,
+          notebookPath,
+          oldNoteFilePath,
+        )) {
+          layoutModel.doAction(
+            Actions.updateNodeAttributes(tab.getId(), {
+              config: { ...tab.getConfig(), noteFilePath: newNoteFilePath },
+            }),
+          );
+        }
+      }
+    };
+    globalEmitter.on(EventType.ChangedNoteFilePath, followMove);
+    return () => globalEmitter.off(EventType.ChangedNoteFilePath, followMove);
+  }, [layoutModel]);
+
   const changeNoteFilePath = useCallback(
     async (tabNode: TabNode, note: Note, newFilePath: string) => {
       const notebook = notebooks.find((x) => x.dir === note.notebookPath);
@@ -380,13 +420,6 @@ function useCrossnoteContainer(initialState: InitialState) {
               newFilePath,
               onMoved,
             );
-            // Migrate the shared owner before releasing writes and closing.
-            if (open) {
-              moveNote(open, {
-                notebookPath: note.notebookPath,
-                filePath: newNote.filePath,
-              });
-            }
             globalEmitter.emit(EventType.ChangedNoteFilePath, {
               tabId: tabNode.getId(),
               notebookPath: note.notebookPath,
@@ -394,26 +427,6 @@ function useCrossnoteContainer(initialState: InitialState) {
               // As the notebook wrote it, which is not always as it was asked.
               newNoteFilePath: newNote.filePath,
             });
-            // A tab keeps the path of the note it shows, which the saved layout
-            // opens it at again and which opening the note looks for; every tab
-            // of the note follows it.
-            if (layoutModel) {
-              const tabs = tabsInNotebook(
-                layoutModel,
-                note.notebookPath,
-                oldNoteFilePath,
-              );
-              for (const tab of tabs) {
-                layoutModel.doAction(
-                  Actions.updateNodeAttributes(tab.getId(), {
-                    config: {
-                      ...tab.getConfig(),
-                      noteFilePath: newNote.filePath,
-                    },
-                  }),
-                );
-              }
-            }
             return newNote;
           });
         return open ? await open.saver.rename(rename) : await rename();
@@ -421,7 +434,7 @@ function useCrossnoteContainer(initialState: InitialState) {
         throw new Error("Notebook " + note.notebookPath + " not found");
       }
     },
-    [notebooks, layoutModel],
+    [notebooks],
   );
 
   const nameAndWriteNote = useCallback(

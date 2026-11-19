@@ -9,7 +9,8 @@ export interface PullRecovery {
   deletions?: ConflictDeletions;
   // These local paths have durable copies at safe paths in files. Remove the
   // originals before checkout so remote files and directories can replace them.
-  relocated?: string[];
+  // Older plans listed only the original paths.
+  relocated?: Record<string, string> | string[];
 }
 
 // Earlier versions could publish a plan after Git advertised no refs.

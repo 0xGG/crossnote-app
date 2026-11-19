@@ -6,6 +6,7 @@ import PouchDB from "pouchdb";
 import PouchdbFind from "pouchdb-find";
 import { notebookNameFromGitURL, randomID } from "../utilities/utils";
 import { fs, pfs } from "./fs";
+import { EventType, globalEmitter } from "./event";
 import { Notebook } from "./notebook";
 import { needsRecovery, notebookOperation } from "./notebookOperation";
 import {
@@ -787,7 +788,9 @@ export default class Crossnote {
       await git.listFiles({ fs, dir: notebook.dir, ref: recovery.remoteSha }),
     );
     const baseFiles = await filesAtCommit(notebook.dir, recovery.localSha);
-    for (const file of new Set([...baseFiles, ...(recovery.relocated ?? [])])) {
+    const moves = recovery.relocated ?? {};
+    const originals = Array.isArray(moves) ? moves : Object.keys(moves);
+    for (const file of new Set([...baseFiles, ...originals])) {
       if (
         !remoteFiles.has(file) &&
         !Object.prototype.hasOwnProperty.call(recovery.files, file)
@@ -849,6 +852,18 @@ export default class Crossnote {
     localStorage.removeItem(`pending/pull/${notebook._id}`);
     await deletePullRecovery(notebook._id);
     needsRecovery(notebook.dir, false);
+    // Update editors while Git still owns the notebook lock, before queued
+    // writes get to read or recreate the old paths.
+    if (!Array.isArray(moves)) {
+      for (const [oldNoteFilePath, newNoteFilePath] of Object.entries(moves)) {
+        if (oldNoteFilePath.endsWith(".md"))
+          globalEmitter.emit(EventType.ChangedNoteFilePath, {
+            notebookPath: notebook.dir,
+            oldNoteFilePath,
+            newNoteFilePath,
+          });
+      }
+    }
   }
 
   public async resumeNotebook(notebook: Notebook): Promise<void> {
@@ -953,7 +968,7 @@ export default class Crossnote {
     const files: Cache = Object.create(null);
     const conflicts: string[] = [];
     const deletions: ConflictDeletions = Object.create(null);
-    const relocated: string[] = [];
+    const relocated: Record<string, string> = Object.create(null);
     const overlaps = (a: string, b: string) =>
       a === b || a.startsWith(`${b}/`) || b.startsWith(`${a}/`);
     const copyPath = async (file: string, side: "local" | "remote") => {
@@ -1031,7 +1046,7 @@ export default class Crossnote {
         if (merged.bytes !== null) {
           const copy = await localCopyPath(file);
           files[copy] = merged.bytes;
-          relocated.push(file);
+          relocated[file] = copy;
           conflicts.push(file, copy);
         }
         continue;

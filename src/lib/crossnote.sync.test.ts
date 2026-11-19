@@ -413,6 +413,39 @@ it("reopens an old empty-remote plan without losing working, committed or recove
   expect(committed).not.toContain("removed.txt");
 });
 
+it("replays a previously persisted recovery directory relocation on startup", async () => {
+  const dir = ".crossnote-recovered";
+  const moved = ".crossnote-recovered-1";
+  const { app, notebook, base, theirs, read } = await repository({
+    [dir]: bytes("remote"),
+  });
+  const marker = bytes("# Crossnote recovered files\n*\n");
+  await pfs.writeFile(`${notebook.dir}/${dir}/.gitignore`, marker);
+  await pfs.writeFile(`${notebook.dir}/${dir}/recovered.bin`, binary);
+  await recovery.savePullRecovery(notebook._id, {
+    version: 1,
+    localSha: base,
+    remoteSha: theirs,
+    files: {
+      [`${moved}/.gitignore`]: marker,
+      [`${moved}/recovered.bin`]: binary,
+    },
+    relocated: {
+      [`${dir}/.gitignore`]: `${moved}/.gitignore`,
+      [`${dir}/recovered.bin`]: `${moved}/recovered.bin`,
+    },
+    conflicts: [],
+  });
+  const reopened = (await app.listNotebooks()).find(
+    (n) => n._id === notebook._id,
+  );
+  expect(reopened?.localSha).toBe(theirs);
+  expect(await recovery.readPullRecovery(notebook._id)).toBeUndefined();
+  expect(await read(dir)).toEqual([...bytes("remote")]);
+  expect(await read(`${moved}/recovered.bin`)).toEqual([...binary]);
+  expect(await read(`${moved}/.gitignore`)).toEqual([...marker]);
+});
+
 it("restores changed and newly staged bytes, deletions and untouched files on an unchanged remote", async () => {
   const { app, notebook, read } = await repository();
   await pfs.writeFile(`${notebook.dir}/assets/a.bin`, changed);
@@ -498,7 +531,7 @@ it("moves a local file aside when the remote replaces it with a directory and re
     "Copy write failed",
   );
   const plan = await recovery.readPullRecovery(notebook._id);
-  expect(plan?.relocated).toEqual(["removed.txt"]);
+  expect(plan?.relocated).toEqual({ "removed.txt": kept });
   expect(plan?.files["removed.txt"]).toBeUndefined();
   expect([...plan!.files[kept]!]).toEqual([...bytes("local edit")]);
   failing.mockRestore();

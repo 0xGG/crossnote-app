@@ -354,6 +354,22 @@ export function saverOfTab(tabId: string): NoteSaver | undefined {
   }
 }
 
+export function saverOfWriter(writerId: string): NoteSaver | undefined {
+  return [...savers].find((saver) => saver.id === writerId);
+}
+
+// A tab closed during a Git operation still has a saver until its queued
+// write settles. Move those writers along with any visible editor.
+export function moveNoteSavers(from: NoteLocation, to: NoteLocation) {
+  for (const saver of savers) {
+    if (
+      saver.location.notebookPath === from.notebookPath &&
+      saver.location.filePath === from.filePath
+    )
+      saver.moveTo(to);
+  }
+}
+
 /**
  * Writes out what the note editors open in a notebook, or on one note of it,
  * hold that is not in it yet. Rejects with a NotesNotSavedError naming the

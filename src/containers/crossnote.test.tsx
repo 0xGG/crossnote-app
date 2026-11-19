@@ -8,6 +8,7 @@ import { createRoot, Root } from "react-dom/client";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import "../i18n/i18n";
 import type Crossnote from "../lib/crossnote";
+import { EventType, globalEmitter } from "../lib/event";
 import { fs, pfs } from "../lib/fs";
 import type { Note } from "../lib/note";
 import { Notebook } from "../lib/notebook";
@@ -443,6 +444,39 @@ function openForTyping(notebook: Notebook, filePath: string, text: string) {
   };
   return { open, calls, type, close: () => leaveNote(open, "tab") };
 }
+
+it("applies a recovery move to the shared editor and its waiting save", async () => {
+  const notebook = await notebookAt("/notebooks/moved-editor");
+  const original = ".crossnote-recovered/recovered-example.md";
+  const moved = ".crossnote-recovered-1/recovered-example.md";
+  const text = "Example";
+  await pfs.writeFile(`${notebook.dir}/${moved}`, text);
+  const { open, type, close } = openForTyping(notebook, original, text);
+  const write = vi.spyOn(notebook, "writeNote");
+  let saving: Promise<void>;
+  try {
+    await notebookOperation(notebook.dir, async () => {
+      type(" edited");
+      saving = open.saver.flush();
+      expect(pendingNoteWrites(open.saver.location)).toHaveLength(1);
+      globalEmitter.emit(EventType.ChangedNoteFilePath, {
+        notebookPath: notebook.dir,
+        oldNoteFilePath: original,
+        newNoteFilePath: moved,
+      });
+    });
+    await saving!;
+    expect(open.saver.location.filePath).toBe(moved);
+    expect(openNoteAt({ notebookPath: notebook.dir, filePath: moved })).toBe(
+      open,
+    );
+    expect(open.document.text()).toBe("Example edited");
+    expect(write.mock.calls.map(([file]) => file)).toEqual([moved]);
+    expect(await read(notebook, moved)).toContain("Example edited");
+  } finally {
+    close();
+  }
+});
 
 // The text of a stored note, less the front matter a save puts before it.
 const body = async (notebook: Notebook, fileName: string) =>

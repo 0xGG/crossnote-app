@@ -35,7 +35,6 @@ import { NoteEditor, type EditorDisplay } from "../editor/noteEditor";
 import { outline } from "../editor/outline";
 import { EditorMode } from "../lib/editorMode";
 import {
-  ChangedNoteFilePathEventData,
   DeletedNoteEventData,
   EventType,
   globalEmitter,
@@ -51,7 +50,6 @@ import { failureMessage, notify } from "../lib/notifications";
 import {
   joinNote,
   leaveNote,
-  moveNote,
   type OpenNote,
   type OpenNoteCalls,
 } from "../lib/openNotes";
@@ -489,15 +487,6 @@ export default function NotePanel(props: Props) {
     });
   }, [openNote]);
 
-  useEffect(() => {
-    if (openNote && note) {
-      moveNote(openNote, {
-        notebookPath: note.notebookPath,
-        filePath: note.filePath,
-      });
-    }
-  }, [openNote, note]);
-
   // Emitter
   useEffect(() => {
     if (!globalEmitter || !tabNode || !note || !openNote) {
@@ -528,23 +517,14 @@ export default function NotePanel(props: Props) {
       }
     };
 
-    const changedNoteFilePathCallback = async (
-      data: ChangedNoteFilePathEventData,
-    ) => {
-      if (
-        data.notebookPath === note.notebookPath &&
-        data.oldNoteFilePath === note.filePath
-      ) {
-        const newNote = await getNote(data.notebookPath, data.newNoteFilePath);
-        setNote(newNote);
-      }
-    };
-
     const performedGitOperationCallback = async (
       data: PerformedGitOperationEventData,
     ) => {
       if (data.notebookPath === note.notebookPath) {
-        const newNote = await getNote(data.notebookPath, note.filePath);
+        const newNote = await getNote(
+          data.notebookPath,
+          openNote.saver.location.filePath,
+        );
         if (newNote) {
           setNote(newNote);
           if (openNote.saver.isOwn(newNote.markdown)) {
@@ -564,20 +544,12 @@ export default function NotePanel(props: Props) {
     globalEmitter.on(EventType.ModifiedMarkdown, modifiedMarkdownCallback);
     globalEmitter.on(EventType.DeletedNote, deletedNoteCallback);
     globalEmitter.on(
-      EventType.ChangedNoteFilePath,
-      changedNoteFilePathCallback,
-    );
-    globalEmitter.on(
       EventType.PerformedGitOperation,
       performedGitOperationCallback,
     );
     return () => {
       globalEmitter.off(EventType.ModifiedMarkdown, modifiedMarkdownCallback);
       globalEmitter.off(EventType.DeletedNote, deletedNoteCallback);
-      globalEmitter.off(
-        EventType.ChangedNoteFilePath,
-        changedNoteFilePathCallback,
-      );
       globalEmitter.off(
         EventType.PerformedGitOperation,
         performedGitOperationCallback,
@@ -592,13 +564,18 @@ export default function NotePanel(props: Props) {
   const [missing, setMissing] = useState<boolean>(false);
   const [lookedFor, setLookedFor] = useState<number>(0);
   useEffect(() => {
+    let current = true;
     props.notebook
       .refreshNotesIfNotLoaded({
         dir: "./",
         includeSubdirectories: true,
       })
-      .then((notes) => {
-        const loaded = notes[props.noteFilePath];
+      .then(async (notes) => {
+        // Git can move the open tab before the notebook has been reindexed.
+        const loaded =
+          notes[props.noteFilePath] ??
+          (await props.notebook.getNote(props.noteFilePath));
+        if (!current) return;
         // An empty note opens in the editor rather than the preview. Decided
         // once, with the first note the panel loads: a rename loads the note
         // again from its new path, and that, like a pull replacing the note,
@@ -615,9 +592,13 @@ export default function NotePanel(props: Props) {
         setMissing(!loaded);
       })
       .catch((error) => {
+        if (!current) return;
         console.error(error);
         setMissing(true);
       });
+    return () => {
+      current = false;
+    };
   }, [props.noteFilePath, props.notebook, lookedFor]);
 
   // A note that is not there may come: pulled or restored by git, created,
