@@ -45,7 +45,8 @@ describe("printPreview", () => {
   });
 
   it("puts the page back without printing when the note cannot be drawn", async () => {
-    vi.useFakeTimers();
+    // Track the drawing deadline. jsdom queues its own task for the print stylesheet.
+    vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
     const print = vi.spyOn(window, "print").mockImplementation(() => {});
     const element = noteElement();
     const banner = document.createElement("div");
