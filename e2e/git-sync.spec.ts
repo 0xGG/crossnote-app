@@ -1,4 +1,7 @@
+import { ok } from "node:assert/strict";
+import { readFile } from "node:fs/promises";
 import type { APIRequestContext, Page } from "@playwright/test";
+import { unzipSync } from "fflate";
 import type { CrossnoteApp } from "./crossnote";
 import { expect, test } from "./fixtures";
 import {
@@ -55,7 +58,6 @@ async function moveDuringDownload(
   request: APIRequestContext,
   action: () => Promise<void>,
 ) {
-  const page = app.page;
   const remote = await createRemote(request, { "Story.md": bytes("Base") });
   await app.open();
   const dir = await cloneRemote(app, remote);
@@ -73,6 +75,17 @@ async function moveDuringDownload(
     await request.get(`${fixtureURL}/repos/${remote.id}`)
   ).json();
   const moved = `Story.local-${meta.sha.slice(0, 8)}`;
+  const messages = await whileDownloading(app, remote.id, action);
+  await expect(app.tab(moved)).toHaveAttribute("aria-selected", "true");
+  return { dir, moved, messages };
+}
+
+async function whileDownloading(
+  app: CrossnoteApp,
+  notebook: string,
+  action: () => Promise<void>,
+) {
+  const page = app.page;
   // Hold the fetch until the user's edit or rename has been dispatched.
   const messages = await app.recordMessages();
   const fetchStarted = page.waitForRequest(advertisement);
@@ -87,7 +100,7 @@ async function moveDuringDownload(
     { times: 1 },
   );
   await app
-    .notebook(remote.id)
+    .notebook(notebook)
     .getByRole("treeitem", { name: /Download/ })
     .click();
   try {
@@ -96,8 +109,7 @@ async function moveDuringDownload(
   } finally {
     release();
   }
-  await expect(app.tab(moved)).toHaveAttribute("aria-selected", "true");
-  return { dir, moved, messages };
+  return messages;
 }
 
 test("keeps the editor and queued typing with a note moved during Download", async ({
@@ -121,6 +133,138 @@ test("keeps the editor and queued typing with a note moved during Download", asy
   await app.waitUntilReady();
   await expect(app.tab(moved)).toHaveAttribute("aria-selected", "true");
   await expect(app.preview).toContainText("Local story queued");
+});
+
+test.describe("recovery notes", () => {
+  const directory = ".crossnote-recovered";
+  const story = `${directory}/Story.md`;
+  const markerPath = `${directory}/.gitignore`;
+  const marker = bytes("# Crossnote recovered files\n*\n");
+  const guide = bytes(`See [[${directory}/Story]]`);
+  const editedGuide = bytes(`Updated guide: [[${directory}/Story]]`);
+  const published = bytes("Published story\n");
+  const publicRules = bytes("# Public notebook files\n*.tmp\n");
+
+  for (const { action, startSync, retry, expectedRemoteGuide } of [
+    {
+      action: "Download",
+      startSync: (app: CrossnoteApp, id: string) =>
+        app
+          .notebook(id)
+          .getByRole("treeitem", { name: /Download/ })
+          .click(),
+      retry: download,
+      expectedRemoteGuide: guide,
+    },
+    {
+      action: "Upload",
+      startSync: async (app: CrossnoteApp, id: string) => {
+        await app
+          .notebook(id)
+          .getByRole("treeitem", { name: /Upload/ })
+          .click();
+        await app.page
+          .getByRole("dialog")
+          .getByRole("button", { name: "Upload", exact: true })
+          .click();
+      },
+      retry: upload,
+      expectedRemoteGuide: editedGuide,
+    },
+  ]) {
+    test(`pauses ${action} for a recovery backup and completes on manual retry`, async ({
+      app,
+      page,
+      request,
+    }) => {
+      const remote = await createRemote(request, { "Guide.md": guide });
+      await app.open();
+      const dir = await cloneRemote(app, remote);
+      await localBytes(page, `${dir}/Guide.md`, editedGuide);
+      await localBytes(page, `${dir}/${markerPath}`, marker);
+      await localBytes(page, `${dir}/${story}`, bytes("Story draft"));
+      await app.noteCards.getByText("Guide", { exact: true }).click();
+      await app.preview
+        .getByRole("link", { name: `${directory}/Story` })
+        .click();
+      await expect(app.preview.filter({ visible: true })).toContainText(
+        "Story draft",
+      );
+      await app.modeButton("Edit").click();
+      await app.setEditorText("Story draft with an ending", app.visibleEditor);
+      await expect
+        .poll(() => app.storedText(`${dir}/${story}`))
+        .toContain("Story draft with an ending");
+      const draft = await localBytes(page, `${dir}/${story}`);
+      await changeRemote(request, remote, {
+        [story]: published,
+        [markerPath]: publicRules,
+      });
+
+      const paused = page.getByRole("dialog", { name: "Sync paused" });
+      const confirm = paused.getByRole("button", { name: "I saved the files" });
+      async function requestBackup() {
+        await startSync(app, remote.id);
+        await expect(paused).toContainText(directory);
+        await expect(confirm).toBeDisabled();
+        expect(await localBytes(page, `${dir}/${story}`)).toEqual(draft);
+        expect(await localBytes(page, `${dir}/${markerPath}`)).toEqual(marker);
+        expect(await remoteBytes(request, remote, "Guide.md")).toEqual(guide);
+        const downloaded = page.waitForEvent("download");
+        await paused
+          .getByRole("button", { name: "Download recovery files" })
+          .click();
+        const zip = await (await downloaded).path();
+        ok(zip, "Recovery ZIP has no local download path");
+        const files = unzipSync(await readFile(zip));
+        expect([...files[story]]).toEqual(draft);
+        expect([...files[markerPath]]).toEqual(marker);
+        await expect(confirm).toBeEnabled();
+      }
+
+      await requestBackup();
+      await confirm.click();
+      await expect(paused.getByRole("alert")).toContainText(/close/i);
+      await expect(paused.getByRole("alert")).toContainText(/note/i);
+      expect(await localBytes(page, `${dir}/${story}`)).toEqual(draft);
+      expect(await localBytes(page, `${dir}/${markerPath}`)).toEqual(marker);
+      await paused.getByRole("button", { name: "Close", exact: true }).click();
+      const tab = app.tab("Story");
+      await tab.locator(".flexlayout__tab_button_trailing").click();
+      await expect(tab).toHaveCount(0);
+      await app.openNotes(remote.id);
+      const storyCard = app.noteCards.getByText("Story", { exact: true });
+      const guideCard = app.noteCards.getByText("Guide", { exact: true });
+      await expect(guideCard).toBeVisible();
+      await expect(storyCard).toBeVisible();
+
+      await requestBackup();
+      await confirm.click();
+      await expect(paused).toBeHidden();
+      await expect(guideCard).toBeVisible();
+      await expect(storyCard).toHaveCount(0);
+      expect(await app.storedText(`${dir}/${story}`)).toBeUndefined();
+      await retry(app, remote);
+
+      await page.reload();
+      await app.waitUntilReady();
+      expect(await localBytes(page, `${dir}/${story}`)).toEqual(published);
+      expect(await localBytes(page, `${dir}/${markerPath}`)).toEqual(
+        publicRules,
+      );
+      expect(await remoteBytes(request, remote, story)).toEqual(published);
+      expect(await remoteBytes(request, remote, markerPath)).toEqual(
+        publicRules,
+      );
+      expect(await remoteBytes(request, remote, "Guide.md")).toEqual(
+        expectedRemoteGuide,
+      );
+      const head = await (
+        await request.get(`${fixtureURL}/repos/${remote.id}`)
+      ).json();
+      expect(head.files.sort()).toEqual([markerPath, story, "Guide.md"].sort());
+    });
+  }
 });
 
 for (const { name, rename } of [

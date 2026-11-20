@@ -147,6 +147,10 @@ function useCrossnoteContainer(initialState: InitialState) {
   const crossnote = initialState.crossnote;
   const [initialized, setInitialized] = useState<boolean>(false);
   const [notebooks, setNotebooks] = useState<Notebook[]>([]);
+  const [recoveryCollision, setRecoveryCollision] = useState<{
+    notebook: Notebook;
+    directory: string;
+  } | null>(null);
   const [isAddingNotebook, setIsAddingNotebook] = useState<boolean>(false);
   const [isPushingNotebook, setIsPushingNotebook] = useState<boolean>(false);
   const [isPullingNotebook, setIsPullingNotebook] = useState<boolean>(false);
@@ -1177,6 +1181,8 @@ favorited: true
 
   return {
     crossnote,
+    recoveryCollision,
+    setRecoveryCollision,
     initialized,
     notebooks,
     updateNoteMarkdown,

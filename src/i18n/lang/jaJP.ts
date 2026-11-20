@@ -2,6 +2,18 @@ import type { enUS } from "./enUS";
 
 export const jaJP = {
   translation: {
+    "recovery/title": "同期を一時停止しました",
+    "recovery/instructions":
+      "リモートがノートブック「{{notebook}}」の {{directory}} を使用しています。このフォルダー内のノートを閉じてから ZIP をダウンロードし、ファイルを確認してください。保存を確認するとローカルの復元フォルダーが削除されます。その後、ダウンロードまたはアップロードを再試行できます。",
+    "recovery/download": "復元ファイルをダウンロード",
+    "recovery/confirm": "ファイルを保存しました",
+    "recovery/retry":
+      "ローカルの復元フォルダーを削除しました。ダウンロードまたはアップロードを再試行してください。",
+    "error/close-recovery-notes":
+      "復元フォルダー内のノートを閉じ、変更の保存が終わるまでお待ちください。",
+    "error/recovery-files-changed":
+      "復元ファイルが変更されました。もう一度ダウンロードして内容を確認してください。",
+    "error/recovery-files": "復元ファイルにアクセスできませんでした。",
     "attachment/insert-image": "画像を挿入",
     "attachment/ignored":
       "この添付ファイルのパスは Git で無視されています。リンクは挿入されず、保存済みファイルは assets に残ります。ノートブックの除外ルールを確認してください。",

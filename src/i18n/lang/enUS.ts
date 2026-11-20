@@ -1,5 +1,17 @@
 export const enUS = {
   translation: {
+    "recovery/title": "Sync paused",
+    "recovery/instructions":
+      "The remote now uses {{directory}} in {{notebook}}. Close any notes from that folder, then download the ZIP and check your files. Confirming below removes the local recovery folder so you can retry the download or upload.",
+    "recovery/download": "Download recovery files",
+    "recovery/confirm": "I saved the files",
+    "recovery/retry":
+      "Recovery files removed from the notebook. Retry the download or upload.",
+    "error/close-recovery-notes":
+      "Close the notes in this recovery folder before removing it. Wait for their changes to finish saving.",
+    "error/recovery-files-changed":
+      "The recovery files have changed. Download a fresh copy before confirming.",
+    "error/recovery-files": "Could not access the recovery files.",
     "attachment/insert-image": "Insert image",
     "attachment/ignored":
       "This attachment path is ignored by Git. No links were inserted; any files already saved remain in assets. Check the notebook's ignore rules.",

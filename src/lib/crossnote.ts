@@ -5,9 +5,10 @@ import path from "path-browserify";
 import PouchDB from "pouchdb";
 import PouchdbFind from "pouchdb-find";
 import { notebookNameFromGitURL, randomID } from "../utilities/utils";
-import { fs, pfs } from "./fs";
+import { fs, missingFileOrThrow, pfs } from "./fs";
 import { EventType, globalEmitter } from "./event";
 import { Notebook } from "./notebook";
+import { RecoveryDirectoryCollisionError } from "./recoveryDirectory";
 import { needsRecovery, notebookOperation } from "./notebookOperation";
 import {
   hasTextConflicts,
@@ -94,6 +95,8 @@ const recoveryHeader = "# Crossnote recovered files";
 const recoveredMarker = `${recoveryHeader}\n*\n`;
 const recoveredDirectory = (suffix: number) =>
   `.crossnote-recovered${suffix ? `-${suffix}` : ""}`;
+const recoveryDirectoryName = /^\.crossnote-recovered(?:-\d+)?$/;
+const recoveryFilesChanged = () => new Error("error/recovery-files-changed");
 
 // Git interprets a missing ref as the index. An unborn branch has an empty
 // base tree regardless of which files the user has already staged.
@@ -614,6 +617,140 @@ export default class Crossnote {
     return true;
   }
 
+  private async isUntrackedRecoveryDirectory(
+    notebook: Notebook,
+    directory: string,
+  ) {
+    if (!recoveryDirectoryName.test(directory) || notebook.isLocal)
+      return false;
+    const root = this.checkedPath(notebook, directory);
+    if (
+      !(await fs.promises.lstat(root).catch(missingFileOrThrow))?.isDirectory()
+    )
+      return false;
+    const args = { fs, dir: notebook.dir };
+    const head = await git
+      .resolveRef({ ...args, ref: "HEAD" })
+      .catch((error) => {
+        if (error instanceof git.Errors.NotFoundError) return "";
+        throw error;
+      });
+    const tracked = (file: string) =>
+      file === directory || file.startsWith(directory + "/");
+    if (
+      (await git.listFiles(args)).some(tracked) ||
+      (await filesAtCommit(notebook.dir, head)).some(tracked) ||
+      (head !== notebook.localSha &&
+        (await filesAtCommit(notebook.dir, notebook.localSha)).some(tracked))
+    )
+      return false;
+    return this.isProtectedRecoveryDirectory(notebook, directory);
+  }
+
+  private async recoveryContents(notebook: Notebook, directory: string) {
+    if (!(await this.isUntrackedRecoveryDirectory(notebook, directory)))
+      throw recoveryFilesChanged();
+    const root = this.checkedPath(notebook, directory);
+    const files = new Map<string, Uint8Array>();
+    const directories: string[] = [];
+    const visit = async (folder: string) => {
+      for (const entry of await pfs.readdir(path.join(root, folder))) {
+        const relative = path.join(folder, entry);
+        const target = this.checkedPath(notebook, directory + "/" + relative);
+        const stat = await fs.promises.lstat(target);
+        if (stat.isDirectory()) {
+          await visit(relative);
+          directories.push(target);
+        } else if (stat.isFile()) {
+          files.set(
+            relative,
+            new Uint8Array((await pfs.readFile(target)) as Uint8Array),
+          );
+        } else throw recoveryFilesChanged();
+      }
+    };
+    await visit("");
+    return { files, directories };
+  }
+
+  public readRecoveryFiles(
+    notebook: Notebook,
+    directory: string,
+  ): Promise<Map<string, Uint8Array>> {
+    return notebookOperation(
+      notebook.dir,
+      async () => (await this.recoveryContents(notebook, directory)).files,
+    );
+  }
+
+  public releaseRecoveryFiles(
+    notebook: Notebook,
+    directory: string,
+    snapshot: Map<string, Uint8Array>,
+    canRelease: () => boolean,
+  ): Promise<void> {
+    return notebookOperation(notebook.dir, async () => {
+      const { files, directories } = await this.recoveryContents(
+        notebook,
+        directory,
+      );
+      if (
+        files.size !== snapshot.size ||
+        [...files].some(
+          ([file, bytes]) => !sameBytes(bytes, snapshot.get(file) ?? null),
+        )
+      )
+        throw recoveryFilesChanged();
+      const checkOpenNotes = () => {
+        if (!canRelease()) throw new Error("error/close-recovery-notes");
+      };
+      const root = this.checkedPath(notebook, directory);
+      const deletedNotes: string[] = [];
+      try {
+        // Leave the marker in place if a file or nested directory cannot be removed.
+        for (const file of files.keys()) {
+          if (file === ".gitignore") continue;
+          checkOpenNotes();
+          await pfs.unlink(path.join(root, file));
+          if (file.endsWith(".md"))
+            deletedNotes.push(path.join(directory, file));
+        }
+        for (const dir of directories) {
+          checkOpenNotes();
+          await fs.promises.rmdir(dir);
+        }
+        const remaining = await pfs.readdir(root);
+        if (remaining.length !== 1 || remaining[0] !== ".gitignore")
+          throw recoveryFilesChanged();
+        checkOpenNotes();
+        await pfs.unlink(path.join(root, ".gitignore"));
+        try {
+          await fs.promises.rmdir(root);
+        } catch (error) {
+          // Keep an interrupted release recognizable on the next sync.
+          const marker = path.join(root, ".gitignore");
+          if ((await pfs.exists(root)) && !(await pfs.exists(marker)))
+            await pfs.writeFile(marker, files.get(".gitignore")!);
+          throw error;
+        }
+        await pfs.storeTree(notebook.dir);
+      } finally {
+        if (deletedNotes.length) {
+          await notebook.refreshNotes({
+            dir: "./",
+            includeSubdirectories: true,
+          });
+          for (const noteFilePath of deletedNotes)
+            globalEmitter.emit(EventType.DeletedNote, {
+              notebookPath: notebook.dir,
+              noteFilePath,
+              tabId: "",
+            });
+        }
+      }
+    });
+  }
+
   private async restoreFilesFromCache(
     cache: Cache,
     notebook: Notebook,
@@ -920,12 +1057,19 @@ export default class Crossnote {
     });
     const remoteSha = fetched.fetchHead;
     if (!remoteSha) throw new Error("error/remote-has-no-commits");
-    const cache = await this.generateChangesCache(notebook);
     const localSha = notebook.localSha;
     const baseFiles = new Set(await filesAtCommit(notebook.dir, localSha));
     const remoteFiles = new Set(
       await git.listFiles({ fs, dir: notebook.dir, ref: remoteSha }),
     );
+    const remoteRoots = new Set(
+      [...remoteFiles].map((file) => file.split("/")[0]),
+    );
+    for (const directory of remoteRoots) {
+      if (await this.isUntrackedRecoveryDirectory(notebook, directory))
+        throw new RecoveryDirectoryCollisionError(directory);
+    }
+    const cache = await this.generateChangesCache(notebook);
     // A remote file may replace a local directory. Preserve untracked/ignored
     // children too; Git's status matrix need not include those files.
     const collectUntracked = async (dir: string): Promise<void> => {

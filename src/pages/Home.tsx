@@ -32,6 +32,7 @@ import NotebookTreeView from "../components/NotebookTreeView";
 import { builtInTabLabels } from "../lib/tabNode";
 import ConfigureNotebookDialog from "../components/ConfigureNotebookDialog";
 import PushNotebookDialog from "../components/PushNotebookDialog";
+import { RecoveryDirectoryDialog } from "../components/RecoveryDirectoryDialog";
 import { CrossnoteContainer } from "../containers/crossnote";
 import type { Notebook as NotebookData } from "../lib/notebook";
 
@@ -367,6 +368,13 @@ export function Home(props: Props) {
         ></PushNotebookDialog>
       )}
       <LanguageSelectorDialog></LanguageSelectorDialog>
+      {crossnoteContainer.recoveryCollision && (
+        <RecoveryDirectoryDialog
+          key={`${crossnoteContainer.recoveryCollision.notebook.dir}/${crossnoteContainer.recoveryCollision.directory}`}
+          {...crossnoteContainer.recoveryCollision}
+          onClose={() => crossnoteContainer.setRecoveryCollision(null)}
+        />
+      )}
     </Page>
   );
 }

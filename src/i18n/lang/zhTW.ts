@@ -2,6 +2,17 @@ import type { enUS } from "./enUS";
 
 export const zhTW = {
   translation: {
+    "recovery/title": "同步已暫停",
+    "recovery/instructions":
+      "遠端開始使用筆記本「{{notebook}}」中的 {{directory}}。請關閉該目錄下的筆記，下載 ZIP 並核對檔案。確認已儲存後，Crossnote 會移除本機復原目錄，即可重試下載或上傳。",
+    "recovery/download": "下載復原檔案",
+    "recovery/confirm": "我已儲存檔案",
+    "recovery/retry": "本機復原目錄已移除，可以重試下載或上傳。",
+    "error/close-recovery-notes":
+      "請先關閉復原目錄下的筆記，並等待變更儲存完畢。",
+    "error/recovery-files-changed":
+      "復原檔案已有變更，請重新下載並核對後再確認。",
+    "error/recovery-files": "無法存取復原檔案。",
     "attachment/insert-image": "插入圖片",
     "attachment/ignored":
       "此附件路徑被 Git 忽略，未插入連結；已儲存的檔案仍保留在 assets 中。請檢查筆記本的忽略規則。",

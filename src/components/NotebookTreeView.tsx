@@ -1,5 +1,6 @@
 import { builtInTabLabels } from "../lib/tabNode";
 import { isAppErrorKey } from "../i18n/i18n";
+import { RecoveryDirectoryCollisionError } from "../lib/recoveryDirectory";
 import i18next from "i18next";
 import { Box, Chip, IconButton, Tooltip, Typography } from "@mui/material";
 import { darken, styled } from "@mui/material/styles";
@@ -361,6 +362,13 @@ export default function NotebookTreeView(props: Props) {
         });
       })
       .catch((error) => {
+        if (error instanceof RecoveryDirectoryCollisionError) {
+          crossnoteContainer.setRecoveryCollision({
+            notebook: props.notebook,
+            directory: error.directory,
+          });
+          return;
+        }
         console.log(error);
         // Already said: which note could not be saved first.
         if (error instanceof NotesNotSavedError) {

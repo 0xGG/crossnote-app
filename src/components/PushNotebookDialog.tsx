@@ -21,6 +21,7 @@ import { SettingsContainer } from "../containers/settings";
 import { Notebook } from "../lib/notebook";
 import { NotesNotSavedError } from "../lib/noteSaver";
 import { NotebookConflictError } from "../lib/mergeFiles";
+import { RecoveryDirectoryCollisionError } from "../lib/recoveryDirectory";
 import { notify } from "../lib/notifications";
 
 const SpacedTextField = styled(TextField)(({ theme }) => ({
@@ -78,8 +79,15 @@ export default function PushNotebookDialog(props: Props) {
         });
       })
       .catch((error: Error) => {
-        console.log(error);
         close();
+        if (error instanceof RecoveryDirectoryCollisionError) {
+          crossnoteContainer.setRecoveryCollision({
+            notebook,
+            directory: error.directory,
+          });
+          return;
+        }
+        console.log(error);
         // Already said: which note could not be saved first.
         if (error instanceof NotesNotSavedError) {
           return;
