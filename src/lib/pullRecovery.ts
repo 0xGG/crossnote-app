@@ -9,8 +9,14 @@ export interface PullRecovery {
   deletions?: ConflictDeletions;
   // These local paths have durable copies at safe paths in files. Remove the
   // originals before checkout so remote files and directories can replace them.
-  relocated?: string[];
+  // Older plans listed only the original paths.
+  relocated?: Record<string, string> | string[];
 }
+
+// Earlier versions could publish a plan after Git advertised no refs.
+export type StoredPullRecovery = Omit<PullRecovery, "remoteSha"> & {
+  remoteSha: string | null;
+};
 
 // Kept outside the git working tree. A resolved write means the transaction,
 // not just its put request, committed before any destructive git operation.
@@ -47,7 +53,7 @@ async function transaction<T>(
 
 export const readPullRecovery = (
   id: string,
-): Promise<PullRecovery | undefined> =>
+): Promise<StoredPullRecovery | undefined> =>
   transaction("readonly", (store) => store.get(id));
 export const savePullRecovery = (id: string, recovery: PullRecovery) =>
   transaction("readwrite", (store) => store.put(recovery, id));

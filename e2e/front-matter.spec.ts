@@ -47,6 +47,60 @@ async function typeAtEnd(app: CrossnoteApp, text: string) {
 // The settings the notebook writes before front matter it cannot add them to.
 const settingsBefore = /^---\ncreated: \S+\nmodified: \S+\n---\n/;
 
+for (const failure of ["stat", "read original"] as const) {
+  test(`keeps external edits and setting comments after a failed save (${failure})`, async ({
+    app,
+    page,
+  }) => {
+    const settings = "---\npinned: true # keep my comment\n---\n";
+    const initial = "First\nMiddle\nLast";
+    const changed = "External\nMiddle\nLast";
+    const file = await openReadme(app, settings + initial);
+    await app.modeButton("Edit").click();
+    await expect.poll(() => app.editorText()).toBe(initial);
+    expect(await app.storedText(file)).toBe(settings + initial);
+    await app.storedText(file, settings + changed);
+    await page.evaluate(
+      ({ file, failure }) => {
+        const fs = (
+          window as unknown as {
+            pfs: {
+              stats(path: string): Promise<unknown>;
+              readFile(path: string, options?: object): Promise<unknown>;
+            };
+          }
+        ).pfs;
+        const method = failure === "stat" ? "stats" : "readFile";
+        const original = fs[method].bind(fs);
+        // The first read supplies the body to merge. The second supplies the
+        // raw settings for serialization just before the file would be written.
+        let remaining = failure === "stat" ? 1 : 2;
+        fs[method] = (path, options?: object) => {
+          if (path === file && --remaining === 0) {
+            fs[method] = original;
+            throw new DOMException("Storage unavailable", "NotReadableError");
+          }
+          return original(path, options);
+        };
+      },
+      { file, failure },
+    );
+    await typeAtEnd(app, " typed");
+    await expect(page.getByRole("alert")).toContainText(
+      "Failed to save the note",
+    );
+    expect(await app.storedText(file)).toBe(settings + changed);
+    expect(await app.editorText()).toContain("Last typed");
+    await typeAtEnd(app, " again");
+    await expect
+      .poll(() => app.storedText(file))
+      .toMatch(
+        /pinned: true # keep my comment\n[\s\S]*---\nExternal\nMiddle\nLast typed again$/,
+      );
+    await expect.poll(() => app.editorText()).toBe(changed + " typed again");
+  });
+}
+
 test("keeps a separate body mapping after breaking and restoring its closing rule", async ({
   app,
 }) => {

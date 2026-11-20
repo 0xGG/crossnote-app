@@ -23,6 +23,8 @@ export interface NoteSaverOptions {
   // The write started last failed: said once, and not again until a write
   // that is still the last one started when it settles goes through.
   onFailed?: (error: unknown) => void;
+  // The closed editor can release its document once written or discarded.
+  onReleased?: () => void;
 }
 
 // Thrown by flushNotes when a note it waited on could not be written.
@@ -54,7 +56,7 @@ let made = 0;
  * could land in either order, the older text last.
  *
  * Each saver is listed while it lives, and after it is disposed or discarded
- * until its writes have settled, so that whatever is about to change notes
+ * until its writes succeed or it is discarded, so whatever changes notes
  * behind the editors' backs (git, printing from storage) can write them out
  * first through flushNotes.
  */
@@ -114,6 +116,11 @@ export class NoteSaver {
   /** Whether the editor is still there: not disposed or discarded. */
   get open(): boolean {
     return !this.disposed;
+  }
+
+  join(tabId: string) {
+    this.disposed = false;
+    this.tabs.add(tabId);
   }
 
   /** The editor's text changed: write it once it has stayed so a moment. */
@@ -245,22 +252,20 @@ export class NoteSaver {
   }
 
   /**
-   * The editor goes away: write out what it held, then leave the list. A
-   * write that fails is not said: no editor is left to say it in.
+   * The editor goes away: write out what it held and keep it available for
+   * retry if that fails. The closed editor no longer reports the result.
    */
   dispose() {
     if (this.disposed) {
       return;
     }
-    this.options.onFailed = undefined;
-    this.options.onWritten = undefined;
     this.disposed = true;
     if (this.timer !== null) {
       clearTimeout(this.timer);
       this.timer = null;
       this.start();
     }
-    this.leaveOnceWritten();
+    this.releaseIfDone();
   }
 
   /**
@@ -268,8 +273,6 @@ export class NoteSaver {
    * write still going settles unheard: the user let the note go.
    */
   discard() {
-    this.options.onFailed = undefined;
-    this.options.onWritten = undefined;
     this.disposed = true;
     this.dropped = true;
     if (this.timer !== null) {
@@ -277,22 +280,15 @@ export class NoteSaver {
       this.timer = null;
     }
     this.failed = false;
-    this.leaveOnceWritten();
+    this.options.onReleased?.();
+    this.releaseIfDone();
   }
 
-  private leaveOnceWritten() {
-    const writing = this.writing;
-    if (writing === null) {
+  private releaseIfDone() {
+    if (this.disposed && this.writing === null && !this.failed) {
       savers.delete(this);
-      return;
+      if (!this.dropped) this.options.onReleased?.();
     }
-    writing
-      .catch(() => {})
-      .then(() => {
-        if (this.writing === null || this.writing === writing) {
-          savers.delete(this);
-        }
-      });
   }
 
   private start() {
@@ -314,14 +310,14 @@ export class NoteSaver {
         if (write === this.writes) {
           this.failed = false;
           this.lastError = null;
-          this.options.onWritten?.();
+          if (!this.disposed) this.options.onWritten?.();
         }
       },
       (error) => {
         if (write !== this.writes || this.dropped) {
           return;
         }
-        if (!this.failed) {
+        if (!this.failed && !this.disposed) {
           this.options.onFailed?.(error);
         }
         this.failed = true;
@@ -335,6 +331,7 @@ export class NoteSaver {
       .then(() => {
         if (this.writing === writing) {
           this.writing = null;
+          this.releaseIfDone();
         }
       });
   }
@@ -351,6 +348,34 @@ export function saverOfTab(tabId: string): NoteSaver | undefined {
     if (saver.open && saver.tabs.size === 1 && saver.tabs.has(tabId)) {
       return saver;
     }
+  }
+}
+
+export function saverOfWriter(writerId: string): NoteSaver | undefined {
+  return [...savers].find((saver) => saver.id === writerId);
+}
+
+export function hasNoteWriterInDirectory(
+  notebookPath: string,
+  directory: string,
+): boolean {
+  const inside = ({ location }: { location: NoteLocation }) =>
+    location.notebookPath === notebookPath &&
+    location.filePath.startsWith(directory + "/");
+  return (
+    [...savers].some(inside) || pendingNoteWrites({ notebookPath }).some(inside)
+  );
+}
+
+// A tab closed during a Git operation still has a saver until its queued
+// write settles. Move those writers along with any visible editor.
+export function moveNoteSavers(from: NoteLocation, to: NoteLocation) {
+  for (const saver of savers) {
+    if (
+      saver.location.notebookPath === from.notebookPath &&
+      saver.location.filePath === from.filePath
+    )
+      saver.moveTo(to);
   }
 }
 

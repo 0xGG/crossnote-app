@@ -70,7 +70,12 @@ export default class LocalFileSystem {
     const rootDir = "/" + pathArr[1] + "/" + pathArr[2] + "/";
     const directoryHandle = this.directoryHandleMap[rootDir];
     if (!directoryHandle) throw new Error(`${path} is not valid`);
-    await verifyPermission(directoryHandle, mode);
+    if (!(await verifyPermission(directoryHandle, mode))) {
+      throw new DOMException(
+        "Access to the folder was denied.",
+        "NotAllowedError",
+      );
+    }
     return [directoryHandle, pathArr.slice(3, pathArr.length)];
   }
 
@@ -79,7 +84,14 @@ export default class LocalFileSystem {
     parts: string[],
   ) {
     for (const name of parts) {
-      directory = await directory.getDirectoryHandle(name);
+      try {
+        directory = await directory.getDirectoryHandle(name);
+      } catch (error) {
+        if ((error as DOMException).name === "TypeMismatchError") {
+          throw notAFolder(name);
+        }
+        throw error;
+      }
     }
     return directory;
   }
@@ -149,7 +161,8 @@ export default class LocalFileSystem {
     let file: File | undefined;
     try {
       await directory.getDirectoryHandle(name);
-    } catch {
+    } catch (error) {
+      if ((error as DOMException).name !== "TypeMismatchError") throw error;
       file = await (await directory.getFileHandle(name)).getFile();
     }
     const time = file?.lastModified ?? Date.now();

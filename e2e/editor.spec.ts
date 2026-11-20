@@ -36,6 +36,13 @@ async function openNote(
   return readme;
 }
 
+async function openImageNote(app: CrossnoteApp, text: string) {
+  await app.page.route("https://example.org/a.png", (route) =>
+    route.fulfill({ contentType: "image/png", path: "public/logo64.png" }),
+  );
+  return openNote(app, text);
+}
+
 async function placeCaret(
   app: CrossnoteApp,
   anchor: TextPosition,
@@ -317,10 +324,11 @@ test.describe("the live preview", () => {
     page,
   }) => {
     const text = '![a picture](https://example.org/a.png "Pic")\n\nText\n';
-    await openNote(app, text);
+    await openImageNote(app, text);
     await placeCaret(app, at(text, text.indexOf("Text") + 4));
     const image = app.editor.locator("img.cn-image");
     await expect(image).toHaveAttribute("alt", "a picture");
+    await expect(image).toHaveJSProperty("naturalWidth", 64);
     await image.evaluate((element) => {
       (element as HTMLElement & { kept?: boolean }).kept = true;
     });
@@ -350,11 +358,12 @@ test.describe("the live preview", () => {
   }) => {
     const definition = '\n\n[pic]: https://example.org/a.png "Pic"\n\nText\n';
     const text = "![first][pic]\n\n![second][pic]" + definition;
-    const readme = await openNote(app, text);
+    const readme = await openImageNote(app, text);
     await placeCaret(app, at(text, text.indexOf("Text")));
     const images = app.editor.locator("img.cn-image");
     await expect(images).toHaveCount(2);
     await expect(images.first()).toHaveAttribute("title", "Pic");
+    await expect(images.first()).toHaveJSProperty("naturalWidth", 64);
     await images.first().click();
     const dialog = page.getByRole("dialog");
     await expect(dialog.getByRole("textbox").first()).toHaveValue(
@@ -367,6 +376,7 @@ test.describe("the live preview", () => {
       definition;
     await expect.poll(() => storedBody(app, readme)).toBe(edited);
     await placeCaret(app, at(edited, edited.indexOf("Text")));
+    await expect(images.nth(1)).toHaveJSProperty("naturalWidth", 64);
     await images.nth(1).click();
     await dialog.getByRole("button", { name: "Delete", exact: true }).click();
     await expect

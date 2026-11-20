@@ -1,5 +1,17 @@
 export const enUS = {
   translation: {
+    "recovery/title": "Sync paused",
+    "recovery/instructions":
+      "The remote now uses {{directory}} in {{notebook}}. Close any notes from that folder, then download the ZIP and check your files. Confirming below removes the local recovery folder so you can retry the download or upload.",
+    "recovery/download": "Download recovery files",
+    "recovery/confirm": "I saved the files",
+    "recovery/retry":
+      "Recovery files removed from the notebook. Retry the download or upload.",
+    "error/close-recovery-notes":
+      "Close the notes in this recovery folder before removing it. Wait for their changes to finish saving.",
+    "error/recovery-files-changed":
+      "The recovery files have changed. Download a fresh copy before confirming.",
+    "error/recovery-files": "Could not access the recovery files.",
     "attachment/insert-image": "Insert image",
     "attachment/ignored":
       "This attachment path is ignored by Git. No links were inserted; any files already saved remain in assets. Check the notebook's ignore rules.",
@@ -29,6 +41,7 @@ export const enUS = {
     "general/title": "Title",
     "general/loading": "Loading ...",
     "general/note-not-found": "The note was not found",
+    "error/failed-to-load-note": "Could not load the note",
     "general/update": "Update",
     "general/close": "Close",
     "general/open-menu": "Open menu",
@@ -107,11 +120,14 @@ export const enUS = {
     // Error
     "error/authentication-failed": "Authentication failed",
     "error/failed-to-upload-notebook": "Failed to upload notebook",
+    "error/remote-has-no-commits": "The remote repository has no commits yet.",
     "error/failed-to-download-notebook": "Failed to download notebook",
     "error/notebook-already-exists": "Notebook already exists",
     "error/invalid-git-url-prefix": "Invalid git URL prefix",
     "error/please-resolve-conflicts": "Please resolve conflicts first",
     "error/failed-to-change-file-path": "Failed to change file path",
+    "error/note-moved-retry":
+      "The note moved to {{path}}. Open it there and try again.",
     "error/failed-to-print": "Failed to print the note",
     "error/failed-to-save-notebook-settings":
       "Failed to save the notebook settings",

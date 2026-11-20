@@ -326,12 +326,15 @@ describe("NoteSaver", () => {
     await expect(flushing).rejects.toBeInstanceOf(NotesNotSavedError);
     // Not said: no editor is left to say it in.
     expect(note.onFailed).not.toHaveBeenCalled();
-    // Out of the list once its write has settled.
-    await expect(flushNotes({ notebookPath: "/n" })).resolves.toBeUndefined();
+    const retry = flushNotes({ notebookPath: "/n" });
+    expect(note.writes[1].text).toBe("last words");
+    note.writes[1].resolve();
+    await retry;
+    expect(note.onWritten).not.toHaveBeenCalled();
 
     note.type("after");
     await vi.advanceTimersByTimeAsync(300);
-    expect(note.writes).toHaveLength(1);
+    expect(note.writes).toHaveLength(2);
   });
 
   // A tab's editor made again, as its panel is, while the one before is

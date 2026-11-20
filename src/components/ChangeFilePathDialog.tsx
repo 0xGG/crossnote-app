@@ -1,4 +1,3 @@
-import i18next from "i18next";
 import {
   Button,
   Dialog,
@@ -11,7 +10,7 @@ import { TabNode } from "flexlayout-react";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { CrossnoteContainer } from "../containers/crossnote";
-import { Note } from "../lib/note";
+import { Note, renameFailureMessage } from "../lib/note";
 import { isFinishingEnter } from "../lib/keys";
 import { notify } from "../lib/notifications";
 
@@ -55,7 +54,7 @@ export default function ChangeFilePathDialog(props: Props) {
           } catch (error) {
             notify({
               severity: "error",
-              message: i18next.t("error/failed-to-change-file-path"),
+              message: renameFailureMessage(error),
               duration: 5000,
             });
           }

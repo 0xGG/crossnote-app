@@ -11,6 +11,18 @@ interface AttachLocalDirectory {
   directoryHandle: FileSystemDirectoryHandle;
 }
 
+// LightningFS and File System Access report a missing path differently.
+export function missingFileOrThrow(error: unknown): null {
+  if (
+    typeof error === "object" &&
+    error !== null &&
+    (("code" in error && error.code === "ENOENT") ||
+      ("name" in error && error.name === "NotFoundError"))
+  )
+    return null;
+  throw error;
+}
+
 class FileSystem {
   private fs: any;
   private lfs: LocalFileSystem;

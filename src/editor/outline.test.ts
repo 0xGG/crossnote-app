@@ -1,4 +1,3 @@
-/// <reference types="node" />
 import { describe, expect, it } from "vitest";
 import { Worker } from "node:worker_threads";
 import { noteLanguage } from "./language";

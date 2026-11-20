@@ -39,19 +39,28 @@ describe("Crossnote keeps the stored directory tree in step", () => {
       autoFetchPeriod: 0,
     };
     const records = crossnote["notebookDB"];
-    vi.spyOn(records, "put").mockRejectedValueOnce(new Error("disk full"));
+    const put = records.put.bind(records);
+    const failingWrite = vi
+      .spyOn(records, "put")
+      .mockImplementation((...args) => {
+        // The search index can still be writing its own document.
+        if (args[0]._id === notebook._id) {
+          return Promise.reject(new Error("disk full"));
+        }
+        return put(...args);
+      });
     try {
       await expect(
         crossnote.saveNotebookSettings(notebook, changes),
       ).rejects.toThrow("disk full");
       expect(notebook.name).toBe("Original");
       expect((await records.get(notebook._id)).name).toBe("Original");
-      await crossnote.saveNotebookSettings(notebook, changes);
-      expect(notebook.name).toBe("Edited");
-      expect((await records.get(notebook._id)).name).toBe("Edited");
     } finally {
-      vi.restoreAllMocks();
+      failingWrite.mockRestore();
     }
+    await crossnote.saveNotebookSettings(notebook, changes);
+    expect(notebook.name).toBe("Edited");
+    expect((await records.get(notebook._id)).name).toBe("Edited");
   });
 
   it("reports a cleanup failure after removing the notebook record", async () => {

@@ -123,6 +123,29 @@ describe("Notebook", () => {
 
   it("returns null for a missing note", async () => {
     expect(await notebook.getNote("missing.md")).toBeNull();
+    expect(await notebook.getNote("missing-folder/missing.md")).toBeNull();
+  });
+
+  it("continues indexing readable notes after a file read fails during refresh", async () => {
+    const readFile = pfs.readFile.bind(pfs);
+    const error = new Error("Could not read file");
+    const reading = vi
+      .spyOn(pfs, "readFile")
+      .mockImplementation(async (path, options) => {
+        if (path === notebook.dir + "/hello.md") throw error;
+        return readFile(path, options);
+      });
+    const logged = vi.spyOn(console, "error").mockImplementation(() => {});
+    try {
+      const notes = await notebook.refreshNotes({ dir: "./" });
+      expect(logged).toHaveBeenCalledWith(error);
+      expect(notes["pinned.md"].config.pinned).toBe(true);
+      expect(notes["hello.md"]).toBeUndefined();
+    } finally {
+      reading.mockRestore();
+      logged.mockRestore();
+      await notebook.refreshNotes({ dir: "./" });
+    }
   });
 
   // The browser file system can list a file whose content was never stored,
