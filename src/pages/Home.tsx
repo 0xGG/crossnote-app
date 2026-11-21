@@ -144,6 +144,7 @@ export function Home(props: Props) {
   const [uploadDialog, setUploadDialog] = useState<NotebookDialog>(null);
   const { t } = useTranslation();
   const crossnoteContainer = CrossnoteContainer.useContainer();
+  const { recoveryCollision, setRecoveryCollision } = crossnoteContainer;
 
   const toggleDrawer = useCallback(() => {
     setDrawerOpen(!drawerOpen);
@@ -368,11 +369,15 @@ export function Home(props: Props) {
         ></PushNotebookDialog>
       )}
       <LanguageSelectorDialog></LanguageSelectorDialog>
-      {crossnoteContainer.recoveryCollision && (
+      {recoveryCollision && (
         <RecoveryDirectoryDialog
-          key={`${crossnoteContainer.recoveryCollision.notebook.dir}/${crossnoteContainer.recoveryCollision.directory}`}
-          {...crossnoteContainer.recoveryCollision}
-          onClose={() => crossnoteContainer.setRecoveryCollision(null)}
+          key={`${recoveryCollision.notebook.dir}/${recoveryCollision.directory}`}
+          {...recoveryCollision}
+          onClose={() =>
+            setRecoveryCollision((current) =>
+              current === recoveryCollision ? null : current,
+            )
+          }
         />
       )}
     </Page>
