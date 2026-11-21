@@ -2,6 +2,7 @@ import { ok } from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import type { APIRequestContext, Page } from "@playwright/test";
 import { unzipSync } from "fflate";
+import { readNoteText } from "../src/lib/frontMatter";
 import type { CrossnoteApp } from "./crossnote";
 import { expect, test } from "./fixtures";
 import {
@@ -161,7 +162,7 @@ test.describe("recovery notes", () => {
   for (const {
     action,
     firstSync,
-    expectedText,
+    checkBackup,
     startSync,
     retry,
     expectedRemoteGuide,
@@ -183,7 +184,10 @@ test.describe("recovery notes", () => {
           );
           expect(await localBytes(app.page, path)).toEqual(savedDraft);
         }),
-      expectedText: savedText + extraText,
+      checkBackup: (draft: number[]) => {
+        const file = new TextDecoder().decode(Uint8Array.from(draft));
+        expect(readNoteText(file).text).toBe(savedText + extraText);
+      },
       startSync: (app: CrossnoteApp, id: string) =>
         app
           .notebook(id)
@@ -194,16 +198,9 @@ test.describe("recovery notes", () => {
     },
     {
       action: "Upload",
-      firstSync: async (
-        app: CrossnoteApp,
-        id: string,
-        path: string,
-        savedDraft: number[],
-      ) => {
-        await startUpload(app, id);
-        expect(await localBytes(app.page, path)).toEqual(savedDraft);
-      },
-      expectedText: savedText,
+      firstSync: startUpload,
+      checkBackup: (draft: number[], savedDraft: number[]) =>
+        expect(draft).toEqual(savedDraft),
       startSync: startUpload,
       retry: upload,
       expectedRemoteGuide: editedGuide,
@@ -252,8 +249,8 @@ test.describe("recovery notes", () => {
         const zip = await (await downloaded).path();
         ok(zip, "Recovery ZIP has no local download path");
         const files = unzipSync(await readFile(zip));
-        const draft = await localBytes(page, `${dir}/${story}`);
-        expect([...files[story]]).toEqual(draft);
+        const draft = [...files[story]];
+        expect(draft).toEqual(await localBytes(page, `${dir}/${story}`));
         expect([...files[markerPath]]).toEqual(marker);
         await expect(confirm).toBeEnabled();
         return draft;
@@ -261,9 +258,7 @@ test.describe("recovery notes", () => {
 
       await firstSync(app, remote.id, `${dir}/${story}`, savedDraft);
       const draft = await requestBackup();
-      expect(new TextDecoder().decode(Uint8Array.from(draft))).toContain(
-        expectedText,
-      );
+      checkBackup(draft, savedDraft);
       await confirm.click();
       await expect(paused.getByRole("alert")).toContainText(/close/i);
       await expect(paused.getByRole("alert")).toContainText(/note/i);
