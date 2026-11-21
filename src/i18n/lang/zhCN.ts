@@ -5,6 +5,8 @@ export const zhCN = {
     "recovery/title": "同步已暂停",
     "recovery/instructions":
       "远端开始使用笔记本“{{notebook}}”中的 {{directory}}。请关闭该目录下的笔记，下载 ZIP 并核对文件。确认已保存后，Crossnote 会移除本地恢复目录，届时可重试下载或上传。",
+    "recovery/legacy-instructions":
+      "远端开始使用笔记本“{{notebook}}”中的 {{directory}}。Crossnote 无法确认本地目录的来源。你可以下载 ZIP 留存文件。在远端仓库中重命名冲突路径后，即可重试同步。",
     "recovery/download": "下载恢复文件",
     "recovery/confirm": "我已保存文件",
     "recovery/retry": "本地恢复目录已移除，可以重试下载或上传。",

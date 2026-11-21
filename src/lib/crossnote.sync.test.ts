@@ -499,6 +499,41 @@ it.each([
   },
 );
 
+it.each([
+  ".crossnote-recovery.local-abcdef12",
+  ".crossnote-recovery.local-abcdef12-1",
+])(
+  "pauses for an untracked legacy directory %s without claiming its contents",
+  async (directory) => {
+    const { app, notebook, read } = await repository({
+      [`${directory}/remote.md`]: bytes("remote fixture"),
+    });
+    await pfs.writeFile(`${notebook.dir}/${directory}/.gitignore`, "*\n");
+    const save = vi
+      .spyOn(recovery, "savePullRecovery")
+      .mockRejectedValue(new Error("unexpected plan"));
+    await expect(app.pullNotebook({ notebook })).rejects.toMatchObject({
+      directory,
+      canRelease: false,
+    });
+    expect(save).not.toHaveBeenCalled();
+    const snapshot = await app.readRecoveryFiles(notebook, directory);
+    expect([...snapshot.get(".gitignore")!]).toEqual([...bytes("*\n")]);
+    await expect(
+      app.releaseRecoveryFiles(notebook, directory, snapshot, () => true),
+    ).rejects.toThrow("error/recovery-files-changed");
+    expect(await read(`${directory}/.gitignore`)).toEqual([...bytes("*\n")]);
+    save.mockRestore();
+    vi.mocked(git.fetch).mockResolvedValueOnce({
+      fetchHead: notebook.localSha,
+      defaultBranch: "master",
+      fetchHeadDescription: "master",
+    });
+    await app.pullNotebook({ notebook });
+    expect(await read(`${directory}/.gitignore`)).toEqual([...bytes("*\n")]);
+  },
+);
+
 it("validates the whole recovery snapshot and open documents before releasing files", async () => {
   const { app, notebook, read } = await repository();
   const dir = ".crossnote-recovered-2";
@@ -629,38 +664,43 @@ it("keeps the marker when releasing a recovery directory fails and permits a fre
   expect(await pfs.exists(root)).toBe(false);
 });
 
-it("replays a previously persisted recovery directory relocation on startup", async () => {
-  const dir = ".crossnote-recovered";
-  const moved = ".crossnote-recovered-1";
-  const { app, notebook, base, theirs, read } = await repository({
-    [dir]: bytes("remote"),
-  });
-  const marker = bytes("# Crossnote recovered files\n*\n");
-  await pfs.writeFile(`${notebook.dir}/${dir}/.gitignore`, marker);
-  await pfs.writeFile(`${notebook.dir}/${dir}/recovered.bin`, binary);
-  await recovery.savePullRecovery(notebook._id, {
-    version: 1,
-    localSha: base,
-    remoteSha: theirs,
-    files: {
-      [`${moved}/.gitignore`]: marker,
-      [`${moved}/recovered.bin`]: binary,
-    },
-    relocated: {
-      [`${dir}/.gitignore`]: `${moved}/.gitignore`,
-      [`${dir}/recovered.bin`]: `${moved}/recovered.bin`,
-    },
-    conflicts: [],
-  });
-  const reopened = (await app.listNotebooks()).find(
-    (n) => n._id === notebook._id,
-  );
-  expect(reopened?.localSha).toBe(theirs);
-  expect(await recovery.readPullRecovery(notebook._id)).toBeUndefined();
-  expect(await read(dir)).toEqual([...bytes("remote")]);
-  expect(await read(`${moved}/recovered.bin`)).toEqual([...binary]);
-  expect(await read(`${moved}/.gitignore`)).toEqual([...marker]);
-});
+it.each([
+  [".crossnote-recovered-1", "# Crossnote recovered files\n*\n"],
+  [".crossnote-recovery.local-abcdef12", "*\n"],
+])(
+  "replays a previously persisted recovery directory relocation to %s on startup",
+  async (moved, rules) => {
+    const dir = ".crossnote-recovered";
+    const { app, notebook, base, theirs, read } = await repository({
+      [dir]: bytes("remote"),
+    });
+    const marker = bytes(rules);
+    await pfs.writeFile(`${notebook.dir}/${dir}/.gitignore`, marker);
+    await pfs.writeFile(`${notebook.dir}/${dir}/recovered.bin`, binary);
+    await recovery.savePullRecovery(notebook._id, {
+      version: 1,
+      localSha: base,
+      remoteSha: theirs,
+      files: {
+        [`${moved}/.gitignore`]: marker,
+        [`${moved}/recovered.bin`]: binary,
+      },
+      relocated: {
+        [`${dir}/.gitignore`]: `${moved}/.gitignore`,
+        [`${dir}/recovered.bin`]: `${moved}/recovered.bin`,
+      },
+      conflicts: [],
+    });
+    const reopened = (await app.listNotebooks()).find(
+      (n) => n._id === notebook._id,
+    );
+    expect(reopened?.localSha).toBe(theirs);
+    expect(await recovery.readPullRecovery(notebook._id)).toBeUndefined();
+    expect(await read(dir)).toEqual([...bytes("remote")]);
+    expect(await read(`${moved}/recovered.bin`)).toEqual([...binary]);
+    expect(await read(`${moved}/.gitignore`)).toEqual([...marker]);
+  },
+);
 
 it("restores changed and newly staged bytes, deletions and untouched files on an unchanged remote", async () => {
   const { app, notebook, read } = await repository();
@@ -781,7 +821,7 @@ it("preserves changed and ignored children when a remote file replaces their dir
   expect(await read(`a.local-${theirs.slice(0, 8)}.bin`)).toEqual([...changed]);
   expect(
     await read(
-      `.crossnote-recovery.local-${theirs.slice(0, 8)}/private.local-${theirs.slice(0, 8)}.ignored`,
+      `.crossnote-recovered/private.local-${theirs.slice(0, 8)}.ignored`,
     ),
   ).toEqual([...bytes("keep ignored")]);
   expect(await recovery.readPullRecovery(notebook._id)).toBeUndefined();
@@ -800,7 +840,7 @@ it("keeps an ignored local file when the remote introduces a directory at its pa
   expect(result.conflicts).toContain("private.ignored");
   expect(
     await read(
-      `.crossnote-recovery.local-${theirs.slice(0, 8)}/private.local-${theirs.slice(0, 8)}.ignored`,
+      `.crossnote-recovered/private.local-${theirs.slice(0, 8)}.ignored`,
     ),
   ).toEqual([...bytes("private bytes")]);
   expect(await read("private.ignored/remote.md")).toEqual([...bytes("remote")]);
@@ -816,7 +856,7 @@ it("keeps directory-ignored recovery bytes out of replay and later upload commit
     `${notebook.dir}/private/credentials.txt`,
     bytes("secret"),
   );
-  const occupied = `.crossnote-recovery.local-${theirs.slice(0, 8)}`;
+  const occupied = ".crossnote-recovered";
   await pfs.writeFile(
     `${notebook.dir}/${occupied}/keep.txt`,
     bytes("unrelated"),
@@ -837,6 +877,10 @@ it("keeps directory-ignored recovery bytes out of replay and later upload commit
     file.endsWith(`credentials.local-${theirs.slice(0, 8)}.txt`),
   )!;
   expect([...plan!.files[copy]!]).toEqual([...bytes("secret")]);
+  expect(copy).toMatch(/^\.crossnote-recovered-1\//);
+  expect(plan!.files[".crossnote-recovered-1/.gitignore"]).toEqual(
+    bytes("# Crossnote recovered files\n*\n"),
+  );
   failing.mockRestore();
   const restarted = new Crossnote();
   const reopened = (await restarted.listNotebooks()).find(

@@ -5,6 +5,8 @@ export const zhTW = {
     "recovery/title": "同步已暫停",
     "recovery/instructions":
       "遠端開始使用筆記本「{{notebook}}」中的 {{directory}}。請關閉該目錄下的筆記，下載 ZIP 並核對檔案。確認已儲存後，Crossnote 會移除本機復原目錄，即可重試下載或上傳。",
+    "recovery/legacy-instructions":
+      "遠端開始使用筆記本「{{notebook}}」中的 {{directory}}。Crossnote 無法確認本機目錄的來源。你可以下載 ZIP 保留檔案。在遠端儲存庫重新命名衝突路徑後，即可重試同步。",
     "recovery/download": "下載復原檔案",
     "recovery/confirm": "我已儲存檔案",
     "recovery/retry": "本機復原目錄已移除，可以重試下載或上傳。",

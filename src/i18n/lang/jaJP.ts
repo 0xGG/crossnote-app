@@ -5,6 +5,8 @@ export const jaJP = {
     "recovery/title": "同期を一時停止しました",
     "recovery/instructions":
       "リモートがノートブック「{{notebook}}」の {{directory}} を使用しています。このフォルダー内のノートを閉じてから ZIP をダウンロードし、ファイルを確認してください。保存を確認するとローカルの復元フォルダーが削除されます。その後、ダウンロードまたはアップロードを再試行できます。",
+    "recovery/legacy-instructions":
+      "リモートがノートブック「{{notebook}}」の {{directory}} を使用しています。Crossnote はローカルフォルダーの作成元を確認できません。ZIP をダウンロードしてファイルを手元に保存できます。リモートリポジトリで競合するパスの名前を変更してから、同期を再試行してください。",
     "recovery/download": "復元ファイルをダウンロード",
     "recovery/confirm": "ファイルを保存しました",
     "recovery/retry":

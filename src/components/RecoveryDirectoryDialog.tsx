@@ -19,12 +19,14 @@ import { failureMessage, notify } from "../lib/notifications";
 interface Props {
   notebook: Notebook;
   directory: string;
+  canRelease: boolean;
   onClose: () => void;
 }
 
 export function RecoveryDirectoryDialog({
   notebook,
   directory,
+  canRelease,
   onClose,
 }: Props) {
   const { t } = useTranslation();
@@ -115,7 +117,15 @@ export function RecoveryDirectoryDialog({
       </DialogTitle>
       <DialogContent>
         <DialogContentText>
-          {t("recovery/instructions", { directory, notebook: notebook.name })}
+          {t(
+            canRelease
+              ? "recovery/instructions"
+              : "recovery/legacy-instructions",
+            {
+              directory,
+              notebook: notebook.name,
+            },
+          )}
         </DialogContentText>
         {error && <Alert severity="error">{error}</Alert>}
       </DialogContent>
@@ -126,9 +136,11 @@ export function RecoveryDirectoryDialog({
         <Button onClick={download} disabled={busy}>
           {t("recovery/download")}
         </Button>
-        <Button onClick={release} disabled={busy || !archive}>
-          {t("recovery/confirm")}
-        </Button>
+        {canRelease && (
+          <Button onClick={release} disabled={busy || !archive}>
+            {t("recovery/confirm")}
+          </Button>
+        )}
       </DialogActions>
     </Dialog>
   );

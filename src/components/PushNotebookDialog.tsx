@@ -84,6 +84,7 @@ export default function PushNotebookDialog(props: Props) {
           crossnoteContainer.setRecoveryCollision({
             notebook,
             directory: error.directory,
+            canRelease: error.canRelease,
           });
           return;
         }

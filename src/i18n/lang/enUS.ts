@@ -3,6 +3,8 @@ export const enUS = {
     "recovery/title": "Sync paused",
     "recovery/instructions":
       "The remote now uses {{directory}} in {{notebook}}. Close any notes from that folder, then download the ZIP and check your files. Confirming below removes the local recovery folder so you can retry the download or upload.",
+    "recovery/legacy-instructions":
+      "The remote now uses {{directory}} in {{notebook}}. Crossnote cannot verify who created the local folder. Download a ZIP to keep a copy. Rename the conflicting path in the remote repository, then retry sync.",
     "recovery/download": "Download recovery files",
     "recovery/confirm": "I saved the files",
     "recovery/retry":

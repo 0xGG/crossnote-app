@@ -366,6 +366,7 @@ export default function NotebookTreeView(props: Props) {
           crossnoteContainer.setRecoveryCollision({
             notebook: props.notebook,
             directory: error.directory,
+            canRelease: error.canRelease,
           });
           return;
         }

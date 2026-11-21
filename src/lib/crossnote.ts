@@ -96,6 +96,8 @@ const recoveredMarker = `${recoveryHeader}\n*\n`;
 const recoveredDirectory = (suffix: number) =>
   `.crossnote-recovered${suffix ? `-${suffix}` : ""}`;
 const recoveryDirectoryName = /^\.crossnote-recovered(?:-\d+)?$/;
+const legacyRecoveryDirectoryName =
+  /^\.crossnote-recovery\.local-[0-9a-f]{8}(?:-\d+)?$/;
 const recoveryFilesChanged = () => new Error("error/recovery-files-changed");
 
 // Git interprets a missing ref as the index. An unborn branch has an empty
@@ -617,17 +619,18 @@ export default class Crossnote {
     return true;
   }
 
-  private async isUntrackedRecoveryDirectory(
+  private async untrackedRecoveryDirectoryKind(
     notebook: Notebook,
     directory: string,
   ) {
-    if (!recoveryDirectoryName.test(directory) || notebook.isLocal)
-      return false;
+    const legacy = legacyRecoveryDirectoryName.test(directory);
+    if (notebook.isLocal || (!legacy && !recoveryDirectoryName.test(directory)))
+      return;
     const root = this.checkedPath(notebook, directory);
     if (
       !(await fs.promises.lstat(root).catch(missingFileOrThrow))?.isDirectory()
     )
-      return false;
+      return;
     const args = { fs, dir: notebook.dir };
     const head = await git
       .resolveRef({ ...args, ref: "HEAD" })
@@ -643,12 +646,20 @@ export default class Crossnote {
       (head !== notebook.localSha &&
         (await filesAtCommit(notebook.dir, notebook.localSha)).some(tracked))
     )
-      return false;
-    return this.isProtectedRecoveryDirectory(notebook, directory);
+      return;
+    // Older copies had only a wildcard ignore rule, with no ownership marker.
+    if (legacy) return "legacy";
+    if (await this.isProtectedRecoveryDirectory(notebook, directory))
+      return "owned";
   }
 
-  private async recoveryContents(notebook: Notebook, directory: string) {
-    if (!(await this.isUntrackedRecoveryDirectory(notebook, directory)))
+  private async recoveryContents(
+    notebook: Notebook,
+    directory: string,
+    mode: "read" | "release",
+  ) {
+    const kind = await this.untrackedRecoveryDirectoryKind(notebook, directory);
+    if (!kind || (mode === "release" && kind !== "owned"))
       throw recoveryFilesChanged();
     const root = this.checkedPath(notebook, directory);
     const files = new Map<string, Uint8Array>();
@@ -679,7 +690,8 @@ export default class Crossnote {
   ): Promise<Map<string, Uint8Array>> {
     return notebookOperation(
       notebook.dir,
-      async () => (await this.recoveryContents(notebook, directory)).files,
+      async () =>
+        (await this.recoveryContents(notebook, directory, "read")).files,
     );
   }
 
@@ -693,6 +705,7 @@ export default class Crossnote {
       const { files, directories } = await this.recoveryContents(
         notebook,
         directory,
+        "release",
       );
       if (
         files.size !== snapshot.size ||
@@ -1066,8 +1079,12 @@ export default class Crossnote {
       [...remoteFiles].map((file) => file.split("/")[0]),
     );
     for (const directory of remoteRoots) {
-      if (await this.isUntrackedRecoveryDirectory(notebook, directory))
-        throw new RecoveryDirectoryCollisionError(directory);
+      const kind = await this.untrackedRecoveryDirectoryKind(
+        notebook,
+        directory,
+      );
+      if (kind)
+        throw new RecoveryDirectoryCollisionError(directory, kind === "owned");
     }
     const cache = await this.generateChangesCache(notebook);
     // A remote file may replace a local directory. Preserve untracked/ignored
@@ -1115,6 +1132,9 @@ export default class Crossnote {
     const relocated: Record<string, string> = Object.create(null);
     const overlaps = (a: string, b: string) =>
       a === b || a.startsWith(`${b}/`) || b.startsWith(`${a}/`);
+    const occupied = async (candidate: string) =>
+      [...reserved].some((entry) => overlaps(entry, candidate)) ||
+      (await pfs.exists(this.checkedPath(notebook, candidate)));
     const copyPath = async (file: string, side: "local" | "remote") => {
       // A relocated local file cannot retain an ancestor that is now a remote
       // file. Put it at the notebook root and report both paths to the user.
@@ -1130,10 +1150,7 @@ export default class Crossnote {
       do {
         copy = `${stem}.${side}-${remoteSha.slice(0, 8)}${suffix ? `-${suffix}` : ""}${ext}`;
         suffix++;
-      } while (
-        [...reserved].some((entry) => overlaps(entry, copy)) ||
-        (await pfs.exists(this.checkedPath(notebook, copy)))
-      );
+      } while (await occupied(copy));
       reserved.add(copy);
       return copy;
     };
@@ -1150,9 +1167,13 @@ export default class Crossnote {
       // directory, including its ignore file in the durable plan before bytes.
       // Skipping add only during replay would let the next pull stage them.
       if (!ignoredCopiesDirectory) {
-        ignoredCopiesDirectory = await copyPath(".crossnote-recovery", "local");
+        let suffix = 0;
+        do {
+          ignoredCopiesDirectory = recoveredDirectory(suffix++);
+        } while (await occupied(ignoredCopiesDirectory));
+        reserved.add(ignoredCopiesDirectory);
         files[`${ignoredCopiesDirectory}/.gitignore`] =
-          new TextEncoder().encode("*\n");
+          new TextEncoder().encode(recoveredMarker);
       }
       return `${ignoredCopiesDirectory}/${copy}`;
     };

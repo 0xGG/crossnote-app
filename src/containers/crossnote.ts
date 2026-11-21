@@ -150,6 +150,7 @@ function useCrossnoteContainer(initialState: InitialState) {
   const [recoveryCollision, setRecoveryCollision] = useState<{
     notebook: Notebook;
     directory: string;
+    canRelease: boolean;
   } | null>(null);
   const [isAddingNotebook, setIsAddingNotebook] = useState<boolean>(false);
   const [isPushingNotebook, setIsPushingNotebook] = useState<boolean>(false);
