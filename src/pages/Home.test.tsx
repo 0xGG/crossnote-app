@@ -11,14 +11,18 @@ import {
 } from "../test/component";
 import { Home } from "./Home";
 
-vi.mock("../components/MainPanel", () => ({ MainPanel: () => null }));
-vi.mock("../components/AddNotebookDialog", () => ({ default: () => null }));
-vi.mock("../components/LanguageSelectorDialog", () => ({
-  default: () => null,
+vi.mock("../components/MainPanel", () => ({ MainPanel: (): null => null }));
+vi.mock("../components/AddNotebookDialog", () => ({
+  default: (): null => null,
 }));
-vi.mock("../components/NotebookTreeView", () => ({ default: () => null }));
+vi.mock("../components/LanguageSelectorDialog", () => ({
+  default: (): null => null,
+}));
+vi.mock("../components/NotebookTreeView", () => ({
+  default: (): null => null,
+}));
 vi.mock("../components/ConfigureNotebookDialog", () => ({
-  default: () => null,
+  default: (): null => null,
 }));
 
 it("keeps a newer recovery prompt when a previous notebook finishes releasing files", async () => {
