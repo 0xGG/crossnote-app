@@ -586,6 +586,21 @@ it("releases a closed draft when its note is explicitly deleted", async () => {
   }
 });
 
+it("prints the downloaded text when the note list still has its old contents", async () => {
+  const notebook = await notebookAt("/notebooks/print-after-download");
+  const note = await notebook.writeNote("example.md", "Before download", {
+    createdAt: new Date(),
+    modifiedAt: new Date(),
+  });
+  let printed!: ReturnType<typeof crossnote.getNoteForPrint>;
+  await notebookOperation(notebook.dir, async () => {
+    printed = crossnote.getNoteForPrint(note);
+    await pfs.writeFile(`${notebook.dir}/example.md`, "Downloaded text");
+    expect(notebook.notes[note.filePath].markdown).toBe("Before download");
+  });
+  await expect(printed).resolves.toMatchObject({ markdown: "Downloaded text" });
+});
+
 it.each(["rename", "delete", "checkout", "print"])(
   "cancels a waiting %s from a card when the note moves",
   async (action) => {

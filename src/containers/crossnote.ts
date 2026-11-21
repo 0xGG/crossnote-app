@@ -942,10 +942,10 @@ function useCrossnoteContainer(initialState: InitialState) {
         await saveOpenNotes({ notebookPath, filePath });
         return notebookOperation(notebookPath, () => {
           requireOriginalPath(filePath, location);
-          return getNote(location.notebookPath, location.filePath);
+          return getNotebookAtPath(notebookPath)?.getNote(filePath, false, true);
         });
       }),
-    [getNote, saveOpenNotes],
+    [getNotebookAtPath, saveOpenNotes],
   );
 
   const togglePin = useCallback(
