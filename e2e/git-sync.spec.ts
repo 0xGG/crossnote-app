@@ -2,7 +2,6 @@ import { ok } from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import type { APIRequestContext, Page } from "@playwright/test";
 import { unzipSync } from "fflate";
-import { readNoteText } from "../src/lib/frontMatter";
 import type { CrossnoteApp } from "./crossnote";
 import { expect, test } from "./fixtures";
 import {
@@ -186,7 +185,10 @@ test.describe("recovery notes", () => {
         }),
       checkBackup: (draft: number[]) => {
         const file = new TextDecoder().decode(Uint8Array.from(draft));
-        expect(readNoteText(file).text).toBe(savedText + extraText);
+        // The fixture starts without front matter. Its first save adds two timestamps.
+        const settings = /^---\ncreated: \S+\nmodified: \S+\n---\n/;
+        expect(file).toMatch(settings);
+        expect(file.replace(settings, "")).toBe(savedText + extraText);
       },
       startSync: (app: CrossnoteApp, id: string) =>
         app
