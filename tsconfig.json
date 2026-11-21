@@ -1,8 +1,8 @@
 {
   "compilerOptions": {
-    "target": "ES2020",
+    "target": "ESNext",
     "useDefineForClassFields": true,
-    "lib": ["ES2021", "ES2022.Intl", "DOM", "DOM.Iterable"],
+    "lib": ["ESNext", "DOM", "DOM.Iterable"],
     "module": "ESNext",
     "moduleResolution": "bundler",
     "resolveJsonModule": true,
@@ -15,8 +15,13 @@
     "forceConsistentCasingInFileNames": true,
     "strict": true,
     "strictNullChecks": false,
-    "noFallthroughCasesInSwitch": true,
-    "types": ["vite/client", "wicg-file-system-access"]
+    "noFallthroughCasesInSwitch": true
   },
-  "include": ["src"]
+  "files": [],
+  "references": [
+    { "path": "./src" },
+    { "path": "./tsconfig.test.json" },
+    { "path": "./tsconfig.node.json" },
+    { "path": "./e2e" }
+  ]
 }

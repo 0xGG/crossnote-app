@@ -5,8 +5,10 @@ import path from "path-browserify";
 import PouchDB from "pouchdb";
 import PouchdbFind from "pouchdb-find";
 import { notebookNameFromGitURL, randomID } from "../utilities/utils";
-import { fs, pfs } from "./fs";
+import { fs, missingFileOrThrow, pfs } from "./fs";
+import { EventType, globalEmitter } from "./event";
 import { Notebook } from "./notebook";
+import { RecoveryDirectoryCollisionError } from "./recoveryDirectory";
 import { needsRecovery, notebookOperation } from "./notebookOperation";
 import {
   hasTextConflicts,
@@ -21,6 +23,7 @@ import {
   type FileBytes,
   type ConflictDeletions,
   type PullRecovery,
+  type StoredPullRecovery,
 } from "./pullRecovery";
 
 /*
@@ -88,6 +91,21 @@ interface PullNotebookResult {
 
 type Cache = Record<string, FileBytes>;
 
+const recoveryHeader = "# Crossnote recovered files";
+const recoveredMarker = `${recoveryHeader}\n*\n`;
+const recoveredDirectory = (suffix: number) =>
+  `.crossnote-recovered${suffix ? `-${suffix}` : ""}`;
+const recoveryDirectoryName = /^\.crossnote-recovered(?:-\d+)?$/;
+const legacyRecoveryDirectoryName =
+  /^\.crossnote-recovery\.local-[0-9a-f]{8}(?:-\d+)?$/;
+const recoveryFilesChanged = () => new Error("error/recovery-files-changed");
+
+// Git interprets a missing ref as the index. An unborn branch has an empty
+// base tree regardless of which files the user has already staged.
+async function filesAtCommit(dir: string, sha: string): Promise<string[]> {
+  return sha ? git.listFiles({ fs, dir, ref: sha }) : [];
+}
+
 interface NotebookDBEntry {
   // basic info
   _id: string;
@@ -102,7 +120,7 @@ interface NotebookDBEntry {
   gitPassword?: string;
   autoFetchPeriod: number; // in milliseconds
   fetchedAt: Date;
-  remoteSha: string;
+  remoteSha: string | null;
   localSha: string;
   directoryHandle?: FileSystemDirectoryHandle;
 }
@@ -375,7 +393,7 @@ export default class Crossnote {
       // Git's stat shortcut compares timestamps only to whole seconds. An
       // equal-sized edit within that second can look unchanged. Before reset,
       // compare the bytes even for files the matrix calls clean.
-      if (head === work) {
+      if (head === work && notebook.localSha) {
         const base = await git.readBlob({
           fs,
           dir: notebook.dir,
@@ -562,6 +580,190 @@ export default class Crossnote {
     return path.resolve(notebook.dir, file);
   }
 
+  private async isProtectedRecoveryDirectory(
+    notebook: Notebook,
+    directory: string,
+    newCopy?: string,
+  ): Promise<boolean> {
+    const dir = this.checkedPath(notebook, directory);
+    const marker = path.join(dir, ".gitignore");
+    const entries = await pfs.readdir(dir);
+    if (
+      !entries.includes(".gitignore") ||
+      !(await fs.promises.lstat(marker)).isFile()
+    )
+      return false;
+    const text = await pfs.readFile(marker, { encoding: "utf8" });
+    if (typeof text !== "string") return false;
+    const rules = text.split(/\r?\n/);
+    if (
+      !rules.some((line) => line.trimEnd() === recoveryHeader) ||
+      !rules.some((rule) => /^\*[ \t]*$/.test(rule))
+    )
+      return false;
+    if (!rules.some((rule) => rule.startsWith("!"))) return true;
+    // The directory's own ordered rules must protect every existing file.
+    const gitdir = path.join(notebook.dir, ".git");
+    const isIgnored = async (filepath: string) =>
+      (await git.status({ fs, dir, gitdir, filepath })) === "ignored";
+    if (newCopy && !(await isIgnored(newCopy))) return false;
+    const remaining = [...entries];
+    while (remaining.length) {
+      const file = remaining.pop()!;
+      const target = this.checkedPath(notebook, `${directory}/${file}`);
+      if ((await fs.promises.lstat(target)).isDirectory()) {
+        for (const child of await pfs.readdir(target))
+          remaining.push(`${file}/${child}`);
+      } else if (!(await isIgnored(file))) return false;
+    }
+    return true;
+  }
+
+  private async untrackedRecoveryDirectoryKind(
+    notebook: Notebook,
+    directory: string,
+  ) {
+    const legacy = legacyRecoveryDirectoryName.test(directory);
+    if (notebook.isLocal || (!legacy && !recoveryDirectoryName.test(directory)))
+      return;
+    const root = this.checkedPath(notebook, directory);
+    if (
+      !(await fs.promises.lstat(root).catch(missingFileOrThrow))?.isDirectory()
+    )
+      return;
+    const args = { fs, dir: notebook.dir };
+    const head = await git
+      .resolveRef({ ...args, ref: "HEAD" })
+      .catch((error) => {
+        if (error instanceof git.Errors.NotFoundError) return "";
+        throw error;
+      });
+    const tracked = (file: string) =>
+      file === directory || file.startsWith(directory + "/");
+    if (
+      (await git.listFiles(args)).some(tracked) ||
+      (await filesAtCommit(notebook.dir, head)).some(tracked) ||
+      (head !== notebook.localSha &&
+        (await filesAtCommit(notebook.dir, notebook.localSha)).some(tracked))
+    )
+      return;
+    // Older copies had only a wildcard ignore rule, with no ownership marker.
+    if (legacy) return "legacy";
+    if (await this.isProtectedRecoveryDirectory(notebook, directory))
+      return "owned";
+  }
+
+  private async recoveryContents(
+    notebook: Notebook,
+    directory: string,
+    mode: "read" | "release",
+  ) {
+    const kind = await this.untrackedRecoveryDirectoryKind(notebook, directory);
+    if (!kind || (mode === "release" && kind !== "owned"))
+      throw recoveryFilesChanged();
+    const root = this.checkedPath(notebook, directory);
+    const files = new Map<string, Uint8Array>();
+    const directories: string[] = [];
+    const visit = async (folder: string) => {
+      for (const entry of await pfs.readdir(path.join(root, folder))) {
+        const relative = path.join(folder, entry);
+        const target = this.checkedPath(notebook, directory + "/" + relative);
+        const stat = await fs.promises.lstat(target);
+        if (stat.isDirectory()) {
+          await visit(relative);
+          directories.push(target);
+        } else if (stat.isFile()) {
+          files.set(
+            relative,
+            new Uint8Array((await pfs.readFile(target)) as Uint8Array),
+          );
+        } else throw recoveryFilesChanged();
+      }
+    };
+    await visit("");
+    return { files, directories };
+  }
+
+  public readRecoveryFiles(
+    notebook: Notebook,
+    directory: string,
+  ): Promise<Map<string, Uint8Array>> {
+    return notebookOperation(
+      notebook.dir,
+      async () =>
+        (await this.recoveryContents(notebook, directory, "read")).files,
+    );
+  }
+
+  public releaseRecoveryFiles(
+    notebook: Notebook,
+    directory: string,
+    snapshot: Map<string, Uint8Array>,
+    canRelease: () => boolean,
+  ): Promise<void> {
+    return notebookOperation(notebook.dir, async () => {
+      const { files, directories } = await this.recoveryContents(
+        notebook,
+        directory,
+        "release",
+      );
+      if (
+        files.size !== snapshot.size ||
+        [...files].some(
+          ([file, bytes]) => !sameBytes(bytes, snapshot.get(file) ?? null),
+        )
+      )
+        throw recoveryFilesChanged();
+      const checkOpenNotes = () => {
+        if (!canRelease()) throw new Error("error/close-recovery-notes");
+      };
+      const root = this.checkedPath(notebook, directory);
+      const deletedNotes: string[] = [];
+      try {
+        // Leave the marker in place if a file or nested directory cannot be removed.
+        for (const file of files.keys()) {
+          if (file === ".gitignore") continue;
+          checkOpenNotes();
+          await pfs.unlink(path.join(root, file));
+          if (file.endsWith(".md"))
+            deletedNotes.push(path.join(directory, file));
+        }
+        for (const dir of directories) {
+          checkOpenNotes();
+          await fs.promises.rmdir(dir);
+        }
+        const remaining = await pfs.readdir(root);
+        if (remaining.length !== 1 || remaining[0] !== ".gitignore")
+          throw recoveryFilesChanged();
+        checkOpenNotes();
+        await pfs.unlink(path.join(root, ".gitignore"));
+        try {
+          await fs.promises.rmdir(root);
+        } catch (error) {
+          // Keep an interrupted release recognizable on the next sync.
+          const marker = path.join(root, ".gitignore");
+          if ((await pfs.exists(root)) && !(await pfs.exists(marker)))
+            await pfs.writeFile(marker, files.get(".gitignore")!);
+          throw error;
+        }
+        await pfs.storeTree(notebook.dir);
+      } finally {
+        if (deletedNotes.length) {
+          await notebook.refreshNotes({
+            dir: "./",
+            includeSubdirectories: true,
+          });
+          for (const noteFilePath of deletedNotes)
+            globalEmitter.emit(EventType.DeletedNote, {
+              notebookPath: notebook.dir,
+              noteFilePath,
+              tabId: "",
+            });
+        }
+      }
+    });
+  }
+
   private async restoreFilesFromCache(
     cache: Cache,
     notebook: Notebook,
@@ -586,7 +788,11 @@ export default class Crossnote {
     if (pending) {
       if (pending.version !== 1)
         throw new Error("Unknown pull recovery version");
-      return pending;
+      if (!pending.remoteSha) {
+        await this.recoverEmptyRemote(notebook, pending);
+        return;
+      }
+      return { ...pending, remoteSha: pending.remoteSha };
     }
     const legacy = localStorage.getItem(`pending/pull/${notebook._id}`);
     if (!legacy) return;
@@ -609,8 +815,116 @@ export default class Crossnote {
       files,
       conflicts: [],
     };
+    if (!upgraded.remoteSha) {
+      await this.recoverEmptyRemote(notebook, upgraded, true);
+      return;
+    }
     await savePullRecovery(notebook._id, upgraded);
     return upgraded;
+  }
+
+  private async recoverEmptyRemote(
+    notebook: Notebook,
+    recovery: StoredPullRecovery,
+    legacyOnly = false,
+  ): Promise<void> {
+    needsRecovery(notebook.dir, true);
+    // With a null ref Git listed the index. The old replay could unlink a
+    // base file absent from the index before the null branch write failed.
+    const args = { fs, dir: notebook.dir };
+    const base = await filesAtCommit(notebook.dir, recovery.localSha);
+    const index = new Set(await git.listFiles(args));
+    const reservedRoots = new Set(
+      [...base, ...index, ...Object.keys(recovery.files)].map(
+        (file) => file.split("/")[0],
+      ),
+    );
+    const getStats = async (file: string) => {
+      const target = this.checkedPath(notebook, file);
+      let current = notebook.dir;
+      try {
+        for (const part of file.split("/")) {
+          current = path.join(current, part);
+          const stats = await pfs.stats(current);
+          if (current === target) return stats.isFile() ? "file" : "directory";
+          if (!stats.isDirectory()) return "blocked";
+        }
+      } catch (error) {
+        if (
+          (error as { code?: string }).code === "ENOENT" ||
+          (error as Error).name === "NotFoundError"
+        )
+          return null;
+        throw error;
+      }
+    };
+    for (const file of base) {
+      if (
+        index.has(file) ||
+        Object.prototype.hasOwnProperty.call(recovery.files, file) ||
+        (await getStats(file))
+      )
+        continue;
+      const { blob } = await git.readBlob({
+        ...args,
+        oid: recovery.localSha,
+        filepath: file,
+      });
+      await pfs.writeFile(this.checkedPath(notebook, file), blob);
+    }
+    for (const [file, bytes] of Object.entries(recovery.files)) {
+      if (bytes === null) continue;
+      let target = this.checkedPath(notebook, file);
+      const stats = await getStats(file);
+      if (!stats) {
+        await pfs.writeFile(target, bytes);
+        continue;
+      }
+      if (
+        stats === "file" &&
+        sameBytes((await pfs.readFile(target)) as Uint8Array, bytes)
+      )
+        continue;
+
+      // The working version or a blocking ancestor wins its original path.
+      // Keep the other bytes out of later commits even if only the original
+      // name was ignored. Reuse an interrupted copy only with matching bytes.
+      for (let suffix = 0; ; suffix++) {
+        const dir = recoveredDirectory(suffix);
+        if (reservedRoots.has(dir)) continue;
+        const folder = await getStats(dir);
+        const name = `recovered-${path.basename(file)}`;
+        const ignore = this.checkedPath(notebook, `${dir}/.gitignore`);
+        if (!folder) await pfs.writeFile(ignore, recoveredMarker);
+        else if (
+          folder !== "directory" ||
+          !(await this.isProtectedRecoveryDirectory(notebook, dir, name))
+        )
+          continue;
+        const copy = `${dir}/${name}`;
+        target = this.checkedPath(notebook, copy);
+        const existing = await getStats(copy);
+        if (!existing) {
+          await pfs.writeFile(target, bytes);
+          break;
+        }
+        if (
+          existing === "file" &&
+          sameBytes((await pfs.readFile(target)) as Uint8Array, bytes)
+        )
+          break;
+      }
+    }
+    await pfs.storeTree(notebook.dir);
+    const entry = await this.notebookDB.get(notebook._id);
+    const remoteSha = entry.remoteSha ?? entry.localSha;
+    if (entry.remoteSha !== remoteSha) {
+      await this.notebookDB.put({ ...entry, remoteSha });
+    }
+    notebook.remoteSha = remoteSha;
+    localStorage.removeItem(`pending/pull/${notebook._id}`);
+    if (!legacyOnly) await deletePullRecovery(notebook._id);
+    needsRecovery(notebook.dir, false);
   }
 
   private async finishPull(
@@ -623,12 +937,10 @@ export default class Crossnote {
     const remoteFiles = new Set(
       await git.listFiles({ fs, dir: notebook.dir, ref: recovery.remoteSha }),
     );
-    const baseFiles = await git.listFiles({
-      fs,
-      dir: notebook.dir,
-      ref: recovery.localSha,
-    });
-    for (const file of new Set([...baseFiles, ...(recovery.relocated ?? [])])) {
+    const baseFiles = await filesAtCommit(notebook.dir, recovery.localSha);
+    const moves = recovery.relocated ?? {};
+    const originals = Array.isArray(moves) ? moves : Object.keys(moves);
+    for (const file of new Set([...baseFiles, ...originals])) {
       if (
         !remoteFiles.has(file) &&
         !Object.prototype.hasOwnProperty.call(recovery.files, file)
@@ -690,6 +1002,18 @@ export default class Crossnote {
     localStorage.removeItem(`pending/pull/${notebook._id}`);
     await deletePullRecovery(notebook._id);
     needsRecovery(notebook.dir, false);
+    // Update editors while Git still owns the notebook lock, before queued
+    // writes get to read or recreate the old paths.
+    if (!Array.isArray(moves)) {
+      for (const [oldNoteFilePath, newNoteFilePath] of Object.entries(moves)) {
+        if (oldNoteFilePath.endsWith(".md"))
+          globalEmitter.emit(EventType.ChangedNoteFilePath, {
+            notebookPath: notebook.dir,
+            oldNoteFilePath,
+            newNoteFilePath,
+          });
+      }
+    }
   }
 
   public async resumeNotebook(notebook: Notebook): Promise<void> {
@@ -744,15 +1068,25 @@ export default class Crossnote {
       onAuthSuccess,
       onMessage,
     });
-    const cache = await this.generateChangesCache(notebook);
-    const localSha = notebook.localSha;
     const remoteSha = fetched.fetchHead;
-    const baseFiles = new Set(
-      await git.listFiles({ fs, dir: notebook.dir, ref: localSha }),
-    );
+    if (!remoteSha) throw new Error("error/remote-has-no-commits");
+    const localSha = notebook.localSha;
+    const baseFiles = new Set(await filesAtCommit(notebook.dir, localSha));
     const remoteFiles = new Set(
       await git.listFiles({ fs, dir: notebook.dir, ref: remoteSha }),
     );
+    const remoteRoots = new Set(
+      [...remoteFiles].map((file) => file.split("/")[0]),
+    );
+    for (const directory of remoteRoots) {
+      const kind = await this.untrackedRecoveryDirectoryKind(
+        notebook,
+        directory,
+      );
+      if (kind)
+        throw new RecoveryDirectoryCollisionError(directory, kind === "owned");
+    }
+    const cache = await this.generateChangesCache(notebook);
     // A remote file may replace a local directory. Preserve untracked/ignored
     // children too; Git's status matrix need not include those files.
     const collectUntracked = async (dir: string): Promise<void> => {
@@ -795,9 +1129,12 @@ export default class Crossnote {
     const files: Cache = Object.create(null);
     const conflicts: string[] = [];
     const deletions: ConflictDeletions = Object.create(null);
-    const relocated: string[] = [];
+    const relocated: Record<string, string> = Object.create(null);
     const overlaps = (a: string, b: string) =>
       a === b || a.startsWith(`${b}/`) || b.startsWith(`${a}/`);
+    const occupied = async (candidate: string) =>
+      [...reserved].some((entry) => overlaps(entry, candidate)) ||
+      (await pfs.exists(this.checkedPath(notebook, candidate)));
     const copyPath = async (file: string, side: "local" | "remote") => {
       // A relocated local file cannot retain an ancestor that is now a remote
       // file. Put it at the notebook root and report both paths to the user.
@@ -813,10 +1150,7 @@ export default class Crossnote {
       do {
         copy = `${stem}.${side}-${remoteSha.slice(0, 8)}${suffix ? `-${suffix}` : ""}${ext}`;
         suffix++;
-      } while (
-        [...reserved].some((entry) => overlaps(entry, copy)) ||
-        (await pfs.exists(this.checkedPath(notebook, copy)))
-      );
+      } while (await occupied(copy));
       reserved.add(copy);
       return copy;
     };
@@ -833,9 +1167,13 @@ export default class Crossnote {
       // directory, including its ignore file in the durable plan before bytes.
       // Skipping add only during replay would let the next pull stage them.
       if (!ignoredCopiesDirectory) {
-        ignoredCopiesDirectory = await copyPath(".crossnote-recovery", "local");
+        let suffix = 0;
+        do {
+          ignoredCopiesDirectory = recoveredDirectory(suffix++);
+        } while (await occupied(ignoredCopiesDirectory));
+        reserved.add(ignoredCopiesDirectory);
         files[`${ignoredCopiesDirectory}/.gitignore`] =
-          new TextEncoder().encode("*\n");
+          new TextEncoder().encode(recoveredMarker);
       }
       return `${ignoredCopiesDirectory}/${copy}`;
     };
@@ -873,7 +1211,7 @@ export default class Crossnote {
         if (merged.bytes !== null) {
           const copy = await localCopyPath(file);
           files[copy] = merged.bytes;
-          relocated.push(file);
+          relocated[file] = copy;
           conflicts.push(file, copy);
         }
         continue;
@@ -940,6 +1278,18 @@ export default class Crossnote {
       onMessage,
     });
 
+    if (!result.fetchHead) {
+      // The next background check is due one fetch period from now.
+      const entry = await this.notebookDB.get(notebook._id);
+      const fetchedAt = new Date();
+      await this.notebookDB.put({
+        ...entry,
+        fetchedAt,
+        remoteSha: entry.remoteSha ?? entry.localSha,
+      });
+      notebook.fetchedAt = fetchedAt;
+      return false;
+    }
     await pfs.storeTree(notebook.dir);
 
     // Update notebook
@@ -977,7 +1327,7 @@ export default class Crossnote {
       notebook.gitPassword = n.gitPassword;
       notebook.autoFetchPeriod = n.autoFetchPeriod;
       notebook.fetchedAt = n.fetchedAt;
-      notebook.remoteSha = n.remoteSha;
+      notebook.remoteSha = n.remoteSha ?? n.localSha;
       notebook.localSha = n.localSha;
 
       if (
@@ -1023,13 +1373,13 @@ export default class Crossnote {
           notebook.remoteSha = notebook.localSha;
         }
         const gitBranch = notebook.gitBranch || "master";
-        const sha = notebook.localSha || "";
         try {
-          // Perform a soft reset
-          await pfs.writeFile(
-            path.resolve(notebook.dir, `.git/refs/heads/${gitBranch}`),
-            sha,
-          );
+          if (notebook.localSha) {
+            await pfs.writeFile(
+              path.resolve(notebook.dir, `.git/refs/heads/${gitBranch}`),
+              notebook.localSha,
+            );
+          }
 
           const pendingPull = await this.pendingPull(notebook);
           if (pendingPull) await this.finishPull(notebook, pendingPull);

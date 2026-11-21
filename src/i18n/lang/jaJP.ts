@@ -2,6 +2,20 @@ import type { enUS } from "./enUS";
 
 export const jaJP = {
   translation: {
+    "recovery/title": "同期を一時停止しました",
+    "recovery/instructions":
+      "リモートがノートブック「{{notebook}}」の {{directory}} を使用しています。このフォルダー内のノートを閉じてから ZIP をダウンロードし、ファイルを確認してください。保存を確認するとローカルの復元フォルダーが削除されます。その後、ダウンロードまたはアップロードを再試行できます。",
+    "recovery/legacy-instructions":
+      "リモートがノートブック「{{notebook}}」の {{directory}} を使用しています。Crossnote はローカルフォルダーの作成元を確認できません。ZIP をダウンロードしてファイルを手元に保存できます。リモートリポジトリで競合するパスの名前を変更してから、同期を再試行してください。",
+    "recovery/download": "復元ファイルをダウンロード",
+    "recovery/confirm": "ファイルを保存しました",
+    "recovery/retry":
+      "ローカルの復元フォルダーを削除しました。ダウンロードまたはアップロードを再試行してください。",
+    "error/close-recovery-notes":
+      "復元フォルダー内のノートを閉じ、変更の保存が終わるまでお待ちください。",
+    "error/recovery-files-changed":
+      "復元ファイルが変更されました。もう一度ダウンロードして内容を確認してください。",
+    "error/recovery-files": "復元ファイルにアクセスできませんでした。",
     "attachment/insert-image": "画像を挿入",
     "attachment/ignored":
       "この添付ファイルのパスは Git で無視されています。リンクは挿入されず、保存済みファイルは assets に残ります。ノートブックの除外ルールを確認してください。",
@@ -31,6 +45,7 @@ export const jaJP = {
     "general/title": "表題",
     "general/loading": "讀取中 ...",
     "general/note-not-found": "ノートが見つかりません",
+    "error/failed-to-load-note": "ノートを読み込めませんでした",
     "general/update": "更新",
     "general/close": "閉じる",
     "general/open-menu": "メニューを開く",
@@ -110,12 +125,16 @@ export const jaJP = {
     "error/authentication-failed": "認証に失敗しました",
     "error/failed-to-upload-notebook":
       "ノートブックをアップロードできませんでした",
+    "error/remote-has-no-commits":
+      "リモートリポジトリにはまだコミットがありません。",
     "error/failed-to-download-notebook":
       "ノートブックをダウンロードできませんでした ...",
     "error/notebook-already-exists": "ノートブックは既に存在します",
     "error/invalid-git-url-prefix": "無効な git URL プレフィックス",
     "error/please-resolve-conflicts": "最初に競合を解決してください",
     "error/failed-to-change-file-path": "ファイル パスの変更に失敗しました",
+    "error/note-moved-retry":
+      "ノートは {{path}} に移動しました。移動先で開いてもう一度お試しください。",
     "error/failed-to-print": "ノートを印刷できませんでした",
     "error/failed-to-save-notebook-settings":
       "ノートブックの設定を保存できませんでした",

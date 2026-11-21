@@ -56,6 +56,7 @@ beforeEach(() => {
 
 afterEach(async () => {
   for (const [note, tabId] of joined.splice(0)) {
+    note.saver.discard();
     leaveNote(note, tabId);
   }
   for (const view of views.splice(0)) {
@@ -287,6 +288,25 @@ describe("open notes", () => {
     expect(openNoteAt(location)).toBeUndefined();
     expect(its.write).toHaveBeenCalledTimes(1);
     expect(its.write.mock.calls[0][2]).toBe("Text typed");
+  });
+
+  it("protects and retries a closed draft when leaving the page", async () => {
+    const its = calls();
+    its.write.mockRejectedValueOnce(new Error("Try again"));
+    const note = join("tab-1", "Text", its);
+    type(note, " edited");
+    leaveNote(note, "tab-1");
+    await vi.advanceTimersByTimeAsync(0);
+    const leaving = () => {
+      const event = new Event("beforeunload", { cancelable: true });
+      window.dispatchEvent(event);
+      return event.defaultPrevented;
+    };
+    expect(leaving()).toBe(true);
+    window.dispatchEvent(new Event("pagehide"));
+    await vi.advanceTimersByTimeAsync(0);
+    expect(its.write).toHaveBeenCalledTimes(2);
+    expect(leaving()).toBe(false);
   });
 
   it("opens the note anew, with the text given, after its last tab has left", () => {

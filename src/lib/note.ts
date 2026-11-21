@@ -1,4 +1,14 @@
+import i18next from "i18next";
+
 export type FilePath = string;
+
+export class NoteMovedError extends Error {}
+
+export function renameFailureMessage(error: unknown): string {
+  return error instanceof NoteMovedError
+    ? error.message
+    : i18next.t("error/failed-to-change-file-path");
+}
 
 export interface NoteConfigEncryption {
   title: string;

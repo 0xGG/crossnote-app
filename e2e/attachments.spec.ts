@@ -497,17 +497,22 @@ async function expectReleased(players: ElementHandle<Node>[]) {
 
 async function expectReadyPaused(root: Locator) {
   const players = root.locator("audio[controls], video[controls]");
-  await expect(players).toHaveCount(2);
-  for (const player of await players.elementHandles()) {
-    await expect
-      .poll(() =>
-        player.evaluate((el) => ({
-          ready: (el as HTMLMediaElement).readyState >= 1,
-          paused: (el as HTMLMediaElement).paused,
+  // Returning to a tab can make the old controls visible before the remount.
+  await expect
+    .poll(() =>
+      players.evaluateAll((elements: HTMLMediaElement[]) =>
+        elements.map((media) => ({
+          tag: media.localName,
+          ready: media.readyState >= HTMLMediaElement.HAVE_METADATA,
+          paused: media.paused,
+          autoplay: media.autoplay,
         })),
-      )
-      .toEqual({ ready: true, paused: true });
-  }
+      ),
+    )
+    .toEqual([
+      { tag: "audio", ready: true, paused: true, autoplay: false },
+      { tag: "video", ready: true, paused: true, autoplay: false },
+    ]);
 }
 
 test("stops playing media on mode and tab changes and does not autoplay on return", async ({

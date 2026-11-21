@@ -61,9 +61,7 @@ export const test = base.extend<Fixtures>({
   // was refused and the page it was refused in. A test fails on any but the
   // directives it says it makes the policy refuse, and fails as well if one
   // of those is never reported, so that an exception outlives no reason for
-  // it (the browser reports an event handler attribute in hostile markup as
-  // the sanitizer parses it, inert, as refused). Not seen: what a worker's
-  // policy refuses.
+  // it. Not seen: what a worker's policy refuses.
   expectPolicyViolations: [{ violations: [] }, { option: true }],
   policyViolations: [
     async ({ context, expectPolicyViolations, baseURL }, use) => {

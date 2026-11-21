@@ -28,8 +28,7 @@ test("highlights a code block in its language", async ({ app }) => {
 });
 
 test.describe("hostile markup in a diagram", () => {
-  // The browser reports the handler in the label as refused while the
-  // sanitizer parses it, inert.
+  // The control below exercises the policy on the same page as the diagram.
   test.use({
     expectPolicyViolations: {
       violations: [
@@ -41,7 +40,6 @@ test.describe("hostile markup in a diagram", () => {
   test("draws a mermaid diagram with a formula in it, drawn by KaTeX", async ({
     app,
     page,
-    policyViolations,
   }) => {
     const vendored = app.recordVendoredRequests("mermaid");
     await app.open();
@@ -81,7 +79,24 @@ test.describe("hostile markup in a diagram", () => {
       await page.evaluate(() => (window as any).fromMermaid),
     ).toBeUndefined();
     expect(vendored()).toEqual([]);
-    await expect.poll(() => policyViolations.length).toBeGreaterThan(0);
+
+    // Browsers can discard the diagram's inert handler without reporting
+    // it. A connected button tests enforcement independently of sanitizing.
+    await app.preview.evaluate((preview) => {
+      const button = document.createElement("button");
+      button.textContent = "Check inline handlers";
+      button.addEventListener("securitypolicyviolation", (event) => {
+        button.dataset.blockedBy = event.effectiveDirective;
+      });
+      button.setAttribute("onclick", "this.disabled = true");
+      preview.appendChild(button);
+    });
+    const control = app.preview.getByRole("button", {
+      name: "Check inline handlers",
+    });
+    await control.click();
+    await expect(control).toHaveAttribute("data-blocked-by", "script-src-attr");
+    await expect(control).toBeEnabled();
   });
 });
 

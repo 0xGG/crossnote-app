@@ -48,6 +48,10 @@ export class OpenNote {
         }
       },
       onFailed: (error) => this.calls.failed(error),
+      onReleased: () => {
+        const key = keyOf(this.saver.location);
+        if (open.get(key) === this) open.delete(key);
+      },
     });
     // The notebook holds this text: nothing to write until it is edited.
     this.saver.took(text);
@@ -144,6 +148,7 @@ export class OpenNote {
   }
 }
 
+// Keep the last tab's document here while it still owns an unfinished save.
 const open = new Map<string, OpenNote>();
 
 const keyOf = ({ notebookPath, filePath }: NoteLocation) =>
@@ -162,8 +167,8 @@ export function joinNote(
 ): OpenNote {
   const key = keyOf(location);
   const existing = open.get(key);
-  if (existing?.saver.open) {
-    existing.saver.tabs.add(tabId);
+  if (existing) {
+    existing.saver.join(tabId);
     existing.setCalls(calls);
     return existing;
   }
@@ -182,11 +187,6 @@ export function leaveNote(note: OpenNote, tabId: string) {
     return;
   }
   note.saver.dispose();
-  for (const [key, value] of open) {
-    if (value === note) {
-      open.delete(key);
-    }
-  }
 }
 
 /** The note has a new path: its saver writes there from now on. */
@@ -195,20 +195,22 @@ export function moveNote(note: OpenNote, location: NoteLocation) {
   if (open.get(key) === note) {
     return;
   }
-  for (const [old, value] of open) {
-    if (value === note) {
-      open.delete(old);
-    }
-  }
+  const old = keyOf(note.saver.location);
+  if (open.get(old) !== note) return;
+  open.delete(old);
   note.saver.moveTo(location);
-  if (note.saver.open) {
-    open.set(key, note);
-  }
+  open.set(key, note);
+}
+
+/** Includes a closed document until its final write succeeds or is discarded. */
+export function retainedNoteAt(location: NoteLocation): OpenNote | undefined {
+  return open.get(keyOf(location));
 }
 
 /** The open note at a location, if a tab shows one. */
 export function openNoteAt(location: NoteLocation): OpenNote | undefined {
-  return open.get(keyOf(location));
+  const note = retainedNoteAt(location);
+  return note?.saver.open ? note : undefined;
 }
 
 // Asks before the page is left while anything typed may not be written yet:

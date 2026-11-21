@@ -12,6 +12,9 @@ const baseURL = `http://localhost:${port}`;
 export default defineConfig({
   testDir: "e2e",
   fullyParallel: true,
+  workers: process.env.CI ? 1 : undefined,
+  // Let Playwright finish the report before the CI job reaches its timeout.
+  globalTimeout: process.env.CI ? 20 * 60_000 : undefined,
   // A stray test.only would silently shrink the suite in CI.
   forbidOnly: !!process.env.CI,
   // One retry in CI: a transient failure then yields a trace to diagnose

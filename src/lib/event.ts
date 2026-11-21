@@ -29,7 +29,7 @@ export interface DeletedNoteEventData {
 }
 
 export interface ChangedNoteFilePathEventData {
-  tabId: string;
+  tabId?: string;
   notebookPath: string;
   oldNoteFilePath: string;
   newNoteFilePath: string;

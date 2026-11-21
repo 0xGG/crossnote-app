@@ -5,7 +5,7 @@ import path from "path-browserify";
 import { findLinks } from "../render/links";
 import { decodeLinkPath, leadsToNote } from "../render/markdown/linkTargets";
 import { NOTE_SETTINGS, readNoteText, writeNoteText } from "./frontMatter";
-import { fs, pfs } from "./fs";
+import { fs, missingFileOrThrow, pfs } from "./fs";
 import { Mentions, Note, NoteConfig, Notes } from "./note";
 import { Reference, ReferenceMap } from "./reference";
 import Search from "./search";
@@ -204,6 +204,7 @@ export class Notebook {
     oldFilePath: string,
     newFilePath: string,
     onMoved?: () => void,
+    isPathInUse?: (filePath: string) => boolean,
   ): Promise<Note> {
     // Written plainly, relative to the notebook, which is the only form git
     // takes: notes//a.md or ./a.md would be moved and then fail.
@@ -221,14 +222,12 @@ export class Notebook {
     // Checked before anything changes: a rename that cannot happen has to
     // leave the note listed, searchable and linked.
     const exists = await pfs.exists(path.resolve(this.dir, newFilePath));
-    if (exists) {
+    if (exists || isPathInUse?.(newFilePath)) {
       throw new Error("error/target-file-already-exists");
     }
 
     // The file moves first, for the same reason: a folder on the user's disk
     // can still refuse a name it does not allow.
-    const newDirPath = path.dirname(path.resolve(this.dir, newFilePath));
-    await pfs.mkdirp(newDirPath);
     await pfs.rename(
       path.resolve(this.dir, oldFilePath),
       path.resolve(this.dir, newFilePath),
@@ -289,16 +288,14 @@ export class Notebook {
       return this.notes[filePath];
     }
     const absFilePath = path.resolve(this.dir, filePath);
-    let stats;
-    try {
-      stats = await pfs.stats(absFilePath);
-    } catch (error) {
-      return null;
-    }
-    if (stats.isFile() && filePath.endsWith(".md")) {
-      const file = await pfs.readFile(absFilePath, {
-        encoding: "utf8",
-      });
+    const stats = await pfs.stats(absFilePath).catch(missingFileOrThrow);
+    if (stats?.isFile() && filePath.endsWith(".md")) {
+      let file;
+      try {
+        file = await pfs.readFile(absFilePath, { encoding: "utf8" });
+      } catch (error) {
+        return missingFileOrThrow(error);
+      }
       // A file the browser file system lists without its content, as an
       // earlier refused write could leave, reads as empty rather than stop
       // every note of the notebook from loading.
@@ -403,23 +400,25 @@ export class Notebook {
       // A save can repopulate the cache while this directory scan awaits I/O.
       // Refresh must still read external changes, without rebuilding relations
       // until the complete set of notes has been collected below.
-      const note = await this.getNote(
-        path.relative(this.dir, absFilePath),
-        false,
-        true,
-      );
-      if (note) {
-        this.notes[note.filePath] = note;
-        this.search.add(note.filePath, note.title, note.config.aliases);
-      }
-
       let stats;
       try {
-        stats = await pfs.stats(absFilePath);
+        if (file.endsWith(".md")) {
+          const note = await this.getNote(
+            path.relative(this.dir, absFilePath),
+            false,
+            true,
+          );
+          if (note) {
+            this.notes[note.filePath] = note;
+            this.search.add(note.filePath, note.title, note.config.aliases);
+            continue;
+          }
+        }
+        if (includeSubdirectories) stats = await pfs.stats(absFilePath);
       } catch (error) {
         console.error(error);
       }
-      if (stats && stats.isDirectory() && includeSubdirectories) {
+      if (stats?.isDirectory()) {
         refreshNotesPromises.push(
           this.refreshNotes({
             dir: path.relative(this.dir, absFilePath),
@@ -451,21 +450,21 @@ export class Notebook {
     markdown: string,
     noteConfig: NoteConfig,
   ): Promise<Note> {
-    noteConfig.modifiedAt = new Date();
     const absFilePath = path.resolve(this.dir, filePath);
     // Settings that have not changed are written as the file had them.
-    let previous: string = null;
-    try {
-      previous = (await pfs.readFile(absFilePath, {
+    const previous = (await pfs
+      .readFile(absFilePath, {
         encoding: "utf8",
-      })) as string;
-    } catch (error) {
-      // A new note.
-    }
+      })
+      .catch(missingFileOrThrow)) as string | null;
 
     await pfs.writeFile(
       absFilePath,
-      writeNoteText(markdown, noteSettings(noteConfig), previous),
+      writeNoteText(
+        markdown,
+        noteSettings({ ...noteConfig, modifiedAt: new Date() }),
+        previous,
+      ),
     );
     await this.storeNote(filePath);
 

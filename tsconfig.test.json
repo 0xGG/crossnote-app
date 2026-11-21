@@ -1,0 +1,12 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "types": ["vite/client", "wicg-file-system-access", "node"]
+  },
+  "include": [
+    "src/**/*.test.*",
+    "src/test",
+    "src/editor/testText.ts",
+    "src/**/*.d.ts"
+  ]
+}

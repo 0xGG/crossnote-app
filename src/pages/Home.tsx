@@ -32,6 +32,7 @@ import NotebookTreeView from "../components/NotebookTreeView";
 import { builtInTabLabels } from "../lib/tabNode";
 import ConfigureNotebookDialog from "../components/ConfigureNotebookDialog";
 import PushNotebookDialog from "../components/PushNotebookDialog";
+import { RecoveryDirectoryDialog } from "../components/RecoveryDirectoryDialog";
 import { CrossnoteContainer } from "../containers/crossnote";
 import type { Notebook as NotebookData } from "../lib/notebook";
 
@@ -143,6 +144,7 @@ export function Home(props: Props) {
   const [uploadDialog, setUploadDialog] = useState<NotebookDialog>(null);
   const { t } = useTranslation();
   const crossnoteContainer = CrossnoteContainer.useContainer();
+  const { recoveryCollision, setRecoveryCollision } = crossnoteContainer;
 
   const toggleDrawer = useCallback(() => {
     setDrawerOpen(!drawerOpen);
@@ -367,6 +369,17 @@ export function Home(props: Props) {
         ></PushNotebookDialog>
       )}
       <LanguageSelectorDialog></LanguageSelectorDialog>
+      {recoveryCollision && (
+        <RecoveryDirectoryDialog
+          key={`${recoveryCollision.notebook.dir}/${recoveryCollision.directory}`}
+          {...recoveryCollision}
+          onClose={() =>
+            setRecoveryCollision((current) =>
+              current === recoveryCollision ? null : current,
+            )
+          }
+        />
+      )}
     </Page>
   );
 }
