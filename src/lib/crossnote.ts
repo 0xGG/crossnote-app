@@ -9,7 +9,11 @@ import { fs, missingFileOrThrow, pfs } from "./fs";
 import { EventType, globalEmitter } from "./event";
 import { Notebook } from "./notebook";
 import { RecoveryDirectoryCollisionError } from "./recoveryDirectory";
-import { needsRecovery, notebookOperation } from "./notebookOperation";
+import {
+  IgnoredUploadFileError,
+  needsRecovery,
+  notebookOperation,
+} from "./notebookOperation";
 import {
   hasTextConflicts,
   mergeFile,
@@ -85,6 +89,7 @@ export type FetchNotebookArgs = PullNotebookArgs;
 
 interface PullNotebookResult {
   status?: "up-to-date" | "pending-upload";
+  ignoredUploadFile?: string;
   numConflicts: number;
   cache: Cache;
   conflicts: string[];
@@ -121,6 +126,55 @@ async function localBranchSha(notebook: Notebook): Promise<string> {
   }
 }
 
+async function prepareUploadIndex(
+  dir: string,
+  changes: Cache,
+): Promise<boolean> {
+  const args = { fs, dir };
+  const unchecked = new Set<string>();
+  for (const [file, head, work, index] of await git.statusMatrix(args)) {
+    if (
+      work &&
+      (work !== index || file in changes) &&
+      (await git.status({ ...args, filepath: file })) === "ignored"
+    ) {
+      if (!head && index) {
+        // A draft staged before the ignore rule changed must stay local.
+        await git.remove({ ...args, filepath: file });
+        continue;
+      }
+      unchecked.add(file);
+    }
+  }
+
+  // Only the committed tree and index determine what the next commit changes.
+  // The working directory can hide a staged deletion from the status matrix.
+  const fileVersion = async (entry: git.WalkerEntry | null) =>
+    entry && (await entry.type()) !== "tree"
+      ? `${await entry.mode()} ${await entry.oid()}`
+      : null;
+  let hasStagedChanges = false;
+  await git.walk({
+    ...args,
+    trees: [git.TREE({ ref: "HEAD" }), git.STAGE()],
+    map: async (file, [head, entry]) => {
+      if (
+        !hasStagedChanges &&
+        (await fileVersion(head)) !== (await fileVersion(entry))
+      )
+        hasStagedChanges = true;
+      // Git add can skip ignored edits even when cached file stats match.
+      if (!unchecked.has(file)) return;
+      const object = (await pfs.readFile(path.join(dir, file))) as Uint8Array;
+      if ((await git.hashBlob({ object })).oid === (await entry?.oid()))
+        unchecked.delete(file);
+    },
+  });
+  const [unstaged] = unchecked;
+  if (unstaged) throw new IgnoredUploadFileError(unstaged);
+  return hasStagedChanges;
+}
+
 interface NotebookDBEntry {
   // basic info
   _id: string;
@@ -137,6 +191,7 @@ interface NotebookDBEntry {
   fetchedAt: Date;
   remoteSha: string | null;
   localSha: string;
+  blockedUploadPaths?: string[];
   directoryHandle?: FileSystemDirectoryHandle;
 }
 
@@ -374,7 +429,7 @@ export default class Crossnote {
       return { cleanupError };
     }
   }
-  public async updateNotebook(notebook: Notebook) {
+  public async updateNotebook(notebook: Notebook, uploadCandidates?: string[]) {
     const nb = await this.notebookDB.get(notebook._id);
     nb.dir = notebook.dir;
     nb.name = notebook.name;
@@ -387,7 +442,33 @@ export default class Crossnote {
     nb.fetchedAt = notebook.fetchedAt;
     nb.remoteSha = notebook.remoteSha;
     nb.localSha = notebook.localSha;
+    if (
+      uploadCandidates &&
+      (uploadCandidates.length || nb.blockedUploadPaths)
+    ) {
+      const paths = new Set([
+        ...(nb.blockedUploadPaths ?? []),
+        ...uploadCandidates,
+      ]);
+      const tracked = new Set(
+        await filesAtCommit(notebook.dir, notebook.localSha),
+      );
+      const blocked: string[] = [];
+      for (const filepath of paths) {
+        if (tracked.has(filepath)) continue;
+        const target = this.checkedPath(notebook, filepath);
+        if (
+          (await pfs.exists(target)) &&
+          !(await pfs.stats(target)).isDirectory() &&
+          (await git.status({ fs, dir: notebook.dir, filepath })) === "ignored"
+        )
+          blocked.push(filepath);
+      }
+      if (blocked.length) nb.blockedUploadPaths = blocked;
+      else delete nb.blockedUploadPaths;
+    }
     await this.notebookDB.put(nb, { force: true });
+    return nb.blockedUploadPaths?.[0];
   }
 
   private async generateChangesCache(
@@ -461,6 +542,8 @@ export default class Crossnote {
         pullNotebookResult.deletions,
       );
     }
+    if (pullNotebookResult.ignoredUploadFile)
+      throw new IgnoredUploadFileError(pullNotebookResult.ignoredUploadFile);
 
     const args = { fs, dir: notebook.dir };
     if (pullNotebookResult.status) {
@@ -472,8 +555,11 @@ export default class Crossnote {
         else await git.add({ ...args, filepath });
       }
     }
-    const staged = await git.statusMatrix(args);
-    if (staged.some(([, head, , index]) => head !== index)) {
+    const hasStagedChanges = await prepareUploadIndex(
+      notebook.dir,
+      pullNotebookResult.cache,
+    );
+    if (hasStagedChanges) {
       notebook.localSha = await git.commit({
         ...args,
         author: { name: authorName, email: authorEmail },
@@ -913,7 +999,7 @@ export default class Crossnote {
   private async finishPull(
     notebook: Notebook,
     recovery: PullRecovery,
-  ): Promise<void> {
+  ): Promise<string | undefined> {
     // Replay the same planned bytes, including stable conflict-copy names.
     // Nothing deletes the recovery record on a failed reset, write or flush.
     needsRecovery(notebook.dir, true);
@@ -921,6 +1007,24 @@ export default class Crossnote {
       await git.listFiles({ fs, dir: notebook.dir, ref: recovery.remoteSha }),
     );
     const baseFiles = await filesAtCommit(notebook.dir, recovery.localSha);
+    // Older plans saved the working bytes without their upload eligibility.
+    // While the old checkout is still present, Git can recover that decision.
+    if (
+      !recovery.uploadCandidates &&
+      recovery.localSha !== recovery.remoteSha &&
+      (await localBranchSha(notebook)) === recovery.localSha
+    ) {
+      const candidates: string[] = [];
+      for (const [filepath, bytes] of Object.entries(recovery.files)) {
+        if (bytes === null || remoteFiles.has(filepath)) continue;
+        this.checkedPath(notebook, filepath);
+        const status = await git.status({ fs, dir: notebook.dir, filepath });
+        if (status === "added" || status === "*added")
+          candidates.push(filepath);
+      }
+      recovery.uploadCandidates = candidates;
+      await savePullRecovery(notebook._id, recovery);
+    }
     const moves = recovery.relocated ?? {};
     const originals = Array.isArray(moves) ? moves : Object.keys(moves);
     for (const file of new Set([...baseFiles, ...originals])) {
@@ -980,7 +1084,10 @@ export default class Crossnote {
     notebook.localSha = recovery.remoteSha;
     notebook.remoteSha = recovery.remoteSha;
     notebook.fetchedAt = new Date();
-    await this.updateNotebook(notebook);
+    const ignoredUploadFile = await this.updateNotebook(
+      notebook,
+      recovery.uploadCandidates ?? [],
+    );
     // Delete legacy data first: failure leaves the committed new record.
     localStorage.removeItem(`pending/pull/${notebook._id}`);
     await deletePullRecovery(notebook._id);
@@ -997,6 +1104,7 @@ export default class Crossnote {
           });
       }
     }
+    return ignoredUploadFile;
   }
 
   public async resumeNotebook(notebook: Notebook): Promise<void> {
@@ -1071,9 +1179,10 @@ export default class Crossnote {
       await pfs.storeTree(notebook.dir);
       notebook.remoteSha = remoteSha;
       notebook.fetchedAt = new Date();
-      await this.updateNotebook(notebook);
+      const ignoredUploadFile = await this.updateNotebook(notebook, []);
       return {
         status: localSha === remoteSha ? "up-to-date" : "pending-upload",
+        ignoredUploadFile,
         numConflicts: conflicts.length,
         conflicts,
         cache,
@@ -1202,6 +1311,20 @@ export default class Crossnote {
             })
           ).blob
         : null;
+    const incomingIgnoreChange = async (file: string) => {
+      for (let dir = path.dirname(file); ; dir = path.dirname(dir)) {
+        const rule = path.join(dir, ".gitignore");
+        if (
+          !sameBytes(
+            await blob(localSha, rule, baseFiles),
+            await blob(remoteSha, rule, remoteFiles),
+          )
+        )
+          return true;
+        if (dir === ".") return false;
+      }
+    };
+    const uploadCandidates: string[] = [];
     for (const [file, ours] of Object.entries(cache)) {
       this.checkedPath(notebook, file);
       const merged = mergeFile(
@@ -1226,6 +1349,19 @@ export default class Crossnote {
         }
         continue;
       }
+      // Replaying an ignored draft under the fetched rules could publish it.
+      if (ours !== null && !baseFiles.has(file)) {
+        const remoteTracksFile = remoteFiles.has(file);
+        if ((await git.status({ ...args, filepath: file })) === "ignored") {
+          if (remoteTracksFile || (await incomingIgnoreChange(file)))
+            throw new NotebookConflictError([file]);
+          // Restore the working bytes below. This file was excluded from
+          // upload before the pull, even if an earlier save had staged it.
+          cache[file] = null;
+        } else if (!remoteTracksFile && (await incomingIgnoreChange(file))) {
+          uploadCandidates.push(file);
+        }
+      }
       files[file] = merged.bytes;
       if (merged.conflict) conflicts.push(file);
       if (merged.deleted) deletions[file] = merged.deleted;
@@ -1243,13 +1379,20 @@ export default class Crossnote {
       conflicts,
       deletions,
       relocated,
+      uploadCandidates,
     };
     // Recovery references the fetched commit and its objects. Persist their
     // directory entries before publishing a plan a new page must replay.
     await pfs.storeTree(notebook.dir);
     await savePullRecovery(notebook._id, recovery);
-    await this.finishPull(notebook, recovery);
-    return { numConflicts: conflicts.length, conflicts, deletions, cache };
+    const ignoredUploadFile = await this.finishPull(notebook, recovery);
+    return {
+      numConflicts: conflicts.length,
+      conflicts,
+      deletions,
+      cache,
+      ignoredUploadFile,
+    };
   }
 
   public fetchNotebook(args: FetchNotebookArgs): Promise<boolean> {

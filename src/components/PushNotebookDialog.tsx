@@ -20,6 +20,7 @@ import { CrossnoteContainer } from "../containers/crossnote";
 import { SettingsContainer } from "../containers/settings";
 import { Notebook } from "../lib/notebook";
 import { NotesNotSavedError } from "../lib/noteSaver";
+import { IgnoredUploadFileError } from "../lib/notebookOperation";
 import { NotebookConflictError } from "../lib/mergeFiles";
 import { RecoveryDirectoryCollisionError } from "../lib/recoveryDirectory";
 import { notify } from "../lib/notifications";
@@ -102,9 +103,13 @@ export default function PushNotebookDialog(props: Props) {
                     i18next.t(`error/notebook-file-deleted-${side}`, { file }),
                   ),
                 })
-              : isAppErrorKey(error.message)
-                ? i18next.t(error.message)
-                : i18next.t("error/failed-to-upload-notebook"),
+              : error instanceof IgnoredUploadFileError
+                ? i18next.t("error/notebook-file-ignored", {
+                    file: error.filepath,
+                  })
+                : isAppErrorKey(error.message)
+                  ? i18next.t(error.message)
+                  : i18next.t("error/failed-to-upload-notebook"),
         });
       });
   }, [

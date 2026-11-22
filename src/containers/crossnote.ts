@@ -38,7 +38,10 @@ import { writeNoteOperation } from "../lib/noteWrites";
 import { moveNote, openNoteAt, retainedNoteAt } from "../lib/openNotes";
 import { failureMessage, notify } from "../lib/notifications";
 import i18next from "../i18n/i18n";
-import { notebookOperation } from "../lib/notebookOperation";
+import {
+  IgnoredUploadFileError,
+  notebookOperation,
+} from "../lib/notebookOperation";
 import { NotebookConflictError } from "../lib/mergeFiles";
 import { CrossnoteTabNode } from "../lib/tabNode";
 import { notebookInFront, tabsetForNewTab } from "../lib/tabset";
@@ -857,7 +860,10 @@ function useCrossnoteContainer(initialState: InitialState) {
         setIsPushingNotebook(false);
       } catch (error) {
         setIsPushingNotebook(false);
-        if (error instanceof NotebookConflictError) {
+        if (
+          error instanceof NotebookConflictError ||
+          error instanceof IgnoredUploadFileError
+        ) {
           await flushNotes({ notebookPath: args.notebook.dir });
           await readNotebookAgain(args.notebook);
         }

@@ -159,6 +159,8 @@ export const jaJP = {
     // Success
     "success/notebook-uploaded": "ノートブックがアップロードされます",
     "success/notebook-downloaded": "ノートブックがダウンロードされます",
+    "error/notebook-file-ignored":
+      "{{file}} が Git の除外ルールに一致するため、アップロードを中断しました。ルールを変更して再試行してください。",
     "error/notebook-history-diverged":
       "現在の履歴ではファストフォワードできるか確認できません。両方のブランチを保持しました。",
 

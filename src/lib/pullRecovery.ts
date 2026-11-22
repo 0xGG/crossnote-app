@@ -6,6 +6,8 @@ export interface PullRecovery {
   remoteSha: string;
   files: Record<string, FileBytes>;
   conflicts: string[];
+  // New local files that were eligible for upload before the incoming ignore rules.
+  uploadCandidates?: string[];
   deletions?: ConflictDeletions;
   // These local paths have durable copies at safe paths in files. Remove the
   // originals before checkout so remote files and directories can replace them.

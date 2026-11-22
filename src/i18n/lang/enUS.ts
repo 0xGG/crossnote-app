@@ -154,6 +154,8 @@ export const enUS = {
     // Success
     "success/notebook-uploaded": "Notebook uploaded",
     "success/notebook-downloaded": "Notebook downloaded",
+    "error/notebook-file-ignored":
+      "Upload paused because {{file}} matches a Git ignore rule. Update the rule and retry.",
     "error/notebook-history-diverged":
       "The available history cannot establish a fast-forward. Both branches have been kept.",
 

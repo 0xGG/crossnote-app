@@ -147,6 +147,8 @@ export const zhCN = {
     // Success
     "success/notebook-uploaded": "笔记本已上传",
     "success/notebook-downloaded": "笔记本已下载",
+    "error/notebook-file-ignored":
+      "上传已暂停。{{file}} 匹配 Git 忽略规则，请调整规则后重试。",
     "error/notebook-history-diverged":
       "现有历史无法确认分支能安全快进。已保留本地和远端分支。",
 

@@ -20,7 +20,10 @@ import {
   openNoteAt,
   type OpenNoteCalls,
 } from "../lib/openNotes";
-import { notebookOperation } from "../lib/notebookOperation";
+import {
+  IgnoredUploadFileError,
+  notebookOperation,
+} from "../lib/notebookOperation";
 import { pendingNoteWrites } from "../lib/noteWrites";
 import { NotebookConflictError } from "../lib/mergeFiles";
 import { CrossnoteContainer } from "./crossnote";
@@ -1111,50 +1114,62 @@ it("chooses a new note's path only after git has restored the notebook", async (
   }
 });
 
-it("saves input made during a conflicting upload before refreshing editors", async () => {
-  let reach!: () => void;
-  let release!: () => void;
-  const reached = new Promise<void>((resolve) => (reach = resolve));
-  const held = new Promise<void>((resolve) => (release = resolve));
-  const conflict = new NotebookConflictError(["assets/a.bin"]);
-  const notebook = await notebookAt("/notebooks/typing-during-conflict", {
-    pushNotebook: async () => {
-      reach();
-      await held;
-      await pfs.writeFile(`${notebook.dir}/a.md`, "Remote\nMiddle\nLast\n");
-      throw conflict;
-    },
-  });
-  const initial = "First\nMiddle\nLast\n";
-  await pfs.writeFile(`${notebook.dir}/a.md`, initial);
-  await notebook.getNote("a.md", true);
-  const { open, type, close } = openForTyping(notebook, "a.md", initial);
-  try {
-    await act(async () => {
-      const pushing = crossnote.pushNotebook({
-        notebook,
-        message: "Save",
-        authorName: "Test",
-        authorEmail: "test@example.test",
-        username: "Test",
-        password: "",
-      });
-      const rejected = expect(pushing).rejects.toBe(conflict);
-      await reached;
-      type("Typed during sync\n");
-      release();
-      await rejected;
+it.each([
+  ["conflict", new NotebookConflictError(["assets/a.bin"])],
+  ["ignored file", new IgnoredUploadFileError("draft.md")],
+] as const)(
+  "saves input before refreshing editors after an upload stops for %s",
+  async (reason, error) => {
+    let reach!: () => void;
+    let release!: () => void;
+    const reached = new Promise<void>((resolve) => (reach = resolve));
+    const held = new Promise<void>((resolve) => (release = resolve));
+    const notebook = await notebookAt(`/notebooks/typing-during-${reason}`, {
+      pushNotebook: async () => {
+        reach();
+        await held;
+        await pfs.writeFile(`${notebook.dir}/a.md`, "Remote\nMiddle\nLast\n");
+        await pfs.writeFile(`${notebook.dir}/README.md`, "Incoming");
+        throw error;
+      },
     });
-    expect(await body(notebook, "a.md")).toBe(
-      "Remote\nMiddle\nLast\nTyped during sync\n",
+    const initial = "First\nMiddle\nLast\n";
+    await pfs.writeFile(`${notebook.dir}/a.md`, initial);
+    await notebook.getNote("a.md", true);
+    await pfs.writeFile(`${notebook.dir}/README.md`, "Original");
+    expect((await notebook.getNote("README.md", true)).markdown).toBe(
+      "Original",
     );
-    expect(open.document.text()).toBe(await body(notebook, "a.md"));
-    expect(open.saver.pending).toBe(false);
-  } finally {
-    release();
-    close();
-  }
-});
+    const { open, type, close } = openForTyping(notebook, "a.md", initial);
+    const pendingAtRefresh: boolean[] = [];
+    const onRefresh = ({ notebookPath }: { notebookPath: string }) => {
+      if (notebookPath === notebook.dir)
+        pendingAtRefresh.push(open.saver.pending);
+    };
+    globalEmitter.on(EventType.PerformedGitOperation, onRefresh);
+    try {
+      await act(async () => {
+        const pushing = crossnote.pushNotebook({ notebook });
+        const rejected = expect(pushing).rejects.toBe(error);
+        await reached;
+        type("Typed during sync\n");
+        release();
+        await rejected;
+      });
+      expect(pendingAtRefresh).toEqual([false]);
+      expect((await notebook.getNote("README.md")).markdown).toBe("Incoming");
+      expect(await body(notebook, "a.md")).toBe(
+        "Remote\nMiddle\nLast\nTyped during sync\n",
+      );
+      expect(open.document.text()).toBe(await body(notebook, "a.md"));
+      expect(open.saver.pending).toBe(false);
+    } finally {
+      globalEmitter.off(EventType.PerformedGitOperation, onRefresh);
+      release();
+      close();
+    }
+  },
+);
 
 it("writes what was just typed into a note before renaming it, and saves it under its new name from then on", async () => {
   const notebook = await notebookAt("/notebooks/renaming");
