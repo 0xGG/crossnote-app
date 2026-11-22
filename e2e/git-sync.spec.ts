@@ -375,6 +375,57 @@ test("downloads the first remote commit and uploads a note made in the empty clo
   expect(await remoteBytes(request, remote, "remote.md")).toEqual(first);
 });
 
+test("retries the same commit after an upload failure, reload and download", async ({
+  app,
+  page,
+  request,
+}) => {
+  const remote = await createRemote(request, { "README.md": bytes("Base\n") });
+  const remoteHead = async () =>
+    (await (await request.get(`${fixtureURL}/repos/${remote.id}`)).json()).sha;
+  const base = await remoteHead();
+  await app.open();
+  const dir = await cloneRemote(app, remote);
+  const ref = `${dir}/.git/refs/heads/master`;
+  const edited = bytes("Saved before uploading\r\n");
+  await localBytes(page, `${dir}/README.md`, edited);
+  let attempted = "";
+  await page.route(
+    "**/git-receive-pack",
+    async (route) => {
+      attempted = new TextDecoder()
+        .decode(new Uint8Array(await localBytes(page, ref)))
+        .trim();
+      await route.abort("failed");
+    },
+    { times: 1 },
+  );
+  const messages = await app.recordMessages();
+  await app
+    .notebook(remote.id)
+    .getByRole("treeitem", { name: /Upload/ })
+    .click();
+  await page
+    .getByRole("dialog")
+    .getByRole("button", { name: "Upload", exact: true })
+    .click();
+  await expect.poll(messages).toContain("Failed to upload notebook");
+  expect(attempted).toMatch(/^[0-9a-f]{40}$/);
+  expect(attempted).not.toBe(base);
+  expect(await remoteHead()).toBe(base);
+  expect((await app.storedText(ref))?.trim()).toBe(attempted);
+
+  await page.reload();
+  await app.waitUntilReady();
+  await app.openNotes(remote.id);
+  await download(app, remote, "Local commits are waiting to be uploaded.");
+  expect((await app.storedText(ref))?.trim()).toBe(attempted);
+  expect(await localBytes(page, `${dir}/README.md`)).toEqual(edited);
+  await upload(app, remote);
+  expect(await remoteHead()).toBe(attempted);
+  expect(await remoteBytes(request, remote, "README.md")).toEqual(edited);
+});
+
 test("explains an empty remote and retries the download without losing a local edit", async ({
   app,
   page,
@@ -466,7 +517,10 @@ test("preserves modified attachment bytes through pull, push and a fresh clone",
   const dir = await cloneRemote(app, remote);
   expect(await localBytes(page, `${dir}/assets/image.png`)).toEqual(original);
   await localBytes(page, `${dir}/assets/image.png`, edited);
-  await download(app, remote);
+  await download(app, remote, "No new commits to download");
+  expect(await remoteBytes(request, remote, "assets/image.png")).toEqual(
+    original,
+  );
   expect(await localBytes(page, `${dir}/assets/image.png`)).toEqual(edited);
   await upload(app, remote);
   expect(await remoteBytes(request, remote, "assets/image.png")).toEqual(

@@ -154,6 +154,8 @@ export const enUS = {
     // Success
     "success/notebook-uploaded": "Notebook uploaded",
     "success/notebook-downloaded": "Notebook downloaded",
+    "info/notebook-pending-upload": "Local commits are waiting to be uploaded.",
+    "success/notebook-up-to-date": "No new commits to download",
     "error/notebook-file-ignored":
       "Upload paused because {{file}} matches a Git ignore rule. Update the rule and retry.",
     "error/notebook-history-diverged":

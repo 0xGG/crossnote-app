@@ -146,6 +146,8 @@ export const zhTW = {
     // Success
     "success/notebook-uploaded": "筆記本已上傳",
     "success/notebook-downloaded": "筆記本已下載",
+    "info/notebook-pending-upload": "本機還有待上傳的提交。",
+    "success/notebook-up-to-date": "沒有需要下載的新提交。",
     "error/notebook-file-ignored":
       "上傳已暫停。{{file}} 符合 Git 忽略規則，請調整規則後重試。",
     "error/notebook-history-diverged":

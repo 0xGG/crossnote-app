@@ -147,6 +147,8 @@ export const zhCN = {
     // Success
     "success/notebook-uploaded": "笔记本已上传",
     "success/notebook-downloaded": "笔记本已下载",
+    "info/notebook-pending-upload": "本机还有待上传的提交。",
+    "success/notebook-up-to-date": "没有需要下载的新提交。",
     "error/notebook-file-ignored":
       "上传已暂停。{{file}} 匹配 Git 忽略规则，请调整规则后重试。",
     "error/notebook-history-diverged":

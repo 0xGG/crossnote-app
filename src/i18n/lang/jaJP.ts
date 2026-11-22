@@ -159,6 +159,10 @@ export const jaJP = {
     // Success
     "success/notebook-uploaded": "ノートブックがアップロードされます",
     "success/notebook-downloaded": "ノートブックがダウンロードされます",
+    "info/notebook-pending-upload":
+      "アップロード待ちのローカルコミットがあります。",
+    "success/notebook-up-to-date":
+      "ダウンロードする新しいコミットはありません。",
     "error/notebook-file-ignored":
       "{{file}} が Git の除外ルールに一致するため、アップロードを中断しました。ルールを変更して再試行してください。",
     "error/notebook-history-diverged":
