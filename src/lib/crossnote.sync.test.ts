@@ -1450,6 +1450,70 @@ it("unstages a new draft ignored after an interrupted upload without deleting it
   ]).toEqual([...bytes("edited note")]);
 });
 
+it("retries the pending commit after a staged replacement is undone by restoring the directory", async () => {
+  const { app, notebook, read } = await repository();
+  const args = { fs, dir: notebook.dir };
+  const push = vi
+    .spyOn(git, "push")
+    .mockRejectedValueOnce(new Error("Offline"))
+    .mockResolvedValue({ ok: true, error: null, refs: {} });
+  await pfs.writeFile(`${notebook.dir}/README.md`, "pending edit");
+  await expect(app.pushNotebook({ notebook })).rejects.toThrow("Offline");
+  const pending = notebook.localSha;
+  const parent = `${notebook.dir}/assets`;
+  await pfs.rmdir(parent);
+  await git.remove({ ...args, filepath: "assets/a.bin" });
+  await pfs.writeFile(parent, "discarded replacement");
+  await git.add({ ...args, filepath: "assets" });
+  expect(await git.listFiles(args)).toContain("assets");
+  await pfs.unlink(parent);
+  await pfs.writeFile(parent + "/a.bin", binary);
+  await app.pushNotebook({ notebook });
+  expect(push).toHaveBeenCalledTimes(2);
+  expect(notebook.remoteSha).toBe(pending);
+  expect(await git.listFiles(args)).not.toContain("assets");
+  expect(await read("assets/a.bin")).toEqual([...binary]);
+  expect([
+    ...(
+      await git.readBlob({
+        ...args,
+        oid: notebook.remoteSha,
+        filepath: "assets/a.bin",
+      })
+    ).blob,
+  ]).toEqual([...binary]);
+});
+
+it.each([false, true])(
+  "checks an unstaged ignored draft at the exact incoming path (matching bytes: %s)",
+  async (match) => {
+    const { app, notebook, base, theirs, read } = await repository(
+      { ".gitignore": null, "draft.md": bytes("remote note") },
+      { ".gitignore": bytes("draft.md\n") },
+    );
+    const args = { fs, dir: notebook.dir };
+    expect([
+      ...(await git.readBlob({ ...args, oid: theirs, filepath: "draft.md" }))
+        .blob,
+    ]).toEqual([...bytes("remote note")]);
+    const content = bytes(match ? "remote note" : "local note");
+    await pfs.writeFile(`${notebook.dir}/draft.md`, content);
+    expect(await git.status({ ...args, filepath: "draft.md" })).toBe("ignored");
+    expect(await git.listFiles(args)).not.toContain("draft.md");
+    if (match) {
+      await app.pullNotebook({ notebook });
+      expect(notebook.localSha).toBe(theirs);
+    } else {
+      await expect(app.pullNotebook({ notebook })).rejects.toMatchObject({
+        files: ["draft.md"],
+      });
+      expect(await git.resolveRef({ ...args, ref: "HEAD" })).toBe(base);
+      expect(await recovery.readPullRecovery(notebook._id)).toBeUndefined();
+    }
+    expect(await read("draft.md")).toEqual([...content]);
+  },
+);
+
 it("uploads a note deletion when only an ignored draft remains in its former path", async () => {
   const { app, notebook, base, read } = await repository(
     {},
@@ -1477,6 +1541,170 @@ it("uploads a note deletion when only an ignored draft remains in its former pat
   expect(files).not.toContain("README.md/private.md");
   expect(await read("README.md/private.md")).toEqual(savedDraft);
 });
+
+it("preserves a submodule in the uploaded tree when only a note changes", async () => {
+  const { app, notebook, base } = await repository();
+  const args = { fs, dir: notebook.dir };
+  const { tree } = await git.readTree({ ...args, oid: base });
+  const submodule = {
+    path: "vendor",
+    type: "commit" as const,
+    mode: "160000",
+    oid: base,
+  };
+  const tip = await git.commit({
+    ...args,
+    author,
+    message: "Add submodule",
+    tree: await git.writeTree({ ...args, tree: [...tree, submodule] }),
+  });
+  await app.hardResetNotebook(notebook, tip, true);
+  vi.mocked(git.fetch).mockResolvedValue({ ...emptyRemote, fetchHead: tip });
+  expect((await pfs.stats(notebook.dir + "/vendor")).isDirectory()).toBe(true);
+  expect(await git.listFiles(args)).toContain("vendor");
+  await pfs.writeFile(notebook.dir + "/README.md", "ordinary edit");
+  const push = vi
+    .spyOn(git, "push")
+    .mockResolvedValue({ ok: true, error: null, refs: {} });
+  await app.pushNotebook({ notebook });
+  expect(push).toHaveBeenCalledOnce();
+  const sent = await git.readTree({ ...args, oid: notebook.remoteSha });
+  expect(sent.tree).toContainEqual(submodule);
+});
+
+it("uploads the replacement file when a tracked directory becomes a working file", async () => {
+  const { app, notebook, base, read } = await repository();
+  await pfs.rmdir(`${notebook.dir}/assets`);
+  await pfs.writeFile(`${notebook.dir}/assets`, "replacement");
+  const push = vi
+    .spyOn(git, "push")
+    .mockResolvedValue({ ok: true, error: null, refs: {} });
+  await app.pushNotebook({ notebook });
+  expect(push).toHaveBeenCalledOnce();
+  const args = { fs, dir: notebook.dir, oid: notebook.remoteSha };
+  expect((await git.readCommit(args)).commit.parent).toEqual([base]);
+  const files = await git.listFiles({ ...args, ref: notebook.remoteSha });
+  expect(files).toContain("assets");
+  expect(files).not.toContain("assets/a.bin");
+  expect([
+    ...(await git.readBlob({ ...args, filepath: "assets" })).blob,
+  ]).toEqual([...bytes("replacement")]);
+  expect(await read("assets")).toEqual([...bytes("replacement")]);
+});
+
+it("preserves both replacement files when each side replaces the same directory", async () => {
+  const { app, notebook, theirs, read } = await repository({
+    "assets/a.bin": null,
+    "assets": remoteBytes,
+  });
+  await pfs.rmdir(`${notebook.dir}/assets`);
+  await pfs.writeFile(`${notebook.dir}/assets`, changed);
+  const push = vi.spyOn(git, "push");
+  const copy = `assets.remote-${theirs.slice(0, 8)}`;
+  await expect(app.pushNotebook({ notebook })).rejects.toMatchObject({
+    files: ["assets", copy],
+  });
+  expect(push).not.toHaveBeenCalled();
+  expect(notebook.localSha).toBe(theirs);
+  expect(await read("assets")).toEqual([...changed]);
+  expect(await read(copy)).toEqual([...remoteBytes]);
+});
+
+it.each([false, true])(
+  "keeps an ignored directory replacement local while uploading other edits (previously staged: %s)",
+  async (staged) => {
+    const { app, notebook, read } = await repository({
+      ".gitignore": bytes(staged ? "" : "assets\n"),
+    });
+    await app.pullNotebook({ notebook });
+    const args = { fs, dir: notebook.dir };
+    await pfs.rmdir(`${notebook.dir}/assets`);
+    await pfs.writeFile(`${notebook.dir}/assets`, "local file");
+    if (staged) {
+      await git.remove({ ...args, filepath: "assets/a.bin" });
+      await git.add({ ...args, filepath: "assets" });
+      expect(await git.listFiles(args)).toContain("assets");
+      await pfs.writeFile(`${notebook.dir}/.gitignore`, "assets\n");
+    }
+    await pfs.writeFile(`${notebook.dir}/README.md`, "upload this edit");
+    const push = vi
+      .spyOn(git, "push")
+      .mockResolvedValue({ ok: true, error: null, refs: {} });
+    await app.pushNotebook({ notebook });
+    expect(push).toHaveBeenCalledOnce();
+    const files = await git.listFiles({ ...args, ref: notebook.remoteSha });
+    expect(files).not.toContain("assets");
+    expect(files).not.toContain("assets/a.bin");
+    expect(await git.listFiles(args)).not.toContain("assets");
+    expect(await read("assets")).toEqual([...bytes("local file")]);
+    expect([
+      ...(
+        await git.readBlob({
+          ...args,
+          oid: notebook.remoteSha,
+          filepath: "README.md",
+        })
+      ).blob,
+    ]).toEqual([...bytes("upload this edit")]);
+  },
+);
+
+it.each([false, true])(
+  "preserves an ignored replacement before a fast-forward removes its rule (remote adds an empty file: %s)",
+  async (remoteFile) => {
+    const { app, notebook, base, read } = await repository(
+      {
+        "records.md/old.md": null,
+        ".gitignore": bytes("local-only.md\n"),
+        ...(remoteFile ? { "records.md": bytes("") } : {}),
+      },
+      {
+        "records.md/old.md": bytes("tracked child"),
+        ".gitignore": bytes("records.md\nlocal-only.md\n"),
+      },
+    );
+    const args = { fs, dir: notebook.dir };
+    const target = `${notebook.dir}/records.md`;
+    await pfs.rmdir(target);
+    await pfs.writeFile(target, "local draft");
+    await pfs.writeFile(`${notebook.dir}/README.md`, "other edit");
+    expect(await git.status({ ...args, filepath: "records.md" })).toBe(
+      "ignored",
+    );
+    const push = vi
+      .spyOn(git, "push")
+      .mockResolvedValue({ ok: true, error: null, refs: {} });
+    for (let attempt = 0; attempt < 2; attempt++) {
+      await expect(app.pushNotebook({ notebook })).rejects.toMatchObject({
+        files: ["records.md"],
+      });
+      expect(await git.resolveRef({ ...args, ref: "HEAD" })).toBe(base);
+      expect(await read("records.md")).toEqual([...bytes("local draft")]);
+      expect(await recovery.readPullRecovery(notebook._id)).toBeUndefined();
+    }
+    expect(push).not.toHaveBeenCalled();
+    // Move the draft to a path excluded by both revisions, then retry the ordinary edit.
+    await pfs.rename(target, `${notebook.dir}/local-only.md`);
+    await app.pushNotebook({ notebook });
+    expect(push).toHaveBeenCalledOnce();
+    expect(await read("local-only.md")).toEqual([...bytes("local draft")]);
+    const sent = { ...args, oid: notebook.remoteSha };
+    expect(
+      await git.listFiles({ ...args, ref: notebook.remoteSha }),
+    ).not.toContain("local-only.md");
+    expect([
+      ...(await git.readBlob({ ...sent, filepath: "README.md" })).blob,
+    ]).toEqual([...bytes("other edit")]);
+    if (remoteFile)
+      expect([
+        ...(await git.readBlob({ ...sent, filepath: "records.md" })).blob,
+      ]).toEqual([]);
+    else
+      expect(
+        await git.listFiles({ ...args, ref: notebook.remoteSha }),
+      ).not.toContain("records.md");
+  },
+);
 
 it("keeps a staged draft private when a fast-forward removes its ignore rule", async () => {
   const { app, notebook, base, read } = await repository(

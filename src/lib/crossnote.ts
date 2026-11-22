@@ -471,15 +471,64 @@ export default class Crossnote {
     return nb.blockedUploadPaths?.[0];
   }
 
+  private async cacheWorkingFileAncestor(
+    notebook: Notebook,
+    file: string,
+    cache: Cache,
+    forStaging = false,
+  ) {
+    let ancestor = "";
+    for (const name of file.split("/").slice(0, -1)) {
+      ancestor = ancestor ? `${ancestor}/${name}` : name;
+      if (ancestor in cache) return;
+      const target = this.checkedPath(notebook, ancestor);
+      const stats = await pfs.stats(target).catch(missingFileOrThrow);
+      if (!stats) return;
+      if (stats.isDirectory()) continue;
+      // The parent has no tracked file in HEAD. On the no-checkout path a
+      // null entry only removes it from the index, leaving the file on disk.
+      if (
+        forStaging &&
+        (await git.status({ fs, dir: notebook.dir, filepath: ancestor })) ===
+          "ignored"
+      ) {
+        cache[ancestor] = null;
+        return;
+      }
+      cache[ancestor] = new Uint8Array(
+        (await pfs.readFile(target)) as Uint8Array,
+      );
+      return;
+    }
+  }
+
   private async generateChangesCache(
     notebook: Notebook,
     includeStaged = false,
   ): Promise<Cache> {
     const cache: Cache = Object.create(null);
-    for (const [file, head, work, stage] of await git.statusMatrix({
-      fs,
-      dir: notebook.dir,
-    })) {
+    const args = { fs, dir: notebook.dir };
+    const rows = await git.statusMatrix(args);
+    if (includeStaged) {
+      // A staged blob can be hidden by a restored directory. A submodule is
+      // also a directory on disk, but its staged commit must be preserved.
+      const visible = new Set(rows.map(([file]) => file));
+      await git.walk({
+        ...args,
+        trees: [git.STAGE()],
+        map: async (file, [entry]) => {
+          if (visible.has(file) || (await entry.type()) !== "blob") return;
+          const target = this.checkedPath(notebook, file);
+          if (
+            (
+              await fs.promises.lstat(target).catch(missingFileOrThrow)
+            )?.isDirectory()
+          )
+            cache[file] = null;
+        },
+      });
+    }
+    for (const [file, head, work, stage] of rows) {
       // When checkout is skipped the old index still exists. An upload must
       // stage the current working bytes even if an earlier edit was undone.
       const indexMatches = !includeStaged || head === stage;
@@ -505,6 +554,14 @@ export default class Crossnote {
         if (sameBytes(bytes, base.blob)) continue;
       }
       cache[file] = bytes;
+      // Git reports the deleted children but skips the file replacing their directory.
+      if (!work && head)
+        await this.cacheWorkingFileAncestor(
+          notebook,
+          file,
+          cache,
+          includeStaged,
+        );
     }
     return cache;
   }
@@ -1222,23 +1279,27 @@ export default class Crossnote {
     };
     for (const file of remoteFiles) {
       const target = this.checkedPath(notebook, file);
-      if ((await pfs.exists(target)) && (await pfs.stats(target)).isDirectory())
-        await collectUntracked(file);
-      const parts = file.split("/");
-      parts.pop();
-      while (parts.length) {
-        const ancestor = parts.join("/");
-        const target = this.checkedPath(notebook, ancestor);
-        if (
-          (await pfs.exists(target)) &&
-          !(await pfs.stats(target)).isDirectory() &&
-          !(ancestor in cache)
-        )
-          cache[ancestor] = new Uint8Array(
-            (await pfs.readFile(target)) as Uint8Array,
-          );
-        parts.pop();
+      if (await pfs.exists(target)) {
+        if ((await pfs.stats(target)).isDirectory())
+          await collectUntracked(file);
+        else if (!baseFiles.has(file) && !(file in cache)) {
+          // An unstaged ignored file has no matrix row. Checkout may replace
+          // it only when the incoming commit already contains its exact bytes.
+          const incoming = await git.readBlob({
+            ...args,
+            oid: remoteSha,
+            filepath: file,
+          });
+          if (
+            !sameBytes(
+              (await pfs.readFile(target)) as Uint8Array,
+              incoming.blob,
+            )
+          )
+            throw new NotebookConflictError([file]);
+        }
       }
+      await this.cacheWorkingFileAncestor(notebook, file, cache);
     }
     const reserved = new Set([
       ...baseFiles,
@@ -1350,8 +1411,13 @@ export default class Crossnote {
         continue;
       }
       // Replaying an ignored draft under the fetched rules could publish it.
+      // Checkout also cannot remove an old directory over a working file.
       if (ours !== null && !baseFiles.has(file)) {
         const remoteTracksFile = remoteFiles.has(file);
+        const replacesRemovedDirectory =
+          !remoteTracksFile &&
+          [...baseFiles].some((child) => child.startsWith(file + "/"));
+        if (replacesRemovedDirectory) throw new NotebookConflictError([file]);
         if ((await git.status({ ...args, filepath: file })) === "ignored") {
           if (remoteTracksFile || (await incomingIgnoreChange(file)))
             throw new NotebookConflictError([file]);
