@@ -13,6 +13,7 @@ import { needsRecovery, notebookOperation } from "./notebookOperation";
 import {
   hasTextConflicts,
   mergeFile,
+  mergeableText,
   NotebookConflictError,
   sameBytes,
 } from "./mergeFiles";
@@ -83,6 +84,7 @@ export interface PullNotebookArgs {
 export type FetchNotebookArgs = PullNotebookArgs;
 
 interface PullNotebookResult {
+  status?: "up-to-date" | "pending-upload";
   numConflicts: number;
   cache: Cache;
   conflicts: string[];
@@ -104,6 +106,19 @@ const recoveryFilesChanged = () => new Error("error/recovery-files-changed");
 // base tree regardless of which files the user has already staged.
 async function filesAtCommit(dir: string, sha: string): Promise<string[]> {
   return sha ? git.listFiles({ fs, dir, ref: sha }) : [];
+}
+
+async function localBranchSha(notebook: Notebook): Promise<string> {
+  try {
+    return await git.resolveRef({
+      fs,
+      dir: notebook.dir,
+      ref: `refs/heads/${notebook.gitBranch || "master"}`,
+    });
+  } catch (error) {
+    if (error instanceof git.Errors.NotFoundError) return "";
+    throw error;
+  }
 }
 
 interface NotebookDBEntry {
@@ -375,13 +390,19 @@ export default class Crossnote {
     await this.notebookDB.put(nb, { force: true });
   }
 
-  private async generateChangesCache(notebook: Notebook): Promise<Cache> {
+  private async generateChangesCache(
+    notebook: Notebook,
+    includeStaged = false,
+  ): Promise<Cache> {
     const cache: Cache = Object.create(null);
-    for (const [file, head, work] of await git.statusMatrix({
+    for (const [file, head, work, stage] of await git.statusMatrix({
       fs,
       dir: notebook.dir,
     })) {
-      if (head === 0 && work === 0) continue;
+      // When checkout is skipped the old index still exists. An upload must
+      // stage the current working bytes even if an earlier edit was undone.
+      const indexMatches = !includeStaged || head === stage;
+      if (head === 0 && work === 0 && indexMatches) continue;
       const bytes =
         work === 0
           ? null
@@ -393,7 +414,7 @@ export default class Crossnote {
       // Git's stat shortcut compares timestamps only to whole seconds. An
       // equal-sized edit within that second can look unchanged. Before reset,
       // compare the bytes even for files the matrix calls clean.
-      if (head === work && notebook.localSha) {
+      if (head === work && indexMatches && notebook.localSha) {
         const base = await git.readBlob({
           fs,
           dir: notebook.dir,
@@ -441,85 +462,47 @@ export default class Crossnote {
       );
     }
 
-    const localSha = notebook.localSha;
-
-    const sha = await git.commit({
-      fs: fs,
-      dir: notebook.dir,
-      author: {
-        name: authorName,
-        email: authorEmail,
-      },
-      message,
-    });
-
-    const restoreSHA = async () => {
-      const gitBranch = notebook.gitBranch || "master";
-      // Perform a soft reset
-      await pfs.writeFile(
-        path.resolve(notebook.dir, `.git/refs/heads/${gitBranch}`),
-        localSha,
-      );
-    };
-
-    // console.log(sha);
-    let pushResult: git.PushResult;
-    try {
-      pushResult = await git.push({
-        fs: fs,
-        http,
-        onAuth: (url, auth) => {
-          return {
-            username: username, // || notebook.gitUsername,
-            password: password, // || notebook.gitPassword
-          };
-        },
-        onProgress: (progress) => {
-          if (onProgress) {
-            onProgress(progress);
-          }
-        },
-        onMessage: (message) => {
-          if (onMessage) {
-            onMessage(message);
-          }
-        },
-        onAuthFailure: (url, auth) => {
-          if (onAuthFailure) {
-            onAuthFailure(url);
-          }
-        },
-        onAuthSuccess: (url, auth) => {
-          if (onAuthSuccess) {
-            onAuthSuccess(url);
-          }
-        },
-        url: notebook.gitURL,
-        dir: notebook.dir,
-        ref: notebook.gitBranch,
-        corsProxy: notebook.gitCorsProxy,
+    const args = { fs, dir: notebook.dir };
+    if (pullNotebookResult.status) {
+      // No checkout staged the working changes on this path.
+      for (const [filepath, bytes] of Object.entries(
+        pullNotebookResult.cache,
+      )) {
+        if (bytes === null) await git.remove({ ...args, filepath });
+        else await git.add({ ...args, filepath });
+      }
+    }
+    const staged = await git.statusMatrix(args);
+    if (staged.some(([, head, , index]) => head !== index)) {
+      notebook.localSha = await git.commit({
+        ...args,
+        author: { name: authorName, email: authorEmail },
+        message,
       });
-    } catch (error) {
-      await restoreSHA();
+      // The new commit belongs to this branch even if the network fails.
       await pfs.storeTree(notebook.dir);
-      throw error;
-    }
-
-    if (pushResult.error) {
-      await restoreSHA();
-      await pfs.storeTree(notebook.dir);
-      throw new Error(pushResult.error);
-    }
-    // The commit is made here whether or not the push went through.
-    await pfs.storeTree(notebook.dir);
-
-    if (pushResult.ok) {
-      // Update notebook
-      notebook.fetchedAt = new Date();
-      notebook.localSha = sha;
-      notebook.remoteSha = sha;
       await this.updateNotebook(notebook);
     }
+    if (notebook.localSha === notebook.remoteSha) return null;
+
+    const pushResult = await git.push({
+      ...args,
+      http,
+      onAuth: () => ({ username, password }),
+      onProgress,
+      onMessage,
+      onAuthFailure,
+      onAuthSuccess,
+      url: notebook.gitURL,
+      ref: notebook.gitBranch,
+      corsProxy: notebook.gitCorsProxy,
+    });
+    if (pushResult.error || !pushResult.ok)
+      throw new Error(pushResult.error || "error/failed-to-upload-notebook");
+    await pfs.storeTree(notebook.dir);
+    notebook.fetchedAt = new Date();
+    notebook.remoteSha = notebook.localSha;
+    await this.updateNotebook(notebook);
     return pushResult;
   }
 
@@ -1070,7 +1053,34 @@ export default class Crossnote {
     });
     const remoteSha = fetched.fetchHead;
     if (!remoteSha) throw new Error("error/remote-has-no-commits");
-    const localSha = notebook.localSha;
+    const args = { fs, dir: notebook.dir };
+    const localSha = await localBranchSha(notebook);
+    notebook.localSha = localSha;
+    const descendsFrom = (oid: string, ancestor: string) =>
+      git.isDescendent({ ...args, oid, ancestor });
+    if (
+      localSha === remoteSha ||
+      (localSha && (await descendsFrom(localSha, remoteSha)))
+    ) {
+      const cache = await this.generateChangesCache(notebook, true);
+      const conflicts = Object.entries(cache)
+        .filter(([file, bytes]) =>
+          hasTextConflicts(mergeableText(file, bytes) ?? ""),
+        )
+        .map(([file]) => file);
+      await pfs.storeTree(notebook.dir);
+      notebook.remoteSha = remoteSha;
+      notebook.fetchedAt = new Date();
+      await this.updateNotebook(notebook);
+      return {
+        status: localSha === remoteSha ? "up-to-date" : "pending-upload",
+        numConflicts: conflicts.length,
+        conflicts,
+        cache,
+      };
+    }
+    if (localSha && !(await descendsFrom(remoteSha, localSha)))
+      throw new Error("error/notebook-history-diverged");
     const baseFiles = new Set(await filesAtCommit(notebook.dir, localSha));
     const remoteFiles = new Set(
       await git.listFiles({ fs, dir: notebook.dir, ref: remoteSha }),
@@ -1363,44 +1373,35 @@ export default class Crossnote {
         if (typeof notebook.autoFetchPeriod === "undefined") {
           notebook.autoFetchPeriod = 3600000; // 60 minutes
         }
-        if (typeof notebook.localSha === "undefined") {
-          notebook.localSha = await this.getGitSHA(
-            notebook.dir,
-            `origin/${notebook.gitBranch}`,
-          );
-        }
-        if (typeof notebook.remoteSha === "undefined") {
-          notebook.remoteSha = notebook.localSha;
-        }
         const gitBranch = notebook.gitBranch || "master";
         try {
-          if (notebook.localSha) {
-            await pfs.writeFile(
-              path.resolve(notebook.dir, `.git/refs/heads/${gitBranch}`),
-              notebook.localSha,
-            );
+          notebook.localSha ??= await this.getGitSHA(
+            notebook.dir,
+            `origin/${gitBranch}`,
+          );
+          notebook.remoteSha ??= notebook.localSha;
+          const localSha = await localBranchSha(notebook);
+          // Older notebooks may only have their branch tip in the registry.
+          if (!localSha && notebook.localSha) {
+            await git.writeRef({
+              fs,
+              dir: notebook.dir,
+              ref: `refs/heads/${gitBranch}`,
+              value: notebook.localSha,
+            });
+            await pfs.storeTree(notebook.dir);
+          } else {
+            notebook.localSha = localSha;
           }
-
           const pendingPull = await this.pendingPull(notebook);
           if (pendingPull) await this.finishPull(notebook, pendingPull);
-
-          const status = await git.status({
-            fs: fs,
-            dir: notebook.dir,
-            filepath: ".",
-          });
-
-          // check: absent, deleted, undeleted
-          if (status.match(/(absent|deleted)/) || pendingPull) {
-            // NOTE: Seems like there is a bug somewhere that caused all files to become *undeleted
-            // So we run git.add again.
-            await git.add({
-              fs: fs,
-              dir: notebook.dir,
-              filepath: ".",
-            });
+          if (
+            notebook.localSha &&
+            !(await pfs.exists(path.join(notebook.dir, ".git/index")))
+          ) {
+            await git.add({ fs, dir: notebook.dir, filepath: "." });
+            await pfs.storeTree(notebook.dir);
           }
-          await pfs.storeTree(notebook.dir);
         } catch (error) {
           notebooks[i] = null;
         }

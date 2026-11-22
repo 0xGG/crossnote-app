@@ -702,14 +702,21 @@ it.each([
   },
 );
 
-it("restores changed and newly staged bytes, deletions and untouched files on an unchanged remote", async () => {
+it("keeps working and staged changes on an unchanged remote without replacing the worktree", async () => {
   const { app, notebook, read } = await repository();
   await pfs.writeFile(`${notebook.dir}/assets/a.bin`, changed);
   await pfs.writeFile(`${notebook.dir}/assets/new.bin`, remoteBytes);
   await git.add({ fs, dir: notebook.dir, filepath: "assets/new.bin" });
   await pfs.unlink(`${notebook.dir}/removed.txt`);
   await git.remove({ fs, dir: notebook.dir, filepath: "removed.txt" });
+  const plan = vi.spyOn(recovery, "savePullRecovery");
+  const reset = vi.spyOn(app, "hardResetNotebook");
+  const index = await read(".git/index");
   const result = await app.pullNotebook({ notebook });
+  expect(result.status).toBe("up-to-date");
+  expect(reset).not.toHaveBeenCalled();
+  expect(plan).not.toHaveBeenCalled();
+  expect(await read(".git/index")).toEqual(index);
   expect(result.numConflicts).toBe(0);
   expect(await read("assets/a.bin")).toEqual([...changed]);
   expect(await read("assets/new.bin")).toEqual([...remoteBytes]);
@@ -728,6 +735,11 @@ it("restores changed and newly staged bytes, deletions and untouched files on an
   ]);
   expect(await recovery.readPullRecovery(notebook._id)).toBeUndefined();
   expect(localStorage.getItem(`pending/pull/${notebook._id}`)).toBeNull();
+  const reopened = (await app.listNotebooks()).find(
+    (item) => item._id === notebook._id,
+  )!;
+  expect(reopened.localSha).toBe(notebook.localSha);
+  expect(await read(".git/index")).toEqual(index);
 });
 
 it("keeps both binary sides, avoids an existing copy name and stops this push", async () => {
@@ -1078,29 +1090,34 @@ it("retains deletion intent in interrupted recovery and reports it on retry", as
 });
 
 it("persists fetched objects before publishing a recovery plan", async () => {
-  const { app, notebook, base } = await repository();
+  const { app, notebook, theirs } = await repository({
+    "new.md": bytes("remote"),
+  });
   const object = `${notebook.dir}/.git/objects/pack/new-fetch.pack`;
   vi.mocked(git.fetch).mockImplementationOnce(async () => {
     await pfs.writeFile(object, binary);
     return {
-      fetchHead: base,
+      fetchHead: theirs,
       fetchHeadDescription: "master",
       defaultBranch: "master",
       headers: {},
     };
   });
   const save = recovery.savePullRecovery;
-  vi.spyOn(recovery, "savePullRecovery").mockImplementationOnce(
-    async (id, plan) => {
+  const publish = vi
+    .spyOn(recovery, "savePullRecovery")
+    .mockImplementationOnce(async (id, plan) => {
       expect(Array.from((await readStored(object)) ?? [])).toEqual([...binary]);
       return save(id, plan);
-    },
-  );
+    });
   await app.pullNotebook({ notebook });
+  expect(publish).toHaveBeenCalledOnce();
 });
 
 it("does not reset when durable recovery cannot be written", async () => {
-  const { app, notebook, read } = await repository();
+  const { app, notebook, read } = await repository({
+    "new.md": bytes("remote"),
+  });
   await pfs.writeFile(`${notebook.dir}/assets/a.bin`, changed);
   vi.spyOn(recovery, "savePullRecovery").mockRejectedValueOnce(
     new Error("Quota exceeded"),
@@ -1140,23 +1157,242 @@ it("reads legacy pending text, retaining it when recovery fails", async () => {
   expect(localStorage.getItem(key)).toBeNull();
 });
 
-it("waits for a failed push's soft reset and stores its directory tree before rejecting", async () => {
-  const { app, notebook, base } = await repository();
-  vi.spyOn(git, "push").mockRejectedValueOnce(new Error("Network lost"));
-  await expect(
-    app.pushNotebook({
-      notebook,
-      authorName: author.name,
-      authorEmail: author.email,
-    }),
-  ).rejects.toThrow("Network lost");
-  expect(await app.getGitSHA(notebook.dir)).toBe(base);
+it.each(["Network lost", "Remote rejected"])(
+  "keeps and retries the original commit after %s, a reopen and a download",
+  async (failure) => {
+    const { app, notebook, base, read } = await repository();
+    const args = { fs, dir: notebook.dir };
+    const head = () => git.resolveRef({ ...args, ref: "refs/heads/master" });
+    const note = "saved before upload\r\n";
+    await pfs.writeFile(`${notebook.dir}/README.md`, note);
+    await git.add({ ...args, filepath: "README.md" });
+    const attempts: string[] = [];
+    const push = vi.spyOn(git, "push").mockImplementation(async () => {
+      attempts.push(await head());
+      if (attempts.length === 1) {
+        if (failure === "Network lost") throw new Error(failure);
+        return { ok: false, error: failure, refs: {} };
+      }
+      return { ok: true, error: null, refs: {} };
+    });
+    await expect(app.pushNotebook({ notebook })).rejects.toThrow(failure);
+    const [pending] = attempts;
+    expect(
+      (await git.readCommit({ ...args, oid: pending })).commit.parent,
+    ).toEqual([base]);
+    expect([
+      ...(await git.readBlob({ ...args, oid: pending, filepath: "README.md" }))
+        .blob,
+    ]).toEqual([...bytes(note)]);
+    expect(await head()).toBe(pending);
+    expect(
+      new TextDecoder()
+        .decode(await readStored(`${notebook.dir}/.git/refs/heads/master`))
+        .trim(),
+    ).toBe(pending);
+    expect(await app["notebookDB"].get(notebook._id)).toMatchObject({
+      localSha: pending,
+      remoteSha: base,
+    });
+
+    // A stale registry entry must not move the actual branch on startup.
+    const entry = await app["notebookDB"].get(notebook._id);
+    await app["notebookDB"].put({ ...entry, localSha: base });
+    const write = vi.spyOn(pfs, "writeFile");
+    const reopened = (await app.listNotebooks()).find(
+      (n) => n._id === notebook._id,
+    )!;
+    expect(reopened.localSha).toBe(pending);
+    expect(await head()).toBe(pending);
+    expect(await read("README.md")).toEqual([...bytes(note)]);
+    expect(
+      write.mock.calls.filter(
+        ([file]) =>
+          file.startsWith(notebook.dir + "/") &&
+          !file.startsWith(notebook.dir + "/.git/"),
+      ),
+    ).toEqual([]);
+    const reset = vi.spyOn(app, "hardResetNotebook");
+    const plan = vi.spyOn(recovery, "savePullRecovery");
+    await app.pullNotebook({ notebook: reopened });
+    expect(await head()).toBe(pending);
+    await app.pushNotebook({ notebook: reopened });
+    expect(push).toHaveBeenCalledTimes(2);
+    expect(attempts).toEqual([pending, pending]);
+    expect(reset).not.toHaveBeenCalled();
+    expect(plan).not.toHaveBeenCalled();
+    expect(await app["notebookDB"].get(notebook._id)).toMatchObject({
+      localSha: pending,
+      remoteSha: pending,
+    });
+  },
+);
+
+it("confirms a commit already received after a lost reply without another push", async () => {
+  const { app, notebook } = await repository();
+  const args = { fs, dir: notebook.dir };
+  await pfs.writeFile(`${notebook.dir}/README.md`, "sent before disconnect");
+  const push = vi
+    .spyOn(git, "push")
+    .mockRejectedValueOnce(new Error("Lost reply"));
+  await expect(app.pushNotebook({ notebook })).rejects.toThrow("Lost reply");
+  const pending = await git.resolveRef({ ...args, ref: "HEAD" });
+  vi.mocked(git.fetch).mockResolvedValueOnce({
+    ...emptyRemote,
+    fetchHead: pending,
+  });
+  const commit = vi.spyOn(git, "commit");
+  await app.pushNotebook({ notebook });
+  expect(push).toHaveBeenCalledTimes(1);
+  expect(commit).not.toHaveBeenCalled();
+  expect(await app["notebookDB"].get(notebook._id)).toMatchObject({
+    localSha: pending,
+    remoteSha: pending,
+  });
+});
+
+it("retries the pending commit when later staged edits have been undone in the worktree", async () => {
+  const { app, notebook } = await repository();
+  const args = { fs, dir: notebook.dir };
+  const path = `${notebook.dir}/README.md`;
+  await pfs.writeFile(path, "saved");
+  const push = vi
+    .spyOn(git, "push")
+    .mockRejectedValueOnce(new Error("Offline"));
+  await expect(app.pushNotebook({ notebook })).rejects.toThrow("Offline");
+  const pending = notebook.localSha;
+  await pfs.writeFile(path, "discarded");
+  await git.add({ ...args, filepath: "README.md" });
+  await pfs.writeFile(path, "saved");
+  await pfs.writeFile(`${notebook.dir}/draft.md`, "discarded file");
+  await git.add({ ...args, filepath: "draft.md" });
+  await pfs.unlink(`${notebook.dir}/draft.md`);
+  push.mockResolvedValueOnce({ ok: true, error: null, refs: {} });
+  await app.pushNotebook({ notebook });
+  expect(notebook.remoteSha).toBe(pending);
   expect(
-    new TextDecoder().decode(
-      await readStored(`${notebook.dir}/.git/refs/heads/master`),
-    ),
-  ).toBe(base);
-  expect(await isStored(`${notebook.dir}/.git/index`)).toBe(true);
+    await git.listFiles({ ...args, ref: notebook.remoteSha }),
+  ).not.toContain("draft.md");
+});
+
+it("stops an upload with unresolved text while keeping the pending branch and later edits", async () => {
+  const { app, notebook, read } = await repository();
+  const args = { fs, dir: notebook.dir };
+  await pfs.writeFile(`${notebook.dir}/README.md`, "first edit");
+  const push = vi
+    .spyOn(git, "push")
+    .mockRejectedValueOnce(new Error("Offline"));
+  await expect(app.pushNotebook({ notebook })).rejects.toThrow("Offline");
+  const pending = await git.resolveRef({ ...args, ref: "HEAD" });
+  const conflict =
+    "\\<<<<<<< ours\nfirst\n\\=======\nsecond\n\\>>>>>>> theirs\n";
+  await pfs.writeFile(`${notebook.dir}/README.md`, conflict);
+  const index = await read(".git/index");
+  const result = await app.pullNotebook({ notebook });
+  expect(result).toMatchObject({
+    status: "pending-upload",
+    conflicts: ["README.md"],
+  });
+  await expect(app.pushNotebook({ notebook })).rejects.toBeInstanceOf(
+    NotebookConflictError,
+  );
+  expect(await git.resolveRef({ ...args, ref: "HEAD" })).toBe(pending);
+  expect(await read(".git/index")).toEqual(index);
+  expect(await read("README.md")).toEqual([...bytes(conflict)]);
+  expect(push).toHaveBeenCalledTimes(1);
+  await pfs.writeFile(`${notebook.dir}/README.md`, "resolved");
+  push.mockResolvedValueOnce({ ok: true, error: null, refs: {} });
+  await app.pushNotebook({ notebook });
+  expect(
+    (await git.readCommit({ ...args, oid: notebook.remoteSha })).commit.parent,
+  ).toEqual([pending]);
+  expect([
+    ...(
+      await git.readBlob({
+        ...args,
+        oid: notebook.remoteSha,
+        filepath: "README.md",
+      })
+    ).blob,
+  ]).toEqual([...bytes("resolved")]);
+});
+
+it("keeps both branches and working files when a retry cannot fast-forward", async () => {
+  const { app, notebook, theirs, read } = await repository({
+    "remote.md": bytes("remote only"),
+  });
+  const args = { fs, dir: notebook.dir };
+  await pfs.writeFile(`${notebook.dir}/README.md`, "local only");
+  await git.add({ ...args, filepath: "README.md" });
+  const local = await git.commit({ ...args, author, message: "Pending" });
+  await pfs.writeFile(`${notebook.dir}/README.md`, "later edit");
+  const reset = vi.spyOn(app, "hardResetNotebook");
+  const push = vi.spyOn(git, "push");
+  await expect(app.pushNotebook({ notebook })).rejects.toThrow(
+    "error/notebook-history-diverged",
+  );
+  expect(reset).not.toHaveBeenCalled();
+  expect(push).not.toHaveBeenCalled();
+  expect(await git.resolveRef({ ...args, ref: "HEAD" })).toBe(local);
+  expect(await read("README.md")).toEqual([...bytes("later edit")]);
+  expect([
+    ...(await git.readBlob({ ...args, oid: theirs, filepath: "remote.md" }))
+      .blob,
+  ]).toEqual([...bytes("remote only")]);
+});
+
+it("keeps later edits with shallow history and uploads them once the remote advance can be verified", async () => {
+  const { app, notebook, read } = await repository();
+  const args = { fs, dir: notebook.dir };
+  const push = vi
+    .spyOn(git, "push")
+    .mockRejectedValueOnce(new Error("Lost reply"))
+    .mockResolvedValue({ ok: true, error: null, refs: {} });
+  await pfs.writeFile(`${notebook.dir}/README.md`, "first upload");
+  await expect(app.pushNotebook({ notebook })).rejects.toThrow("Lost reply");
+  const pending = await git.resolveRef({ ...args, ref: "HEAD" });
+
+  // The server received the upload and advanced twice, independently of
+  // this notebook's branch and index. Only its newest commit is advertised.
+  const remoteArgs = { ...args, author, noUpdateBranch: true };
+  const intermediate = await git.commit({
+    ...remoteArgs,
+    message: "Remote checkpoint",
+    parent: [pending],
+  });
+  const parentTree = (await git.readCommit({ ...args, oid: pending })).commit
+    .tree;
+  const { tree } = await git.readTree({ ...args, oid: parentTree });
+  const oid = await git.writeBlob({ ...args, blob: bytes("from remote") });
+  tree.push({ mode: "100644", path: "remote.md", type: "blob", oid });
+  const remote = await git.commit({
+    ...remoteArgs,
+    message: "Remote addition",
+    parent: [intermediate],
+    tree: await git.writeTree({ ...args, tree }),
+  });
+  vi.mocked(git.fetch).mockResolvedValue({ ...emptyRemote, fetchHead: remote });
+  await pfs.writeFile(`${notebook.dir}/README.md`, "typed after upload");
+  await pfs.writeFile(`${notebook.dir}/.git/shallow`, remote + "\n");
+  await expect(app.pushNotebook({ notebook })).rejects.toThrow(
+    "error/notebook-history-diverged",
+  );
+  expect(await git.resolveRef({ ...args, ref: "HEAD" })).toBe(pending);
+  expect(await read("README.md")).toEqual([...bytes("typed after upload")]);
+  expect(push).toHaveBeenCalledTimes(1);
+
+  await pfs.unlink(`${notebook.dir}/.git/shallow`);
+  await app.pushNotebook({ notebook });
+  expect(push).toHaveBeenCalledTimes(2);
+  expect(await read("remote.md")).toEqual([...bytes("from remote")]);
+  const sent = { ...args, oid: notebook.remoteSha };
+  expect((await git.readCommit(sent)).commit.parent).toEqual([remote]);
+  expect([
+    ...(await git.readBlob({ ...sent, filepath: "README.md" })).blob,
+  ]).toEqual([...bytes("typed after upload")]);
+  expect([
+    ...(await git.readBlob({ ...sent, filepath: "remote.md" })).blob,
+  ]).toEqual([...bytes("from remote")]);
 });
 
 it("persists fetched objects before reporting the new remote revision", async () => {
@@ -1175,28 +1411,6 @@ it("persists fetched objects before reporting the new remote revision", async ()
   expect(
     Array.from((await readStored(`${notebook.dir}/.git/objects/fetched`))!),
   ).toEqual([...bytes("object")]);
-});
-
-it("does not report a rejected remote push as success", async () => {
-  const { app, notebook, base } = await repository();
-  vi.spyOn(git, "push").mockResolvedValueOnce({
-    ok: false,
-    error: "Remote rejected",
-    refs: {},
-  });
-  await expect(
-    app.pushNotebook({
-      notebook,
-      authorName: author.name,
-      authorEmail: author.email,
-    }),
-  ).rejects.toThrow("Remote rejected");
-  expect(await app.getGitSHA(notebook.dir)).toBe(base);
-  expect(
-    new TextDecoder().decode(
-      await readStored(`${notebook.dir}/.git/refs/heads/master`),
-    ),
-  ).toBe(base);
 });
 
 it("persists cloned content before recording the notebook", async () => {

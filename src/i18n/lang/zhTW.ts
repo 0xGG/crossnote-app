@@ -146,6 +146,8 @@ export const zhTW = {
     // Success
     "success/notebook-uploaded": "筆記本已上傳",
     "success/notebook-downloaded": "筆記本已下載",
+    "error/notebook-history-diverged":
+      "現有歷史無法確認分支能安全快轉。已保留本機和遠端分支。",
 
     // Info
     "info/downloading-notebook": "正在下載筆記本",

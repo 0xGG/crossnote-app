@@ -154,6 +154,8 @@ export const enUS = {
     // Success
     "success/notebook-uploaded": "Notebook uploaded",
     "success/notebook-downloaded": "Notebook downloaded",
+    "error/notebook-history-diverged":
+      "The available history cannot establish a fast-forward. Both branches have been kept.",
 
     // Info
     "info/downloading-notebook": "Downloading notebook",

@@ -147,6 +147,8 @@ export const zhCN = {
     // Success
     "success/notebook-uploaded": "笔记本已上传",
     "success/notebook-downloaded": "笔记本已下载",
+    "error/notebook-history-diverged":
+      "现有历史无法确认分支能安全快进。已保留本地和远端分支。",
 
     // Info
     "info/downloading-notebook": "正在下载笔记本",

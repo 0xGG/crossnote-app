@@ -159,6 +159,8 @@ export const jaJP = {
     // Success
     "success/notebook-uploaded": "ノートブックがアップロードされます",
     "success/notebook-downloaded": "ノートブックがダウンロードされます",
+    "error/notebook-history-diverged":
+      "現在の履歴ではファストフォワードできるか確認できません。両方のブランチを保持しました。",
 
     // Info
     "info/downloading-notebook": "ノートブックをダウンロード中",
