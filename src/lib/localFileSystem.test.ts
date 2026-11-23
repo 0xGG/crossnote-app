@@ -1,69 +1,39 @@
 import { expect, it, vi } from "vitest";
+import { Folder } from "../test/diskFolder";
 import { pfs } from "./fs";
 import LocalFileSystem from "./localFileSystem";
 import { Notebook } from "./notebook";
 
-// A folder on the user's disk, held in memory, with the part of the File
-// System Access API the writes go through: asking for a folder where a file
-// is gives a TypeMismatchError, as the browsers do.
-class Folder {
-  readonly kind = "directory";
-  entries = new Map<string, Folder | string>();
+it.each([false, true])(
+  "matches an ancestor note path using the disk's case sensitivity (%s)",
+  async (caseSensitive) => {
+    const folder = new Folder(undefined, caseSensitive);
+    const child = await folder.getDirectoryHandle("Child", { create: true });
+    if (caseSensitive) {
+      await folder.getDirectoryHandle("child", { create: true });
+    }
+    const fs = new LocalFileSystem();
+    const mount = async (id: string, handle: Folder) =>
+      (
+        await fs.attachLocalDirectory(
+          id,
+          handle as unknown as FileSystemDirectoryHandle,
+        )
+      ).slice(0, -1);
+    const parent = await mount("parent", folder);
+    const target = await mount("child", child);
 
-  async queryPermission() {
-    return "granted";
-  }
-
-  async requestPermission() {
-    return "denied";
-  }
-
-  async getDirectoryHandle(name: string, { create = false } = {}) {
-    const entry = this.entries.get(name);
-    if (typeof entry === "string") {
-      throw new DOMException("A file is in the way.", "TypeMismatchError");
-    }
-    if (entry) {
-      return entry;
-    }
-    if (!create) {
-      throw new DOMException("Not there.", "NotFoundError");
-    }
-    const folder = new Folder();
-    this.entries.set(name, folder);
-    return folder;
-  }
-
-  async getFileHandle(name: string, { create = false } = {}) {
-    const entry = this.entries.get(name);
-    if (entry instanceof Folder) {
-      throw new DOMException("A folder is in the way.", "TypeMismatchError");
-    }
-    if (entry === undefined && !create) {
-      throw new DOMException("Not there.", "NotFoundError");
-    }
-    if (entry === undefined) {
-      this.entries.set(name, "");
-    }
-    return {
-      getFile: async () => ({
-        lastModified: Date.now(),
-        text: async () => this.entries.get(name) as string,
-      }),
-      createWritable: async () => {
-        let written = "";
-        return {
-          write: async (data: string) => {
-            written += data;
-          },
-          close: async () => {
-            this.entries.set(name, written);
-          },
-        };
-      },
-    };
-  }
-}
+    expect(
+      await fs.filePathInNotebook(target, parent, "./Child/nested/Note.md"),
+    ).toBe("nested/Note.md");
+    expect(await fs.filePathInNotebook(target, parent, "child/Note.md")).toBe(
+      caseSensitive ? null : "Note.md",
+    );
+    expect(
+      await fs.filePathInNotebook(target, parent, "Childish/Note.md"),
+    ).toBeNull();
+  },
+);
 
 it("creates a note with missing parents and preserves it when folder access fails", async () => {
   const root = new Folder();
@@ -107,6 +77,22 @@ async function attached() {
   );
   return { lfs, root, dir };
 }
+
+it("creates a note in a disk folder without Promise.withResolvers", async () => {
+  const { lfs, dir } = await attached();
+  const original = Object.getOwnPropertyDescriptor(Promise, "withResolvers")!;
+  Reflect.deleteProperty(Promise, "withResolvers");
+  try {
+    await lfs.withFileCreationLock(dir, () =>
+      lfs.writeFile(`${dir}note.md`, "# Saved"),
+    );
+  } finally {
+    Object.defineProperty(Promise, "withResolvers", original);
+  }
+  expect(await lfs.readFile(`${dir}note.md`, { encoding: "utf8" })).toBe(
+    "# Saved",
+  );
+});
 
 it("makes the folders a new file's path names", async () => {
   const { lfs, root, dir } = await attached();

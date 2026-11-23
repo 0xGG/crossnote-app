@@ -1,11 +1,19 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { Folder } from "../test/diskFolder";
+import { pfs } from "./fs";
 import {
+  flushNotebookEdits,
   flushNotes,
   NoteLocation,
   NoteSaver,
   NotesNotSavedError,
   saverOfTab,
 } from "./noteSaver";
+import {
+  pendingNoteWrites,
+  trackNoteInsertion,
+  writeNoteOperation,
+} from "./noteWrites";
 
 // A write the test settles by hand, in whatever order it likes.
 interface Write {
@@ -472,4 +480,103 @@ describe("flushNotes", () => {
     ]);
     expect((failure as NotesNotSavedError).errors).toEqual([full]);
   });
+});
+
+async function mountDisk(id: string, handle: Folder) {
+  const dir = await pfs.attachLocalDirectory({
+    id,
+    directoryHandle: handle as unknown as FileSystemDirectoryHandle,
+  });
+  return dir.slice(0, -1);
+}
+
+it.each(["alias", "child", "parent"] as const)(
+  "flushes accepted edits in the export folder from its %s registration",
+  async (registration) => {
+    const folder = new Folder();
+    const child = await folder.getDirectoryHandle("Child", { create: true });
+    const { editingFolder, exportFolder, filePath } = {
+      alias: {
+        editingFolder: new Folder(folder.entries),
+        exportFolder: folder,
+        filePath: "a.md",
+      },
+      child: { editingFolder: child, exportFolder: folder, filePath: "a.md" },
+      parent: {
+        editingFolder: folder,
+        exportFolder: child,
+        filePath: "Child/a.md",
+      },
+    }[registration];
+    const source = await mountDisk(`${registration}-editing`, editingFolder);
+    const target = await mountDisk(`${registration}-exporting`, exportFolder);
+    const unrelated =
+      registration === "parent"
+        ? source
+        : await mountDisk(`${registration}-unrelated`, new Folder());
+    const draft = editor({ notebookPath: source, filePath });
+    const other = editor({ notebookPath: unrelated, filePath: "b.md" });
+    draft.type("Pending draft");
+    other.type("Unrelated draft");
+
+    const insertion = Promise.withResolvers<void>();
+    const unrelatedInsertion = Promise.withResolvers<void>();
+    trackNoteInsertion(draft.saver.location, insertion.promise);
+    trackNoteInsertion(other.saver.location, unrelatedInsertion.promise);
+    let finished = false;
+    const flush = flushNotebookEdits(target).then(() => (finished = true));
+    try {
+      await settle();
+      expect(finished).toBe(false);
+      expect(draft.writes).toHaveLength(0);
+      draft.type("Pending draft with attachment");
+      insertion.resolve();
+
+      await settle();
+      expect(draft.writes.map(({ text }) => text)).toEqual([
+        "Pending draft with attachment",
+      ]);
+      expect(other.writes).toHaveLength(0);
+      draft.writes[0].resolve();
+      await settle();
+      expect(finished).toBe(true);
+    } finally {
+      insertion.resolve();
+      unrelatedInsertion.resolve();
+    }
+    await flush;
+  },
+);
+
+it("reports a child note write that fails during the disk folder comparison", async () => {
+  const folder = new Folder();
+  const child = await folder.getDirectoryHandle("Child", { create: true });
+  const target = await mountDisk("failed-exporting", folder);
+  const source = await mountDisk("failed-child", child);
+  const comparing = Promise.withResolvers<void>();
+  const compare = folder.resolve.bind(folder);
+  vi.spyOn(folder, "resolve").mockImplementation(async (candidate) => {
+    await comparing.promise;
+    return compare(candidate);
+  });
+  const location = { notebookPath: source, filePath: "Chapter.md" };
+  const write = Promise.withResolvers<void>();
+  const problem = new Error("Settings write refused");
+  const writing = expect(
+    writeNoteOperation(location, () => write.promise),
+  ).rejects.toBe(problem);
+  const flushing = expect(flushNotebookEdits(target)).rejects.toMatchObject({
+    locations: [{ notebookPath: target, filePath: "Child/Chapter.md" }],
+    errors: [problem],
+  });
+
+  try {
+    write.reject(problem);
+    await writing;
+    await settle();
+    expect(pendingNoteWrites(location)).toHaveLength(0);
+  } finally {
+    comparing.resolve();
+  }
+  await flushing;
 });

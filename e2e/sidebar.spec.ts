@@ -174,6 +174,7 @@ test("lists a notebook's favourites after its other rows, and marks the notebook
     "Graph view",
     "Notes",
     "Settings",
+    "Export notebook ZIP",
     "README",
   ]);
 

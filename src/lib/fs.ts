@@ -66,6 +66,27 @@ class FileSystem {
     return this.lfs.isPathOfLocalFileSystem(path);
   }
 
+  public notebookLockPath(dir: string) {
+    return this.lfs.notebookLockPath(dir);
+  }
+
+  public filePathInNotebook(
+    dir: string,
+    notebookPath: string,
+    filePath: string,
+  ) {
+    return this.lfs.filePathInNotebook(dir, notebookPath, filePath);
+  }
+
+  public withFileCreationLock<T>(
+    dir: string,
+    create: () => Promise<T>,
+  ): Promise<T> {
+    return this.lfs.isPathOfLocalFileSystem(dir)
+      ? this.lfs.withFileCreationLock(dir, create)
+      : create();
+  }
+
   private setUpFSMethods() {
     // The browser file system puts an entry under whatever its path names, a
     // note's file included, where the entry is out of sight of every listing

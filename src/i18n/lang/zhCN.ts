@@ -2,6 +2,21 @@ import type { enUS } from "./enUS";
 
 export const zhCN = {
   translation: {
+    "backup/export": "导出整本 ZIP",
+    "backup/title": "将“{{notebook}}”导出为 ZIP",
+    "backup/private-files":
+      "ZIP 包含隐藏文件及 Git 忽略的文件，其中可能含私有信息。外部媒体保留原网址。",
+    "backup/disk-links":
+      "备份包含 Chrome 能从目录中读取的文件。Chrome 可能隐藏符号链接。",
+    "backup/preparing": "正在准备 ZIP…",
+    "backup/windows-paths":
+      "以下路径在 Windows 上可能无法原名解包。ZIP 会保留原路径。",
+    "backup/download": "下载 ZIP",
+    "backup/failed": "无法导出笔记本。",
+    "backup/read-error": "无法读取“{{file}}”。",
+    "backup/symbolic-link": "无法收录符号链接“{{file}}”。",
+    "backup/too-large": "笔记本超出了 ZIP 大小或条目数量限制。",
+    "backup/sync-recovery": "请先重试“下载”以完成中断的同步，再导出笔记本。",
     "recovery/title": "同步已暂停",
     "recovery/instructions":
       "远端开始使用笔记本“{{notebook}}”中的 {{directory}}。请关闭该目录下的笔记，下载 ZIP 并核对文件。确认已保存后，Crossnote 会移除本地恢复目录，届时可重试下载或上传。",

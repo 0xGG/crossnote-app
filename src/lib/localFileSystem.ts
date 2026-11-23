@@ -1,6 +1,8 @@
 // Local File System API
 
 import type LightningFS from "@isomorphic-git/lightning-fs";
+import { Mutex } from "async-mutex";
+import path from "path-browserify";
 import { randomID } from "../utilities/utils";
 
 export interface ReadFileOptions {
@@ -35,7 +37,15 @@ export async function verifyPermission(
 }
 
 export default class LocalFileSystem {
-  private directoryHandleMap: { [key: string]: FileSystemDirectoryHandle } = {};
+  private readonly directories: Record<
+    string,
+    { handle: FileSystemDirectoryHandle; lockPath: string }
+  > = {};
+  private readonly attaching = new Mutex();
+  private readonly creatingFiles = new Set<{
+    handle: FileSystemDirectoryHandle;
+    done: Promise<unknown>;
+  }>();
   private readonly _prefix = "lfs";
 
   public async attachLocalDirectory(
@@ -54,8 +64,111 @@ export default class LocalFileSystem {
     if (!rootDir.endsWith("/")) {
       rootDir += "/";
     }
-    this.directoryHandleMap[rootDir] = directoryHandle;
+    // Separate notebook registrations can point to the same disk directory.
+    await this.attaching.runExclusive(async () => {
+      let lockPath = rootDir.slice(0, -1);
+      for (const mounted of Object.values(this.directories)) {
+        if (await directoryHandle.isSameEntry(mounted.handle)) {
+          lockPath = mounted.lockPath;
+          break;
+        }
+      }
+      this.directories[rootDir] = { handle: directoryHandle, lockPath };
+    });
     return rootDir;
+  }
+
+  public notebookLockPath(dir: string) {
+    return this.directories[`${dir}/`]?.lockPath ?? dir;
+  }
+
+  public async filePathInNotebook(
+    dir: string,
+    notebookPath: string,
+    filePath: string,
+  ): Promise<string | null> {
+    const relativeFile = path.normalize(filePath);
+    if (dir === notebookPath) return relativeFile;
+    const root = this.directories[`${dir}/`];
+    const source = this.directories[`${notebookPath}/`];
+    if (!root || !source) return null;
+    if (root.lockPath === source.lockPath) return relativeFile;
+
+    const sourcePath = await root.handle.resolve(source.handle);
+    if (sourcePath !== null) return path.join(...sourcePath, relativeFile);
+
+    const rootPath = await source.handle.resolve(root.handle);
+    const parts = relativeFile.split("/");
+    if (!rootPath || parts.length <= rootPath.length) return null;
+    const prefix = parts.slice(0, rootPath.length);
+    if (
+      prefix.join("/") !== rootPath.join("/") &&
+      !(await this.matchesDirectoryPath(source.handle, prefix, rootPath))
+    ) {
+      return null;
+    }
+    return parts.slice(rootPath.length).join("/");
+  }
+
+  private async matchesDirectoryPath(
+    directory: FileSystemDirectoryHandle,
+    supplied: string[],
+    actual: string[],
+  ) {
+    // A Windows link can spell a directory differently from the picker.
+    // Check that the alternate spelling resolves and is not a separate entry.
+    for (const [i, name] of actual.entries()) {
+      const alternate = supplied[i];
+      if (alternate !== name) {
+        const folded = name.toUpperCase();
+        if (alternate.toUpperCase() !== folded) return false;
+        try {
+          await directory.getDirectoryHandle(alternate);
+        } catch (error) {
+          if (
+            error instanceof DOMException &&
+            (error.name === "NotFoundError" ||
+              error.name === "TypeMismatchError")
+          ) {
+            return false;
+          }
+          throw error;
+        }
+        for await (const entry of directory.values()) {
+          if (entry.name !== name && entry.name.toUpperCase() === folded)
+            return false;
+        }
+      }
+      if (i + 1 < actual.length)
+        directory = await directory.getDirectoryHandle(name);
+    }
+    return true;
+  }
+
+  public async withFileCreationLock<T>(
+    dir: string,
+    create: () => Promise<T>,
+  ): Promise<T> {
+    const { handle } = this.directories[`${path.resolve(dir)}/`];
+    const earlier = [...this.creatingFiles];
+    // Overlapping registrations can create the same file through either root.
+    const creation = Promise.all(
+      earlier.map(async (other) => {
+        if (
+          (await handle.resolve(other.handle)) !== null ||
+          (await other.handle.resolve(handle)) !== null
+        ) {
+          await other.done;
+        }
+      }),
+    ).then(create);
+    const current = { handle, done: creation.catch(() => {}) };
+    this.creatingFiles.add(current);
+    try {
+      return await creation;
+    } finally {
+      this.creatingFiles.delete(current);
+    }
   }
 
   public isPathOfLocalFileSystem(path: string) {
@@ -68,7 +181,7 @@ export default class LocalFileSystem {
   ): Promise<[FileSystemDirectoryHandle, string[]]> {
     const pathArr = path.replace(/\/+$/, "").split("/");
     const rootDir = "/" + pathArr[1] + "/" + pathArr[2] + "/";
-    const directoryHandle = this.directoryHandleMap[rootDir];
+    const directoryHandle = this.directories[rootDir]?.handle;
     if (!directoryHandle) throw new Error(`${path} is not valid`);
     if (!(await verifyPermission(directoryHandle, mode))) {
       throw new DOMException(
@@ -169,6 +282,7 @@ export default class LocalFileSystem {
     return {
       isDirectory: () => !file,
       isFile: () => !!file,
+      size: file?.size ?? 0,
       ctimeMs: time,
       mtimeMs: time,
     } as LightningFS.Stats;

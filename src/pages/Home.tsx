@@ -31,6 +31,7 @@ import { MainPanel } from "../components/MainPanel";
 import NotebookTreeView from "../components/NotebookTreeView";
 import { builtInTabLabels } from "../lib/tabNode";
 import ConfigureNotebookDialog from "../components/ConfigureNotebookDialog";
+import { ExportNotebookDialog } from "../components/ExportNotebookDialog";
 import PushNotebookDialog from "../components/PushNotebookDialog";
 import { RecoveryDirectoryDialog } from "../components/RecoveryDirectoryDialog";
 import { CrossnoteContainer } from "../containers/crossnote";
@@ -142,6 +143,9 @@ export function Home(props: Props) {
   );
   const [settingsDialog, setSettingsDialog] = useState<NotebookDialog>(null);
   const [uploadDialog, setUploadDialog] = useState<NotebookDialog>(null);
+  const [exportNotebook, setExportNotebook] = useState<NotebookData | null>(
+    null,
+  );
   const { t } = useTranslation();
   const crossnoteContainer = CrossnoteContainer.useContainer();
   const { recoveryCollision, setRecoveryCollision } = crossnoteContainer;
@@ -264,6 +268,7 @@ export function Home(props: Props) {
                     setSettingsDialog({ notebook, open: true })
                   }
                   onOpenUpload={() => setUploadDialog({ notebook, open: true })}
+                  onOpenExport={() => setExportNotebook(notebook)}
                 ></NotebookTreeView>
               </ListItem>
             );
@@ -367,6 +372,12 @@ export function Home(props: Props) {
           onClose={() => setUploadDialog(closing(uploadDialog))}
           notebook={uploadDialog.notebook}
         ></PushNotebookDialog>
+      )}
+      {exportNotebook && (
+        <ExportNotebookDialog
+          notebook={exportNotebook}
+          onClose={() => setExportNotebook(null)}
+        />
       )}
       <LanguageSelectorDialog></LanguageSelectorDialog>
       {recoveryCollision && (
