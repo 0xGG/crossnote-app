@@ -4,6 +4,12 @@ import path from "path-browserify";
 const locks = new Map<string, Mutex>();
 const recovering = new Set<string>();
 
+export class IgnoredUploadFileError extends Error {
+  constructor(readonly filepath: string) {
+    super("error/notebook-file-ignored");
+  }
+}
+
 export function notebookOperation<T>(
   dir: string,
   operation: () => Promise<T>,

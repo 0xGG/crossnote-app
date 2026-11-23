@@ -96,15 +96,17 @@ export async function localBytes(
   );
 }
 
-export async function download(app: CrossnoteApp, remote: Remote) {
+export async function download(
+  app: CrossnoteApp,
+  remote: Remote,
+  expectedMessage = "Notebook downloaded",
+) {
   const messages = await app.recordMessages();
   await app
     .notebook(remote.id)
     .getByRole("treeitem", { name: /Download/ })
     .click();
-  await expect
-    .poll(messages, { timeout: 20000 })
-    .toContain("Notebook downloaded");
+  await expect.poll(messages, { timeout: 20000 }).toContain(expectedMessage);
 }
 
 export async function upload(app: CrossnoteApp, remote: Remote) {

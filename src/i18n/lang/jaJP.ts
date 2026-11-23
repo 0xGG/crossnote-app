@@ -159,6 +159,16 @@ export const jaJP = {
     // Success
     "success/notebook-uploaded": "ノートブックがアップロードされます",
     "success/notebook-downloaded": "ノートブックがダウンロードされます",
+    "info/notebook-pending-upload":
+      "アップロード待ちのローカルコミットがあります。",
+    "success/notebook-up-to-date":
+      "ダウンロードする新しいコミットはありません。",
+    "error/notebook-file-ignored":
+      "{{file}} が Git の除外ルールに一致するため、アップロードを中断しました。ルールを変更して再試行してください。",
+    "error/notebook-branch-mismatch":
+      "同期を一時停止しました。作業コピーとノートブックに設定されたブランチが異なるコミットを指しています。",
+    "error/notebook-history-diverged":
+      "現在の履歴ではファストフォワードできるか確認できません。両方のブランチを保持しました。",
 
     // Info
     "info/downloading-notebook": "ノートブックをダウンロード中",

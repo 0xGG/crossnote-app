@@ -10,6 +10,7 @@ import {
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import "../i18n/i18n";
 import { Notebook } from "../lib/notebook";
+import { IgnoredUploadFileError } from "../lib/notebookOperation";
 import PushNotebookDialog from "./PushNotebookDialog";
 
 // A push that never settles, so the dialog stays as it is after the click.
@@ -108,4 +109,23 @@ it("reports completion in the language selected during upload", async () => {
   );
   notify.mockRestore();
   await act(() => i18next.changeLanguage("en-US"));
+});
+
+it("names the ignored file that stopped the upload", async () => {
+  await act(() => i18next.changeLanguage("en-US"));
+  pushNotebook.mockRejectedValueOnce(
+    new IgnoredUploadFileError("notes/keep.md"),
+  );
+  const notify = vi.spyOn(notifications, "notify");
+  upload();
+  await vi.waitFor(() =>
+    expect(notify).toHaveBeenCalledWith(
+      expect.objectContaining({
+        severity: "error",
+        message:
+          "Upload paused because notes/keep.md matches a Git ignore rule. Update the rule and retry.",
+      }),
+    ),
+  );
+  notify.mockRestore();
 });

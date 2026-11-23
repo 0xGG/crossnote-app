@@ -70,8 +70,6 @@ export default function ConfigureNotebookDialog(props: Props) {
     try {
       await crossnoteContainer.updateNotebook(notebook, {
         name: draft.name.trim(),
-        gitURL: notebook.gitURL.trim(),
-        gitBranch: (notebook.gitBranch || "master").trim(),
         gitUsername: draft.gitUsername.trim(),
         gitPassword: draft.gitPassword,
         gitCorsProxy: draft.gitCorsProxy.trim(),

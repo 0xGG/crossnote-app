@@ -31,8 +31,6 @@ describe("Crossnote keeps the stored directory tree in step", () => {
     });
     const changes = {
       name: "Edited",
-      gitURL: "",
-      gitBranch: "master",
       gitUsername: "",
       gitPassword: "",
       gitCorsProxy: "",

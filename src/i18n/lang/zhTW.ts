@@ -146,6 +146,14 @@ export const zhTW = {
     // Success
     "success/notebook-uploaded": "筆記本已上傳",
     "success/notebook-downloaded": "筆記本已下載",
+    "info/notebook-pending-upload": "本機還有待上傳的提交。",
+    "success/notebook-up-to-date": "沒有需要下載的新提交。",
+    "error/notebook-file-ignored":
+      "上傳已暫停。{{file}} 符合 Git 忽略規則，請調整規則後重試。",
+    "error/notebook-branch-mismatch":
+      "同步已暫停。目前工作區與筆記本設定的分支指向不同的提交。",
+    "error/notebook-history-diverged":
+      "現有歷史無法確認分支能安全快轉。已保留本機和遠端分支。",
 
     // Info
     "info/downloading-notebook": "正在下載筆記本",

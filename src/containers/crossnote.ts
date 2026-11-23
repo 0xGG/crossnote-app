@@ -38,7 +38,10 @@ import { writeNoteOperation } from "../lib/noteWrites";
 import { moveNote, openNoteAt, retainedNoteAt } from "../lib/openNotes";
 import { failureMessage, notify } from "../lib/notifications";
 import i18next from "../i18n/i18n";
-import { notebookOperation } from "../lib/notebookOperation";
+import {
+  IgnoredUploadFileError,
+  notebookOperation,
+} from "../lib/notebookOperation";
 import { NotebookConflictError } from "../lib/mergeFiles";
 import { CrossnoteTabNode } from "../lib/tabNode";
 import { notebookInFront, tabsetForNewTab } from "../lib/tabset";
@@ -857,9 +860,19 @@ function useCrossnoteContainer(initialState: InitialState) {
         setIsPushingNotebook(false);
       } catch (error) {
         setIsPushingNotebook(false);
-        if (error instanceof NotebookConflictError) {
-          await flushNotes({ notebookPath: args.notebook.dir });
-          await readNotebookAgain(args.notebook);
+        if (
+          error instanceof NotebookConflictError ||
+          error instanceof IgnoredUploadFileError
+        ) {
+          try {
+            await flushNotes({ notebookPath: args.notebook.dir });
+            await readNotebookAgain(args.notebook);
+          } catch (refreshError) {
+            if (!(error instanceof IgnoredUploadFileError)) throw refreshError;
+            // The editor reports failed writes. Keep the ignored path for the
+            // upload dialog even when the notebook could not be refreshed.
+            console.error(refreshError);
+          }
         }
         throw error;
       }

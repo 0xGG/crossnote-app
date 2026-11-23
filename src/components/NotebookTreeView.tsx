@@ -358,7 +358,11 @@ export default function NotebookTreeView(props: Props) {
                   i18next.t(`error/notebook-file-deleted-${side}`, { file }),
                 ),
               })
-            : i18next.t("success/notebook-downloaded"),
+            : result?.status === "pending-upload"
+              ? i18next.t("info/notebook-pending-upload")
+              : result?.status === "up-to-date"
+                ? i18next.t("success/notebook-up-to-date")
+                : i18next.t("success/notebook-downloaded"),
         });
       })
       .catch((error) => {
