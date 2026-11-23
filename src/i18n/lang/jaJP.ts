@@ -2,6 +2,24 @@ import type { enUS } from "./enUS";
 
 export const jaJP = {
   translation: {
+    "backup/export": "ノートブックを ZIP で書き出す",
+    "backup/title": "「{{notebook}}」を ZIP で書き出す",
+    "backup/private-files":
+      "ZIP には隠しファイルや Git の追跡対象外のファイルも含まれ、非公開の情報が入る場合があります。外部メディアの URL はそのままです。",
+    "backup/disk-links":
+      "Chrome がフォルダーから読み取れるファイルをバックアップします。シンボリックリンクは Chrome によって表示されない場合があります。",
+    "backup/preparing": "ZIP を準備しています…",
+    "backup/windows-paths":
+      "次のパスは Windows で元の名前のまま展開できない場合があります。ZIP 内のパスは変更されません。",
+    "backup/download": "ZIP をダウンロード",
+    "backup/failed": "ノートブックを書き出せませんでした。",
+    "backup/read-error": "「{{file}}」を読み取れませんでした。",
+    "backup/symbolic-link":
+      "シンボリックリンク「{{file}}」を含められませんでした。",
+    "backup/too-large":
+      "ノートブックが ZIP のサイズまたは項目数の上限を超えています。",
+    "backup/sync-recovery":
+      "「ダウンロード」をやり直して中断した同期を完了してから、ノートブックを書き出してください。",
     "recovery/title": "同期を一時停止しました",
     "recovery/instructions":
       "リモートがノートブック「{{notebook}}」の {{directory}} を使用しています。このフォルダー内のノートを閉じてから ZIP をダウンロードし、ファイルを確認してください。保存を確認するとローカルの復元フォルダーが削除されます。その後、ダウンロードまたはアップロードを再試行できます。",

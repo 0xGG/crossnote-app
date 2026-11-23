@@ -1,5 +1,21 @@
 export const enUS = {
   translation: {
+    "backup/export": "Export notebook ZIP",
+    "backup/title": "Export {{notebook}} as ZIP",
+    "backup/private-files":
+      "The ZIP includes hidden and Git-ignored files, which may contain private information. External media keeps its original URL.",
+    "backup/disk-links":
+      "This backup includes the files Chrome can read from the folder. Chrome may hide symbolic links.",
+    "backup/preparing": "Preparing the ZIP…",
+    "backup/windows-paths":
+      "These paths may fail to extract with their original names on Windows. The ZIP keeps the original paths.",
+    "backup/download": "Download ZIP",
+    "backup/failed": "Could not export the notebook.",
+    "backup/read-error": "Could not read “{{file}}”.",
+    "backup/symbolic-link": "Could not include the symbolic link “{{file}}”.",
+    "backup/too-large": "This notebook exceeds the ZIP size or entry limit.",
+    "backup/sync-recovery":
+      "Retry Download to finish the interrupted sync, then export the notebook.",
     "recovery/title": "Sync paused",
     "recovery/instructions":
       "The remote now uses {{directory}} in {{notebook}}. Close any notes from that folder, then download the ZIP and check your files. Confirming below removes the local recovery folder so you can retry the download or upload.",

@@ -101,6 +101,7 @@ interface Props {
   onExpandedChange: (expanded: string[]) => void;
   onOpenSettings: () => void;
   onOpenUpload: () => void;
+  onOpenExport: () => void;
 }
 function ExpandIcon() {
   const { t } = useTranslation();
@@ -503,6 +504,18 @@ export default function NotebookTreeView(props: Props) {
               </LabelRoot>
             }
           ></NotebookTreeItem>
+          <NotebookTreeItem
+            itemId="export-zip"
+            onKeyDown={onEnter(props.onOpenExport)}
+            label={
+              <LabelRoot onClick={props.onOpenExport}>
+                <EmojiIcon aria-hidden="true">
+                  <Emoji emoji=":package:" size={16} />
+                </EmojiIcon>
+                <LabelText>{t("backup/export")}</LabelText>
+              </LabelRoot>
+            }
+          />
           {props.notebook.gitURL && (
             <NotebookTreeItem
               itemId={"upload"}
