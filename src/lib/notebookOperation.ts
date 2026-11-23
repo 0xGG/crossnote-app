@@ -29,8 +29,12 @@ export function needsRecovery(dir: string, pending: boolean) {
   else recovering.delete(path.resolve(dir));
 }
 
+export function isNotebookRecovering(dir: string) {
+  return recovering.has(path.resolve(dir));
+}
+
 export function assertNotebookWritable(dir: string) {
-  if (recovering.has(path.resolve(dir)))
+  if (isNotebookRecovering(dir))
     throw new Error(
       "Sync recovery is pending. Retry the download before saving.",
     );

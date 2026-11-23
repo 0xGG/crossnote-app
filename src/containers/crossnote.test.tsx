@@ -1,6 +1,7 @@
 import { EditorState } from "@codemirror/state";
 import { EditorView } from "@codemirror/view";
 import type { TabNode } from "flexlayout-react";
+import { strFromU8, unzipSync } from "fflate";
 import * as git from "isomorphic-git";
 import moment from "moment";
 import React, { act, useEffect } from "react";
@@ -12,6 +13,7 @@ import { EventType, globalEmitter } from "../lib/event";
 import { fs, pfs } from "../lib/fs";
 import type { Note } from "../lib/note";
 import { Notebook } from "../lib/notebook";
+import { exportNotebookZip } from "../lib/notebookBackup";
 import { NoteSaver, NotesNotSavedError, flushNotes } from "../lib/noteSaver";
 import { getNotificationState, resetNotifications } from "../lib/notifications";
 import {
@@ -258,6 +260,48 @@ it.each(["parent", "child"] as const)(
     expect(withBacklink.filePath).not.toBe(today);
   },
 );
+
+it("backs up a new note requested while another notebook is still creating its own", async () => {
+  const first = await notebookAt("/notebooks/creating-before-backup");
+  const other = new Notebook();
+  other.dir = "/notebooks/created-in-backup";
+  other.name = "Second";
+  other.isLocal = true;
+  other.initSearch();
+  await pfs.mkdirp(other.dir);
+
+  const started = Promise.withResolvers<void>();
+  const release = Promise.withResolvers<void>();
+  const write = first.writeNote.bind(first);
+  vi.spyOn(first, "writeNote").mockImplementationOnce(async (...args) => {
+    started.resolve();
+    await release.promise;
+    return write(...args);
+  });
+
+  const earlier = crossnote.createNewNote(first, "First.md", "First notebook");
+  await started.promise;
+  const accepted = crossnote.createNewNote(
+    other,
+    "Second.md",
+    "Second notebook",
+  );
+  try {
+    const { blob } = await exportNotebookZip(other);
+    const buffer = await new Promise<ArrayBuffer>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as ArrayBuffer);
+      reader.onerror = () => reject(reader.error);
+      reader.readAsArrayBuffer(blob);
+    });
+    const file = unzipSync(new Uint8Array(buffer))["files/Second.md"];
+    expect(file).toBeDefined();
+    expect(strFromU8(file)).toContain("Second notebook");
+  } finally {
+    release.resolve();
+    await Promise.all([earlier, accepted]);
+  }
+});
 
 it("writes no new note over one asked for by name at the same time", async () => {
   const notebook = await notebookAt("/notebooks/at-once-named");

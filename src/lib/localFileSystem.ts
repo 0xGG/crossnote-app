@@ -282,6 +282,7 @@ export default class LocalFileSystem {
     return {
       isDirectory: () => !file,
       isFile: () => !!file,
+      size: file?.size ?? 0,
       ctimeMs: time,
       mtimeMs: time,
     } as LightningFS.Stats;
