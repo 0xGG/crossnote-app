@@ -82,6 +82,69 @@ export default class LocalFileSystem {
     return this.directories[`${dir}/`]?.lockPath ?? dir;
   }
 
+  public async filePathInNotebook(
+    dir: string,
+    notebookPath: string,
+    filePath: string,
+  ): Promise<string | null> {
+    const relativeFile = path.normalize(filePath);
+    if (dir === notebookPath) return relativeFile;
+    const root = this.directories[`${dir}/`];
+    const source = this.directories[`${notebookPath}/`];
+    if (!root || !source) return null;
+    if (root.lockPath === source.lockPath) return relativeFile;
+
+    const sourcePath = await root.handle.resolve(source.handle);
+    if (sourcePath !== null) return path.join(...sourcePath, relativeFile);
+
+    const rootPath = await source.handle.resolve(root.handle);
+    const parts = relativeFile.split("/");
+    if (!rootPath || parts.length <= rootPath.length) return null;
+    const prefix = parts.slice(0, rootPath.length);
+    if (
+      prefix.join("/") !== rootPath.join("/") &&
+      !(await this.matchesDirectoryPath(source.handle, prefix, rootPath))
+    ) {
+      return null;
+    }
+    return parts.slice(rootPath.length).join("/");
+  }
+
+  private async matchesDirectoryPath(
+    directory: FileSystemDirectoryHandle,
+    supplied: string[],
+    actual: string[],
+  ) {
+    // A Windows link can spell a directory differently from the picker.
+    // Check that the alternate spelling resolves and is not a separate entry.
+    for (const [i, name] of actual.entries()) {
+      const alternate = supplied[i];
+      if (alternate !== name) {
+        const folded = name.toUpperCase();
+        if (alternate.toUpperCase() !== folded) return false;
+        try {
+          await directory.getDirectoryHandle(alternate);
+        } catch (error) {
+          if (
+            error instanceof DOMException &&
+            (error.name === "NotFoundError" ||
+              error.name === "TypeMismatchError")
+          ) {
+            return false;
+          }
+          throw error;
+        }
+        for await (const entry of directory.values()) {
+          if (entry.name !== name && entry.name.toUpperCase() === folded)
+            return false;
+        }
+      }
+      if (i + 1 < actual.length)
+        directory = await directory.getDirectoryHandle(name);
+    }
+    return true;
+  }
+
   public async withFileCreationLock<T>(
     dir: string,
     create: () => Promise<T>,

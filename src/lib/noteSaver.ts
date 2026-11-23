@@ -1,5 +1,11 @@
+import path from "path-browserify";
+import { pfs } from "./fs";
 import { sameNoteText } from "./notebook";
-import { pendingNoteWrites } from "./noteWrites";
+import {
+  pendingNoteEdits,
+  pendingNoteWrites,
+  type NoteWriteScope,
+} from "./noteWrites";
 
 // Where a note is: the notebook's folder and the note's path in it.
 export interface NoteLocation {
@@ -380,45 +386,87 @@ export function moveNoteSavers(from: NoteLocation, to: NoteLocation) {
 }
 
 /**
- * Writes out what the note editors open in a notebook, or on one note of it,
- * hold that is not in it yet. Rejects with a NotesNotSavedError naming the
- * notes that could not be written, once the others have been.
+ * Writes the pending edits in the selected scope. Rejects with a
+ * NotesNotSavedError naming the notes that could not be written, once the
+ * others have been.
  */
-export async function flushNotes(where: {
-  notebookPath: string;
-  filePath?: string;
-}): Promise<void> {
+export async function flushNotes(where: NoteWriteScope): Promise<void> {
   do {
     await flushNoteBatch(where);
   } while (pendingNoteWrites(where).length > 0);
 }
 
-async function flushNoteBatch(where: {
-  notebookPath: string;
-  filePath?: string;
-}): Promise<void> {
-  const chosen = [...savers].filter(
-    (saver) =>
-      saver.location.notebookPath === where.notebookPath &&
-      (where.filePath === undefined ||
-        saver.location.filePath === where.filePath),
-  );
-  const pending = pendingNoteWrites(where);
-  const locations = [
-    ...chosen.map((saver) => saver.location),
-    ...pending.map((entry) => entry.location),
-  ];
-  const results = await Promise.allSettled([
-    ...chosen.map((saver) => saver.flush()),
-    ...pending.map((entry) => entry.done),
+// First let already accepted file inputs reach their editors. Text and
+// attributes can then finish through the existing savers and write queue.
+export async function flushNotebookEdits(notebookPath: string): Promise<void> {
+  const dir = path.resolve(notebookPath);
+  async function inExport<T extends { location: NoteLocation }>(entries: T[]) {
+    const paths = await Promise.all(
+      entries.map(async (entry) => {
+        const filePath = await pfs.filePathInNotebook(
+          dir,
+          path.resolve(entry.location.notebookPath),
+          entry.location.filePath,
+        );
+        return filePath === null
+          ? null
+          : { ...entry, location: { notebookPath, filePath } };
+      }),
+    );
+    return paths.filter((entry) => entry !== null);
+  }
+
+  // Capture writes before looking up paths. A settled write leaves the queue.
+  await waitForNoteWrites(await inExport(pendingNoteEdits()));
+
+  const editors = [...savers]
+    .filter((saver) => saver.pending)
+    .map((saver) => ({ location: saver.location, save: () => saver.flush() }));
+  const [chosen, queued] = await Promise.all([
+    inExport(editors),
+    inExport(pendingNoteWrites()),
   ]);
-  const failed = results
-    .map((result, i) => ({ result, location: locations[i] }))
-    .filter(({ result }) => result.status === "rejected");
+  await waitForNoteWrites([
+    ...chosen.map(({ location, save }) => ({ location, done: save() })),
+    ...queued,
+  ]);
+  let writes = await inExport(pendingNoteWrites());
+  while (writes.length) {
+    await waitForNoteWrites(writes);
+    writes = await inExport(pendingNoteWrites());
+  }
+}
+
+function flushNoteBatch(where: NoteWriteScope): Promise<void> {
+  const chosen = [...savers].filter(({ location }) => {
+    return (
+      location.notebookPath === where.notebookPath &&
+      (where.filePath === undefined || location.filePath === where.filePath)
+    );
+  });
+  const pending = pendingNoteWrites(where);
+  return waitForNoteWrites([
+    ...chosen.map((saver) => ({
+      location: saver.location,
+      done: saver.flush(),
+    })),
+    ...pending,
+  ]);
+}
+
+async function waitForNoteWrites(
+  pending: { location: NoteLocation; done: Promise<unknown> }[],
+) {
+  const results = await Promise.allSettled(pending.map(({ done }) => done));
+  const failed = results.flatMap((result, i) =>
+    result.status === "rejected"
+      ? [{ location: pending[i].location, cause: result.reason }]
+      : [],
+  );
   if (failed.length > 0) {
     throw new NotesNotSavedError(
       failed.map(({ location }) => location),
-      failed.map(({ result }) => (result as PromiseRejectedResult).reason),
+      failed.map(({ cause }) => cause),
     );
   }
 }

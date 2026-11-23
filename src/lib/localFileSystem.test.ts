@@ -4,6 +4,37 @@ import { pfs } from "./fs";
 import LocalFileSystem from "./localFileSystem";
 import { Notebook } from "./notebook";
 
+it.each([false, true])(
+  "matches an ancestor note path using the disk's case sensitivity (%s)",
+  async (caseSensitive) => {
+    const folder = new Folder(undefined, caseSensitive);
+    const child = await folder.getDirectoryHandle("Child", { create: true });
+    if (caseSensitive) {
+      await folder.getDirectoryHandle("child", { create: true });
+    }
+    const fs = new LocalFileSystem();
+    const mount = async (id: string, handle: Folder) =>
+      (
+        await fs.attachLocalDirectory(
+          id,
+          handle as unknown as FileSystemDirectoryHandle,
+        )
+      ).slice(0, -1);
+    const parent = await mount("parent", folder);
+    const target = await mount("child", child);
+
+    expect(
+      await fs.filePathInNotebook(target, parent, "./Child/nested/Note.md"),
+    ).toBe("nested/Note.md");
+    expect(await fs.filePathInNotebook(target, parent, "child/Note.md")).toBe(
+      caseSensitive ? null : "Note.md",
+    );
+    expect(
+      await fs.filePathInNotebook(target, parent, "Childish/Note.md"),
+    ).toBeNull();
+  },
+);
+
 it("creates a note with missing parents and preserves it when folder access fails", async () => {
   const root = new Folder();
   const notebook = new Notebook();

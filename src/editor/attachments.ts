@@ -5,6 +5,7 @@ import { AttachmentError } from "../lib/attachments";
 
 export interface AttachmentHost {
   upload(files: readonly File[]): Promise<string[]>;
+  trackInsertion(done: Promise<void>): void;
   failed(error: unknown): void;
 }
 export const attachmentHost = Facet.define<
@@ -34,18 +35,22 @@ function checkedText(text: string): string {
   return text;
 }
 
+function readTextFile(file: File, charset?: string): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = () => reject(reader.error);
+    reader.readAsText(file, charset);
+  });
+}
+
 async function readDroppedFile(file: File): Promise<string> {
   if (dropKind(file) === "text") {
     // FileReader detects BOMs, but some browsers need an explicit charset.
     const charset = /;\s*charset\s*=\s*(?:"([^"]+)"|([^;\s]+))/i.exec(
       file.type,
     );
-    const value = await new Promise<string>((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve(reader.result as string);
-      reader.onerror = () => reject(reader.error);
-      reader.readAsText(file, charset?.[1] ?? charset?.[2]);
-    });
+    const value = await readTextFile(file, charset?.[1] ?? charset?.[2]);
     return checkedText(value);
   }
 
@@ -76,10 +81,31 @@ async function readDroppedFile(file: File): Promise<string> {
   return parts.join("");
 }
 
-async function readDroppedText(files: readonly File[], separator: string) {
+async function readDroppedText(
+  files: readonly File[],
+  separator: string,
+): Promise<{ text: string; failed?: PromiseRejectedResult }> {
+  if (files.every((file) => dropKind(file) === "text")) {
+    // As with CodeMirror's text-only drop, insert the readable files in
+    // order even if a companion file could not be read.
+    const reads = await Promise.allSettled(
+      files.map((file) => readTextFile(file)),
+    );
+    // eslint-disable-next-line no-control-regex
+    const binaryText = /[\x00-\x08\x0e-\x1f]{2}/;
+    const texts = reads.flatMap((read) =>
+      read.status === "fulfilled" && !binaryText.test(read.value)
+        ? [read.value]
+        : [],
+    );
+    return {
+      text: texts.join(separator),
+      failed: reads.find((read) => read.status === "rejected"),
+    };
+  }
   const parts = [];
   for (const file of files) parts.push(await readDroppedFile(file));
-  return parts.join(separator);
+  return { text: parts.join(separator) };
 }
 
 const input = ViewPlugin.fromClass(
@@ -111,22 +137,38 @@ const input = ViewPlugin.fromClass(
         return;
       }
       this.pending.add(at);
-      const beforeRead = this.view.state;
+      const done = this.applyInsertion(host, files, at, asText);
+      host.trackInsertion(done);
       try {
-        let insert = asText
-          ? await readDroppedText(files, this.view.state.lineBreak)
-          : (await host.upload(files)).map((src) => `![](${src})`).join("\n");
-        if (this.destroyed || !at.valid || this.view.state.readOnly)
-          throw new AttachmentError("location");
-        // Do not replace anything typed into the selected range while reading.
+        await done;
+      } catch (error) {
+        host.failed(error);
+      } finally {
         this.pending.delete(at);
-        if (asText) {
-          for (const filter of this.view.state.facet(
-            EditorView.clipboardInputFilter,
-          ))
-            insert = filter(insert, this.view.state);
-          if (!insert) return;
-        }
+      }
+    }
+    private async applyInsertion(
+      host: AttachmentHost,
+      files: readonly File[],
+      at: Insertion,
+      asText: boolean,
+    ) {
+      const beforeRead = this.view.state;
+      const droppedText = asText
+        ? await readDroppedText(files, this.view.state.lineBreak)
+        : undefined;
+      let insert =
+        droppedText?.text ??
+        (await host.upload(files)).map((src) => `![](${src})`).join("\n");
+      if (this.destroyed || !at.valid || this.view.state.readOnly)
+        throw new AttachmentError("location");
+      if (asText) {
+        for (const filter of this.view.state.facet(
+          EditorView.clipboardInputFilter,
+        ))
+          insert = filter(insert, this.view.state);
+      }
+      if (insert) {
         const changes = this.view.state.changes({
           from: at.from,
           to: at.to,
@@ -143,11 +185,8 @@ const input = ViewPlugin.fromClass(
               : undefined,
           userEvent: asText ? "input.drop" : "input.paste",
         });
-      } catch (error) {
-        host.failed(error);
-      } finally {
-        this.pending.delete(at);
       }
+      if (droppedText?.failed) throw droppedText.failed.reason;
     }
     pick(from: number, to: number) {
       if (this.view.state.readOnly) return;
@@ -207,11 +246,8 @@ const input = ViewPlugin.fromClass(
       drop(event) {
         const files = Array.from(event.dataTransfer?.files ?? []);
         if (!files.length) return false;
-        // CodeMirror imports text files at the drop position. Keep media and
-        // mixed batches together so attachment validation can report errors.
-        const kinds = files.map(dropKind);
-        if (kinds.every((kind) => kind === "text")) return false;
-        const asText = !kinds.includes("attachment");
+        // Keep media and mixed batches together for attachment validation.
+        const asText = !files.some((file) => dropKind(file) === "attachment");
         event.preventDefault();
         const coords = { x: event.clientX, y: event.clientY };
         const from = asText

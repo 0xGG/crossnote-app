@@ -44,6 +44,7 @@ import {
 import { readNoteText } from "../lib/frontMatter";
 import { Note, renameFailureMessage } from "../lib/note";
 import { Notebook } from "../lib/notebook";
+import { trackNoteInsertion } from "../lib/noteWrites";
 import { tagCompletions, wikiLinkCompletions } from "../lib/noteCompletions";
 import { isFinishingEnter } from "../lib/keys";
 import { failureMessage, notify } from "../lib/notifications";
@@ -736,6 +737,8 @@ export default function NotePanel(props: Props) {
         },
       },
       attachments: {
+        trackInsertion: (done) =>
+          trackNoteInsertion(openNote.saver.location, done),
         upload: async (files) => {
           if (!latest.current.note) throw new AttachmentError("location");
           files.forEach(validateAttachment);

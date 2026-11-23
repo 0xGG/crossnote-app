@@ -28,7 +28,7 @@ function setup(text = "hello") {
     document: new NoteDocument(text),
     display: "source",
     testId: "attachment-test",
-    attachments: { upload, failed },
+    attachments: { upload, failed, trackInsertion: vi.fn() },
   });
   editors.push(editor);
   return { editor, resolve, reject, upload, failed };
@@ -107,6 +107,39 @@ it("reports upload failure and keeps the text", async () => {
   await settle();
   expect(failed).toHaveBeenCalledOnce();
   expect(editor.handle.text()).toBe("hello");
+});
+
+it("inserts readable text in order when another dropped text file goes missing", async () => {
+  const { editor, failed, upload } = setup();
+  vi.spyOn(editor.view, "posAtCoords").mockReturnValue(5);
+  const failure = new DOMException("File removed", "NotFoundError");
+  const read = FileReader.prototype.readAsText;
+  const mocked = vi
+    .spyOn(FileReader.prototype, "readAsText")
+    .mockImplementation(function (this: FileReader, file, encoding) {
+      if ((file as File).name !== "missing.txt") {
+        read.call(this, file, encoding);
+        return;
+      }
+      Object.defineProperty(this, "error", { value: failure });
+      queueMicrotask(() => this.dispatchEvent(new ProgressEvent("error")));
+    });
+  try {
+    const event = new MouseEvent("drop", { bubbles: true, cancelable: true });
+    Object.defineProperty(event, "dataTransfer", {
+      value: {
+        files: ["first", "missing", "second"].map(
+          (text) => new File([text], `${text}.txt`, { type: "text/plain" }),
+        ),
+      },
+    });
+    editor.view.contentDOM.dispatchEvent(event);
+    await vi.waitFor(() => expect(failed).toHaveBeenCalledWith(failure));
+    expect(editor.handle.text()).toBe("hellofirst\nsecond");
+    expect(upload).not.toHaveBeenCalled();
+  } finally {
+    mocked.mockRestore();
+  }
 });
 
 it("keeps the slash command when the image chooser is cancelled", async () => {

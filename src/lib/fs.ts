@@ -70,6 +70,14 @@ class FileSystem {
     return this.lfs.notebookLockPath(dir);
   }
 
+  public filePathInNotebook(
+    dir: string,
+    notebookPath: string,
+    filePath: string,
+  ) {
+    return this.lfs.filePathInNotebook(dir, notebookPath, filePath);
+  }
+
   public withFileCreationLock<T>(
     dir: string,
     create: () => Promise<T>,
