@@ -118,6 +118,7 @@ const server = createServer(async (req, res) => {
         },
         (response) => {
           res.writeHead(response.statusCode, response.headers);
+          response.on("error", (error) => res.destroy(error));
           response.pipe(res);
         },
       );
@@ -229,9 +230,22 @@ const server = createServer(async (req, res) => {
       res.write(headers.subarray(split + 4));
     });
     backend.stderr.on("data", (chunk) => process.stderr.write(chunk));
+    backend.stdin.on("error", (error) => {
+      // Git can finish its CGI response before reading the entire request.
+      if (error.code === "EPIPE") return;
+      console.error(error);
+      res.destroy(error);
+      backend.kill();
+    });
     backend.on("error", (error) => res.destroy(error));
-    backend.on("close", (code) => {
-      if (code && !sent) res.statusCode = 500;
+    backend.on("close", (code, signal) => {
+      if (!sent) res.statusCode = 500;
+      else if (code !== 0 && res.statusCode < 400) {
+        res.destroy(
+          new Error(`git http-backend exited with ${signal ?? code}`),
+        );
+        return;
+      }
       res.end();
     });
     backend.stdin.end(input);
