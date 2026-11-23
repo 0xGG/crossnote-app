@@ -189,6 +189,11 @@ async function prepareUploadIndex(
     trees: [git.TREE({ ref: "HEAD" }), git.STAGE()],
     map: async (file, [head, entry]) => {
       if (
+        (await head?.type()) === "commit" &&
+        (await entry?.type()) !== "commit"
+      )
+        throw new NotebookConflictError([file]);
+      if (
         !hasStagedChanges &&
         (await fileVersion(head)) !== (await fileVersion(entry))
       )
@@ -579,7 +584,7 @@ export default class Crossnote {
       }
       cache[file] = bytes;
       // Git reports the deleted children but skips the file replacing their directory.
-      if (!work && head)
+      if (!work)
         await this.cacheWorkingFileAncestor(
           notebook,
           file,
@@ -629,11 +634,13 @@ export default class Crossnote {
     const args = { fs, dir: notebook.dir };
     if (pullNotebookResult.status) {
       // No checkout staged the working changes on this path.
-      for (const [filepath, bytes] of Object.entries(
-        pullNotebookResult.cache,
-      )) {
+      const changes = Object.entries(pullNotebookResult.cache);
+      // Remove obsolete children before staging a file at their parent path.
+      for (const [filepath, bytes] of changes) {
         if (bytes === null) await git.remove({ ...args, filepath });
-        else await git.add({ ...args, filepath });
+      }
+      for (const [filepath, bytes] of changes) {
+        if (bytes !== null) await git.add({ ...args, filepath });
       }
     }
     const hasStagedChanges = await prepareUploadIndex(

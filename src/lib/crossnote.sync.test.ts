@@ -1752,35 +1752,87 @@ it("uploads a note deletion when only an ignored draft remains in its former pat
   expect(await read("README.md/private.md")).toEqual(savedDraft);
 });
 
-it("preserves a submodule in the uploaded tree when only a note changes", async () => {
-  const { app, notebook, base } = await repository();
-  const args = { fs, dir: notebook.dir };
-  const { tree } = await git.readTree({ ...args, oid: base });
-  const submodule = {
-    path: "vendor",
-    type: "commit" as const,
-    mode: "160000",
-    oid: base,
-  };
-  const tip = await git.commit({
-    ...args,
-    author,
-    message: "Add submodule",
-    tree: await git.writeTree({ ...args, tree: [...tree, submodule] }),
-  });
-  await app.hardResetNotebook(notebook, tip, true);
-  vi.mocked(git.fetch).mockResolvedValue({ ...emptyRemote, fetchHead: tip });
-  expect((await pfs.stats(notebook.dir + "/vendor")).isDirectory()).toBe(true);
-  expect(await git.listFiles(args)).toContain("vendor");
-  await pfs.writeFile(notebook.dir + "/README.md", "ordinary edit");
-  const push = vi
-    .spyOn(git, "push")
-    .mockResolvedValue({ ok: true, error: null, refs: {} });
-  await app.pushNotebook({ notebook });
-  expect(push).toHaveBeenCalledOnce();
-  const sent = await git.readTree({ ...args, oid: notebook.remoteSha });
-  expect(sent.tree).toContainEqual(submodule);
-});
+it.each([false, true])(
+  "protects a committed submodule when uploading a note (index missing on reopen: %s)",
+  async (missingIndex) => {
+    const app = new Crossnote();
+    const notebook = await app.addNotebook({ name: "Sync", gitURL: "" });
+    const args = { fs, dir: notebook.dir };
+    // Keep fixture setup out of the Git index cache used by the application.
+    const setup = { ...args, fs: { promises: fs.promises } };
+    const note = notebook.dir + "/README.md";
+    const edit = bytes("ordinary edit");
+    await pfs.writeFile(note, "original note");
+    await git.add({ ...setup, filepath: "README.md" });
+    const base = await git.commit({ ...setup, author, message: "Base" });
+    const { tree } = await git.readTree({ ...setup, oid: base });
+    const submodule = {
+      path: "vendor",
+      type: "commit" as const,
+      mode: "160000",
+      oid: base,
+    };
+    const tip = await git.commit({
+      ...setup,
+      author,
+      message: "Add submodule",
+      tree: await git.writeTree({ ...setup, tree: [...tree, submodule] }),
+    });
+    await git.checkout({ ...setup, ref: "refs/heads/master" });
+    notebook.gitURL = "https://example.test/notebook.git";
+    notebook.localSha = tip;
+    notebook.remoteSha = tip;
+    await saveNotebookFixture(app, notebook);
+    vi.spyOn(git, "fetch").mockResolvedValue({
+      ...emptyRemote,
+      fetchHead: tip,
+    });
+    expect((await pfs.stats(notebook.dir + "/vendor")).isDirectory()).toBe(
+      true,
+    );
+    expect(await git.listFiles(setup)).toContain("vendor");
+    let active = notebook;
+    if (missingIndex) {
+      await pfs.unlink(notebook.dir + "/.git/index");
+      await pfs.storeTree(notebook.dir);
+      active = (await app.listNotebooks()).find(
+        (entry) => entry._id === notebook._id,
+      )!;
+    }
+    expect((await git.listFiles(args)).includes("vendor")).toBe(!missingIndex);
+    await pfs.writeFile(note, edit);
+    let sent: string | undefined;
+    const push = vi.spyOn(git, "push").mockImplementation(async ({ ref }) => {
+      const target = await git.expandRef({ ...args, ref: ref! });
+      sent = await git.resolveRef({ ...args, ref: target });
+      return { ok: true, error: null, refs: {} };
+    });
+    if (!missingIndex) {
+      await app.pushNotebook({ notebook: active });
+      expect(push).toHaveBeenCalledOnce();
+      expect(sent).toBe(active.remoteSha);
+      const sentTree = await git.readTree({ ...args, oid: sent! });
+      expect(sentTree.tree).toContainEqual(submodule);
+      const { blob } = await git.readBlob({
+        ...args,
+        oid: sent!,
+        filepath: "README.md",
+      });
+      expect([...blob]).toEqual([...edit]);
+    } else {
+      await expect(
+        app.pushNotebook({ notebook: active }),
+      ).rejects.toMatchObject({
+        files: ["vendor"],
+      });
+      expect(push).not.toHaveBeenCalled();
+      expect(await git.resolveRef({ ...args, ref: "HEAD" })).toBe(tip);
+      expect([...((await pfs.readFile(note)) as Uint8Array)]).toEqual([
+        ...edit,
+      ]);
+    }
+  },
+);
 
 it("uploads the replacement file when a tracked directory becomes a working file", async () => {
   const { app, notebook, base, read } = await repository();
@@ -1800,6 +1852,41 @@ it("uploads the replacement file when a tracked directory becomes a working file
     ...(await git.readBlob({ ...args, filepath: "assets" })).blob,
   ]).toEqual([...bytes("replacement")]);
   expect(await read("assets")).toEqual([...bytes("replacement")]);
+});
+
+it("uploads a working file that replaces a directory with only staged notes", async () => {
+  const { app, notebook, base } = await repository();
+  const args = { fs, dir: notebook.dir };
+  const folder = "topic.md";
+  const children = [folder + "/first.md", folder + "/second.md"];
+  for (const file of children) {
+    await pfs.writeFile(`${notebook.dir}/${file}`, "staged note");
+    await notebook.storeNote(file);
+  }
+  expect(await git.listFiles(args)).toEqual(expect.arrayContaining(children));
+  expect(await git.listFiles({ ...args, ref: base })).not.toContain(
+    children[0],
+  );
+  await pfs.rmdir(`${notebook.dir}/${folder}`);
+  await pfs.writeFile(`${notebook.dir}/${folder}`, "replacement note");
+  await pfs.writeFile(notebook.dir + "/README.md", "another edit");
+  let sent: string | undefined;
+  const push = vi.spyOn(git, "push").mockImplementation(async ({ ref }) => {
+    const target = await git.expandRef({ ...args, ref: ref! });
+    sent = await git.resolveRef({ ...args, ref: target });
+    return { ok: true, error: null, refs: {} };
+  });
+  await app.pushNotebook({ notebook });
+  expect(push).toHaveBeenCalledOnce();
+  expect(sent).toBe(notebook.remoteSha);
+  const files = await git.listFiles({ ...args, ref: sent! });
+  expect(files.filter((file) => file.startsWith(folder))).toEqual([folder]);
+  const replacement = await git.readBlob({
+    ...args,
+    oid: sent!,
+    filepath: folder,
+  });
+  expect([...replacement.blob]).toEqual([...bytes("replacement note")]);
 });
 
 it("preserves both replacement files when each side replaces the same directory", async () => {
