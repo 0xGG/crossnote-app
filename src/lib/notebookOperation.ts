@@ -1,5 +1,6 @@
 import { Mutex } from "async-mutex";
 import path from "path-browserify";
+import { pfs } from "./fs";
 
 const locks = new Map<string, Mutex>();
 const recovering = new Set<string>();
@@ -14,7 +15,7 @@ export function notebookOperation<T>(
   dir: string,
   operation: () => Promise<T>,
 ): Promise<T> {
-  const key = path.resolve(dir);
+  const key = pfs.notebookLockPath(path.resolve(dir));
   let lock = locks.get(key);
   if (!lock) {
     lock = new Mutex();

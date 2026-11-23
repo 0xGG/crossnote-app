@@ -26,6 +26,7 @@ import {
 } from "../lib/notebookOperation";
 import { pendingNoteWrites } from "../lib/noteWrites";
 import { NotebookConflictError } from "../lib/mergeFiles";
+import { Folder } from "../test/diskFolder";
 import { CrossnoteContainer } from "./crossnote";
 
 // Tells React it runs under a test, so act() flushes renders and effects.
@@ -94,6 +95,18 @@ async function notebookAt(
 // being read again at that moment.
 const read = (notebook: Notebook, fileName: string) =>
   pfs.readFile(`${notebook.dir}/${fileName}`, { encoding: "utf8" });
+
+async function diskNotebook(id: string, folder: Folder) {
+  const notebook = new Notebook();
+  const dir = await pfs.attachLocalDirectory({
+    id,
+    directoryHandle: folder as unknown as FileSystemDirectoryHandle,
+  });
+  notebook.dir = dir.replace(/\/+$/, "");
+  notebook.name = "Notes";
+  notebook.isLocal = true;
+  return notebook;
+}
 
 it("gives a new note a name no file has, whether the list knows the file or not", async () => {
   const notebook = await notebookAt("/notebooks/unlisted-today");
@@ -166,6 +179,85 @@ it("gives two new notes asked for at once names of their own", async () => {
   expect(await read(notebook, a.filePath)).toContain("[[From A]]");
   expect(await read(notebook, b.filePath)).toContain("[[From B]]");
 });
+
+it("keeps both new notes when two notebooks open the same disk folder", async () => {
+  await notebookAt("/notebooks/disk-folder-aliases");
+  const shared = new Folder();
+  const [first, alias, other] = await Promise.all([
+    diskNotebook("first-opening", shared),
+    diskNotebook("second-opening", new Folder(shared.entries)),
+    diskNotebook("distinct-folder", new Folder()),
+  ]);
+
+  const started = Promise.withResolvers<void>();
+  const release = Promise.withResolvers<void>();
+  const write = first.writeNote.bind(first);
+  vi.spyOn(first, "writeNote").mockImplementationOnce(async (...args) => {
+    started.resolve();
+    await release.promise;
+    return write(...args);
+  });
+
+  const a = crossnote.createNewNote(first, "", "First note");
+  await started.promise;
+  const b = crossnote.createNewNote(alias, "", "Second note");
+  try {
+    // A different directory can finish while the first write is paused.
+    const c = await crossnote.createNewNote(other, "", "Separate folder");
+    expect(await read(other, c.filePath)).toContain("Separate folder");
+  } finally {
+    release.resolve();
+  }
+
+  const [firstNote, secondNote] = await Promise.all([a, b]);
+  expect(firstNote.filePath).not.toBe(secondNote.filePath);
+  expect(await read(first, firstNote.filePath)).toContain("First note");
+  expect(await read(alias, secondNote.filePath)).toContain("Second note");
+});
+
+it.each(["parent", "child"] as const)(
+  "preserves a new note's text across path casing when the %s disk folder is registered first",
+  async (first) => {
+    await notebookAt(`/notebooks/nested-disk-${first}`);
+    const parentFolder = new Folder(undefined, false);
+    const childFolder = await parentFolder.getDirectoryHandle("Child", {
+      create: true,
+    });
+    const folders = { parent: parentFolder, child: childFolder };
+    const open = (name: keyof typeof folders) =>
+      diskNotebook(`${name}-when-${first}-first`, folders[name]);
+    const firstNotebook = await open(first);
+    const nextNotebook = await open(first === "parent" ? "child" : "parent");
+    const [parent, child] =
+      first === "parent"
+        ? [firstNotebook, nextNotebook]
+        : [nextNotebook, firstNotebook];
+    const other = await diskNotebook(`unrelated-${first}`, new Folder());
+    const started = Promise.withResolvers<void>();
+    const release = Promise.withResolvers<void>();
+    const write = parent.writeNote.bind(parent);
+    vi.spyOn(parent, "writeNote").mockImplementationOnce(async (...args) => {
+      started.resolve();
+      await release.promise;
+      return write(...args);
+    });
+
+    const today = `${moment().format("YYYY-MM-DD")}.md`;
+    const linked = crossnote.createNewNote(parent, `child/${today}`, "");
+    await started.promise;
+    const backlink = crossnote.createNewNote(child, "", "[[Reference]]");
+    try {
+      const separate = await crossnote.createNewNote(other, "", "Unrelated");
+      expect(await read(other, separate.filePath)).toContain("Unrelated");
+    } finally {
+      release.resolve();
+    }
+
+    const [, withBacklink] = await Promise.all([linked, backlink]);
+    expect(await read(child, withBacklink.filePath)).toContain("[[Reference]]");
+    expect(withBacklink.filePath).not.toBe(today);
+  },
+);
 
 it("writes no new note over one asked for by name at the same time", async () => {
   const notebook = await notebookAt("/notebooks/at-once-named");

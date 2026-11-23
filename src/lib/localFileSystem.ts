@@ -1,6 +1,8 @@
 // Local File System API
 
 import type LightningFS from "@isomorphic-git/lightning-fs";
+import { Mutex } from "async-mutex";
+import path from "path-browserify";
 import { randomID } from "../utilities/utils";
 
 export interface ReadFileOptions {
@@ -35,7 +37,15 @@ export async function verifyPermission(
 }
 
 export default class LocalFileSystem {
-  private directoryHandleMap: { [key: string]: FileSystemDirectoryHandle } = {};
+  private readonly directories: Record<
+    string,
+    { handle: FileSystemDirectoryHandle; lockPath: string }
+  > = {};
+  private readonly attaching = new Mutex();
+  private readonly creatingFiles = new Set<{
+    handle: FileSystemDirectoryHandle;
+    done: Promise<unknown>;
+  }>();
   private readonly _prefix = "lfs";
 
   public async attachLocalDirectory(
@@ -54,8 +64,48 @@ export default class LocalFileSystem {
     if (!rootDir.endsWith("/")) {
       rootDir += "/";
     }
-    this.directoryHandleMap[rootDir] = directoryHandle;
+    // Separate notebook registrations can point to the same disk directory.
+    await this.attaching.runExclusive(async () => {
+      let lockPath = rootDir.slice(0, -1);
+      for (const mounted of Object.values(this.directories)) {
+        if (await directoryHandle.isSameEntry(mounted.handle)) {
+          lockPath = mounted.lockPath;
+          break;
+        }
+      }
+      this.directories[rootDir] = { handle: directoryHandle, lockPath };
+    });
     return rootDir;
+  }
+
+  public notebookLockPath(dir: string) {
+    return this.directories[`${dir}/`]?.lockPath ?? dir;
+  }
+
+  public async withFileCreationLock<T>(
+    dir: string,
+    create: () => Promise<T>,
+  ): Promise<T> {
+    const { handle } = this.directories[`${path.resolve(dir)}/`];
+    const earlier = [...this.creatingFiles];
+    // Overlapping registrations can create the same file through either root.
+    const creation = Promise.all(
+      earlier.map(async (other) => {
+        if (
+          (await handle.resolve(other.handle)) !== null ||
+          (await other.handle.resolve(handle)) !== null
+        ) {
+          await other.done;
+        }
+      }),
+    ).then(create);
+    const current = { handle, done: creation.catch(() => {}) };
+    this.creatingFiles.add(current);
+    try {
+      return await creation;
+    } finally {
+      this.creatingFiles.delete(current);
+    }
   }
 
   public isPathOfLocalFileSystem(path: string) {
@@ -68,7 +118,7 @@ export default class LocalFileSystem {
   ): Promise<[FileSystemDirectoryHandle, string[]]> {
     const pathArr = path.replace(/\/+$/, "").split("/");
     const rootDir = "/" + pathArr[1] + "/" + pathArr[2] + "/";
-    const directoryHandle = this.directoryHandleMap[rootDir];
+    const directoryHandle = this.directories[rootDir]?.handle;
     if (!directoryHandle) throw new Error(`${path} is not valid`);
     if (!(await verifyPermission(directoryHandle, mode))) {
       throw new DOMException(
