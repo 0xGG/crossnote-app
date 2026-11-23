@@ -864,8 +864,15 @@ function useCrossnoteContainer(initialState: InitialState) {
           error instanceof NotebookConflictError ||
           error instanceof IgnoredUploadFileError
         ) {
-          await flushNotes({ notebookPath: args.notebook.dir });
-          await readNotebookAgain(args.notebook);
+          try {
+            await flushNotes({ notebookPath: args.notebook.dir });
+            await readNotebookAgain(args.notebook);
+          } catch (refreshError) {
+            if (!(error instanceof IgnoredUploadFileError)) throw refreshError;
+            // The editor reports failed writes. Keep the ignored path for the
+            // upload dialog even when the notebook could not be refreshed.
+            console.error(refreshError);
+          }
         }
         throw error;
       }

@@ -1,6 +1,8 @@
 import { DEFAULT_CORS_PROXY } from "../config";
 import * as git from "isomorphic-git";
 import http from "isomorphic-git/http/web";
+import { decode } from "isomorphic-textencoder";
+import ignore, { type Ignore } from "ignore";
 import path from "path-browserify";
 import PouchDB from "pouchdb";
 import PouchdbFind from "pouchdb-find";
@@ -120,17 +122,51 @@ async function refSha(dir: string, ref: string): Promise<string> {
   }
 }
 
+// Match the working tree or a planned set of rules using Git 1.3.1's matcher.
+// An excluded parent wins before a nested rule can re-include its children.
+function ignoreCheck(dir: string, overrides?: Map<string, string>) {
+  const matchers = new Map<string, Ignore>();
+  return async (filepath: string) => {
+    if (path.basename(filepath) === ".git") return true;
+    let ignored = false;
+    const parts = filepath.split("/");
+    for (let depth = 0; depth < parts.length; depth++) {
+      const folder = path.join(...parts.slice(0, depth));
+      let matcher = matchers.get(folder);
+      if (!matcher) {
+        let contents = overrides?.get(folder);
+        if (contents === undefined) {
+          const rule = path.join(dir, folder, ".gitignore");
+          const stats = await pfs.stats(rule).catch(missingFileOrThrow);
+          contents = stats?.isFile()
+            ? ((await pfs.readFile(rule, { encoding: "utf8" })) as string)
+            : "";
+        }
+        matcher = ignore().add(contents);
+        matchers.set(folder, matcher);
+      }
+      const relative = parts.slice(depth).join("/");
+      const parent = path.dirname(relative);
+      if (parent !== "." && matcher.ignores(parent)) return true;
+      const result = matcher.test(relative);
+      if (result.ignored || result.unignored) ignored = result.ignored;
+    }
+    return ignored;
+  };
+}
+
 async function prepareUploadIndex(
   dir: string,
   changes: Cache,
 ): Promise<boolean> {
   const args = { fs, dir };
+  const isIgnored = ignoreCheck(dir);
   const unchecked = new Set<string>();
   for (const [file, head, work, index] of await git.statusMatrix(args)) {
     if (
       work &&
       (work !== index || file in changes) &&
-      (await git.status({ ...args, filepath: file })) === "ignored"
+      (await isIgnored(file))
     ) {
       if (!head && index) {
         // A draft staged before the ignore rule changed must stay local.
@@ -447,15 +483,13 @@ export default class Crossnote {
       const tracked = new Set(
         await filesAtCommit(notebook.dir, notebook.localSha),
       );
+      const isIgnored = ignoreCheck(notebook.dir);
       const blocked: string[] = [];
       for (const filepath of paths) {
         if (tracked.has(filepath)) continue;
         const target = this.checkedPath(notebook, filepath);
-        if (
-          (await pfs.exists(target)) &&
-          !(await pfs.stats(target)).isDirectory() &&
-          (await git.status({ fs, dir: notebook.dir, filepath })) === "ignored"
-        )
+        const stats = await pfs.stats(target).catch(missingFileOrThrow);
+        if (stats?.isFile() && (await isIgnored(filepath)))
           blocked.push(filepath);
       }
       if (blocked.length) record.blockedUploadPaths = blocked;
@@ -481,11 +515,7 @@ export default class Crossnote {
       if (stats.isDirectory()) continue;
       // The parent has no tracked file in HEAD. On the no-checkout path a
       // null entry only removes it from the index, leaving the file on disk.
-      if (
-        forStaging &&
-        (await git.status({ fs, dir: notebook.dir, filepath: ancestor })) ===
-          "ignored"
-      ) {
+      if (forStaging && (await ignoreCheck(notebook.dir)(ancestor))) {
         cache[ancestor] = null;
         return;
       }
@@ -1057,19 +1087,26 @@ export default class Crossnote {
     );
     const baseFiles = await filesAtCommit(notebook.dir, recovery.localSha);
     // Older plans saved the working bytes without their upload eligibility.
-    // While the old checkout is still present, Git can recover that decision.
+    // Recover it from the original checkout before replacing its ignore rules.
     if (
       !recovery.uploadCandidates &&
       recovery.localSha !== recovery.remoteSha &&
       (await refSha(notebook.dir, branchRef(notebook.gitBranch))) ===
         recovery.localSha
     ) {
+      const tracked = new Set(baseFiles);
+      const isIgnored = ignoreCheck(notebook.dir);
       const candidates: string[] = [];
       for (const [filepath, bytes] of Object.entries(recovery.files)) {
-        if (bytes === null || remoteFiles.has(filepath)) continue;
-        this.checkedPath(notebook, filepath);
-        const status = await git.status({ fs, dir: notebook.dir, filepath });
-        if (status === "added" || status === "*added")
+        if (
+          bytes === null ||
+          tracked.has(filepath) ||
+          remoteFiles.has(filepath)
+        )
+          continue;
+        const target = this.checkedPath(notebook, filepath);
+        const stats = await pfs.stats(target).catch(missingFileOrThrow);
+        if (stats?.isFile() && !(await isIgnored(filepath)))
           candidates.push(filepath);
       }
       recovery.uploadCandidates = candidates;
@@ -1263,6 +1300,7 @@ export default class Crossnote {
         throw new RecoveryDirectoryCollisionError(directory, kind === "owned");
     }
     const cache = await this.generateChangesCache(notebook);
+    const isIgnored = ignoreCheck(notebook.dir);
     // A remote file may replace a local directory. Preserve untracked/ignored
     // children too; Git's status matrix need not include those files.
     const collectUntracked = async (dir: string): Promise<void> => {
@@ -1282,21 +1320,27 @@ export default class Crossnote {
       if (await pfs.exists(target)) {
         if ((await pfs.stats(target)).isDirectory())
           await collectUntracked(file);
-        else if (!baseFiles.has(file) && !(file in cache)) {
-          // An unstaged ignored file has no matrix row. Checkout may replace
-          // it only when the incoming commit already contains its exact bytes.
-          const incoming = await git.readBlob({
+        else if (
+          !baseFiles.has(file) &&
+          (!(file in cache) || (await isIgnored(file)))
+        ) {
+          // The matching-bytes exception applies to regular files.
+          const parent = path.dirname(file);
+          const { tree } = await git.readTree({
             ...args,
             oid: remoteSha,
-            filepath: file,
+            filepath: parent === "." ? undefined : parent,
           });
-          if (
-            !sameBytes(
-              (await pfs.readFile(target)) as Uint8Array,
-              incoming.blob,
-            )
-          )
+          const name = path.basename(file);
+          const entry = tree.find((entry) => entry.path === name);
+          if (entry?.mode !== "100644" && entry?.mode !== "100755")
             throw new NotebookConflictError([file]);
+          const { blob } = await git.readBlob({ ...args, oid: entry.oid });
+          const current =
+            cache[file] ?? ((await pfs.readFile(target)) as Uint8Array);
+          if (!sameBytes(current, blob))
+            throw new NotebookConflictError([file]);
+          delete cache[file];
         }
       }
       await this.cacheWorkingFileAncestor(notebook, file, cache);
@@ -1337,11 +1381,7 @@ export default class Crossnote {
     let ignoredCopiesDirectory: string | undefined;
     const localCopyPath = async (file: string) => {
       const copy = await copyPath(file, "local");
-      if (
-        (await git.status({ fs, dir: notebook.dir, filepath: file })) !==
-        "ignored"
-      )
-        return copy;
+      if (!(await isIgnored(file))) return copy;
       // Moving a file out of a directory-scoped ignore rule must not make it
       // eligible for the next upload. Keep these copies in a separate ignored
       // directory, including its ignore file in the durable plan before bytes.
@@ -1372,20 +1412,6 @@ export default class Crossnote {
             })
           ).blob
         : null;
-    const incomingIgnoreChange = async (file: string) => {
-      for (let dir = path.dirname(file); ; dir = path.dirname(dir)) {
-        const rule = path.join(dir, ".gitignore");
-        if (
-          !sameBytes(
-            await blob(localSha, rule, baseFiles),
-            await blob(remoteSha, rule, remoteFiles),
-          )
-        )
-          return true;
-        if (dir === ".") return false;
-      }
-    };
-    const uploadCandidates: string[] = [];
     for (const [file, ours] of Object.entries(cache)) {
       this.checkedPath(notebook, file);
       const merged = mergeFile(
@@ -1410,24 +1436,14 @@ export default class Crossnote {
         }
         continue;
       }
-      // Replaying an ignored draft under the fetched rules could publish it.
       // Checkout also cannot remove an old directory over a working file.
-      if (ours !== null && !baseFiles.has(file)) {
-        const remoteTracksFile = remoteFiles.has(file);
-        const replacesRemovedDirectory =
-          !remoteTracksFile &&
-          [...baseFiles].some((child) => child.startsWith(file + "/"));
-        if (replacesRemovedDirectory) throw new NotebookConflictError([file]);
-        if ((await git.status({ ...args, filepath: file })) === "ignored") {
-          if (remoteTracksFile || (await incomingIgnoreChange(file)))
-            throw new NotebookConflictError([file]);
-          // Restore the working bytes below. This file was excluded from
-          // upload before the pull, even if an earlier save had staged it.
-          cache[file] = null;
-        } else if (!remoteTracksFile && (await incomingIgnoreChange(file))) {
-          uploadCandidates.push(file);
-        }
-      }
+      if (
+        ours !== null &&
+        !baseFiles.has(file) &&
+        !remoteFiles.has(file) &&
+        [...baseFiles].some((child) => child.startsWith(file + "/"))
+      )
+        throw new NotebookConflictError([file]);
       files[file] = merged.bytes;
       if (merged.conflict) conflicts.push(file);
       if (merged.deleted) deletions[file] = merged.deleted;
@@ -1436,6 +1452,72 @@ export default class Crossnote {
         files[copy] = merged.copy;
         conflicts.push(copy);
       }
+    }
+    const overrides = new Map<string, string>();
+    for (const file of new Set([
+      ...baseFiles,
+      ...remoteFiles,
+      ...Object.keys(relocated),
+    ])) {
+      if (path.basename(file) !== ".gitignore") continue;
+      const incoming = await blob(remoteSha, file, remoteFiles);
+      if (
+        !(file in relocated) &&
+        sameBytes(await blob(localSha, file, baseFiles), incoming)
+      )
+        continue;
+      this.checkedPath(notebook, file);
+      const planned = file in files ? files[file] : incoming;
+      // Match LightningFS's utf8 reads, including BOM handling.
+      overrides.set(
+        path.dirname(file),
+        planned === null ? "" : decode(planned),
+      );
+    }
+    const uploadCandidates: string[] = [];
+    if (overrides.size) {
+      const willBeIgnored = ignoreCheck(notebook.dir, overrides);
+      // Include untracked drafts that Git leaves out of the status matrix.
+      const checkDirectory = async (folder: string): Promise<void> => {
+        for (const name of await pfs.readdir(path.join(notebook.dir, folder))) {
+          if (name.toLowerCase() === ".git") continue;
+          const file = path.join(folder, name);
+          const target = this.checkedPath(notebook, file);
+          if ((await fs.promises.lstat(target)).isDirectory()) {
+            await checkDirectory(file);
+            continue;
+          }
+          if (baseFiles.has(file) || remoteFiles.has(file) || file in relocated)
+            continue;
+          if (await isIgnored(file)) {
+            if (!(await willBeIgnored(file)))
+              throw new NotebookConflictError([file]);
+          } else if (files[file] && (await willBeIgnored(file))) {
+            uploadCandidates.push(file);
+          }
+        }
+      };
+      changedRules: for (const folder of overrides.keys()) {
+        for (let parent = folder; parent !== ".";) {
+          parent = path.dirname(parent);
+          if (overrides.has(parent)) continue changedRules;
+        }
+        // A newly introduced scope may still be missing or sit below a file
+        // or symlink. Only descend through directories in the current tree.
+        let target = notebook.dir;
+        for (const part of folder.split("/")) {
+          target = path.join(target, part);
+          const stats = await fs.promises
+            .lstat(target)
+            .catch(missingFileOrThrow);
+          if (!stats?.isDirectory()) continue changedRules;
+        }
+        await checkDirectory(folder);
+      }
+    }
+    for (const [file, copy] of Object.entries(relocated)) {
+      if (baseFiles.has(file) || !(await isIgnored(file)))
+        uploadCandidates.push(copy);
     }
     const recovery: PullRecovery = {
       version: 1,

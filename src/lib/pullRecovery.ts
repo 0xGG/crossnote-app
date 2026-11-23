@@ -6,7 +6,7 @@ export interface PullRecovery {
   remoteSha: string;
   files: Record<string, FileBytes>;
   conflicts: string[];
-  // New local files that were eligible for upload before the incoming ignore rules.
+  // Local files whose paths may be excluded from upload after replay.
   uploadCandidates?: string[];
   deletions?: ConflictDeletions;
   // These local paths have durable copies at safe paths in files. Remove the

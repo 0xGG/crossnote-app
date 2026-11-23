@@ -2,6 +2,10 @@
 declare const __GIT_COMMIT__: { logMessage: string; hash: string };
 
 // Untyped CommonJS modules
+declare module "isomorphic-textencoder" {
+  export function decode(buffer: Uint8Array): string;
+}
+
 declare module "markdown-it-emoji";
 declare module "markdown-it-footnote";
 declare module "markdown-it-for-inline";

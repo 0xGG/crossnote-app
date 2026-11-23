@@ -546,6 +546,34 @@ test("preserves modified attachment bytes through pull, push and a fresh clone",
   }
 });
 
+test("blocks a download when a BOM-prefixed nested rule would expose a local file", async ({
+  app,
+  page,
+  request,
+}) => {
+  const remote = await createRemote(request, {
+    ".gitignore": bytes("sample.txt\n"),
+    "assets/tracked.md": bytes("Base"),
+  });
+  await app.open();
+  const dir = await cloneRemote(app, remote);
+  const file = "assets/sample.txt";
+  await localBytes(page, `${dir}/${file}`, bytes("fixture"));
+  await changeRemote(request, remote, {
+    "assets/.gitignore": bytes("\uFEFF!sample.txt\n"),
+    "assets/tracked.md": bytes("Incoming"),
+  });
+  await download(
+    app,
+    remote,
+    `Sync conflicts: ${file}. Your changes were kept. Review the files before uploading again.`,
+  );
+  expect(await localBytes(page, `${dir}/assets/tracked.md`)).toEqual(
+    bytes("Base"),
+  );
+  expect(await localBytes(page, `${dir}/${file}`)).toEqual(bytes("fixture"));
+});
+
 test("keeps both binary conflicts and stops the upload with their paths", async ({
   app,
   page,

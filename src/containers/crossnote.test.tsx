@@ -1171,6 +1171,59 @@ it.each([
   },
 );
 
+it.each(["save", "refresh"] as const)(
+  "keeps the ignored upload path when the following %s fails",
+  async (failure) => {
+    const ignored = new IgnoredUploadFileError("private/draft.md");
+    const secondary = new Error(
+      failure === "save" ? "Disk full" : "Cannot read notes",
+    );
+    const notebook = await notebookAt(
+      `/notebooks/ignored-with-${failure}-failure`,
+      {
+        pushNotebook: async () => {
+          type(" in progress");
+          throw ignored;
+        },
+      },
+    );
+    const initial = "Draft";
+    await pfs.writeFile(`${notebook.dir}/a.md`, initial);
+    await notebook.getNote("a.md", true);
+    const { open, calls, type, close } = openForTyping(
+      notebook,
+      "a.md",
+      initial,
+    );
+    const refresh = vi.spyOn(notebook, "refreshNotes");
+    const logged = vi.spyOn(console, "error").mockImplementation(() => {});
+    const reportSaveFailure = vi.spyOn(calls, "failed");
+    if (failure === "save")
+      vi.spyOn(calls, "write").mockRejectedValue(secondary);
+    else refresh.mockRejectedValue(secondary);
+    try {
+      await act(async () => {
+        await expect(crossnote.pushNotebook({ notebook })).rejects.toBe(
+          ignored,
+        );
+      });
+      expect(open.document.text()).toBe("Draft in progress");
+      if (failure === "save") {
+        expect(refresh).not.toHaveBeenCalled();
+        expect(open.saver.pending).toBe(true);
+        expect(reportSaveFailure).toHaveBeenCalledWith(secondary);
+      } else {
+        expect(refresh).toHaveBeenCalledOnce();
+        expect(logged).toHaveBeenCalledWith(secondary);
+        expect(await body(notebook, "a.md")).toBe("Draft in progress");
+      }
+    } finally {
+      open.saver.discard();
+      close();
+    }
+  },
+);
+
 it("writes what was just typed into a note before renaming it, and saves it under its new name from then on", async () => {
   const notebook = await notebookAt("/notebooks/renaming");
   await pfs.writeFile(`${notebook.dir}/a.md`, "# A");
