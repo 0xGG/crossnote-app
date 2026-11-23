@@ -2,11 +2,12 @@ import * as git from "isomorphic-git";
 import http from "isomorphic-git/http/web";
 import { afterEach, expect, it, vi } from "vitest";
 import { isStored, readStored } from "../test/storedTree";
-import Crossnote from "./crossnote";
+import Crossnote, { convertNotebookToNotebookDBEntry } from "./crossnote";
 import { EventType, globalEmitter } from "./event";
 import { RecoveryDirectoryCollisionError } from "./recoveryDirectory";
 import { fs, pfs } from "./fs";
 import { NotebookConflictError } from "./mergeFiles";
+import type { Notebook } from "./notebook";
 import { assertNotebookWritable } from "./notebookOperation";
 import * as recovery from "./pullRecovery";
 
@@ -20,6 +21,14 @@ const bytes = (text: string) => new TextEncoder().encode(text);
 const binary = new Uint8Array([137, 80, 0, 255, 128]);
 const changed = new Uint8Array([137, 80, 0, 254, 129, 1]);
 const remoteBytes = new Uint8Array([137, 80, 0, 253, 130, 2]);
+
+async function saveNotebookFixture(app: Crossnote, notebook: Notebook) {
+  const records = app["notebookDB"];
+  await records.put({
+    ...(await records.get(notebook._id)),
+    ...convertNotebookToNotebookDBEntry(notebook, null),
+  });
+}
 
 async function repository(
   remote: Record<string, Uint8Array | null> = {},
@@ -84,7 +93,7 @@ async function repository(
   notebook.gitURL = "http://fixture.test/notebook.git";
   notebook.localSha = base;
   notebook.remoteSha = base;
-  await app.updateNotebook(notebook);
+  await saveNotebookFixture(app, notebook);
   vi.spyOn(git, "fetch").mockResolvedValue({
     fetchHead: theirs,
     fetchHeadDescription: "master",
@@ -117,7 +126,7 @@ it("records an empty remote check and lets a manual pull retry immediately", asy
   await pfs.storeTree(notebook.dir);
   notebook.fetchedAt = new Date(0);
   notebook.autoFetchPeriod = 3600000;
-  await app.updateNotebook(notebook);
+  await saveNotebookFixture(app, notebook);
   // Another tab can change settings while this notebook is still open.
   const registered = await app["notebookDB"].get(notebook._id);
   await app["notebookDB"].put({ ...registered, name: "Renamed" });
@@ -148,6 +157,11 @@ it("records an empty remote check and lets a manual pull retry immediately", asy
   expect(notebook.localSha).toBe(theirs);
   expect(await read("README.md")).toEqual([...bytes("local edit")]);
   expect(await read("new.md")).toEqual([...bytes("remote")]);
+  expect(await app["notebookDB"].get(notebook._id)).toMatchObject({
+    name: "Renamed",
+    localSha: theirs,
+    remoteSha: theirs,
+  });
 });
 
 it("pulls a first commit into an empty clone with a staged local note", async () => {
@@ -230,7 +244,7 @@ it("recovers a legacy cache without resetting an unborn branch", async () => {
   const app = new Crossnote();
   const notebook = await app.addNotebook({ name: "Unborn", gitURL: "" });
   notebook.gitURL = "http://fixture.test/empty.git";
-  await app.updateNotebook(notebook);
+  await saveNotebookFixture(app, notebook);
   const key = `pending/pull/${notebook._id}`;
   localStorage.setItem(
     key,
@@ -1839,6 +1853,159 @@ it("stops an upload with unresolved text while keeping the pending branch and la
   ]).toEqual([...bytes("resolved")]);
 });
 
+it.each([false, true])(
+  "uploads to the configured branch when another branch is checked out (different tip: %s)",
+  async (differentTip) => {
+    const { app, notebook, base, read } = await repository();
+    const args = { fs, dir: notebook.dir };
+    await git.branch({ ...args, ref: "side", checkout: true });
+    const tag = await git.commit({
+      ...args,
+      author,
+      message: "Tagged revision",
+      noUpdateBranch: true,
+    });
+    await git.writeRef({ ...args, ref: "refs/tags/master", value: tag });
+    const side = differentTip
+      ? await git.commit({
+          ...args,
+          author,
+          message: "Independent side commit",
+        })
+      : base;
+    await pfs.writeFile(notebook.dir + "/README.md", "edited note");
+    let sent: string | undefined;
+    const push = vi.spyOn(git, "push").mockImplementation(async ({ ref }) => {
+      const actualRef = await git.expandRef({ ...args, ref: ref! });
+      expect(actualRef).toBe("refs/heads/master");
+      sent = await git.resolveRef({ ...args, ref: actualRef });
+      return { ok: true, error: null, refs: {} };
+    });
+    if (differentTip) {
+      await expect(app.pushNotebook({ notebook })).rejects.toThrow(
+        "error/notebook-branch-mismatch",
+      );
+      expect(push).not.toHaveBeenCalled();
+      expect(await git.currentBranch(args)).toBe("side");
+      expect(await git.resolveRef({ ...args, ref: "refs/heads/master" })).toBe(
+        base,
+      );
+      expect(notebook.remoteSha).toBe(base);
+    } else {
+      await app.pushNotebook({ notebook });
+      expect(push).toHaveBeenCalledOnce();
+      expect(sent).toBe(notebook.remoteSha);
+      expect(sent).not.toBe(base);
+      expect(await git.currentBranch(args)).toBe(notebook.gitBranch);
+      expect([
+        ...(await git.readBlob({ ...args, oid: sent!, filepath: "README.md" }))
+          .blob,
+      ]).toEqual([...bytes("edited note")]);
+    }
+    expect(await git.resolveRef({ ...args, ref: "refs/heads/side" })).toBe(
+      side,
+    );
+    expect(vi.mocked(git.fetch).mock.lastCall?.[0].ref).toBe(
+      "refs/heads/master",
+    );
+    expect(await git.resolveRef({ ...args, ref: "refs/tags/master" })).toBe(
+      tag,
+    );
+    expect(await read("README.md")).toEqual([...bytes("edited note")]);
+  },
+);
+
+it("fast-forwards the notebook branch when a tag has the same name", async () => {
+  const { app, notebook, base, theirs, read } = await repository({
+    "README.md": bytes("Incoming edit"),
+  });
+  const args = { fs, dir: notebook.dir };
+  await git.writeRef({ ...args, ref: "refs/tags/master", value: base });
+  await git.branch({ ...args, ref: "side", checkout: true });
+  const checkout = vi.spyOn(git, "checkout");
+  await app.pullNotebook({ notebook });
+  expect(checkout).toHaveBeenCalledExactlyOnceWith(
+    expect.objectContaining({ ref: "refs/heads/master", force: true }),
+  );
+  expect(await git.currentBranch({ ...args, fullname: true })).toBe(
+    "refs/heads/master",
+  );
+  expect(await git.resolveRef({ ...args, ref: "HEAD" })).toBe(theirs);
+  expect(await read("README.md")).toEqual([...bytes("Incoming edit")]);
+  expect(await git.resolveRef({ ...args, ref: "refs/tags/master" })).toBe(base);
+  expect(await git.resolveRef({ ...args, ref: "refs/heads/side" })).toBe(base);
+});
+
+it("keeps recovery on the original branch when notebook settings are saved", async () => {
+  const { app, notebook, base, theirs, read } = await repository({
+    "README.md": bytes("Incoming edit"),
+  });
+  const args = { fs, dir: notebook.dir };
+  await git.branch({ ...args, ref: "release" });
+  vi.spyOn(app, "hardResetNotebook").mockRejectedValueOnce(
+    new Error("Interrupted checkout"),
+  );
+  await expect(app.pullNotebook({ notebook })).rejects.toThrow(
+    "Interrupted checkout",
+  );
+  const originalURL = notebook.gitURL;
+  const settings = {
+    name: "Renamed",
+    gitURL: "https://example.test/other.git",
+    gitBranch: "release",
+    gitUsername: notebook.gitUsername,
+    gitPassword: notebook.gitPassword,
+    gitCorsProxy: notebook.gitCorsProxy,
+    autoFetchPeriod: notebook.autoFetchPeriod,
+  };
+  await app.saveNotebookSettings(notebook, settings);
+  await app.resumeNotebook(notebook);
+  expect(await git.resolveRef({ ...args, ref: "refs/heads/master" })).toBe(
+    theirs,
+  );
+  expect(await git.resolveRef({ ...args, ref: "refs/heads/release" })).toBe(
+    base,
+  );
+  expect(await read("README.md")).toEqual([...bytes("Incoming edit")]);
+  expect(await recovery.readPullRecovery(notebook._id)).toBeUndefined();
+  const records = app["notebookDB"];
+  expect(await records.get(notebook._id)).toMatchObject({
+    name: "Renamed",
+    gitURL: originalURL,
+    gitBranch: "master",
+  });
+});
+
+it.each([false, true])(
+  "leaves the worktree alone when only another branch has a local tip (reopened: %s)",
+  async (reopen) => {
+    const { app, notebook, base, read } = await repository({
+      "README.md": bytes("Incoming edit"),
+    });
+    const args = { fs, dir: notebook.dir };
+    await git.branch({ ...args, ref: "side", checkout: true });
+    await git.deleteBranch({ ...args, ref: "master" });
+    await pfs.writeFile(`${notebook.dir}/README.md`, "Working edit");
+    await pfs.storeTree(notebook.dir);
+    const active = reopen
+      ? (await app.listNotebooks()).find((entry) => entry._id === notebook._id)!
+      : notebook;
+    expect(await pfs.exists(`${notebook.dir}/.git/refs/heads/master`)).toBe(
+      false,
+    );
+    await expect(app.pullNotebook({ notebook: active })).rejects.toThrow(
+      "error/notebook-branch-mismatch",
+    );
+    expect(await git.currentBranch(args)).toBe("side");
+    expect(await git.resolveRef({ ...args, ref: "HEAD" })).toBe(base);
+    expect(await pfs.exists(`${notebook.dir}/.git/refs/heads/master`)).toBe(
+      false,
+    );
+    expect(await read("README.md")).toEqual([...bytes("Working edit")]);
+    expect(await recovery.readPullRecovery(notebook._id)).toBeUndefined();
+  },
+);
+
 it("keeps both branches and working files when a retry cannot fast-forward", async () => {
   const { app, notebook, theirs, read } = await repository({
     "remote.md": bytes("remote only"),
@@ -1850,6 +2017,9 @@ it("keeps both branches and working files when a retry cannot fast-forward", asy
   await pfs.writeFile(`${notebook.dir}/README.md`, "later edit");
   const reset = vi.spyOn(app, "hardResetNotebook");
   const push = vi.spyOn(git, "push");
+  await expect(app.pullNotebook({ notebook })).rejects.toThrow(
+    "error/notebook-history-diverged",
+  );
   await expect(app.pushNotebook({ notebook })).rejects.toThrow(
     "error/notebook-history-diverged",
   );
@@ -1937,7 +2107,8 @@ it("persists fetched objects before reporting the new remote revision", async ()
 
 it("persists cloned content before recording the notebook", async () => {
   const app = new Crossnote();
-  vi.spyOn(git, "clone").mockImplementationOnce(async ({ dir }) => {
+  vi.spyOn(git, "clone").mockImplementationOnce(async ({ dir, ref }) => {
+    expect(ref).toBe("refs/heads/master");
     await pfs.mkdirp(dir!);
     await git.init({ fs, dir });
     await pfs.writeFile(`${dir}/nested/README.md`, "Cloned");
@@ -1948,7 +2119,15 @@ it("persists cloned content before recording the notebook", async () => {
   const notebook = await app.cloneNotebook({
     gitURL: "http://fixture.test/clone.git",
     corsProxy: "",
+    branch: "refs/heads/master",
   });
+  const tip = await git.resolveRef({
+    fs,
+    dir: notebook.dir,
+    ref: "refs/heads/master",
+  });
+  expect(notebook.localSha).toBe(tip);
+  expect(notebook.remoteSha).toBe(tip);
   expect(await isStored(`${notebook.dir}/nested/README.md`)).toBe(true);
   expect(
     Array.from((await readStored(`${notebook.dir}/nested/README.md`))!),

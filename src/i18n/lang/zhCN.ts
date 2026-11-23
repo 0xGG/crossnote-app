@@ -151,6 +151,8 @@ export const zhCN = {
     "success/notebook-up-to-date": "没有需要下载的新提交。",
     "error/notebook-file-ignored":
       "上传已暂停。{{file}} 匹配 Git 忽略规则，请调整规则后重试。",
+    "error/notebook-branch-mismatch":
+      "同步已暂停。当前工作区与笔记本配置的分支指向不同的提交。",
     "error/notebook-history-diverged":
       "现有历史无法确认分支能安全快进。已保留本地和远端分支。",
 

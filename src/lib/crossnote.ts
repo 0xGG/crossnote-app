@@ -55,13 +55,7 @@ interface CloneNotebookArgs {
 
 export type NotebookSettings = Pick<
   Notebook,
-  | "name"
-  | "gitURL"
-  | "gitBranch"
-  | "gitCorsProxy"
-  | "gitUsername"
-  | "gitPassword"
-  | "autoFetchPeriod"
+  "name" | "gitCorsProxy" | "gitUsername" | "gitPassword" | "autoFetchPeriod"
 >;
 
 export interface PushNotebookArgs {
@@ -113,13 +107,13 @@ async function filesAtCommit(dir: string, sha: string): Promise<string[]> {
   return sha ? git.listFiles({ fs, dir, ref: sha }) : [];
 }
 
-async function localBranchSha(notebook: Notebook): Promise<string> {
+const branchName = (branch: string) =>
+  (branch || "master").replace(/^refs\/heads\//, "");
+const branchRef = (branch: string) => `refs/heads/${branchName(branch)}`;
+
+async function refSha(dir: string, ref: string): Promise<string> {
   try {
-    return await git.resolveRef({
-      fs,
-      dir: notebook.dir,
-      ref: `refs/heads/${notebook.gitBranch || "master"}`,
-    });
+    return await git.resolveRef({ fs, dir, ref });
   } catch (error) {
     if (error instanceof git.Errors.NotFoundError) return "";
     throw error;
@@ -351,13 +345,14 @@ export default class Crossnote {
     const _id = randomID();
     const dir = `/notebooks/${_id}`;
 
+    const gitBranch = branch.trim() || "master";
     await git.clone({
       fs: fs,
       http,
       dir,
       corsProxy,
       url: gitURL,
-      ref: branch.trim() || "master",
+      ref: branchRef(gitBranch),
       depth: depth,
       singleBranch: true,
       onAuth: (url, auth) => {
@@ -370,7 +365,7 @@ export default class Crossnote {
 
     const sha = await this.getGitSHA(
       dir,
-      `origin/${branch.trim() || "master"}`,
+      `refs/remotes/origin/${branchName(gitBranch)}`,
     );
     // Before the record, as for a notebook made here.
     await pfs.storeTree(dir);
@@ -380,7 +375,7 @@ export default class Crossnote {
     notebook.dir = dir;
     notebook.name = name || notebookNameFromGitURL(gitURL);
     notebook.gitURL = gitURL;
-    notebook.gitBranch = branch.trim() || "master";
+    notebook.gitBranch = gitBranch;
     notebook.gitCorsProxy = corsProxy;
     notebook.gitUsername = rememberCredentials ? username : "";
     notebook.gitPassword = rememberCredentials ? password : "";
@@ -402,7 +397,14 @@ export default class Crossnote {
     return notebook;
   }
 
-  public saveNotebookSettings(notebook: Notebook, settings: NotebookSettings) {
+  public saveNotebookSettings(notebook: Notebook, draft: NotebookSettings) {
+    const settings = {
+      name: draft.name,
+      gitCorsProxy: draft.gitCorsProxy,
+      gitUsername: draft.gitUsername,
+      gitPassword: draft.gitPassword,
+      autoFetchPeriod: draft.autoFetchPeriod,
+    };
     return notebookOperation(notebook.dir, async () => {
       const record = await this.notebookDB.get(notebook._id);
       await this.notebookDB.put({ ...record, ...settings });
@@ -429,25 +431,17 @@ export default class Crossnote {
       return { cleanupError };
     }
   }
-  public async updateNotebook(notebook: Notebook, uploadCandidates?: string[]) {
-    const nb = await this.notebookDB.get(notebook._id);
-    nb.dir = notebook.dir;
-    nb.name = notebook.name;
-    nb.gitURL = notebook.gitURL;
-    nb.gitBranch = notebook.gitBranch;
-    nb.gitCorsProxy = notebook.gitCorsProxy;
-    nb.gitUsername = notebook.gitUsername;
-    nb.gitPassword = notebook.gitPassword;
-    nb.autoFetchPeriod = notebook.autoFetchPeriod;
-    nb.fetchedAt = notebook.fetchedAt;
-    nb.remoteSha = notebook.remoteSha;
-    nb.localSha = notebook.localSha;
+  private async saveSyncState(notebook: Notebook, uploadCandidates?: string[]) {
+    const record = await this.notebookDB.get(notebook._id);
+    record.fetchedAt = notebook.fetchedAt;
+    record.remoteSha = notebook.remoteSha;
+    record.localSha = notebook.localSha;
     if (
       uploadCandidates &&
-      (uploadCandidates.length || nb.blockedUploadPaths)
+      (uploadCandidates.length || record.blockedUploadPaths?.length)
     ) {
       const paths = new Set([
-        ...(nb.blockedUploadPaths ?? []),
+        ...(record.blockedUploadPaths ?? []),
         ...uploadCandidates,
       ]);
       const tracked = new Set(
@@ -464,11 +458,11 @@ export default class Crossnote {
         )
           blocked.push(filepath);
       }
-      if (blocked.length) nb.blockedUploadPaths = blocked;
-      else delete nb.blockedUploadPaths;
+      if (blocked.length) record.blockedUploadPaths = blocked;
+      else delete record.blockedUploadPaths;
     }
-    await this.notebookDB.put(nb, { force: true });
-    return nb.blockedUploadPaths?.[0];
+    await this.notebookDB.put(record, { force: true });
+    return record.blockedUploadPaths?.[0];
   }
 
   private async cacheWorkingFileAncestor(
@@ -624,7 +618,7 @@ export default class Crossnote {
       });
       // The new commit belongs to this branch even if the network fails.
       await pfs.storeTree(notebook.dir);
-      await this.updateNotebook(notebook);
+      await this.saveSyncState(notebook);
     }
     if (notebook.localSha === notebook.remoteSha) return null;
 
@@ -637,7 +631,7 @@ export default class Crossnote {
       onAuthFailure,
       onAuthSuccess,
       url: notebook.gitURL,
-      ref: notebook.gitBranch,
+      ref: branchRef(notebook.gitBranch),
       corsProxy: notebook.gitCorsProxy,
     });
     if (pushResult.error || !pushResult.ok)
@@ -645,7 +639,7 @@ export default class Crossnote {
     await pfs.storeTree(notebook.dir);
     notebook.fetchedAt = new Date();
     notebook.remoteSha = notebook.localSha;
-    await this.updateNotebook(notebook);
+    await this.saveSyncState(notebook);
     return pushResult;
   }
 
@@ -672,16 +666,14 @@ export default class Crossnote {
     sha: string,
     force = false,
   ) {
-    await pfs.writeFile(
-      path.resolve(notebook.dir, `.git/refs/heads/${notebook.gitBranch}`),
-      sha,
-    );
+    const ref = branchRef(notebook.gitBranch);
+    await pfs.writeFile(path.resolve(notebook.dir, ".git", ref), sha);
     const index = path.resolve(notebook.dir, `.git/index`);
     if (await pfs.exists(index)) await pfs.unlink(index);
     await git.checkout({
       dir: notebook.dir,
       fs: fs,
-      ref: notebook.gitBranch || "master",
+      ref,
       force,
     });
     await pfs.storeTree(notebook.dir);
@@ -1069,7 +1061,8 @@ export default class Crossnote {
     if (
       !recovery.uploadCandidates &&
       recovery.localSha !== recovery.remoteSha &&
-      (await localBranchSha(notebook)) === recovery.localSha
+      (await refSha(notebook.dir, branchRef(notebook.gitBranch))) ===
+        recovery.localSha
     ) {
       const candidates: string[] = [];
       for (const [filepath, bytes] of Object.entries(recovery.files)) {
@@ -1141,7 +1134,7 @@ export default class Crossnote {
     notebook.localSha = recovery.remoteSha;
     notebook.remoteSha = recovery.remoteSha;
     notebook.fetchedAt = new Date();
-    const ignoredUploadFile = await this.updateNotebook(
+    const ignoredUploadFile = await this.saveSyncState(
       notebook,
       recovery.uploadCandidates ?? [],
     );
@@ -1200,13 +1193,14 @@ export default class Crossnote {
           cache: previous.files,
         };
     }
+    const ref = branchRef(notebook.gitBranch);
     const fetched = await git.fetch({
       fs,
       http,
       dir: notebook.dir,
       singleBranch: true,
       corsProxy: notebook.gitCorsProxy,
-      ref: notebook.gitBranch || "master",
+      ref,
       onAuth: () => ({
         username: notebook.gitUsername,
         password: notebook.gitPassword,
@@ -1219,7 +1213,11 @@ export default class Crossnote {
     const remoteSha = fetched.fetchHead;
     if (!remoteSha) throw new Error("error/remote-has-no-commits");
     const args = { fs, dir: notebook.dir };
-    const localSha = await localBranchSha(notebook);
+    const localSha = await refSha(notebook.dir, ref);
+    const headRef = await git.currentBranch({ ...args, fullname: true });
+    // Synchronization uses the working files and index of this checkout.
+    if (headRef !== ref && (await refSha(notebook.dir, "HEAD")) !== localSha)
+      throw new Error("error/notebook-branch-mismatch");
     notebook.localSha = localSha;
     const descendsFrom = (oid: string, ancestor: string) =>
       git.isDescendent({ ...args, oid, ancestor });
@@ -1227,6 +1225,8 @@ export default class Crossnote {
       localSha === remoteSha ||
       (localSha && (await descendsFrom(localSha, remoteSha)))
     ) {
+      if (headRef !== ref)
+        await git.checkout({ ...args, ref, noCheckout: true });
       const cache = await this.generateChangesCache(notebook, true);
       const conflicts = Object.entries(cache)
         .filter(([file, bytes]) =>
@@ -1236,7 +1236,7 @@ export default class Crossnote {
       await pfs.storeTree(notebook.dir);
       notebook.remoteSha = remoteSha;
       notebook.fetchedAt = new Date();
-      const ignoredUploadFile = await this.updateNotebook(notebook, []);
+      const ignoredUploadFile = await this.saveSyncState(notebook, []);
       return {
         status: localSha === remoteSha ? "up-to-date" : "pending-upload",
         ignoredUploadFile,
@@ -1484,7 +1484,7 @@ export default class Crossnote {
       depth: 1,
       corsProxy: notebook.gitCorsProxy,
       url: notebook.gitURL,
-      ref: notebook.gitBranch || "master",
+      ref: branchRef(notebook.gitBranch),
       onAuth: (url, auth) => {
         return {
           username: notebook.gitUsername,
@@ -1513,9 +1513,8 @@ export default class Crossnote {
 
     // Update notebook
     notebook.fetchedAt = new Date();
-    notebook.localSha = localSha;
     notebook.remoteSha = result.fetchHead;
-    await this.updateNotebook(notebook);
+    await this.saveSyncState(notebook);
 
     return localSha !== result.fetchHead;
   }
@@ -1586,18 +1585,19 @@ export default class Crossnote {
         try {
           notebook.localSha ??= await this.getGitSHA(
             notebook.dir,
-            `origin/${gitBranch}`,
+            `refs/remotes/origin/${branchName(gitBranch)}`,
           );
           notebook.remoteSha ??= notebook.localSha;
-          const localSha = await localBranchSha(notebook);
+          const args = { fs, dir: notebook.dir };
+          const ref = branchRef(gitBranch);
+          const localSha = await refSha(notebook.dir, ref);
           // Older notebooks may only have their branch tip in the registry.
-          if (!localSha && notebook.localSha) {
-            await git.writeRef({
-              fs,
-              dir: notebook.dir,
-              ref: `refs/heads/${gitBranch}`,
-              value: notebook.localSha,
-            });
+          if (
+            !localSha &&
+            notebook.localSha &&
+            (await git.currentBranch({ ...args, fullname: true })) === ref
+          ) {
+            await git.writeRef({ ...args, ref, value: notebook.localSha });
             await pfs.storeTree(notebook.dir);
           } else {
             notebook.localSha = localSha;
@@ -1608,7 +1608,7 @@ export default class Crossnote {
             notebook.localSha &&
             !(await pfs.exists(path.join(notebook.dir, ".git/index")))
           ) {
-            await git.add({ fs, dir: notebook.dir, filepath: "." });
+            await git.add({ ...args, filepath: "." });
             await pfs.storeTree(notebook.dir);
           }
         } catch (error) {

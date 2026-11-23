@@ -1,6 +1,6 @@
 import * as git from "isomorphic-git";
 import { expect, it, vi } from "vitest";
-import Crossnote from "./crossnote";
+import Crossnote, { convertNotebookToNotebookDBEntry } from "./crossnote";
 import { fs, pfs } from "./fs";
 
 vi.mock("pouchdb", async () => {
@@ -8,8 +8,7 @@ vi.mock("pouchdb", async () => {
   return await import(/* @vite-ignore */ browserBuild);
 });
 
-// Deliberately uses only the old public entry points and storage format, so
-// this regression also runs against the pre-fix implementation.
+// Use the original storage format to exercise recovery during startup.
 it("retains a legacy recovery record when startup cannot restore its files", async () => {
   const app = new Crossnote();
   const notebook = await app.addNotebook({ name: "Recover", gitURL: "" });
@@ -24,7 +23,11 @@ it("retains a legacy recovery record when startup cannot restore its files", asy
   notebook.localSha = base;
   notebook.remoteSha = base;
   notebook.gitURL = "http://fixture.test/recovery.git";
-  await app.updateNotebook(notebook);
+  const records = app["notebookDB"];
+  await records.put({
+    ...(await records.get(notebook._id)),
+    ...convertNotebookToNotebookDBEntry(notebook, null),
+  });
   const key = `pending/pull/${notebook._id}`;
   const pending = JSON.stringify({
     localSha: base,

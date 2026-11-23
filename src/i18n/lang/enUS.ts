@@ -158,6 +158,8 @@ export const enUS = {
     "success/notebook-up-to-date": "No new commits to download",
     "error/notebook-file-ignored":
       "Upload paused because {{file}} matches a Git ignore rule. Update the rule and retry.",
+    "error/notebook-branch-mismatch":
+      "Sync paused. The working copy is on a different revision from the notebook branch.",
     "error/notebook-history-diverged":
       "The available history cannot establish a fast-forward. Both branches have been kept.",
 
