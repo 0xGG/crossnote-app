@@ -6,6 +6,7 @@ import { findLinks } from "../render/links";
 import { decodeLinkPath, leadsToNote } from "../render/markdown/linkTargets";
 import { NOTE_SETTINGS, readNoteText, writeNoteText } from "./frontMatter";
 import { fs, missingFileOrThrow, pfs } from "./fs";
+import { stageLocalFile } from "./gitFiles";
 import { Mentions, Note, NoteConfig, Notes } from "./note";
 import { Reference, ReferenceMap } from "./reference";
 import Search from "./search";
@@ -243,11 +244,7 @@ export class Notebook {
         dir: this.dir,
         filepath: oldFilePath,
       });
-      await git.add({
-        fs: fs,
-        dir: this.dir,
-        filepath: newFilePath,
-      });
+      await stageLocalFile(this.dir, newFilePath);
     }
     await pfs.storeTree(this.dir);
 
@@ -478,11 +475,7 @@ export class Notebook {
   public async storeNote(filePath: string): Promise<void> {
     if (!this.isLocal) {
       // Stages the note, which writes its text as a new object file.
-      await git.add({
-        fs: fs,
-        dir: this.dir,
-        filepath: filePath,
-      });
+      await stageLocalFile(this.dir, filePath);
     }
     await pfs.storeTree(this.dir);
   }
