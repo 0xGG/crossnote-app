@@ -8,6 +8,7 @@ import PouchDB from "pouchdb";
 import PouchdbFind from "pouchdb-find";
 import { notebookNameFromGitURL, randomID } from "../utilities/utils";
 import { fs, missingFileOrThrow, pfs } from "./fs";
+import { stageLocalFile } from "./gitFiles";
 import { EventType, globalEmitter } from "./event";
 import { Notebook } from "./notebook";
 import { RecoveryDirectoryCollisionError } from "./recoveryDirectory";
@@ -122,7 +123,7 @@ async function refSha(dir: string, ref: string): Promise<string> {
   }
 }
 
-// Match the working tree or a planned set of rules using Git 1.3.1's matcher.
+// Match the working tree or a planned set of rules using Git's matcher.
 // An excluded parent wins before a nested rule can re-include its children.
 function ignoreCheck(dir: string, overrides?: Map<string, string>) {
   const matchers = new Map<string, Ignore>();
@@ -162,17 +163,12 @@ async function prepareUploadIndex(
   const args = { fs, dir };
   const isIgnored = ignoreCheck(dir);
   const unchecked = new Set<string>();
-  for (const [file, head, work, index] of await git.statusMatrix(args)) {
+  for (const [file, , work, index] of await git.statusMatrix(args)) {
     if (
       work &&
       (work !== index || file in changes) &&
       (await isIgnored(file))
     ) {
-      if (!head && index) {
-        // A draft staged before the ignore rule changed must stay local.
-        await git.remove({ ...args, filepath: file });
-        continue;
-      }
       unchecked.add(file);
     }
   }
@@ -184,6 +180,7 @@ async function prepareUploadIndex(
       ? `${await entry.mode()} ${await entry.oid()}`
       : null;
   let hasStagedChanges = false;
+  const privateStaged: string[] = [];
   await git.walk({
     ...args,
     trees: [git.TREE({ ref: "HEAD" }), git.STAGE()],
@@ -193,18 +190,25 @@ async function prepareUploadIndex(
         (await entry?.type()) !== "commit"
       )
         throw new NotebookConflictError([file]);
+      if (unchecked.has(file) && (!head || (await head.type()) === "tree")) {
+        // A directory in HEAD does not track a working file at that path.
+        if (await fileVersion(entry)) privateStaged.push(file);
+        unchecked.delete(file);
+        return;
+      }
       if (
         !hasStagedChanges &&
         (await fileVersion(head)) !== (await fileVersion(entry))
       )
         hasStagedChanges = true;
-      // Git add can skip ignored edits even when cached file stats match.
+      // The index can hold older bytes even when Git reports matching stats.
       if (!unchecked.has(file)) return;
       const object = (await pfs.readFile(path.join(dir, file))) as Uint8Array;
       if ((await git.hashBlob({ object })).oid === (await entry?.oid()))
         unchecked.delete(file);
     },
   });
+  for (const filepath of privateStaged) await git.remove({ ...args, filepath });
   const [unstaged] = unchecked;
   if (unstaged) throw new IgnoredUploadFileError(unstaged);
   return hasStagedChanges;
@@ -570,9 +574,8 @@ export default class Crossnote {
                 path.resolve(notebook.dir, file),
               )) as Uint8Array,
             );
-      // Git's stat shortcut compares timestamps only to whole seconds. An
-      // equal-sized edit within that second can look unchanged. Before reset,
-      // compare the bytes even for files the matrix calls clean.
+      // LightningFS can report the same stats for an equal-sized edit.
+      // Compare working bytes before replacing files the matrix calls clean.
       if (head === work && indexMatches && notebook.localSha) {
         const base = await git.readBlob({
           fs,
@@ -640,7 +643,7 @@ export default class Crossnote {
         if (bytes === null) await git.remove({ ...args, filepath });
       }
       for (const [filepath, bytes] of changes) {
-        if (bytes !== null) await git.add({ ...args, filepath });
+        if (bytes !== null) await stageLocalFile(notebook.dir, filepath);
       }
     }
     const hasStagedChanges = await prepareUploadIndex(
@@ -758,9 +761,7 @@ export default class Crossnote {
       return false;
     if (!rules.some((rule) => rule.startsWith("!"))) return true;
     // The directory's own ordered rules must protect every existing file.
-    const gitdir = path.join(notebook.dir, ".git");
-    const isIgnored = async (filepath: string) =>
-      (await git.status({ fs, dir, gitdir, filepath })) === "ignored";
+    const isIgnored = ignoreCheck(dir);
     if (newCopy && !(await isIgnored(newCopy))) return false;
     const remaining = [...entries];
     while (remaining.length) {
@@ -931,7 +932,7 @@ export default class Crossnote {
       } else {
         await pfs.mkdirp(path.dirname(target));
         await pfs.writeFile(target, bytes);
-        await git.add({ fs, dir: notebook.dir, filepath: file });
+        await stageLocalFile(notebook.dir, file);
       }
     }
   }
@@ -1154,25 +1155,8 @@ export default class Crossnote {
     await this.hardResetNotebook(notebook, recovery.remoteSha, true);
     // A reset removes the old index. Include every remote file before applying
     // local additions/deletions, so the next commit cannot drop untouched files.
-    for (const file of remoteFiles) {
-      // This git version logs individual checkout write failures and resolves.
-      // Never stage stale working bytes as the downloaded remote version.
-      if (!Object.prototype.hasOwnProperty.call(recovery.files, file)) {
-        const expected = await git.readBlob({
-          fs,
-          dir: notebook.dir,
-          oid: recovery.remoteSha,
-          filepath: file,
-        });
-        const target = this.checkedPath(notebook, file);
-        const actual = (await pfs.exists(target))
-          ? ((await pfs.readFile(target)) as Uint8Array)
-          : null;
-        if (!sameBytes(actual, expected.blob))
-          throw new Error(`Git checkout did not restore ${file}`);
-      }
+    for (const file of remoteFiles)
       await git.add({ fs, dir: notebook.dir, filepath: file });
-    }
     await this.restoreFilesFromCache(recovery.files, notebook);
     await pfs.storeTree(notebook.dir);
     notebook.localSha = recovery.remoteSha;
@@ -1774,10 +1758,8 @@ export default class Crossnote {
   */
 
   public async getStatus(notebookPath: string, filePath: string) {
-    return await git.status({
-      fs: fs,
-      dir: notebookPath,
-      filepath: filePath,
-    });
+    const args = { fs, dir: notebookPath, filepath: filePath };
+    if (await git.isIgnored(args)) return "ignored";
+    return git.status(args);
   }
 }

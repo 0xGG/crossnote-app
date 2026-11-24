@@ -1,13 +1,28 @@
 import { spawn, execFile } from "node:child_process";
 import { promisify } from "node:util";
-import { createServer, request } from "node:http";
-import { mkdir, mkdtemp, writeFile, rm, realpath } from "node:fs/promises";
+import { createServer, request } from "node:https";
+import {
+  lstat,
+  mkdir,
+  mkdtemp,
+  readFile,
+  writeFile,
+  rm,
+  realpath,
+  rmdir,
+} from "node:fs/promises";
 import path from "node:path";
 import { randomUUID } from "node:crypto";
 
-// A real smart-HTTP remote, restricted to disposable repositories on loopback.
+// A real Git HTTPS remote, restricted to disposable repositories on loopback.
 // No developer repository, credential, user git config or external network is used.
 const port = Number(process.env.GIT_FIXTURE_PORT || 4174);
+const origin = `https://127.0.0.1:${port}`;
+const tlsDirectory = process.env.CROSSNOTE_GIT_FIXTURE_TLS_DIR;
+if (!tlsDirectory)
+  throw new Error("Start the HTTPS Git fixture through Playwright");
+const cert = await readFile(path.join(tlsDirectory, "cert.pem"));
+const key = await readFile(path.join(tlsDirectory, "key.pem"));
 const cache = path.resolve(".cache");
 await mkdir(cache, { recursive: true });
 const root = await mkdtemp(path.join(cache, "git-http-"));
@@ -54,6 +69,11 @@ const commit = async (repo, files) => {
     if (bytes === null) await rm(target, { force: true });
     else {
       await mkdir(path.dirname(target), { recursive: true });
+      // Replacing a directory with a file requires deleting its children first.
+      const previous = await lstat(target).catch((error) => {
+        if (error.code !== "ENOENT") throw error;
+      });
+      if (previous?.isDirectory()) await rmdir(target);
       await writeFile(target, Buffer.from(bytes));
     }
   }
@@ -74,7 +94,7 @@ const commit = async (repo, files) => {
   await git(["push", "origin", "master"], repo.work);
 };
 
-const server = createServer(async (req, res) => {
+const server = createServer({ cert, key }, async (req, res) => {
   const started = Date.now();
   const label = `${req.method} ${new URL(req.url, "http://fixture").pathname}`;
   console.log(`${label} started`);
@@ -88,7 +108,7 @@ const server = createServer(async (req, res) => {
     ),
   );
   try {
-    const url = new URL(req.url, `http://127.0.0.1:${port}`);
+    const url = new URL(req.url, origin);
     if (url.pathname === "/health") return json(res, { ready: true });
     if (url.pathname.startsWith("/proxy/")) {
       // Match isomorphic-git's proxy URL convention, without an open proxy.
@@ -112,6 +132,7 @@ const server = createServer(async (req, res) => {
         {
           host: "127.0.0.1",
           port,
+          ca: cert,
           path: "/git/" + url.pathname.slice(prefix.length) + url.search,
           method: req.method,
           headers: { ...req.headers, host: `127.0.0.1:${port}` },
@@ -140,8 +161,8 @@ const server = createServer(async (req, res) => {
       repos.set(id, repo);
       return json(res, {
         id,
-        url: `http://127.0.0.1:${port}/git/${id}.git`,
-        proxy: `http://127.0.0.1:${port}/proxy`,
+        url: `${origin}/git/${id}.git`,
+        proxy: `${origin}/proxy`,
       });
     }
     const api = url.pathname.match(/^\/repos\/([\w-]+)(?:\/file)?$/);

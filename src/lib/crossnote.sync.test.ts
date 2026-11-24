@@ -170,7 +170,9 @@ it("pulls a first commit into an empty clone with a staged local note", async ()
     statusCode: 200,
     statusMessage: "OK",
     headers: { "content-type": "application/x-git-upload-pack-advertisement" },
-    body: [bytes("001e# service=git-upload-pack\n00000000")],
+    body: (async function* () {
+      yield bytes("001e# service=git-upload-pack\n00000000");
+    })(),
   }));
   const app = new Crossnote();
   const notebook = await app.cloneNotebook({
@@ -447,9 +449,13 @@ it.each([
   async (collision, marker) => {
     const directory = ".crossnote-recovered";
     const remotePath = collision ? `${directory}/${collision}` : directory;
-    const { app, notebook, read, theirs } = await repository({
-      [remotePath]: bytes("remote content"),
-    });
+    const { app, notebook, read, theirs } = await repository(
+      { [remotePath]: bytes("remote content") },
+      {
+        ".gitignore": bytes("# Root rules\n"),
+        "recovered-note.md": bytes("public note with the same name"),
+      },
+    );
     const original = `${directory}/recovered-note.md`;
     await pfs.writeFile(`${notebook.dir}/${directory}/.gitignore`, marker);
     await pfs.writeFile(`${notebook.dir}/${original}`, "private note");
@@ -1136,7 +1142,7 @@ it("keeps recovery after a failed restore, retries at startup and reuses the sam
   expect(() => assertNotebookWritable(notebook.dir)).not.toThrow();
 });
 
-it("retains recovery when checkout swallows a remote file write failure", async () => {
+it("retains recovery when Git reports a refused checkout write", async () => {
   const { app, notebook, read } = await repository({
     "README.md": bytes("Remote text\n"),
   });
@@ -1170,9 +1176,12 @@ it("retains recovery when checkout swallows a remote file write failure", async 
       },
     }),
   );
-  await expect(app.pullNotebook({ notebook })).rejects.toThrow(
-    "Git checkout did not restore README.md",
-  );
+  await expect(app.pullNotebook({ notebook })).rejects.toMatchObject({
+    code: "MultipleGitError",
+    data: {
+      errors: [expect.objectContaining({ message: "Checkout write refused" })],
+    },
+  });
   // Git's write helper retries once after mkdir; both attempts must fail.
   expect(failures).toBe(2);
   expect(await recovery.readPullRecovery(notebook._id)).toBeDefined();
@@ -1666,10 +1675,7 @@ it.each([
     }
     await pfs.writeFile(draft, content);
     expect((await git.listFiles(args)).includes("draft.md")).toBe(staged);
-    expect(await git.status({ ...args, filepath: "draft.md" })).toBe("ignored");
-    expect(
-      (await git.statusMatrix(args)).find(([file]) => file === "draft.md"),
-    ).toEqual(staged ? ["draft.md", 0, 2, 3] : undefined);
+    expect(await read(".gitignore")).toEqual([...bytes("draft.md\n")]);
     if (match) {
       await app.pullNotebook({ notebook });
       expect(notebook.localSha).toBe(theirs);
@@ -1737,6 +1743,9 @@ it("uploads a note deletion when only an ignored draft remains in its former pat
     modifiedAt: new Date(),
   });
   const savedDraft = await read("README.md/private.md");
+  expect(await app.getStatus(notebook.dir, "README.md/private.md")).toBe(
+    "ignored",
+  );
   expect(await git.listFiles(args)).not.toContain("README.md");
   const push = vi
     .spyOn(git, "push")
@@ -1965,9 +1974,9 @@ it.each([false, true])(
     await pfs.rmdir(target);
     await pfs.writeFile(target, "local draft");
     await pfs.writeFile(`${notebook.dir}/README.md`, "other edit");
-    expect(await git.status({ ...args, filepath: "records.md" })).toBe(
-      "ignored",
-    );
+    expect(await read(".gitignore")).toEqual([
+      ...bytes("records.md\nlocal-only.md\n"),
+    ]);
     const push = vi
       .spyOn(git, "push")
       .mockResolvedValue({ ok: true, error: null, refs: {} });
@@ -2201,6 +2210,8 @@ it("detects unstaged bytes in an ignored tracked file even when Git reports matc
   await app.pullNotebook({ notebook });
   const args = { fs, dir: notebook.dir };
   await pfs.writeFile(`${notebook.dir}/README.md`, "# Left\n");
+  await notebook.storeNote("README.md");
+  expect(await app.getStatus(notebook.dir, "README.md")).toBe("ignored");
   expect(await git.statusMatrix({ ...args, filepaths: ["README.md"] })).toEqual(
     [["README.md", 1, 1, 1]],
   );

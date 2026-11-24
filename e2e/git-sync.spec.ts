@@ -139,7 +139,7 @@ test.describe("recovery notes", () => {
   const directory = ".crossnote-recovered";
   const story = `${directory}/Story.md`;
   const markerPath = `${directory}/.gitignore`;
-  const marker = bytes("# Crossnote recovered files\n*\n");
+  const marker = bytes("# Crossnote recovered files\n*\n!Future.md\n");
   const guide = bytes(`See [[${directory}/Story]]`);
   const editedGuide = bytes(`Updated guide: [[${directory}/Story]]`);
   const published = bytes("Published story\n");
@@ -213,7 +213,10 @@ test.describe("recovery notes", () => {
       page,
       request,
     }) => {
-      const remote = await createRemote(request, { "Guide.md": guide });
+      const remote = await createRemote(request, {
+        ".gitignore": publicRules,
+        "Guide.md": guide,
+      });
       await app.open();
       const dir = await cloneRemote(app, remote);
       await localBytes(page, `${dir}/Guide.md`, editedGuide);
@@ -301,7 +304,9 @@ test.describe("recovery notes", () => {
       const head = await (
         await request.get(`${fixtureURL}/repos/${remote.id}`)
       ).json();
-      expect(head.files.sort()).toEqual([markerPath, story, "Guide.md"].sort());
+      expect(head.files.sort()).toEqual(
+        [markerPath, story, ".gitignore", "Guide.md"].sort(),
+      );
     });
   }
 });
@@ -625,6 +630,125 @@ test("keeps both binary conflicts and stops the upload with their paths", async 
       `assets/a.remote-${before.sha.slice(0, 8)}.bin`,
     ),
   ).toEqual(theirs);
+});
+
+test("downloads a file replacing a directory after an ignored tracked edit stops upload", async ({
+  app,
+  page,
+  request,
+}) => {
+  const original = [137, 80, 0, 255, 128];
+  const edit = [137, 80, 0, 254, 129];
+  const draft = [0, 10, 255, 251];
+  const replacement = [0, 253, 130, 10];
+  const remote = await createRemote(request, {
+    "README.md": bytes("# Directory replacement\n"),
+    "assets/a.bin": original,
+  });
+  const remoteState = async () => {
+    const response = await request.get(`${fixtureURL}/repos/${remote.id}`);
+    expect(response.ok(), await response.text()).toBe(true);
+    return (await response.json()) as { sha: string; files: string[] };
+  };
+
+  await app.open();
+  const dir = await cloneRemote(app, remote);
+  const branch = `${dir}/.git/refs/heads/master`;
+  await changeRemote(request, remote, {
+    ".gitignore": bytes("assets/a.bin\nassets/private.bin\n"),
+  });
+  const ignored = await remoteState();
+  await download(app, remote);
+  expect((await app.storedText(branch))?.trim()).toBe(ignored.sha);
+  await localBytes(page, `${dir}/assets/a.bin`, edit);
+  await localBytes(page, `${dir}/assets/private.bin`, draft);
+
+  const uploadRequests: string[] = [];
+  const observeRequest = (request: { url(): string }) => {
+    uploadRequests.push(request.url());
+  };
+  page.on("request", observeRequest);
+  const uploadMessages = await app.recordMessages();
+  await app
+    .notebook(remote.id)
+    .getByRole("treeitem", { name: /Upload/ })
+    .click();
+  const dialog = page.getByRole("dialog");
+  await dialog.getByRole("button", { name: "Upload", exact: true }).click();
+  await expect(dialog).toBeHidden({ timeout: 20000 });
+  await expect
+    .poll(uploadMessages, { timeout: 20000 })
+    .toContainEqual(
+      expect.stringContaining(
+        "Upload paused because assets/a.bin matches a Git ignore rule",
+      ),
+    );
+  page.off("request", observeRequest);
+  expect(uploadRequests).not.toContainEqual(
+    expect.stringMatching(/\/git-receive-pack$/),
+  );
+  expect(await remoteState()).toEqual(ignored);
+  expect(await remoteBytes(request, remote, "assets/a.bin")).toEqual(original);
+
+  await changeRemote(request, remote, {
+    "assets/a.bin": null,
+    "assets": replacement,
+  });
+  const incoming = await remoteState();
+  const suffix = incoming.sha.slice(0, 8);
+  const movedEdit = `.crossnote-recovered/a.local-${suffix}.bin`;
+  const movedDraft = `.crossnote-recovered/private.local-${suffix}.bin`;
+  const fetch = page.waitForResponse(
+    (response) =>
+      response.url().startsWith(`${remote.proxy}/`) &&
+      response.url().endsWith(`/git/${remote.id}.git/git-upload-pack`) &&
+      response.request().method() === "POST",
+  );
+  const downloadMessages = await app.recordMessages();
+  await app
+    .notebook(remote.id)
+    .getByRole("treeitem", { name: /Download/ })
+    .click();
+  expect((await fetch).ok()).toBe(true);
+  await expect
+    .poll(downloadMessages, { timeout: 20000 })
+    .toContainEqual(expect.stringMatching(/Sync conflicts:.*assets\/a\.bin/));
+
+  const expectRecovered = async () => {
+    expect((await app.storedText(branch))?.trim()).toBe(incoming.sha);
+    expect(await localBytes(page, `${dir}/assets`)).toEqual(replacement);
+    expect(await localBytes(page, `${dir}/${movedEdit}`)).toEqual(edit);
+    expect(await localBytes(page, `${dir}/${movedDraft}`)).toEqual(draft);
+  };
+  await expectRecovered();
+  await page.reload();
+  await app.waitUntilReady();
+  await app.openNotes(remote.id);
+  await expectRecovered();
+
+  // Move the recovered tracked edit out of the ignored location to publish it.
+  await page.evaluate(
+    async ({ dir, movedEdit }) => {
+      const fs = (window as unknown as FileHost).pfs as FileHost["pfs"] & {
+        rename(source: string, target: string): Promise<void>;
+      };
+      await fs.rename(`${dir}/${movedEdit}`, `${dir}/recovered.bin`);
+      await fs.storeTree(dir);
+    },
+    { dir, movedEdit },
+  );
+  await upload(app, remote);
+  const published = await remoteState();
+  expect(published.sha).not.toBe(incoming.sha);
+  expect((await app.storedText(branch))?.trim()).toBe(published.sha);
+  expect(published.files).toEqual([
+    ".gitignore",
+    "README.md",
+    "assets",
+    "recovered.bin",
+  ]);
+  expect(await remoteBytes(request, remote, "recovered.bin")).toEqual(edit);
+  expect(await localBytes(page, `${dir}/${movedDraft}`)).toEqual(draft);
 });
 
 test("reports which side deleted conflicting files while retaining modified bytes", async ({

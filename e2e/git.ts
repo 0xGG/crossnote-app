@@ -1,7 +1,8 @@
 import { expect, type APIRequestContext, type Page } from "@playwright/test";
 import { CrossnoteApp } from "./crossnote";
+import { fixtureURL } from "./git-fixture";
 
-export const fixtureURL = "http://127.0.0.1:4174";
+export { fixtureURL };
 export type FileHost = {
   pfs: {
     readdir(name: string): Promise<string[]>;

@@ -59,8 +59,7 @@ export async function writeAttachment(
     // attachment or override the notebook owner's ignore rules.
     if (
       !notebook.isLocal &&
-      (await git.status({ fs, dir: notebook.dir, filepath: relative })) ===
-        "ignored"
+      (await git.isIgnored({ fs, dir: notebook.dir, filepath: relative }))
     )
       throw new AttachmentError("ignored");
     await pfs.mkdirp(path.join(notebook.dir, "assets"));

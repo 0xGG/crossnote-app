@@ -1,4 +1,5 @@
 import { defineConfig, devices } from "@playwright/test";
+import { configureGitFixtureTls, fixtureURL } from "./e2e/git-fixture.ts";
 
 // The suite drives the production build served by `vite preview`, not the
 // dev server: bundling is part of what it guards (how a dependency is
@@ -8,6 +9,7 @@ import { defineConfig, devices } from "@playwright/test";
 // already listening.
 const port = 4173;
 const baseURL = `http://localhost:${port}`;
+const gitCertificateArg = configureGitFixtureTls();
 
 export default defineConfig({
   testDir: "e2e",
@@ -28,6 +30,7 @@ export default defineConfig({
   use: {
     baseURL,
     trace: "on-first-retry",
+    launchOptions: { args: [gitCertificateArg] },
   },
   projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
   webServer: [
@@ -38,7 +41,7 @@ export default defineConfig({
     },
     {
       command: "node scripts/git-fixture.mjs",
-      url: "http://127.0.0.1:4174/health",
+      url: `${fixtureURL}/health`,
       reuseExistingServer: false,
     },
   ],
