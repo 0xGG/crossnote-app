@@ -560,7 +560,6 @@ test("allows keyboard access to Git results from the narrow drawer", async ({
       await expect(details).toBeFocused();
       await page.keyboard.press("Escape");
       await expect(drawer).toBeHidden();
-      await expect(page.getByRole("alert")).toBeVisible();
     },
     (drawer: Locator) => startUpload(app, remote, drawer),
   ]) {

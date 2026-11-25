@@ -4,6 +4,8 @@ import {
   Button,
   Portal,
   Snackbar,
+  dialogClasses,
+  drawerClasses,
   modalClasses,
 } from "@mui/material";
 import React, { useLayoutEffect, useState, useSyncExternalStore } from "react";
@@ -66,8 +68,10 @@ function NotificationMessage({
   useLayoutEffect(() => {
     if (!host) return;
     const place = () => {
-      const modals = Array.from(document.body.children).filter((element) =>
-        element.classList.contains(modalClasses.root),
+      const modals = Array.from(document.body.children).filter(
+        ({ classList }) =>
+          classList.contains(dialogClasses.root) ||
+          classList.contains(drawerClasses.modal),
       );
       // The temporary drawer opens and closes without leaving the DOM.
       for (const modal of modals)
