@@ -15,7 +15,6 @@ export interface Notification {
   readonly message: string;
   readonly details?: string;
   readonly action?: { label: string; onClick: () => void };
-  readonly dialog?: HTMLElement;
   /** Milliseconds before the message hides on its own. */
   readonly duration: number;
 }

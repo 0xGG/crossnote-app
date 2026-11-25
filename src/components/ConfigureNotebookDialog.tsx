@@ -17,7 +17,7 @@ import {
   Typography,
 } from "@mui/material";
 import { ChevronDown, Eye, EyeOff } from "mdi-material-ui";
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { CrossnoteContainer } from "../containers/crossnote";
 import i18next from "../i18n/i18n";
@@ -45,7 +45,6 @@ function settingsFrom(notebook: Notebook) {
 
 export default function ConfigureNotebookDialog(props: Props) {
   const { notebook, open, onClose: close } = props;
-  const dialog = useRef<HTMLDivElement>(null);
   const crossnoteContainer = CrossnoteContainer.useContainer();
   const { t } = useTranslation();
   const [draft, setDraft] = useState(() => settingsFrom(notebook));
@@ -94,7 +93,6 @@ export default function ConfigureNotebookDialog(props: Props) {
       notifyGit("error", t("error/failed-to-save-notebook-settings"), {
         error,
         credentials: draft,
-        dialog: dialog.current,
       });
     }
   }
@@ -132,17 +130,12 @@ export default function ConfigureNotebookDialog(props: Props) {
       notifyGit("error", t("git/reset-failed"), {
         error,
         credentials: notebook,
-        dialog: dialog.current,
       });
     }
   }
 
   return (
-    <Dialog
-      open={open}
-      onClose={!clickDeleteCount ? null : close}
-      slotProps={{ paper: { ref: dialog } }}
-    >
+    <Dialog open={open} onClose={!clickDeleteCount ? null : close}>
       <DialogTitle>{t("general/configure-the-notebook")}</DialogTitle>
       <DialogContent>
         <TextField

@@ -10,15 +10,16 @@ import "../i18n/i18n";
 import AddNotebookDialog from "./AddNotebookDialog";
 
 // An add that never settles, so the dialog stays as it is after the click.
-const { addNotebook } = vi.hoisted(() => ({
+const { addNotebook, clone } = vi.hoisted(() => ({
   addNotebook: vi.fn((name: string) => new Promise<never>(() => {})),
+  clone: { pending: false },
 }));
 
 vi.mock("../containers/crossnote", () => ({
   CrossnoteContainer: {
     useContainer: () => ({
       addNotebook,
-      isAddingNotebook: false,
+      isAddingNotebook: clone.pending,
       openLocalNotebook: () => {},
     }),
   },
@@ -34,6 +35,7 @@ let root: Root;
 
 beforeEach(() => {
   addNotebook.mockClear();
+  clone.pending = false;
   ({ container, root } = mountTestRoot());
 });
 
@@ -71,6 +73,35 @@ it("opens with no repository to name the notebook after", () => {
     ),
   );
   expect(document.querySelector('[role="dialog"]')).not.toBeNull();
+});
+
+it("keeps submitted clone values fixed until a failed attempt can be corrected", async () => {
+  let rejectAdd: (reason: Error) => void;
+  addNotebook.mockImplementationOnce(
+    () => new Promise<never>((_, reject) => (rejectAdd = reject)),
+  );
+  const url = "https://example.test/notes.git";
+  const render = () =>
+    root.render(
+      <AddNotebookDialog open onClose={() => {}} canCancel gitURL={url} />,
+    );
+  act(render);
+  await act(async () => buttonByText(document, "Add").click());
+  clone.pending = true;
+  act(render);
+  const fields = [
+    ...document.querySelectorAll<HTMLInputElement>('[role="dialog"] input'),
+  ];
+  expect(fields).toHaveLength(5);
+  expect(fields.every((field) => field.matches(":disabled"))).toBe(true);
+
+  clone.pending = false;
+  await act(async () => {
+    rejectAdd(new Error("Remote unavailable"));
+    render();
+  });
+  expect(fields.every((field) => !field.matches(":disabled"))).toBe(true);
+  expect(fields[0].value).toBe(url);
 });
 import i18next from "i18next";
 import * as notifications from "../lib/notifications";

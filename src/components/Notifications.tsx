@@ -1,4 +1,11 @@
-import { Alert, Box, Button, Portal, Snackbar } from "@mui/material";
+import {
+  Alert,
+  Box,
+  Button,
+  Portal,
+  Snackbar,
+  dialogClasses,
+} from "@mui/material";
 import React, { useLayoutEffect, useState, useSyncExternalStore } from "react";
 import { useTranslation } from "react-i18next";
 import {
@@ -49,28 +56,36 @@ function NotificationMessage({
   const { t } = useTranslation();
   const [expanded, setExpanded] = useState(false);
   const [copyResult, setCopyResult] = useState<"copied" | "failed">();
-  const [dialogHost] = useState(
-    () => current.dialog && document.createElement("div"),
+  const [host] = useState(() =>
+    current.details || current.action
+      ? document.createElement("div")
+      : undefined,
   );
   useLayoutEffect(() => {
-    if (!dialogHost) return;
-    const dialog = current.dialog;
-    (dialog.isConnected ? dialog : document.body).appendChild(dialogHost);
-    // Move the host without restarting its timer or exit transition.
-    const observer = new MutationObserver(() => {
-      if (!dialog.isConnected) {
-        observer.disconnect();
-        document.body.appendChild(dialogHost);
+    if (!host) return;
+    const place = () => {
+      // The navigation drawer stays mounted after it closes.
+      const dialog = Array.from(
+        document.querySelectorAll<HTMLElement>(
+          `.${dialogClasses.paper}[aria-modal="true"]`,
+        ),
+      ).find((dialog) => !dialog.closest('[aria-hidden="true"]'));
+      const target = dialog ?? document.body;
+      if (host.parentElement !== target) {
+        // MUI may have hidden the host while it was a sibling of this modal.
+        host.removeAttribute("aria-hidden");
+        target.appendChild(host);
       }
-    });
-    // MUI mounts the two dialogs under the body; only the modal removal matters.
-    if (dialog.isConnected)
-      observer.observe(document.body, { childList: true });
+    };
+    // Move one host between MUI dialogs and the page without remounting the notice.
+    place();
+    const observer = new MutationObserver(place);
+    observer.observe(document.body, { childList: true });
     return () => {
       observer.disconnect();
-      dialogHost.remove();
+      host.remove();
     };
-  }, [current.dialog, dialogHost]);
+  }, [host]);
 
   async function copyDetails() {
     try {
@@ -82,7 +97,7 @@ function NotificationMessage({
   }
 
   return (
-    <Portal container={dialogHost}>
+    <Portal container={host}>
       <Snackbar
         open={open}
         anchorOrigin={anchorOrigin}

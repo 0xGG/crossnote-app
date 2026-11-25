@@ -84,6 +84,7 @@ function upload(gitUsername = "") {
 
 it("commits under the author name and email from the settings", () => {
   upload();
+  expect(document.querySelectorAll('[role="dialog"] input')).toHaveLength(3);
   expect(pushNotebook).toHaveBeenCalledWith(
     expect.objectContaining({
       authorName: "Ada Lovelace",

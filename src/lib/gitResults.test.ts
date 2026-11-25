@@ -1,25 +1,30 @@
 import { Errors } from "isomorphic-git";
 import { afterEach, expect, it } from "vitest";
 import { needsGitSettings, repositoryAddress } from "./gitConnection";
-import { notifyGit, redactGitText } from "./gitResults";
+import { gitConflictNotice, notifyGit } from "./gitResults";
+import { NotebookConflictError } from "./mergeFiles";
 import { getNotificationState, resetNotifications } from "./notifications";
 
 afterEach(resetNotifications);
 
-it("keeps literal filename characters while redacting credentials from a summary", () => {
-  const files = "saved-secret-$&.md";
+it("keeps literal filename characters and redacts credentials in conflict results", () => {
+  const error = new NotebookConflictError([
+    "saved-secret-$&.md",
+    "reader-name.md",
+  ]);
   const credentials = {
     gitUsername: "  reader-name  ",
     gitPassword: "saved-secret",
   };
-  notifyGit("warning", "Conflict in " + redactGitText(files, credentials), {
-    files,
+  const { message } = gitConflictNotice(error, credentials);
+  notifyGit("warning", message, {
     credentials,
-    error: new Error("Unauthorized for reader-name"),
+    error,
   });
   const notification = getNotificationState().current;
-  expect(notification.message).toBe("Conflict in [redacted]-$&.md");
-  expect(notification.details).toContain("Unauthorized for [redacted]");
+  expect(notification.message).toContain("[redacted]-$&.md, [redacted].md");
+  expect(notification.details).toContain("Please resolve conflicts first");
+  expect(notification.details).toContain("[redacted]-$&.md, [redacted].md");
   expect(notification.details).not.toMatch(/reader-name|saved-secret/);
 });
 

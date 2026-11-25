@@ -488,6 +488,26 @@ it("retains the completed Git outcome when the local refresh fails", async () =>
   }
 });
 
+it("reports an interrupted download conflict before starting checkout", async () => {
+  const conflict = new NotebookConflictError(["assets/report.bin"]);
+  const notebook = await notebookAt("/notebooks/checkout-after-conflict", {
+    resumeNotebook: async () => {
+      throw conflict;
+    },
+  });
+  notebook.isLocal = false;
+  const checkout = vi.spyOn(notebook, "checkoutNote");
+  await act(async () => {
+    await expect(
+      crossnote.checkoutNote({
+        notebookPath: notebook.dir,
+        filePath: "a.md",
+      } as Note),
+    ).rejects.toBe(conflict);
+  });
+  expect(checkout).not.toHaveBeenCalled();
+});
+
 it("replaces the old search alias on checkout", async () => {
   const notebook = await notebookAt("/notebooks/restored-search-alias");
   notebook.isLocal = false;

@@ -20,10 +20,9 @@ import {
 } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import { ChevronDown, Eye, EyeOff, FolderOpen } from "mdi-material-ui";
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { CrossnoteContainer } from "../containers/crossnote";
-import { repositoryAddress } from "../lib/gitConnection";
 import { gitErrorMessage, notifyGit } from "../lib/gitResults";
 import { notify } from "../lib/notifications";
 import { notebookNameFromGitURL } from "../utilities/utils";
@@ -40,12 +39,11 @@ interface Props {
 
 export default function AddNotebookDialog(props: Props) {
   const crossnoteContainer = CrossnoteContainer.useContainer();
-  const dialog = useRef<HTMLDivElement>(null);
   const [notebookName, setNotebookName] = useState<string>(
     props.notebookName || notebookNameFromGitURL(props.gitURL ?? ""),
   );
   const [expanded, setExpanded] = useState<boolean>(true);
-  const [gitURL, setGitURL] = useState(() => repositoryAddress(props.gitURL));
+  const [gitURL, setGitURL] = useState(props.gitURL ?? "");
   const [gitBranch, setGitBranch] = useState<string>(props.gitBranch || "");
   const [gitUsername, setGitUsername] = useState<string>("");
   const [gitPassword, setGitPassword] = useState<string>("");
@@ -98,7 +96,6 @@ export default function AddNotebookDialog(props: Props) {
         notifyGit("error", gitErrorMessage(error, t("git/clone-failed")), {
           error,
           credentials: { gitUsername, gitPassword },
-          dialog: dialog.current,
         });
         return;
       }
@@ -133,7 +130,7 @@ export default function AddNotebookDialog(props: Props) {
     previousDefaults.gitBranch !== props.gitBranch ||
     previousDefaults.notebookName !== props.notebookName
   ) {
-    const gitURL = repositoryAddress(props.gitURL);
+    const gitURL = props.gitURL ?? "";
     setPreviousDefaults({
       gitURL: props.gitURL,
       gitBranch: props.gitBranch,
@@ -148,7 +145,6 @@ export default function AddNotebookDialog(props: Props) {
   return (
     <Dialog
       open={props.open}
-      slotProps={{ paper: { ref: dialog } }}
       onClose={() => {
         if (!crossnoteContainer.isAddingNotebook) {
           close();
@@ -208,19 +204,6 @@ export default function AddNotebookDialog(props: Props) {
         </Typography>
         <br></br>
         <br></br>
-        {/*
-        <TextField
-          label={t("general/notebook-name")}
-          value={notebookName}
-          fullWidth={true}
-          onChange={(event) => {
-            setNotebookName(event.target.value);
-          }}
-          style={{ marginBottom: "16px" }}
-          autoComplete={"off"}
-          autoCorrect={"off"}
-        ></TextField>
-        */}
         <Accordion
           elevation={2}
           expanded={expanded}
@@ -230,7 +213,11 @@ export default function AddNotebookDialog(props: Props) {
             <Typography>{`${t("general/clone-a-git-repository")}`}</Typography>
           </AccordionSummary>
           <AccordionDetails>
-            <Box>
+            <Box
+              component="fieldset"
+              disabled={crossnoteContainer.isAddingNotebook}
+              sx={{ border: 0, m: 0, minWidth: 0, p: 0 }}
+            >
               <TextField
                 label={t("general/url")}
                 placeholder={"https://github.com/0xGG/crossnote-app.git"}

@@ -944,7 +944,8 @@ function useCrossnoteContainer(initialState: InitialState) {
             filePath: note.filePath,
           });
         } catch (error) {
-          return;
+          if (error instanceof NotesNotSavedError) return;
+          throw error;
         }
         const updateFailure = await writeNoteOperation(location, async () => {
           requireOriginalPath(note.filePath, location);

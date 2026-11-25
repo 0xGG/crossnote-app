@@ -1,7 +1,7 @@
 import { Errors } from "isomorphic-git";
 import i18next, { isAppErrorKey } from "../i18n/i18n";
 import { gitHttpStatus, repositoryAddress } from "./gitConnection";
-import type { NotebookConflictError } from "./mergeFiles";
+import { NotebookConflictError } from "./mergeFiles";
 import { type NotificationSeverity, notify } from "./notifications";
 
 type GitCredentials = { gitUsername?: string; gitPassword?: string };
@@ -37,13 +37,17 @@ export function redactGitText(text: string, credentials: GitCredentials) {
   return result;
 }
 
+function describeConflicts(error: NotebookConflictError) {
+  return error.describe((file, side) =>
+    i18next.t(`error/notebook-file-deleted-${side}`, { file }),
+  );
+}
+
 export function gitConflictNotice(
   error: NotebookConflictError,
   credentials: GitCredentials,
 ) {
-  const files = error.describe((file, side) =>
-    i18next.t(`error/notebook-file-deleted-${side}`, { file }),
-  );
+  const files = describeConflicts(error);
   const message = i18next.t("error/notebook-sync-conflicts", {
     files: redactGitText(files, credentials),
   });
@@ -57,16 +61,16 @@ export function notifyGit(
     updateFailure,
     error = updateFailure?.error,
     credentials = {},
-    files,
+    files = error instanceof NotebookConflictError
+      ? describeConflicts(error)
+      : undefined,
     openSettings,
-    dialog,
   }: {
     updateFailure?: { error: unknown };
     error?: unknown;
     credentials?: GitCredentials;
     files?: string;
     openSettings?: () => void;
-    dialog?: HTMLElement;
   } = {},
 ) {
   const { code, message: original } = Object(error) as {
@@ -99,7 +103,6 @@ export function notifyGit(
       : message,
     duration: openSettings ? 8000 : 4000,
     details: details ? redactGitText(details, credentials) : undefined,
-    dialog,
     action: openSettings
       ? { label: i18next.t("git/change-credentials"), onClick: openSettings }
       : undefined,

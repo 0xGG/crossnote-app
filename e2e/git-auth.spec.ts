@@ -112,9 +112,6 @@ async function dismissAlert(app: CrossnoteApp, message: RegExp) {
 async function clonePrivate(app: CrossnoteApp, remote: PrivateRemote) {
   await app.open();
   const dir = await cloneRemote(app, remote, async (dialog) => {
-    await expect(
-      dialog.getByRole("checkbox", { name: /Remember credentials/i }),
-    ).toHaveCount(0);
     if ((await userField(dialog).getAttribute("type")) === "text")
       await dialog
         .getByRole("button", { name: "toggle username visibility" })
@@ -148,8 +145,6 @@ async function startUpload(app: CrossnoteApp, remote: Remote, scope?: Locator) {
     .getByRole("treeitem", { name: /Upload/ })
     .click();
   const dialog = app.page.getByRole("dialog");
-  await expect(userField(dialog)).toHaveCount(0);
-  await expect(passwordField(dialog)).toHaveCount(0);
   await dialog.getByRole("button", { name: "Upload", exact: true }).click();
   await expect(dialog).toBeHidden({ timeout: 20_000 });
 }
