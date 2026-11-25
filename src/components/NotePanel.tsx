@@ -550,7 +550,7 @@ export default function NotePanel(props: Props) {
         if (
           !active ||
           openNote.saver.location !== location ||
-          openNote.saver.pending
+          (data.preservePendingEdits && openNote.saver.pending)
         )
           return;
         if (newNote) {

@@ -165,8 +165,9 @@ test("keeps the upload result when the next local edit cannot be saved", async (
   page,
   request,
 }) => {
+  const original = "# Starting point\n\nShared text\n\nOriginal ending\n";
   const remote = await createRemote(request, {
-    "README.md": bytes("# Starting point\n"),
+    "README.md": bytes(original),
   });
   await app.open();
   const dir = await cloneRemote(app, remote);
@@ -178,11 +179,13 @@ test("keeps the upload result when the next local edit cannot be saved", async (
     .click();
   await app.noteCards.getByText("README", { exact: true }).click();
   await app.modeButton("Source code").click();
-  const before = "# A saved edit to upload\n";
+  const before = original.replace("Starting point", "A saved edit to upload");
   await app.setEditorText(before, app.visibleEditor);
   await expect.poll(() => app.storedText(file)).toContain(before);
-  const sent = (await app.storedText(file))!;
+  const ending = "Ending downloaded from the remote";
+  const sent = (await app.storedText(file))!.replace("Original ending", ending);
   await changeRemote(request, remote, {
+    "README.md": bytes(original.replace("Original ending", ending)),
     "Incoming.md": bytes(
       "---\nfavorited: true\n---\n# Downloaded before upload\n",
     ),
@@ -225,16 +228,30 @@ test("keeps the upload result when the next local edit cannot be saved", async (
 
     // The request has reached the server, but the application is still waiting.
     await dialog.getByRole("button", { name: "Cancel", exact: true }).click();
-    await page.evaluate((path) => {
-      const fs = (window as unknown as FileHost).pfs;
-      const write = fs.writeFile.bind(fs);
-      fs.writeFile = async (file, data) => {
-        if (file === path)
-          throw new Error("Fixture rejected the next local save");
-        return write(file, data);
-      };
-    }, file);
-    const after = "# A newer edit to keep in the editor\n";
+    await page.evaluate(
+      ({ file, dir }) => {
+        const fs = (window as unknown as FileHost).pfs;
+        const { readFile, readdir } = fs;
+        // Stop the save before reconciliation. The refresh can read normally.
+        fs.readFile = async (...args) => {
+          if (args[0] === file)
+            throw new Error("Fixture could not read the note for saving");
+          return readFile(...args);
+        };
+        fs.readdir = (path) => {
+          if (path === dir) {
+            fs.readFile = readFile;
+            fs.readdir = readdir;
+          }
+          return readdir(path);
+        };
+      },
+      { file, dir },
+    );
+    const after = before.replace(
+      "A saved edit to upload",
+      "A newer edit to keep in the editor",
+    );
     await app.setEditorText(after, app.visibleEditor);
     expect(await app.editorText(app.visibleEditor)).toBe(after);
     release();
