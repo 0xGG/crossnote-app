@@ -866,6 +866,11 @@ test("finishing a cancelled upload does not close another notebook's upload dial
   await app.open();
   const dir = await cloneRemote(app, a);
   await cloneRemote(app, b);
+  // The cloned notebooks are ready. Observe the upload in a fresh queue.
+  await page.reload();
+  await app.waitUntilReady();
+  await app.expandNotebook(a.id);
+  await app.expandNotebook(b.id);
   const messages = await app.recordMessages();
   await localBytes(page, `${dir}/README.md`, bytes("Changed A\n"));
   let release!: () => void;

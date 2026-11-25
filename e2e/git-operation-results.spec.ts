@@ -18,6 +18,11 @@ test("reports the checkout command and a refused reset at their real entry point
   const remote = await createRemote(request, { "README.md": bytes(original) });
   await app.open();
   const dir = await cloneRemote(app, remote);
+  // Start with an already registered notebook and no writes from this clone
+  // scheduled in the page being checked.
+  await page.reload();
+  await app.waitUntilReady();
+  await app.openNotes(remote.id);
   const notePath = dir + "/README.md";
   const indexPath = dir + "/.git/index";
   const refPath = dir + "/.git/refs/heads/master";
@@ -26,10 +31,6 @@ test("reports the checkout command and a refused reset at their real entry point
   expect(originalHead).toMatch(/^[a-f0-9]{40}$/);
   const originalIndex = await localBytes(page, indexPath);
 
-  const cloneNotice = page
-    .getByRole("alert")
-    .filter({ hasText: "Notebook cloned" });
-  await cloneNotice.getByRole("button", { name: "Close" }).click();
   await app.refuseWrites();
   await app.noteCards.getByText("README", { exact: true }).click();
   await expect(app.noteTitle).toHaveValue("README");
@@ -50,6 +51,10 @@ test("reports the checkout command and a refused reset at their real entry point
   const containsStaged = async () =>
     Buffer.from(await localBytes(page, indexPath)).includes(stagedObject);
   await expect.poll(containsStaged).toBe(true);
+  const unstaged = "# Unstaged changes\n";
+  await localBytes(page, notePath, bytes(unstaged));
+  expect(await app.storedText(notePath)).toBe(unstaged);
+  expect(await containsStaged()).toBe(true);
 
   await page.getByRole("button", { name: "Note menu" }).click();
   await page
@@ -130,6 +135,7 @@ test("reports the checkout command and a refused reset at their real entry point
   await expect(detailsButton).toBeFocused();
   await page.keyboard.press("Enter");
   const details = failed.locator("pre");
+  await expect(details).toContainText("MultipleGitError");
   await expect(details).toContainText(
     "Fixture note write refused https://example.test/repo.git",
   );
