@@ -380,26 +380,6 @@ export default class Crossnote {
       throw new Error("error/invalid-git-url-prefix");
     }
 
-    // Check if gitURL exists
-    /*
-    let exists = false;
-    try {
-      const notebooks = await this.notebookDB.find({
-        selector: {
-          gitURL: { $eq: gitURL }
-        }
-      });
-      if (notebooks.docs && notebooks.docs.length) {
-        exists = true;
-      }
-    } catch (error) {
-      exists = false;
-    }
-
-    if (exists) {
-      throw new Error("error/repository-already-cloned");
-    }*/
-
     const _id = randomID();
     const dir = `/notebooks/${_id}`;
 
@@ -625,21 +605,8 @@ export default class Crossnote {
     return cache;
   }
 
-  private runGitOperation<T>(notebook: Notebook, run: () => Promise<T>) {
-    return notebookOperation(notebook.dir, async () => {
-      try {
-        const result = await run();
-        notebook.gitNeedsLogin = false;
-        return result;
-      } catch (error) {
-        if (needsGitSettings(error)) notebook.gitNeedsLogin = true;
-        throw error;
-      }
-    });
-  }
-
   public pushNotebook(args: PushNotebookArgs): Promise<PushNotebookResult> {
-    return this.runGitOperation(args.notebook, () =>
+    return notebookOperation(args.notebook.dir, () =>
       this.pushNotebookUnlocked(args),
     );
   }
@@ -1285,7 +1252,7 @@ export default class Crossnote {
   }
 
   public pullNotebook(args: PullNotebookArgs): Promise<PullNotebookResult> {
-    return this.runGitOperation(args.notebook, () =>
+    return notebookOperation(args.notebook.dir, () =>
       this.pullNotebookUnlocked(args),
     );
   }
@@ -1308,15 +1275,7 @@ export default class Crossnote {
         };
     }
     const ref = branchRef(notebook.gitBranch);
-    const fetched = await git.fetch({
-      fs,
-      ...notebookGitConnection(notebook),
-      dir: notebook.dir,
-      singleBranch: true,
-      ref,
-      onProgress,
-      onMessage,
-    });
+    const fetched = await this.fetchGit({ notebook, onProgress, onMessage });
     const remoteSha = fetched.fetchHead;
     if (!remoteSha) throw new Error("error/remote-has-no-commits");
     const args = { fs, dir: notebook.dir };
@@ -1614,8 +1573,31 @@ export default class Crossnote {
     };
   }
 
+  private async fetchGit(
+    { notebook, onProgress, onMessage }: FetchNotebookArgs,
+    options?: { depth: number; tags: boolean },
+  ) {
+    try {
+      const result = await git.fetch({
+        fs,
+        ...notebookGitConnection(notebook),
+        dir: notebook.dir,
+        singleBranch: true,
+        ref: branchRef(notebook.gitBranch),
+        ...options,
+        onProgress,
+        onMessage,
+      });
+      notebook.gitNeedsLogin = false;
+      return result;
+    } catch (error) {
+      if (needsGitSettings(error)) notebook.gitNeedsLogin = true;
+      throw error;
+    }
+  }
+
   public fetchNotebook(args: FetchNotebookArgs): Promise<boolean> {
-    return this.runGitOperation(args.notebook, () =>
+    return notebookOperation(args.notebook.dir, () =>
       this.fetchNotebookUnlocked(args),
     );
   }
@@ -1626,17 +1608,10 @@ export default class Crossnote {
     onMessage,
   }: FetchNotebookArgs): Promise<boolean> {
     const localSha = notebook.localSha;
-    const result = await git.fetch({
-      fs: fs,
-      ...notebookGitConnection(notebook),
-      dir: notebook.dir,
-      singleBranch: true,
-      tags: false,
-      depth: 1,
-      ref: branchRef(notebook.gitBranch),
-      onProgress,
-      onMessage,
-    });
+    const result = await this.fetchGit(
+      { notebook, onProgress, onMessage },
+      { depth: 1, tags: false },
+    );
 
     if (!result.fetchHead) {
       // The next background check is due one fetch period from now.

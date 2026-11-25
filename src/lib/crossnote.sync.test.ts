@@ -1297,73 +1297,84 @@ it("reads legacy pending text, retaining it when recovery fails", async () => {
   expect(localStorage.getItem(key)).toBeNull();
 });
 
-it.each(["Network lost", "Remote rejected"])(
-  "keeps and retries the original commit after %s, a reopen and a download",
-  async (failure) => {
-    const { app, notebook, base, read } = await repository();
-    const args = { fs, dir: notebook.dir };
-    const head = () => git.resolveRef({ ...args, ref: "refs/heads/master" });
-    const note = "saved before upload\r\n";
-    await pfs.writeFile(`${notebook.dir}/README.md`, note);
-    await git.add({ ...args, filepath: "README.md" });
-    const attempts: string[] = [];
-    const push = vi.spyOn(git, "push").mockImplementation(async () => {
-      attempts.push(await head());
-      if (attempts.length === 1) throw new Error(failure);
-      return { ok: true, error: null, refs: {} };
-    });
-    await expect(app.pushNotebook({ notebook })).rejects.toThrow(failure);
-    const [pending] = attempts;
-    expect(
-      (await git.readCommit({ ...args, oid: pending })).commit.parent,
-    ).toEqual([base]);
-    expect([
-      ...(await git.readBlob({ ...args, oid: pending, filepath: "README.md" }))
-        .blob,
-    ]).toEqual([...bytes(note)]);
-    expect(await head()).toBe(pending);
-    expect(
-      new TextDecoder()
-        .decode(await readStored(`${notebook.dir}/.git/refs/heads/master`))
-        .trim(),
-    ).toBe(pending);
-    expect(await app["notebookDB"].get(notebook._id)).toMatchObject({
-      localSha: pending,
-      remoteSha: base,
-    });
+it("clears read sign-in after a rejected push and retries the original commit", async () => {
+  const { app, notebook, base, read } = await repository();
+  const args = { fs, dir: notebook.dir };
+  const head = () => git.resolveRef({ ...args, ref: "refs/heads/master" });
+  const note = "saved before upload\r\n";
+  await pfs.writeFile(`${notebook.dir}/README.md`, note);
+  await git.add({ ...args, filepath: "README.md" });
+  const unauthorized = Object.assign(new Error("Sign-in required"), {
+    data: { statusCode: 401 },
+  });
+  vi.mocked(git.fetch).mockRejectedValueOnce(unauthorized);
+  await expect(app.fetchNotebook({ notebook })).rejects.toBe(unauthorized);
+  expect(notebook.gitNeedsLogin).toBe(true);
 
-    // A stale registry entry must not move the actual branch on startup.
-    const entry = await app["notebookDB"].get(notebook._id);
-    await app["notebookDB"].put({ ...entry, localSha: base });
-    const write = vi.spyOn(pfs, "writeFile");
-    const reopened = (await app.listNotebooks()).find(
-      (n) => n._id === notebook._id,
-    )!;
-    expect(reopened.localSha).toBe(pending);
-    expect(await head()).toBe(pending);
-    expect(await read("README.md")).toEqual([...bytes(note)]);
-    expect(
-      write.mock.calls.filter(
-        ([file]) =>
-          file.startsWith(notebook.dir + "/") &&
-          !file.startsWith(notebook.dir + "/.git/"),
-      ),
-    ).toEqual([]);
-    const reset = vi.spyOn(app, "hardResetNotebook");
-    const plan = vi.spyOn(recovery, "savePullRecovery");
-    await app.pullNotebook({ notebook: reopened });
-    expect(await head()).toBe(pending);
-    await app.pushNotebook({ notebook: reopened });
-    expect(push).toHaveBeenCalledTimes(2);
-    expect(attempts).toEqual([pending, pending]);
-    expect(reset).not.toHaveBeenCalled();
-    expect(plan).not.toHaveBeenCalled();
-    expect(await app["notebookDB"].get(notebook._id)).toMatchObject({
-      localSha: pending,
-      remoteSha: pending,
-    });
-  },
-);
+  const rejected = Object.assign(new Error("Remote rejected"), {
+    data: { statusCode: 403 },
+  });
+  const attempts: string[] = [];
+  const push = vi.spyOn(git, "push").mockImplementation(async () => {
+    attempts.push(await head());
+    if (attempts.length === 1) throw rejected;
+    return { ok: true, error: null, refs: {} };
+  });
+  await expect(app.pushNotebook({ notebook })).rejects.toMatchObject({
+    phase: "push",
+    cause: rejected,
+  });
+  expect(notebook.gitNeedsLogin).toBe(false);
+  const [pending] = attempts;
+  expect(
+    (await git.readCommit({ ...args, oid: pending })).commit.parent,
+  ).toEqual([base]);
+  expect([
+    ...(await git.readBlob({ ...args, oid: pending, filepath: "README.md" }))
+      .blob,
+  ]).toEqual([...bytes(note)]);
+  expect(await head()).toBe(pending);
+  expect(
+    new TextDecoder()
+      .decode(await readStored(`${notebook.dir}/.git/refs/heads/master`))
+      .trim(),
+  ).toBe(pending);
+  expect(await app["notebookDB"].get(notebook._id)).toMatchObject({
+    localSha: pending,
+    remoteSha: base,
+  });
+
+  // A stale registry entry must not move the actual branch on startup.
+  const entry = await app["notebookDB"].get(notebook._id);
+  await app["notebookDB"].put({ ...entry, localSha: base });
+  const write = vi.spyOn(pfs, "writeFile");
+  const reopened = (await app.listNotebooks()).find(
+    (n) => n._id === notebook._id,
+  )!;
+  expect(reopened.localSha).toBe(pending);
+  expect(await head()).toBe(pending);
+  expect(await read("README.md")).toEqual([...bytes(note)]);
+  expect(
+    write.mock.calls.filter(
+      ([file]) =>
+        file.startsWith(notebook.dir + "/") &&
+        !file.startsWith(notebook.dir + "/.git/"),
+    ),
+  ).toEqual([]);
+  const reset = vi.spyOn(app, "hardResetNotebook");
+  const plan = vi.spyOn(recovery, "savePullRecovery");
+  await app.pullNotebook({ notebook: reopened });
+  expect(await head()).toBe(pending);
+  await app.pushNotebook({ notebook: reopened });
+  expect(push).toHaveBeenCalledTimes(2);
+  expect(attempts).toEqual([pending, pending]);
+  expect(reset).not.toHaveBeenCalled();
+  expect(plan).not.toHaveBeenCalled();
+  expect(await app["notebookDB"].get(notebook._id)).toMatchObject({
+    localSha: pending,
+    remoteSha: pending,
+  });
+});
 
 it("confirms a commit already received after a lost reply without another push", async () => {
   const { app, notebook } = await repository();
