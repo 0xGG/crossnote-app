@@ -488,6 +488,43 @@ it("retains the completed Git outcome when the local refresh fails", async () =>
   }
 });
 
+it("replaces the old search alias on checkout", async () => {
+  const notebook = await notebookAt("/notebooks/restored-search-alias");
+  notebook.isLocal = false;
+  const filepath = "a.md";
+  const file = `${notebook.dir}/${filepath}`;
+  const args = { fs, dir: notebook.dir };
+  await git.init(args);
+  await pfs.writeFile(file, "---\naliases: restoredterm\n---\n# Restored\n");
+  await git.add({ ...args, filepath });
+  await git.commit({
+    ...args,
+    message: "Initial note",
+    author: { name: "Test", email: "test@example.test" },
+  });
+  await pfs.writeFile(
+    file,
+    "---\naliases: obsoleteword\n---\n# Working copy\n",
+  );
+  const note = await notebook.getNote(filepath, true);
+  expect(
+    notebook.search.search("obsoleteword").map((match) => match.filePath),
+  ).toEqual([filepath]);
+
+  await act(async () => {
+    await expect(crossnote.checkoutNote(note)).resolves.toEqual({
+      result: true,
+    });
+  });
+  expect((await notebook.getNote(filepath)).config.aliases).toEqual([
+    "restoredterm",
+  ]);
+  expect(notebook.search.search("obsoleteword")).toEqual([]);
+  expect(
+    notebook.search.search("restoredterm").map((match) => match.filePath),
+  ).toEqual([filepath]);
+});
+
 it("writes what is typed into a notebook's notes before git, or reading the folder again, changes them", async () => {
   const { done, saver, operations } = await notebookWithTyping(
     "/notebooks/git-written",

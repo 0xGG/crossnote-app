@@ -944,7 +944,14 @@ function useCrossnoteContainer(initialState: InitialState) {
           return notebook.checkoutNote(note);
         });
         const completed = await finishGit(true, async () => {
-          if (await notebook.getNote(note.filePath, true)) {
+          const restored = await notebook.getNote(note.filePath, true);
+          if (restored) {
+            notebook.search.remove(restored.filePath);
+            notebook.search.add(
+              restored.filePath,
+              restored.title,
+              restored.config.aliases,
+            );
             globalEmitter.emit(EventType.PerformedGitOperation, {
               notebookPath: notebook.dir,
             });

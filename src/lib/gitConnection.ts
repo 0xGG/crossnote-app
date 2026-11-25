@@ -5,7 +5,8 @@ import type { Notebook } from "./notebook";
 
 export function repositoryAddress(value = ""): string {
   const stripped = value.replace(/^(https?:\/\/)[^/?#\\]*@/i, "$1");
-  if (stripped !== value || !URL.canParse(value)) return stripped;
+  if ((stripped !== value && !value.includes("\\")) || !URL.canParse(value))
+    return stripped;
   const url = new URL(value);
   if (!url.username && !url.password) return value;
   url.username = "";
@@ -80,9 +81,7 @@ export function gitConnection(
       }
       const response = await http.request(request);
       if (response.statusCode !== 401) return response;
-      const basic = Buffer.from(username.trim() + ":" + password).toString(
-        "base64",
-      );
+      const basic = Buffer.from(username + ":" + password).toString("base64");
       return sendAuthenticated({
         ...request,
         headers: { ...request.headers, authorization: "Basic " + basic },

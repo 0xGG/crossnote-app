@@ -53,8 +53,13 @@ it.each([401, 203])(
   },
 );
 
-it("removes URL credentials without changing a root repository address", () => {
+it("removes URL credentials and keeps the repository selected by the browser", () => {
   expect(repositoryAddress("https://reader:secret@example.test:443")).toBe(
     "https://example.test:443",
   );
+  expect(
+    repositoryAddress(
+      "https://reader:secret@example.test\\path@other.test/repo.git",
+    ),
+  ).toBe("https://example.test/path@other.test/repo.git");
 });

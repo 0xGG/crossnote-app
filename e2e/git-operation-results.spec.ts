@@ -183,8 +183,14 @@ test("keeps the upload result when the next local edit cannot be saved", async (
   await expect.poll(() => app.storedText(file)).toContain(before);
   const sent = (await app.storedText(file))!;
   await changeRemote(request, remote, {
-    "Incoming.md": bytes("# Downloaded before upload\n"),
+    "Incoming.md": bytes(
+      "---\nfavorited: true\n---\n# Downloaded before upload\n",
+    ),
   });
+  const favorite = app
+    .notebook(remote.id)
+    .getByRole("treeitem", { name: /Incoming/ });
+  await expect(favorite).toBeHidden();
 
   let release!: () => void;
   let accepted!: () => void;
@@ -238,6 +244,7 @@ test("keeps the upload result when the next local edit cannot be saved", async (
           "Downloaded remote changes. Notebook uploaded. Could not finish updating the local notebook.",
       }),
     ).toBeVisible({ timeout: 10000 });
+    await expect(favorite).toBeVisible();
     expect(await app.editorText(app.visibleEditor)).toBe(after);
     expect(await app.storedText(file)).toBe(sent);
     expect(await remoteBytes(request, remote, "README.md")).toEqual(
