@@ -547,7 +547,12 @@ export default function NotePanel(props: Props) {
           console.error(error);
           return;
         }
-        if (!active || openNote.saver.location !== location) return;
+        if (
+          !active ||
+          openNote.saver.location !== location ||
+          openNote.saver.pending
+        )
+          return;
         if (newNote) {
           setNote(newNote);
           if (openNote.saver.isOwn(newNote.markdown)) {

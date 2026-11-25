@@ -445,16 +445,19 @@ it("retains the completed Git outcome when the local refresh fails", async () =>
     "/notebooks/git-refresh-failed",
     async () => {},
   );
-  const error = new Error("Could not refresh notes");
-  notebook.refreshNotes = vi.fn().mockRejectedValue(error);
+  const error = new Error("Could not list notes");
+  const readdir = pfs.readdir.bind(pfs);
+  vi.spyOn(pfs, "readdir").mockImplementation((dir) =>
+    dir === notebook.dir ? Promise.reject(error) : readdir(dir),
+  );
+  const oldView = notebook.notes;
   const expected: Record<string, unknown> = {
     pull: { numConflicts: 0 },
     push: "confirmed",
     reset: true,
-    restore: true,
   };
   try {
-    for (const [name, run] of operations.filter(([name]) => name !== "read")) {
+    for (const [name, run] of operations.filter(([name]) => name in expected)) {
       let completed: unknown;
       done.length = 0;
       await act(async () => {
@@ -465,6 +468,7 @@ it("retains the completed Git outcome when the local refresh fails", async () =>
         result: expected[name],
         updateFailure: { error },
       });
+      expect(notebook.notes).toBe(oldView);
     }
     const readError = new Error("Could not read the checked-out note");
     notebook.getNote = vi.fn().mockRejectedValue(readError);

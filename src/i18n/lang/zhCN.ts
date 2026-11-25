@@ -274,6 +274,7 @@ export const zhCN = {
     "layout/retry": "重试",
     "git/credentials-storage": "凭证保存在当前浏览器。",
     "git/proxy-credentials": "所选代理可能接触这些凭证。",
+    "git/replacement-proxy": "输入 {{proxy}} 并保存，以确认使用此代理。",
     "git/change-credentials": "修改 Git 凭证",
     "git/needs-login": "Git 需要登录",
     "git/credentials-saved": "Git 凭证已保存",
@@ -287,6 +288,8 @@ export const zhCN = {
     "git/downloaded-no-upload": "已下载远端改动，没有需要上传的改动。",
     "git/upload-download-failed": "上传在前置下载时停止，尚未推送。",
     "git/upload-prepare-failed": "准备上传时处理本机改动失败",
+    "git/upload-prepare-failed-after-download":
+      "已完成下载，准备上传本机改动时失败。",
     "git/upload-push-failed-after-download": "已完成下载，推送失败。",
     "git/uploaded-and-downloaded": "已下载远端改动并上传本地提交。",
     "git/confirmed-and-downloaded": "远端已包含本地提交，本次已下载后续改动。",

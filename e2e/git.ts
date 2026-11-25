@@ -1,4 +1,9 @@
-import { expect, type APIRequestContext, type Page } from "@playwright/test";
+import {
+  expect,
+  type APIRequestContext,
+  type Locator,
+  type Page,
+} from "@playwright/test";
 import { CrossnoteApp } from "./crossnote";
 import { fixtureURL } from "./git-fixture";
 
@@ -52,6 +57,7 @@ export async function remoteBytes(
 export async function cloneRemote(
   app: CrossnoteApp,
   remote: Remote,
+  fill?: (dialog: Locator) => Promise<void>,
 ): Promise<string> {
   const page = app.page;
   const before = await page.evaluate(() =>
@@ -65,6 +71,7 @@ export async function cloneRemote(
   await dialog
     .getByRole("textbox", { name: "CORS proxy", exact: true })
     .fill(remote.proxy);
+  await fill?.(dialog);
   await dialog.getByRole("button", { name: "Add", exact: true }).click();
   await expect(app.notebook(remote.id)).toBeVisible({ timeout: 20000 });
   await expect(dialog).toBeHidden({ timeout: 15000 });

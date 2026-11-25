@@ -294,6 +294,8 @@ export const jaJP = {
     "layout/retry": "再試行",
     "git/credentials-storage": "資格情報はこのブラウザーに保存されます。",
     "git/proxy-credentials": "選択したプロキシはこの資格情報を参照できます。",
+    "git/replacement-proxy":
+      "このプロキシを使用するには {{proxy}} を入力して保存します。",
     "git/change-credentials": "Git 資格情報を変更",
     "git/needs-login": "Git へのサインインが必要です",
     "git/credentials-saved": "Git 資格情報を保存しました",
@@ -311,6 +313,8 @@ export const jaJP = {
       "ダウンロード中にアップロードを中断しました。プッシュは行われていません。",
     "git/upload-prepare-failed":
       "アップロードするローカルの変更を準備できませんでした",
+    "git/upload-prepare-failed-after-download":
+      "ダウンロードは完了しました。アップロードするローカルの変更を準備できませんでした。",
     "git/upload-push-failed-after-download":
       "ダウンロードは完了しました。プッシュに失敗しました。",
     "git/uploaded-and-downloaded":

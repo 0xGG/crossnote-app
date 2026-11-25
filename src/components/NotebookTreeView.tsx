@@ -20,7 +20,11 @@ import { Note, Notes } from "../lib/note";
 import { Notebook } from "../lib/notebook";
 import { NotesNotSavedError } from "../lib/noteSaver";
 import { NotebookConflictError } from "../lib/mergeFiles";
-import { gitErrorMessage, notifyGit, redactGitText } from "../lib/gitResults";
+import {
+  gitConflictNotice,
+  gitErrorMessage,
+  notifyGit,
+} from "../lib/gitResults";
 import { needsGitSettings } from "../lib/gitConnection";
 import { Emoji } from "./EmojiWrapper";
 
@@ -327,7 +331,10 @@ export default function NotebookTreeView(props: Props) {
     props.onCloseDrawer();
   };
   const openSettings = props.onOpenSettings;
-  const upload = props.onOpenUpload;
+  const upload = () => {
+    props.onCloseDrawer();
+    props.onOpenUpload();
+  };
   const reload = () => crossnoteContainer.refreshNotebook(props.notebook);
   const download = async () => {
     if (
@@ -336,11 +343,8 @@ export default function NotebookTreeView(props: Props) {
     ) {
       return;
     }
+    props.onCloseDrawer();
     const credentials = props.notebook;
-    const describe = (error: NotebookConflictError) =>
-      error.describe((file, side) =>
-        i18next.t(`error/notebook-file-deleted-${side}`, { file }),
-      );
     try {
       const completed = await crossnoteContainer.pullNotebook({
         notebook: props.notebook,
@@ -348,16 +352,11 @@ export default function NotebookTreeView(props: Props) {
       if (!completed) return;
       const { result, updateFailure } = completed;
       if (result.numConflicts) {
-        const files = describe(
+        const { message, files } = gitConflictNotice(
           new NotebookConflictError(result.conflicts, result.deletions),
+          credentials,
         );
-        notifyGit(
-          "warning",
-          i18next.t("error/notebook-sync-conflicts", {
-            files: redactGitText(files, credentials),
-          }),
-          { files, credentials, updateFailure },
-        );
+        notifyGit("warning", message, { files, credentials, updateFailure });
       } else {
         notifyGit(
           "success",
@@ -385,20 +384,20 @@ export default function NotebookTreeView(props: Props) {
       const openSettings = needsGitSettings(error)
         ? props.onOpenSettings
         : undefined;
-      const files =
-        error instanceof NotebookConflictError ? describe(error) : undefined;
-      const message = files
-        ? i18next.t("error/notebook-sync-conflicts", {
-            files: redactGitText(files, credentials),
-          })
-        : gitErrorMessage(
-            error,
-            i18next.t(
-              openSettings
-                ? "git/download-auth-failed"
-                : "error/failed-to-download-notebook",
-            ),
-          );
+      const { message, files } =
+        error instanceof NotebookConflictError
+          ? gitConflictNotice(error, credentials)
+          : {
+              files: undefined,
+              message: gitErrorMessage(
+                error,
+                i18next.t(
+                  openSettings
+                    ? "git/download-auth-failed"
+                    : "error/failed-to-download-notebook",
+                ),
+              ),
+            };
       notifyGit("error", message, { error, credentials, files, openSettings });
     }
   };

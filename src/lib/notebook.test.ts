@@ -478,6 +478,18 @@ describe("Notebook", () => {
       await notebook.checkoutNote(note);
       expect(await pfs.exists("/notebooks/test/stored-restored.md")).toBe(true);
       expect(await isStored("/notebooks/test/stored-restored.md")).toBe(true);
+
+      await pfs.writeFile("/notebooks/test/stored-restored.md", "Unstaged");
+      const error = new Error("Could not stage the restored file");
+      const add = vi.spyOn(git, "add").mockRejectedValueOnce(error);
+      try {
+        await expect(notebook.checkoutNote(note)).resolves.toEqual({ error });
+        expect(
+          (await notebook.getNote(note.filePath, true)).markdown,
+        ).toContain("# Restored");
+      } finally {
+        add.mockRestore();
+      }
     });
   });
 

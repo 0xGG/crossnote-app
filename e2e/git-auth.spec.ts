@@ -4,10 +4,10 @@ import { expect, test } from "./fixtures";
 import {
   bytes,
   changeRemote,
+  cloneRemote,
   fixtureURL,
   localBytes,
   remoteBytes,
-  type FileHost,
   type Remote,
 } from "./git";
 
@@ -67,16 +67,14 @@ async function remoteRequests(request: APIRequestContext, remote: Remote) {
   return (await response.json()) as GitRequest[];
 }
 
-async function setWriteDenied(
+async function setPermissions(
   request: APIRequestContext,
   remote: Remote,
-  denyReceive: boolean,
+  data: { denyReceive?: boolean; receiveOnly?: boolean },
 ) {
   const response = await request.put(
     `${fixtureURL}/repos/${remote.id}/permissions`,
-    {
-      data: { denyReceive },
-    },
+    { data },
   );
   expect(response.ok()).toBe(true);
 }
@@ -112,39 +110,20 @@ async function dismissAlert(app: CrossnoteApp, message: RegExp) {
 }
 
 async function clonePrivate(app: CrossnoteApp, remote: PrivateRemote) {
-  const { page } = app;
   await app.open();
-  const before = await page.evaluate(() =>
-    (window as unknown as FileHost).pfs.readdir("/notebooks"),
-  );
-  await app.sidebar.getByRole("button", { name: "Add a notebook" }).click();
-  const dialog = page.getByRole("dialog");
-  await dialog
-    .getByRole("textbox", { name: "Url", exact: true })
-    .fill(remote.url);
-  await dialog
-    .getByRole("textbox", { name: "CORS proxy", exact: true })
-    .fill(remote.proxy);
-  await expect(
-    dialog.getByRole("checkbox", { name: /Remember credentials/i }),
-  ).toHaveCount(0);
-  if ((await userField(dialog).getAttribute("type")) === "text")
-    await dialog
-      .getByRole("button", { name: "toggle username visibility" })
-      .click();
-  await fillCredentials(dialog, remote.credentials);
-  await dialog.getByRole("button", { name: "Add", exact: true }).click();
-  await expect(app.notebook(remote.id)).toBeVisible({ timeout: 20_000 });
-  await expect(dialog).toBeHidden();
+  const dir = await cloneRemote(app, remote, async (dialog) => {
+    await expect(
+      dialog.getByRole("checkbox", { name: /Remember credentials/i }),
+    ).toHaveCount(0);
+    if ((await userField(dialog).getAttribute("type")) === "text")
+      await dialog
+        .getByRole("button", { name: "toggle username visibility" })
+        .click();
+    await fillCredentials(dialog, remote.credentials);
+  });
   // The authenticated clone must be registered before claiming persistence.
   await dismissAlert(app, saved);
-  const dirs = await page.evaluate(() =>
-    (window as unknown as FileHost).pfs.readdir("/notebooks"),
-  );
-  const added = dirs.filter((dir) => !before.includes(dir));
-  expect(added).toHaveLength(1);
-  await app.openNotes(remote.id);
-  return `/notebooks/${added[0]}`;
+  return dir;
 }
 
 async function revealGitSettings(dialog: Locator) {
@@ -163,9 +142,9 @@ async function saveCredentials(
   await expect(dialog).toBeHidden();
 }
 
-async function startUpload(app: CrossnoteApp, remote: Remote) {
+async function startUpload(app: CrossnoteApp, remote: Remote, scope?: Locator) {
   await app
-    .notebook(remote.id)
+    .notebook(remote.id, scope)
     .getByRole("treeitem", { name: /Upload/ })
     .click();
   const dialog = app.page.getByRole("dialog");
@@ -211,7 +190,8 @@ test("uses saved clone credentials for both upload stages and retries the origin
     "Incoming.md": bytes("# New remote note\n"),
   });
   const incoming = await remoteHead(request, remote);
-  await setWriteDenied(request, remote, true);
+  await setPermissions(request, remote, { denyReceive: true });
+  await app.openNotes(remote.id);
   await startUpload(app, remote);
   await dismissAlert(app, /Download completed\. Push failed\./);
   let traffic = await remoteRequests(request, remote);
@@ -230,6 +210,9 @@ test("uses saved clone credentials for both upload stages and retries the origin
   expect(await app.storedText(`${dir}/Incoming.md`)).toContain(
     "New remote note",
   );
+  await expect(
+    app.noteCards.getByText("Incoming", { exact: true }),
+  ).toBeVisible();
   const pending = await readHead();
   expect(pending).toMatch(/^[0-9a-f]{40}$/);
   expect(pending).not.toBe(incoming);
@@ -239,7 +222,7 @@ test("uses saved clone credentials for both upload stages and retries the origin
   await app.openNotes(remote.id);
   expect(await readHead()).toBe(pending);
   expect(await app.storedText(file)).toBe(edited);
-  await setWriteDenied(request, remote, false);
+  await setPermissions(request, remote, { denyReceive: false });
   await startUpload(app, remote);
   await dismissAlert(app, /Notebook uploaded/i);
   expect((await remoteRequests(request, remote)).slice(traffic.length)).toEqual(
@@ -320,6 +303,65 @@ test("uses saved clone credentials for both upload stages and retries the origin
   expect(await remoteBytes(request, remote, "Story.md")).toEqual(
     bytes(afterReplyLoss),
   );
+});
+
+test("confirms an authenticated POST even when the local tracking ref cannot be written", async ({
+  app,
+  page,
+  request,
+}) => {
+  const remote = await createPrivateRemote(request);
+  const dir = await clonePrivate(app, remote);
+  const file = bytes("# Received after anonymous discovery\n");
+  await localBytes(page, `${dir}/Story.md`, file);
+  await setPermissions(request, remote, { receiveOnly: true });
+  await page.route("**/git-receive-pack", async (route) => {
+    const response = await route.fetch();
+    if (response.ok()) await app.refuseWrites();
+    await route.fulfill({ response });
+  });
+  await startUpload(app, remote);
+  await dismissAlert(
+    app,
+    /Notebook uploaded\. Could not finish updating the local notebook/,
+  );
+  expect(await app.refusedWrites()).toContain("file");
+  await app.refuseWrites(false);
+  const ref = `${dir}/.git/refs/heads/master`;
+  expect(await remoteHead(request, remote)).toBe(
+    (await app.storedText(ref))?.trim(),
+  );
+  expect(await remoteBytes(request, remote, "Story.md")).toEqual(file);
+  expect(
+    (await remoteRequests(request, remote))
+      .slice(downloaded.length)
+      .filter((entry) => entry.service === "git-receive-pack"),
+  ).toEqual([
+    {
+      method: "GET",
+      service: "git-receive-pack",
+      status: 200,
+      auth: "missing",
+    },
+    {
+      method: "POST",
+      service: "git-receive-pack",
+      status: 401,
+      auth: "missing",
+    },
+    {
+      method: "POST",
+      service: "git-receive-pack",
+      status: 200,
+      auth: "accepted",
+    },
+    {
+      method: "GET",
+      service: "git-receive-pack",
+      status: 200,
+      auth: "missing",
+    },
+  ]);
 });
 
 test("shows one download authentication failure and retries after changing saved credentials", async ({
@@ -408,6 +450,56 @@ test("shows one download authentication failure and retries after changing saved
   ).toEqual(downloaded);
   expect(await readHead()).toBe(incoming);
   expect(await app.storedText(`${dir}/Incoming.md`)).toContain("Retry result");
+});
+
+test("allows keyboard access to Git results from the narrow drawer", async ({
+  app,
+  page,
+  request,
+}) => {
+  const remote = await createPrivateRemote(request);
+  await clonePrivate(app, remote);
+  await app
+    .notebook(remote.id)
+    .getByRole("treeitem", { name: /Settings/ })
+    .click();
+  const dialog = page.getByRole("dialog");
+  await saveCredentials(dialog, null);
+  await dismissAlert(app, cleared);
+  await page.setViewportSize({ width: 375, height: 700 });
+
+  for (const run of [
+    (drawer: Locator) =>
+      app
+        .notebook(remote.id, drawer)
+        .getByRole("treeitem", { name: /Download/ })
+        .click(),
+    (drawer: Locator) => startUpload(app, remote, drawer),
+  ]) {
+    await page.getByRole("button", { name: "Open menu" }).click();
+    await app.expandNotebook(remote.id, dialog);
+    await run(dialog);
+    const alert = page.getByRole("alert");
+    const change = alert.getByRole("button", {
+      name: "Change Git credentials",
+    });
+    await change.focus();
+    await expect(change).toBeFocused();
+    await page.keyboard.press("Tab");
+    await expect(
+      alert.getByRole("button", { name: "Details", exact: true }),
+    ).toBeFocused();
+    await page.keyboard.press("Enter");
+    await expect(alert.locator("pre")).toContainText("HTTP 401");
+    await page.keyboard.press("Shift+Tab");
+    await expect(change).toBeFocused();
+    await page.keyboard.press("Enter");
+    await expect(
+      dialog.getByRole("textbox", { name: "Notebook name" }),
+    ).toHaveValue(remote.id);
+    await dialog.getByRole("button", { name: "Cancel", exact: true }).click();
+    await expect(alert).toBeHidden();
+  }
 });
 
 test("stops authenticated Git redirects to another repository on either origin", async ({

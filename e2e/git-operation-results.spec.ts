@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 import { expect, test } from "./fixtures";
 import {
   bytes,
+  changeRemote,
   cloneRemote,
   createRemote,
   type FileHost,
@@ -181,6 +182,9 @@ test("keeps the upload result when the next local edit cannot be saved", async (
   await app.setEditorText(before, app.visibleEditor);
   await expect.poll(() => app.storedText(file)).toContain(before);
   const sent = (await app.storedText(file))!;
+  await changeRemote(request, remote, {
+    "Incoming.md": bytes("# Downloaded before upload\n"),
+  });
 
   let release!: () => void;
   let accepted!: () => void;
@@ -231,7 +235,7 @@ test("keeps the upload result when the next local edit cannot be saved", async (
     await expect(
       page.getByTestId("notification-summary").filter({
         hasText:
-          "Notebook uploaded. Could not finish updating the local notebook.",
+          "Downloaded remote changes. Notebook uploaded. Could not finish updating the local notebook.",
       }),
     ).toBeVisible({ timeout: 10000 });
     expect(await app.editorText(app.visibleEditor)).toBe(after);

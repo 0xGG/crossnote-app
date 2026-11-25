@@ -632,8 +632,7 @@ export default class Crossnote {
         notebook.gitNeedsLogin = false;
         return result;
       } catch (error) {
-        const cause = error instanceof GitUploadError ? error.cause : error;
-        if (needsGitSettings(cause)) notebook.gitNeedsLogin = true;
+        if (needsGitSettings(error)) notebook.gitNeedsLogin = true;
         throw error;
       }
     });
@@ -653,8 +652,7 @@ export default class Crossnote {
     onProgress,
     onMessage,
   }: PushNotebookArgs): Promise<PushNotebookResult> {
-    const pending =
-      notebook.localSha !== notebook.remoteSha ? notebook.localSha : null;
+    const { localSha: before, remoteSha: priorRemote } = notebook;
     let phase: GitUploadError["phase"] = "download";
     let downloaded = false;
     try {
@@ -695,23 +693,66 @@ export default class Crossnote {
       }
       if (notebook.localSha === notebook.remoteSha) {
         const confirmed =
-          pending &&
-          (pending === notebook.localSha || pending === pull.downloadedFrom);
+          priorRemote &&
+          before &&
+          before !== priorRemote &&
+          (before === notebook.localSha || before === pull.downloadedFrom) &&
+          (await git
+            .isDescendent({ ...args, oid: before, ancestor: priorRemote })
+            .catch(() => false));
         if (downloaded)
           return confirmed ? "confirmed-and-downloaded" : "downloaded";
         return confirmed ? "confirmed" : "up-to-date";
       }
 
       phase = "push";
-      const pushResult = await git.push({
-        ...args,
-        ...notebookGitConnection(notebook),
-        onProgress,
-        onMessage,
-        ref: branchRef(notebook.gitBranch),
-      });
-      if (pushResult.error || !pushResult.ok)
-        throw new Error(pushResult.error || "error/failed-to-upload-notebook");
+      const connection = notebookGitConnection(notebook);
+      let replyReceived = false;
+      let target = "";
+      try {
+        await git.push({
+          ...args,
+          ...connection,
+          http: {
+            async request(request) {
+              const response = await connection.http.request(request);
+              if (request.method === "POST" && response.statusCode === 200)
+                replyReceived = true;
+              return response;
+            },
+          },
+          onPrePush: ({ remoteRef }) => {
+            target = remoteRef.ref;
+            return true;
+          },
+          onProgress,
+          onMessage,
+          ref: branchRef(notebook.gitBranch),
+        });
+      } catch (error) {
+        // The client writes the local remote-tracking ref after receive-pack.
+        if (
+          replyReceived &&
+          target &&
+          !(error instanceof git.Errors.GitPushError)
+        ) {
+          const refs = await git
+            .listServerRefs({
+              ...connection,
+              forPush: true,
+              protocolVersion: 1,
+              prefix: target,
+            })
+            .catch((): git.ServerRef[] => []);
+          if (
+            refs.some(
+              ({ ref, oid }) => ref === target && oid === notebook.localSha,
+            )
+          )
+            phase = "finish";
+        }
+        throw error;
+      }
       phase = "finish";
       await pfs.storeTree(notebook.dir);
       notebook.fetchedAt = new Date();

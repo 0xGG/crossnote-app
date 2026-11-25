@@ -11,7 +11,7 @@ import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import "../i18n/i18n";
 import { Notebook } from "../lib/notebook";
 import { IgnoredUploadFileError } from "../lib/notebookOperation";
-import type { PushNotebookResult } from "../lib/crossnote";
+import { GitUploadError, type PushNotebookResult } from "../lib/crossnote";
 import PushNotebookDialog from "./PushNotebookDialog";
 
 type PushOutcome = {
@@ -137,6 +137,26 @@ it("reports confirmed delivery and the local refresh failure in one notice", asy
         message:
           "The remote already has your local commit. Downloaded newer changes. Could not finish updating the local notebook.",
         details: "Could not refresh notes",
+      }),
+    );
+  } finally {
+    notify.mockRestore();
+  }
+});
+
+it("reports a completed download when upload preparation fails", async () => {
+  pushNotebook.mockRejectedValueOnce(
+    new GitUploadError("prepare", true, new Error("Index write failed")),
+  );
+  const notify = vi.spyOn(notifications, "notify");
+  try {
+    upload();
+    await act(async () => {});
+    expect(notify).toHaveBeenCalledWith(
+      expect.objectContaining({
+        message:
+          "Download completed. Failed to prepare local changes for upload.",
+        details: "Index write failed",
       }),
     );
   } finally {

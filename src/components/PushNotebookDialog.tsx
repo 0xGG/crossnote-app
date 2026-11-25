@@ -15,7 +15,12 @@ import { CrossnoteContainer } from "../containers/crossnote";
 import { SettingsContainer } from "../containers/settings";
 import i18next from "../i18n/i18n";
 import { GitUploadError } from "../lib/crossnote";
-import { gitErrorMessage, notifyGit, redactGitText } from "../lib/gitResults";
+import {
+  gitConflictNotice,
+  gitErrorMessage,
+  notifyGit,
+  redactGitText,
+} from "../lib/gitResults";
 import { needsGitSettings } from "../lib/gitConnection";
 import { Notebook } from "../lib/notebook";
 import { NotesNotSavedError } from "../lib/noteSaver";
@@ -91,12 +96,7 @@ export default function PushNotebookDialog({
       let files: string | undefined;
       let updateFailure: { error: unknown } | undefined;
       if (error instanceof NotebookConflictError) {
-        files = error.describe((file, side) =>
-          t(`error/notebook-file-deleted-${side}`, { file }),
-        );
-        message = t("error/notebook-sync-conflicts", {
-          files: redactGitText(files, notebook),
-        });
+        ({ message, files } = gitConflictNotice(error, notebook));
       } else if (error instanceof IgnoredUploadFileError) {
         files = error.filepath;
         message = t("error/notebook-file-ignored", {
@@ -106,7 +106,11 @@ export default function PushNotebookDialog({
         if (error.phase === "download") {
           message = t("git/upload-download-failed");
         } else if (error.phase === "prepare") {
-          message = t("git/upload-prepare-failed");
+          message = t(
+            error.downloaded
+              ? "git/upload-prepare-failed-after-download"
+              : "git/upload-prepare-failed",
+          );
         } else if (error.phase === "finish") {
           message = i18next.t(
             resultMessage[

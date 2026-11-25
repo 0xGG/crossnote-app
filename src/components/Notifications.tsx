@@ -63,8 +63,9 @@ function NotificationMessage({
         document.body.appendChild(dialogHost);
       }
     });
+    // MUI mounts the two dialogs under the body; only the modal removal matters.
     if (dialog.isConnected)
-      observer.observe(document.body, { childList: true, subtree: true });
+      observer.observe(document.body, { childList: true });
     return () => {
       observer.disconnect();
       dialogHost.remove();

@@ -273,6 +273,7 @@ export const zhTW = {
     "layout/retry": "重試",
     "git/credentials-storage": "憑證儲存在目前的瀏覽器。",
     "git/proxy-credentials": "所選代理可能接觸這些憑證。",
+    "git/replacement-proxy": "輸入 {{proxy}} 並儲存，以確認使用此代理。",
     "git/change-credentials": "修改 Git 憑證",
     "git/needs-login": "Git 需要登入",
     "git/credentials-saved": "Git 憑證已儲存",
@@ -286,6 +287,8 @@ export const zhTW = {
     "git/downloaded-no-upload": "已下載遠端變更，沒有需要上傳的變更。",
     "git/upload-download-failed": "上傳在前置下載時停止，尚未推送。",
     "git/upload-prepare-failed": "準備上傳時處理本機變更失敗",
+    "git/upload-prepare-failed-after-download":
+      "已完成下載，準備上傳本機變更時失敗。",
     "git/upload-push-failed-after-download": "已完成下載，推送失敗。",
     "git/uploaded-and-downloaded": "已下載遠端變更並上傳本機提交。",
     "git/confirmed-and-downloaded": "遠端已包含本機提交，本次已下載後續變更。",

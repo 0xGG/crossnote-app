@@ -25,7 +25,6 @@ import { effectiveGitProxy } from "../lib/gitConnection";
 import { notifyGit } from "../lib/gitResults";
 import { failureMessage, notify } from "../lib/notifications";
 import { Notebook } from "../lib/notebook";
-import { NotesNotSavedError } from "../lib/noteSaver";
 
 interface Props {
   open: boolean;
@@ -39,7 +38,7 @@ function settingsFrom(notebook: Notebook) {
     name: notebook.name,
     gitUsername: notebook.gitUsername ?? "",
     gitPassword: notebook.gitPassword ?? "",
-    gitCorsProxy: effectiveGitProxy(notebook.gitCorsProxy),
+    gitCorsProxy: notebook.gitCorsProxy ?? "",
     minutes: String(notebook.autoFetchPeriod / 60000),
   };
 }
@@ -50,6 +49,7 @@ export default function ConfigureNotebookDialog(props: Props) {
   const crossnoteContainer = CrossnoteContainer.useContainer();
   const { t } = useTranslation();
   const [draft, setDraft] = useState(() => settingsFrom(notebook));
+  const replacementProxy = effectiveGitProxy(draft.gitCorsProxy);
   const [expanded, setExpanded] = useState(false);
   const [showUsername, setShowUsername] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -129,13 +129,11 @@ export default function ConfigureNotebookDialog(props: Props) {
       });
     } catch (error) {
       setClickHardResetCount(MaxClickDeleteCount);
-      if (!(error instanceof NotesNotSavedError)) {
-        notifyGit("error", t("git/reset-failed"), {
-          error,
-          credentials: notebook,
-          dialog: dialog.current,
-        });
-      }
+      notifyGit("error", t("git/reset-failed"), {
+        error,
+        credentials: notebook,
+        dialog: dialog.current,
+      });
     }
   }
 
@@ -190,6 +188,10 @@ export default function ConfigureNotebookDialog(props: Props) {
                   placeholder={DEFAULT_CORS_PROXY}
                   fullWidth={true}
                   value={draft.gitCorsProxy}
+                  helperText={
+                    replacementProxy !== draft.gitCorsProxy &&
+                    t("git/replacement-proxy", { proxy: replacementProxy })
+                  }
                   onChange={(event) =>
                     setDraft({ ...draft, gitCorsProxy: event.target.value })
                   }

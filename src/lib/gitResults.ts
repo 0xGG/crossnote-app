@@ -1,6 +1,7 @@
 import { Errors } from "isomorphic-git";
 import i18next, { isAppErrorKey } from "../i18n/i18n";
 import { gitHttpStatus, repositoryAddress } from "./gitConnection";
+import type { NotebookConflictError } from "./mergeFiles";
 import { type NotificationSeverity, notify } from "./notifications";
 
 type GitCredentials = { gitUsername?: string; gitPassword?: string };
@@ -34,6 +35,19 @@ export function redactGitText(text: string, credentials: GitCredentials) {
     }
   }
   return result;
+}
+
+export function gitConflictNotice(
+  error: NotebookConflictError,
+  credentials: GitCredentials,
+) {
+  const files = error.describe((file, side) =>
+    i18next.t(`error/notebook-file-deleted-${side}`, { file }),
+  );
+  const message = i18next.t("error/notebook-sync-conflicts", {
+    files: redactGitText(files, credentials),
+  });
+  return { message, files };
 }
 
 export function notifyGit(

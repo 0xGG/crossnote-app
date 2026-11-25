@@ -173,7 +173,10 @@ export default function AddNotebookDialog(props: Props) {
                 crossnoteContainer.openLocalNotebook();
                 close();
               }}
-              disabled={!("showDirectoryPicker" in window)}
+              disabled={
+                crossnoteContainer.isAddingNotebook ||
+                !("showDirectoryPicker" in window)
+              }
             >
               {"showDirectoryPicker" in window
                 ? t("general/open-a-local-folder")

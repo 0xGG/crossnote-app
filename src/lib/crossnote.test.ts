@@ -283,12 +283,12 @@ describe("Crossnote keeps the stored directory tree in step", () => {
       try {
         const { http } = gitConnection(url, proxy, "reader", "saved-secret");
         await http.request({ url: receiver });
-        expect(() =>
+        await expect(
           http.request({
             url: receiver,
             headers: { Authorization: "Basic fixture" },
           }),
-        ).toThrow("error/git-credentials-require-https");
+        ).rejects.toThrow("error/git-credentials-require-https");
         expect(dispatched.mock.calls).toEqual([[{ url: receiver }]]);
       } finally {
         dispatched.mockRestore();

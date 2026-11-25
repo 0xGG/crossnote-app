@@ -283,6 +283,7 @@ export const enUS = {
     "layout/retry": "Retry",
     "git/credentials-storage": "Credentials are saved in this browser.",
     "git/proxy-credentials": "The selected proxy can see these credentials.",
+    "git/replacement-proxy": "Enter {{proxy}} and save to approve this proxy.",
     "git/change-credentials": "Change Git credentials",
     "git/needs-login": "Git sign-in required",
     "git/credentials-saved": "Git credentials saved",
@@ -298,6 +299,8 @@ export const enUS = {
     "git/upload-download-failed":
       "Upload stopped during download. Nothing was pushed.",
     "git/upload-prepare-failed": "Failed to prepare local changes for upload",
+    "git/upload-prepare-failed-after-download":
+      "Download completed. Failed to prepare local changes for upload.",
     "git/upload-push-failed-after-download": "Download completed. Push failed.",
     "git/uploaded-and-downloaded":
       "Downloaded remote changes. Notebook uploaded.",

@@ -139,11 +139,6 @@ const serve = async (req, res) => {
         res.writeHead(403).end();
         return;
       }
-      const target = repos.get(
-        url.pathname.slice(prefix.length).split(".git/")[0],
-      );
-      if (target?.observeProxy)
-        recordGitRequest(target, req, res, url.searchParams.get("service"));
       allowGitCors(res);
       if (req.method === "OPTIONS") {
         res.writeHead(204).end();
@@ -188,7 +183,6 @@ const serve = async (req, res) => {
           `Basic ${Buffer.from(`${credentials.username}:${credentials.password}`).toString("base64")}`,
         denyReceive: false,
         redirect: null,
-        observeProxy: false,
         requests: [],
       };
       await git(["init", "--bare", "--initial-branch=master", repo.bare]);
@@ -216,8 +210,11 @@ const serve = async (req, res) => {
       if (api[2] === "requests" && req.method === "GET")
         return json(res, repo.requests);
       if (api[2] === "permissions" && req.method === "PUT") {
-        repo.denyReceive =
-          JSON.parse((await body(req)).toString()).denyReceive === true;
+        const { denyReceive, receiveOnly } = JSON.parse(
+          (await body(req)).toString(),
+        );
+        repo.denyReceive = denyReceive === true;
+        repo.receiveOnly = receiveOnly === true;
         return json(res, { ok: true });
       }
       if (api[2] === "redirect" && req.method === "PUT") {
@@ -230,8 +227,7 @@ const serve = async (req, res) => {
           return;
         }
         const redirectOrigin = crossOrigin === true ? receiverOrigin : origin;
-        target.observeProxy = true;
-        repo.redirect = `${redirectOrigin}/proxy/127.0.0.1:${port}/git/${destination}.git/info/refs`;
+        repo.redirect = `${redirectOrigin}/git/${destination}.git/info/refs`;
         return json(res, { redirectOrigin });
       }
       if (!api[2] && req.method === "POST") {
@@ -289,7 +285,11 @@ const serve = async (req, res) => {
       const service =
         remote[2] === "info/refs" ? url.searchParams.get("service") : remote[2];
       const auth = recordGitRequest(repo, req, res, service);
-      if (auth !== "accepted") {
+      if (
+        auth !== "accepted" &&
+        (!repo.receiveOnly ||
+          (req.method === "POST" && service === "git-receive-pack"))
+      ) {
         res
           .writeHead(401, {
             "WWW-Authenticate": 'Basic realm="crossnote-git-fixture"',

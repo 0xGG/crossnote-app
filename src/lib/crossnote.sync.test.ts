@@ -1309,10 +1309,7 @@ it.each(["Network lost", "Remote rejected"])(
     const attempts: string[] = [];
     const push = vi.spyOn(git, "push").mockImplementation(async () => {
       attempts.push(await head());
-      if (attempts.length === 1) {
-        if (failure === "Network lost") throw new Error(failure);
-        return { ok: false, error: failure, refs: {} };
-      }
+      if (attempts.length === 1) throw new Error(failure);
       return { ok: true, error: null, refs: {} };
     });
     await expect(app.pushNotebook({ notebook })).rejects.toThrow(failure);
@@ -2514,6 +2511,21 @@ it("persists fetched objects before reporting the new remote revision", async ()
   expect(
     Array.from((await readStored(`${notebook.dir}/.git/objects/fetched`))!),
   ).toEqual([...bytes("object")]);
+});
+
+it("only reports a download when the background check saw an incoming commit", async () => {
+  const { app, notebook, base, theirs } = await repository({
+    "incoming.md": bytes("new remote note"),
+  });
+  expect(await app.fetchNotebook({ notebook })).toBe(true);
+  expect(notebook).toMatchObject({ localSha: base, remoteSha: theirs });
+  const push = vi.spyOn(git, "push");
+  await expect(app.pushNotebook({ notebook })).resolves.toBe("downloaded");
+  expect(push).not.toHaveBeenCalled();
+  expect(notebook.localSha).toBe(theirs);
+  expect(await readStored(`${notebook.dir}/incoming.md`)).toEqual(
+    bytes("new remote note"),
+  );
 });
 
 it("persists cloned content before recording the notebook", async () => {

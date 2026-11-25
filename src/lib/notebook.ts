@@ -55,6 +55,7 @@ interface RefreshNotesArgs {
   dir: string;
   includeSubdirectories?: boolean;
   refreshRelations?: boolean;
+  requireDirectory?: boolean;
 }
 
 export class Notebook {
@@ -252,21 +253,25 @@ export class Notebook {
     return await this.getNote(newFilePath, true);
   }
 
-  public async checkoutNote(note: Note): Promise<void> {
+  public async checkoutNote(note: Note): Promise<{ error: unknown } | void> {
     await git.checkout({
       fs: fs,
       dir: this.dir,
       filepaths: [note.filePath],
       force: true,
     });
-    if (await pfs.exists(path.resolve(this.dir, note.filePath))) {
-      await git.add({
-        fs: fs,
-        dir: this.dir,
-        filepath: note.filePath,
-      });
+    try {
+      if (await pfs.exists(path.resolve(this.dir, note.filePath))) {
+        await git.add({
+          fs: fs,
+          dir: this.dir,
+          filepath: note.filePath,
+        });
+      }
+      await pfs.storeTree(this.dir);
+    } catch (error) {
+      return { error };
     }
-    await pfs.storeTree(this.dir);
   }
 
   public async getNote(
@@ -363,18 +368,20 @@ export class Notebook {
     dir = "./",
     includeSubdirectories = false,
     refreshRelations = true,
+    requireDirectory = false,
   }: RefreshNotesArgs): Promise<Notes> {
-    if (refreshRelations) {
-      this.notes = {};
-      this.referenceMap = new ReferenceMap();
-      this.initSearch();
-    }
     let files: string[];
     try {
       files = await pfs.readdir(path.resolve(this.dir, dir));
     } catch (error) {
+      if (requireDirectory) throw error;
       console.error(error);
       files = [];
+    }
+    if (refreshRelations) {
+      this.notes = {};
+      this.referenceMap = new ReferenceMap();
+      this.initSearch();
     }
     const refreshNotesPromises = [];
 
