@@ -384,9 +384,11 @@ async function notebookWithTyping(dir: string, write: () => Promise<void>) {
   const notebook = await notebookAt(dir, {
     pullNotebook: async () => {
       done.push("pull");
+      return { numConflicts: 0, conflicts: [] as string[], cache: {} };
     },
     pushNotebook: async () => {
       done.push("push");
+      return "confirmed";
     },
     hardResetNotebook: async () => {
       done.push("reset");
@@ -394,9 +396,8 @@ async function notebookWithTyping(dir: string, write: () => Promise<void>) {
   } as unknown as Partial<Crossnote>);
   // Restoring a note is for notebooks git keeps.
   notebook.isLocal = false;
-  notebook.checkoutNote = async (note) => {
+  notebook.checkoutNote = async () => {
     done.push("restore");
-    return note;
   };
   const refreshNotes = notebook.refreshNotes.bind(notebook);
   notebook.refreshNotes = async (args) => {
@@ -422,8 +423,6 @@ async function notebookWithTyping(dir: string, write: () => Promise<void>) {
           notebook,
           authorName: "Test",
           authorEmail: "",
-          username: "",
-          password: "",
           message: "",
         }),
     ],
@@ -438,8 +437,113 @@ async function notebookWithTyping(dir: string, write: () => Promise<void>) {
         } as Note),
     ],
   ];
-  return { done, saver, operations };
+  return { done, notebook, saver, operations };
 }
+
+it("retains the completed Git outcome when the local refresh fails", async () => {
+  const { done, notebook, saver, operations } = await notebookWithTyping(
+    "/notebooks/git-refresh-failed",
+    async () => {},
+  );
+  const error = new Error("Could not list notes");
+  const readdir = pfs.readdir.bind(pfs);
+  vi.spyOn(pfs, "readdir").mockImplementation((dir) =>
+    dir === notebook.dir ? Promise.reject(error) : readdir(dir),
+  );
+  const oldView = notebook.notes;
+  const expected: Record<string, unknown> = {
+    pull: { numConflicts: 0 },
+    push: "confirmed",
+    reset: true,
+  };
+  try {
+    for (const [name, run] of operations.filter(([name]) => name in expected)) {
+      let completed: unknown;
+      done.length = 0;
+      await act(async () => {
+        completed = await run();
+      });
+      expect(done, name).toContain(name);
+      expect(completed, name).toMatchObject({
+        result: expected[name],
+        updateFailure: { error },
+      });
+      expect(notebook.notes).toBe(oldView);
+    }
+    const readError = new Error("Could not read the checked-out note");
+    notebook.getNote = vi.fn().mockRejectedValue(readError);
+    await act(async () => {
+      await expect(
+        crossnote.checkoutNote({
+          notebookPath: notebook.dir,
+          filePath: "a.md",
+        } as Note),
+      ).resolves.toMatchObject({
+        result: true,
+        updateFailure: { error: readError },
+      });
+    });
+  } finally {
+    saver.discard();
+  }
+});
+
+it("reports an interrupted download conflict before starting checkout", async () => {
+  const conflict = new NotebookConflictError(["assets/report.bin"]);
+  const notebook = await notebookAt("/notebooks/checkout-after-conflict", {
+    resumeNotebook: async () => {
+      throw conflict;
+    },
+  });
+  notebook.isLocal = false;
+  const checkout = vi.spyOn(notebook, "checkoutNote");
+  await act(async () => {
+    await expect(
+      crossnote.checkoutNote({
+        notebookPath: notebook.dir,
+        filePath: "a.md",
+      } as Note),
+    ).rejects.toBe(conflict);
+  });
+  expect(checkout).not.toHaveBeenCalled();
+});
+
+it("replaces the old search alias on checkout", async () => {
+  const notebook = await notebookAt("/notebooks/restored-search-alias");
+  notebook.isLocal = false;
+  const filepath = "a.md";
+  const file = `${notebook.dir}/${filepath}`;
+  const args = { fs, dir: notebook.dir };
+  await git.init(args);
+  await pfs.writeFile(file, "---\naliases: restoredterm\n---\n# Restored\n");
+  await git.add({ ...args, filepath });
+  await git.commit({
+    ...args,
+    message: "Initial note",
+    author: { name: "Test", email: "test@example.test" },
+  });
+  await pfs.writeFile(
+    file,
+    "---\naliases: obsoleteword\n---\n# Working copy\n",
+  );
+  const note = await notebook.getNote(filepath, true);
+  expect(
+    notebook.search.search("obsoleteword").map((match) => match.filePath),
+  ).toEqual([filepath]);
+
+  await act(async () => {
+    await expect(crossnote.checkoutNote(note)).resolves.toEqual({
+      result: true,
+    });
+  });
+  expect((await notebook.getNote(filepath)).config.aliases).toEqual([
+    "restoredterm",
+  ]);
+  expect(notebook.search.search("obsoleteword")).toEqual([]);
+  expect(
+    notebook.search.search("restoredterm").map((match) => match.filePath),
+  ).toEqual([filepath]);
+});
 
 it("writes what is typed into a notebook's notes before git, or reading the folder again, changes them", async () => {
   const { done, saver, operations } = await notebookWithTyping(
@@ -754,7 +858,9 @@ it.each(["rename", "delete", "checkout", "print"])(
     const remove = vi
       .spyOn(notebook, "deleteNote")
       .mockResolvedValue(undefined);
-    const checkout = vi.spyOn(notebook, "checkoutNote").mockResolvedValue(note);
+    const checkout = vi
+      .spyOn(notebook, "checkoutNote")
+      .mockResolvedValue(undefined);
     const readNote = vi.spyOn(notebook, "getNote");
     notebook.isLocal = false;
     let pending!: Promise<unknown>;

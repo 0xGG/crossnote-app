@@ -1,6 +1,4 @@
-import { DEFAULT_CORS_PROXY } from "../config";
 import * as git from "isomorphic-git";
-import http from "isomorphic-git/http/web";
 import { decode } from "isomorphic-textencoder";
 import ignore, { type Ignore } from "ignore";
 import path from "path-browserify";
@@ -9,6 +7,12 @@ import PouchdbFind from "pouchdb-find";
 import { notebookNameFromGitURL, randomID } from "../utilities/utils";
 import { fs, missingFileOrThrow, pfs } from "./fs";
 import { stageLocalFile } from "./gitFiles";
+import {
+  gitConnection,
+  needsGitSettings,
+  notebookGitConnection,
+  repositoryAddress,
+} from "./gitConnection";
 import { EventType, globalEmitter } from "./event";
 import { Notebook } from "./notebook";
 import { RecoveryDirectoryCollisionError } from "./recoveryDirectory";
@@ -52,7 +56,6 @@ interface CloneNotebookArgs {
   depth?: number;
   username?: string;
   password?: string;
-  rememberCredentials?: boolean;
   directoryHandle?: FileSystemDirectoryHandle;
 }
 
@@ -65,27 +68,40 @@ export interface PushNotebookArgs {
   notebook: Notebook;
   authorName?: string;
   authorEmail?: string;
-  username?: string;
-  password?: string;
   message?: string;
   onProgress?: (progress: git.GitProgressEvent) => void;
   onMessage?: (message: string) => void;
-  onAuthFailure?: (url: string) => void;
-  onAuthSuccess?: (url: string) => void;
 }
 
 export interface PullNotebookArgs {
   notebook: Notebook;
   onProgress?: (progress: git.GitProgressEvent) => void;
   onMessage?: (message: string) => void;
-  onAuthFailure?: (url: string) => void;
-  onAuthSuccess?: (url: string) => void;
 }
 
 export type FetchNotebookArgs = PullNotebookArgs;
 
+export type PushNotebookResult =
+  | "uploaded"
+  | "uploaded-and-downloaded"
+  | "confirmed"
+  | "confirmed-and-downloaded"
+  | "downloaded"
+  | "up-to-date";
+
+export class GitUploadError extends Error {
+  constructor(
+    public readonly phase: "download" | "prepare" | "push" | "finish",
+    public readonly downloaded: boolean,
+    cause: unknown,
+  ) {
+    super(cause instanceof Error ? cause.message : String(cause), { cause });
+  }
+}
+
 interface PullNotebookResult {
   status?: "up-to-date" | "pending-upload";
+  downloadedFrom?: string;
   ignoredUploadFile?: string;
   numConflicts: number;
   cache: Cache;
@@ -276,7 +292,6 @@ export default class Crossnote {
     username = "",
     password = "",
     depth = 3,
-    rememberCredentials = false,
     directoryHandle = null,
   }: CloneNotebookArgs) {
     if (gitURL) {
@@ -288,7 +303,6 @@ export default class Crossnote {
         username,
         password,
         depth,
-        rememberCredentials,
       });
     } else {
       const _id = randomID();
@@ -308,8 +322,8 @@ export default class Crossnote {
       notebook.gitURL = gitURL.trim();
       notebook.gitBranch = branch.trim() || "master";
       notebook.gitCorsProxy = corsProxy.trim();
-      notebook.gitUsername = rememberCredentials ? username.trim() : "";
-      notebook.gitPassword = rememberCredentials ? password : "";
+      notebook.gitUsername = "";
+      notebook.gitPassword = "";
       notebook.autoFetchPeriod = 0;
       notebook.fetchedAt = new Date();
       notebook.remoteSha = "";
@@ -361,85 +375,59 @@ export default class Crossnote {
     username = "",
     password = "",
     depth = 10,
-    rememberCredentials = false,
   }: CloneNotebookArgs): Promise<Notebook> {
-    if (!gitURL.match(/^https?:\/\//)) {
+    if (!gitURL.match(/^https?:\/\//) || !URL.canParse(gitURL)) {
       throw new Error("error/invalid-git-url-prefix");
     }
-
-    // Check if gitURL exists
-    /*
-    let exists = false;
-    try {
-      const notebooks = await this.notebookDB.find({
-        selector: {
-          gitURL: { $eq: gitURL }
-        }
-      });
-      if (notebooks.docs && notebooks.docs.length) {
-        exists = true;
-      }
-    } catch (error) {
-      exists = false;
-    }
-
-    if (exists) {
-      throw new Error("error/repository-already-cloned");
-    }*/
 
     const _id = randomID();
     const dir = `/notebooks/${_id}`;
 
     const gitBranch = branch.trim() || "master";
-    await git.clone({
-      fs: fs,
-      http,
-      dir,
-      corsProxy,
-      url: gitURL,
-      ref: branchRef(gitBranch),
-      depth: depth,
-      singleBranch: true,
-      onAuth: (url, auth) => {
-        return {
-          username,
-          password,
-        };
-      },
-    });
-
-    const sha = await this.getGitSHA(
-      dir,
-      `refs/remotes/origin/${branchName(gitBranch)}`,
+    const connection = gitConnection(
+      gitURL,
+      corsProxy?.trim() ?? "",
+      username.trim(),
+      password,
     );
-    // Before the record, as for a notebook made here.
-    await pfs.storeTree(dir);
-
-    const notebook: Notebook = new Notebook();
-    notebook._id = _id;
-    notebook.dir = dir;
-    notebook.name = name || notebookNameFromGitURL(gitURL);
-    notebook.gitURL = gitURL;
-    notebook.gitBranch = gitBranch;
-    notebook.gitCorsProxy = corsProxy;
-    notebook.gitUsername = rememberCredentials ? username : "";
-    notebook.gitPassword = rememberCredentials ? password : "";
-    notebook.autoFetchPeriod = 3600000; // 60 minutes
-    notebook.fetchedAt = new Date();
-    notebook.localSha = sha;
-    notebook.remoteSha = sha;
-
-    // Save to DB
     try {
+      await git.clone({
+        ...connection,
+        fs,
+        dir,
+        ref: branchRef(gitBranch),
+        depth,
+        singleBranch: true,
+      });
+      const sha = await this.getGitSHA(
+        dir,
+        `refs/remotes/origin/${branchName(gitBranch)}`,
+      );
+      // Before the record, as for a notebook made here.
+      await pfs.storeTree(dir);
+
+      const notebook = new Notebook();
+      notebook._id = _id;
+      notebook.dir = dir;
+      notebook.name = name || notebookNameFromGitURL(connection.url);
+      notebook.gitURL = connection.url;
+      notebook.gitBranch = gitBranch;
+      notebook.gitCorsProxy = connection.corsProxy;
+      notebook.gitUsername = username.trim();
+      notebook.gitPassword = password;
+      notebook.autoFetchPeriod = 3600000; // 60 minutes
+      notebook.fetchedAt = new Date();
+      notebook.localSha = sha;
+      notebook.remoteSha = sha;
       await this.notebookDB.put(
         convertNotebookToNotebookDBEntry(notebook, null),
       );
+      return notebook;
     } catch (error) {
-      // Failed to save to DB
-      await pfs.rmdir(dir);
+      // A failed clone may have created only part of the directory.
+      await pfs.rmdir(dir).catch(() => {});
+      throw error;
     }
-
-    return notebook;
   }
 
   public saveNotebookSettings(notebook: Notebook, draft: NotebookSettings) {
@@ -452,8 +440,27 @@ export default class Crossnote {
     };
     return notebookOperation(notebook.dir, async () => {
       const record = await this.notebookDB.get(notebook._id);
-      await this.notebookDB.put({ ...record, ...settings });
-      Object.assign(notebook, settings);
+      const gitURL = repositoryAddress(record.gitURL);
+      let changed =
+        gitURL !== record.gitURL ||
+        (record.gitUsername ?? "") !== settings.gitUsername ||
+        (record.gitPassword ?? "") !== settings.gitPassword;
+      if (gitURL) {
+        const config = { fs, dir: notebook.dir, path: "remote.origin.url" };
+        const origin = await git.getConfig(config);
+        if (origin && origin !== repositoryAddress(origin)) {
+          await git.setConfig({ ...config, value: gitURL });
+          await pfs.storeTree(notebook.dir);
+          changed = true;
+        }
+      }
+      await this.notebookDB.put({ ...record, ...settings, gitURL });
+      Object.assign(notebook, settings, { gitURL });
+      if (changed) {
+        return settings.gitUsername || settings.gitPassword
+          ? "saved"
+          : "cleared";
+      }
     });
   }
 
@@ -598,7 +605,7 @@ export default class Crossnote {
     return cache;
   }
 
-  public pushNotebook(args: PushNotebookArgs): Promise<null | git.PushResult> {
+  public pushNotebook(args: PushNotebookArgs): Promise<PushNotebookResult> {
     return notebookOperation(args.notebook.dir, () =>
       this.pushNotebookUnlocked(args),
     );
@@ -608,79 +615,127 @@ export default class Crossnote {
     notebook,
     authorName = "crossnote",
     authorEmail = "anonymous@crossnote.com",
-    username,
-    password,
     message = "doc: Updated docs",
     onProgress,
     onMessage,
-    onAuthFailure,
-    onAuthSuccess,
-  }: PushNotebookArgs): Promise<null | git.PushResult> {
-    // Pull notebook first
-    const pullNotebookResult = await this.pullNotebookUnlocked({
-      notebook,
-      onProgress,
-      onAuthFailure,
-      onAuthSuccess,
-      onMessage,
-    });
-
-    if (pullNotebookResult.numConflicts > 0) {
-      throw new NotebookConflictError(
-        pullNotebookResult.conflicts,
-        pullNotebookResult.deletions,
-      );
-    }
-    if (pullNotebookResult.ignoredUploadFile)
-      throw new IgnoredUploadFileError(pullNotebookResult.ignoredUploadFile);
-
-    const args = { fs, dir: notebook.dir };
-    if (pullNotebookResult.status) {
-      // No checkout staged the working changes on this path.
-      const changes = Object.entries(pullNotebookResult.cache);
-      // Remove obsolete children before staging a file at their parent path.
-      for (const [filepath, bytes] of changes) {
-        if (bytes === null) await git.remove({ ...args, filepath });
-      }
-      for (const [filepath, bytes] of changes) {
-        if (bytes !== null) await stageLocalFile(notebook.dir, filepath);
-      }
-    }
-    const hasStagedChanges = await prepareUploadIndex(
-      notebook.dir,
-      pullNotebookResult.cache,
-    );
-    if (hasStagedChanges) {
-      notebook.localSha = await git.commit({
-        ...args,
-        author: { name: authorName, email: authorEmail },
-        message,
+  }: PushNotebookArgs): Promise<PushNotebookResult> {
+    const { localSha: before, remoteSha: priorRemote } = notebook;
+    let phase: GitUploadError["phase"] = "download";
+    let downloaded = false;
+    try {
+      const pull = await this.pullNotebookUnlocked({
+        notebook,
+        onProgress,
+        onMessage,
       });
-      // The new commit belongs to this branch even if the network fails.
-      await pfs.storeTree(notebook.dir);
-      await this.saveSyncState(notebook);
-    }
-    if (notebook.localSha === notebook.remoteSha) return null;
+      if (pull.numConflicts > 0) {
+        throw new NotebookConflictError(pull.conflicts, pull.deletions);
+      }
+      if (pull.ignoredUploadFile)
+        throw new IgnoredUploadFileError(pull.ignoredUploadFile);
 
-    const pushResult = await git.push({
-      ...args,
-      http,
-      onAuth: () => ({ username, password }),
-      onProgress,
-      onMessage,
-      onAuthFailure,
-      onAuthSuccess,
-      url: notebook.gitURL,
-      ref: branchRef(notebook.gitBranch),
-      corsProxy: notebook.gitCorsProxy,
-    });
-    if (pushResult.error || !pushResult.ok)
-      throw new Error(pushResult.error || "error/failed-to-upload-notebook");
-    await pfs.storeTree(notebook.dir);
-    notebook.fetchedAt = new Date();
-    notebook.remoteSha = notebook.localSha;
-    await this.saveSyncState(notebook);
-    return pushResult;
+      downloaded = !pull.status;
+      phase = "prepare";
+      const args = { fs, dir: notebook.dir };
+      if (pull.status) {
+        // No checkout staged the working changes on this path.
+        const changes = Object.entries(pull.cache);
+        // Remove obsolete children before staging a file at their parent path.
+        for (const [filepath, bytes] of changes) {
+          if (bytes === null) await git.remove({ ...args, filepath });
+        }
+        for (const [filepath, bytes] of changes) {
+          if (bytes !== null) await stageLocalFile(notebook.dir, filepath);
+        }
+      }
+      if (await prepareUploadIndex(notebook.dir, pull.cache)) {
+        notebook.localSha = await git.commit({
+          ...args,
+          author: { name: authorName, email: authorEmail },
+          message,
+        });
+        // The new commit belongs to this branch even if the network fails.
+        await pfs.storeTree(notebook.dir);
+        await this.saveSyncState(notebook);
+      }
+      if (notebook.localSha === notebook.remoteSha) {
+        const confirmed =
+          priorRemote &&
+          before &&
+          before !== priorRemote &&
+          (before === notebook.localSha || before === pull.downloadedFrom) &&
+          (await git
+            .isDescendent({ ...args, oid: before, ancestor: priorRemote })
+            .catch(() => false));
+        if (downloaded)
+          return confirmed ? "confirmed-and-downloaded" : "downloaded";
+        return confirmed ? "confirmed" : "up-to-date";
+      }
+
+      phase = "push";
+      const connection = notebookGitConnection(notebook);
+      let replyReceived = false;
+      let target = "";
+      try {
+        await git.push({
+          ...args,
+          ...connection,
+          http: {
+            async request(request) {
+              const response = await connection.http.request(request);
+              if (request.method === "POST" && response.statusCode === 200)
+                replyReceived = true;
+              return response;
+            },
+          },
+          onPrePush: ({ remoteRef }) => {
+            target = remoteRef.ref;
+            return true;
+          },
+          onProgress,
+          onMessage,
+          ref: branchRef(notebook.gitBranch),
+        });
+      } catch (error) {
+        // The client writes the local remote-tracking ref after receive-pack.
+        if (
+          replyReceived &&
+          target &&
+          !(error instanceof git.Errors.GitPushError)
+        ) {
+          const refs = await git
+            .listServerRefs({
+              ...connection,
+              forPush: true,
+              protocolVersion: 1,
+              prefix: target,
+            })
+            .catch((): git.ServerRef[] => []);
+          if (
+            refs.some(
+              ({ ref, oid }) => ref === target && oid === notebook.localSha,
+            )
+          )
+            phase = "finish";
+        }
+        throw error;
+      }
+      phase = "finish";
+      await pfs.storeTree(notebook.dir);
+      notebook.fetchedAt = new Date();
+      notebook.remoteSha = notebook.localSha;
+      await this.saveSyncState(notebook);
+      return downloaded ? "uploaded-and-downloaded" : "uploaded";
+    } catch (error) {
+      if (
+        error instanceof NotebookConflictError ||
+        error instanceof IgnoredUploadFileError ||
+        error instanceof RecoveryDirectoryCollisionError
+      ) {
+        throw error;
+      }
+      throw new GitUploadError(phase, downloaded, error);
+    }
   }
 
   public async getGitSHA(dir: string, ref: string = "master"): Promise<string> {
@@ -1205,8 +1260,6 @@ export default class Crossnote {
   private async pullNotebookUnlocked({
     notebook,
     onProgress,
-    onAuthFailure,
-    onAuthSuccess,
     onMessage,
   }: PullNotebookArgs): Promise<PullNotebookResult> {
     const previous = await this.pendingPull(notebook);
@@ -1222,22 +1275,7 @@ export default class Crossnote {
         };
     }
     const ref = branchRef(notebook.gitBranch);
-    const fetched = await git.fetch({
-      fs,
-      http,
-      dir: notebook.dir,
-      singleBranch: true,
-      corsProxy: notebook.gitCorsProxy,
-      ref,
-      onAuth: () => ({
-        username: notebook.gitUsername,
-        password: notebook.gitPassword,
-      }),
-      onProgress,
-      onAuthFailure,
-      onAuthSuccess,
-      onMessage,
-    });
+    const fetched = await this.fetchGit({ notebook, onProgress, onMessage });
     const remoteSha = fetched.fetchHead;
     if (!remoteSha) throw new Error("error/remote-has-no-commits");
     const args = { fs, dir: notebook.dir };
@@ -1530,8 +1568,32 @@ export default class Crossnote {
       conflicts,
       deletions,
       cache,
+      downloadedFrom: localSha,
       ignoredUploadFile,
     };
+  }
+
+  private async fetchGit(
+    { notebook, onProgress, onMessage }: FetchNotebookArgs,
+    options?: { depth: number; tags: boolean },
+  ) {
+    try {
+      const result = await git.fetch({
+        fs,
+        ...notebookGitConnection(notebook),
+        dir: notebook.dir,
+        singleBranch: true,
+        ref: branchRef(notebook.gitBranch),
+        ...options,
+        onProgress,
+        onMessage,
+      });
+      notebook.gitNeedsLogin = false;
+      return result;
+    } catch (error) {
+      if (needsGitSettings(error)) notebook.gitNeedsLogin = true;
+      throw error;
+    }
   }
 
   public fetchNotebook(args: FetchNotebookArgs): Promise<boolean> {
@@ -1543,32 +1605,13 @@ export default class Crossnote {
   private async fetchNotebookUnlocked({
     notebook,
     onProgress,
-    onAuthFailure,
-    onAuthSuccess,
     onMessage,
   }: FetchNotebookArgs): Promise<boolean> {
     const localSha = notebook.localSha;
-    const result = await git.fetch({
-      fs: fs,
-      http,
-      dir: notebook.dir,
-      singleBranch: true,
-      tags: false,
-      depth: 1,
-      corsProxy: notebook.gitCorsProxy,
-      url: notebook.gitURL,
-      ref: branchRef(notebook.gitBranch),
-      onAuth: (url, auth) => {
-        return {
-          username: notebook.gitUsername,
-          password: notebook.gitPassword,
-        };
-      },
-      onProgress,
-      onAuthFailure,
-      onAuthSuccess,
-      onMessage,
-    });
+    const result = await this.fetchGit(
+      { notebook, onProgress, onMessage },
+      { depth: 1, tags: false },
+    );
 
     if (!result.fetchHead) {
       // The next background check is due one fetch period from now.
@@ -1611,7 +1654,7 @@ export default class Crossnote {
       notebook._id = n._id;
       notebook.dir = n.dir;
       notebook.name = n.name;
-      notebook.gitURL = n.gitURL;
+      notebook.gitURL = repositoryAddress(n.gitURL);
       notebook.gitBranch = n.gitBranch;
       notebook.gitCorsProxy = n.gitCorsProxy;
       notebook.gitUsername = n.gitUsername;
@@ -1620,13 +1663,6 @@ export default class Crossnote {
       notebook.fetchedAt = n.fetchedAt;
       notebook.remoteSha = n.remoteSha ?? n.localSha;
       notebook.localSha = n.localSha;
-
-      if (
-        typeof notebook.gitCorsProxy === "string" &&
-        notebook.gitCorsProxy.startsWith("https://crossnote.app/cors")
-      ) {
-        notebook.gitCorsProxy = DEFAULT_CORS_PROXY;
-      }
 
       if (n.directoryHandle) {
         // local notebook

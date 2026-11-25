@@ -41,6 +41,7 @@ import {
 } from "../lib/event";
 import { NotesNotSavedError } from "../lib/noteSaver";
 import { failureMessage, notify } from "../lib/notifications";
+import { notifyGit } from "../lib/gitResults";
 import { mountPreview } from "../render";
 import { printPreview } from "../render/print";
 import { setPreviewTheme } from "../render/theme";
@@ -327,15 +328,22 @@ export default function NotePopover(props: Props) {
           {!isLocal && (
             <MenuRow
               onClick={() => {
-                crossnoteContainer.checkoutNote(note).catch((error) => {
-                  notify({
-                    severity: "error",
-                    message: failureMessage(
-                      t("general/restore-checkout"),
+                crossnoteContainer
+                  .checkoutNote(note)
+                  .then((completed) => {
+                    if (completed) {
+                      notifyGit("success", t("git/checkout-complete"), {
+                        credentials: notebook,
+                        updateFailure: completed.updateFailure,
+                      });
+                    }
+                  })
+                  .catch((error) => {
+                    notifyGit("error", t("git/checkout-failed"), {
                       error,
-                    ),
+                      credentials: notebook,
+                    });
                   });
-                });
                 props.onClose();
               }}
             >

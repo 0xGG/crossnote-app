@@ -21,6 +21,8 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { CrossnoteContainer } from "../containers/crossnote";
 import i18next from "../i18n/i18n";
+import { effectiveGitProxy } from "../lib/gitConnection";
+import { notifyGit } from "../lib/gitResults";
 import { failureMessage, notify } from "../lib/notifications";
 import { Notebook } from "../lib/notebook";
 
@@ -46,6 +48,7 @@ export default function ConfigureNotebookDialog(props: Props) {
   const crossnoteContainer = CrossnoteContainer.useContainer();
   const { t } = useTranslation();
   const [draft, setDraft] = useState(() => settingsFrom(notebook));
+  const replacementProxy = effectiveGitProxy(draft.gitCorsProxy);
   const [expanded, setExpanded] = useState(false);
   const [showUsername, setShowUsername] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -68,7 +71,7 @@ export default function ConfigureNotebookDialog(props: Props) {
 
   async function updateNotebook() {
     try {
-      await crossnoteContainer.updateNotebook(notebook, {
+      const credentials = await crossnoteContainer.updateNotebook(notebook, {
         name: draft.name.trim(),
         gitUsername: draft.gitUsername.trim(),
         gitPassword: draft.gitPassword,
@@ -76,13 +79,20 @@ export default function ConfigureNotebookDialog(props: Props) {
         autoFetchPeriod: (parseFloat(draft.minutes) || 0) * 60000,
       });
       close();
+      if (credentials) {
+        notifyGit(
+          "success",
+          t(
+            credentials === "saved"
+              ? "git/credentials-saved"
+              : "git/credentials-cleared",
+          ),
+        );
+      }
     } catch (error) {
-      notify({
-        severity: "error",
-        message: failureMessage(
-          i18next.t("error/failed-to-save-notebook-settings"),
-          error,
-        ),
+      notifyGit("error", t("error/failed-to-save-notebook-settings"), {
+        error,
+        credentials: draft,
       });
     }
   }
@@ -104,8 +114,24 @@ export default function ConfigureNotebookDialog(props: Props) {
   }
 
   async function hardResetNotebook() {
-    await crossnoteContainer.hardResetNotebook(notebook);
-    close();
+    try {
+      const completed = await crossnoteContainer.hardResetNotebook(notebook);
+      if (!completed) {
+        setClickHardResetCount(MaxClickDeleteCount);
+        return;
+      }
+      close();
+      notifyGit("success", t("git/reset-complete"), {
+        updateFailure: completed.updateFailure,
+        credentials: notebook,
+      });
+    } catch (error) {
+      setClickHardResetCount(MaxClickDeleteCount);
+      notifyGit("error", t("git/reset-failed"), {
+        error,
+        credentials: notebook,
+      });
+    }
   }
 
   return (
@@ -150,6 +176,23 @@ export default function ConfigureNotebookDialog(props: Props) {
                   fullWidth={true}
                   value={notebook.gitBranch || "master"}
                 ></TextField>
+                <TextField
+                  label={t("general/cors-proxy")}
+                  placeholder={DEFAULT_CORS_PROXY}
+                  fullWidth={true}
+                  value={draft.gitCorsProxy}
+                  helperText={
+                    replacementProxy !== draft.gitCorsProxy &&
+                    t("git/replacement-proxy", { proxy: replacementProxy })
+                  }
+                  onChange={(event) =>
+                    setDraft({ ...draft, gitCorsProxy: event.target.value })
+                  }
+                ></TextField>
+                <Typography variant="body2">
+                  {t("git/credentials-storage")}{" "}
+                  {draft.gitCorsProxy.trim() && t("git/proxy-credentials")}
+                </Typography>
                 <TextField
                   label={`${t("general/Username")} (${t("general/optional")})`}
                   placeholder={`${t("general/Username")} (${t(
@@ -211,15 +254,6 @@ export default function ConfigureNotebookDialog(props: Props) {
                       ),
                     },
                   }}
-                ></TextField>
-                <TextField
-                  label={t("general/cors-proxy")}
-                  placeholder={DEFAULT_CORS_PROXY}
-                  fullWidth={true}
-                  value={draft.gitCorsProxy}
-                  onChange={(event) =>
-                    setDraft({ ...draft, gitCorsProxy: event.target.value })
-                  }
                 ></TextField>
                 <Link
                   href={

@@ -237,7 +237,10 @@ export class CrossnoteApp {
         for (const message of document.querySelectorAll('[role="alert"]')) {
           if (!seen.has(message)) {
             seen.add(message);
-            kept.push(message.textContent ?? "");
+            const summary = message.querySelector(
+              '[data-testid="notification-summary"]',
+            );
+            kept.push((summary ?? message).textContent ?? "");
           }
         }
       }).observe(document.body, { childList: true, subtree: true });
@@ -273,17 +276,22 @@ export class CrossnoteApp {
     );
   }
 
-  notebook(name: string): Locator {
-    return this.sidebar.getByRole("treeitem", { name: new RegExp(name) });
+  notebook(name: string, scope = this.sidebar): Locator {
+    return scope.getByRole("treeitem", { name: new RegExp(name) });
   }
 
-  async openNotes(notebookName = "Drafts") {
-    const notebook = this.notebook(notebookName);
+  async expandNotebook(notebookName: string, scope = this.sidebar) {
+    const notebook = this.notebook(notebookName, scope);
     // Only the chevron expands a notebook; clicking its label refreshes it.
     if ((await notebook.getAttribute("aria-expanded")) !== "true")
       await notebook
         .getByRole("button", { name: "Expand", exact: true })
         .click();
+    return notebook;
+  }
+
+  async openNotes(notebookName = "Drafts") {
+    const notebook = await this.expandNotebook(notebookName);
     await notebook
       .getByRole("group")
       .getByRole("treeitem", { name: /Notes/ })

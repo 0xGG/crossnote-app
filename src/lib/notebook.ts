@@ -55,6 +55,7 @@ interface RefreshNotesArgs {
   dir: string;
   includeSubdirectories?: boolean;
   refreshRelations?: boolean;
+  requireDirectory?: boolean;
 }
 
 export class Notebook {
@@ -69,6 +70,7 @@ export class Notebook {
   public gitCorsProxy?: string;
   public gitUsername?: string;
   public gitPassword?: string;
+  public gitNeedsLogin?: boolean;
   public autoFetchPeriod: number; // in milliseconds
   public fetchedAt: Date;
   public remoteSha: string;
@@ -251,28 +253,24 @@ export class Notebook {
     return await this.getNote(newFilePath, true);
   }
 
-  public async checkoutNote(note: Note): Promise<Note> {
+  public async checkoutNote(note: Note): Promise<{ error: unknown } | void> {
+    await git.checkout({
+      fs: fs,
+      dir: this.dir,
+      filepaths: [note.filePath],
+      force: true,
+    });
     try {
-      await git.checkout({
-        fs: fs,
-        dir: this.dir,
-        // ref: "HEAD"
-        // ref: note.notebook.gitBranch,
-        filepaths: [note.filePath],
-        force: true,
-      });
       if (await pfs.exists(path.resolve(this.dir, note.filePath))) {
         await git.add({
-          // .remove is wrong
           fs: fs,
           dir: this.dir,
           filepath: note.filePath,
         });
       }
       await pfs.storeTree(this.dir);
-      return await this.getNote(note.filePath, true);
     } catch (error) {
-      return null;
+      return { error };
     }
   }
 
@@ -370,18 +368,20 @@ export class Notebook {
     dir = "./",
     includeSubdirectories = false,
     refreshRelations = true,
+    requireDirectory = false,
   }: RefreshNotesArgs): Promise<Notes> {
-    if (refreshRelations) {
-      this.notes = {};
-      this.referenceMap = new ReferenceMap();
-      this.initSearch();
-    }
     let files: string[];
     try {
       files = await pfs.readdir(path.resolve(this.dir, dir));
     } catch (error) {
+      if (requireDirectory) throw error;
       console.error(error);
       files = [];
+    }
+    if (refreshRelations) {
+      this.notes = {};
+      this.referenceMap = new ReferenceMap();
+      this.initSearch();
     }
     const refreshNotesPromises = [];
 

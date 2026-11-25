@@ -13,6 +13,7 @@ import path from "path-browserify";
 import { useCallback, useEffect, useState } from "react";
 import { createContainer } from "unstated-next";
 import Crossnote, {
+  GitUploadError,
   type NotebookSettings,
   PullNotebookArgs,
   PushNotebookArgs,
@@ -23,6 +24,7 @@ import {
   globalEmitter,
 } from "../lib/event";
 import { missingFileOrThrow, pfs } from "../lib/fs";
+import { repositoryAddress } from "../lib/gitConnection";
 import { pruneUnknownTabs, tabsInNotebook } from "../lib/layout";
 import { Note, NoteConfig, NoteMovedError } from "../lib/note";
 import { Notebook } from "../lib/notebook";
@@ -139,6 +141,18 @@ function requireOriginalPath(original: string, current: NoteLocation) {
     throw new NoteMovedError(
       i18next.t("error/note-moved-retry", { path: current.filePath }),
     );
+}
+
+async function finishGit<T>(
+  result: T,
+  update: () => Promise<void>,
+): Promise<{ result: T; updateFailure?: { error: unknown } }> {
+  try {
+    await update();
+    return { result };
+  } catch (error) {
+    return { result, updateFailure: { error } };
+  }
 }
 
 function useCrossnoteContainer(initialState: InitialState) {
@@ -670,34 +684,30 @@ function useCrossnoteContainer(initialState: InitialState) {
       gitBranch: string,
       gitUsername: string,
       gitPassword: string,
-      gitRememberCredentials: boolean,
       gitCorsProxy: string,
     ) => {
       setIsAddingNotebook(true);
+      const url = repositoryAddress(gitURL);
       try {
         if (
-          gitURL.length &&
+          url.length &&
           notebooks.find(
-            (nb) => nb.gitBranch === gitBranch && nb.gitURL === gitURL,
+            (nb) => nb.gitBranch === gitBranch && nb.gitURL === url,
           )
         ) {
-          setIsAddingNotebook(false);
-          throw new Error(i18next.t("error/notebook-already-exists"));
+          throw new Error("error/notebook-already-exists");
         }
         const notebook = await crossnote.addNotebook({
           name,
-          gitURL,
+          gitURL: url,
           branch: gitBranch,
           username: gitUsername,
           password: gitPassword,
           corsProxy: gitCorsProxy,
-          rememberCredentials: gitRememberCredentials,
         });
         setNotebooks((notebooks) => [notebook, ...notebooks]);
+      } finally {
         setIsAddingNotebook(false);
-      } catch (error) {
-        setIsAddingNotebook(false);
-        throw error;
       }
     },
     [crossnote, notebooks],
@@ -715,8 +725,12 @@ function useCrossnoteContainer(initialState: InitialState) {
 
   const updateNotebook = useCallback(
     async (notebook: Notebook, settings: NotebookSettings) => {
-      await crossnote.saveNotebookSettings(notebook, settings);
+      const credentials = await crossnote.saveNotebookSettings(
+        notebook,
+        settings,
+      );
       setNotebooks((notebooks) => [...notebooks]);
+      return credentials;
     },
     [crossnote],
   );
@@ -792,12 +806,40 @@ function useCrossnoteContainer(initialState: InitialState) {
 
   // Reads a notebook's notes again from disk, and has its open editors take
   // them.
-  const readNotebookAgain = useCallback(async (notebook: Notebook) => {
-    await notebook.refreshNotes({ dir: "./", includeSubdirectories: true });
-    globalEmitter.emit(EventType.PerformedGitOperation, {
-      notebookPath: notebook.dir,
-    });
-  }, []);
+  const readNotebookAgain = useCallback(
+    async (
+      notebook: Notebook,
+      { requireDirectory = false, preservePendingEdits = false } = {},
+    ) => {
+      await notebook.refreshNotes({
+        dir: "./",
+        includeSubdirectories: true,
+        requireDirectory,
+      });
+      globalEmitter.emit(EventType.PerformedGitOperation, {
+        notebookPath: notebook.dir,
+        preservePendingEdits,
+      });
+    },
+    [],
+  );
+
+  const refreshAfterGit = useCallback(
+    async (notebook: Notebook, refreshAfterFailedSave = true) => {
+      try {
+        await flushNotes({ notebookPath: notebook.dir });
+      } catch (error) {
+        if (refreshAfterFailedSave)
+          await readNotebookAgain(notebook, {
+            requireDirectory: true,
+            preservePendingEdits: true,
+          }).catch(console.error);
+        throw error;
+      }
+      await readNotebookAgain(notebook, { requireDirectory: true });
+    },
+    [readNotebookAgain],
+  );
 
   const refreshNotebook = useCallback(
     async (notebook: Notebook) => {
@@ -819,21 +861,23 @@ function useCrossnoteContainer(initialState: InitialState) {
       if (!crossnote) {
         return;
       }
+      // Written first, or a write still to come would put back after the
+      // reset what was typed before it. An editor typed into while the reset
+      // runs then writes what it holds, which keeps the typing and undoes
+      // the reset for that note; that is written, or fails, before the
+      // notebook is read again, so the editors take what is on disk then.
+      // A write that fails does not stop the reading again: the reset is
+      // done.
       try {
-        // Written first, or a write still to come would put back after the
-        // reset what was typed before it. An editor typed into while the reset
-        // runs then writes what it holds, which keeps the typing and undoes
-        // the reset for that note; that is written, or fails, before the
-        // notebook is read again, so the editors take what is on disk then.
-        // A write that fails does not stop the reading again: the reset is
-        // done.
         await saveOpenNotes({ notebookPath: notebook.dir });
-        await crossnote.hardResetNotebook(notebook, notebook.localSha);
-        await flushNotes({ notebookPath: notebook.dir }).catch(() => {});
-        await readNotebookAgain(notebook);
-      } catch (error) {}
+      } catch (error) {
+        if (error instanceof NotesNotSavedError) return;
+        throw error;
+      }
+      await crossnote.hardResetNotebook(notebook, notebook.localSha);
+      return finishGit(true, () => refreshAfterGit(notebook));
     },
-    [crossnote, saveOpenNotes, readNotebookAgain],
+    [crossnote, saveOpenNotes, refreshAfterGit],
   );
 
   const pushNotebook = useCallback(
@@ -844,36 +888,30 @@ function useCrossnoteContainer(initialState: InitialState) {
       setIsPushingNotebook(true);
       try {
         await saveOpenNotes({ notebookPath: args.notebook.dir });
-        await crossnote.pushNotebook(args);
-        await flushNotes({ notebookPath: args.notebook.dir });
-        await args.notebook.refreshNotes({
-          dir: "./",
-          includeSubdirectories: true,
-        });
-        globalEmitter.emit(EventType.PerformedGitOperation, {
-          notebookPath: args.notebook.dir,
-        });
-        setIsPushingNotebook(false);
+        const result = await crossnote.pushNotebook(args);
+        return await finishGit(result, () => refreshAfterGit(args.notebook));
       } catch (error) {
-        setIsPushingNotebook(false);
         if (
           error instanceof NotebookConflictError ||
-          error instanceof IgnoredUploadFileError
+          error instanceof IgnoredUploadFileError ||
+          (error instanceof GitUploadError && error.downloaded)
         ) {
           try {
-            await flushNotes({ notebookPath: args.notebook.dir });
-            await readNotebookAgain(args.notebook);
+            await refreshAfterGit(
+              args.notebook,
+              error instanceof GitUploadError,
+            );
           } catch (refreshError) {
-            if (!(error instanceof IgnoredUploadFileError)) throw refreshError;
-            // The editor reports failed writes. Keep the ignored path for the
-            // upload dialog even when the notebook could not be refreshed.
+            // Keep the original reason the upload stopped.
             console.error(refreshError);
           }
         }
         throw error;
+      } finally {
+        setIsPushingNotebook(false);
       }
     },
-    [crossnote, saveOpenNotes, readNotebookAgain],
+    [crossnote, saveOpenNotes, refreshAfterGit],
   );
 
   const pullNotebook = useCallback(
@@ -885,22 +923,12 @@ function useCrossnoteContainer(initialState: InitialState) {
       try {
         await saveOpenNotes({ notebookPath: args.notebook.dir });
         const result = await crossnote.pullNotebook(args);
-        await flushNotes({ notebookPath: args.notebook.dir });
-        await args.notebook.refreshNotes({
-          dir: "./",
-          includeSubdirectories: true,
-        });
-        globalEmitter.emit(EventType.PerformedGitOperation, {
-          notebookPath: args.notebook.dir,
-        });
+        return await finishGit(result, () => refreshAfterGit(args.notebook));
+      } finally {
         setIsPullingNotebook(false);
-        return result;
-      } catch (error) {
-        setIsPullingNotebook(false);
-        throw error;
       }
     },
-    [crossnote, saveOpenNotes],
+    [crossnote, saveOpenNotes, refreshAfterGit],
   );
 
   const checkoutNote = useCallback(
@@ -916,23 +944,33 @@ function useCrossnoteContainer(initialState: InitialState) {
             filePath: note.filePath,
           });
         } catch (error) {
-          return;
+          if (error instanceof NotesNotSavedError) return;
+          throw error;
         }
-        const newNote = await writeNoteOperation(location, async () => {
+        const updateFailure = await writeNoteOperation(location, async () => {
           requireOriginalPath(note.filePath, location);
           return notebook.checkoutNote(note);
         });
-        await notebook.refreshNotes({
-          dir: "./",
-          includeSubdirectories: true,
+        const completed = await finishGit(true, async () => {
+          const restored = await notebook.getNote(note.filePath, true);
+          if (restored) {
+            notebook.search.remove(restored.filePath);
+            notebook.search.add(
+              restored.filePath,
+              restored.title,
+              restored.config.aliases,
+            );
+            globalEmitter.emit(EventType.PerformedGitOperation, {
+              notebookPath: notebook.dir,
+            });
+          } else {
+            await readNotebookAgain(notebook, { requireDirectory: true });
+          }
         });
-        globalEmitter.emit(EventType.PerformedGitOperation, {
-          notebookPath: note.notebookPath,
-        });
-        return newNote;
+        return updateFailure ? { ...completed, updateFailure } : completed;
       });
     },
-    [getNotebookAtPath, saveOpenNotes],
+    [getNotebookAtPath, saveOpenNotes, readNotebookAgain],
   );
 
   const getNote = useCallback(
@@ -1185,8 +1223,8 @@ favorited: true
               notebookPath: notebook.dir,
             });
           }
-        } catch (error) {
-          console.error(error);
+        } catch {
+          // fetchNotebook records sign-in failures for the sidebar.
         }
       }
     }

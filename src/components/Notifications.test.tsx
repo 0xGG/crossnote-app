@@ -2,13 +2,9 @@ import { Dialog } from "@mui/material";
 import i18next from "i18next";
 import React, { act } from "react";
 import { createRoot, Root } from "react-dom/client";
-import { afterEach, beforeEach, expect, it } from "vitest";
+import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import "../i18n/i18n";
-import {
-  closeNotification,
-  notify,
-  resetNotifications,
-} from "../lib/notifications";
+import { notify, resetNotifications } from "../lib/notifications";
 import Notifications from "./Notifications";
 
 // Tells React it runs under a test, so act() flushes renders and effects.
@@ -36,16 +32,21 @@ function shownMessage(): HTMLElement {
   return document.querySelector('[role="alert"]');
 }
 
-it("drops a message closed before it was shown instead of stalling the queue", () => {
-  act(() => root.render(<Notifications />));
-
-  act(() => {
-    notify({ severity: "info", message: "first" });
-    closeNotification();
-    notify({ severity: "error", message: "second" });
-  });
-
-  expect(shownMessage()?.textContent).toBe("second");
+it("shows the next notification after the visible one is closed", async () => {
+  vi.useFakeTimers();
+  try {
+    act(() => root.render(<Notifications />));
+    act(() => {
+      notify({ severity: "info", message: "first" });
+      notify({ severity: "error", message: "second" });
+    });
+    expect(shownMessage()?.textContent).toBe("first");
+    act(() => shownMessage().querySelector("button").click());
+    await act(async () => vi.advanceTimersByTimeAsync(250));
+    expect(shownMessage()?.textContent).toBe("second");
+  } finally {
+    vi.useRealTimers();
+  }
 });
 
 it("keeps a message raised while a dialog is open audible", () => {

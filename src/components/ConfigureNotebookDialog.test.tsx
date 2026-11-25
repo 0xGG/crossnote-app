@@ -45,14 +45,14 @@ afterEach(() => {
 
 // Only a notebook cloned from git is checked for updates. Opens its dialog
 // and hands back the notebook and the minutes field.
-function openGitNotebook(onClose = vi.fn()) {
+function openGitNotebook(onClose = vi.fn(), gitCorsProxy = "") {
   const notebook = {
     name: "Notes",
     gitURL: "https://example.com/notes.git",
     gitBranch: "main",
     gitUsername: "",
     gitPassword: "",
-    gitCorsProxy: "",
+    gitCorsProxy,
     autoFetchPeriod: 60 * 60000,
   } as Notebook;
   act(() =>
@@ -69,6 +69,32 @@ function openGitNotebook(onClose = vi.fn()) {
   );
   return { notebook, minutes };
 }
+
+it("keeps the saved proxy on unrelated edits and only saves a typed replacement", async () => {
+  const legacy = "https://crossnote.app/cors";
+  const { notebook } = openGitNotebook(vi.fn(), legacy);
+  const save = buttonByText(document, "Save");
+  const name = document.querySelector("input")!;
+  act(() => typeInput(name, "Renamed"));
+  await act(async () => save.click());
+  expect(updateNotebook).toHaveBeenLastCalledWith(
+    notebook,
+    expect.objectContaining({ name: "Renamed", gitCorsProxy: legacy }),
+  );
+  const gitSection = Array.from(document.querySelectorAll("button")).find(
+    (button) => button.textContent.includes("Git repository"),
+  )!;
+  act(() => gitSection.click());
+  const proxy = Array.from(document.querySelectorAll("input")).find(
+    (input) => input.value === legacy,
+  )!;
+  act(() => typeInput(proxy, "https://approved.example.test"));
+  await act(async () => save.click());
+  expect(updateNotebook).toHaveBeenLastCalledWith(
+    notebook,
+    expect.objectContaining({ gitCorsProxy: "https://approved.example.test" }),
+  );
+});
 
 it("takes a period between checks for updates with a decimal point", async () => {
   const { notebook, minutes } = openGitNotebook();

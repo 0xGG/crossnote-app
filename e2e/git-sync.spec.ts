@@ -866,7 +866,11 @@ test("finishing a cancelled upload does not close another notebook's upload dial
   await app.open();
   const dir = await cloneRemote(app, a);
   await cloneRemote(app, b);
-  const messages = await app.recordMessages();
+  // The cloned notebooks are ready. Observe the upload in a fresh queue.
+  await page.reload();
+  await app.waitUntilReady();
+  await app.expandNotebook(a.id);
+  await app.expandNotebook(b.id);
   await localBytes(page, `${dir}/README.md`, bytes("Changed A\n"));
   let release!: () => void;
   let reached!: () => void;
@@ -891,16 +895,43 @@ test("finishing a cancelled upload does not close another notebook's upload dial
       .getByRole("treeitem", { name: /Upload/ })
       .click();
     await expect(dialog).toContainText(b.id);
+    const bMessage = dialog.getByRole("textbox", { name: "Commit message" });
+    await bMessage.fill("Draft upload for B");
+    await page.evaluate((notebookDir) => {
+      const { pfs } = window as unknown as FileHost;
+      const storeTree = pfs.storeTree;
+      pfs.storeTree = async (dir) => {
+        if (dir === notebookDir) {
+          pfs.storeTree = storeTree;
+          throw new Error("Could not persist the local upload result");
+        }
+        await storeTree(dir);
+      };
+    }, dir);
     release();
+    const notice = page.getByRole("alert").filter({
+      hasText:
+        "Notebook uploaded. Could not finish updating the local notebook.",
+    });
+    const details = notice.getByRole("button", {
+      name: "Details",
+      exact: true,
+    });
+    await details.focus();
+    await expect(details).toBeFocused();
+    await page.keyboard.press("Enter");
+    await expect(notice).toContainText(
+      "Could not persist the local upload result",
+    );
     await expect
       .poll(() => remoteBytes(request, a, "README.md"))
       .toEqual(bytes("Changed A\n"));
-    await expect.poll(messages).toContain("Notebook uploaded");
     await expect(
       dialog.getByRole("button", { name: "Upload", exact: true }),
     ).toBeEnabled();
     await expect(dialog).toBeVisible();
     await expect(dialog).toContainText(b.id);
+    await expect(bMessage).toHaveValue("Draft upload for B");
   } finally {
     release();
     await page.unroute("**/git-receive-pack");
