@@ -4,7 +4,7 @@ import {
   Button,
   Portal,
   Snackbar,
-  dialogClasses,
+  modalClasses,
 } from "@mui/material";
 import React, { useLayoutEffect, useState, useSyncExternalStore } from "react";
 import { useTranslation } from "react-i18next";
@@ -56,6 +56,8 @@ function NotificationMessage({
   const { t } = useTranslation();
   const [expanded, setExpanded] = useState(false);
   const [copyResult, setCopyResult] = useState<"copied" | "failed">();
+  const [modalOpen, setModalOpen] = useState(false);
+  const deferAction = current.action && modalOpen;
   const [host] = useState(() =>
     current.details || current.action
       ? document.createElement("div")
@@ -64,13 +66,24 @@ function NotificationMessage({
   useLayoutEffect(() => {
     if (!host) return;
     const place = () => {
-      // The navigation drawer stays mounted after it closes.
-      const dialog = Array.from(
-        document.querySelectorAll<HTMLElement>(
-          `.${dialogClasses.paper}[aria-modal="true"]`,
-        ),
-      ).find((dialog) => !dialog.closest('[aria-hidden="true"]'));
+      const modals = Array.from(document.body.children).filter((element) =>
+        element.classList.contains(modalClasses.root),
+      );
+      // The temporary drawer opens and closes without leaving the DOM.
+      for (const modal of modals)
+        observer.observe(modal, {
+          attributes: true,
+          attributeFilter: ["aria-hidden", "class"],
+        });
+      const modal = modals.find(
+        (element) =>
+          !element.classList.contains(modalClasses.hidden) &&
+          element.getAttribute("aria-hidden") !== "true",
+      );
+      const dialog = modal?.querySelector<HTMLElement>('[aria-modal="true"]');
       const target = dialog ?? document.body;
+      // An action that opens a new form waits for the current one to close.
+      setModalOpen(Boolean(dialog));
       if (host.parentElement !== target) {
         // MUI may have hidden the host while it was a sibling of this modal.
         host.removeAttribute("aria-hidden");
@@ -78,9 +91,9 @@ function NotificationMessage({
       }
     };
     // Move one host between MUI dialogs and the page without remounting the notice.
-    place();
     const observer = new MutationObserver(place);
     observer.observe(document.body, { childList: true });
+    place();
     return () => {
       observer.disconnect();
       host.remove();
@@ -101,7 +114,7 @@ function NotificationMessage({
       <Snackbar
         open={open}
         anchorOrigin={anchorOrigin}
-        autoHideDuration={expanded ? null : current.duration}
+        autoHideDuration={expanded || deferAction ? null : current.duration}
         onClose={(_event, reason) => {
           // A click elsewhere on the page is not a request to hide the message.
           if (reason !== "clickaway") {
@@ -118,7 +131,7 @@ function NotificationMessage({
           closeText={t("general/close")}
         >
           <span data-testid="notification-summary">{current.message}</span>
-          {current.action && (
+          {current.action && !deferAction && (
             <Button
               size="small"
               color="inherit"

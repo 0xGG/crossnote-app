@@ -1,10 +1,11 @@
-import type { APIRequestContext, Locator } from "@playwright/test";
+import type { APIRequestContext, Locator, Page } from "@playwright/test";
 import type { CrossnoteApp } from "./crossnote";
 import { expect, test } from "./fixtures";
 import {
   bytes,
   changeRemote,
   cloneRemote,
+  createRemote,
   fixtureURL,
   localBytes,
   remoteBytes,
@@ -147,6 +148,23 @@ async function startUpload(app: CrossnoteApp, remote: Remote, scope?: Locator) {
   const dialog = app.page.getByRole("dialog");
   await dialog.getByRole("button", { name: "Upload", exact: true }).click();
   await expect(dialog).toBeHidden({ timeout: 20_000 });
+}
+
+async function holdNextGitRead(page: Page) {
+  let release!: () => void;
+  let requested!: () => void;
+  const held = new Promise<void>((resolve) => (release = resolve));
+  const started = new Promise<void>((resolve) => (requested = resolve));
+  await page.route(
+    "**/info/refs?service=git-upload-pack",
+    async (route) => {
+      requested();
+      await held;
+      await route.continue();
+    },
+    { times: 1 },
+  );
+  return { started, release };
 }
 
 test("uses saved clone credentials for both upload stages and retries the original pending commit", async ({
@@ -447,6 +465,63 @@ test("shows one download authentication failure and retries after changing saved
   expect(await app.storedText(`${dir}/Incoming.md`)).toContain("Retry result");
 });
 
+test("keeps another notebook's settings draft until its editor closes", async ({
+  app,
+  page,
+  request,
+}) => {
+  const a = await createPrivateRemote(request);
+  const b = await createRemote(request, { "README.md": bytes("# Notes\n") });
+  await clonePrivate(app, a);
+  await cloneRemote(app, b);
+  await dismissAlert(app, /Notebook cloned/i);
+  const dialog = page.getByRole("dialog");
+  await app
+    .notebook(a.id)
+    .getByRole("treeitem", { name: /Settings/ })
+    .click();
+  await saveCredentials(dialog, null);
+  await dismissAlert(app, cleared);
+  await page.clock.install();
+
+  const { started, release } = await holdNextGitRead(page);
+  const bName = "Saved settings for B";
+  try {
+    await app
+      .notebook(a.id)
+      .getByRole("treeitem", { name: /Upload/ })
+      .click();
+    await dialog.getByRole("button", { name: "Upload", exact: true }).click();
+    await started;
+    await dialog.getByRole("button", { name: "Cancel", exact: true }).click();
+    await app
+      .notebook(b.id)
+      .getByRole("treeitem", { name: /Settings/ })
+      .click();
+    await dialog.getByRole("textbox", { name: "Notebook name" }).fill(bName);
+  } finally {
+    release();
+  }
+
+  const result = page.getByRole("alert").filter({
+    hasText: "Upload stopped during download. Nothing was pushed.",
+  });
+  const change = result.getByRole("button", { name: "Change Git credentials" });
+  await expect(dialog.getByRole("alert")).toBeVisible();
+  await expect(change).toHaveCount(0);
+  await page.clock.fastForward(8500);
+  await expect(result).toBeVisible();
+  await dialog.getByRole("button", { name: "Save", exact: true }).click();
+  await expect(dialog).toBeHidden();
+  await expect(app.notebook(bName)).toBeVisible();
+  await change.focus();
+  await expect(change).toBeFocused();
+  await page.keyboard.press("Enter");
+  await expect(
+    dialog.getByRole("textbox", { name: "Notebook name" }),
+  ).toHaveValue(a.id);
+});
+
 test("allows keyboard access to Git results from the narrow drawer", async ({
   app,
   page,
@@ -464,11 +539,29 @@ test("allows keyboard access to Git results from the narrow drawer", async ({
   await page.setViewportSize({ width: 375, height: 700 });
 
   for (const run of [
-    (drawer: Locator) =>
-      app
-        .notebook(remote.id, drawer)
-        .getByRole("treeitem", { name: /Download/ })
-        .click(),
+    async (drawer: Locator) => {
+      const { started, release } = await holdNextGitRead(page);
+      try {
+        await app
+          .notebook(remote.id, drawer)
+          .getByRole("treeitem", { name: /Download/ })
+          .click();
+        await started;
+        await page.getByRole("button", { name: "Open menu" }).click();
+        await expect(drawer).toBeVisible();
+      } finally {
+        release();
+      }
+      const details = drawer.getByRole("button", {
+        name: "Details",
+        exact: true,
+      });
+      await details.focus({ timeout: 5000 });
+      await expect(details).toBeFocused();
+      await page.keyboard.press("Escape");
+      await expect(drawer).toBeHidden();
+      await expect(page.getByRole("alert")).toBeVisible();
+    },
     (drawer: Locator) => startUpload(app, remote, drawer),
   ]) {
     await page.getByRole("button", { name: "Open menu" }).click();
@@ -478,7 +571,7 @@ test("allows keyboard access to Git results from the narrow drawer", async ({
     const change = alert.getByRole("button", {
       name: "Change Git credentials",
     });
-    await change.focus();
+    await change.focus({ timeout: 5000 });
     await expect(change).toBeFocused();
     await page.keyboard.press("Tab");
     await expect(
