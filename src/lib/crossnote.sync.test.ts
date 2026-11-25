@@ -1382,7 +1382,7 @@ it("confirms a commit already received after a lost reply without another push",
     fetchHead: pending,
   });
   const commit = vi.spyOn(git, "commit");
-  await app.pushNotebook({ notebook });
+  await expect(app.pushNotebook({ notebook })).resolves.toBe("confirmed");
   expect(push).toHaveBeenCalledTimes(1);
   expect(commit).not.toHaveBeenCalled();
   expect(await app["notebookDB"].get(notebook._id)).toMatchObject({

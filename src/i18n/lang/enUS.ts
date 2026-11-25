@@ -101,8 +101,6 @@ export const enUS = {
     "general/optional": "optional",
     "general/url": "Url",
     "general/branch": "branch",
-    "general/remember-username-and-password": "Remember credentials",
-    "general/stored-locally": "stored locally",
     "general/cors-proxy": "CORS proxy",
     "general/why-cors-proxy": "Why do we need CORS proxy？",
     "general/today": "Today",
@@ -283,5 +281,43 @@ export const enUS = {
     "layout/move-tabset": "Move tabset",
     "layout/error-rendering-component": "Error rendering component",
     "layout/retry": "Retry",
+    "git/credentials-storage": "Credentials are saved in this browser.",
+    "git/proxy-credentials": "The selected proxy can see these credentials.",
+    "git/change-credentials": "Change Git credentials",
+    "git/needs-login": "Git sign-in required",
+    "git/credentials-saved": "Git credentials saved",
+    "git/credentials-cleared": "Git credentials cleared",
+    "git/cloned": "Notebook cloned",
+    "git/cloned-credentials": "Notebook cloned. Git credentials saved.",
+    "git/clone-failed": "Failed to clone notebook",
+    "git/download-auth-failed": "Authentication failed during download",
+    "git/upload-unchanged": "No changes to upload",
+    "git/upload-confirmed": "The remote already has your local commit",
+    "git/downloaded-no-upload":
+      "Downloaded remote changes. No changes to upload.",
+    "git/upload-download-failed":
+      "Upload stopped during download. Nothing was pushed.",
+    "git/upload-prepare-failed": "Failed to prepare local changes for upload",
+    "git/upload-push-failed-after-download": "Download completed. Push failed.",
+    "git/uploaded-and-downloaded":
+      "Downloaded remote changes. Notebook uploaded.",
+    "git/confirmed-and-downloaded":
+      "The remote already has your local commit. Downloaded newer changes.",
+    "git/local-update-failed":
+      "{{outcome}}. Could not finish updating the local notebook.",
+    "git/checkout-complete": "Checkout command completed",
+    "git/checkout-failed": "Checkout failed",
+    "git/reset-complete": "Reset command completed",
+    "git/reset-failed": "Notebook reset failed",
+    "git/details": "Details",
+    "git/copy-details": "Copy details",
+    "git/details-copied": "Details copied",
+    "git/copy-failed": "Could not copy details",
+    "error/git-credentials-require-https":
+      "Git credentials require HTTPS for the repository and its proxy.",
+    "error/git-unexpected-target":
+      "Git credentials can only be sent to the configured repository or proxy.",
+    "error/git-confirm-proxy":
+      "Save the proxy shown in notebook settings before using Git credentials.",
   },
 };

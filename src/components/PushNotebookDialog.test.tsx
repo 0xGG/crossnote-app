@@ -11,11 +11,17 @@ import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import "../i18n/i18n";
 import { Notebook } from "../lib/notebook";
 import { IgnoredUploadFileError } from "../lib/notebookOperation";
+import type { PushNotebookResult } from "../lib/crossnote";
 import PushNotebookDialog from "./PushNotebookDialog";
+
+type PushOutcome = {
+  result: PushNotebookResult;
+  updateFailure?: { error: unknown };
+};
 
 // A push that never settles, so the dialog stays as it is after the click.
 const { pushNotebook, settings } = vi.hoisted(() => ({
-  pushNotebook: vi.fn(() => new Promise<void>(() => {})),
+  pushNotebook: vi.fn(() => new Promise<PushOutcome>(() => {})),
   settings: { authorName: "", authorEmail: "" },
 }));
 
@@ -54,18 +60,22 @@ afterEach(() => {
   unmountTestRoot(container, root);
 });
 
-const notebook = {
-  name: "Notes",
-  gitURL: "https://example.com/notes.git",
-  gitBranch: "main",
-  gitUsername: "",
-  gitPassword: "",
-} as Notebook;
-
-function upload() {
+function upload(gitUsername = "") {
+  const notebook = Object.assign(new Notebook(), {
+    name: "Notes",
+    gitURL: "https://example.com/notes.git",
+    gitBranch: "main",
+    gitUsername,
+    gitPassword: "",
+  });
   act(() =>
     root.render(
-      <PushNotebookDialog open={true} onClose={() => {}} notebook={notebook} />,
+      <PushNotebookDialog
+        open
+        onClose={() => {}}
+        onOpenSettings={() => {}}
+        notebook={notebook}
+      />,
     ),
   );
   const button = buttonByText(document, "Upload");
@@ -92,10 +102,10 @@ it("commits under the name the settings start with when the name is cleared", ()
 });
 
 it("reports completion in the language selected during upload", async () => {
-  let resolvePush: () => void;
+  let resolvePush: (outcome: PushOutcome) => void;
   pushNotebook.mockImplementationOnce(
     () =>
-      new Promise<void>((resolve) => {
+      new Promise<PushOutcome>((resolve) => {
         resolvePush = resolve;
       }),
   );
@@ -103,12 +113,35 @@ it("reports completion in the language selected during upload", async () => {
   await act(() => i18next.changeLanguage("en-US"));
   upload();
   await act(() => i18next.changeLanguage("zh-CN"));
-  await act(async () => resolvePush());
+  await act(async () => resolvePush({ result: "uploaded" }));
   expect(notify).toHaveBeenCalledWith(
     expect.objectContaining({ message: "笔记本已上传" }),
   );
   notify.mockRestore();
   await act(() => i18next.changeLanguage("en-US"));
+});
+
+it("reports confirmed delivery and the local refresh failure in one notice", async () => {
+  const notify = vi.spyOn(notifications, "notify");
+  try {
+    pushNotebook.mockResolvedValueOnce({
+      result: "confirmed-and-downloaded",
+      updateFailure: { error: new Error("Could not refresh notes") },
+    });
+    upload();
+    await act(async () => {});
+    expect(notify).toHaveBeenCalledOnce();
+    expect(notify).toHaveBeenCalledWith(
+      expect.objectContaining({
+        severity: "warning",
+        message:
+          "The remote already has your local commit. Downloaded newer changes. Could not finish updating the local notebook.",
+        details: "Could not refresh notes",
+      }),
+    );
+  } finally {
+    notify.mockRestore();
+  }
 });
 
 it("names the ignored file that stopped the upload", async () => {
@@ -128,4 +161,23 @@ it("names the ignored file that stopped the upload", async () => {
     ),
   );
   notify.mockRestore();
+});
+
+it("redacts the ignored path when the same word appears in the prompt", async () => {
+  await act(() => i18next.changeLanguage("en-US"));
+  pushNotebook.mockRejectedValueOnce(new IgnoredUploadFileError("because"));
+  const notify = vi.spyOn(notifications, "notify");
+  try {
+    upload("because");
+    await act(async () => {});
+    expect(notify).toHaveBeenCalledWith(
+      expect.objectContaining({
+        message:
+          "Upload paused because [redacted] matches a Git ignore rule. Update the rule and retry.",
+        details: expect.stringContaining("\n[redacted]"),
+      }),
+    );
+  } finally {
+    notify.mockRestore();
+  }
 });

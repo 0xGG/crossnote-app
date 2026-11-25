@@ -69,6 +69,7 @@ export class Notebook {
   public gitCorsProxy?: string;
   public gitUsername?: string;
   public gitPassword?: string;
+  public gitNeedsLogin?: boolean;
   public autoFetchPeriod: number; // in milliseconds
   public fetchedAt: Date;
   public remoteSha: string;
@@ -251,29 +252,21 @@ export class Notebook {
     return await this.getNote(newFilePath, true);
   }
 
-  public async checkoutNote(note: Note): Promise<Note> {
-    try {
-      await git.checkout({
+  public async checkoutNote(note: Note): Promise<void> {
+    await git.checkout({
+      fs: fs,
+      dir: this.dir,
+      filepaths: [note.filePath],
+      force: true,
+    });
+    if (await pfs.exists(path.resolve(this.dir, note.filePath))) {
+      await git.add({
         fs: fs,
         dir: this.dir,
-        // ref: "HEAD"
-        // ref: note.notebook.gitBranch,
-        filepaths: [note.filePath],
-        force: true,
+        filepath: note.filePath,
       });
-      if (await pfs.exists(path.resolve(this.dir, note.filePath))) {
-        await git.add({
-          // .remove is wrong
-          fs: fs,
-          dir: this.dir,
-          filepath: note.filePath,
-        });
-      }
-      await pfs.storeTree(this.dir);
-      return await this.getNote(note.filePath, true);
-    } catch (error) {
-      return null;
     }
+    await pfs.storeTree(this.dir);
   }
 
   public async getNote(

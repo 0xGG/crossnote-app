@@ -1,5 +1,4 @@
 import { builtInTabLabels } from "../lib/tabNode";
-import { isAppErrorKey } from "../i18n/i18n";
 import { RecoveryDirectoryCollisionError } from "../lib/recoveryDirectory";
 import i18next from "i18next";
 import { Box, Chip, IconButton, Tooltip, Typography } from "@mui/material";
@@ -21,7 +20,8 @@ import { Note, Notes } from "../lib/note";
 import { Notebook } from "../lib/notebook";
 import { NotesNotSavedError } from "../lib/noteSaver";
 import { NotebookConflictError } from "../lib/mergeFiles";
-import { notify } from "../lib/notifications";
+import { gitErrorMessage, notifyGit, redactGitText } from "../lib/gitResults";
+import { needsGitSettings } from "../lib/gitConnection";
 import { Emoji } from "./EmojiWrapper";
 
 // Every tree item here passed the same four slot classes, so those four rules
@@ -329,71 +329,78 @@ export default function NotebookTreeView(props: Props) {
   const openSettings = props.onOpenSettings;
   const upload = props.onOpenUpload;
   const reload = () => crossnoteContainer.refreshNotebook(props.notebook);
-  const download = () => {
+  const download = async () => {
     if (
       crossnoteContainer.isPullingNotebook ||
       crossnoteContainer.isPushingNotebook
     ) {
       return;
     }
-    crossnoteContainer
-      .pullNotebook({
+    const credentials = props.notebook;
+    const describe = (error: NotebookConflictError) =>
+      error.describe((file, side) =>
+        i18next.t(`error/notebook-file-deleted-${side}`, { file }),
+      );
+    try {
+      const completed = await crossnoteContainer.pullNotebook({
         notebook: props.notebook,
-        onAuthFailure: () => {
-          notify({
-            severity: "error",
-            message: i18next.t("error/authentication-failed"),
-            duration: 5000,
-          });
-        },
-      })
-      .then((result) => {
-        notify({
-          severity: result?.numConflicts ? "warning" : "success",
-          message: result?.numConflicts
-            ? i18next.t("error/notebook-sync-conflicts", {
-                files: new NotebookConflictError(
-                  result.conflicts,
-                  result.deletions,
-                ).describe((file, side) =>
-                  i18next.t(`error/notebook-file-deleted-${side}`, { file }),
-                ),
-              })
-            : result?.status === "pending-upload"
-              ? i18next.t("info/notebook-pending-upload")
-              : result?.status === "up-to-date"
-                ? i18next.t("success/notebook-up-to-date")
-                : i18next.t("success/notebook-downloaded"),
-        });
-      })
-      .catch((error) => {
-        if (error instanceof RecoveryDirectoryCollisionError) {
-          crossnoteContainer.setRecoveryCollision({
-            notebook: props.notebook,
-            directory: error.directory,
-            canRelease: error.canRelease,
-          });
-          return;
-        }
-        console.log(error);
-        // Already said: which note could not be saved first.
-        if (error instanceof NotesNotSavedError) {
-          return;
-        }
-        notify({
-          severity: "error",
-          message:
-            error instanceof NotebookConflictError
-              ? i18next.t("error/notebook-sync-conflicts", {
-                  files: error.describe((file, side) =>
-                    i18next.t(`error/notebook-file-deleted-${side}`, { file }),
-                  ),
-                })
-              : error instanceof Error && isAppErrorKey(error.message)
-                ? i18next.t(error.message)
-                : i18next.t("error/failed-to-download-notebook"),
-        });
       });
+      if (!completed) return;
+      const { result, updateFailure } = completed;
+      if (result.numConflicts) {
+        const files = describe(
+          new NotebookConflictError(result.conflicts, result.deletions),
+        );
+        notifyGit(
+          "warning",
+          i18next.t("error/notebook-sync-conflicts", {
+            files: redactGitText(files, credentials),
+          }),
+          { files, credentials, updateFailure },
+        );
+      } else {
+        notifyGit(
+          "success",
+          i18next.t(
+            result.status === "pending-upload"
+              ? "info/notebook-pending-upload"
+              : result.status === "up-to-date"
+                ? "success/notebook-up-to-date"
+                : "success/notebook-downloaded",
+          ),
+          { credentials, updateFailure },
+        );
+      }
+    } catch (error) {
+      if (error instanceof RecoveryDirectoryCollisionError) {
+        crossnoteContainer.setRecoveryCollision({
+          notebook: props.notebook,
+          directory: error.directory,
+          canRelease: error.canRelease,
+        });
+        return;
+      }
+      // The note save already reported which edit could not be written.
+      if (error instanceof NotesNotSavedError) return;
+      const openSettings = needsGitSettings(error)
+        ? props.onOpenSettings
+        : undefined;
+      const files =
+        error instanceof NotebookConflictError ? describe(error) : undefined;
+      const message = files
+        ? i18next.t("error/notebook-sync-conflicts", {
+            files: redactGitText(files, credentials),
+          })
+        : gitErrorMessage(
+            error,
+            i18next.t(
+              openSettings
+                ? "git/download-auth-failed"
+                : "error/failed-to-download-notebook",
+            ),
+          );
+      notifyGit("error", message, { error, credentials, files, openSettings });
+    }
   };
 
   return (
@@ -449,6 +456,15 @@ export default function NotebookTreeView(props: Props) {
                   )}
                 </EmojiIcon>
                 {props.notebook.name}
+                {props.notebook.gitNeedsLogin && (
+                  <Typography
+                    component="span"
+                    variant="caption"
+                    sx={{ display: "block", color: "warning.main" }}
+                  >
+                    {t("git/needs-login")}
+                  </Typography>
+                )}
               </LabelText>
             </LabelRoot>
           }

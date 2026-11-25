@@ -237,7 +237,10 @@ export class CrossnoteApp {
         for (const message of document.querySelectorAll('[role="alert"]')) {
           if (!seen.has(message)) {
             seen.add(message);
-            kept.push(message.textContent ?? "");
+            const summary = message.querySelector(
+              '[data-testid="notification-summary"]',
+            );
+            kept.push((summary ?? message).textContent ?? "");
           }
         }
       }).observe(document.body, { childList: true, subtree: true });

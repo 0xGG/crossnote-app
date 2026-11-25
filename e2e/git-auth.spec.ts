@@ -1,0 +1,452 @@
+import type { APIRequestContext, Locator } from "@playwright/test";
+import type { CrossnoteApp } from "./crossnote";
+import { expect, test } from "./fixtures";
+import {
+  bytes,
+  changeRemote,
+  fixtureURL,
+  localBytes,
+  remoteBytes,
+  type FileHost,
+  type Remote,
+} from "./git";
+
+type Credentials = { username: string; password: string };
+type PrivateRemote = Remote & { credentials: Credentials };
+type GitRequest = {
+  method: "GET" | "POST";
+  service: "git-upload-pack" | "git-receive-pack";
+  status: number;
+  auth: "missing" | "accepted" | "rejected";
+};
+
+const downloaded = [
+  { method: "GET", service: "git-upload-pack", status: 401, auth: "missing" },
+  { method: "GET", service: "git-upload-pack", status: 200, auth: "accepted" },
+  { method: "POST", service: "git-upload-pack", status: 200, auth: "accepted" },
+] satisfies GitRequest[];
+const receive = [
+  { method: "GET", service: "git-receive-pack", status: 401, auth: "missing" },
+  { method: "GET", service: "git-receive-pack", status: 200, auth: "accepted" },
+] satisfies GitRequest[];
+const story = "# Story\n\nOriginal remote story.\n";
+const saved = /Git credentials saved/i;
+const cleared = /Git credentials cleared/i;
+
+function expectFailedPull(traffic: GitRequest[]) {
+  expect(traffic.length).toBeGreaterThan(0);
+  for (const request of traffic) expect(request).toEqual(downloaded[0]);
+}
+
+test.describe.configure({ timeout: 90_000 });
+// Keep captured evidence limited to classified requests and the assertions.
+test.use({ trace: "off", screenshot: "off" });
+
+async function createPrivateRemote(request: APIRequestContext) {
+  const response = await request.post(`${fixtureURL}/repos`, {
+    data: { private: true, files: { "Story.md": bytes(story) } },
+  });
+  expect(response.ok()).toBe(true);
+  const remote: PrivateRemote = await response.json();
+  expect(new URL(remote.url).origin).toBe(fixtureURL);
+  expect(new URL(remote.proxy).origin).toBe(fixtureURL);
+  return remote;
+}
+
+async function remoteHead(request: APIRequestContext, remote: Remote) {
+  const response = await request.get(`${fixtureURL}/repos/${remote.id}`);
+  expect(response.ok()).toBe(true);
+  return ((await response.json()) as { sha: string }).sha;
+}
+
+async function remoteRequests(request: APIRequestContext, remote: Remote) {
+  const response = await request.get(
+    `${fixtureURL}/repos/${remote.id}/requests`,
+  );
+  expect(response.ok()).toBe(true);
+  return (await response.json()) as GitRequest[];
+}
+
+async function setWriteDenied(
+  request: APIRequestContext,
+  remote: Remote,
+  denyReceive: boolean,
+) {
+  const response = await request.put(
+    `${fixtureURL}/repos/${remote.id}/permissions`,
+    {
+      data: { denyReceive },
+    },
+  );
+  expect(response.ok()).toBe(true);
+}
+
+function userField(dialog: Locator) {
+  return dialog.getByLabel(/username(?: \(optional\))?$/i);
+}
+
+function passwordField(dialog: Locator) {
+  return dialog.getByLabel(/password(?: \(optional\))?$/i);
+}
+
+async function fillCredentials(
+  dialog: Locator,
+  credentials: Credentials | null,
+) {
+  await expect(userField(dialog)).toBeVisible();
+  await expect(passwordField(dialog)).toBeVisible();
+  try {
+    await userField(dialog).fill(credentials?.username ?? "");
+    await passwordField(dialog).fill(credentials?.password ?? "");
+  } catch {
+    // Playwright's fill error includes the value in its call log.
+    throw new Error("Could not enter fixture credentials in the dialog");
+  }
+}
+
+async function dismissAlert(app: CrossnoteApp, message: RegExp) {
+  const alert = app.page.getByRole("alert").filter({ hasText: message });
+  await expect(alert).toBeVisible();
+  await alert.getByRole("button", { name: "Close", exact: true }).click();
+  await expect(alert).toBeHidden();
+}
+
+async function clonePrivate(app: CrossnoteApp, remote: PrivateRemote) {
+  const { page } = app;
+  await app.open();
+  const before = await page.evaluate(() =>
+    (window as unknown as FileHost).pfs.readdir("/notebooks"),
+  );
+  await app.sidebar.getByRole("button", { name: "Add a notebook" }).click();
+  const dialog = page.getByRole("dialog");
+  await dialog
+    .getByRole("textbox", { name: "Url", exact: true })
+    .fill(remote.url);
+  await dialog
+    .getByRole("textbox", { name: "CORS proxy", exact: true })
+    .fill(remote.proxy);
+  await expect(
+    dialog.getByRole("checkbox", { name: /Remember credentials/i }),
+  ).toHaveCount(0);
+  if ((await userField(dialog).getAttribute("type")) === "text")
+    await dialog
+      .getByRole("button", { name: "toggle username visibility" })
+      .click();
+  await fillCredentials(dialog, remote.credentials);
+  await dialog.getByRole("button", { name: "Add", exact: true }).click();
+  await expect(app.notebook(remote.id)).toBeVisible({ timeout: 20_000 });
+  await expect(dialog).toBeHidden();
+  // The authenticated clone must be registered before claiming persistence.
+  await dismissAlert(app, saved);
+  const dirs = await page.evaluate(() =>
+    (window as unknown as FileHost).pfs.readdir("/notebooks"),
+  );
+  const added = dirs.filter((dir) => !before.includes(dir));
+  expect(added).toHaveLength(1);
+  await app.openNotes(remote.id);
+  return `/notebooks/${added[0]}`;
+}
+
+async function revealGitSettings(dialog: Locator) {
+  const accordion = dialog.getByRole("button", { name: /Git repository/ });
+  if ((await accordion.getAttribute("aria-expanded")) !== "true")
+    await accordion.click();
+}
+
+async function saveCredentials(
+  dialog: Locator,
+  credentials: Credentials | null,
+) {
+  await revealGitSettings(dialog);
+  await fillCredentials(dialog, credentials);
+  await dialog.getByRole("button", { name: "Save", exact: true }).click();
+  await expect(dialog).toBeHidden();
+}
+
+async function startUpload(app: CrossnoteApp, remote: Remote) {
+  await app
+    .notebook(remote.id)
+    .getByRole("treeitem", { name: /Upload/ })
+    .click();
+  const dialog = app.page.getByRole("dialog");
+  await expect(userField(dialog)).toHaveCount(0);
+  await expect(passwordField(dialog)).toHaveCount(0);
+  await dialog.getByRole("button", { name: "Upload", exact: true }).click();
+  await expect(dialog).toBeHidden({ timeout: 20_000 });
+}
+
+test("uses saved clone credentials for both upload stages and retries the original pending commit", async ({
+  app,
+  request,
+  page,
+}) => {
+  const remote = await createPrivateRemote(request);
+  const dir = await clonePrivate(app, remote);
+  const readHead = async () =>
+    (await app.storedText(`${dir}/.git/refs/heads/master`))?.trim();
+  const file = `${dir}/Story.md`;
+  expect(await remoteRequests(request, remote)).toEqual(downloaded);
+
+  await page.reload();
+  await app.waitUntilReady();
+  await app.openNotes(remote.id);
+  await app.refuseWrites();
+  const before = await app.storedText(file);
+  await app.noteCards.getByText("Story", { exact: true }).click();
+  await expect(app.preview).toContainText("Original remote story.");
+  expect(await app.refusedWrites()).toEqual([]);
+  expect(await app.storedText(file)).toBe(before);
+  await app.refuseWrites(false);
+
+  await app.modeButton("Edit").click();
+  await app.setEditorText(
+    "# Story\n\nA local edit that must reach the remote.\n",
+    app.visibleEditor,
+  );
+  await expect
+    .poll(() => app.storedText(file))
+    .toContain("A local edit that must reach the remote.");
+  const edited = (await app.storedText(file))!;
+  await changeRemote(request, remote, {
+    "Incoming.md": bytes("# New remote note\n"),
+  });
+  const incoming = await remoteHead(request, remote);
+  await setWriteDenied(request, remote, true);
+  await startUpload(app, remote);
+  await dismissAlert(app, /Download completed\. Push failed\./);
+  let traffic = await remoteRequests(request, remote);
+  expect(traffic.slice(downloaded.length)).toEqual([
+    ...downloaded,
+    ...receive,
+    {
+      method: "POST",
+      service: "git-receive-pack",
+      status: 403,
+      auth: "accepted",
+    },
+  ]);
+  expect(await remoteHead(request, remote)).toBe(incoming);
+  expect(await remoteBytes(request, remote, "Story.md")).toEqual(bytes(story));
+  expect(await app.storedText(`${dir}/Incoming.md`)).toContain(
+    "New remote note",
+  );
+  const pending = await readHead();
+  expect(pending).toMatch(/^[0-9a-f]{40}$/);
+  expect(pending).not.toBe(incoming);
+
+  await page.reload();
+  await app.waitUntilReady();
+  await app.openNotes(remote.id);
+  expect(await readHead()).toBe(pending);
+  expect(await app.storedText(file)).toBe(edited);
+  await setWriteDenied(request, remote, false);
+  await startUpload(app, remote);
+  await dismissAlert(app, /Notebook uploaded/i);
+  expect((await remoteRequests(request, remote)).slice(traffic.length)).toEqual(
+    [
+      ...downloaded,
+      ...receive,
+      {
+        method: "POST",
+        service: "git-receive-pack",
+        status: 200,
+        auth: "accepted",
+      },
+    ],
+  );
+  expect(await remoteHead(request, remote)).toBe(pending);
+  expect(await readHead()).toBe(pending);
+  expect(await remoteBytes(request, remote, "Story.md")).toEqual(bytes(edited));
+
+  traffic = await remoteRequests(request, remote);
+  await startUpload(app, remote);
+  await dismissAlert(app, /No changes to upload/i);
+  expect((await remoteRequests(request, remote)).slice(traffic.length)).toEqual(
+    downloaded,
+  );
+  expect(await remoteHead(request, remote)).toBe(pending);
+
+  await changeRemote(request, remote, {
+    "Remote.md": bytes("# Only downloaded\n"),
+  });
+  const downloadOnly = await remoteHead(request, remote);
+  traffic = await remoteRequests(request, remote);
+  await startUpload(app, remote);
+  await dismissAlert(app, /Downloaded remote changes\. No changes to upload/i);
+  expect((await remoteRequests(request, remote)).slice(traffic.length)).toEqual(
+    downloaded,
+  );
+  expect(await readHead()).toBe(downloadOnly);
+  expect(await app.storedText(`${dir}/Remote.md`)).toContain("Only downloaded");
+
+  const afterReplyLoss = "Saved before the server reply was lost\n";
+  await localBytes(page, file, bytes(afterReplyLoss));
+  await page.route(
+    "**/git-receive-pack",
+    async (route) => {
+      const response = await route.fetch();
+      expect(response.ok()).toBe(true);
+      await route.abort("failed");
+    },
+    { times: 1 },
+  );
+  await startUpload(app, remote);
+  await dismissAlert(app, /Failed to upload notebook/i);
+  const sent = await remoteHead(request, remote);
+  expect(sent).not.toBe(downloadOnly);
+  expect(await readHead()).toBe(sent);
+  expect(await remoteBytes(request, remote, "Story.md")).toEqual(
+    bytes(afterReplyLoss),
+  );
+  await changeRemote(request, remote, {
+    "After.md": bytes("# Newer remote change\n"),
+  });
+  const newer = await remoteHead(request, remote);
+  expect(newer).not.toBe(sent);
+  traffic = await remoteRequests(request, remote);
+  await startUpload(app, remote);
+  await dismissAlert(
+    app,
+    /The remote already has your local commit\. Downloaded newer changes\./,
+  );
+  expect((await remoteRequests(request, remote)).slice(traffic.length)).toEqual(
+    downloaded,
+  );
+  expect(await remoteHead(request, remote)).toBe(newer);
+  expect(await readHead()).toBe(newer);
+  expect(await app.storedText(`${dir}/After.md`)).toContain(
+    "Newer remote change",
+  );
+  expect(await remoteBytes(request, remote, "Story.md")).toEqual(
+    bytes(afterReplyLoss),
+  );
+});
+
+test("shows one download authentication failure and retries after changing saved credentials", async ({
+  app,
+  request,
+  page,
+}) => {
+  const remote = await createPrivateRemote(request);
+  const dir = await clonePrivate(app, remote);
+  await app
+    .notebook(remote.id)
+    .getByRole("treeitem", { name: /Settings/ })
+    .click();
+  await saveCredentials(page.getByRole("dialog"), null);
+  await dismissAlert(app, cleared);
+  await changeRemote(request, remote, {
+    "Incoming.md": bytes("# Retry result\n"),
+  });
+  const incoming = await remoteHead(request, remote);
+
+  await page.clock.install();
+  await page.reload();
+  await app.waitUntilReady();
+  await app.openNotes(remote.id);
+  const beforeCheck = (await remoteRequests(request, remote)).length;
+  const backgroundMessages = await app.recordMessages();
+  await page.clock.fastForward(61 * 60_000);
+  const signIn = app
+    .notebook(remote.id)
+    .getByText("Git sign-in required", { exact: true });
+  await expect(signIn).toBeVisible();
+  expectFailedPull((await remoteRequests(request, remote)).slice(beforeCheck));
+  expect(await backgroundMessages()).toEqual([]);
+  const readHead = async () =>
+    (await app.storedText(`${dir}/.git/refs/heads/master`))?.trim();
+  const local = await readHead();
+  expect(local).not.toBe(incoming);
+  const beforeUpload = (await remoteRequests(request, remote)).length;
+  await startUpload(app, remote);
+  await dismissAlert(
+    app,
+    /Upload stopped during download\. Nothing was pushed\./,
+  );
+  const afterUpload = await remoteRequests(request, remote);
+  expectFailedPull(afterUpload.slice(beforeUpload));
+  expect(await readHead()).toBe(local);
+
+  const before = afterUpload.length;
+  const messages = await app.recordMessages();
+  const download = app
+    .notebook(remote.id)
+    .getByRole("treeitem", { name: /Download/ });
+  await download.click();
+  const change = page
+    .getByRole("alert")
+    .getByRole("button", { name: "Change Git credentials" });
+  await expect(change).toBeVisible();
+  const denied = (await remoteRequests(request, remote)).slice(before);
+  expectFailedPull(denied);
+  expect(await readHead()).toBe(local);
+  expect(await app.storedText(`${dir}/Incoming.md`)).toBeUndefined();
+
+  await change.click();
+  const dialog = page.getByRole("dialog");
+  await expect(dialog).toBeVisible();
+  await revealGitSettings(dialog);
+  const values = await Promise.all([
+    userField(dialog).inputValue(),
+    passwordField(dialog).inputValue(),
+  ]);
+  expect(values.every((value) => value === "")).toBe(true);
+  await saveCredentials(dialog, remote.credentials);
+  await dismissAlert(app, saved);
+  // Anything queued by the failed attempt must arrive before this save notice.
+  const alerts = await messages();
+  expect(alerts).toHaveLength(2);
+  expect(alerts[1]).toMatch(saved);
+  expect((await remoteRequests(request, remote)).slice(before)).toEqual(denied);
+  expect(await readHead()).toBe(local);
+
+  await download.click();
+  await dismissAlert(app, /Notebook downloaded/i);
+  await expect(signIn).toBeHidden();
+  expect(
+    (await remoteRequests(request, remote)).slice(before + denied.length),
+  ).toEqual(downloaded);
+  expect(await readHead()).toBe(incoming);
+  expect(await app.storedText(`${dir}/Incoming.md`)).toContain("Retry result");
+});
+
+test("stops authenticated Git redirects to another repository on either origin", async ({
+  app,
+  request,
+}) => {
+  const source = { ...(await createPrivateRemote(request)), proxy: "" };
+  const target = await createPrivateRemote(request);
+  const dir = await clonePrivate(app, source);
+  const readHead = async () =>
+    (await app.storedText(`${dir}/.git/refs/heads/master`))?.trim();
+  const initial = await readHead();
+  const endpoint = `${fixtureURL}/repos/${source.id}/redirect`;
+  const download = app
+    .notebook(source.id)
+    .getByRole("treeitem", { name: /Download/ });
+
+  for (const crossOrigin of [false, true]) {
+    const response = await request.put(endpoint, {
+      data: { destination: target.id, crossOrigin },
+    });
+    expect(response.ok()).toBe(true);
+    const { redirectOrigin } = await response.json();
+    expect(new URL(redirectOrigin).hostname).toBe("127.0.0.1");
+    expect(redirectOrigin !== fixtureURL).toBe(crossOrigin);
+
+    const before = (await remoteRequests(request, source)).length;
+    await download.click();
+    await dismissAlert(app, /failed to download|download.*failed/i);
+    expect((await remoteRequests(request, source)).slice(before)).toEqual([
+      downloaded[0],
+      {
+        method: "GET",
+        service: "git-upload-pack",
+        status: 307,
+        auth: "accepted",
+      },
+    ]);
+    expect(await remoteRequests(request, target)).toEqual([]);
+    expect(await readHead()).toBe(initial);
+  }
+});

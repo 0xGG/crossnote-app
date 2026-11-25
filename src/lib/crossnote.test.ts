@@ -1,8 +1,10 @@
 import * as git from "isomorphic-git";
+import webHttp from "isomorphic-git/http/web";
 import { beforeAll, describe, expect, it, vi } from "vitest";
 import { isStored, readStored } from "../test/storedTree";
 import Crossnote from "./crossnote";
 import { fs, pfs } from "./fs";
+import { effectiveGitProxy, gitConnection } from "./gitConnection";
 
 // The app runs PouchDB's browser build, on IndexedDB. So do these tests, on
 // the fake one, which also keeps the notebook records off the disk.
@@ -79,6 +81,220 @@ describe("Crossnote keeps the stored directory tree in step", () => {
       remove.mockRestore();
     }
   });
+
+  it("stores clone credentials only in a successfully registered notebook", async () => {
+    const url = "https://example.test/notes.git";
+    const clone = vi.spyOn(git, "clone").mockImplementation(async (args) => {
+      const location = { fs, dir: args.dir };
+      await git.init({ ...location, defaultBranch: "master" });
+      await git.setConfig({
+        ...location,
+        path: "remote.origin.url",
+        value: args.url,
+      });
+    });
+    const records = crossnote["notebookDB"];
+    const put = records.put.bind(records);
+    const failed = vi
+      .spyOn(records, "put")
+      .mockImplementation((...args) =>
+        args[0].gitURL === url
+          ? Promise.reject(new Error("registration failed"))
+          : put(...args),
+      );
+    const args = {
+      gitURL: "https://old:embedded@example.test/notes.git",
+      username: "reader",
+      password: "saved-secret",
+    };
+    try {
+      try {
+        await expect(crossnote.cloneNotebook(args)).rejects.toThrow(
+          "registration failed",
+        );
+      } finally {
+        failed.mockRestore();
+      }
+      const notebook = await crossnote.cloneNotebook(args);
+      expect(await records.get(notebook._id)).toMatchObject({
+        gitURL: url,
+        gitUsername: args.username,
+        gitPassword: args.password,
+      });
+      expect(
+        await git.getConfig({
+          fs,
+          dir: notebook.dir,
+          path: "remote.origin.url",
+        }),
+      ).toBe(url);
+      const connection = clone.mock.calls.at(-1)[0];
+      expect(await connection.onAuth(url, {})).toEqual({
+        username: args.username,
+        password: args.password,
+      });
+    } finally {
+      clone.mockRestore();
+    }
+  });
+
+  it("clears login information from the registry and Git config only when settings are saved", async () => {
+    const notebook = await crossnote.addNotebook({
+      name: "Legacy",
+      gitURL: "",
+    });
+    const records = crossnote["notebookDB"];
+    const url = "https://example.test/legacy.git";
+    const legacy = "https://legacy:embedded@example.test/legacy.git";
+    const origin = { fs, dir: notebook.dir, path: "remote.origin.url" };
+    await git.setConfig({ ...origin, value: legacy });
+    await records.put({
+      ...(await records.get(notebook._id)),
+      gitURL: legacy,
+      gitUsername: "legacy",
+      gitPassword: "old-stored-secret",
+    });
+
+    const reopened = (await crossnote.listNotebooks()).find(
+      (item) => item._id === notebook._id,
+    );
+    expect(reopened.gitURL).toBe(url);
+    expect((await records.get(notebook._id)).gitURL).toBe(legacy);
+    expect(await git.getConfig(origin)).toBe(legacy);
+    expect(
+      await crossnote.saveNotebookSettings(reopened, {
+        name: reopened.name,
+        gitUsername: "",
+        gitPassword: "",
+        gitCorsProxy: "",
+        autoFetchPeriod: 0,
+      }),
+    ).toBe("cleared");
+    expect(await records.get(notebook._id)).toMatchObject({
+      gitURL: url,
+      gitUsername: "",
+      gitPassword: "",
+    });
+    expect(await git.getConfig(origin)).toBe(url);
+  });
+
+  it("waits for the displayed proxy address to be saved before sending existing credentials", async () => {
+    const notebook = await crossnote.addNotebook({
+      name: "Old proxy",
+      gitURL: "",
+    });
+    const records = crossnote["notebookDB"];
+    const url = "https://example.test/old-proxy.git";
+    const oldProxy = "https://crossnote.app/cors";
+    const credentials = { gitUsername: "reader", gitPassword: "saved-secret" };
+    await records.put({
+      ...(await records.get(notebook._id)),
+      ...credentials,
+      gitURL: url,
+      gitCorsProxy: oldProxy,
+    });
+    const reopened = (await crossnote.listNotebooks()).find(
+      (item) => item._id === notebook._id,
+    );
+    const shownProxy = effectiveGitProxy(reopened.gitCorsProxy);
+    expect(shownProxy).not.toBe(oldProxy);
+    expect((await records.get(notebook._id)).gitCorsProxy).toBe(oldProxy);
+    const receiver =
+      (shownProxy.endsWith("?")
+        ? shownProxy + url
+        : shownProxy
+          ? shownProxy + "/example.test/old-proxy.git"
+          : url) + "/info/refs?service=git-upload-pack";
+    const dispatched = vi
+      .spyOn(webHttp, "request")
+      .mockResolvedValue(undefined);
+    let challenged = false;
+    const fetch = vi
+      .spyOn(git, "fetch")
+      .mockImplementation(async ({ http }) => {
+        await http.request({ url: receiver });
+        if (challenged) {
+          await http.request({
+            url: receiver,
+            headers: { Authorization: "Basic fixture" },
+          });
+        }
+        return {
+          fetchHead: null,
+          fetchHeadDescription: null,
+          defaultBranch: null,
+        };
+      });
+    try {
+      await expect(
+        crossnote.fetchNotebook({ notebook: reopened }),
+      ).resolves.toBe(false);
+      expect(dispatched.mock.calls.map(([request]) => request.headers)).toEqual(
+        [undefined],
+      );
+      challenged = true;
+      await expect(
+        crossnote.fetchNotebook({ notebook: reopened }),
+      ).rejects.toThrow("error/git-confirm-proxy");
+      expect(dispatched.mock.calls.map(([request]) => request.headers)).toEqual(
+        [undefined, undefined],
+      );
+      expect(reopened.gitNeedsLogin).toBe(true);
+      await crossnote.saveNotebookSettings(reopened, {
+        ...credentials,
+        name: reopened.name,
+        gitCorsProxy: shownProxy,
+        autoFetchPeriod: 0,
+      });
+      await crossnote.fetchNotebook({ notebook: reopened });
+      expect(dispatched.mock.calls.at(-1)[0].headers).toEqual({
+        Authorization: "Basic fixture",
+      });
+      const connection = fetch.mock.calls.at(-1)[0];
+      expect(connection.corsProxy).toBe(shownProxy);
+      expect(await connection.onAuth(url, {})).toEqual({
+        username: credentials.gitUsername,
+        password: credentials.gitPassword,
+      });
+      expect(reopened.gitNeedsLogin).toBe(false);
+    } finally {
+      fetch.mockRestore();
+      dispatched.mockRestore();
+    }
+  });
+
+  it.each([
+    [
+      "http://example.test/notes.git",
+      "",
+      "http://example.test/notes.git/info/refs?service=git-upload-pack",
+    ],
+    [
+      "https://example.test/notes.git",
+      "http://proxy.test",
+      "http://proxy.test/example.test/notes.git/info/refs?service=git-upload-pack",
+    ],
+  ])(
+    "allows anonymous HTTP and refuses to send saved authorization (%s via %s)",
+    async (url, proxy, receiver) => {
+      const dispatched = vi
+        .spyOn(webHttp, "request")
+        .mockResolvedValue(undefined);
+      try {
+        const { http } = gitConnection(url, proxy, "reader", "saved-secret");
+        await http.request({ url: receiver });
+        expect(() =>
+          http.request({
+            url: receiver,
+            headers: { Authorization: "Basic fixture" },
+          }),
+        ).toThrow("error/git-credentials-require-https");
+        expect(dispatched.mock.calls).toEqual([[{ url: receiver }]]);
+      } finally {
+        dispatched.mockRestore();
+      }
+    },
+  );
 
   it("with a new notebook's folder, before it records the notebook", async () => {
     // A record without its folder is a notebook that can take no notes.

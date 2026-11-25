@@ -17,12 +17,15 @@ import {
   Typography,
 } from "@mui/material";
 import { ChevronDown, Eye, EyeOff } from "mdi-material-ui";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { CrossnoteContainer } from "../containers/crossnote";
 import i18next from "../i18n/i18n";
+import { effectiveGitProxy } from "../lib/gitConnection";
+import { notifyGit } from "../lib/gitResults";
 import { failureMessage, notify } from "../lib/notifications";
 import { Notebook } from "../lib/notebook";
+import { NotesNotSavedError } from "../lib/noteSaver";
 
 interface Props {
   open: boolean;
@@ -36,13 +39,14 @@ function settingsFrom(notebook: Notebook) {
     name: notebook.name,
     gitUsername: notebook.gitUsername ?? "",
     gitPassword: notebook.gitPassword ?? "",
-    gitCorsProxy: notebook.gitCorsProxy ?? "",
+    gitCorsProxy: effectiveGitProxy(notebook.gitCorsProxy),
     minutes: String(notebook.autoFetchPeriod / 60000),
   };
 }
 
 export default function ConfigureNotebookDialog(props: Props) {
   const { notebook, open, onClose: close } = props;
+  const dialog = useRef<HTMLDivElement>(null);
   const crossnoteContainer = CrossnoteContainer.useContainer();
   const { t } = useTranslation();
   const [draft, setDraft] = useState(() => settingsFrom(notebook));
@@ -68,7 +72,7 @@ export default function ConfigureNotebookDialog(props: Props) {
 
   async function updateNotebook() {
     try {
-      await crossnoteContainer.updateNotebook(notebook, {
+      const credentials = await crossnoteContainer.updateNotebook(notebook, {
         name: draft.name.trim(),
         gitUsername: draft.gitUsername.trim(),
         gitPassword: draft.gitPassword,
@@ -76,13 +80,21 @@ export default function ConfigureNotebookDialog(props: Props) {
         autoFetchPeriod: (parseFloat(draft.minutes) || 0) * 60000,
       });
       close();
+      if (credentials) {
+        notifyGit(
+          "success",
+          t(
+            credentials === "saved"
+              ? "git/credentials-saved"
+              : "git/credentials-cleared",
+          ),
+        );
+      }
     } catch (error) {
-      notify({
-        severity: "error",
-        message: failureMessage(
-          i18next.t("error/failed-to-save-notebook-settings"),
-          error,
-        ),
+      notifyGit("error", t("error/failed-to-save-notebook-settings"), {
+        error,
+        credentials: draft,
+        dialog: dialog.current,
       });
     }
   }
@@ -104,12 +116,35 @@ export default function ConfigureNotebookDialog(props: Props) {
   }
 
   async function hardResetNotebook() {
-    await crossnoteContainer.hardResetNotebook(notebook);
-    close();
+    try {
+      const completed = await crossnoteContainer.hardResetNotebook(notebook);
+      if (!completed) {
+        setClickHardResetCount(MaxClickDeleteCount);
+        return;
+      }
+      close();
+      notifyGit("success", t("git/reset-complete"), {
+        updateFailure: completed.updateFailure,
+        credentials: notebook,
+      });
+    } catch (error) {
+      setClickHardResetCount(MaxClickDeleteCount);
+      if (!(error instanceof NotesNotSavedError)) {
+        notifyGit("error", t("git/reset-failed"), {
+          error,
+          credentials: notebook,
+          dialog: dialog.current,
+        });
+      }
+    }
   }
 
   return (
-    <Dialog open={open} onClose={!clickDeleteCount ? null : close}>
+    <Dialog
+      open={open}
+      onClose={!clickDeleteCount ? null : close}
+      slotProps={{ paper: { ref: dialog } }}
+    >
       <DialogTitle>{t("general/configure-the-notebook")}</DialogTitle>
       <DialogContent>
         <TextField
@@ -150,6 +185,19 @@ export default function ConfigureNotebookDialog(props: Props) {
                   fullWidth={true}
                   value={notebook.gitBranch || "master"}
                 ></TextField>
+                <TextField
+                  label={t("general/cors-proxy")}
+                  placeholder={DEFAULT_CORS_PROXY}
+                  fullWidth={true}
+                  value={draft.gitCorsProxy}
+                  onChange={(event) =>
+                    setDraft({ ...draft, gitCorsProxy: event.target.value })
+                  }
+                ></TextField>
+                <Typography variant="body2">
+                  {t("git/credentials-storage")}{" "}
+                  {draft.gitCorsProxy.trim() && t("git/proxy-credentials")}
+                </Typography>
                 <TextField
                   label={`${t("general/Username")} (${t("general/optional")})`}
                   placeholder={`${t("general/Username")} (${t(
@@ -211,15 +259,6 @@ export default function ConfigureNotebookDialog(props: Props) {
                       ),
                     },
                   }}
-                ></TextField>
-                <TextField
-                  label={t("general/cors-proxy")}
-                  placeholder={DEFAULT_CORS_PROXY}
-                  fullWidth={true}
-                  value={draft.gitCorsProxy}
-                  onChange={(event) =>
-                    setDraft({ ...draft, gitCorsProxy: event.target.value })
-                  }
                 ></TextField>
                 <Link
                   href={

@@ -1,10 +1,11 @@
-import { Alert, Portal, Snackbar } from "@mui/material";
-import React, { useEffect, useRef, useSyncExternalStore } from "react";
+import { Alert, Box, Button, Portal, Snackbar } from "@mui/material";
+import React, { useLayoutEffect, useState, useSyncExternalStore } from "react";
 import { useTranslation } from "react-i18next";
 import {
   closeNotification,
   dismissNotification,
   getNotificationState,
+  type Notification,
   subscribeToNotifications,
 } from "../lib/notifications";
 
@@ -27,41 +28,64 @@ const snackbarSx = { zIndex: 3002, top: { xs: 116, sm: 116 } } as const;
 // Shows the notification queue one message at a time. Mounted once under the
 // theme provider, so every message gets the same look wherever it is raised.
 export default function Notifications() {
-  const { t } = useTranslation();
   const { current, open } = useSyncExternalStore(
     subscribeToNotifications,
     getNotificationState,
   );
 
-  // A message leaves the queue when its exit transition ends. One that is
-  // already closing the first time this host renders it (closed before it was
-  // ever shown, or the host remounted mid-exit) never mounts a transition, so
-  // nothing would end it and every later message would wait behind it.
-  const shownId = useRef<number | null>(null);
-  useEffect(() => {
-    if (!current) {
-      return;
-    }
-    if (open) {
-      shownId.current = current.id;
-    } else if (shownId.current !== current.id) {
-      dismissNotification();
-    }
-  }, [current, open]);
-
   if (!current) {
     return null;
   }
-  // The portal appends each message to the body as it appears. While a dialog
-  // is open MUI hides everything else from assistive technology, the app root
-  // included, so a message rendered in place would never be announced.
+  return <NotificationMessage key={current.id} current={current} open={open} />;
+}
+
+function NotificationMessage({
+  current,
+  open,
+}: {
+  current: Notification;
+  open: boolean;
+}) {
+  const { t } = useTranslation();
+  const [expanded, setExpanded] = useState(false);
+  const [copyResult, setCopyResult] = useState<"copied" | "failed">();
+  const [dialogHost] = useState(
+    () => current.dialog && document.createElement("div"),
+  );
+  useLayoutEffect(() => {
+    if (!dialogHost) return;
+    const dialog = current.dialog;
+    (dialog.isConnected ? dialog : document.body).appendChild(dialogHost);
+    // Move the host without restarting its timer or exit transition.
+    const observer = new MutationObserver(() => {
+      if (!dialog.isConnected) {
+        observer.disconnect();
+        document.body.appendChild(dialogHost);
+      }
+    });
+    if (dialog.isConnected)
+      observer.observe(document.body, { childList: true, subtree: true });
+    return () => {
+      observer.disconnect();
+      dialogHost.remove();
+    };
+  }, [current.dialog, dialogHost]);
+
+  async function copyDetails() {
+    try {
+      await navigator.clipboard.writeText(current.details);
+      setCopyResult("copied");
+    } catch {
+      setCopyResult("failed");
+    }
+  }
+
   return (
-    <Portal>
+    <Portal container={dialogHost}>
       <Snackbar
-        key={current.id}
         open={open}
         anchorOrigin={anchorOrigin}
-        autoHideDuration={current.duration}
+        autoHideDuration={expanded ? null : current.duration}
         onClose={(_event, reason) => {
           // A click elsewhere on the page is not a request to hide the message.
           if (reason !== "clickaway") {
@@ -77,7 +101,55 @@ export default function Notifications() {
           onClose={closeNotification}
           closeText={t("general/close")}
         >
-          {current.message}
+          <span data-testid="notification-summary">{current.message}</span>
+          {current.action && (
+            <Button
+              size="small"
+              color="inherit"
+              onClick={() => {
+                closeNotification();
+                current.action.onClick();
+              }}
+            >
+              {current.action.label}
+            </Button>
+          )}
+          {current.details && (
+            <Box>
+              <Button
+                size="small"
+                color="inherit"
+                aria-expanded={expanded}
+                onClick={() => setExpanded(!expanded)}
+              >
+                {t("git/details")}
+              </Button>
+              {expanded && (
+                <>
+                  <Box
+                    component="pre"
+                    sx={{
+                      whiteSpace: "pre-wrap",
+                      overflowWrap: "anywhere",
+                      userSelect: "text",
+                      maxHeight: "30vh",
+                      overflow: "auto",
+                      maxWidth: "min(65ch, 70vw)",
+                    }}
+                  >
+                    {current.details}
+                  </Box>
+                  <Button size="small" color="inherit" onClick={copyDetails}>
+                    {t("git/copy-details")}
+                  </Button>
+                  <span role="status">
+                    {copyResult === "copied" && t("git/details-copied")}
+                    {copyResult === "failed" && t("git/copy-failed")}
+                  </span>
+                </>
+              )}
+            </Box>
+          )}
         </Alert>
       </Snackbar>
     </Portal>

@@ -384,9 +384,11 @@ async function notebookWithTyping(dir: string, write: () => Promise<void>) {
   const notebook = await notebookAt(dir, {
     pullNotebook: async () => {
       done.push("pull");
+      return { numConflicts: 0, conflicts: [] as string[], cache: {} };
     },
     pushNotebook: async () => {
       done.push("push");
+      return "confirmed";
     },
     hardResetNotebook: async () => {
       done.push("reset");
@@ -394,9 +396,8 @@ async function notebookWithTyping(dir: string, write: () => Promise<void>) {
   } as unknown as Partial<Crossnote>);
   // Restoring a note is for notebooks git keeps.
   notebook.isLocal = false;
-  notebook.checkoutNote = async (note) => {
+  notebook.checkoutNote = async () => {
     done.push("restore");
-    return note;
   };
   const refreshNotes = notebook.refreshNotes.bind(notebook);
   notebook.refreshNotes = async (args) => {
@@ -422,8 +423,6 @@ async function notebookWithTyping(dir: string, write: () => Promise<void>) {
           notebook,
           authorName: "Test",
           authorEmail: "",
-          username: "",
-          password: "",
           message: "",
         }),
     ],
@@ -438,8 +437,52 @@ async function notebookWithTyping(dir: string, write: () => Promise<void>) {
         } as Note),
     ],
   ];
-  return { done, saver, operations };
+  return { done, notebook, saver, operations };
 }
+
+it("retains the completed Git outcome when the local refresh fails", async () => {
+  const { done, notebook, saver, operations } = await notebookWithTyping(
+    "/notebooks/git-refresh-failed",
+    async () => {},
+  );
+  const error = new Error("Could not refresh notes");
+  notebook.refreshNotes = vi.fn().mockRejectedValue(error);
+  const expected: Record<string, unknown> = {
+    pull: { numConflicts: 0 },
+    push: "confirmed",
+    reset: true,
+    restore: true,
+  };
+  try {
+    for (const [name, run] of operations.filter(([name]) => name !== "read")) {
+      let completed: unknown;
+      done.length = 0;
+      await act(async () => {
+        completed = await run();
+      });
+      expect(done, name).toContain(name);
+      expect(completed, name).toMatchObject({
+        result: expected[name],
+        updateFailure: { error },
+      });
+    }
+    const readError = new Error("Could not read the checked-out note");
+    notebook.getNote = vi.fn().mockRejectedValue(readError);
+    await act(async () => {
+      await expect(
+        crossnote.checkoutNote({
+          notebookPath: notebook.dir,
+          filePath: "a.md",
+        } as Note),
+      ).resolves.toMatchObject({
+        result: true,
+        updateFailure: { error: readError },
+      });
+    });
+  } finally {
+    saver.discard();
+  }
+});
 
 it("writes what is typed into a notebook's notes before git, or reading the folder again, changes them", async () => {
   const { done, saver, operations } = await notebookWithTyping(
@@ -754,7 +797,9 @@ it.each(["rename", "delete", "checkout", "print"])(
     const remove = vi
       .spyOn(notebook, "deleteNote")
       .mockResolvedValue(undefined);
-    const checkout = vi.spyOn(notebook, "checkoutNote").mockResolvedValue(note);
+    const checkout = vi
+      .spyOn(notebook, "checkoutNote")
+      .mockResolvedValue(undefined);
     const readNote = vi.spyOn(notebook, "getNote");
     notebook.isLocal = false;
     let pending!: Promise<unknown>;

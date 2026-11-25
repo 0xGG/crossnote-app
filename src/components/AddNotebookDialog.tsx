@@ -7,13 +7,11 @@ import {
   AccordionSummary,
   Box,
   Button,
-  Checkbox,
   Dialog,
   DialogActions,
   DialogContent,
   DialogTitle,
   Divider,
-  FormControlLabel,
   IconButton,
   InputAdornment,
   Link,
@@ -22,9 +20,11 @@ import {
 } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import { ChevronDown, Eye, EyeOff, FolderOpen } from "mdi-material-ui";
-import { useCallback, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { CrossnoteContainer } from "../containers/crossnote";
+import { repositoryAddress } from "../lib/gitConnection";
+import { gitErrorMessage, notifyGit } from "../lib/gitResults";
 import { notify } from "../lib/notifications";
 import { notebookNameFromGitURL } from "../utilities/utils";
 
@@ -40,17 +40,16 @@ interface Props {
 
 export default function AddNotebookDialog(props: Props) {
   const crossnoteContainer = CrossnoteContainer.useContainer();
+  const dialog = useRef<HTMLDivElement>(null);
   const [notebookName, setNotebookName] = useState<string>(
     props.notebookName || notebookNameFromGitURL(props.gitURL ?? ""),
   );
   const [expanded, setExpanded] = useState<boolean>(true);
-  const [gitURL, setGitURL] = useState<string>(props.gitURL || "");
+  const [gitURL, setGitURL] = useState(() => repositoryAddress(props.gitURL));
   const [gitBranch, setGitBranch] = useState<string>(props.gitBranch || "");
   const [gitUsername, setGitUsername] = useState<string>("");
   const [gitPassword, setGitPassword] = useState<string>("");
   const [gitCorsProxy, setGitCorsProxy] = useState<string>(DEFAULT_CORS_PROXY);
-  const [rememberCredentialsChecked, setRememberCredentialsChecked] =
-    useState<boolean>(false);
   const [showUsername, setShowUsername] = useState<boolean>(true);
   const [showPassword, setShowPassword] = useState<boolean>(false);
   const { t } = useTranslation();
@@ -63,7 +62,6 @@ export default function AddNotebookDialog(props: Props) {
     setGitUsername("");
     setGitPassword("");
     setGitCorsProxy(DEFAULT_CORS_PROXY);
-    setRememberCredentialsChecked(false);
     setShowUsername(true);
     setShowPassword(false);
     // Back to the initial expanded state: the dialog stays mounted across
@@ -74,21 +72,36 @@ export default function AddNotebookDialog(props: Props) {
   }, [props]);
 
   const addNotebook = useCallback(async () => {
+    const remote = gitURL.trim();
     try {
-      if (gitURL.trim().length) {
-        notify({ severity: "info", message: t("info/downloading-notebook") });
-      }
-      close();
       await crossnoteContainer.addNotebook(
         notebookName,
-        gitURL.trim(),
+        remote,
         gitBranch.trim() || "master",
         gitUsername,
         gitPassword,
-        rememberCredentialsChecked,
         gitCorsProxy,
       );
+      close();
+      if (remote) {
+        notifyGit(
+          "success",
+          t(
+            gitUsername.trim() || gitPassword
+              ? "git/cloned-credentials"
+              : "git/cloned",
+          ),
+        );
+      }
     } catch (error) {
+      if (remote) {
+        notifyGit("error", gitErrorMessage(error, t("git/clone-failed")), {
+          error,
+          credentials: { gitUsername, gitPassword },
+          dialog: dialog.current,
+        });
+        return;
+      }
       const message = error instanceof Error ? error.message : String(error);
       notify({
         severity: "error",
@@ -96,7 +109,6 @@ export default function AddNotebookDialog(props: Props) {
         // such as a git server's reply, are shown as they come.
         message: isAppErrorKey(message) ? i18next.t(message) : message,
       });
-      close();
     }
   }, [
     crossnoteContainer,
@@ -105,7 +117,6 @@ export default function AddNotebookDialog(props: Props) {
     gitBranch,
     gitUsername,
     gitPassword,
-    rememberCredentialsChecked,
     gitCorsProxy,
     close,
     t,
@@ -122,7 +133,7 @@ export default function AddNotebookDialog(props: Props) {
     previousDefaults.gitBranch !== props.gitBranch ||
     previousDefaults.notebookName !== props.notebookName
   ) {
-    const gitURL = props.gitURL ?? "";
+    const gitURL = repositoryAddress(props.gitURL);
     setPreviousDefaults({
       gitURL: props.gitURL,
       gitBranch: props.gitBranch,
@@ -137,6 +148,7 @@ export default function AddNotebookDialog(props: Props) {
   return (
     <Dialog
       open={props.open}
+      slotProps={{ paper: { ref: dialog } }}
       onClose={() => {
         if (!crossnoteContainer.isAddingNotebook) {
           close();
@@ -231,6 +243,17 @@ export default function AddNotebookDialog(props: Props) {
                 onChange={(event) => setGitBranch(event.target.value)}
               ></TextField>
               <TextField
+                label={t("general/cors-proxy")}
+                placeholder={DEFAULT_CORS_PROXY}
+                fullWidth={true}
+                value={gitCorsProxy}
+                onChange={(event) => setGitCorsProxy(event.target.value)}
+              ></TextField>
+              <Typography variant="body2">
+                {t("git/credentials-storage")}{" "}
+                {gitCorsProxy.trim() && t("git/proxy-credentials")}
+              </Typography>
+              <TextField
                 label={`${t("general/Username")} (${t("general/optional")})`}
                 placeholder={`${t("general/Username")} (${t(
                   "general/optional",
@@ -280,33 +303,6 @@ export default function AddNotebookDialog(props: Props) {
                   },
                 }}
               ></TextField>
-              <FormControlLabel
-                control={
-                  <Checkbox
-                    checked={rememberCredentialsChecked}
-                    onChange={() =>
-                      setRememberCredentialsChecked(!rememberCredentialsChecked)
-                    }
-                    value={rememberCredentialsChecked}
-                  />
-                }
-                label={
-                  <Typography>
-                    {t("general/remember-username-and-password") +
-                      " " +
-                      (rememberCredentialsChecked
-                        ? `(${t("general/stored-locally")})`
-                        : "")}
-                  </Typography>
-                }
-              />
-              <TextField
-                label={t("general/cors-proxy")}
-                placeholder={DEFAULT_CORS_PROXY}
-                fullWidth={true}
-                value={gitCorsProxy}
-                onChange={(event) => setGitCorsProxy(event.target.value)}
-              ></TextField>
               <Link
                 href={
                   "https://github.com/isomorphic-git/isomorphic-git#cors-support"
@@ -331,7 +327,12 @@ export default function AddNotebookDialog(props: Props) {
             : t("general/add")}
         </Button>
         {props.canCancel && (
-          <Button onClick={close}>{t("general/cancel")}</Button>
+          <Button
+            onClick={close}
+            disabled={crossnoteContainer.isAddingNotebook}
+          >
+            {t("general/cancel")}
+          </Button>
         )}
       </DialogActions>
     </Dialog>

@@ -105,8 +105,6 @@ export const jaJP = {
     "general/optional": "オプション",
     "general/url": "Url",
     "general/branch": "ブランチ",
-    "general/remember-username-and-password": "資格情報を記憶する",
-    "general/stored-locally": "ローカルに保存",
     "general/cors-proxy": "CORS プロキシ",
     "general/why-cors-proxy": "なぜ CORS プロキシが必要なのですか?",
     "general/today": "今日",
@@ -294,5 +292,46 @@ export const jaJP = {
     "layout/error-rendering-component":
       "コンポーネントの描画中にエラーが発生しました",
     "layout/retry": "再試行",
+    "git/credentials-storage": "資格情報はこのブラウザーに保存されます。",
+    "git/proxy-credentials": "選択したプロキシはこの資格情報を参照できます。",
+    "git/change-credentials": "Git 資格情報を変更",
+    "git/needs-login": "Git へのサインインが必要です",
+    "git/credentials-saved": "Git 資格情報を保存しました",
+    "git/credentials-cleared": "Git 資格情報を消去しました",
+    "git/cloned": "ノートブックをクローンしました",
+    "git/cloned-credentials":
+      "ノートブックをクローンし、Git 資格情報を保存しました。",
+    "git/clone-failed": "ノートブックのクローンに失敗しました",
+    "git/download-auth-failed": "ダウンロード時の認証に失敗しました",
+    "git/upload-unchanged": "アップロードする変更はありません",
+    "git/upload-confirmed": "ローカルのコミットはすでにリモートにあります",
+    "git/downloaded-no-upload":
+      "リモートの変更をダウンロードしました。アップロードする変更はありません。",
+    "git/upload-download-failed":
+      "ダウンロード中にアップロードを中断しました。プッシュは行われていません。",
+    "git/upload-prepare-failed":
+      "アップロードするローカルの変更を準備できませんでした",
+    "git/upload-push-failed-after-download":
+      "ダウンロードは完了しました。プッシュに失敗しました。",
+    "git/uploaded-and-downloaded":
+      "リモートの変更をダウンロードし、ノートブックをアップロードしました。",
+    "git/confirmed-and-downloaded":
+      "ローカルのコミットはリモートにあり、後続の変更をダウンロードしました。",
+    "git/local-update-failed":
+      "{{outcome}}。ローカルのノートブックの更新を完了できませんでした。",
+    "git/checkout-complete": "チェックアウトコマンドが完了しました",
+    "git/checkout-failed": "チェックアウトに失敗しました",
+    "git/reset-complete": "リセットコマンドが完了しました",
+    "git/reset-failed": "ノートブックのリセットに失敗しました",
+    "git/details": "詳細",
+    "git/copy-details": "詳細をコピー",
+    "git/details-copied": "詳細をコピーしました",
+    "git/copy-failed": "詳細をコピーできませんでした",
+    "error/git-credentials-require-https":
+      "Git 資格情報を使うにはリポジトリとプロキシの両方で HTTPS が必要です。",
+    "error/git-unexpected-target":
+      "Git 資格情報は設定済みのリポジトリまたはプロキシにのみ送信できます。",
+    "error/git-confirm-proxy":
+      "Git 資格情報を使う前に、ノートブックの設定に表示されたプロキシを保存してください。",
   },
 } satisfies typeof enUS;

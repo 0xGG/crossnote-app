@@ -35,6 +35,7 @@ import { ExportNotebookDialog } from "../components/ExportNotebookDialog";
 import PushNotebookDialog from "../components/PushNotebookDialog";
 import { RecoveryDirectoryDialog } from "../components/RecoveryDirectoryDialog";
 import { CrossnoteContainer } from "../containers/crossnote";
+import { repositoryAddress } from "../lib/gitConnection";
 import type { Notebook as NotebookData } from "../lib/notebook";
 
 const drawerWidth = 200;
@@ -161,7 +162,8 @@ export function Home(props: Props) {
     filePath?: string;
   } | null>();
   if (launchTarget === undefined && crossnoteContainer.initialized) {
-    const { repo, branch, filePath } = props.queryParams ?? {};
+    const { repo: link, branch, filePath } = props.queryParams ?? {};
+    const repo = repositoryAddress(link);
     const notebook =
       repo &&
       branch &&
@@ -370,6 +372,9 @@ export function Home(props: Props) {
           key={uploadDialog.notebook._id}
           open={uploadDialog.open}
           onClose={() => setUploadDialog(closing(uploadDialog))}
+          onOpenSettings={() =>
+            setSettingsDialog({ notebook: uploadDialog.notebook, open: true })
+          }
           notebook={uploadDialog.notebook}
         ></PushNotebookDialog>
       )}

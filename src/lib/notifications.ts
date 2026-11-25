@@ -13,6 +13,9 @@ export interface Notification {
   readonly id: number;
   readonly severity: NotificationSeverity;
   readonly message: string;
+  readonly details?: string;
+  readonly action?: { label: string; onClick: () => void };
+  readonly dialog?: HTMLElement;
   /** Milliseconds before the message hides on its own. */
   readonly duration: number;
 }
@@ -38,15 +41,14 @@ function setState(next: NotificationState) {
   listeners.forEach((listener) => listener());
 }
 
-export function notify(input: {
-  severity: NotificationSeverity;
-  message: string;
-  duration?: number;
-}): void {
+export function notify(
+  input: Omit<Notification, "id" | "duration"> & {
+    duration?: number;
+  },
+): void {
   queue.push({
+    ...input,
     id: nextId++,
-    severity: input.severity,
-    message: input.message,
     duration: input.duration ?? DEFAULT_NOTIFICATION_DURATION,
   });
   if (!state.current) {
