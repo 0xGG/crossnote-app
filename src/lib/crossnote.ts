@@ -884,9 +884,7 @@ export default class Crossnote {
     const ref = branchRef(notebook.gitBranch);
     const args = { fs, dir: notebook.dir, cache: {} };
     const links = target.links;
-    const files = links.size
-      ? [...target.files].filter((file) => !links.has(file))
-      : undefined;
+
     await pfs.writeFile(path.resolve(notebook.dir, ".git", ref), sha);
     const index = path.resolve(notebook.dir, `.git/index`);
     if (await pfs.exists(index)) await pfs.unlink(index);
@@ -895,8 +893,6 @@ export default class Crossnote {
       ref,
       force,
       fs: parentWorkingFs(notebook.dir, links),
-      filepaths: files,
-      noCheckout: files?.length === 0,
     });
     for (const [filepath, oid] of links) {
       await pfs.mkdirp(path.join(notebook.dir, filepath));

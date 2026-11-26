@@ -2052,6 +2052,49 @@ it.each(["reset", "download"])(
   },
 );
 
+it.each([0, 8])(
+  "checks out both new and populated gitlinks with %s notes",
+  async (count) => {
+    const { app, notebook, args, tree, submodule } =
+      await submoduleRepository();
+    const files = Array.from({ length: count }, (_, i) => ({
+      ...tree[0],
+      path: `note-${i}.md`,
+    }));
+    const next = { ...submodule, oid: "2".repeat(40) };
+    const another = { ...submodule, path: "new-link", oid: "3".repeat(40) };
+    const incoming = await git.commit({
+      ...args,
+      author,
+      noUpdateBranch: true,
+      message: "Replace notes",
+      tree: await git.writeTree({ ...args, tree: [...files, next, another] }),
+    });
+    vi.mocked(git.fetch).mockResolvedValue({
+      ...emptyRemote,
+      fetchHead: incoming,
+    });
+    await pfs.writeFile(notebook.dir + "/vendor/local.bin", binary);
+    const checkout = vi.spyOn(git, "checkout");
+    await app.pullNotebook({ notebook });
+    expect(checkout.mock.calls).toHaveLength(1);
+    expect(checkout.mock.calls[0][0].filepaths).toBeUndefined();
+    const index = await parentGitTree(notebook.dir);
+    expect(index.links).toEqual(
+      new Map([
+        ["vendor", next.oid],
+        ["new-link", another.oid],
+      ]),
+    );
+    expect([...index.files].sort()).toEqual(
+      [...files.map((file) => file.path), "vendor", "new-link"].sort(),
+    );
+    expect([
+      ...(await pfs.readFile(notebook.dir + "/vendor/local.bin")),
+    ]).toEqual([...binary]);
+  },
+);
+
 it.each(["complete", "missing", "interrupted"])(
   "protects a committed submodule when uploading a note (%s index)",
   async (index) => {
