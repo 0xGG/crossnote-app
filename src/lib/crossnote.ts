@@ -122,8 +122,12 @@ const recoveryFilesChanged = () => new Error("error/recovery-files-changed");
 
 // Git interprets a missing ref as the index. An unborn branch has an empty
 // base tree regardless of which files the user has already staged.
-async function filesAtCommit(dir: string, sha: string): Promise<string[]> {
-  return sha ? git.listFiles({ fs, dir, ref: sha }) : [];
+async function filesAtCommit(
+  dir: string,
+  sha: string,
+  cache?: object,
+): Promise<string[]> {
+  return sha ? git.listFiles({ fs, dir, ref: sha, cache }) : [];
 }
 
 const branchName = (branch: string) =>
@@ -176,7 +180,7 @@ async function prepareUploadIndex(
   dir: string,
   changes: Cache,
 ): Promise<boolean> {
-  const args = { fs, dir };
+  const args = { fs, dir, cache: {} };
   const isIgnored = ignoreCheck(dir);
   const unchecked = new Set<string>();
   for (const [file, , work, index] of await git.statusMatrix(args)) {
@@ -546,9 +550,10 @@ export default class Crossnote {
   private async generateChangesCache(
     notebook: Notebook,
     includeStaged = false,
+    gitCache: object = {},
   ): Promise<Cache> {
     const cache: Cache = Object.create(null);
-    const args = { fs, dir: notebook.dir };
+    const args = { fs, dir: notebook.dir, cache: gitCache };
     const rows = await git.statusMatrix(args);
     if (includeStaged) {
       // A staged blob can be hidden by a restored directory. A submodule is
@@ -586,8 +591,7 @@ export default class Crossnote {
       // Compare working bytes before replacing files the matrix calls clean.
       if (head === work && indexMatches && notebook.localSha) {
         const base = await git.readBlob({
-          fs,
-          dir: notebook.dir,
+          ...args,
           oid: notebook.localSha,
           filepath: file,
         });
@@ -1209,10 +1213,19 @@ export default class Crossnote {
         await removeEmptyDirectory(target);
     }
     await this.hardResetNotebook(notebook, recovery.remoteSha, true);
-    // A reset removes the old index. Include every remote file before applying
-    // local additions/deletions, so the next commit cannot drop untouched files.
-    for (const file of remoteFiles)
-      await git.add({ fs, dir: notebook.dir, filepath: file });
+    // Checkout can skip unchanged working files when recreating the index.
+    // Fill only missing blobs before replaying local changes over them.
+    const args = { fs, dir: notebook.dir, cache: {} };
+    const missing: string[] = [];
+    await git.walk({
+      ...args,
+      trees: [git.TREE({ ref: recovery.remoteSha }), git.STAGE()],
+      map: async (file, [head, entry]) => {
+        if (!entry && (await head?.type()) === "blob") missing.push(file);
+      },
+    });
+    if (missing.length)
+      await git.add({ ...args, filepath: missing, force: true });
     await this.restoreFilesFromCache(recovery.files, notebook);
     await pfs.storeTree(notebook.dir);
     notebook.localSha = recovery.remoteSha;
@@ -1279,7 +1292,7 @@ export default class Crossnote {
     const fetched = await this.fetchGit({ notebook, onProgress, onMessage });
     const remoteSha = fetched.fetchHead;
     if (!remoteSha) throw new Error("error/remote-has-no-commits");
-    const args = { fs, dir: notebook.dir };
+    const args = { fs, dir: notebook.dir, cache: {} };
     const localSha = await refSha(notebook.dir, ref);
     const headRef = await git.currentBranch({ ...args, fullname: true });
     // Synchronization uses the working files and index of this checkout.
@@ -1294,7 +1307,7 @@ export default class Crossnote {
     ) {
       if (headRef !== ref)
         await git.checkout({ ...args, ref, noCheckout: true });
-      const cache = await this.generateChangesCache(notebook, true);
+      const cache = await this.generateChangesCache(notebook, true, args.cache);
       const conflicts = Object.entries(cache)
         .filter(([file, bytes]) =>
           hasTextConflicts(mergeableText(file, bytes) ?? ""),
@@ -1314,9 +1327,11 @@ export default class Crossnote {
     }
     if (localSha && !(await descendsFrom(remoteSha, localSha)))
       throw new Error("error/notebook-history-diverged");
-    const baseFiles = new Set(await filesAtCommit(notebook.dir, localSha));
+    const baseFiles = new Set(
+      await filesAtCommit(notebook.dir, localSha, args.cache),
+    );
     const remoteFiles = new Set(
-      await git.listFiles({ fs, dir: notebook.dir, ref: remoteSha }),
+      await git.listFiles({ ...args, ref: remoteSha }),
     );
     const remoteRoots = new Set(
       [...remoteFiles].map((file) => file.split("/")[0]),
@@ -1329,7 +1344,7 @@ export default class Crossnote {
       if (kind)
         throw new RecoveryDirectoryCollisionError(directory, kind === "owned");
     }
-    const cache = await this.generateChangesCache(notebook);
+    const cache = await this.generateChangesCache(notebook, false, args.cache);
     const isIgnored = ignoreCheck(notebook.dir);
     // A remote file may replace a local directory. Preserve untracked/ignored
     // children too; Git's status matrix need not include those files.
@@ -1435,8 +1450,7 @@ export default class Crossnote {
       listed.has(file)
         ? (
             await git.readBlob({
-              fs,
-              dir: notebook.dir,
+              ...args,
               oid: sha,
               filepath: file,
             })

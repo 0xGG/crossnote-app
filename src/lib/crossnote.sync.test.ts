@@ -158,6 +158,33 @@ it("shares status reads within a notebook batch and observes later index changes
   expect(await read(".git/index")).toEqual(index);
 });
 
+it("only fills missing blob entries when staging a fast-forward checkout", async () => {
+  const { app, notebook, theirs } = await repository({
+    "new.md": bytes("remote note"),
+  });
+  const args = { fs, dir: notebook.dir };
+  const checkout = app.hardResetNotebook.bind(app);
+  const populateIndex = git.add;
+  vi.spyOn(app, "hardResetNotebook").mockImplementation(async (...params) => {
+    await checkout(...params);
+    // Model a partial checkout index with two skipped working files.
+    await populateIndex({ ...args, filepath: "." });
+    await git.remove({ ...args, filepath: "README.md" });
+    await git.remove({ ...args, filepath: "assets/a.bin" });
+  });
+  const add = vi.spyOn(git, "add");
+  await app.pullNotebook({ notebook });
+  const staged = add.mock.calls.map(([options]) => options.filepath);
+  expect(staged).toHaveLength(1);
+  expect(staged[0]).toEqual(
+    expect.arrayContaining(["README.md", "assets/a.bin"]),
+  );
+  expect(staged[0]).toHaveLength(2);
+  expect(await git.listFiles(args)).toEqual(
+    await git.listFiles({ ...args, ref: theirs }),
+  );
+});
+
 it("records an empty remote check and lets a manual pull retry immediately", async () => {
   const { app, notebook, base, theirs, read } = await repository({
     "new.md": bytes("remote"),
