@@ -6,6 +6,7 @@ import {
   changeRemote,
   cloneRemote,
   createRemote,
+  download,
   expectReadOnlyNoteOpen,
   fixtureURL,
   indexEntries,
@@ -23,6 +24,7 @@ test("keeps a checked-out relative symlink clean across notebook resets", async 
   const name = "Shortcut.md";
   const remote = await createRemote(request, {
     "README.md": bytes("# Linked note\n"),
+    "Other.md": bytes("# Linked note\n"),
     [name]: { symlink: "README.md" },
   });
   await app.open();
@@ -56,7 +58,8 @@ test("keeps a checked-out relative symlink clean across notebook resets", async 
         target: () => fs.readlink(file),
         change: async () => {
           await unlink(file);
-          await symlink("missing.md", file);
+          await symlink("Other.md", file);
+          await pfs.storeTree(file);
         },
       };
     },
@@ -86,12 +89,26 @@ test("keeps a checked-out relative symlink clean across notebook resets", async 
   await expect(await preview()).toHaveText([name]);
   await confirm();
   expect(await link.evaluate((state) => state.target())).toBe("./README.md");
+  const card = app.noteCards.filter({ hasText: name });
+  await expect
+    .soft(card)
+    .toContainText(name + " - unmodified", { ignoreCase: true });
   await expect(await preview()).toHaveCount(0);
   await confirm();
   expect(await link.evaluate((state) => state.writes)).toEqual([
     "unlink",
     "symlink",
   ]);
+  const updated = bytes("# Updated linked note\n");
+  await changeRemote(request, remote, { "README.md": updated });
+  await download(app, remote);
+  expect(await link.evaluate((state) => state.target())).toBe("./README.md");
+  expect(await localBytes(page, dir + "/" + name)).toEqual(updated);
+  await link.evaluate((state) => state.change());
+  await page.reload();
+  await app.waitUntilReady();
+  await app.openNotes(remote.id);
+  await expect(card).toContainText(name + " - *modified", { ignoreCase: true });
 });
 
 test("requires a new reset preview for new files inside a blocking directory", async ({

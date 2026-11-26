@@ -1,7 +1,56 @@
 import * as git from "isomorphic-git";
 import path from "path-browserify";
 import { fs } from "./fs";
-import { gitLinks } from "./gitLinks";
+import { gitLinks, matchesSymlink } from "./gitLinks";
+
+// git.status hashes the contents of the file a symlink points at. Compare
+// the link itself with the index and HEAD, including dangling links.
+export async function symlinkEntryStatus(
+  args: { fs: typeof fs; dir: string; cache: object },
+  filepath: string,
+  head: git.WalkerEntry | null,
+  index: git.WalkerEntry | null,
+) {
+  const name = path.join(args.dir, filepath);
+  const staged =
+    (await index?.mode()) === 0o120000 ? await index.oid() : undefined;
+  const committed =
+    (await head?.mode()) === 0o120000 ? await head.oid() : undefined;
+  if (staged && (await matchesSymlink(args, name, staged))) {
+    if (!head) return "added";
+    return committed === staged ? "unmodified" : "modified";
+  }
+  if (
+    committed &&
+    committed !== staged &&
+    (await matchesSymlink(args, name, committed))
+  )
+    return index ? "*unmodified" : "*undeleted";
+  if (!head) return "*added";
+  return index ? "*modified" : "*undeletemodified";
+}
+
+export async function symlinkStatus(
+  dir: string,
+  filepath: string,
+  cache: object,
+) {
+  const args = { fs, dir, cache };
+  let status = "*added";
+  await git.walk({
+    ...args,
+    trees: [git.TREE({ ref: "HEAD" }), git.STAGE()],
+    map: async (file, [head, index]) => {
+      if (file !== filepath)
+        return file === "." || filepath.startsWith(file + "/")
+          ? undefined
+          : null;
+      status = await symlinkEntryStatus(args, file, head, index);
+      return null;
+    },
+  });
+  return status;
+}
 
 export function checkedGitPath(dir: string, file: string) {
   if (

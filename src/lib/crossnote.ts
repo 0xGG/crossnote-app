@@ -6,7 +6,12 @@ import PouchDB from "pouchdb";
 import PouchdbFind from "pouchdb-find";
 import { notebookNameFromGitURL, randomID } from "../utilities/utils";
 import { fs, missingFileOrThrow, pfs } from "./fs";
-import { checkedGitPath, stageLocalFile } from "./gitFiles";
+import {
+  checkedGitPath,
+  stageLocalFile,
+  symlinkEntryStatus,
+  symlinkStatus,
+} from "./gitFiles";
 import {
   resetIndex,
   resetTarget,
@@ -611,18 +616,26 @@ export default class Crossnote {
     const args = { fs, dir: notebook.dir, cache: gitCache };
     const links = new Set(incomingLinks?.keys());
     const stagedBlobs: string[] = [];
-    if (includeStaged) {
-      await git.walk({
-        ...args,
-        trees: [git.TREE({ ref: "HEAD" }), git.STAGE()],
-        map: async (file, [head, entry]) => {
-          const staged = await entry?.type();
-          if (staged === "commit" || (await head?.type()) === "commit")
-            links.add(file);
-          else if (staged === "blob") stagedBlobs.push(file);
-        },
-      });
-    }
+    const symlinks = new Map<
+      string,
+      [git.WalkerEntry | null, git.WalkerEntry | null]
+    >();
+    await git.walk({
+      ...args,
+      trees: [git.TREE({ ref: "HEAD" }), git.STAGE()],
+      map: async (file, [head, entry]) => {
+        if (
+          (await head?.mode()) === 0o120000 ||
+          (await entry?.mode()) === 0o120000
+        )
+          symlinks.set(file, [head, entry]);
+        if (!includeStaged) return;
+        const staged = await entry?.type();
+        if (staged === "commit" || (await head?.type()) === "commit")
+          links.add(file);
+        else if (staged === "blob") stagedBlobs.push(file);
+      },
+    });
     const rows = await git.statusMatrix({
       ...args,
       fs: parentWorkingFs(notebook.dir, links),
@@ -666,6 +679,18 @@ export default class Crossnote {
       // stage the current working bytes even if an earlier edit was undone.
       const indexMatches = !includeStaged || head === stage;
       if (head === 0 && work === 0 && indexMatches) continue;
+      const name = path.join(notebook.dir, file);
+      const link = symlinks.get(file);
+      if (work && (await fs.promises.lstat(name)).isSymbolicLink()) {
+        if (
+          link &&
+          (await symlinkEntryStatus(args, file, ...link)) === "unmodified"
+        )
+          continue;
+        throw new NotebookConflictError([file]);
+      }
+      // The change cache holds regular files and deletions, not link objects.
+      if (link && work) throw new NotebookConflictError([file]);
       const bytes =
         work === 0
           ? null
@@ -2099,6 +2124,11 @@ export default class Crossnote {
     }
     const args = { fs, dir: notebookPath, filepath: filePath, cache };
     if (await git.isIgnored(args)) return "ignored";
+    const stat = await fs.promises
+      .lstat(path.join(notebookPath, filePath))
+      .catch(missingFileOrThrow);
+    if (stat?.isSymbolicLink())
+      return symlinkStatus(notebookPath, filePath, cache);
     return git.status({ ...args, refresh: false });
   }
 }

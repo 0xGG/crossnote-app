@@ -456,7 +456,11 @@ describe("Crossnote keeps the stored directory tree in step", () => {
       mode: 0o120000,
       add: true,
     });
-    await git.commit({ ...args, author, message: "Relative link" });
+    const base = await git.commit({
+      ...args,
+      author,
+      message: "Relative link",
+    });
     await git.checkout({ ...args, ref: "master", force: true });
     expect(await fs.promises.readlink(file)).toBe("./README.md");
     const unlink = vi.spyOn(pfs, "unlink");
@@ -473,7 +477,64 @@ describe("Crossnote keeps the stored directory tree in step", () => {
       expect(changed.files).toEqual([filepath]);
       await crossnote.resetToHead(notebook, changed);
       expect(await fs.promises.readlink(file)).toBe("./README.md");
+      expect(await crossnote.getStatus(notebook.dir, filepath)).toBe(
+        "unmodified",
+      );
       expect((await crossnote.previewReset(notebook)).files).toEqual([]);
+      const { tree } = await git.readTree({ ...args, oid: base });
+      const updated = await git.writeBlob({
+        ...args,
+        blob: new TextEncoder().encode("updated target"),
+      });
+      const incoming = await git.commit({
+        ...args,
+        author,
+        message: "Update linked note",
+        noUpdateBranch: true,
+        tree: await git.writeTree({
+          ...args,
+          tree: tree.map((entry) =>
+            entry.path === "README.md" ? { ...entry, oid: updated } : entry,
+          ),
+        }),
+      });
+      notebook.gitURL = "https://fixture.test/link.git";
+      notebook.localSha = notebook.remoteSha = base;
+      const fetch = vi
+        .spyOn(git, "fetch")
+        .mockResolvedValue({
+          fetchHead: incoming,
+          fetchHeadDescription: "master",
+          defaultBranch: "master",
+          headers: {},
+        });
+      try {
+        await pfs.unlink(file);
+        await fs.promises.symlink("Other.md", file);
+        await expect(
+          crossnote.pullNotebook({ notebook }),
+        ).rejects.toMatchObject({ files: [filepath] });
+        expect(await fs.promises.readlink(file)).toBe("./Other.md");
+        await crossnote.resetToHead(
+          notebook,
+          await crossnote.previewReset(notebook),
+        );
+        await crossnote.pullNotebook({ notebook });
+        expect(await fs.promises.readlink(file)).toBe("./README.md");
+        expect(await pfs.readFile(file, { encoding: "utf8" })).toBe(
+          "updated target",
+        );
+        const push = vi.spyOn(git, "push");
+        try {
+          await crossnote.pushNotebook({ notebook });
+          expect(push).not.toHaveBeenCalled();
+          expect(await git.resolveRef({ ...args, ref: "HEAD" })).toBe(incoming);
+        } finally {
+          push.mockRestore();
+        }
+      } finally {
+        fetch.mockRestore();
+      }
     } finally {
       unlink.mockRestore();
       symlink.mockRestore();
