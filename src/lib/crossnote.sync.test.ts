@@ -118,6 +118,46 @@ const emptyRemote: git.FetchResult = {
   defaultBranch: null,
 };
 
+it("shares status reads within a notebook batch and observes later index changes", async () => {
+  const { app, notebook, read } = await repository();
+  const args = { fs, dir: notebook.dir };
+  const status = vi.spyOn(git, "status");
+  const readStatus = () => app.getStatus(notebook.dir, "README.md");
+  expect(
+    await Promise.all([
+      readStatus(),
+      app.getStatus(notebook.dir, "assets/a.bin"),
+    ]),
+  ).toEqual(["unmodified", "unmodified"]);
+  const batch = status.mock.calls[0][0].cache;
+  expect(batch).toBeDefined();
+  expect(status.mock.calls[1][0].cache).toBe(batch);
+  await pfs.writeFile(notebook.dir + "/README.md", "longer edited note");
+  expect(await readStatus()).toBe("*modified");
+  expect(status.mock.calls[2][0].cache).not.toBe(batch);
+  await git.add({ ...args, filepath: "README.md" });
+  expect(await readStatus()).toBe("modified");
+  await pfs.unlink(notebook.dir + "/.git/index");
+  expect(await readStatus()).toBe("*undeletemodified");
+  await app.listNotebooks();
+  expect(await readStatus()).toBe("modified");
+  await git.checkout({
+    ...args,
+    ref: "HEAD",
+    filepaths: ["README.md"],
+    force: true,
+  });
+  expect(await readStatus()).toBe("unmodified");
+  // Recreating identical bytes changes the file stats. Displaying its status
+  // must still leave the on-disk index alone.
+  const index = await read(".git/index");
+  const file = notebook.dir + "/README.md";
+  await pfs.unlink(file);
+  await pfs.writeFile(file, "# Kept\n");
+  expect(await readStatus()).toBe("unmodified");
+  expect(await read(".git/index")).toEqual(index);
+});
+
 it("records an empty remote check and lets a manual pull retry immediately", async () => {
   const { app, notebook, base, theirs, read } = await repository({
     "new.md": bytes("remote"),

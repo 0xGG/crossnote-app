@@ -273,6 +273,7 @@ export function convertNotebookToNotebookDBEntry(
 
 export default class Crossnote {
   private notebookDB: PouchDB.Database<NotebookDBEntry>;
+  private statusBatches = new Map<string, object>();
 
   constructor() {
     PouchDB.plugin(PouchdbFind);
@@ -1794,8 +1795,16 @@ export default class Crossnote {
   */
 
   public async getStatus(notebookPath: string, filePath: string) {
-    const args = { fs, dir: notebookPath, filepath: filePath };
+    // Cards requesting status in one render share Git's object and index
+    // reads. A later batch starts fresh, even after an index rebuild.
+    let cache = this.statusBatches.get(notebookPath);
+    if (!cache) {
+      cache = {};
+      this.statusBatches.set(notebookPath, cache);
+      queueMicrotask(() => this.statusBatches.delete(notebookPath));
+    }
+    const args = { fs, dir: notebookPath, filepath: filePath, cache };
     if (await git.isIgnored(args)) return "ignored";
-    return git.status(args);
+    return git.status({ ...args, refresh: false });
   }
 }
