@@ -2955,6 +2955,55 @@ it.each([false, true])(
   },
 );
 
+it.each([false, true])(
+  "restores committed children beneath a staged pointer (matching child: %s)",
+  async (matching) => {
+    const file = "vendor/note.md";
+    const { app, notebook, base, read } = await repository(
+      {},
+      { [file]: bytes("committed note") },
+    );
+    const args = { fs, dir: notebook.dir };
+    const staged = matching
+      ? (await git.readBlob({ ...args, oid: base, filepath: file })).oid
+      : await git.writeBlob({ ...args, blob: bytes("staged version") });
+    for (const child of [file, "vendor/obsolete.md"])
+      await git.updateIndex({
+        ...args,
+        filepath: child,
+        mode: 0o100644,
+        oid: staged,
+        add: true,
+      });
+    await git.updateIndex({
+      ...args,
+      filepath: "vendor",
+      mode: 0o160000,
+      oid: base,
+      add: true,
+    });
+    await pfs.unlink(notebook.dir + "/" + file);
+    expect(await git.listFiles(args)).toEqual(
+      expect.arrayContaining(["vendor", file, "vendor/obsolete.md"]),
+    );
+    await app.resetToHead(notebook, await app.previewReset(notebook));
+    expect(await git.listFiles(args)).toEqual(
+      await git.listFiles({ ...args, ref: base }),
+    );
+    expect(await read(file)).toEqual([...bytes("committed note")]);
+    const [entry] = await git.walk({
+      ...args,
+      trees: [git.STAGE()],
+      map: async (path, [staged]) =>
+        path === file ? [await staged.mode(), await staged.oid()] : undefined,
+    });
+    expect(entry).toEqual([
+      0o100644,
+      (await git.readBlob({ ...args, oid: base, filepath: file })).oid,
+    ]);
+  },
+);
+
 it("resets an old staged submodule child without changing its local file", async () => {
   const { app, notebook, args, tip, submodule } = await submoduleRepository();
   const filepath = "vendor/Draft.md";

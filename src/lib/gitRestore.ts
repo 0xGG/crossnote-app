@@ -232,6 +232,9 @@ export async function restoreTree(
       oldLinks,
       args.cache,
     )) {
+      // The joint walk already compared every visible index entry and
+      // planned any missing entry required by HEAD.
+      if (staged.has(file) || indexChanges.has(file)) continue;
       changed.add(file);
       indexChanges.set(file, null);
     }
