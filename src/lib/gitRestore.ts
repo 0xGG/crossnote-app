@@ -1,4 +1,6 @@
 import * as git from "isomorphic-git";
+import { GitIndexManager } from "isomorphic-git/managers";
+import { FileSystem } from "isomorphic-git/models";
 import path from "path-browserify";
 import { fs, missingFileOrThrow, pfs } from "./fs";
 import { checkedGitPath } from "./gitFiles";
@@ -12,6 +14,12 @@ import { NotebookConflictError, sameBytes } from "./mergeFiles";
 export class RestorePersistenceError extends Error {
   constructor(cause: unknown) {
     super("error/restore-persistence", { cause });
+  }
+}
+
+export class RestoreApplyError extends Error {
+  constructor(cause: unknown) {
+    super(cause instanceof Error ? cause.message : String(cause), { cause });
   }
 }
 
@@ -30,32 +38,40 @@ export const resetIndex = (dir: string) =>
 export type ResetPreview = Awaited<ReturnType<typeof resetTarget>> & {
   index: Awaited<ReturnType<typeof resetIndex>>;
   files: string[];
+  displaced: Map<string, string>;
 };
 
 const lstat = (file: string) =>
   fs.promises.lstat(file).catch(missingFileOrThrow);
 
-// Follow only the directory entries seen in preflight, never a symlink or a
-// new entry that appeared after the user confirmed the reset.
-async function removeBlocker(file: string, displaced?: ReadonlySet<string>) {
+// Both checks use lstat so a symlink is always a leaf.
+async function visitBlocker(
+  file: string,
+  check: (file: string, kind: string) => void,
+  remove = false,
+) {
   const stat = await lstat(file);
-  if (stat?.isDirectory()) {
-    for (const name of await pfs.readdir(file)) {
-      const child = path.join(file, name);
-      if (!displaced?.has(child)) throw new Error("error/reset-target-changed");
-      await removeBlocker(child, displaced);
-    }
-    await fs.promises.rmdir(file);
-  } else if (stat) await pfs.unlink(file);
+  if (!stat) return;
+  check(file, stat.type);
+  if (stat.isDirectory()) {
+    for (const name of await pfs.readdir(file))
+      await visitBlocker(path.join(file, name), check, remove);
+    if (remove) await fs.promises.rmdir(file);
+  } else if (remove) await pfs.unlink(file);
 }
 
-async function listDisplacedEntries(folder: string, entries: Set<string>) {
-  for (const name of await pfs.readdir(folder)) {
-    const file = path.join(folder, name);
-    entries.add(file);
-    if ((await lstat(file))?.isDirectory())
-      await listDisplacedEntries(file, entries);
-  }
+async function removeBlocker(
+  file: string,
+  displaced: ReadonlyMap<string, string>,
+) {
+  const verify = (name: string, kind: string) => {
+    if (displaced.get(name) !== kind)
+      throw new Error("error/reset-target-changed");
+  };
+  // Check all siblings before removing the first one, then verify again as
+  // each entry is reached. An approved directory cannot become a new file.
+  await visitBlocker(file, verify);
+  await visitBlocker(file, verify, true);
 }
 
 async function restoreBlob(
@@ -64,7 +80,7 @@ async function restoreBlob(
   mode: number,
   oid: string,
   work: Awaited<ReturnType<typeof lstat>>,
-  displaced: ReadonlySet<string>,
+  displaced: Map<string, string>,
 ) {
   const symlink = mode === 0o120000;
   const sameMode = symlink
@@ -76,8 +92,12 @@ async function restoreBlob(
     const bytes = await fs.promises.readFile(file);
     if (bytes && (await git.hashBlob({ object: bytes })).oid === oid) return;
   }
+  if (work) displaced.set(file, work.type);
   return async () => {
     const { blob } = await git.readBlob({ ...args, oid });
+    const current = await lstat(file);
+    if (current?.type !== work?.type)
+      throw new Error("error/reset-target-changed");
     if (work && (!sameMode || symlink)) await removeBlocker(file, displaced);
     if (symlink)
       await fs.promises.symlink(
@@ -99,9 +119,7 @@ export async function restoreTree(
 ) {
   const onlyFile = apply && "onlyFile" in apply ? apply.onlyFile : undefined;
   const args = { fs, dir, cache: {} };
-  const removeIndexEntry = async (filepath: string) => {
-    await git.updateIndex({ ...args, filepath, remove: true, force: true });
-  };
+  const indexChanges = new Map<string, { mode: number; oid: string } | null>();
   const inScope = (file: string) =>
     !onlyFile || file === onlyFile || onlyFile.startsWith(file + "/");
   const oldLinks = new Map<string, string>();
@@ -112,7 +130,8 @@ export async function restoreTree(
   const removals: (() => Promise<void>)[] = [];
   const obsoleteDirectories: string[] = [];
   const blockingDirectories: string[] = [];
-  const displaced = new Set<string>();
+  const displaced = new Map<string, string>();
+  const installedBlobs = new Set<string>();
   const updates: (() => Promise<void>)[] = [];
   let foundNote = false;
   await git.walk({
@@ -143,10 +162,11 @@ export async function restoreTree(
         directories.add(file);
       if (staged.has(file) && (!mode || mode === 0o40000)) {
         changed.add(file);
-        removals.push(async () => {
-          if (work && !work.isDirectory()) await pfs.unlink(full);
-          await removeIndexEntry(file);
-        });
+        indexChanges.set(file, null);
+        if (work && !work.isDirectory()) {
+          displaced.set(full, work.type);
+          removals.push(() => removeBlocker(full, displaced));
+        }
       }
       if (!head) {
         if (work?.isDirectory() && (await index?.type()) === "tree")
@@ -155,9 +175,12 @@ export async function restoreTree(
       }
       if (mode === 0o40000) {
         if (!work?.isDirectory()) {
-          if (work) changed.add(file);
+          if (work) {
+            changed.add(file);
+            displaced.set(full, work.type);
+          }
           updates.push(async () => {
-            await removeBlocker(full);
+            await removeBlocker(full, displaced);
             await pfs.mkdir(full);
           });
         }
@@ -172,20 +195,14 @@ export async function restoreTree(
         if (file === onlyFile) foundNote = true;
         if (work?.isDirectory()) blockingDirectories.push(full);
         write = await restoreBlob(args, full, mode, oid, work, displaced);
+        // A staged pointer may already have its committed blob on disk.
+        // Only the index changes; no submodule directory is displaced.
+        if (indexMode === 0o160000 && !write) installedBlobs.add(file);
       }
       if (write || updateIndex) {
         changed.add(file);
-        updates.push(async () => {
-          await write?.();
-          if (updateIndex)
-            await git.updateIndex({
-              ...args,
-              filepath: file,
-              mode,
-              oid,
-              add: true,
-            });
-        });
+        if (write) updates.push(write);
+        if (updateIndex) indexChanges.set(file, { mode, oid });
       }
     },
   });
@@ -195,16 +212,20 @@ export async function restoreTree(
     for (const file of changed)
       if (file !== onlyFile) throw new NotebookConflictError([file]);
   }
-  await assertGitLinkTransition(dir, oldLinks, links, staged);
+  await assertGitLinkTransition(dir, oldLinks, links, staged, {
+    oid: ref,
+    files: installedBlobs,
+    cache: args.cache,
+  });
   for (const folder of blockingDirectories) {
     if (onlyFile) {
       const [child] = await pfs.readdir(folder);
       if (child) throw new NotebookConflictError([path.join(onlyFile, child)]);
     } else {
-      await listDisplacedEntries(folder, displaced);
+      await visitBlocker(folder, (name, kind) => displaced.set(name, kind));
     }
   }
-  for (const file of displaced) changed.add(path.relative(dir, file));
+  for (const file of displaced.keys()) changed.add(path.relative(dir, file));
   if (!onlyFile) {
     for (const file of await indexedGitLinkChildren(
       dir,
@@ -212,7 +233,7 @@ export async function restoreTree(
       args.cache,
     )) {
       changed.add(file);
-      removals.push(() => removeIndexEntry(file));
+      indexChanges.set(file, null);
     }
   }
   const files = [...changed].sort();
@@ -222,20 +243,58 @@ export async function restoreTree(
       if (
         confirmed.files.length !== files.length ||
         files.some((file, i) => file !== confirmed.files[i]) ||
+        confirmed.displaced.size !== displaced.size ||
+        [...displaced].some(
+          ([name, kind]) => confirmed.displaced.get(name) !== kind,
+        ) ||
         !sameBytes(confirmed.index, await resetIndex(dir))
       )
         throw new Error("error/reset-target-changed");
     }
     // A committed file can replace a directory of staged children.
-    for (const remove of removals) await remove();
-    for (const folder of obsoleteDirectories.reverse())
-      if (!(await pfs.readdir(folder)).length) await fs.promises.rmdir(folder);
-    for (const update of updates) await update();
+    try {
+      for (const remove of removals) await remove();
+      for (const folder of obsoleteDirectories.reverse())
+        if (!(await pfs.readdir(folder)).length)
+          await fs.promises.rmdir(folder);
+      for (const update of updates) await update();
+      if (indexChanges.size) {
+        await GitIndexManager.acquire(
+          {
+            fs: new FileSystem(fs),
+            gitdir: path.join(dir, ".git"),
+            cache: args.cache,
+          },
+          (index) => {
+            for (const [filepath, entry] of indexChanges) {
+              if (!entry) index.delete({ filepath });
+              else
+                index.insert({
+                  filepath,
+                  oid: entry.oid,
+                  stats: {
+                    mode: entry.mode,
+                    ctime: new Date(0),
+                    mtime: new Date(0),
+                    dev: 0,
+                    ino: 0,
+                    uid: 0,
+                    gid: 0,
+                    size: 0,
+                  },
+                });
+            }
+          },
+        );
+      }
+    } catch (error) {
+      throw new RestoreApplyError(error);
+    }
     try {
       await pfs.storeTree(dir);
     } catch (error) {
       throw new RestorePersistenceError(error);
     }
   }
-  return files;
+  return { files, displaced };
 }

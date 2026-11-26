@@ -433,6 +433,7 @@ async function notebookWithTyping(dir: string, write: () => Promise<void>) {
           branch: "refs/heads/master",
           sha: "head",
           index: null,
+          displaced: new Map(),
           files: [],
         }),
     ],
@@ -683,6 +684,7 @@ it("finishes an accepted attachment and its note edit before resetting", async (
         branch: "refs/heads/master",
         sha: "head",
         index: null,
+        displaced: new Map(),
         files: [],
       });
       await new Promise((resolve) => setTimeout(resolve, 0));

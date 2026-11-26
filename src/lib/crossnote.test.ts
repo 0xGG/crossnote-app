@@ -500,14 +500,12 @@ describe("Crossnote keeps the stored directory tree in step", () => {
       });
       notebook.gitURL = "https://fixture.test/link.git";
       notebook.localSha = notebook.remoteSha = base;
-      const fetch = vi
-        .spyOn(git, "fetch")
-        .mockResolvedValue({
-          fetchHead: incoming,
-          fetchHeadDescription: "master",
-          defaultBranch: "master",
-          headers: {},
-        });
+      const fetch = vi.spyOn(git, "fetch").mockResolvedValue({
+        fetchHead: incoming,
+        fetchHeadDescription: "master",
+        defaultBranch: "master",
+        headers: {},
+      });
       try {
         await pfs.unlink(file);
         await fs.promises.symlink("Other.md", file);
@@ -539,6 +537,99 @@ describe("Crossnote keeps the stored directory tree in step", () => {
       unlink.mockRestore();
       symlink.mockRestore();
     }
+  });
+
+  it.each(["preview", "apply"])(
+    "preserves a file replacing a confirmed empty directory during %s",
+    async (when) => {
+      const notebook = await crossnote.addNotebook({
+        name: "Changing blocker",
+        gitURL: "",
+      });
+      const args = { fs, dir: notebook.dir };
+      const root = notebook.dir + "/README.md";
+      const child = root + "/private";
+      await pfs.writeFile(root, "committed");
+      await git.add({ ...args, filepath: "README.md" });
+      await git.commit({ ...args, author, message: "Note" });
+      await pfs.unlink(root);
+      await pfs.mkdirp(child);
+      await pfs.writeFile(root + "/approved.md", "old");
+      const preview = await crossnote.previewReset(notebook);
+      const replace = async () => {
+        await fs.promises.rmdir(child);
+        await pfs.writeFile(child, "keep new file");
+      };
+      const read = git.readBlob;
+      if (when === "preview") await replace();
+      const hook = vi.spyOn(git, "readBlob");
+      if (when === "apply")
+        hook.mockImplementationOnce(async (args) => {
+          await replace();
+          return read(args);
+        });
+      try {
+        await expect(crossnote.resetToHead(notebook, preview)).rejects.toThrow(
+          "error/reset-target-changed",
+        );
+        expect(await pfs.readFile(child, { encoding: "utf8" })).toBe(
+          "keep new file",
+        );
+        expect(
+          await pfs.readFile(root + "/approved.md", { encoding: "utf8" }),
+        ).toBe("old");
+      } finally {
+        hook.mockRestore();
+      }
+    },
+  );
+
+  it("writes a missing index once and restores an index-only pointer replacement", async () => {
+    const notebook = await crossnote.addNotebook({
+      name: "Index restore",
+      gitURL: "",
+    });
+    const args = { fs, dir: notebook.dir };
+    const files = Array.from({ length: 70 }, (_, i) => "note-" + i + ".md");
+    for (const file of files)
+      await pfs.writeFile(notebook.dir + "/" + file, "tracked");
+    await git.add({ ...args, filepath: "." });
+    await git.commit({ ...args, author, message: "Notes" });
+    const name = notebook.dir + "/.git/index";
+    await pfs.unlink(name);
+    const preview = await crossnote.previewReset(notebook);
+    const write = vi.spyOn(fs.promises, "writeFile");
+    try {
+      await crossnote.resetToHead(notebook, preview);
+      expect
+        .soft(write.mock.calls.filter(([file]) => file === name))
+        .toHaveLength(1);
+    } finally {
+      write.mockRestore();
+    }
+    expect(await git.listFiles(args)).toEqual([...files].sort());
+    const file = files[0];
+    await git.updateIndex({
+      ...args,
+      filepath: file,
+      mode: 0o160000,
+      oid: "1".repeat(40),
+      add: true,
+    });
+    const changed = await crossnote.previewReset(notebook);
+    expect(changed.files).toEqual([file]);
+    const working = vi.spyOn(fs.promises, "writeFile");
+    try {
+      await crossnote.resetToHead(notebook, changed);
+      expect(
+        working.mock.calls.filter(
+          ([path]) => path === notebook.dir + "/" + file,
+        ),
+      ).toHaveLength(0);
+    } finally {
+      working.mockRestore();
+    }
+    expect((await crossnote.previewReset(notebook)).files).toEqual([]);
   });
 
   it("only removes the previewed entries of a directory that blocks a committed file", async () => {

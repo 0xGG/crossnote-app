@@ -25,7 +25,11 @@ import {
 } from "../lib/event";
 import { missingFileOrThrow, pfs } from "../lib/fs";
 import { repositoryAddress } from "../lib/gitConnection";
-import { RestorePersistenceError, type ResetPreview } from "../lib/gitRestore";
+import {
+  RestoreApplyError,
+  RestorePersistenceError,
+  type ResetPreview,
+} from "../lib/gitRestore";
 import { pruneUnknownTabs, tabsInNotebook } from "../lib/layout";
 import { Note, NoteConfig, NoteMovedError } from "../lib/note";
 import { Notebook } from "../lib/notebook";
@@ -159,11 +163,15 @@ async function finishGit<T>(
 
 async function finishRestore(
   restore: Promise<void>,
-  update: () => Promise<void>,
+  update: (preservePendingEdits?: boolean) => Promise<void>,
 ) {
   try {
     await restore;
   } catch (error) {
+    if (error instanceof RestoreApplyError) {
+      await update(true).catch(console.error);
+      throw error.cause;
+    }
     // The working files and index already reflect HEAD when only the flush failed.
     if (error instanceof RestorePersistenceError)
       await update().catch(console.error);
@@ -897,8 +905,13 @@ function useCrossnoteContainer(initialState: InitialState) {
         if (error instanceof NotesNotSavedError) return;
         throw error;
       }
-      return finishRestore(crossnote.resetToHead(notebook, target), () =>
-        readNotebookAgain(notebook, { requireDirectory: true }),
+      return finishRestore(
+        crossnote.resetToHead(notebook, target),
+        (preservePendingEdits) =>
+          readNotebookAgain(notebook, {
+            requireDirectory: true,
+            preservePendingEdits,
+          }),
       );
     },
     [crossnote, saveOpenNotes, readNotebookAgain],
@@ -978,7 +991,7 @@ function useCrossnoteContainer(initialState: InitialState) {
           requireOriginalPath(note.filePath, location);
           return notebook.checkoutNote(note);
         });
-        return finishRestore(restore, async () => {
+        return finishRestore(restore, async (preservePendingEdits) => {
           const restored = await notebook.getNote(note.filePath, true);
           if (restored) {
             notebook.search.remove(restored.filePath);
@@ -990,9 +1003,13 @@ function useCrossnoteContainer(initialState: InitialState) {
             globalEmitter.emit(EventType.PerformedGitOperation, {
               notebookPath: notebook.dir,
               filePath: restored.filePath,
+              preservePendingEdits,
             });
           } else {
-            await readNotebookAgain(notebook, { requireDirectory: true });
+            await readNotebookAgain(notebook, {
+              requireDirectory: true,
+              preservePendingEdits,
+            });
           }
         });
       });

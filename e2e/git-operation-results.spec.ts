@@ -111,6 +111,105 @@ test("keeps a checked-out relative symlink clean across notebook resets", async 
   await expect(card).toContainText(name + " - *modified", { ignoreCase: true });
 });
 
+test("restores a staged pointer to the committed file already on disk", async ({
+  app,
+  page,
+  request,
+}) => {
+  const file = "Note.md";
+  const data = bytes("# Kept\n");
+  const ordinary = await createRemote(request, { [file]: data });
+  const pointer = await createRemote(request, {
+    [file]: { gitlink: "1".repeat(40) },
+  });
+  await app.open();
+  const dir = await cloneRemote(app, ordinary);
+  const index = dir + "/.git/index";
+  const original = await indexEntries(page, index);
+  const second = await cloneRemote(app, pointer);
+  await localBytes(page, index, await localBytes(page, second + "/.git/index"));
+  await app
+    .notebook(ordinary.id)
+    .getByRole("treeitem", { name: /Settings/ })
+    .click();
+  const dialog = page.getByRole("dialog");
+  await dialog.getByRole("button", { name: "Hard reset", exact: true }).click();
+  await expect(dialog.getByRole("listitem")).toHaveText([file]);
+  await dialog.getByRole("button", { name: "Confirm reset" }).click();
+  await expect(dialog).toBeHidden();
+  expect(await indexEntries(page, index)).toEqual(original);
+  expect(await localBytes(page, dir + "/" + file)).toEqual(data);
+});
+
+test("refreshes deleted draft cards when a later reset write fails", async ({
+  app,
+  page,
+  request,
+}) => {
+  const original = "# Committed\n";
+  const remote = await createRemote(request, { "README.md": bytes(original) });
+  await app.open();
+  const dir = await cloneRemote(app, remote);
+  const name = await app.createNote();
+  await app.openNotes(remote.id);
+  const card = app.noteCards.getByText(name, { exact: true });
+  await expect(card).toBeVisible();
+  const file = dir + "/README.md";
+  await localBytes(page, file, bytes("working changes\n"));
+  const index = dir + "/.git/index";
+  const staged = await localBytes(page, index);
+  await page.evaluate((file) => {
+    const { fs } = (
+      window as unknown as {
+        pfs: {
+          fs: {
+            promises: {
+              writeFile(
+                name: string,
+                bytes: Uint8Array,
+                options: unknown,
+              ): Promise<void>;
+            };
+          };
+        };
+      }
+    ).pfs;
+    const original = fs.promises.writeFile;
+    fs.promises.writeFile = function (name, data, options) {
+      if (name === file) {
+        fs.promises.writeFile = original;
+        throw new Error("Refused restored note content");
+      }
+      return original.call(this, name, data, options);
+    };
+  }, file);
+  const settings = app
+    .notebook(remote.id)
+    .getByRole("treeitem", { name: /Settings/ });
+  const dialog = page.getByRole("dialog");
+  const reset = dialog.getByRole("button", { name: "Hard reset", exact: true });
+  const confirm = dialog.getByRole("button", { name: "Confirm reset" });
+  await settings.click();
+  await reset.click();
+  await expect(dialog.getByRole("status")).toContainText(name + ".md");
+  await confirm.click();
+  await expect(reset).toBeVisible();
+  await dialog.getByRole("button", { name: "Cancel", exact: true }).click();
+  await expect(dialog).toBeHidden();
+  await expect(app.notesPanel).toBeVisible();
+  await expect(card).toBeHidden();
+  expect(await localBytes(page, index)).toEqual(staged);
+  expect(await localBytes(page, file)).toEqual(bytes("working changes\n"));
+  await settings.click();
+  await reset.click();
+  await confirm.click();
+  await expect(dialog).toBeHidden();
+  expect(await localBytes(page, file)).toEqual(bytes(original));
+  expect(
+    (await indexEntries(page, index)).map((entry) => entry.name),
+  ).not.toContain(name + ".md");
+});
+
 test("requires a new reset preview for new files inside a blocking directory", async ({
   app,
   page,
@@ -151,10 +250,30 @@ test("requires a new reset preview for new files inside a blocking directory", a
   );
   expect(await localBytes(page, dir + "/" + late)).toEqual([0, 255]);
   expect(await localBytes(page, index)).toEqual(before);
+  const occupied = root + "/private-slot";
+  await page.evaluate(
+    (path) =>
+      (
+        window as unknown as { pfs: { mkdir(path: string): Promise<void> } }
+      ).pfs.mkdir(path),
+    occupied,
+  );
   await reset.click();
   await expect(preview).toContainText(draft);
   await expect(preview).toContainText(late);
   await expect(preview).not.toContainText("sibling.bin");
+  await page.evaluate(
+    (path) =>
+      (
+        window as unknown as { pfs: { rmdir(path: string): Promise<void> } }
+      ).pfs.rmdir(path),
+    occupied,
+  );
+  await localBytes(page, occupied, bytes("new local file"));
+  await confirm.click();
+  await expect(reset).toBeVisible();
+  expect(await localBytes(page, occupied)).toEqual(bytes("new local file"));
+  await reset.click();
   await confirm.click();
   await expect(dialog).toBeHidden();
   expect(await localBytes(page, root)).toEqual(bytes(original));

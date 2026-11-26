@@ -939,8 +939,11 @@ export default class Crossnote {
       assertNotebookWritable(notebook.dir);
       const target = await resetTarget(notebook.dir);
       const index = await resetIndex(notebook.dir);
-      const files = await restoreTree(notebook.dir, target.sha);
-      return { ...target, index, files };
+      return {
+        ...target,
+        index,
+        ...(await restoreTree(notebook.dir, target.sha)),
+      };
     });
   }
 

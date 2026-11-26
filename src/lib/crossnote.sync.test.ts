@@ -2010,13 +2010,18 @@ it.each(["reset", "download"])(
     if (operation === "reset") {
       const target = await app.previewReset(notebook);
       expect(target.files).toContain("vendor");
-      vi.spyOn(git, "updateIndex").mockRejectedValueOnce(
-        new Error("Interrupted reset"),
-      );
+      const write = fs.promises.writeFile.bind(fs.promises);
+      const interrupted = vi
+        .spyOn(fs.promises, "writeFile")
+        .mockImplementation((file, data, options) => {
+          if (file === index) throw new Error("Interrupted reset");
+          return write(file, data, options);
+        });
       await expect(app.resetToHead(notebook, target)).rejects.toThrow(
         "Interrupted reset",
       );
       expect(await pfs.exists(index + ".crossnote-rebuild")).toBe(true);
+      interrupted.mockRestore();
       await app.resetToHead(notebook, target);
       expect((await parentGitTree(notebook.dir)).links.get("vendor")).toBe(
         submodule.oid,
