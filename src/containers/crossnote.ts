@@ -1217,12 +1217,7 @@ favorited: true
       ) {
         // TODO:  Run tasks in parallel instead of running one by one
         try {
-          const changed = await crossnote.fetchNotebook({ notebook });
-          if (changed) {
-            globalEmitter.emit(EventType.PerformedGitOperation, {
-              notebookPath: notebook.dir,
-            });
-          }
+          await crossnote.fetchNotebook({ notebook });
         } catch {
           // fetchNotebook records sign-in failures for the sidebar.
         }
