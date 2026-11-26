@@ -25,6 +25,8 @@ test("keeps a checked-out relative symlink clean across notebook resets", async 
   const remote = await createRemote(request, {
     "README.md": bytes("# Linked note\n"),
     "Other.md": bytes("# Linked note\n"),
+    "Data/keep.txt": bytes("local data"),
+    "Alias": { symlink: "Data" },
     [name]: { symlink: "README.md" },
   });
   await app.open();
@@ -102,6 +104,15 @@ test("keeps a checked-out relative symlink clean across notebook resets", async 
   const updated = bytes("# Updated linked note\n");
   await changeRemote(request, remote, { "README.md": updated });
   await download(app, remote);
+  const indexed = await indexEntries(page, dir + "/.git/index");
+  expect(indexed.map((entry) => entry.name).sort()).toEqual([
+    "Alias",
+    "Data/keep.txt",
+    "Other.md",
+    "README.md",
+    name,
+  ]);
+  expect(indexed.find((entry) => entry.name === "Alias")?.mode).toBe("120000");
   expect(await link.evaluate((state) => state.target())).toBe("./README.md");
   expect(await localBytes(page, dir + "/" + name)).toEqual(updated);
   await link.evaluate((state) => state.change());

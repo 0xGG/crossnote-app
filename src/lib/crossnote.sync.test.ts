@@ -126,6 +126,90 @@ const emptyRemote: git.FetchResult = {
   defaultBranch: null,
 };
 
+it("keeps staged regular bytes when the incoming path becomes a symlink", async () => {
+  const file = "Shortcut.md";
+  const { app, notebook, base, read } = await repository(
+    {},
+    { [file]: bytes("old note") },
+  );
+  const args = { fs, dir: notebook.dir };
+  const { tree } = await git.readTree({ ...args, oid: base });
+  const link = await git.writeBlob({ ...args, blob: bytes("README.md") });
+  const remote = await git.commit({
+    ...args,
+    author,
+    noUpdateBranch: true,
+    message: "Link the shortcut",
+    tree: await git.writeTree({
+      ...args,
+      tree: tree.map((entry) =>
+        entry.path === file ? { ...entry, mode: "120000", oid: link } : entry,
+      ),
+    }),
+  });
+  vi.mocked(git.fetch).mockResolvedValue({ ...emptyRemote, fetchHead: remote });
+  await pfs.writeFile(notebook.dir + "/" + file, "local note");
+  await git.add({ ...args, filepath: file });
+  const index = await read(".git/index");
+  await expect(app.pullNotebook({ notebook })).rejects.toMatchObject({
+    files: [file],
+  });
+  expect(await recovery.readPullRecovery(notebook._id)).toBeUndefined();
+  expect(await read(".git/index")).toEqual(index);
+  expect(await read(file)).toEqual([...bytes("local note")]);
+  expect(await read("README.md")).toEqual([...bytes("# Kept\n")]);
+
+  await pfs.writeFile(notebook.dir + "/" + file, "old note");
+  await expect(app.pullNotebook({ notebook })).rejects.toMatchObject({
+    files: [file],
+  });
+  expect(await read(".git/index")).toEqual(index);
+
+  await recovery.savePullRecovery(notebook._id, {
+    version: 1,
+    localSha: base,
+    remoteSha: remote,
+    files: { [file]: bytes("pending note") },
+    conflicts: [],
+    deletions: {},
+  });
+  await expect(app.pullNotebook({ notebook })).rejects.toMatchObject({
+    files: [file],
+  });
+  expect(await read(".git/index")).toEqual(index);
+  expect(await read("README.md")).toEqual([...bytes("# Kept\n")]);
+});
+
+it("treats a tracked directory symlink as a leaf during a download", async () => {
+  const { app, notebook } = await repository();
+  const args = { fs, dir: notebook.dir };
+  await fs.promises.symlink("assets", notebook.dir + "/Alias");
+  await git.add({ ...args, filepath: "Alias" });
+  const base = await git.commit({ ...args, author, message: "Add alias" });
+  const { tree } = await git.readTree({ ...args, oid: base });
+  const oid = await git.writeBlob({ ...args, blob: bytes("updated note") });
+  const remote = await git.commit({
+    ...args,
+    author,
+    noUpdateBranch: true,
+    message: "Update note",
+    tree: await git.writeTree({
+      ...args,
+      tree: tree.map((entry) =>
+        entry.path === "README.md" ? { ...entry, oid } : entry,
+      ),
+    }),
+  });
+  vi.mocked(git.fetch).mockResolvedValue({ ...emptyRemote, fetchHead: remote });
+  const listing = vi.spyOn(pfs, "readdir");
+  await app.pullNotebook({ notebook });
+  expect(listing).not.toHaveBeenCalledWith(notebook.dir + "/Alias");
+  expect(await fs.promises.readlink(notebook.dir + "/Alias")).toBe("./assets");
+  expect(await git.listFiles(args)).toEqual(
+    await git.listFiles({ ...args, ref: remote }),
+  );
+});
+
 it("requires a new reset preview after rebuilding the index over a draft", async () => {
   const { app, notebook, read } = await repository();
   const draft = "nested/draft.md";

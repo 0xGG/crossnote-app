@@ -127,6 +127,24 @@ interface PullNotebookResult {
 
 type Cache = Record<string, FileBytes>;
 
+// Stop at the first file or symlink, even when a deeper path was requested.
+async function workingEntry(dir: string, file: string) {
+  checkedGitPath(dir, file);
+  let relative = "";
+  for (const part of file.split("/")) {
+    relative = relative ? relative + "/" + part : part;
+    const stats = await fs.promises
+      .lstat(path.join(dir, relative))
+      .catch(missingFileOrThrow);
+    if (!stats) return;
+    if (relative === file || !stats.isDirectory()) return { relative, stats };
+  }
+}
+
+function checkReplayPath(file: string, symlinks: ReadonlyMap<string, string>) {
+  if (isWithinGitLink(file, symlinks)) throw new NotebookConflictError([file]);
+}
+
 const recoveryHeader = "# Crossnote recovered files";
 const recoveredMarker = `${recoveryHeader}\n*\n`;
 const recoveredDirectory = (suffix: number) =>
@@ -645,24 +663,25 @@ export default class Crossnote {
     cache: Cache,
     forStaging = false,
   ) {
-    let ancestor = "";
-    for (const name of file.split("/").slice(0, -1)) {
-      ancestor = ancestor ? `${ancestor}/${name}` : name;
-      if (ancestor in cache) return;
+    const parent = path.dirname(file);
+    if (parent === ".") return;
+    const entry = await workingEntry(notebook.dir, parent);
+    if (entry && !entry.stats.isDirectory()) {
+      const ancestor = entry.relative;
+      if (entry.stats.isSymbolicLink())
+        throw new NotebookConflictError([ancestor]);
+      if (ancestor in cache) return true;
       const target = this.checkedPath(notebook, ancestor);
-      const stats = await pfs.stats(target).catch(missingFileOrThrow);
-      if (!stats) return;
-      if (stats.isDirectory()) continue;
       // The parent has no tracked file in HEAD. On the no-checkout path a
       // null entry only removes it from the index, leaving the file on disk.
       if (forStaging && (await ignoreCheck(notebook.dir)(ancestor))) {
         cache[ancestor] = null;
-        return;
+        return true;
       }
       cache[ancestor] = new Uint8Array(
         (await pfs.readFile(target)) as Uint8Array,
       );
-      return;
+      return true;
     }
   }
 
@@ -674,6 +693,7 @@ export default class Crossnote {
     symlinks = {
       head: new Map<string, string>(),
       staged: new Map<string, string>(),
+      remote: new Map<string, string>(),
     },
   ) {
     const cache: Cache = Object.create(null);
@@ -724,6 +744,7 @@ export default class Crossnote {
     }
     for (const [file, head, work, stage] of rows) {
       const withinLink = isWithinGitLink(file, links);
+      if (stage !== head) checkReplayPath(file, symlinks.remote);
       // Checkout needs directories above a pointer and cannot retain a staged
       // blob at those paths, at the pointer itself, or below it.
       if (
@@ -1260,23 +1281,11 @@ export default class Crossnote {
       ),
     );
     const getStats = async (file: string) => {
-      const target = this.checkedPath(notebook, file);
-      let current = notebook.dir;
-      try {
-        for (const part of file.split("/")) {
-          current = path.join(current, part);
-          const stats = await pfs.stats(current);
-          if (current === target) return stats.isFile() ? "file" : "directory";
-          if (!stats.isDirectory()) return "blocked";
-        }
-      } catch (error) {
-        if (
-          (error as { code?: string }).code === "ENOENT" ||
-          (error as Error).name === "NotFoundError"
-        )
-          return null;
-        throw error;
-      }
+      const entry = await workingEntry(notebook.dir, file);
+      if (!entry) return null;
+      if (entry.relative !== file || entry.stats.isSymbolicLink())
+        return "blocked";
+      return entry.stats.isFile() ? "file" : "directory";
     };
     for (const file of base) {
       if (
@@ -1378,6 +1387,18 @@ export default class Crossnote {
     );
     const moves = recovery.relocated ?? {};
     const files = { ...recovery.files };
+    for (const file of Object.keys(files)) {
+      if (
+        isWithinGitLink(file, baseLinks) ||
+        isWithinGitLink(file, remoteLinks)
+      )
+        continue;
+      // A saved regular-file plan can predate the checkout or the link.
+      checkReplayPath(file, targetTree.symlinks);
+      const entry = await workingEntry(notebook.dir, file);
+      if (entry?.stats.isSymbolicLink())
+        throw new NotebookConflictError([file]);
+    }
     if (!Array.isArray(moves)) {
       for (const [original, copy] of Object.entries(moves)) {
         if (
@@ -1444,12 +1465,9 @@ export default class Crossnote {
         !remoteFiles.has(file) &&
         !Object.prototype.hasOwnProperty.call(recovery.files, file)
       ) {
-        const target = this.checkedPath(notebook, file);
-        if (
-          (await pfs.exists(target)) &&
-          !(await pfs.stats(target)).isDirectory()
-        )
-          await pfs.unlink(target);
+        const entry = await workingEntry(notebook.dir, file);
+        if (entry?.relative === file && !entry.stats.isDirectory())
+          await pfs.unlink(this.checkedPath(notebook, file));
       }
     }
     // Checkout cannot write a file over a directory, even when all its former
@@ -1617,11 +1635,11 @@ export default class Crossnote {
       links: baseLinks,
       symlinks: headSymlinks,
     } = await parentGitTree(notebook.dir, localSha, args.cache);
-    const { files: remoteFiles, links: remoteLinks } = await parentGitTree(
-      notebook.dir,
-      remoteSha,
-      args.cache,
-    );
+    const {
+      files: remoteFiles,
+      links: remoteLinks,
+      symlinks: remoteSymlinks,
+    } = await parentGitTree(notebook.dir, remoteSha, args.cache);
     const {
       links: stagedLinks,
       files: stagedFiles,
@@ -1675,7 +1693,7 @@ export default class Crossnote {
       false,
       args.cache,
       remoteLinks,
-      { head: headSymlinks, staged: stagedSymlinks },
+      { head: headSymlinks, staged: stagedSymlinks, remote: remoteSymlinks },
     );
     const isIgnored = ignoreCheck(notebook.dir);
     // A remote file may replace a local directory. Preserve untracked/ignored
@@ -1685,20 +1703,23 @@ export default class Crossnote {
         const file = `${dir}/${name}`;
         if (previousLinks.has(file) || remoteLinks.has(file)) continue;
         const target = this.checkedPath(notebook, file);
-        if ((await pfs.stats(target)).isDirectory())
-          await collectUntracked(file);
-        else if (!baseFiles.has(file) && !(file in cache))
+        const stats = await fs.promises.lstat(target);
+        if (stats.isDirectory()) await collectUntracked(file);
+        else if (!baseFiles.has(file) && !(file in cache)) {
+          if (stats.isSymbolicLink()) throw new NotebookConflictError([file]);
           cache[file] = new Uint8Array(
             (await pfs.readFile(target)) as Uint8Array,
           );
+        }
       }
     };
     for (const file of remoteFiles) {
       if (remoteLinks.has(file)) continue;
+      if (await this.cacheWorkingFileAncestor(notebook, file, cache)) continue;
       const target = this.checkedPath(notebook, file);
-      if (await pfs.exists(target)) {
-        if ((await pfs.stats(target)).isDirectory())
-          await collectUntracked(file);
+      const stats = await fs.promises.lstat(target).catch(missingFileOrThrow);
+      if (stats) {
+        if (stats.isDirectory()) await collectUntracked(file);
         else if (
           !baseFiles.has(file) &&
           (!(file in cache) || (await isIgnored(file)))
@@ -1712,7 +1733,10 @@ export default class Crossnote {
           });
           const name = path.basename(file);
           const entry = tree.find((entry) => entry.path === name);
-          if (entry?.mode !== "100644" && entry?.mode !== "100755")
+          if (
+            !stats.isFile() ||
+            (entry?.mode !== "100644" && entry?.mode !== "100755")
+          )
             throw new NotebookConflictError([file]);
           const { blob } = await git.readBlob({ ...args, oid: entry.oid });
           const current =
@@ -1722,7 +1746,6 @@ export default class Crossnote {
           delete cache[file];
         }
       }
-      await this.cacheWorkingFileAncestor(notebook, file, cache);
     }
     const reserved = new Set([
       ...baseFiles,
@@ -1791,6 +1814,7 @@ export default class Crossnote {
           ).blob
         : null;
     for (const [file, ours] of Object.entries(cache)) {
+      checkReplayPath(file, remoteSymlinks);
       this.checkedPath(notebook, file);
       const merged = mergeFile(
         file,
