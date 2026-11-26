@@ -69,6 +69,15 @@ const recordGitRequest = (repo, req, res, service) => {
 };
 const commit = async (repo, files) => {
   const specialEntries = [];
+  // With core.symlinks=false the worktree stores link targets as regular
+  // files. Git needs the requested mode when such a path becomes a blob.
+  const symlinks = new Set(
+    (await git(["ls-files", "--stage", "-z"], repo.work))
+      .toString()
+      .split("\0")
+      .filter((entry) => entry.startsWith("120000 "))
+      .map((entry) => entry.slice(entry.indexOf("\t") + 1)),
+  );
   for (const [name, bytes] of Object.entries(files)) {
     if (
       !name ||
@@ -79,28 +88,33 @@ const commit = async (repo, files) => {
     const target = path.resolve(repo.work, name);
     if (!target.startsWith(repo.work + path.sep))
       throw new Error("Outside fixture");
+    const previous = await lstat(target).catch((error) => {
+      if (error.code !== "ENOENT") throw error;
+    });
     if (bytes?.gitlink && /^[a-f0-9]{40}$/.test(bytes.gitlink)) {
+      if (previous && !previous.isDirectory()) await rm(target);
       await mkdir(target, { recursive: true });
       specialEntries.push(["160000", bytes.gitlink, name]);
       continue;
     }
-    const previous = await lstat(target).catch((error) => {
-      if (error.code !== "ENOENT") throw error;
-    });
     // A gitlink occupies an empty directory in the fixture checkout.
     if (previous?.isDirectory()) await rmdir(target);
     else if (bytes === null) await rm(target, { force: true });
     if (bytes !== null) {
       await mkdir(path.dirname(target), { recursive: true });
-      if (typeof bytes.symlink === "string") {
-        // Represent the link with its target text even on Windows.
-        await writeFile(target, bytes.symlink);
+      const link = typeof bytes.symlink === "string";
+      await writeFile(target, link ? bytes.symlink : Buffer.from(bytes));
+      if (link || symlinks.has(name)) {
         const oid = await git(
           ["hash-object", "-w", "--no-filters", "--", name],
           repo.work,
         );
-        specialEntries.push(["120000", oid.toString().trim(), name]);
-      } else await writeFile(target, Buffer.from(bytes));
+        specialEntries.push([
+          link ? "120000" : "100644",
+          oid.toString().trim(),
+          name,
+        ]);
+      }
     }
   }
   await git(["add", "-A"], repo.work);

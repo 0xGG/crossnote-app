@@ -30,6 +30,32 @@ test("removes a gitlink from the fixture remote", async ({ request }) => {
   expect((await state.json()).files).toEqual(["keep.md"]);
 });
 
+test("replaces a regular fixture file with a gitlink", async ({ request }) => {
+  const remote = await createRemote(request, { vendor: bytes("old file") });
+  for (const oid of ["1".repeat(40), "2".repeat(40)]) {
+    await changeRemote(request, remote, { vendor: { gitlink: oid } });
+    const tree = await request.get(`${fixtureURL}/repos/${remote.id}?tree`);
+    expect(await tree.json()).toEqual([`160000 commit ${oid}\tvendor`]);
+  }
+});
+
+test("replaces a fixture symlink with ordinary file bytes", async ({
+  request,
+}) => {
+  const remote = await createRemote(request, {
+    shortcut: { symlink: "target" },
+    other: { symlink: "target" },
+  });
+  const content = bytes("ordinary content");
+  await changeRemote(request, remote, { shortcut: content });
+  const tree = await request.get(`${fixtureURL}/repos/${remote.id}?tree`);
+  expect(await tree.json()).toEqual([
+    expect.stringMatching(/^120000 blob [0-9a-f]{40}\tother$/),
+    expect.stringMatching(/^100644 blob [0-9a-f]{40}\tshortcut$/),
+  ]);
+  expect(await remoteBytes(request, remote, "shortcut")).toEqual(content);
+});
+
 test("keeps a populated submodule in place across download, reset, index recovery and upload", async ({
   app,
   page,
