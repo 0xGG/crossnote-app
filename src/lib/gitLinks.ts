@@ -81,9 +81,12 @@ export async function matchesSymlink(
   const { blob } = await git.readBlob({ ...args, oid });
   // LightningFS normalizes the link text (for example "assets" to "./assets").
   const expected = new TextDecoder("utf-8", { ignoreBOM: true }).decode(blob);
+  const target = await args.fs.promises
+    .readlink(name)
+    .catch(missingFileOrThrow);
   return (
-    path.join(expected, ".") ===
-    path.join(await args.fs.promises.readlink(name), ".")
+    typeof target === "string" &&
+    path.join(expected, ".") === path.join(target, ".")
   );
 }
 

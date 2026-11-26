@@ -359,6 +359,38 @@ it("requires a new reset preview after rebuilding the index over a draft", async
   expect(await pfs.exists(notebook.dir + "/" + draft)).toBe(false);
 });
 
+it("reports a change when a link disappears or becomes a file during a status read", async () => {
+  const { app, notebook, read } = await repository();
+  const args = { fs, dir: notebook.dir };
+  const file = "Shortcut.md";
+  const name = notebook.dir + "/" + file;
+  await fs.promises.symlink("README.md", name);
+  await git.add({ ...args, filepath: file });
+  await git.commit({ ...args, author, message: "Track a relative shortcut" });
+  const index = await read(".git/index");
+  const status = () => app.getStatus(notebook.dir, file);
+  const readlink = fs.promises.readlink.bind(fs.promises);
+  const link = vi.spyOn(fs.promises, "readlink");
+  for (const replacement of [false, true]) {
+    expect(await status()).toBe("unmodified");
+    link.mockImplementationOnce(async (path) => {
+      await pfs.unlink(path);
+      if (replacement) await pfs.writeFile(path, "ordinary note");
+      return readlink(path);
+    });
+    await expect.soft(status()).resolves.toBe("*modified");
+    expect(await status()).toBe(replacement ? "*modified" : "*deleted");
+    if (replacement) await pfs.unlink(name);
+    await fs.promises.symlink("README.md", name);
+  }
+  const failure = new Error("Link read failed");
+  link.mockRejectedValueOnce(failure);
+  await expect(status()).rejects.toBe(failure);
+  expect(await status()).toBe("unmodified");
+  expect(await read(".git/index")).toEqual(index);
+  expect(await read("README.md")).toEqual([...bytes("# Kept\n")]);
+});
+
 it("shares status reads within a notebook batch and observes later index changes", async () => {
   const { app, notebook, read } = await repository();
   const args = { fs, dir: notebook.dir };
