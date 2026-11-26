@@ -113,6 +113,21 @@ test("keeps a checked-out relative symlink clean across notebook resets", async 
     name,
   ]);
   expect(indexed.find((entry) => entry.name === "Alias")?.mode).toBe("120000");
+  const note = bytes("Ordinary note");
+  await changeRemote(request, remote, { "Alias": null, "Alias/note.md": note });
+  await download(app, remote);
+  expect(await localBytes(page, dir + "/Alias/note.md")).toEqual(note);
+  await changeRemote(request, remote, {
+    "Alias/note.md": null,
+    "Alias": { symlink: "Data" },
+  });
+  await download(app, remote);
+  expect(
+    (await indexEntries(page, dir + "/.git/index")).map(({ name, mode }) => [
+      name,
+      mode,
+    ]),
+  ).toEqual(indexed.map(({ name, mode }) => [name, mode]));
   expect(await link.evaluate((state) => state.target())).toBe("./README.md");
   expect(await localBytes(page, dir + "/" + name)).toEqual(updated);
   await link.evaluate((state) => state.change());

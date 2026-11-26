@@ -210,6 +210,71 @@ it("treats a tracked directory symlink as a leaf during a download", async () =>
   );
 });
 
+it("downloads a clean symlink change to a directory and back", async () => {
+  const { app, notebook } = await repository();
+  const args = { fs, dir: notebook.dir };
+  const file = "Alias";
+  const name = notebook.dir + "/" + file;
+  await fs.promises.symlink("assets", name);
+  await git.add({ ...args, filepath: file });
+  const base = await git.commit({ ...args, author, message: "Link to assets" });
+  const { tree } = await git.readTree({ ...args, oid: base });
+  const note = await git.writeBlob({ ...args, blob: bytes("ordinary note") });
+  const folder = await git.writeTree({
+    ...args,
+    tree: [{ path: "note.md", type: "blob", mode: "100644", oid: note }],
+  });
+  const incoming = await git.commit({
+    ...args,
+    author,
+    noUpdateBranch: true,
+    message: "Track alias directory",
+    tree: await git.writeTree({
+      ...args,
+      tree: tree.map((entry) =>
+        entry.path === file
+          ? { path: file, mode: "040000", type: "tree", oid: folder }
+          : entry,
+      ),
+    }),
+  });
+  vi.mocked(git.fetch).mockResolvedValue({
+    ...emptyRemote,
+    fetchHead: incoming,
+  });
+  await pfs.unlink(name);
+  await fs.promises.symlink("README.md", name);
+  await expect(app.pullNotebook({ notebook })).rejects.toMatchObject({
+    files: [file],
+  });
+  expect(await fs.promises.readlink(name)).toBe("./README.md");
+  await pfs.unlink(name);
+  await fs.promises.symlink("assets", name);
+  await app.pullNotebook({ notebook });
+  expect(await pfs.readFile(name + "/note.md", { encoding: "utf8" })).toBe(
+    "ordinary note",
+  );
+  expect(await git.listFiles(args)).toEqual(
+    await git.listFiles({ ...args, ref: incoming }),
+  );
+  const reverse = await git.commit({
+    ...args,
+    author,
+    noUpdateBranch: true,
+    message: "Restore link to assets",
+    tree: await git.writeTree({ ...args, tree }),
+  });
+  vi.mocked(git.fetch).mockResolvedValue({
+    ...emptyRemote,
+    fetchHead: reverse,
+  });
+  await app.pullNotebook({ notebook });
+  expect(await fs.promises.readlink(name)).toBe("./assets");
+  expect(await git.listFiles(args)).toEqual(
+    await git.listFiles({ ...args, ref: reverse }),
+  );
+});
+
 it("requires a new reset preview after rebuilding the index over a draft", async () => {
   const { app, notebook, read } = await repository();
   const draft = "nested/draft.md";

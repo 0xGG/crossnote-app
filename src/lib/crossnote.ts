@@ -662,14 +662,19 @@ export default class Crossnote {
     file: string,
     cache: Cache,
     forStaging = false,
+    headSymlinks?: ReadonlyMap<string, string>,
   ) {
     const parent = path.dirname(file);
     if (parent === ".") return;
     const entry = await workingEntry(notebook.dir, parent);
     if (entry && !entry.stats.isDirectory()) {
       const ancestor = entry.relative;
-      if (entry.stats.isSymbolicLink())
+      if (entry.stats.isSymbolicLink()) {
+        // generateChangesCache has already compared tracked links with HEAD
+        // and the index. Checkout can replace this leaf with a directory.
+        if (headSymlinks?.has(ancestor)) return true;
         throw new NotebookConflictError([ancestor]);
+      }
       if (ancestor in cache) return true;
       const target = this.checkedPath(notebook, ancestor);
       // The parent has no tracked file in HEAD. On the no-checkout path a
@@ -1715,7 +1720,16 @@ export default class Crossnote {
     };
     for (const file of remoteFiles) {
       if (remoteLinks.has(file)) continue;
-      if (await this.cacheWorkingFileAncestor(notebook, file, cache)) continue;
+      if (
+        await this.cacheWorkingFileAncestor(
+          notebook,
+          file,
+          cache,
+          false,
+          headSymlinks,
+        )
+      )
+        continue;
       const target = this.checkedPath(notebook, file);
       const stats = await fs.promises.lstat(target).catch(missingFileOrThrow);
       if (stats) {
