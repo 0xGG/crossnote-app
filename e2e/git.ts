@@ -21,6 +21,51 @@ export type Remote = { id: string; url: string; proxy: string };
 type FixtureFile = number[] | { gitlink: string } | { symlink: string };
 export const bytes = (text: string) => [...new TextEncoder().encode(text)];
 
+// Both Git and the app use LightningFS's promise API. Its idle shutdown
+// checkpoints the directory tree even after reads, independently of either
+// caller. Observe their write requests, including explicit tree flushes.
+export async function expectReadOnlyNoteOpen(
+  page: Page,
+  openNote: () => Promise<void>,
+) {
+  const stop = await page.evaluateHandle(async () => {
+    await navigator.locks.request("fs_lock", () => {});
+    const methods = [
+      "writeFile",
+      "unlink",
+      "mkdir",
+      "rmdir",
+      "rename",
+      "symlink",
+      "backFile",
+      "flush",
+    ] as const;
+    type Writes = Record<
+      (typeof methods)[number],
+      (...args: unknown[]) => Promise<unknown>
+    >;
+    const { promises } = (
+      window as unknown as { pfs: { fs: { promises: Writes } } }
+    ).pfs.fs;
+    const writes: string[] = [];
+    const restore = methods.map((method) => {
+      const original = promises[method];
+      promises[method] = (...args) => {
+        writes.push([method, ...args.slice(0, 1)].join(" "));
+        return original.apply(promises, args);
+      };
+      return () => (promises[method] = original);
+    });
+    return async () => {
+      await navigator.locks.request("fs_lock", () => {});
+      for (const reset of restore) reset();
+      return writes;
+    };
+  });
+  await openNote();
+  expect(await stop.evaluate((finish) => finish())).toEqual([]);
+}
+
 export async function createRemote(
   request: APIRequestContext,
   files: Record<string, FixtureFile>,

@@ -6,6 +6,7 @@ import {
   changeRemote,
   cloneRemote,
   createRemote,
+  expectReadOnlyNoteOpen,
   fixtureURL,
   indexEntries,
   type FileHost,
@@ -200,13 +201,12 @@ test("restores a note from HEAD and retries a refused notebook reset", async ({
   expect(originalHead).toMatch(/^[a-f0-9]{40}$/);
   const originalIndex = await localBytes(page, indexPath);
 
-  await app.refuseWrites();
-  await app.noteCards.getByText("README", { exact: true }).click();
-  await expect(app.noteTitle).toHaveValue("README");
-  expect(await app.refusedWrites()).toEqual([]);
+  await expectReadOnlyNoteOpen(page, async () => {
+    await app.noteCards.getByText("README", { exact: true }).click();
+    await expect(app.noteTitle).toHaveValue("README");
+  });
   expect(await app.storedText(notePath)).toBe(original);
   expect(await localBytes(page, indexPath)).toEqual(originalIndex);
-  await app.refuseWrites(false);
 
   await app.modeButton("Source code").click();
   const staged = "# Staged note\n\nKeeps its staged content\n";
