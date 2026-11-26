@@ -120,9 +120,8 @@ async function matchesInstalledEntry(
   );
 }
 
-// Stop at the first missing or non-directory component so lstat never resolves
-// the rest of a pointer path through a working symlink.
-async function inspectPointerPath(dir: string, file: string) {
+// Stop at the first missing or non-directory component, including a symlink.
+export async function inspectWorkingPath(dir: string, file: string) {
   let name = dir;
   let stats: Awaited<ReturnType<typeof fs.promises.lstat>> | null = null;
   for (const part of file.split("/")) {
@@ -142,7 +141,7 @@ export async function assertGitLinkTransition(
 ) {
   for (const file of previous.keys()) {
     if (target.has(file)) continue;
-    const { name, stats } = await inspectPointerPath(dir, file);
+    const { name, stats } = await inspectWorkingPath(dir, file);
     // An empty pointer directory can be replaced on the first checkout.
     if (!stats || (stats.isDirectory() && !(await pfs.readdir(name)).length))
       continue;
@@ -170,7 +169,7 @@ export async function assertGitLinkTransition(
     throw new NotebookConflictError([existing]);
   }
   for (const file of target.keys()) {
-    const { name, stats } = await inspectPointerPath(dir, file);
+    const { name, stats } = await inspectWorkingPath(dir, file);
     if (!stats) continue;
     if (!stats.isDirectory()) throw new NotebookConflictError([file]);
     if (

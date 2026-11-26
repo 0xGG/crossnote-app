@@ -17,6 +17,7 @@ import {
 import {
   assertGitLinkTransition,
   indexedGitLinkChildren,
+  inspectWorkingPath,
   isWithinGitLink,
   matchesSymlink,
   parentGitTree,
@@ -127,18 +128,10 @@ interface PullNotebookResult {
 
 type Cache = Record<string, FileBytes>;
 
-// Stop at the first file or symlink, even when a deeper path was requested.
 async function workingEntry(dir: string, file: string) {
   checkedGitPath(dir, file);
-  let relative = "";
-  for (const part of file.split("/")) {
-    relative = relative ? relative + "/" + part : part;
-    const stats = await fs.promises
-      .lstat(path.join(dir, relative))
-      .catch(missingFileOrThrow);
-    if (!stats) return;
-    if (relative === file || !stats.isDirectory()) return { relative, stats };
-  }
+  const { name, stats } = await inspectWorkingPath(dir, file);
+  if (stats) return { relative: path.relative(dir, name), stats };
 }
 
 function checkReplayPath(file: string, symlinks: ReadonlyMap<string, string>) {
