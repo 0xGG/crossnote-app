@@ -6,12 +6,7 @@ import PouchDB from "pouchdb";
 import PouchdbFind from "pouchdb-find";
 import { notebookNameFromGitURL, randomID } from "../utilities/utils";
 import { fs, missingFileOrThrow, pfs } from "./fs";
-import {
-  checkedGitPath,
-  stageLocalFile,
-  symlinkEntryStatus,
-  symlinkStatus,
-} from "./gitFiles";
+import { checkedGitPath, stageLocalFile, symlinkStatus } from "./gitFiles";
 import {
   resetIndex,
   resetTarget,
@@ -24,6 +19,7 @@ import {
   gitLinks,
   indexedGitLinkChildren,
   isWithinGitLink,
+  matchesSymlink,
   parentGitTree,
 } from "./gitLinks";
 import {
@@ -658,31 +654,30 @@ export default class Crossnote {
     includeStaged = false,
     gitCache: object = {},
     incomingLinks?: ReadonlyMap<string, string>,
+    symlinks = {
+      head: new Map<string, string>(),
+      staged: new Map<string, string>(),
+    },
   ) {
     const cache: Cache = Object.create(null);
     const args = { fs, dir: notebook.dir, cache: gitCache };
     const links = new Set(incomingLinks?.keys());
     const stagedBlobs: string[] = [];
-    const symlinks = new Map<
-      string,
-      [git.WalkerEntry | null, git.WalkerEntry | null]
-    >();
-    await git.walk({
-      ...args,
-      trees: [git.TREE({ ref: "HEAD" }), git.STAGE()],
-      map: async (file, [head, entry]) => {
-        if (
-          (await head?.mode()) === 0o120000 ||
-          (await entry?.mode()) === 0o120000
-        )
-          symlinks.set(file, [head, entry]);
-        if (!includeStaged) return;
-        const staged = await entry?.type();
-        if (staged === "commit" || (await head?.type()) === "commit")
-          links.add(file);
-        else if (staged === "blob") stagedBlobs.push(file);
-      },
-    });
+    if (includeStaged)
+      await git.walk({
+        ...args,
+        trees: [git.TREE({ ref: "HEAD" }), git.STAGE()],
+        map: async (file, [head, entry]) => {
+          if ((await head?.mode()) === 0o120000)
+            symlinks.head.set(file, await head.oid());
+          if ((await entry?.mode()) === 0o120000)
+            symlinks.staged.set(file, await entry.oid());
+          const staged = await entry?.type();
+          if (staged === "commit" || (await head?.type()) === "commit")
+            links.add(file);
+          else if (staged === "blob") stagedBlobs.push(file);
+        },
+      });
     const rows = await git.statusMatrix({
       ...args,
       fs: parentWorkingFs(notebook.dir, links),
@@ -727,17 +722,19 @@ export default class Crossnote {
       const indexMatches = !includeStaged || head === stage;
       if (head === 0 && work === 0 && indexMatches) continue;
       const name = path.join(notebook.dir, file);
-      const link = symlinks.get(file);
+      const link = symlinks.head.get(file);
       if (work && (await fs.promises.lstat(name)).isSymbolicLink()) {
         if (
           link &&
-          (await symlinkEntryStatus(args, file, ...link)) === "unmodified"
+          link === symlinks.staged.get(file) &&
+          (await matchesSymlink(args, name, link))
         )
           continue;
         throw new NotebookConflictError([file]);
       }
       // The change cache holds regular files and deletions, not link objects.
-      if (link && work) throw new NotebookConflictError([file]);
+      if ((link || symlinks.staged.has(file)) && work)
+        throw new NotebookConflictError([file]);
       const bytes =
         work === 0
           ? null
@@ -1595,21 +1592,21 @@ export default class Crossnote {
     }
     if (localSha && !(await descendsFrom(remoteSha, localSha)))
       throw new Error("error/notebook-history-diverged");
-    const { files: baseFiles, links: baseLinks } = await parentGitTree(
-      notebook.dir,
-      localSha,
-      args.cache,
-    );
+    const {
+      files: baseFiles,
+      links: baseLinks,
+      symlinks: headSymlinks,
+    } = await parentGitTree(notebook.dir, localSha, args.cache);
     const { files: remoteFiles, links: remoteLinks } = await parentGitTree(
       notebook.dir,
       remoteSha,
       args.cache,
     );
-    const { links: stagedLinks, files: stagedFiles } = await parentGitTree(
-      notebook.dir,
-      undefined,
-      args.cache,
-    );
+    const {
+      links: stagedLinks,
+      files: stagedFiles,
+      symlinks: stagedSymlinks,
+    } = await parentGitTree(notebook.dir, undefined, args.cache);
     const previousLinks = new Map([...baseLinks, ...stagedLinks]);
     if (
       previousLinks.size &&
@@ -1658,6 +1655,7 @@ export default class Crossnote {
       false,
       args.cache,
       remoteLinks,
+      { head: headSymlinks, staged: stagedSymlinks },
     );
     const isIgnored = ignoreCheck(notebook.dir);
     // A remote file may replace a local directory. Preserve untracked/ignored

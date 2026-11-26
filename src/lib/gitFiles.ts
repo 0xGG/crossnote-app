@@ -5,7 +5,7 @@ import { gitLinks, matchesSymlink } from "./gitLinks";
 
 // git.status hashes the contents of the file a symlink points at. Compare
 // the link itself with the index and HEAD, including dangling links.
-export async function symlinkEntryStatus(
+async function symlinkEntryStatus(
   args: { fs: typeof fs; dir: string; cache: object },
   filepath: string,
   head: git.WalkerEntry | null,

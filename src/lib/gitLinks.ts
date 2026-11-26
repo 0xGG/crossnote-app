@@ -13,7 +13,8 @@ export async function parentGitTree(
 ) {
   const links = new Map<string, string>();
   const files = new Set<string>();
-  if (ref === "") return { links, files };
+  const symlinks = new Map<string, string>();
+  if (ref === "") return { links, files, symlinks };
   await git.walk({
     fs,
     dir,
@@ -29,10 +30,12 @@ export async function parentGitTree(
         return null;
       const type = await entry.type();
       if (type === "commit") links.set(file, await entry.oid());
+      if (type === "blob" && (await entry.mode()) === 0o120000)
+        symlinks.set(file, await entry.oid());
       if (type !== "tree") files.add(file);
     },
   });
-  return { links, files };
+  return { links, files, symlinks };
 }
 
 export async function gitLinks(
