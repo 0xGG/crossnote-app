@@ -22,7 +22,7 @@ export const bytes = (text: string) => [...new TextEncoder().encode(text)];
 
 export async function createRemote(
   request: APIRequestContext,
-  files: Record<string, number[]>,
+  files: Record<string, number[] | { gitlink: string }>,
 ) {
   const response = await request.post(`${fixtureURL}/repos`, {
     data: { files },
@@ -34,7 +34,7 @@ export async function createRemote(
 export async function changeRemote(
   request: APIRequestContext,
   remote: Remote,
-  files: Record<string, number[] | null>,
+  files: Record<string, number[] | null | { gitlink: string }>,
 ) {
   const response = await request.post(`${fixtureURL}/repos/${remote.id}`, {
     data: { files },
@@ -102,6 +102,26 @@ export async function localBytes(
     },
     { file, replacement },
   );
+}
+
+// Inspect the browser's Git v2 index independently of the application.
+export async function indexEntries(page: Page, indexPath: string) {
+  const index = Buffer.from(await localBytes(page, indexPath));
+  expect(index.toString("ascii", 0, 4)).toBe("DIRC");
+  expect(index.readUInt32BE(4)).toBe(2);
+  const entries = [];
+  for (let pos = 12, i = 0; i < index.readUInt32BE(8); i++) {
+    const end = index.indexOf(0, pos + 62);
+    expect(end).toBeGreaterThanOrEqual(pos + 62);
+    const name = index.toString("utf8", pos + 62, end);
+    entries.push({
+      name,
+      mode: index.readUInt32BE(pos + 24).toString(8),
+      oid: index.toString("hex", pos + 40, pos + 60),
+    });
+    pos += Math.ceil((end - pos + 1) / 8) * 8;
+  }
+  return entries;
 }
 
 export async function download(

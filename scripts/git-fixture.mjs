@@ -68,6 +68,7 @@ const recordGitRequest = (repo, req, res, service) => {
   return auth;
 };
 const commit = async (repo, files) => {
+  const pointers = [];
   for (const [name, bytes] of Object.entries(files)) {
     if (
       !name ||
@@ -78,18 +79,28 @@ const commit = async (repo, files) => {
     const target = path.resolve(repo.work, name);
     if (!target.startsWith(repo.work + path.sep))
       throw new Error("Outside fixture");
-    if (bytes === null) await rm(target, { force: true });
-    else {
+    if (bytes?.gitlink && /^[a-f0-9]{40}$/.test(bytes.gitlink)) {
+      await mkdir(target, { recursive: true });
+      pointers.push([name, bytes.gitlink]);
+      continue;
+    }
+    const previous = await lstat(target).catch((error) => {
+      if (error.code !== "ENOENT") throw error;
+    });
+    // A gitlink occupies an empty directory in the fixture checkout.
+    if (previous?.isDirectory()) await rmdir(target);
+    else if (bytes === null) await rm(target, { force: true });
+    if (bytes !== null) {
       await mkdir(path.dirname(target), { recursive: true });
-      // Replacing a directory with a file requires deleting its children first.
-      const previous = await lstat(target).catch((error) => {
-        if (error.code !== "ENOENT") throw error;
-      });
-      if (previous?.isDirectory()) await rmdir(target);
       await writeFile(target, Buffer.from(bytes));
     }
   }
   await git(["add", "-A"], repo.work);
+  for (const [name, oid] of pointers)
+    await git(
+      ["update-index", "--add", "--cacheinfo", "160000", oid, name],
+      repo.work,
+    );
   await git(
     [
       "-c",
@@ -249,6 +260,14 @@ const serve = async (req, res) => {
         res.writeHead(405).end();
         return;
       }
+      if (url.searchParams.has("tree"))
+        return json(
+          res,
+          (await git(["--git-dir", repo.bare, "ls-tree", "-r", "master"]))
+            .toString()
+            .trimEnd()
+            .split("\n"),
+        );
       return json(res, {
         sha: (await git(["--git-dir", repo.bare, "rev-parse", "master"]))
           .toString()
