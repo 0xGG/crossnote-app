@@ -3895,6 +3895,97 @@ it.each([false, true])(
   },
 );
 
+it.each([
+  ["missing", true],
+  ["file ancestor", true],
+  ["deleted", true],
+  ["deleted", false],
+  ["chain", true],
+  ["chain", false],
+  ["directory link", true],
+  ["directory link", false],
+] as const)(
+  "checks a %s nested rule target before download (draft stays ignored: %s)",
+  async (kind, staysIgnored) => {
+    const file = "assets/meeting.draft.md";
+    const directoryLink = kind === "directory link";
+    const chained = kind === "chain" || directoryLink;
+    const target = directoryLink
+      ? "assets/team/team.rules"
+      : "assets/team.rules";
+    const { app, notebook, read } = await repository(
+      {},
+      {
+        ".gitignore": bytes(staysIgnored && !chained ? "*.draft.md\n" : ""),
+        ...(kind === "deleted" || chained
+          ? { [target]: bytes("*.draft.md\n") }
+          : {}),
+      },
+    );
+    const { dir } = notebook;
+    const args = { fs, dir };
+    let link = kind === "file ancestor" ? "a.bin/optional.rules" : "team.rules";
+    if (chained) {
+      await fs.promises.symlink(
+        directoryLink ? "team" : "team.rules",
+        dir + "/assets/selected.rules",
+      );
+      await git.add({ ...args, filepath: "assets/selected.rules" });
+      link = directoryLink ? "selected.rules/team.rules" : "selected.rules";
+    }
+    await fs.promises.symlink(link, dir + "/assets/.gitignore");
+    await git.add({ ...args, filepath: "assets/.gitignore" });
+    const base = await git.commit({
+      ...args,
+      author,
+      message: "Use notebook rules",
+    });
+    await pfs.writeFile(dir + "/README.md", "Shared update");
+    await git.add({ ...args, filepath: "README.md" });
+    if (kind === "deleted") {
+      await pfs.unlink(dir + "/" + target);
+      await git.remove({ ...args, filepath: target });
+    } else if (chained && !staysIgnored) {
+      await pfs.writeFile(dir + "/" + target, "# Publish notes\n");
+      await git.add({ ...args, filepath: target });
+    }
+    const remote = await git.commit({
+      ...args,
+      author,
+      noUpdateBranch: true,
+      message: "Update shared notes",
+    });
+    await app.hardResetNotebook(
+      notebook,
+      base,
+      await parentGitTree(dir, base),
+      true,
+    );
+    vi.mocked(git.fetch).mockResolvedValue({
+      ...emptyRemote,
+      fetchHead: remote,
+    });
+    await pfs.writeFile(dir + "/" + file, "Meeting draft");
+    expect(await app.getStatus(dir, file)).toBe("ignored");
+    if (staysIgnored) {
+      await app.pullNotebook({ notebook });
+      expect(await git.resolveRef({ ...args, ref: "HEAD" })).toBe(remote);
+      expect(await read("README.md")).toEqual([...bytes("Shared update")]);
+    } else {
+      const index = await read(".git/index");
+      await expect(app.pullNotebook({ notebook })).rejects.toMatchObject({
+        files: [file],
+      });
+      expect(await git.resolveRef({ ...args, ref: "HEAD" })).toBe(base);
+      expect(await read(".git/index")).toEqual(index);
+      expect(await read(target)).toEqual([...bytes("*.draft.md\n")]);
+    }
+    expect(await app.getStatus(dir, file)).toBe("ignored");
+    expect(await git.listFiles(args)).not.toContain(file);
+    expect(await read(file)).toEqual([...bytes("Meeting draft")]);
+  },
+);
+
 it("checks merged ignore rules together with local nested exceptions before checkout", async () => {
   const baseRules = "# local rules\n# spacer\n# remote rules\n*.txt\n";
   const localRules = baseRules.replace("# local rules", "assets/*");

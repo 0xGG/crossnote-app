@@ -1856,6 +1856,56 @@ export default class Crossnote {
         conflicts.push(copy);
       }
     }
+    const linkedRules = async (target: string): Promise<string | null> => {
+      // Git stores the target name in each link. Follow committed links in
+      // the planned tree, using the same target decoding as checkout.
+      const visited = new Set<string>();
+      let component = target;
+      while (component !== ".") {
+        const oid = remoteSymlinks.get(component);
+        if (!oid) {
+          component = path.dirname(component);
+          continue;
+        }
+        if (visited.has(component)) return null;
+        visited.add(component);
+        const { blob } = await git.readBlob({ ...args, oid });
+        const link = new TextDecoder("utf-8", { ignoreBOM: true }).decode(blob);
+        if (path.isAbsolute(link)) return null;
+        target = path.join(
+          path.dirname(component),
+          link,
+          target.slice(component.length + 1),
+        );
+        if (
+          target
+            .split("/")
+            .some((part) => part === ".." || part.toLowerCase() === ".git")
+        )
+          return null;
+        component = target;
+      }
+      if (isWithinGitLink(target, remoteLinks)) return null;
+      if (target in files)
+        return files[target] === null ? "" : decode(files[target]);
+      if (remoteFiles.has(target))
+        return decode(
+          (await git.readBlob({ ...args, oid: remoteSha, filepath: target }))
+            .blob,
+        );
+      // Checkout removes the old target, or installs a directory at it or
+      // a regular file above it. The resulting path supplies no rules.
+      if (
+        baseFiles.has(target) ||
+        [...remoteFiles].some((file) => overlaps(file, target))
+      )
+        return "";
+      const { name, stats } = await inspectWorkingPath(notebook.dir, target);
+      if (stats?.isSymbolicLink()) return null;
+      return stats?.isFile() && name === path.join(notebook.dir, target)
+        ? ((await pfs.readFile(name, { encoding: "utf8" })) as string)
+        : "";
+    };
     const overrides = new Map<string, string | null>();
     for (const file of new Set([
       ...baseFiles,
@@ -1864,52 +1914,20 @@ export default class Crossnote {
     ])) {
       if (path.basename(file) !== ".gitignore") continue;
       const folder = path.dirname(file);
-      const incoming = await blob(remoteSha, file, remoteFiles);
-      let planned = file in files ? files[file] : incoming;
       if (remoteSymlinks.has(file)) {
-        // A link stores a path, and its target's contents can change even if
-        // the link does not. Read the planned regular file, including edits.
-        const link = new TextDecoder("utf-8", { ignoreBOM: true }).decode(
-          incoming!,
-        );
-        const target = path.join(folder, link);
-        if (
-          path.isAbsolute(link) ||
-          target
-            .split("/")
-            .some((part) => part === ".." || part.toLowerCase() === ".git") ||
-          remoteSymlinks.has(target) ||
-          remoteLinks.has(target)
-        ) {
-          overrides.set(folder, null);
-          continue;
-        }
-        if (target in files) planned = files[target];
-        else if (remoteFiles.has(target))
-          planned = await blob(remoteSha, target, remoteFiles);
-        else {
-          // Ignored local rules may be absent from both Git and the replay.
-          // Use their current bytes only if checkout leaves the path intact.
-          const entry = ![...reserved].some((file) => overlaps(file, target))
-            ? await inspectWorkingPath(notebook.dir, target)
-            : undefined;
-          const contents =
-            entry?.stats?.isFile() &&
-            entry.name === path.join(notebook.dir, target)
-              ? ((await pfs.readFile(entry.name, {
-                  encoding: "utf8",
-                })) as string)
-              : null;
-          overrides.set(folder, contents);
-          continue;
-        }
-      } else if (
+        // The target can change even when the link itself does not.
+        overrides.set(folder, await linkedRules(file));
+        continue;
+      }
+      const incoming = await blob(remoteSha, file, remoteFiles);
+      if (
         !(file in relocated) &&
         !headSymlinks.has(file) &&
         sameBytes(await blob(localSha, file, baseFiles), incoming)
       )
         continue;
       this.checkedPath(notebook, file);
+      const planned = file in files ? files[file] : incoming;
       // Match LightningFS's utf8 reads, including BOM handling.
       overrides.set(folder, planned === null ? "" : decode(planned));
     }
