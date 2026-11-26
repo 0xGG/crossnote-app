@@ -2095,6 +2095,93 @@ it.each([0, 8])(
   },
 );
 
+it.each(["download", "upload"])(
+  "completes a marked partial index before %s in an open notebook",
+  async (operation) => {
+    const { app, notebook, args, tree, submodule } =
+      await submoduleRepository();
+    const index = notebook.dir + "/.git/index";
+    await pfs.unlink(index);
+    await interruptPointerRebuild(app, notebook);
+    expect(await git.listFiles(args)).toEqual(["README.md"]);
+    expect(await pfs.exists(index + ".crossnote-rebuild")).toBe(true);
+    const incoming = await git.commit({
+      ...args,
+      author,
+      noUpdateBranch: true,
+      message: "Keep the pointer",
+      tree: await git.writeTree({
+        ...args,
+        tree: [...tree, submodule, { ...tree[0], path: "remote.md" }],
+      }),
+    });
+    vi.mocked(git.fetch).mockResolvedValue({
+      ...emptyRemote,
+      fetchHead: incoming,
+    });
+    if (operation === "upload") await app.pushNotebook({ notebook });
+    else await app.pullNotebook({ notebook });
+    expect(await git.resolveRef({ ...args, ref: "HEAD" })).toBe(incoming);
+    expect((await parentGitTree(notebook.dir)).links.get("vendor")).toBe(
+      submodule.oid,
+    );
+    expect(await pfs.exists(index + ".crossnote-rebuild")).toBe(false);
+  },
+);
+
+it("lists the current branch after waiting for an interrupted download", async () => {
+  const { app, notebook, args, tree } = await submoduleRepository();
+  const incoming = await git.commit({
+    ...args,
+    author,
+    noUpdateBranch: true,
+    message: "Remove the empty submodule",
+    tree: await git.writeTree({ ...args, tree }),
+  });
+  let started!: () => void, resume!: () => void, queued!: () => void;
+  const fetching = new Promise<void>((resolve) => {
+    started = resolve;
+  });
+  const proceed = new Promise<void>((resolve) => {
+    resume = resolve;
+  });
+  const waiting = new Promise<void>((resolve) => {
+    queued = resolve;
+  });
+  vi.mocked(git.fetch).mockImplementationOnce(async () => {
+    started();
+    await proceed;
+    return { ...emptyRemote, fetchHead: incoming };
+  });
+  const pull = app.pullNotebook({ notebook });
+  await fetching;
+  const lockPath = pfs.notebookLockPath.bind(pfs);
+  vi.spyOn(pfs, "notebookLockPath").mockImplementation((dir) => {
+    if (dir === notebook.dir) queued();
+    return lockPath(dir);
+  });
+  const listing = app.listNotebooks();
+  await waiting;
+  vi.spyOn(git, "checkout").mockRejectedValueOnce(
+    new Error("Interrupted checkout"),
+  );
+  const failure = expect(pull).rejects.toThrow("Interrupted checkout");
+  resume();
+  await failure;
+  const listed = (await listing).find((entry) => entry._id === notebook._id);
+  expect({
+    listed: listed?.localSha,
+    head: await git.resolveRef({ ...args, ref: "HEAD" }),
+    files: await git.listFiles(args),
+    pending: Boolean(await recovery.readPullRecovery(notebook._id)),
+  }).toEqual({
+    listed: incoming,
+    head: incoming,
+    files: ["README.md"],
+    pending: false,
+  });
+});
+
 it.each(["complete", "missing", "interrupted"])(
   "protects a committed submodule when uploading a note (%s index)",
   async (index) => {

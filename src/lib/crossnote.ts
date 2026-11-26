@@ -153,6 +153,53 @@ async function clearIndexRebuildMarker(dir: string) {
   }
 }
 
+// The caller owns the notebook lock and has read the checkout's current tip.
+async function rebuildNotebookIndex(
+  dir: string,
+  tip: string,
+  includeMissing = false,
+) {
+  if (!tip) return;
+  const index = path.join(dir, ".git/index");
+  const marker = indexRebuildMarker(dir);
+  const interrupted = await pfs.exists(marker);
+  if (!interrupted && !includeMissing) return;
+  if (await pfs.exists(index)) {
+    if (!interrupted) return;
+    await pfs.unlink(index);
+  }
+  const args = { fs, dir };
+  const links = await gitLinks(dir, tip);
+  if (links.size) {
+    // Rebuild the ordinary working entries as before, while the
+    // committed pointers keep the status walk out of their folders.
+    const files = (
+      await git.statusMatrix({
+        ...args,
+        fs: parentWorkingFs(dir, links),
+        ref: tip,
+      })
+    )
+      .filter(([, , work]) => work !== 0)
+      .map(([file]) => file);
+    // Keep the missing-index recovery active across partial writes and reloads.
+    if (!interrupted) await pfs.writeFile(marker, "");
+    if (files.length) await git.add({ ...args, filepath: files });
+    for (const [filepath, oid] of links)
+      await git.updateIndex({
+        ...args,
+        filepath,
+        oid,
+        mode: 0o160000,
+        add: true,
+      });
+  } else {
+    await git.add({ ...args, filepath: "." });
+  }
+  await pfs.storeTree(dir);
+  if (links.size || interrupted) await clearIndexRebuildMarker(dir);
+}
+
 // Git interprets a missing ref as the index. An unborn branch has an empty
 // base tree regardless of which files the user has already staged.
 async function filesAtCommit(dir: string, sha: string): Promise<string[]> {
@@ -1511,6 +1558,7 @@ export default class Crossnote {
     if (headRef !== ref && (await refSha(notebook.dir, "HEAD")) !== localSha)
       throw new Error("error/notebook-branch-mismatch");
     notebook.localSha = localSha;
+    await rebuildNotebookIndex(notebook.dir, localSha);
     const descendsFrom = (oid: string, ancestor: string) =>
       git.isDescendent({ ...args, oid, ancestor });
     if (
@@ -1978,67 +2026,30 @@ export default class Crossnote {
         }
         const gitBranch = notebook.gitBranch || "master";
         try {
-          notebook.localSha ??= await this.getGitSHA(
-            notebook.dir,
-            `refs/remotes/origin/${branchName(gitBranch)}`,
-          );
-          notebook.remoteSha ??= notebook.localSha;
-          const args = { fs, dir: notebook.dir };
-          const ref = branchRef(gitBranch);
-          const localSha = await refSha(notebook.dir, ref);
-          // Older notebooks may only have their branch tip in the registry.
-          if (
-            !localSha &&
-            notebook.localSha &&
-            (await git.currentBranch({ ...args, fullname: true })) === ref
-          ) {
-            await git.writeRef({ ...args, ref, value: notebook.localSha });
-            await pfs.storeTree(notebook.dir);
-          } else {
-            notebook.localSha = localSha;
-          }
-          const pendingPull = await this.pendingPull(notebook);
-          if (pendingPull) await this.finishPull(notebook, pendingPull);
-          if (notebook.localSha)
-            await notebookOperation(notebook.dir, async () => {
-              const index = path.join(notebook.dir, ".git/index");
-              const marker = indexRebuildMarker(notebook.dir);
-              const interrupted = await pfs.exists(marker);
-              if (await pfs.exists(index)) {
-                if (!interrupted) return;
-                await pfs.unlink(index);
-              }
-              const links = await gitLinks(notebook.dir, notebook.localSha);
-              if (links.size) {
-                // Rebuild the ordinary working entries as before, while the
-                // committed pointers keep the status walk out of their folders.
-                const files = (
-                  await git.statusMatrix({
-                    ...args,
-                    fs: parentWorkingFs(notebook.dir, links),
-                    ref: notebook.localSha,
-                  })
-                )
-                  .filter(([, , work]) => work !== 0)
-                  .map(([file]) => file);
-                // Keep the missing-index recovery active across partial writes and reloads.
-                if (!interrupted) await pfs.writeFile(marker, "");
-                if (files.length) await git.add({ ...args, filepath: files });
-                for (const [filepath, oid] of links)
-                  await git.updateIndex({
-                    ...args,
-                    filepath,
-                    oid,
-                    mode: 0o160000,
-                    add: true,
-                  });
-              } else {
-                await git.add({ ...args, filepath: "." });
-              }
+          await notebookOperation(notebook.dir, async () => {
+            notebook.localSha ??= await this.getGitSHA(
+              notebook.dir,
+              `refs/remotes/origin/${branchName(gitBranch)}`,
+            );
+            notebook.remoteSha ??= notebook.localSha;
+            const args = { fs, dir: notebook.dir };
+            const ref = branchRef(gitBranch);
+            const localSha = await refSha(notebook.dir, ref);
+            // Older notebooks may only have their branch tip in the registry.
+            if (
+              !localSha &&
+              notebook.localSha &&
+              (await git.currentBranch({ ...args, fullname: true })) === ref
+            ) {
+              await git.writeRef({ ...args, ref, value: notebook.localSha });
               await pfs.storeTree(notebook.dir);
-              if (links.size || interrupted)
-                await clearIndexRebuildMarker(notebook.dir);
-            });
+            } else {
+              notebook.localSha = localSha;
+            }
+            const pendingPull = await this.pendingPull(notebook);
+            if (pendingPull) await this.finishPull(notebook, pendingPull);
+            await rebuildNotebookIndex(notebook.dir, notebook.localSha, true);
+          });
         } catch (error) {
           // A named path conflict can be resolved from the notebook and retried.
           if (!(error instanceof NotebookConflictError)) notebooks[i] = null;
