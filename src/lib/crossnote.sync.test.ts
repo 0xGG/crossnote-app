@@ -2974,6 +2974,62 @@ it.each(["pull", "upload"])(
   },
 );
 
+it.each([false, true])(
+  "preserves a staged mode change below an incoming pointer (committed symlink: %s)",
+  async (wasLink) => {
+    const filepath = "vendor/alias.md";
+    const target = bytes("../README.md");
+    const { app, notebook, args, base, incoming, pointer, read } =
+      await incomingSubmodule({ [filepath]: target });
+    const oid = (await git.hashBlob({ object: target })).oid;
+    const headMode = wasLink ? 0o120000 : 0o100644;
+    let local = base;
+    let remote = incoming;
+    if (wasLink) {
+      await git.updateIndex({ ...args, filepath, oid, mode: headMode });
+      local = await git.commit({
+        ...args,
+        author,
+        message: "Track the alias as a link",
+      });
+      const { commit } = await git.readCommit({ ...args, oid: incoming });
+      remote = await git.commit({
+        ...args,
+        author,
+        tree: commit.tree,
+        noUpdateBranch: true,
+        message: "Replace the directory with a submodule",
+      });
+      vi.mocked(git.fetch).mockResolvedValue({
+        ...emptyRemote,
+        fetchHead: remote,
+      });
+    }
+    await pfs.unlink(notebook.dir + "/" + filepath);
+    await git.updateIndex({
+      ...args,
+      filepath,
+      oid,
+      mode: wasLink ? 0o100644 : 0o120000,
+    });
+    const index = await read(".git/index");
+    await expect(app.pullNotebook({ notebook })).rejects.toMatchObject({
+      files: [filepath],
+    });
+    expect(await read(".git/index")).toEqual(index);
+    expect(await git.resolveRef({ ...args, ref: "HEAD" })).toBe(local);
+    expect(await recovery.readPullRecovery(notebook._id)).toBeUndefined();
+    expect(await pfs.readdir(notebook.dir + "/vendor")).toEqual([]);
+    await git.updateIndex({ ...args, filepath, oid, mode: headMode });
+    await app.pullNotebook({ notebook });
+    expect(await git.resolveRef({ ...args, ref: "HEAD" })).toBe(remote);
+    expect((await parentGitTree(notebook.dir)).links.get("vendor")).toBe(
+      pointer.oid,
+    );
+    expect(await read("README.md")).toEqual([...bytes("# Kept\n")]);
+  },
+);
+
 it("keeps a staged draft before an incoming submodule occupies its directory", async () => {
   const { app, notebook, args, base, read } = await incomingSubmodule();
   await pfs.writeFile(notebook.dir + "/vendor/draft.md", binary);

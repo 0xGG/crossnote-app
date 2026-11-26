@@ -748,8 +748,9 @@ export default class Crossnote {
       if (
         incomingLinks &&
         stage &&
-        stage !== head &&
-        (withinLink || incomingDirectories.has(file))
+        (withinLink || incomingDirectories.has(file)) &&
+        (stage !== head ||
+          symlinks.head.has(file) !== symlinks.staged.has(file))
       )
         throw new NotebookConflictError([file]);
       if (withinLink) continue;
