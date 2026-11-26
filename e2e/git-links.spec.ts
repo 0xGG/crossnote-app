@@ -30,7 +30,7 @@ test("removes a gitlink from the fixture remote", async ({ request }) => {
   expect((await state.json()).files).toEqual(["keep.md"]);
 });
 
-test("keeps a populated submodule in place across download, reset and upload", async ({
+test("keeps a populated submodule in place across download, reset, index recovery and upload", async ({
   app,
   page,
   request,
@@ -82,6 +82,15 @@ test("keeps a populated submodule in place across download, reset and upload", a
     .getByRole("button", { name: "Hard reset 1", exact: true })
     .click();
   await expect(dialog).toBeHidden();
+  await checkIndex(second);
+  await page.evaluate(async (name) => {
+    const fs = (window as unknown as FileHost).pfs;
+    await fs.unlink(name);
+    await fs.storeTree(name);
+  }, indexPath);
+  await page.reload();
+  await app.waitUntilReady();
+  await app.openNotes(remote.id);
   await checkIndex(second);
   const edit = bytes("# Ordinary edit");
   await localBytes(page, dir + "/README.md", edit);

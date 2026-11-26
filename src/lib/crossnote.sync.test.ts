@@ -1873,6 +1873,128 @@ async function submoduleRepository() {
   return { app, notebook, args, tip, tree, submodule, note };
 }
 
+async function interruptPointerRebuild(app: Crossnote, notebook: Notebook) {
+  const update = git.updateIndex;
+  const fault = vi
+    .spyOn(git, "updateIndex")
+    .mockImplementation(async (args) => {
+      if (args.dir === notebook.dir && args.filepath === "vendor") {
+        await pfs.storeTree(notebook.dir);
+        throw new Error("Interrupted pointer insertion");
+      }
+      return update(args);
+    });
+  try {
+    expect((await app.listNotebooks()).map((entry) => entry._id)).not.toContain(
+      notebook._id,
+    );
+  } finally {
+    fault.mockRestore();
+  }
+}
+
+it("keeps a staged version on reopen after download replaces an interrupted index rebuild", async () => {
+  const { app, notebook, args, tree, note } =
+    await submoduleRepository();
+  const index = notebook.dir + "/.git/index";
+  await pfs.unlink(index);
+  await interruptPointerRebuild(app, notebook);
+  expect(await git.listFiles(args)).toEqual(["README.md"]);
+
+  const incoming = await git.commit({
+    ...args,
+    author,
+    noUpdateBranch: true,
+    message: "Remove the empty submodule",
+    tree: await git.writeTree({ ...args, tree }),
+  });
+  vi.mocked(git.fetch).mockResolvedValue({
+    ...emptyRemote,
+    fetchHead: incoming,
+  });
+  await app.pullNotebook({ notebook });
+  expect(notebook.localSha).toBe(incoming);
+  expect((await parentGitTree(notebook.dir)).links.size).toBe(0);
+  const staged = bytes("staged note");
+  await pfs.writeFile(note, staged);
+  await notebook.storeNote("README.md");
+  const savedIndex = await pfs.readFile(index);
+  const working = bytes("later working note");
+  await pfs.writeFile(note, working);
+  await pfs.storeTree(notebook.dir);
+  expect(
+    (await new Crossnote().listNotebooks()).map((entry) => entry._id),
+  ).toContain(notebook._id);
+  expect(
+    await git.walk({
+      ...args,
+      trees: [git.STAGE()],
+      map: async (file, [entry]) =>
+        file === "README.md" ? entry.oid() : undefined,
+    }),
+  ).toEqual([(await git.hashBlob({ object: staged })).oid]);
+  expect([...(await pfs.readFile(index))]).toEqual([...savedIndex]);
+  expect([...(await pfs.readFile(note))]).toEqual([...working]);
+});
+
+it.each(["complete", "missing", "interrupted"])(
+  "protects a committed submodule when uploading a note (%s index)",
+  async (index) => {
+    const { app, notebook, args, submodule, note } =
+      await submoduleRepository();
+    const edit = bytes("ordinary edit");
+    await pfs.writeFile(notebook.dir + "/vendor/local.bin", binary);
+    await notebook.storeNote("vendor/local.bin");
+    let session = app;
+    let active = notebook;
+    if (index !== "complete") {
+      await pfs.unlink(notebook.dir + "/.git/index");
+      await pfs.storeTree(notebook.dir);
+      if (index === "interrupted") {
+        const add = vi.spyOn(git, "add");
+        await interruptPointerRebuild(app, notebook);
+        expect(add).toHaveBeenCalledWith(
+          expect.objectContaining({
+            dir: notebook.dir,
+            filepath: ["README.md"],
+          }),
+        );
+      }
+      session = new Crossnote();
+      active = (await session.listNotebooks()).find(
+        (entry) => entry._id === notebook._id,
+      )!;
+    }
+    expect(await git.listFiles(args)).toEqual(["README.md", "vendor"]);
+    await pfs.writeFile(note, edit);
+    let sent: string | undefined;
+    const push = vi.spyOn(git, "push").mockImplementation(async ({ ref }) => {
+      const target = await git.expandRef({ ...args, ref: ref! });
+      sent = await git.resolveRef({ ...args, ref: target });
+      return { ok: true, error: null, refs: {} };
+    });
+    await session.pushNotebook({ notebook: active });
+    expect(push).toHaveBeenCalledOnce();
+    expect(sent).toBe(active.remoteSha);
+    expect((await git.readTree({ ...args, oid: sent! })).tree).toContainEqual(
+      submodule,
+    );
+    expect(await git.listFiles({ ...args, ref: sent! })).toEqual([
+      "README.md",
+      "vendor",
+    ]);
+    expect([
+      ...(await git.readBlob({ ...args, oid: sent!, filepath: "README.md" }))
+        .blob,
+    ]).toEqual([...edit]);
+    expect([
+      ...((await pfs.readFile(
+        notebook.dir + "/vendor/local.bin",
+      )) as Uint8Array),
+    ]).toEqual([...binary]);
+  },
+);
+
 it.each([
   ["pull", "file"],
   ["upload", "file"],
@@ -2402,6 +2524,49 @@ it.each([false, true])(
     expect(directories).not.toContain(notebook.dir + "/vendor/subtree");
   },
 );
+
+it("keeps submodule directories outside both upload scans and missing-index recovery", async () => {
+  const { app, notebook, args } = await submoduleRepository();
+  const vendor = notebook.dir + "/vendor";
+  await pfs.writeFile(vendor + "/subtree/inside.md", binary);
+  await pfs.writeFile(notebook.dir + "/ordinary/draft.md", changed);
+  const readings: string[][] = [];
+  let current: string[] | undefined;
+  const readdir = fs.promises.readdir.bind(fs.promises);
+  vi.spyOn(fs.promises, "readdir").mockImplementation((name, ...rest) => {
+    current?.push(name);
+    return readdir(name, ...rest);
+  });
+  const matrix = git.statusMatrix;
+  vi.spyOn(git, "statusMatrix").mockImplementation(async (options) => {
+    current = [];
+    readings.push(current);
+    try {
+      return await matrix(options);
+    } finally {
+      current = undefined;
+    }
+  });
+  vi.spyOn(git, "push").mockResolvedValue({ ok: true, error: null, refs: {} });
+  await app.pushNotebook({ notebook });
+  await pfs.unlink(notebook.dir + "/.git/index");
+  await pfs.storeTree(notebook.dir);
+  await app.listNotebooks();
+  expect(await git.listFiles(args)).toEqual([
+    "README.md",
+    "ordinary/draft.md",
+    "vendor",
+  ]);
+  expect(readings).toHaveLength(3);
+  expect(
+    readings.map((dirs) =>
+      dirs.filter((dir) => dir === vendor || dir.startsWith(vendor + "/")),
+    ),
+  ).toEqual([[], [], []]);
+  expect(
+    readings.every((dirs) => dirs.includes(notebook.dir + "/ordinary")),
+  ).toBe(true);
+});
 
 it("pauses an upload whose old index contains a submodule child", async () => {
   const { app, notebook, args, tip } = await submoduleRepository();

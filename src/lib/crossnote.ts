@@ -9,6 +9,7 @@ import { fs, missingFileOrThrow, pfs } from "./fs";
 import { stageLocalFile } from "./gitFiles";
 import {
   assertGitLinkTransition,
+  gitLinks,
   indexedGitLinkChildren,
   isWithinGitLink,
   parentGitTree,
@@ -126,6 +127,18 @@ const recoveryDirectoryName = /^\.crossnote-recovered(?:-\d+)?$/;
 const legacyRecoveryDirectoryName =
   /^\.crossnote-recovery\.local-[0-9a-f]{8}(?:-\d+)?$/;
 const recoveryFilesChanged = () => new Error("error/recovery-files-changed");
+
+const indexRebuildMarker = (dir: string) =>
+  path.join(dir, ".git/index.crossnote-rebuild");
+
+// Clear the retry marker only after the complete replacement index is durable.
+async function clearIndexRebuildMarker(dir: string) {
+  const marker = indexRebuildMarker(dir);
+  if (await fs.promises.lstat(marker).catch(missingFileOrThrow)) {
+    await pfs.unlink(marker);
+    await pfs.storeTree(dir);
+  }
+}
 
 // Git interprets a missing ref as the index. An unborn branch has an empty
 // base tree regardless of which files the user has already staged.
@@ -1376,6 +1389,7 @@ export default class Crossnote {
         delete files[file];
     await this.restoreFilesFromCache(files, notebook);
     await pfs.storeTree(notebook.dir);
+    await clearIndexRebuildMarker(notebook.dir);
     notebook.localSha = recovery.remoteSha;
     notebook.remoteSha = recovery.remoteSha;
     notebook.fetchedAt = new Date();
@@ -1938,13 +1952,46 @@ export default class Crossnote {
           }
           const pendingPull = await this.pendingPull(notebook);
           if (pendingPull) await this.finishPull(notebook, pendingPull);
-          if (
-            notebook.localSha &&
-            !(await pfs.exists(path.join(notebook.dir, ".git/index")))
-          ) {
-            await git.add({ ...args, filepath: "." });
-            await pfs.storeTree(notebook.dir);
-          }
+          if (notebook.localSha)
+            await notebookOperation(notebook.dir, async () => {
+              const index = path.join(notebook.dir, ".git/index");
+              const marker = indexRebuildMarker(notebook.dir);
+              const interrupted = await pfs.exists(marker);
+              if (await pfs.exists(index)) {
+                if (!interrupted) return;
+                await pfs.unlink(index);
+              }
+              const links = await gitLinks(notebook.dir, notebook.localSha);
+              if (links.size) {
+                // Rebuild the ordinary working entries as before, while the
+                // committed pointers keep the status walk out of their folders.
+                const files = (
+                  await git.statusMatrix({
+                    ...args,
+                    fs: parentWorkingFs(notebook.dir, links),
+                    ref: notebook.localSha,
+                  })
+                )
+                  .filter(([, , work]) => work !== 0)
+                  .map(([file]) => file);
+                // Keep the missing-index recovery active across partial writes and reloads.
+                if (!interrupted) await pfs.writeFile(marker, "");
+                if (files.length) await git.add({ ...args, filepath: files });
+                for (const [filepath, oid] of links)
+                  await git.updateIndex({
+                    ...args,
+                    filepath,
+                    oid,
+                    mode: 0o160000,
+                    add: true,
+                  });
+              } else {
+                await git.add({ ...args, filepath: "." });
+              }
+              await pfs.storeTree(notebook.dir);
+              if (links.size || interrupted)
+                await clearIndexRebuildMarker(notebook.dir);
+            });
         } catch (error) {
           // A named path conflict can be resolved from the notebook and retried.
           if (!(error instanceof NotebookConflictError)) notebooks[i] = null;
