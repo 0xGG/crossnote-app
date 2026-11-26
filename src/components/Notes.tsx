@@ -97,9 +97,9 @@ function LazyNoteCard({
       }}
       className="note-card lazyload-placeholder"
     >
-      <Skeleton />
       <Skeleton animation={false} />
-      <Skeleton animation="wave" />
+      <Skeleton animation={false} />
+      <Skeleton animation={false} />
     </Box>
   );
 }
