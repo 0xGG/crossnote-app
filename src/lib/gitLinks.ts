@@ -120,6 +120,19 @@ async function matchesInstalledEntry(
   );
 }
 
+// Stop at the first missing or non-directory component so lstat never resolves
+// the rest of a pointer path through a working symlink.
+async function inspectPointerPath(dir: string, file: string) {
+  let name = dir;
+  let stats: Awaited<ReturnType<typeof fs.promises.lstat>> | null = null;
+  for (const part of file.split("/")) {
+    name = path.join(name, part);
+    stats = await fs.promises.lstat(name).catch(missingFileOrThrow);
+    if (!stats?.isDirectory()) break;
+  }
+  return { name, stats };
+}
+
 export async function assertGitLinkTransition(
   dir: string,
   previous: ReadonlyMap<string, string>,
@@ -129,44 +142,41 @@ export async function assertGitLinkTransition(
 ) {
   for (const file of previous.keys()) {
     if (target.has(file)) continue;
-    const name = path.join(dir, file);
-    const stats = await fs.promises.lstat(name).catch(missingFileOrThrow);
+    const { name, stats } = await inspectPointerPath(dir, file);
     // An empty pointer directory can be replaced on the first checkout.
     if (!stats || (stats.isDirectory() && !(await pfs.readdir(name)).length))
       continue;
+    const existing = path.relative(dir, name);
     if (
       installed &&
-      (installed.files.has(file) ||
+      (installed.files.has(existing) ||
         (stats.isDirectory() &&
-          [...installed.files].some((child) => child.startsWith(file + "/"))))
+          [...installed.files].some((child) =>
+            child.startsWith(existing + "/"),
+          )))
     ) {
       const args = { fs, dir, cache: installed.cache };
-      const parent = path.dirname(file);
+      const parent = path.dirname(existing);
       const { tree } = await git.readTree({
         ...args,
         oid: installed.oid,
         filepath: parent === "." ? undefined : parent,
       });
-      const entry = tree.find((item) => item.path === path.basename(file));
+      const entry = tree.find((item) => item.path === path.basename(existing));
       if (entry && (await matchesInstalledEntry(args, name, entry))) continue;
     }
     // Once this pointer disappears, its contents would be ordinary parent
     // files on the next upload even if checkout never overwrites them.
-    throw new NotebookConflictError([file]);
+    throw new NotebookConflictError([existing]);
   }
   for (const file of target.keys()) {
-    let name = dir;
-    for (const part of file.split("/")) {
-      name = path.join(name, part);
-      const stats = await fs.promises.lstat(name).catch(missingFileOrThrow);
-      if (!stats) break;
-      if (!stats.isDirectory()) throw new NotebookConflictError([file]);
-    }
+    const { name, stats } = await inspectPointerPath(dir, file);
+    if (!stats) continue;
+    if (!stats.isDirectory()) throw new NotebookConflictError([file]);
     if (
       !previous.has(file) &&
       [...previousFiles].some((old) => old.startsWith(file + "/")) &&
-      (await pfs.exists(path.join(dir, file))) &&
-      (await pfs.readdir(path.join(dir, file))).length
+      (await pfs.readdir(name)).length
     )
       throw new NotebookConflictError([file]);
   }

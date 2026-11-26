@@ -1886,7 +1886,7 @@ it("uploads a note deletion when only an ignored draft remains in its former pat
   expect(await read("README.md/private.md")).toEqual(savedDraft);
 });
 
-async function submoduleRepository() {
+async function submoduleRepository(parent?: string) {
   const app = new Crossnote();
   const notebook = await app.addNotebook({ name: "Sync", gitURL: "" });
   const args = { fs, dir: notebook.dir };
@@ -1903,11 +1903,19 @@ async function submoduleRepository() {
     mode: "160000",
     oid: base,
   };
+  const root = parent
+    ? {
+        path: parent,
+        type: "tree" as const,
+        mode: "040000",
+        oid: await git.writeTree({ ...setup, tree: [submodule] }),
+      }
+    : submodule;
   const tip = await git.commit({
     ...setup,
     author,
     message: "Add submodule",
-    tree: await git.writeTree({ ...setup, tree: [...tree, submodule] }),
+    tree: await git.writeTree({ ...setup, tree: [...tree, root] }),
   });
   await git.checkout({ ...setup, ref: "refs/heads/master" });
   notebook.gitURL = "https://example.test/notebook.git";
@@ -2346,19 +2354,31 @@ it.each([
   },
 );
 
-it("retries a gitlink replaced by a symlink to a tracked directory", async () => {
-  const { app, notebook, args, tree } = await submoduleRepository();
+it.each(["vendor", "section"])("retries a folder alias at %s", async (root) => {
+  const { app, notebook, args, tree } = await submoduleRepository(
+    root === "section" ? root : undefined,
+  );
   const link = {
     ...tree[0],
     mode: "120000",
-    path: "vendor",
+    path: root,
     oid: await git.writeBlob({ ...args, blob: bytes("assets") }),
   };
   const assets = {
     type: "tree" as const,
     mode: "040000",
     path: "assets",
-    oid: await git.writeTree({ ...args, tree }),
+    oid: await git.writeTree({
+      ...args,
+      tree: [
+        {
+          path: "vendor",
+          type: "tree",
+          mode: "040000",
+          oid: await git.writeTree({ ...args, tree }),
+        },
+      ],
+    }),
   };
   const incoming = await git.commit({
     ...args,
@@ -2376,18 +2396,18 @@ it("retries a gitlink replaced by a symlink to a tracked directory", async () =>
   );
   const run = () => app.pullNotebook({ notebook });
   await expect(run()).rejects.toThrow("Could not save notebook");
-  const name = notebook.dir + "/vendor";
+  const name = notebook.dir + "/" + root;
   expect(await fs.promises.readlink(name)).toBe("./assets");
   await pfs.unlink(name);
   await fs.promises.symlink("README.md", name);
-  await expect(run()).rejects.toMatchObject({ files: ["vendor"] });
+  await expect(run()).rejects.toMatchObject({ files: [root] });
   expect(await fs.promises.readlink(name)).toBe("./README.md");
   await pfs.unlink(name);
   await fs.promises.symlink("assets", name);
   await run();
   expect(await fs.promises.readlink(name)).toBe("./assets");
   expect(
-    await pfs.readFile(notebook.dir + "/assets/README.md", {
+    await pfs.readFile(notebook.dir + "/assets/vendor/README.md", {
       encoding: "utf8",
     }),
   ).toBe("original note");
