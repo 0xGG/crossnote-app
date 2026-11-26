@@ -180,35 +180,77 @@ it("keeps staged regular bytes when the incoming path becomes a symlink", async 
   expect(await read("README.md")).toEqual([...bytes("# Kept\n")]);
 });
 
-it("treats a tracked directory symlink as a leaf during a download", async () => {
-  const { app, notebook } = await repository();
-  const args = { fs, dir: notebook.dir };
-  await fs.promises.symlink("assets", notebook.dir + "/Alias");
-  await git.add({ ...args, filepath: "Alias" });
-  const base = await git.commit({ ...args, author, message: "Add alias" });
-  const { tree } = await git.readTree({ ...args, oid: base });
-  const oid = await git.writeBlob({ ...args, blob: bytes("updated note") });
-  const remote = await git.commit({
-    ...args,
-    author,
-    noUpdateBranch: true,
-    message: "Update note",
-    tree: await git.writeTree({
+it.each(["present", "missing", "staged deletion", "retargeted without index"])(
+  "treats a tracked directory symlink as a leaf during a download (%s)",
+  async (state) => {
+    const { app, notebook, read } = await repository();
+    const args = { fs, dir: notebook.dir };
+    const name = notebook.dir + "/Alias";
+    await fs.promises.symlink("assets", name);
+    const link = await git.writeBlob({ ...args, blob: bytes("assets") });
+    await git.updateIndex({
       ...args,
-      tree: tree.map((entry) =>
-        entry.path === "README.md" ? { ...entry, oid } : entry,
-      ),
-    }),
-  });
-  vi.mocked(git.fetch).mockResolvedValue({ ...emptyRemote, fetchHead: remote });
-  const listing = vi.spyOn(pfs, "readdir");
-  await app.pullNotebook({ notebook });
-  expect(listing).not.toHaveBeenCalledWith(notebook.dir + "/Alias");
-  expect(await fs.promises.readlink(notebook.dir + "/Alias")).toBe("./assets");
-  expect(await git.listFiles(args)).toEqual(
-    await git.listFiles({ ...args, ref: remote }),
-  );
-});
+      filepath: "Alias",
+      oid: link,
+      mode: 0o120000,
+      add: true,
+    });
+    const base = await git.commit({ ...args, author, message: "Add alias" });
+    const { tree } = await git.readTree({ ...args, oid: base });
+    const oid = await git.writeBlob({ ...args, blob: bytes("updated note") });
+    const remote = await git.commit({
+      ...args,
+      author,
+      noUpdateBranch: true,
+      message: "Update note",
+      tree: await git.writeTree({
+        ...args,
+        tree: tree.map((entry) =>
+          entry.path === "README.md" ? { ...entry, oid } : entry,
+        ),
+      }),
+    });
+    vi.mocked(git.fetch).mockResolvedValue({
+      ...emptyRemote,
+      fetchHead: remote,
+    });
+    const listing = vi.spyOn(pfs, "readdir");
+    if (state === "staged deletion")
+      await git.remove({ ...args, filepath: "Alias" });
+    if (state === "missing" || state === "retargeted without index")
+      await pfs.unlink(notebook.dir + "/.git/index");
+    if (state === "retargeted without index") {
+      await pfs.unlink(name);
+      await fs.promises.symlink("removed.txt", name);
+    }
+    if (state === "staged deletion" || state === "retargeted without index") {
+      const index =
+        state === "staged deletion" ? await read(".git/index") : null;
+      await expect(app.pullNotebook({ notebook })).rejects.toMatchObject({
+        files: ["Alias"],
+      });
+      expect(await git.resolveRef({ ...args, ref: "HEAD" })).toBe(base);
+      expect(await recovery.readPullRecovery(notebook._id)).toBeUndefined();
+      if (index) expect(await read(".git/index")).toEqual(index);
+      expect(await fs.promises.readlink(name)).toBe(
+        index ? "./assets" : "./removed.txt",
+      );
+      expect(await read("README.md")).toEqual([...bytes("# Kept\n")]);
+      return;
+    }
+    await app.pullNotebook({ notebook });
+    expect(listing).not.toHaveBeenCalledWith(name);
+    expect(await fs.promises.readlink(name)).toBe("./assets");
+    expect((await parentGitTree(notebook.dir)).symlinks.get("Alias")).toBe(
+      link,
+    );
+    expect(await git.resolveRef({ ...args, ref: "HEAD" })).toBe(remote);
+    expect(await read("README.md")).toEqual([...bytes("updated note")]);
+    expect(await git.listFiles(args)).toEqual(
+      await git.listFiles({ ...args, ref: remote }),
+    );
+  },
+);
 
 it("downloads a clean symlink change to a directory and back", async () => {
   const { app, notebook } = await repository();

@@ -160,17 +160,12 @@ async function clearIndexRebuildMarker(dir: string) {
 }
 
 // The caller owns the notebook lock and has read the checkout's current tip.
-async function rebuildNotebookIndex(
-  dir: string,
-  tip: string,
-  includeMissing = false,
-) {
+async function rebuildNotebookIndex(dir: string, tip: string) {
   if (!tip) return;
   const index = path.join(dir, ".git/index");
   const marker = indexRebuildMarker(dir);
   const interrupted = await pfs.exists(marker);
-  if (!interrupted && !includeMissing) return;
-  if (await pfs.exists(index)) {
+  if (await fs.promises.lstat(index).catch(missingFileOrThrow)) {
     if (!interrupted) return;
     await pfs.unlink(index);
   }
@@ -1645,12 +1640,8 @@ export default class Crossnote {
       symlinks: stagedSymlinks,
     } = await parentGitTree(notebook.dir, undefined, args.cache);
     const previousLinks = new Map([...baseLinks, ...stagedLinks]);
-    if (
-      previousLinks.size &&
-      (await pfs.exists(path.join(notebook.dir, ".git/index")))
-    ) {
-      // An absent entry in an existing index can be an intentional deletion.
-      // A missing index has no staged state to preserve.
+    if (previousLinks.size) {
+      // After repairing a missing index, an absent pointer is a staged deletion.
       for (const file of previousLinks.keys()) {
         const staged = stagedLinks.get(file);
         if (staged === baseLinks.get(file)) continue;
@@ -2098,7 +2089,7 @@ export default class Crossnote {
             }
             const pendingPull = await this.pendingPull(notebook);
             if (pendingPull) await this.finishPull(notebook, pendingPull);
-            await rebuildNotebookIndex(notebook.dir, notebook.localSha, true);
+            await rebuildNotebookIndex(notebook.dir, notebook.localSha);
           });
         } catch (error) {
           // A named path conflict can be resolved from the notebook and retried.
