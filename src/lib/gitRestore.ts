@@ -226,18 +226,13 @@ export async function restoreTree(
     }
   }
   for (const file of displaced.keys()) changed.add(path.relative(dir, file));
-  if (!onlyFile) {
-    for (const file of await indexedGitLinkChildren(
-      dir,
-      oldLinks,
-      args.cache,
-    )) {
-      // The joint walk already compared every visible index entry and
-      // planned any missing entry required by HEAD.
-      if (staged.has(file) || indexChanges.has(file)) continue;
-      changed.add(file);
-      indexChanges.set(file, null);
-    }
+  for (const file of await indexedGitLinkChildren(dir, oldLinks, args.cache)) {
+    if (onlyFile) throw new NotebookConflictError([file]);
+    // The joint walk already compared every visible index entry and
+    // planned any missing entry required by HEAD.
+    if (staged.has(file) || indexChanges.has(file)) continue;
+    changed.add(file);
+    indexChanges.set(file, null);
   }
   const files = [...changed].sort();
   if (apply) {

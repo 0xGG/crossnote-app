@@ -3199,6 +3199,66 @@ it.each([false, true])(
   },
 );
 
+it("requires a single-note restore to leave staged pointer children intact", async () => {
+  const file = "Note.md";
+  const other = "Note.md-archive";
+  const child = file + "/draft.md";
+  const sibling = other + "/draft.md";
+  const { notebook, base, read } = await repository(
+    {},
+    { [file]: bytes("committed note"), [sibling]: bytes("other note") },
+  );
+  const args = { fs, dir: notebook.dir };
+  const note = await notebook.getNote(file);
+  const oid = await git.writeBlob({ ...args, blob: bytes("staged draft") });
+  for (const pointer of [file, other]) {
+    await git.updateIndex({
+      ...args,
+      filepath: pointer,
+      mode: 0o160000,
+      oid: base,
+      add: true,
+    });
+    await git.updateIndex({
+      ...args,
+      filepath: pointer + "/draft.md",
+      mode: 0o100644,
+      oid,
+      add: true,
+    });
+  }
+  const index = await read(".git/index");
+  await expect(
+    notebook.checkoutNote(await notebook.getNote(sibling)),
+  ).rejects.toMatchObject({ files: [other] });
+  expect(await read(".git/index")).toEqual(index);
+  await expect
+    .soft(notebook.checkoutNote(note))
+    .rejects.toMatchObject({ files: [child] });
+  expect.soft(await read(".git/index")).toEqual(index);
+  expect(await read(file)).toEqual([...bytes("committed note")]);
+
+  await pfs.unlink(notebook.dir + "/" + file);
+  await expect(notebook.checkoutNote(note)).rejects.toMatchObject({
+    files: [child],
+  });
+  expect(await pfs.exists(notebook.dir + "/" + file)).toBe(false);
+  expect(await read(".git/index")).toEqual(index);
+  await git.updateIndex({
+    ...args,
+    filepath: child,
+    force: true,
+    remove: true,
+  });
+  await notebook.checkoutNote(note);
+  expect(await read(file)).toEqual([...bytes("committed note")]);
+  expect(await git.status({ ...args, filepath: file })).toBe("unmodified");
+  expect(await git.listFiles(args)).toEqual(
+    [...(await git.listFiles({ ...args, ref: base })), other].sort(),
+  );
+  expect(await read(sibling)).toEqual([...bytes("other note")]);
+});
+
 it("resets an old staged submodule child without changing its local file", async () => {
   const { app, notebook, args, tip, submodule } = await submoduleRepository();
   const filepath = "vendor/Draft.md";
