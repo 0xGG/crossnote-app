@@ -30,14 +30,20 @@ test("removes a gitlink from the fixture remote", async ({ request }) => {
   expect((await state.json()).files).toEqual(["keep.md"]);
 });
 
-test("replaces a regular fixture file with a gitlink", async ({ request }) => {
-  const remote = await createRemote(request, { vendor: bytes("old file") });
-  for (const oid of ["1".repeat(40), "2".repeat(40)]) {
-    await changeRemote(request, remote, { vendor: { gitlink: oid } });
-    const tree = await request.get(`${fixtureURL}/repos/${remote.id}?tree`);
-    expect(await tree.json()).toEqual([`160000 commit ${oid}\tvendor`]);
-  }
-});
+for (const oldPath of ["vendor", "vendor/old.md"]) {
+  test(`replaces ${oldPath} with a gitlink and updates the pointer`, async ({
+    request,
+  }) => {
+    const remote = await createRemote(request, {
+      [oldPath]: bytes("old file"),
+    });
+    for (const oid of ["1".repeat(40), "2".repeat(40)]) {
+      await changeRemote(request, remote, { vendor: { gitlink: oid } });
+      const tree = await request.get(`${fixtureURL}/repos/${remote.id}?tree`);
+      expect(await tree.json()).toEqual([`160000 commit ${oid}\tvendor`]);
+    }
+  });
+}
 
 test("replaces a fixture symlink with ordinary file bytes", async ({
   request,

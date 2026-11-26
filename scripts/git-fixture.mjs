@@ -92,7 +92,7 @@ const commit = async (repo, files) => {
       if (error.code !== "ENOENT") throw error;
     });
     if (bytes?.gitlink && /^[a-f0-9]{40}$/.test(bytes.gitlink)) {
-      if (previous && !previous.isDirectory()) await rm(target);
+      if (previous) await rm(target, { recursive: previous.isDirectory() });
       await mkdir(target, { recursive: true });
       specialEntries.push(["160000", bytes.gitlink, name]);
       continue;
