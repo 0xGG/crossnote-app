@@ -68,7 +68,7 @@ const recordGitRequest = (repo, req, res, service) => {
   return auth;
 };
 const commit = async (repo, files) => {
-  const pointers = [];
+  const specialEntries = [];
   for (const [name, bytes] of Object.entries(files)) {
     if (
       !name ||
@@ -81,7 +81,7 @@ const commit = async (repo, files) => {
       throw new Error("Outside fixture");
     if (bytes?.gitlink && /^[a-f0-9]{40}$/.test(bytes.gitlink)) {
       await mkdir(target, { recursive: true });
-      pointers.push([name, bytes.gitlink]);
+      specialEntries.push(["160000", bytes.gitlink, name]);
       continue;
     }
     const previous = await lstat(target).catch((error) => {
@@ -92,15 +92,20 @@ const commit = async (repo, files) => {
     else if (bytes === null) await rm(target, { force: true });
     if (bytes !== null) {
       await mkdir(path.dirname(target), { recursive: true });
-      await writeFile(target, Buffer.from(bytes));
+      if (typeof bytes.symlink === "string") {
+        // Represent the link with its target text even on Windows.
+        await writeFile(target, bytes.symlink);
+        const oid = await git(
+          ["hash-object", "-w", "--no-filters", "--", name],
+          repo.work,
+        );
+        specialEntries.push(["120000", oid.toString().trim(), name]);
+      } else await writeFile(target, Buffer.from(bytes));
     }
   }
   await git(["add", "-A"], repo.work);
-  for (const [name, oid] of pointers)
-    await git(
-      ["update-index", "--add", "--cacheinfo", "160000", oid, name],
-      repo.work,
-    );
+  for (const entry of specialEntries)
+    await git(["update-index", "--add", "--cacheinfo", ...entry], repo.work);
   await git(
     [
       "-c",
@@ -200,6 +205,7 @@ const serve = async (req, res) => {
       await git(["--git-dir", repo.bare, "config", "http.receivepack", "true"]);
       await git(["clone", repo.bare, repo.work]);
       await git(["config", "core.autocrlf", "false"], repo.work);
+      await git(["config", "core.symlinks", "false"], repo.work);
       await commit(repo, files);
       repos.set(id, repo);
       return json(res, {

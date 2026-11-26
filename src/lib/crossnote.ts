@@ -6,7 +6,14 @@ import PouchDB from "pouchdb";
 import PouchdbFind from "pouchdb-find";
 import { notebookNameFromGitURL, randomID } from "../utilities/utils";
 import { fs, missingFileOrThrow, pfs } from "./fs";
-import { stageLocalFile } from "./gitFiles";
+import { checkedGitPath, stageLocalFile } from "./gitFiles";
+import {
+  resetIndex,
+  resetTarget,
+  RestorePersistenceError,
+  restoreTree,
+  type ResetPreview,
+} from "./gitRestore";
 import {
   assertGitLinkTransition,
   gitLinks,
@@ -25,6 +32,7 @@ import { Notebook } from "./notebook";
 import { RecoveryDirectoryCollisionError } from "./recoveryDirectory";
 import {
   IgnoredUploadFileError,
+  assertNotebookWritable,
   needsRecovery,
   notebookOperation,
 } from "./notebookOperation";
@@ -840,14 +848,41 @@ export default class Crossnote {
     }
   }
 
+  public previewReset(notebook: Notebook) {
+    return notebookOperation(notebook.dir, async () => {
+      assertNotebookWritable(notebook.dir);
+      const target = await resetTarget(notebook.dir);
+      const index = await resetIndex(notebook.dir);
+      const files = await restoreTree(notebook.dir, target.sha);
+      return { ...target, index, files };
+    });
+  }
+
+  public resetToHead(notebook: Notebook, expected: ResetPreview) {
+    return notebookOperation(notebook.dir, async () => {
+      assertNotebookWritable(notebook.dir);
+      const target = await resetTarget(notebook.dir);
+      if (target.branch !== expected.branch || target.sha !== expected.sha)
+        throw new Error("error/reset-target-changed");
+      await restoreTree(notebook.dir, target.sha, {
+        confirmed: expected,
+      });
+      try {
+        await clearIndexRebuildMarker(notebook.dir);
+      } catch (error) {
+        throw new RestorePersistenceError(error);
+      }
+    });
+  }
+
   public async hardResetNotebook(
     notebook: Notebook,
     sha: string,
+    target: Awaited<ReturnType<typeof parentGitTree>>,
     force = false,
   ) {
     const ref = branchRef(notebook.gitBranch);
     const args = { fs, dir: notebook.dir, cache: {} };
-    const target = await parentGitTree(notebook.dir, sha, args.cache);
     const links = target.links;
     const files = links.size
       ? [...target.files].filter((file) => !links.has(file))
@@ -877,22 +912,7 @@ export default class Crossnote {
   }
 
   private checkedPath(notebook: Notebook, file: string): string {
-    if (
-      !file ||
-      file
-        .split("/")
-        .some(
-          (part) =>
-            !part ||
-            part === "." ||
-            part === ".." ||
-            part.toLowerCase() === ".git",
-        ) ||
-      /\\/.test(file)
-    ) {
-      throw new Error("Invalid recovery file path");
-    }
-    return path.resolve(notebook.dir, file);
+    return checkedGitPath(notebook.dir, file);
   }
 
   private async isProtectedRecoveryDirectory(
@@ -1249,11 +1269,12 @@ export default class Crossnote {
     // Replay the same planned bytes, including stable conflict-copy names.
     // Nothing deletes the recovery record on a failed reset, write or flush.
     const cache = {};
-    const { files: remoteFiles, links: remoteLinks } = await parentGitTree(
+    const targetTree = await parentGitTree(
       notebook.dir,
       recovery.remoteSha,
       cache,
     );
+    const { files: remoteFiles, links: remoteLinks } = targetTree;
     const { files: baseFiles, links: baseLinks } = await parentGitTree(
       notebook.dir,
       recovery.localSha,
@@ -1367,7 +1388,12 @@ export default class Crossnote {
       )
         await removeEmptyDirectory(target);
     }
-    await this.hardResetNotebook(notebook, recovery.remoteSha, true);
+    await this.hardResetNotebook(
+      notebook,
+      recovery.remoteSha,
+      targetTree,
+      true,
+    );
     // Checkout can skip unchanged working files when recreating the index.
     // Fill only missing blobs before replaying local changes over them.
     const args = { fs, dir: notebook.dir, cache: {} };

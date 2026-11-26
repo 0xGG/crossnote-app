@@ -70,6 +70,20 @@ export async function indexedGitLinkChildren(
   );
 }
 
+export async function matchesSymlink(
+  args: { fs: typeof fs; dir: string; cache: object },
+  name: string,
+  oid: string,
+) {
+  const { blob } = await git.readBlob({ ...args, oid });
+  // LightningFS normalizes the link text (for example "assets" to "./assets").
+  const expected = new TextDecoder("utf-8", { ignoreBOM: true }).decode(blob);
+  return (
+    path.join(expected, ".") ===
+    path.join(await args.fs.promises.readlink(name), ".")
+  );
+}
+
 // A retry may find part or all of the incoming tree already on disk. Check
 // only what exists beneath the old pointer, without following symlinks or
 // opening a nested submodule's checkout.
@@ -94,16 +108,8 @@ async function matchesInstalledEntry(
     }
     return true;
   }
-  if (entry.mode === "120000") {
-    if (!stats.isSymbolicLink()) return false;
-    const { blob } = await git.readBlob({ ...args, oid: entry.oid });
-    // LightningFS normalizes the link text (for example "assets" to "./assets").
-    const expected = new TextDecoder("utf-8", { ignoreBOM: true }).decode(blob);
-    return (
-      path.join(expected, ".") ===
-      path.join(await args.fs.promises.readlink(name), ".")
-    );
-  }
+  if (entry.mode === "120000")
+    return stats.isSymbolicLink() && matchesSymlink(args, name, entry.oid);
   return (
     stats.isFile() &&
     (await git.hashBlob({ object: await args.fs.promises.readFile(name) }))

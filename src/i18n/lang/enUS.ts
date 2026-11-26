@@ -308,10 +308,18 @@ export const enUS = {
       "The remote already has your local commit. Downloaded newer changes.",
     "git/local-update-failed":
       "{{outcome}}. Could not finish updating the local notebook.",
-    "git/checkout-complete": "Checkout command completed",
+    "git/checkout-complete": "Note restored to its committed version",
     "git/checkout-failed": "Checkout failed",
-    "git/reset-complete": "Reset command completed",
+    "git/reset-complete": "Notebook restored to the local commit",
+    "git/reset-confirm":
+      "Reset {{branch}} to {{sha}}? This discards changes to tracked files and removes staged additions. Listed files and folders that block the restore will also be removed.",
+    "git/confirm-reset": "Confirm reset",
+    "error/no-committed-note": "This note has no committed version yet.",
+    "error/reset-target-changed":
+      "The notebook changed after the preview. Review the reset again.",
     "git/reset-failed": "Notebook reset failed",
+    "error/restore-persistence":
+      "Working files were restored, but the notebook could not be saved.",
     "git/details": "Details",
     "git/copy-details": "Copy details",
     "git/details-copied": "Details copied",

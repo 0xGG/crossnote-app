@@ -4,6 +4,7 @@ import { beforeAll, describe, expect, it, vi } from "vitest";
 import { isStored, readStored } from "../test/storedTree";
 import Crossnote from "./crossnote";
 import { fs, pfs } from "./fs";
+import { parentGitTree } from "./gitLinks";
 import { effectiveGitProxy, gitConnection } from "./gitConnection";
 
 // The app runs PouchDB's browser build, on IndexedDB. So do these tests, on
@@ -357,6 +358,208 @@ describe("Crossnote keeps the stored directory tree in step", () => {
     expect(await pfs.exists(`${notebook.dir}/.git/HEAD`)).toBe(true);
   });
 
+  it("checks the confirmed branch and HEAD before resetting equal-size edits", async () => {
+    const notebook = await crossnote.addNotebook({
+      name: "Local commits",
+      gitURL: "",
+    });
+    const args = { fs, dir: notebook.dir };
+    const file = notebook.dir + "/Note.md";
+    vi.useFakeTimers({ toFake: ["Date"] });
+    try {
+      vi.setSystemTime(new Date("2026-01-01T01:02:03.000Z"));
+      await pfs.writeFile(file, "old");
+      await git.add({ ...args, filepath: "Note.md" });
+      notebook.localSha = await git.commit({
+        ...args,
+        message: "First note",
+        author,
+      });
+      await pfs.writeFile(file, "new");
+      await git.add({ ...args, filepath: "Note.md" });
+      const sha = await git.commit({
+        ...args,
+        message: "Pending local commit",
+        author,
+      });
+      const before = await pfs.stats(file);
+      await pfs.writeFile(file, "bad");
+      const draft = "temp/deep/draft.md";
+      await pfs.writeFile(notebook.dir + "/" + draft, "draft");
+      await git.add({ ...args, filepath: draft });
+      expect(await pfs.stats(file)).toMatchObject({
+        mtimeMs: before.mtimeMs,
+        size: before.size,
+      });
+      const target = await crossnote.previewReset(notebook);
+      expect(target).toMatchObject({
+        branch: "refs/heads/master",
+        sha,
+        files: ["Note.md", draft],
+      });
+      await git.branch({ ...args, ref: "other" });
+      await git.checkout({ ...args, ref: "other", noCheckout: true });
+      await expect(crossnote.resetToHead(notebook, target)).rejects.toThrow(
+        "error/reset-target-changed",
+      );
+      expect(await pfs.readFile(file, { encoding: "utf8" })).toBe("bad");
+      await git.checkout({ ...args, ref: "master", noCheckout: true });
+      await expect(
+        crossnote.resetToHead(notebook, { ...target, sha: notebook.localSha }),
+      ).rejects.toThrow("error/reset-target-changed");
+      await crossnote.resetToHead(notebook, target);
+      expect(await pfs.readFile(file, { encoding: "utf8" })).toBe("new");
+      expect(await git.resolveRef({ ...args, ref: "HEAD" })).toBe(sha);
+      expect(await pfs.exists(notebook.dir + "/temp")).toBe(false);
+      expect(await crossnote.previewReset(notebook)).toMatchObject({
+        branch: target.branch,
+        sha,
+        files: [],
+      });
+      await git.checkout({ ...args, ref: sha, noCheckout: true });
+      await pfs.writeFile(file, "bad");
+      await expect(crossnote.resetToHead(notebook, target)).rejects.toThrow(
+        "error/reset-target-changed",
+      );
+      const detached = await crossnote.previewReset(notebook);
+      expect(detached).toMatchObject({
+        branch: "HEAD",
+        sha,
+        files: ["Note.md"],
+      });
+      await crossnote.resetToHead(notebook, detached);
+      expect(await pfs.readFile(file, { encoding: "utf8" })).toBe("new");
+      expect(await git.currentBranch(args)).toBeUndefined();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("leaves a checked-out relative symlink alone and restores a different target", async () => {
+    const notebook = await crossnote.addNotebook({
+      name: "Link restore",
+      gitURL: "",
+    });
+    const args = { fs, dir: notebook.dir };
+    const filepath = "Shortcut.md";
+    const file = notebook.dir + "/" + filepath;
+    await pfs.writeFile(notebook.dir + "/README.md", "note");
+    await git.add({ ...args, filepath: "README.md" });
+    const oid = await git.writeBlob({
+      ...args,
+      blob: new TextEncoder().encode("README.md"),
+    });
+    await git.updateIndex({
+      ...args,
+      filepath,
+      oid,
+      mode: 0o120000,
+      add: true,
+    });
+    await git.commit({ ...args, author, message: "Relative link" });
+    await git.checkout({ ...args, ref: "master", force: true });
+    expect(await fs.promises.readlink(file)).toBe("./README.md");
+    const unlink = vi.spyOn(pfs, "unlink");
+    const symlink = vi.spyOn(fs.promises, "symlink");
+    try {
+      const clean = await crossnote.previewReset(notebook);
+      await crossnote.resetToHead(notebook, clean);
+      expect.soft(clean.files).toEqual([]);
+      expect.soft(unlink).not.toHaveBeenCalledWith(file);
+      expect.soft(symlink).not.toHaveBeenCalled();
+      await pfs.unlink(file);
+      await fs.promises.symlink("missing.md", file);
+      const changed = await crossnote.previewReset(notebook);
+      expect(changed.files).toEqual([filepath]);
+      await crossnote.resetToHead(notebook, changed);
+      expect(await fs.promises.readlink(file)).toBe("./README.md");
+      expect((await crossnote.previewReset(notebook)).files).toEqual([]);
+    } finally {
+      unlink.mockRestore();
+      symlink.mockRestore();
+    }
+  });
+
+  it("only removes the previewed entries of a directory that blocks a committed file", async () => {
+    const notebook = await crossnote.addNotebook({
+      name: "Blocked restore",
+      gitURL: "",
+    });
+    const args = { fs, dir: notebook.dir };
+    const file = "README.md";
+    const root = notebook.dir + "/" + file;
+    await pfs.writeFile(root, "committed");
+    await git.add({ ...args, filepath: file });
+    await git.commit({ ...args, author, message: "Record note" });
+    const note = await notebook.getNote(file);
+    await pfs.unlink(root);
+    await pfs.mkdir(root);
+    await notebook.checkoutNote(note);
+    expect(await pfs.readFile(root, { encoding: "utf8" })).toBe("committed");
+    await pfs.unlink(root);
+    await pfs.mkdir(root);
+    await pfs.writeFile(notebook.dir + "/outside/keep.md", "keep");
+    await fs.promises.symlink("../outside", root + "/shortcut");
+    const preview = await crossnote.previewReset(notebook);
+    expect.soft(preview.files).toEqual([file, file + "/shortcut"]);
+    const readBlob = git.readBlob;
+    // The file appears after confirmation has validated the plan.
+    const insert = vi
+      .spyOn(git, "readBlob")
+      .mockImplementationOnce(async (input) => {
+        await pfs.writeFile(root + "/late.md", "new draft");
+        return readBlob(input);
+      });
+    try {
+      await expect
+        .soft(crossnote.resetToHead(notebook, preview))
+        .rejects.toThrow();
+    } finally {
+      insert.mockRestore();
+    }
+    expect(await pfs.readFile(root + "/late.md", { encoding: "utf8" })).toBe(
+      "new draft",
+    );
+    expect(
+      await pfs.readFile(notebook.dir + "/outside/keep.md", {
+        encoding: "utf8",
+      }),
+    ).toBe("keep");
+    await crossnote.resetToHead(
+      notebook,
+      await crossnote.previewReset(notebook),
+    );
+    expect(await pfs.readFile(root, { encoding: "utf8" })).toBe("committed");
+  });
+
+  it.each([true, false])(
+    "restores both working and index paths when a staged directory replaces a file or vice versa (%s)",
+    async (headHasDirectory) => {
+      const notebook = await crossnote.addNotebook({
+        name: "Path replacement",
+        gitURL: "",
+      });
+      const args = { fs, dir: notebook.dir };
+      const root = notebook.dir + "/thing";
+      const tracked = headHasDirectory ? "thing/inside" : "thing";
+      const replacement = headHasDirectory ? "thing" : "thing/inside";
+      await pfs.writeFile(notebook.dir + "/" + tracked, "committed");
+      await git.add({ ...args, filepath: tracked });
+      await git.commit({ ...args, author, message: "Record original path" });
+      await git.remove({ ...args, filepath: tracked });
+      if (headHasDirectory) await pfs.rmdir(root);
+      else await pfs.unlink(root);
+      await pfs.writeFile(notebook.dir + "/" + replacement, "staged");
+      await git.add({ ...args, filepath: replacement });
+      const target = await crossnote.previewReset(notebook);
+      await crossnote.resetToHead(notebook, target);
+      expect(await git.listFiles(args)).toEqual([tracked]);
+      expect(
+        await pfs.readFile(notebook.dir + "/" + tracked, { encoding: "utf8" }),
+      ).toBe("committed");
+    },
+  );
+
   it("with the staging area as a hard reset leaves it", async () => {
     const notebook = await crossnote.addNotebook({
       name: "Reset",
@@ -376,7 +579,11 @@ describe("Crossnote keeps the stored directory tree in step", () => {
     // The reset deletes the staging area's file, content and all. A page
     // loaded before the tree is stored would still find the entry, pointing
     // at content that is gone: a staging area git cannot read.
-    await crossnote.hardResetNotebook(notebook, sha);
+    await crossnote.hardResetNotebook(
+      notebook,
+      sha,
+      await parentGitTree(notebook.dir, sha),
+    );
     const index = `${notebook.dir}/.git/index`;
     const there = await pfs.exists(index);
     expect({

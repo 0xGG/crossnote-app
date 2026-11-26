@@ -323,10 +323,20 @@ export const jaJP = {
       "ローカルのコミットはリモートにあり、後続の変更をダウンロードしました。",
     "git/local-update-failed":
       "{{outcome}}。ローカルのノートブックの更新を完了できませんでした。",
-    "git/checkout-complete": "チェックアウトコマンドが完了しました",
+    "git/checkout-complete": "ノートをコミット済みの内容に戻しました",
     "git/checkout-failed": "チェックアウトに失敗しました",
-    "git/reset-complete": "リセットコマンドが完了しました",
+    "git/reset-complete":
+      "ノートブックを現在のローカルコミットの状態に戻しました",
+    "git/reset-confirm":
+      "{{branch}} を {{sha}} にリセットしますか？追跡中のファイルの変更を破棄し、ステージに追加した新規ファイルを削除します。一覧に表示されたファイルやフォルダーのうち、復元を妨げるものも削除されます。",
+    "git/confirm-reset": "リセットを確定",
+    "error/no-committed-note":
+      "このノートにはまだコミット済みの版がありません。",
+    "error/reset-target-changed":
+      "プレビュー後にノートブックが変更されました。リセットの対象をもう一度確認してください。",
     "git/reset-failed": "ノートブックのリセットに失敗しました",
+    "error/restore-persistence":
+      "作業ファイルは復元されましたが、ノートブックを保存できませんでした。",
     "git/details": "詳細",
     "git/copy-details": "詳細をコピー",
     "git/details-copied": "詳細をコピーしました",

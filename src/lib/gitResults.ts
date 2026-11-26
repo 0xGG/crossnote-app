@@ -1,6 +1,7 @@
 import { Errors } from "isomorphic-git";
 import i18next, { isAppErrorKey } from "../i18n/i18n";
 import { gitHttpStatus, repositoryAddress } from "./gitConnection";
+import { RestorePersistenceError } from "./gitRestore";
 import { NotebookConflictError } from "./mergeFiles";
 import { type NotificationSeverity, notify } from "./notifications";
 
@@ -73,6 +74,7 @@ export function notifyGit(
     openSettings?: () => void;
   } = {},
 ) {
+  if (error instanceof RestorePersistenceError) error = error.cause;
   const { code, message: original } = Object(error) as {
     code?: string;
     message?: string;

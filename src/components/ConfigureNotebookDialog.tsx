@@ -22,7 +22,9 @@ import { useTranslation } from "react-i18next";
 import { CrossnoteContainer } from "../containers/crossnote";
 import i18next from "../i18n/i18n";
 import { effectiveGitProxy } from "../lib/gitConnection";
-import { notifyGit } from "../lib/gitResults";
+import { gitErrorMessage, notifyGit } from "../lib/gitResults";
+import type { ResetPreview } from "../lib/gitRestore";
+import { NotesNotSavedError } from "../lib/noteSaver";
 import { failureMessage, notify } from "../lib/notifications";
 import { Notebook } from "../lib/notebook";
 
@@ -53,8 +55,8 @@ export default function ConfigureNotebookDialog(props: Props) {
   const [showUsername, setShowUsername] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [clickDeleteCount, setClickDeleteCount] = useState(MaxClickDeleteCount);
-  const [clickHardResetCount, setClickHardResetCount] =
-    useState(MaxClickDeleteCount);
+  const [resetPreview, setResetPreview] = useState<ResetPreview>();
+  const [resetBusy, setResetBusy] = useState(false);
   // Home keeps the dialog for its exit transition. A new visit starts with
   // the saved values, even when the same notebook opens again.
   const [wasOpen, setWasOpen] = useState(open);
@@ -65,7 +67,7 @@ export default function ConfigureNotebookDialog(props: Props) {
       setShowUsername(false);
       setShowPassword(false);
       setClickDeleteCount(MaxClickDeleteCount);
-      setClickHardResetCount(MaxClickDeleteCount);
+      setResetPreview(undefined);
     }
   }
 
@@ -114,28 +116,39 @@ export default function ConfigureNotebookDialog(props: Props) {
   }
 
   async function hardResetNotebook() {
+    setResetBusy(true);
     try {
-      const completed = await crossnoteContainer.hardResetNotebook(notebook);
-      if (!completed) {
-        setClickHardResetCount(MaxClickDeleteCount);
+      if (!resetPreview) {
+        setResetPreview(await crossnoteContainer.previewReset(notebook));
         return;
       }
+      const completed = await crossnoteContainer.hardResetNotebook(
+        notebook,
+        resetPreview,
+      );
+      if (!completed) return;
       close();
       notifyGit("success", t("git/reset-complete"), {
         updateFailure: completed.updateFailure,
         credentials: notebook,
       });
     } catch (error) {
-      setClickHardResetCount(MaxClickDeleteCount);
-      notifyGit("error", t("git/reset-failed"), {
+      setResetPreview(undefined);
+      if (error instanceof NotesNotSavedError) return;
+      notifyGit("error", gitErrorMessage(error, t("git/reset-failed")), {
         error,
         credentials: notebook,
       });
+    } finally {
+      setResetBusy(false);
     }
   }
 
   return (
-    <Dialog open={open} onClose={!clickDeleteCount ? null : close}>
+    <Dialog
+      open={open}
+      onClose={!clickDeleteCount || resetBusy ? undefined : close}
+    >
       <DialogTitle>{t("general/configure-the-notebook")}</DialogTitle>
       <DialogContent>
         <TextField
@@ -294,13 +307,28 @@ export default function ConfigureNotebookDialog(props: Props) {
             </AccordionDetails>
           </Accordion>
         )}
+        {resetPreview && (
+          <Box role="status" sx={{ mt: 2, overflowWrap: "anywhere" }}>
+            <Typography>
+              {t("git/reset-confirm", {
+                branch: resetPreview.branch.replace(/^refs\/heads\//, ""),
+                sha: resetPreview.sha,
+              })}
+            </Typography>
+            <Box component="ul" sx={{ maxHeight: 160, overflowY: "auto" }}>
+              {resetPreview.files.map((file) => (
+                <li key={file}>{file}</li>
+              ))}
+            </Box>
+          </Box>
+        )}
       </DialogContent>
       <DialogActions>
         {crossnoteContainer.notebooks.length > 1 && (
           <Button
             variant={"contained"}
             color={"secondary"}
-            disabled={!clickDeleteCount}
+            disabled={!clickDeleteCount || resetBusy || !!resetPreview}
             onClick={() => {
               setClickDeleteCount(clickDeleteCount - 1);
               if (clickDeleteCount === 1) void deleteNotebook();
@@ -316,27 +344,21 @@ export default function ConfigureNotebookDialog(props: Props) {
           <Button
             variant={"contained"}
             color={"secondary"}
-            disabled={!clickHardResetCount || !clickDeleteCount}
-            onClick={() => {
-              setClickHardResetCount(clickHardResetCount - 1);
-              if (clickHardResetCount === 1) void hardResetNotebook();
-            }}
+            disabled={resetBusy || !clickDeleteCount}
+            onClick={hardResetNotebook}
           >
-            {t("general/hard-reset") +
-              (clickHardResetCount < MaxClickDeleteCount
-                ? ` ${clickHardResetCount}`
-                : "")}
+            {t(resetPreview ? "git/confirm-reset" : "general/hard-reset")}
           </Button>
         )}
         <Button
           variant={"contained"}
           color={"primary"}
           onClick={updateNotebook}
-          disabled={!clickDeleteCount}
+          disabled={!clickDeleteCount || resetBusy || !!resetPreview}
         >
           {t("general/Save")}
         </Button>
-        <Button onClick={close} disabled={!clickDeleteCount}>
+        <Button onClick={close} disabled={!clickDeleteCount || resetBusy}>
           {t("general/cancel")}
         </Button>
       </DialogActions>

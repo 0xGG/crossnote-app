@@ -26,7 +26,7 @@ import {
   IgnoredUploadFileError,
   notebookOperation,
 } from "../lib/notebookOperation";
-import { pendingNoteWrites } from "../lib/noteWrites";
+import { pendingNoteWrites, trackNoteInsertion } from "../lib/noteWrites";
 import { NotebookConflictError } from "../lib/mergeFiles";
 import { Folder } from "../test/diskFolder";
 import { CrossnoteContainer } from "./crossnote";
@@ -390,7 +390,7 @@ async function notebookWithTyping(dir: string, write: () => Promise<void>) {
       done.push("push");
       return "confirmed";
     },
-    hardResetNotebook: async () => {
+    resetToHead: async () => {
       done.push("reset");
     },
   } as unknown as Partial<Crossnote>);
@@ -426,7 +426,16 @@ async function notebookWithTyping(dir: string, write: () => Promise<void>) {
           message: "",
         }),
     ],
-    ["reset", () => crossnote.hardResetNotebook(notebook)],
+    [
+      "reset",
+      () =>
+        crossnote.hardResetNotebook(notebook, {
+          branch: "refs/heads/master",
+          sha: "head",
+          index: null,
+          files: [],
+        }),
+    ],
     ["read", () => crossnote.refreshNotebook(notebook)],
     [
       "restore",
@@ -506,6 +515,36 @@ it("reports an interrupted download conflict before starting checkout", async ()
     ).rejects.toBe(conflict);
   });
   expect(checkout).not.toHaveBeenCalled();
+});
+
+it("keeps a staged draft and its existing view when checkout has no committed version", async () => {
+  const notebook = await notebookAt("/notebooks/no-committed-draft");
+  notebook.isLocal = false;
+  const args = { fs, dir: notebook.dir };
+  await git.init(args);
+  await git.commit({
+    ...args,
+    message: "Empty notebook",
+    author: { name: "Test", email: "test@example.test" },
+  });
+  const file = "draft.md";
+  await pfs.writeFile(notebook.dir + "/" + file, "# Keep this draft\n");
+  await git.add({ ...args, filepath: file });
+  const note = await notebook.getNote(file, true);
+  const index = async () =>
+    Array.from(await fs.promises.readFile(notebook.dir + "/.git/index"));
+  const staged = await index();
+  const refresh = vi.spyOn(notebook, "getNote");
+  const store = vi.spyOn(pfs, "storeTree");
+  await act(async () => {
+    await expect(crossnote.checkoutNote(note)).rejects.toThrow(
+      "error/no-committed-note",
+    );
+  });
+  expect(refresh).not.toHaveBeenCalled();
+  expect(store).not.toHaveBeenCalled();
+  expect(await index()).toEqual(staged);
+  expect(await read(notebook, file)).toBe("# Keep this draft\n");
 });
 
 it("replaces the old search alias on checkout", async () => {
@@ -600,17 +639,12 @@ it("does none of it, and says which note, when what is typed into it cannot be w
   }
 });
 
-// Typed while git resets the notebook: the reset is done, so what is typed
-// is written, or fails, and the notebook is then read again either way.
-it("reads the notebook again after a hard reset once what is typed during it has been written, or could not be", async () => {
+it("finishes an accepted attachment and its note edit before resetting", async () => {
   const done: string[] = [];
   let saver: NoteSaver = null;
-  let reset = false;
   const notebook = await notebookAt("/notebooks/git-reset", {
-    hardResetNotebook: async () => {
+    resetToHead: async () => {
       done.push("reset");
-      reset = true;
-      saver.changed();
     },
   } as unknown as Partial<Crossnote>);
   const refreshNotes = notebook.refreshNotes.bind(notebook);
@@ -626,31 +660,37 @@ it("reads the notebook again after a hard reset once what is typed during it has
       done.push("write");
       // Settles a step later, as a real write does.
       await Promise.resolve();
-      if (reset) {
-        done.push("failed");
-        throw new Error("Disk full");
-      }
       done.push("written");
     },
     // Only a flush writes what is typed here, never the timer.
     delay: 60_000,
   });
   try {
-    saver.changed();
+    let inserted!: () => void;
+    trackNoteInsertion(
+      saver.location,
+      new Promise<void>((resolve) => {
+        inserted = () => {
+          done.push("insert");
+          saver.changed();
+          resolve();
+        };
+      }),
+    );
     resetNotifications();
     await act(async () => {
-      await crossnote.hardResetNotebook(notebook);
+      const pending = crossnote.hardResetNotebook(notebook, {
+        branch: "refs/heads/master",
+        sha: "head",
+        index: null,
+        files: [],
+      });
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      expect(done).toEqual([]);
+      inserted();
+      await pending;
     });
-    // The typing during the reset is written (here it fails) before the
-    // notebook is read again, and the reset is not said to be undone.
-    expect(done).toEqual([
-      "write",
-      "written",
-      "reset",
-      "write",
-      "failed",
-      "read",
-    ]);
+    expect(done).toEqual(["insert", "write", "written", "reset", "read"]);
     expect(getNotificationState().current?.message).toBeUndefined();
   } finally {
     saver.discard();

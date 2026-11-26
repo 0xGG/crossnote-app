@@ -3,6 +3,23 @@ import path from "path-browserify";
 import { fs } from "./fs";
 import { gitLinks } from "./gitLinks";
 
+export function checkedGitPath(dir: string, file: string) {
+  if (
+    file
+      .split("/")
+      .some(
+        (part) =>
+          !part ||
+          part === "." ||
+          part === ".." ||
+          part.toLowerCase() === ".git",
+      ) ||
+    file.includes("\\")
+  )
+    throw new Error("Invalid recovery file path");
+  return path.resolve(dir, file);
+}
+
 export async function stageLocalFile(dir: string, filepath: string) {
   const args = { fs, dir, filepath };
   const relative = path.normalize(filepath);

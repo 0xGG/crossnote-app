@@ -37,6 +37,7 @@ export interface ChangedNoteFilePathEventData {
 
 export interface PerformedGitOperationEventData {
   notebookPath: string;
+  filePath?: string;
   preservePendingEdits?: boolean;
 }
 

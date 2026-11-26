@@ -18,11 +18,12 @@ export type FileHost = {
   };
 };
 export type Remote = { id: string; url: string; proxy: string };
+type FixtureFile = number[] | { gitlink: string } | { symlink: string };
 export const bytes = (text: string) => [...new TextEncoder().encode(text)];
 
 export async function createRemote(
   request: APIRequestContext,
-  files: Record<string, number[] | { gitlink: string }>,
+  files: Record<string, FixtureFile>,
 ) {
   const response = await request.post(`${fixtureURL}/repos`, {
     data: { files },
@@ -34,7 +35,7 @@ export async function createRemote(
 export async function changeRemote(
   request: APIRequestContext,
   remote: Remote,
-  files: Record<string, number[] | null | { gitlink: string }>,
+  files: Record<string, FixtureFile | null>,
 ) {
   const response = await request.post(`${fixtureURL}/repos/${remote.id}`, {
     data: { files },

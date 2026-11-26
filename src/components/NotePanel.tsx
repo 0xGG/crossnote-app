@@ -538,6 +538,7 @@ export default function NotePanel(props: Props) {
       // refresh of the previous location cannot replace or close this editor.
       if (
         data.notebookPath === note?.notebookPath &&
+        (!data.filePath || data.filePath === location.filePath) &&
         note.filePath === location.filePath
       ) {
         let newNote: Note;

@@ -7,6 +7,7 @@ import { EventType, globalEmitter } from "./event";
 import { RecoveryDirectoryCollisionError } from "./recoveryDirectory";
 import { fs, pfs } from "./fs";
 import { parentGitTree } from "./gitLinks";
+import { RestorePersistenceError } from "./gitRestore";
 import { NotebookConflictError } from "./mergeFiles";
 import type { Notebook } from "./notebook";
 import { assertNotebookWritable } from "./notebookOperation";
@@ -86,7 +87,12 @@ async function repository(
     for (const [file, data] of Object.entries(remote)) {
       if (data !== null && !(file in initial)) await removeFile(file);
     }
-    await app.hardResetNotebook(notebook, base, true);
+    await app.hardResetNotebook(
+      notebook,
+      base,
+      await parentGitTree(notebook.dir, base),
+      true,
+    );
     for (const [file, data] of Object.entries(initial)) {
       await pfs.writeFile(`${notebook.dir}/${file}`, data);
     }
@@ -119,6 +125,48 @@ const emptyRemote: git.FetchResult = {
   fetchHeadDescription: null,
   defaultBranch: null,
 };
+
+it("requires a new reset preview after rebuilding the index over a draft", async () => {
+  const { app, notebook, read } = await repository();
+  const draft = "nested/draft.md";
+  const args = { fs, dir: notebook.dir };
+  await pfs.writeFile(notebook.dir + "/" + draft, "untracked draft");
+  const preview = await app.previewReset(notebook);
+  expect(preview.files).not.toContain(draft);
+  await pfs.unlink(notebook.dir + "/.git/index");
+  await app.listNotebooks();
+  expect(await git.listFiles(args)).toContain(draft);
+  const rebuilt = await read(".git/index");
+  await expect
+    .soft(app.resetToHead(notebook, preview))
+    .rejects.toThrow("error/reset-target-changed");
+  expect.soft(await pfs.exists(notebook.dir + "/" + draft)).toBe(true);
+  expect.soft(await read(".git/index")).toEqual(rebuilt);
+  const second = await app.previewReset(notebook);
+  expect(second.files).toContain(draft);
+  await pfs.writeFile(notebook.dir + "/" + draft, "new staged content");
+  await git.add({ ...args, filepath: draft });
+  const revised = await read(".git/index");
+  await expect(app.resetToHead(notebook, second)).rejects.toThrow(
+    "error/reset-target-changed",
+  );
+  expect(await read(".git/index")).toEqual(revised);
+  expect(
+    await pfs.readFile(notebook.dir + "/" + draft, { encoding: "utf8" }),
+  ).toBe("new staged content");
+  const third = await app.previewReset(notebook);
+  await pfs.writeFile(notebook.dir + "/README.md", "another working edit");
+  await expect(app.resetToHead(notebook, third)).rejects.toThrow(
+    "error/reset-target-changed",
+  );
+  expect(await read(".git/index")).toEqual(revised);
+  expect(
+    await pfs.readFile(notebook.dir + "/README.md", { encoding: "utf8" }),
+  ).toBe("another working edit");
+  await app.resetToHead(notebook, await app.previewReset(notebook));
+  expect(await git.listFiles(args)).not.toContain(draft);
+  expect(await pfs.exists(notebook.dir + "/" + draft)).toBe(false);
+});
 
 it("shares status reads within a notebook batch and observes later index changes", async () => {
   const { app, notebook, read } = await repository();
@@ -1893,49 +1941,116 @@ async function interruptPointerRebuild(app: Crossnote, notebook: Notebook) {
   }
 }
 
-it("keeps a staged version on reopen after download replaces an interrupted index rebuild", async () => {
-  const { app, notebook, args, tree, note } =
-    await submoduleRepository();
-  const index = notebook.dir + "/.git/index";
-  await pfs.unlink(index);
-  await interruptPointerRebuild(app, notebook);
-  expect(await git.listFiles(args)).toEqual(["README.md"]);
+it.each(["inspect", "unlink", "flush"])(
+  "reports an applied reset when the rebuild marker fails to %s",
+  async (phase) => {
+    const { app, notebook, note, submodule } = await submoduleRepository();
+    const index = notebook.dir + "/.git/index";
+    const marker = index + ".crossnote-rebuild";
+    await pfs.unlink(index);
+    await interruptPointerRebuild(app, notebook);
+    expect(await pfs.exists(marker)).toBe(true);
+    await pfs.writeFile(note, "draft to discard");
+    const target = await app.previewReset(notebook);
+    const cause = new Error("Marker " + phase + " failed");
+    if (phase === "inspect") {
+      const lstat = fs.promises.lstat.bind(fs.promises);
+      vi.spyOn(fs.promises, "lstat").mockImplementation(
+        async (name, ...rest) => {
+          if (name === marker) throw cause;
+          return lstat(name, ...rest);
+        },
+      );
+    } else if (phase === "unlink") {
+      const unlink = pfs.unlink.bind(pfs);
+      vi.spyOn(pfs, "unlink").mockImplementation(async (name) => {
+        if (name === marker) throw cause;
+        return unlink(name);
+      });
+    } else {
+      const store = pfs.storeTree.bind(pfs);
+      vi.spyOn(pfs, "storeTree").mockImplementation(async (dir) => {
+        if (dir === notebook.dir && !(await pfs.exists(marker))) throw cause;
+        return store(dir);
+      });
+    }
+    const result = app.resetToHead(notebook, target);
+    await expect(result).rejects.toBeInstanceOf(RestorePersistenceError);
+    await expect(result).rejects.toHaveProperty("cause", cause);
+    expect(await pfs.readFile(note, { encoding: "utf8" })).toBe(
+      "original note",
+    );
+    expect((await parentGitTree(notebook.dir)).links.get("vendor")).toBe(
+      submodule.oid,
+    );
+    vi.restoreAllMocks();
+    await app.resetToHead(notebook, await app.previewReset(notebook));
+    expect(await pfs.exists(marker)).toBe(false);
+  },
+);
 
-  const incoming = await git.commit({
-    ...args,
-    author,
-    noUpdateBranch: true,
-    message: "Remove the empty submodule",
-    tree: await git.writeTree({ ...args, tree }),
-  });
-  vi.mocked(git.fetch).mockResolvedValue({
-    ...emptyRemote,
-    fetchHead: incoming,
-  });
-  await app.pullNotebook({ notebook });
-  expect(notebook.localSha).toBe(incoming);
-  expect((await parentGitTree(notebook.dir)).links.size).toBe(0);
-  const staged = bytes("staged note");
-  await pfs.writeFile(note, staged);
-  await notebook.storeNote("README.md");
-  const savedIndex = await pfs.readFile(index);
-  const working = bytes("later working note");
-  await pfs.writeFile(note, working);
-  await pfs.storeTree(notebook.dir);
-  expect(
-    (await new Crossnote().listNotebooks()).map((entry) => entry._id),
-  ).toContain(notebook._id);
-  expect(
-    await git.walk({
-      ...args,
-      trees: [git.STAGE()],
-      map: async (file, [entry]) =>
-        file === "README.md" ? entry.oid() : undefined,
-    }),
-  ).toEqual([(await git.hashBlob({ object: staged })).oid]);
-  expect([...(await pfs.readFile(index))]).toEqual([...savedIndex]);
-  expect([...(await pfs.readFile(note))]).toEqual([...working]);
-});
+it.each(["reset", "download"])(
+  "keeps a staged version on reopen after %s replaces an interrupted index rebuild",
+  async (operation) => {
+    const { app, notebook, args, tree, submodule, note } =
+      await submoduleRepository();
+    const index = notebook.dir + "/.git/index";
+    await pfs.unlink(index);
+    await interruptPointerRebuild(app, notebook);
+    expect(await git.listFiles(args)).toEqual(["README.md"]);
+
+    if (operation === "reset") {
+      const target = await app.previewReset(notebook);
+      expect(target.files).toContain("vendor");
+      vi.spyOn(git, "updateIndex").mockRejectedValueOnce(
+        new Error("Interrupted reset"),
+      );
+      await expect(app.resetToHead(notebook, target)).rejects.toThrow(
+        "Interrupted reset",
+      );
+      expect(await pfs.exists(index + ".crossnote-rebuild")).toBe(true);
+      await app.resetToHead(notebook, target);
+      expect((await parentGitTree(notebook.dir)).links.get("vendor")).toBe(
+        submodule.oid,
+      );
+    } else {
+      const incoming = await git.commit({
+        ...args,
+        author,
+        noUpdateBranch: true,
+        message: "Remove the empty submodule",
+        tree: await git.writeTree({ ...args, tree }),
+      });
+      vi.mocked(git.fetch).mockResolvedValue({
+        ...emptyRemote,
+        fetchHead: incoming,
+      });
+      await app.pullNotebook({ notebook });
+      expect(notebook.localSha).toBe(incoming);
+      expect((await parentGitTree(notebook.dir)).links.size).toBe(0);
+    }
+    const staged = bytes("staged note");
+    await pfs.writeFile(note, staged);
+    await notebook.storeNote("README.md");
+    const savedIndex = await pfs.readFile(index);
+    const working = bytes("later working note");
+    await pfs.writeFile(note, working);
+    await pfs.storeTree(notebook.dir);
+    expect(
+      (await new Crossnote().listNotebooks()).map((entry) => entry._id),
+    ).toContain(notebook._id);
+    expect(
+      await git.walk({
+        ...args,
+        trees: [git.STAGE()],
+        map: async (file, [entry]) =>
+          file === "README.md" ? entry.oid() : undefined,
+      }),
+    ).toEqual([(await git.hashBlob({ object: staged })).oid]);
+    expect([...(await pfs.readFile(index))]).toEqual([...savedIndex]);
+    expect([...(await pfs.readFile(note))]).toEqual([...working]);
+  },
+);
 
 it.each(["complete", "missing", "interrupted"])(
   "protects a committed submodule when uploading a note (%s index)",
@@ -2524,6 +2639,41 @@ it.each([false, true])(
     expect(directories).not.toContain(notebook.dir + "/vendor/subtree");
   },
 );
+
+it("resets an old staged submodule child without changing its local file", async () => {
+  const { app, notebook, args, tip, submodule } = await submoduleRepository();
+  const filepath = "vendor/Draft.md";
+  const file = notebook.dir + "/" + filepath;
+  await pfs.writeFile(file, "# Local draft\r\n");
+  await git.add({ ...args, filepath });
+  const expected = ["README.md", "vendor"];
+  const mixed = [...expected, filepath];
+  expect(await git.listFiles(args)).toEqual(mixed);
+  const draft = await notebook.getNote(filepath);
+  await expect
+    .soft(notebook.checkoutNote(draft))
+    .rejects.toThrow("error/no-committed-note");
+  await notebook.checkoutNote(await notebook.getNote("README.md"));
+  expect(await git.listFiles(args)).toEqual(mixed);
+
+  const target = await app.previewReset(notebook);
+  expect.soft(target.files).toEqual([filepath]);
+  expect(await git.listFiles(args)).toEqual(mixed);
+  await app.resetToHead(notebook, target);
+  expect.soft(await git.listFiles(args)).toEqual(expected);
+  expect(await pfs.readFile(file, { encoding: "utf8" })).toBe(
+    "# Local draft\r\n",
+  );
+  expect(await git.resolveRef({ ...args, ref: "HEAD" })).toBe(tip);
+  const index = await git.walk({
+    ...args,
+    trees: [git.STAGE()],
+    map: async (file, [entry]) =>
+      file === "vendor" ? [await entry.mode(), await entry.oid()] : undefined,
+  });
+  expect(index).toEqual([[0o160000, submodule.oid]]);
+  expect((await app.previewReset(notebook)).files).toEqual([]);
+});
 
 it("keeps submodule directories outside both upload scans and missing-index recovery", async () => {
   const { app, notebook, args } = await submoduleRepository();

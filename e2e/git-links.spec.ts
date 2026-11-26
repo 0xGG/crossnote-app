@@ -38,6 +38,7 @@ test("keeps a populated submodule in place across download, reset, index recover
   const first = "1".repeat(40);
   const second = "2".repeat(40);
   const raw = [0, 255, 128, 9, 12];
+  const draftBytes = bytes("# Local draft\r\n");
   const remote = await createRemote(request, {
     "README.md": bytes("# Original"),
     "vendor": { gitlink: first },
@@ -46,7 +47,9 @@ test("keeps a populated submodule in place across download, reset, index recover
   const dir = await cloneRemote(app, remote);
   const indexPath = dir + "/.git/index";
   const local = dir + "/vendor/local.bin";
+  const draft = dir + "/vendor/Draft.md";
   await localBytes(page, local, raw);
+  await localBytes(page, draft, draftBytes);
   // Read the Git v2 index in the browser's filesystem, including the mode
   // and object ID. The target commit is deliberately absent from the parent.
   const checkIndex = async (oid: string) => {
@@ -61,6 +64,7 @@ test("keeps a populated submodule in place across download, reset, index recover
     ).toEqual([".git", "README.md", "vendor"]);
     expect(entries[1]).toEqual({ name: "vendor", mode: "160000", oid });
     expect(await localBytes(page, local)).toEqual(raw);
+    expect(await localBytes(page, draft)).toEqual(draftBytes);
   };
   await checkIndex(first);
   await changeRemote(request, remote, {
@@ -69,6 +73,17 @@ test("keeps a populated submodule in place across download, reset, index recover
   });
   await download(app, remote);
   await checkIndex(second);
+  await app.noteCards.getByText("Draft", { exact: true }).click();
+  await page.getByRole("button", { name: "Note menu" }).click();
+  await page
+    .getByRole("button", { name: "Restore (git checkout)", exact: true })
+    .click();
+  const notice = page
+    .getByRole("alert")
+    .filter({ hasText: "This note has no committed version yet." });
+  await expect(notice).toBeVisible({ timeout: 20000 });
+  await notice.getByRole("button", { name: "Close" }).click();
+  await checkIndex(second);
   await app
     .notebook(remote.id)
     .getByRole("treeitem", { name: /Settings/ })
@@ -76,10 +91,7 @@ test("keeps a populated submodule in place across download, reset, index recover
   const dialog = page.getByRole("dialog");
   await dialog.getByRole("button", { name: "Hard reset", exact: true }).click();
   await dialog
-    .getByRole("button", { name: "Hard reset 2", exact: true })
-    .click();
-  await dialog
-    .getByRole("button", { name: "Hard reset 1", exact: true })
+    .getByRole("button", { name: "Confirm reset", exact: true })
     .click();
   await expect(dialog).toBeHidden();
   await checkIndex(second);

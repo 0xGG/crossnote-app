@@ -398,7 +398,11 @@ export async function flushNotes(where: NoteWriteScope): Promise<void> {
 
 // First let already accepted file inputs reach their editors. Text and
 // attributes can then finish through the existing savers and write queue.
-export async function flushNotebookEdits(notebookPath: string): Promise<void> {
+export async function flushNotebookEdits(
+  notebookPath: string,
+  onlyFile?: string,
+  ready?: Promise<void>,
+): Promise<void> {
   const dir = path.resolve(notebookPath);
   async function inExport<T extends { location: NoteLocation }>(entries: T[]) {
     const paths = await Promise.all(
@@ -408,7 +412,8 @@ export async function flushNotebookEdits(notebookPath: string): Promise<void> {
           path.resolve(entry.location.notebookPath),
           entry.location.filePath,
         );
-        return filePath === null
+        return filePath === null ||
+          (onlyFile !== undefined && onlyFile !== filePath)
           ? null
           : { ...entry, location: { notebookPath, filePath } };
       }),
@@ -417,7 +422,10 @@ export async function flushNotebookEdits(notebookPath: string): Promise<void> {
   }
 
   // Capture writes before looking up paths. A settled write leaves the queue.
-  await waitForNoteWrites(await inExport(pendingNoteEdits()));
+  await Promise.all([
+    inExport(pendingNoteEdits()).then(waitForNoteWrites),
+    ready,
+  ]);
 
   const editors = [...savers]
     .filter((saver) => saver.pending)

@@ -7,6 +7,7 @@ import { decodeLinkPath, leadsToNote } from "../render/markdown/linkTargets";
 import { NOTE_SETTINGS, readNoteText, writeNoteText } from "./frontMatter";
 import { fs, missingFileOrThrow, pfs } from "./fs";
 import { stageLocalFile } from "./gitFiles";
+import { restoreTree } from "./gitRestore";
 import { Mentions, Note, NoteConfig, Notes } from "./note";
 import { Reference, ReferenceMap } from "./reference";
 import Search from "./search";
@@ -253,25 +254,16 @@ export class Notebook {
     return await this.getNote(newFilePath, true);
   }
 
-  public async checkoutNote(note: Note): Promise<{ error: unknown } | void> {
-    await git.checkout({
-      fs: fs,
-      dir: this.dir,
-      filepaths: [note.filePath],
-      force: true,
-    });
+  public async checkoutNote(note: Note): Promise<void> {
+    let sha: string;
     try {
-      if (await pfs.exists(path.resolve(this.dir, note.filePath))) {
-        await git.add({
-          fs: fs,
-          dir: this.dir,
-          filepath: note.filePath,
-        });
-      }
-      await pfs.storeTree(this.dir);
+      sha = await git.resolveRef({ fs, dir: this.dir, ref: "HEAD" });
     } catch (error) {
-      return { error };
+      if (error instanceof git.Errors.NotFoundError)
+        throw new Error("error/no-committed-note", { cause: error });
+      throw error;
     }
+    await restoreTree(this.dir, sha, { onlyFile: note.filePath });
   }
 
   public async getNote(
