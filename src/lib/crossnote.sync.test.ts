@@ -2137,6 +2137,82 @@ it.each(["download", "upload"])(
   },
 );
 
+it.each([
+  ["reopen", true],
+  ["reopen", false],
+  ["marked", true],
+  ["marked", false],
+] as const)(
+  "rebuilds clean and changed symlink entries (%s, gitlink %s)",
+  async (entry, withPointer) => {
+    const { app, notebook, base } = await repository();
+    const { dir } = notebook;
+    const args = { fs, dir };
+    const target = await git.writeBlob({ ...args, blob: bytes("README.md") });
+    for (const filepath of ["Alias.md", "Other.md"])
+      await git.updateIndex({
+        ...args,
+        filepath,
+        oid: target,
+        mode: 0o120000,
+        add: true,
+      });
+    if (withPointer)
+      await git.updateIndex({
+        ...args,
+        filepath: "vendor",
+        oid: base,
+        mode: 0o160000,
+        add: true,
+      });
+    const tip = await git.commit({ ...args, author, message: "Add aliases" });
+    await git.checkout({ ...args, ref: "master", force: true });
+    notebook.localSha = notebook.remoteSha = tip;
+    await saveNotebookFixture(app, notebook);
+    const { tree } = await git.readTree({ ...args, oid: tip });
+    const note = tree.find((item) => item.path === "README.md")!;
+    const incoming = await git.commit({
+      ...args,
+      author,
+      noUpdateBranch: true,
+      message: "Add another note",
+      tree: await git.writeTree({
+        ...args,
+        tree: [...tree, { ...note, path: "incoming.md" }],
+      }),
+    });
+    vi.mocked(git.fetch).mockResolvedValue({
+      ...emptyRemote,
+      fetchHead: incoming,
+    });
+    await pfs.unlink(dir + "/Other.md");
+    await fs.promises.symlink("removed.txt", dir + "/Other.md");
+    const index = dir + "/.git/index";
+    await pfs.unlink(index);
+    if (entry === "reopen") await app.listNotebooks();
+    else await pfs.writeFile(index + ".crossnote-rebuild", "");
+    await expect(app.pullNotebook({ notebook })).rejects.toMatchObject({
+      files: ["Other.md"],
+    });
+    const staged = await parentGitTree(dir);
+    expect(staged.symlinks.get("Alias.md")).toBe(target);
+    expect(staged.symlinks.get("Other.md")).toBe(
+      (await git.hashBlob({ object: bytes("./removed.txt") })).oid,
+    );
+    expect(staged.links.get("vendor")).toBe(withPointer ? base : undefined);
+    expect(await git.resolveRef({ ...args, ref: "HEAD" })).toBe(tip);
+    await git.checkout({
+      ...args,
+      ref: "HEAD",
+      filepaths: ["Other.md"],
+      force: true,
+    });
+    await app.pullNotebook({ notebook });
+    expect(await git.resolveRef({ ...args, ref: "HEAD" })).toBe(incoming);
+    expect(await app.getStatus(dir, "Alias.md")).toBe("unmodified");
+  },
+);
+
 it("lists the current branch after waiting for an interrupted download", async () => {
   const { app, notebook, args, tree } = await submoduleRepository();
   const incoming = await git.commit({

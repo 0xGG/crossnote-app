@@ -16,7 +16,6 @@ import {
 } from "./gitRestore";
 import {
   assertGitLinkTransition,
-  gitLinks,
   indexedGitLinkChildren,
   isWithinGitLink,
   matchesSymlink,
@@ -164,22 +163,39 @@ async function rebuildNotebookIndex(
     if (!interrupted) return;
     await pfs.unlink(index);
   }
-  const args = { fs, dir };
-  const links = await gitLinks(dir, tip);
-  if (links.size) {
-    // Rebuild the ordinary working entries as before, while the
-    // committed pointers keep the status walk out of their folders.
-    const files = (
-      await git.statusMatrix({
-        ...args,
-        fs: parentWorkingFs(dir, links),
-        ref: tip,
-      })
-    )
-      .filter(([, , work]) => work !== 0)
-      .map(([file]) => file);
+  const args = { fs, dir, cache: {} };
+  const { links, symlinks } = await parentGitTree(dir, tip, args.cache);
+  if (links.size || symlinks.size) {
+    const rows = await git.statusMatrix({
+      ...args,
+      fs: parentWorkingFs(dir, links),
+      ref: tip,
+    });
     // Keep the missing-index recovery active across partial writes and reloads.
     if (!interrupted) await pfs.writeFile(marker, "");
+    const files: string[] = [];
+    for (const [filepath, , work] of rows) {
+      if (!work) continue;
+      const oid = symlinks.get(filepath);
+      const name = path.join(dir, filepath);
+      // LightningFS normalizes link text. Keep the original Git blob when
+      // the working link still points at the committed target.
+      if (
+        oid &&
+        (await fs.promises.lstat(name)).isSymbolicLink() &&
+        (await matchesSymlink(args, name, oid))
+      ) {
+        await git.updateIndex({
+          ...args,
+          filepath,
+          oid,
+          mode: 0o120000,
+          add: true,
+        });
+      } else {
+        files.push(filepath);
+      }
+    }
     if (files.length) await git.add({ ...args, filepath: files });
     for (const [filepath, oid] of links)
       await git.updateIndex({
@@ -193,7 +209,8 @@ async function rebuildNotebookIndex(
     await git.add({ ...args, filepath: "." });
   }
   await pfs.storeTree(dir);
-  if (links.size || interrupted) await clearIndexRebuildMarker(dir);
+  if (links.size || symlinks.size || interrupted)
+    await clearIndexRebuildMarker(dir);
 }
 
 // Git interprets a missing ref as the index. An unborn branch has an empty
