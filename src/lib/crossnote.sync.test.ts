@@ -3803,6 +3803,98 @@ it.each([true, false])(
   },
 );
 
+it("protects a draft when only the ignore file mode changes in either direction", async () => {
+  const { app, notebook, base, read } = await repository(
+    {},
+    {
+      "rules.txt": bytes("draft.md\n"),
+      ".gitignore": bytes("rules.txt"),
+    },
+  );
+  const args = { fs, dir: notebook.dir };
+  const { tree } = await git.readTree({ ...args, oid: base });
+  const remote = await git.commit({
+    ...args,
+    author,
+    noUpdateBranch: true,
+    message: "Use shared rules",
+    tree: await git.writeTree({
+      ...args,
+      tree: tree.map((entry) =>
+        entry.path === ".gitignore" ? { ...entry, mode: "120000" } : entry,
+      ),
+    }),
+  });
+  vi.mocked(git.fetch).mockResolvedValue({ ...emptyRemote, fetchHead: remote });
+  await pfs.writeFile(`${notebook.dir}/draft.md`, "meeting notes");
+  const result = await app.pullNotebook({ notebook });
+  expect(result.ignoredUploadFile).toBe("draft.md");
+  expect(await git.resolveRef({ ...args, ref: "HEAD" })).toBe(remote);
+  expect(await git.listFiles(args)).not.toContain("draft.md");
+  expect(await app.getStatus(notebook.dir, "draft.md")).toBe("ignored");
+  expect(await read("draft.md")).toEqual([...bytes("meeting notes")]);
+
+  const restored = await git.commit({
+    ...args,
+    author,
+    noUpdateBranch: true,
+    message: "Restore ordinary rules",
+    tree: (await git.readCommit({ ...args, oid: base })).commit.tree,
+  });
+  vi.mocked(git.fetch).mockResolvedValue({
+    ...emptyRemote,
+    fetchHead: restored,
+  });
+  await expect(app.pullNotebook({ notebook })).rejects.toMatchObject({
+    files: ["draft.md"],
+  });
+  expect(await git.resolveRef({ ...args, ref: "HEAD" })).toBe(remote);
+  expect(await read("draft.md")).toEqual([...bytes("meeting notes")]);
+});
+
+it.each([false, true])(
+  "downloads an unrelated edit with a linked untracked rules file (self-ignored: %s)",
+  async (selfIgnored) => {
+    const { app, notebook, read } = await repository();
+    const args = { fs, dir: notebook.dir };
+    await fs.promises.symlink("rules.txt", notebook.dir + "/.gitignore");
+    await git.add({ ...args, filepath: ".gitignore" });
+    const linked = await git.commit({
+      ...args,
+      author,
+      message: "Link notebook rules",
+    });
+    const { tree } = await git.readTree({ ...args, oid: linked });
+    const edit = await git.writeBlob({ ...args, blob: bytes("Shared update") });
+    const remote = await git.commit({
+      ...args,
+      author,
+      message: "Update README",
+      noUpdateBranch: true,
+      tree: await git.writeTree({
+        ...args,
+        tree: tree.map((entry) =>
+          entry.path === "README.md" ? { ...entry, oid: edit } : entry,
+        ),
+      }),
+    });
+    vi.mocked(git.fetch).mockResolvedValue({
+      ...emptyRemote,
+      fetchHead: remote,
+    });
+    const rules = selfIgnored ? "rules.txt\ndraft.md\n" : "draft.md\n";
+    await pfs.writeFile(notebook.dir + "/rules.txt", rules);
+    await pfs.writeFile(notebook.dir + "/draft.md", "meeting notes");
+    expect(await git.listFiles(args)).not.toContain("rules.txt");
+    await app.pullNotebook({ notebook });
+    expect(await git.resolveRef({ ...args, ref: "HEAD" })).toBe(remote);
+    expect(await read("README.md")).toEqual([...bytes("Shared update")]);
+    expect(await git.listFiles(args)).not.toContain("draft.md");
+    expect(await read("draft.md")).toEqual([...bytes("meeting notes")]);
+    expect(await read("rules.txt")).toEqual([...bytes(rules)]);
+  },
+);
+
 it("checks merged ignore rules together with local nested exceptions before checkout", async () => {
   const baseRules = "# local rules\n# spacer\n# remote rules\n*.txt\n";
   const localRules = baseRules.replace("# local rules", "assets/*");

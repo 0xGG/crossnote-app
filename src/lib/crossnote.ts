@@ -240,7 +240,7 @@ async function refSha(dir: string, ref: string): Promise<string> {
 
 // Match the working tree or a planned set of rules using Git's matcher.
 // An excluded parent wins before a nested rule can re-include its children.
-function ignoreCheck(dir: string, overrides?: Map<string, string>) {
+function ignoreCheck(dir: string, overrides?: Map<string, string | null>) {
   const matchers = new Map<string, Ignore>();
   return async (filepath: string) => {
     if (path.basename(filepath) === ".git") return true;
@@ -251,6 +251,8 @@ function ignoreCheck(dir: string, overrides?: Map<string, string>) {
       let matcher = matchers.get(folder);
       if (!matcher) {
         let contents = overrides?.get(folder);
+        // The planned tree could not supply an ordinary file for this link.
+        if (contents === null) return undefined;
         if (contents === undefined) {
           const rule = path.join(dir, folder, ".gitignore");
           const stats = await pfs.stats(rule).catch(missingFileOrThrow);
@@ -1854,26 +1856,62 @@ export default class Crossnote {
         conflicts.push(copy);
       }
     }
-    const overrides = new Map<string, string>();
+    const overrides = new Map<string, string | null>();
     for (const file of new Set([
       ...baseFiles,
       ...remoteFiles,
       ...Object.keys(relocated),
     ])) {
       if (path.basename(file) !== ".gitignore") continue;
+      const folder = path.dirname(file);
       const incoming = await blob(remoteSha, file, remoteFiles);
-      if (
+      let planned = file in files ? files[file] : incoming;
+      if (remoteSymlinks.has(file)) {
+        // A link stores a path, and its target's contents can change even if
+        // the link does not. Read the planned regular file, including edits.
+        const link = new TextDecoder("utf-8", { ignoreBOM: true }).decode(
+          incoming!,
+        );
+        const target = path.join(folder, link);
+        if (
+          path.isAbsolute(link) ||
+          target
+            .split("/")
+            .some((part) => part === ".." || part.toLowerCase() === ".git") ||
+          remoteSymlinks.has(target) ||
+          remoteLinks.has(target)
+        ) {
+          overrides.set(folder, null);
+          continue;
+        }
+        if (target in files) planned = files[target];
+        else if (remoteFiles.has(target))
+          planned = await blob(remoteSha, target, remoteFiles);
+        else {
+          // Ignored local rules may be absent from both Git and the replay.
+          // Use their current bytes only if checkout leaves the path intact.
+          const entry = ![...reserved].some((file) => overlaps(file, target))
+            ? await inspectWorkingPath(notebook.dir, target)
+            : undefined;
+          const contents =
+            entry?.stats?.isFile() &&
+            entry.name === path.join(notebook.dir, target)
+              ? ((await pfs.readFile(entry.name, {
+                  encoding: "utf8",
+                })) as string)
+              : null;
+          overrides.set(folder, contents);
+          continue;
+        }
+      } else if (
         !(file in relocated) &&
+        !headSymlinks.has(file) &&
         sameBytes(await blob(localSha, file, baseFiles), incoming)
       )
         continue;
       this.checkedPath(notebook, file);
-      const planned = file in files ? files[file] : incoming;
       // Match LightningFS's utf8 reads, including BOM handling.
-      overrides.set(
-        path.dirname(file),
-        planned === null ? "" : decode(planned),
-      );
+      overrides.set(folder, planned === null ? "" : decode(planned));
     }
     const uploadCandidates: string[] = [];
     if (overrides.size) {
@@ -1894,7 +1932,8 @@ export default class Crossnote {
           if (await isIgnored(file)) {
             if (!(await willBeIgnored(file)))
               throw new NotebookConflictError([file]);
-          } else if (files[file] && (await willBeIgnored(file))) {
+          } else if (files[file] && (await willBeIgnored(file)) !== false) {
+            // saveSyncState checks candidates against the installed rules.
             uploadCandidates.push(file);
           }
         }

@@ -10,6 +10,8 @@ import {
   cloneRemote,
   createRemote,
   download,
+  expectReadOnlyNoteOpen,
+  indexEntries,
   localBytes,
   remoteBytes,
   upload,
@@ -577,6 +579,81 @@ test("blocks a download when a BOM-prefixed nested rule would expose a local fil
     bytes("Base"),
   );
   expect(await localBytes(page, `${dir}/${file}`)).toEqual(bytes("fixture"));
+});
+
+test("protects a draft across changes to a linked ignore file and its rules", async ({
+  app,
+  page,
+  request,
+}) => {
+  test.slow();
+  const draft = bytes("# Meeting draft\n");
+  const remote = await createRemote(request, {
+    "README.md": bytes("# Notes\n"),
+    ".gitignore": bytes("draft.md\n"),
+    "rules.txt": bytes("draft.md\n"),
+  });
+  const remoteState = async () => {
+    const response = await request.get(`${fixtureURL}/repos/${remote.id}`);
+    expect(response.ok()).toBe(true);
+    return (await response.json()) as { sha: string; files: string[] };
+  };
+  await app.open();
+  const dir = await cloneRemote(app, remote);
+  await expectReadOnlyNoteOpen(page, async () => {
+    await app.noteCards.getByText("README", { exact: true }).click();
+    await expect(app.noteTitle).toHaveValue("README");
+  });
+  await localBytes(page, `${dir}/draft.md`, draft);
+  await changeRemote(request, remote, {
+    ".gitignore": { symlink: "rules.txt" },
+  });
+  const linked = await remoteState();
+  await download(app, remote);
+  const head = () => app.storedText(`${dir}/.git/refs/heads/master`);
+  const index = () => indexEntries(page, `${dir}/.git/index`);
+  expect((await head())?.trim()).toBe(linked.sha);
+  expect((await index()).find(({ name }) => name === ".gitignore")?.mode).toBe(
+    "120000",
+  );
+  const edit = bytes("# Shared notes\n");
+  await localBytes(page, `${dir}/README.md`, edit);
+  await upload(app, remote);
+  const shared = await remoteState();
+  expect(shared.sha).not.toBe(linked.sha);
+  expect(await remoteBytes(request, remote, "README.md")).toEqual(edit);
+  expect(shared.files).not.toContain("draft.md");
+  const installed = await index();
+  expect(installed.map(({ name }) => name)).not.toContain("draft.md");
+  expect(await localBytes(page, `${dir}/draft.md`)).toEqual(draft);
+
+  await changeRemote(request, remote, {
+    "rules.txt": bytes("# Publish notes\n"),
+  });
+  await download(
+    app,
+    remote,
+    "Sync conflicts: draft.md. Your changes were kept. Review the files before uploading again.",
+  );
+  expect((await head())?.trim()).toBe(shared.sha);
+  expect(await index()).toEqual(installed);
+  expect(await localBytes(page, `${dir}/rules.txt`)).toEqual(
+    bytes("draft.md\n"),
+  );
+  expect(await localBytes(page, `${dir}/draft.md`)).toEqual(draft);
+
+  await page.evaluate(async (dir) => {
+    const { pfs } = window as unknown as FileHost & {
+      pfs: { rename(source: string, target: string): Promise<void> };
+    };
+    await pfs.rename(`${dir}/draft.md`, `${dir}/meeting.md`);
+    await pfs.storeTree(dir);
+  }, dir);
+  await upload(app, remote);
+  expect(await remoteBytes(request, remote, "meeting.md")).toEqual(draft);
+  const published = await remoteState();
+  expect(published.files).not.toContain("draft.md");
+  expect((await head())?.trim()).toBe(published.sha);
 });
 
 test("keeps both binary conflicts and stops the upload with their paths", async ({
