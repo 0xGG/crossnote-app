@@ -18,11 +18,89 @@ export type FileHost = {
   };
 };
 export type Remote = { id: string; url: string; proxy: string };
+type FixtureFile = number[] | { gitlink: string } | { symlink: string };
 export const bytes = (text: string) => [...new TextEncoder().encode(text)];
+
+// Both Git and the app use LightningFS's promise API. Its idle shutdown
+// checkpoints the directory tree even after reads, independently of either
+// caller. Observe their write requests, including explicit tree flushes.
+export async function expectReadOnlyNoteOpen(
+  page: Page,
+  openNote: () => Promise<void>,
+) {
+  expect(await filesystemWrites(page, openNote)).toEqual([]);
+}
+
+export async function expectNoCheckoutWrites(
+  page: Page,
+  dir: string,
+  sync: () => Promise<void>,
+) {
+  const writes = await filesystemWrites(page, sync);
+  // Fetch can update packs and remote refs before it knows about a conflict.
+  const checkoutWrites = writes.filter(({ paths }) =>
+    paths.some((path) => {
+      if (!path.startsWith(dir + "/")) return false;
+      const relative = path.slice(dir.length + 1);
+      return (
+        !relative.startsWith(".git/") ||
+        /^\.git\/(?:HEAD(?:\.lock)?|index(?:\.lock|\.crossnote-rebuild)?|refs\/heads\/.*)$/.test(
+          relative,
+        )
+      );
+    }),
+  );
+  expect(checkoutWrites).toEqual([]);
+}
+
+async function filesystemWrites(page: Page, action: () => Promise<void>) {
+  const stop = await page.evaluateHandle(async () => {
+    await navigator.locks.request("fs_lock", () => {});
+    const methods = [
+      "writeFile",
+      "unlink",
+      "mkdir",
+      "rmdir",
+      "rename",
+      "symlink",
+      "backFile",
+      "flush",
+    ] as const;
+    type Writes = Record<
+      (typeof methods)[number],
+      (...args: unknown[]) => Promise<unknown>
+    >;
+    const { promises } = (
+      window as unknown as { pfs: { fs: { promises: Writes } } }
+    ).pfs.fs;
+    const writes: { method: string; paths: string[] }[] = [];
+    const restore = methods.map((method) => {
+      const original = promises[method];
+      promises[method] = (...args) => {
+        const count = method === "rename" || method === "symlink" ? 2 : 1;
+        writes.push({
+          method,
+          paths: args
+            .slice(0, count)
+            .filter((arg): arg is string => typeof arg === "string"),
+        });
+        return original.apply(promises, args);
+      };
+      return () => (promises[method] = original);
+    });
+    return async () => {
+      await navigator.locks.request("fs_lock", () => {});
+      for (const reset of restore) reset();
+      return writes;
+    };
+  });
+  await action();
+  return stop.evaluate((finish) => finish());
+}
 
 export async function createRemote(
   request: APIRequestContext,
-  files: Record<string, number[]>,
+  files: Record<string, FixtureFile>,
 ) {
   const response = await request.post(`${fixtureURL}/repos`, {
     data: { files },
@@ -34,7 +112,7 @@ export async function createRemote(
 export async function changeRemote(
   request: APIRequestContext,
   remote: Remote,
-  files: Record<string, number[] | null>,
+  files: Record<string, FixtureFile | null>,
 ) {
   const response = await request.post(`${fixtureURL}/repos/${remote.id}`, {
     data: { files },
@@ -102,6 +180,26 @@ export async function localBytes(
     },
     { file, replacement },
   );
+}
+
+// Inspect the browser's Git v2 index independently of the application.
+export async function indexEntries(page: Page, indexPath: string) {
+  const index = Buffer.from(await localBytes(page, indexPath));
+  expect(index.toString("ascii", 0, 4)).toBe("DIRC");
+  expect(index.readUInt32BE(4)).toBe(2);
+  const entries = [];
+  for (let pos = 12, i = 0; i < index.readUInt32BE(8); i++) {
+    const end = index.indexOf(0, pos + 62);
+    expect(end).toBeGreaterThanOrEqual(pos + 62);
+    const name = index.toString("utf8", pos + 62, end);
+    entries.push({
+      name,
+      mode: index.readUInt32BE(pos + 24).toString(8),
+      oid: index.toString("hex", pos + 40, pos + 60),
+    });
+    pos += Math.ceil((end - pos + 1) / 8) * 8;
+  }
+  return entries;
 }
 
 export async function download(

@@ -42,6 +42,32 @@ describe("Notebook", () => {
     await notebook.refreshNotes({ dir: "./", includeSubdirectories: true });
   });
 
+  it("keeps unreadable and linked Markdown files out of a confirmed editor write", async () => {
+    const notebook = new Notebook();
+    notebook.dir = "/notebooks/compared-note";
+    await pfs.mkdirp(notebook.dir);
+    await git.init({ fs, dir: notebook.dir });
+    await pfs.writeFile(notebook.dir + "/hello.md", "Linked user note");
+    const name = "unreadable.md";
+    const target = notebook.dir + "/" + name;
+    const raw = new Uint8Array([0x62, 0xc3, 0x28]);
+    await pfs.writeFile(target, raw);
+    const config = { createdAt: new Date(), modifiedAt: new Date() };
+    await expect(
+      notebook.writeNote(name, "My draft", config, "b�("),
+    ).rejects.toThrow("error/note-comparison-unavailable");
+    expect(Array.from((await pfs.readFile(target)) as Uint8Array)).toEqual([
+      ...raw,
+    ]);
+    const alias = "alias-to-note.md";
+    await fs.promises.symlink("hello.md", notebook.dir + "/" + alias);
+    await expect(notebook.readConflictSource(alias)).rejects.toThrow(
+      "error/note-comparison-unavailable",
+    );
+    expect(await git.listFiles({ fs, dir: notebook.dir })).not.toContain(name);
+    expect(await git.listFiles({ fs, dir: notebook.dir })).not.toContain(alias);
+  });
+
   it("reads disk during refresh even when a concurrent save has repopulated the cache", async () => {
     const scanning = new Notebook();
     scanning.dir = "/notebooks/refresh-cache";
@@ -480,15 +506,19 @@ describe("Notebook", () => {
       expect(await isStored("/notebooks/test/stored-restored.md")).toBe(true);
 
       await pfs.writeFile("/notebooks/test/stored-restored.md", "Unstaged");
-      const error = new Error("Could not stage the restored file");
-      const add = vi.spyOn(git, "add").mockRejectedValueOnce(error);
+      const error = new Error("Could not persist the restored file");
+      const store = vi.spyOn(pfs, "storeTree").mockRejectedValueOnce(error);
       try {
-        await expect(notebook.checkoutNote(note)).resolves.toEqual({ error });
+        await expect(notebook.checkoutNote(note)).rejects.toMatchObject({
+          message: "error/restore-persistence",
+          cause: error,
+        });
+        await notebook.checkoutNote(note);
         expect(
           (await notebook.getNote(note.filePath, true)).markdown,
         ).toContain("# Restored");
       } finally {
-        add.mockRestore();
+        store.mockRestore();
       }
     });
   });

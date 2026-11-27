@@ -7,6 +7,7 @@ import {
   cloneRemote,
   createRemote,
   download,
+  fixtureURL,
   localBytes,
   remoteBytes,
   upload,
@@ -104,22 +105,86 @@ test("recovers an editor-created attachment after an interrupted pull", async ({
   await app.modeButton("Edit").click();
   await fileEvent(app, "paste", "recovery.png", "image/png", png);
   const file = await insertedPath(app, ".png");
-  const theirs = [0, 253, 130];
-  await changeRemote(request, remote, { [file]: theirs });
+  await changeRemote(request, remote, { "incoming.md": bytes("Remote note") });
+  const localSha = (
+    await app.storedText(`${dir}/.git/refs/heads/master`)
+  )?.trim();
+  const remoteSha = (
+    await (await request.get(`${fixtureURL}/repos/${remote.id}`)).json()
+  ).sha;
+  const key = dir.slice("/notebooks/".length);
+  async function savedPlan() {
+    return page.evaluate(
+      async ({ key, file }) => {
+        if (
+          !(await indexedDB.databases()).some(
+            (db) => db.name === "crossnote-downloads",
+          )
+        )
+          return null;
+        function result<T>(request: IDBRequest<T>) {
+          return new Promise<T>((resolve, reject) => {
+            request.onsuccess = () => resolve(request.result);
+            request.onerror = () => reject(request.error);
+          });
+        }
+        const db = await result(indexedDB.open("crossnote-downloads"));
+        try {
+          const plan = await result(
+            db.transaction("pulls").objectStore("pulls").get(key),
+          );
+          if (plan === undefined) return null;
+          const attachment = plan?.files?.[file];
+          if (!(attachment instanceof Uint8Array)) {
+            throw new Error(
+              `Saved download plan has no attachment bytes for ${file}`,
+            );
+          }
+          return {
+            version: plan.version,
+            localSha: plan.localSha,
+            remoteSha: plan.remoteSha,
+            attachment: Array.from(attachment),
+          };
+        } finally {
+          db.close();
+        }
+      },
+      { key, file },
+    );
+  }
   const messages = await app.recordMessages();
-  await page.evaluate(() => {
-    const fs = (window as unknown as FileHost).pfs;
-    const write = fs.writeFile.bind(fs);
-    fs.writeFile = async (path, data) => {
-      if (path.includes(".remote-")) throw new Error("Simulated disk failure");
-      return write(path, data);
+  // Interrupt persistence only after checkout has installed the incoming note.
+  const interrupted = await page.evaluateHandle((dir) => {
+    const { pfs } = window as unknown as FileHost;
+    const storeTree = pfs.storeTree.bind(pfs);
+    let failed = false;
+    pfs.storeTree = async (path) => {
+      if (path === dir && (await pfs.readdir(dir)).includes("incoming.md")) {
+        pfs.storeTree = storeTree;
+        failed = true;
+        throw new Error("Could not persist the downloaded notebook");
+      }
+      return storeTree(path);
     };
-  });
+    return () => failed;
+  }, dir);
   await app
     .notebook(remote.id)
     .getByRole("treeitem", { name: /Download/ })
     .click();
   await expect.poll(messages).toContain("Failed to download notebook");
+  expect(await interrupted.evaluate((didFail) => didFail())).toBe(true);
+  expect(await localBytes(page, `${dir}/incoming.md`)).toEqual(
+    bytes("Remote note"),
+  );
+  expect(await savedPlan()).toEqual({
+    version: 2,
+    localSha,
+    remoteSha,
+    attachment: png,
+  });
+  // Only the committed plan can restore deliberately removed working bytes on reload.
   await page.evaluate(async (path) => {
     const fs = (window as unknown as FileHost).pfs;
     await fs.unlink(path);
@@ -127,15 +192,15 @@ test("recovers an editor-created attachment after an interrupted pull", async ({
   }, `${dir}/${file}`);
   await page.reload();
   await app.waitUntilReady();
-  await expect(app.notebook(remote.id)).toBeVisible();
+  await expect.poll(savedPlan).toBeNull();
   expect(await localBytes(page, `${dir}/${file}`)).toEqual(png);
-  const copies = await page.evaluate(
-    async (dir) =>
-      (
-        await (window as unknown as FileHost).pfs.readdir(`${dir}/assets`)
-      ).filter((name) => name.includes(".remote-")),
-    dir,
+  expect(await localBytes(page, `${dir}/incoming.md`)).toEqual(
+    bytes("Remote note"),
   );
-  expect(copies).toHaveLength(1);
-  expect(await localBytes(page, `${dir}/assets/${copies[0]}`)).toEqual(theirs);
+  expect((await app.storedText(`${dir}/.git/refs/heads/master`))?.trim()).toBe(
+    remoteSha,
+  );
+  await app.openNotes(remote.id);
+  await upload(app, remote);
+  expect(await remoteBytes(request, remote, file)).toEqual(png);
 });

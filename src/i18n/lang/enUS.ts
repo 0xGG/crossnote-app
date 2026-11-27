@@ -1,5 +1,14 @@
 export const enUS = {
   translation: {
+    "editor/compare-disk": "Compare with disk",
+    "editor/disk-version": "On disk",
+    "editor/compare-disk-help":
+      "Edit your draft below. Saving replaces the file on disk with the editor text.",
+    "editor/save-editor-text": "Save editor text",
+    "error/note-comparison-changed":
+      "The file or draft changed. Compare again before saving.",
+    "error/note-comparison-unavailable":
+      "This file could not be read as editable text.",
     "backup/export": "Export notebook ZIP",
     "backup/title": "Export {{notebook}} as ZIP",
     "backup/private-files":
@@ -16,20 +25,6 @@ export const enUS = {
     "backup/too-large": "This notebook exceeds the ZIP size or entry limit.",
     "backup/sync-recovery":
       "Retry Download to finish the interrupted sync, then export the notebook.",
-    "recovery/title": "Sync paused",
-    "recovery/instructions":
-      "The remote now uses {{directory}} in {{notebook}}. Close any notes from that folder, then download the ZIP and check your files. Confirming below removes the local recovery folder so you can retry the download or upload.",
-    "recovery/legacy-instructions":
-      "The remote now uses {{directory}} in {{notebook}}. Crossnote cannot verify who created the local folder. Download a ZIP to keep a copy. Rename the conflicting path in the remote repository, then retry sync.",
-    "recovery/download": "Download recovery files",
-    "recovery/confirm": "I saved the files",
-    "recovery/retry":
-      "Recovery files removed from the notebook. Retry the download or upload.",
-    "error/close-recovery-notes":
-      "Close the notes in this recovery folder before removing it. Wait for their changes to finish saving.",
-    "error/recovery-files-changed":
-      "The recovery files have changed. Download a fresh copy before confirming.",
-    "error/recovery-files": "Could not access the recovery files.",
     "attachment/insert-image": "Insert image",
     "attachment/ignored":
       "This attachment path is ignored by Git. No links were inserted; any files already saved remain in assets. Check the notebook's ignore rules.",
@@ -158,10 +153,10 @@ export const enUS = {
     "error/failed-to-save-note-settings": "Failed to save the note's settings",
     "error/notebook-sync-conflicts":
       "Sync conflicts: {{files}}. Your changes were kept. Review the files before uploading again.",
-    "error/notebook-file-deleted-local":
-      "{{file}} (deleted locally, remote changes kept)",
-    "error/notebook-file-deleted-remote":
-      "{{file}} (deleted remotely, local changes kept)",
+    "git/sync-conflicts":
+      "Sync conflicts: {{files}}. Resolve the conflicts and retry.",
+    "error/notebook-file-deleted-local": "{{file}} (deleted locally)",
+    "error/notebook-file-deleted-remote": "{{file}} (deleted remotely)",
     "error/notes-not-saved":
       "Nothing was done, as {{notes}} could not be saved",
 
@@ -308,10 +303,18 @@ export const enUS = {
       "The remote already has your local commit. Downloaded newer changes.",
     "git/local-update-failed":
       "{{outcome}}. Could not finish updating the local notebook.",
-    "git/checkout-complete": "Checkout command completed",
+    "git/checkout-complete": "Note restored to its committed version",
     "git/checkout-failed": "Checkout failed",
-    "git/reset-complete": "Reset command completed",
+    "git/reset-complete": "Notebook restored to the local commit",
+    "git/reset-confirm":
+      "Reset {{branch}} to {{sha}}? This discards changes to tracked files and removes staged additions. Listed files and folders that block the restore will also be removed.",
+    "git/confirm-reset": "Confirm reset",
+    "error/no-committed-note": "This note has no committed version yet.",
+    "error/reset-target-changed":
+      "The notebook changed after the preview. Review the reset again.",
     "git/reset-failed": "Notebook reset failed",
+    "error/restore-persistence":
+      "Working files were restored, but the notebook could not be saved.",
     "git/details": "Details",
     "git/copy-details": "Copy details",
     "git/details-copied": "Details copied",

@@ -207,6 +207,14 @@ export class NoteSaver {
     this.synced = text;
   }
 
+  /** A confirmed write to disk and the index supersedes the failed autosave. */
+  resolved(text: string) {
+    this.synced = text;
+    this.saving = null;
+    this.failed = false;
+    this.lastError = null;
+  }
+
   /** The note moved: write to it where it is now. */
   moveTo(location: NoteLocation) {
     this.location = location;
@@ -361,18 +369,6 @@ export function saverOfWriter(writerId: string): NoteSaver | undefined {
   return [...savers].find((saver) => saver.id === writerId);
 }
 
-export function hasNoteWriterInDirectory(
-  notebookPath: string,
-  directory: string,
-): boolean {
-  const inside = ({ location }: { location: NoteLocation }) =>
-    location.notebookPath === notebookPath &&
-    location.filePath.startsWith(directory + "/");
-  return (
-    [...savers].some(inside) || pendingNoteWrites({ notebookPath }).some(inside)
-  );
-}
-
 // A tab closed during a Git operation still has a saver until its queued
 // write settles. Move those writers along with any visible editor.
 export function moveNoteSavers(from: NoteLocation, to: NoteLocation) {
@@ -398,7 +394,11 @@ export async function flushNotes(where: NoteWriteScope): Promise<void> {
 
 // First let already accepted file inputs reach their editors. Text and
 // attributes can then finish through the existing savers and write queue.
-export async function flushNotebookEdits(notebookPath: string): Promise<void> {
+export async function flushNotebookEdits(
+  notebookPath: string,
+  onlyFile?: string,
+  ready?: Promise<void>,
+): Promise<void> {
   const dir = path.resolve(notebookPath);
   async function inExport<T extends { location: NoteLocation }>(entries: T[]) {
     const paths = await Promise.all(
@@ -408,7 +408,8 @@ export async function flushNotebookEdits(notebookPath: string): Promise<void> {
           path.resolve(entry.location.notebookPath),
           entry.location.filePath,
         );
-        return filePath === null
+        return filePath === null ||
+          (onlyFile !== undefined && onlyFile !== filePath)
           ? null
           : { ...entry, location: { notebookPath, filePath } };
       }),
@@ -417,7 +418,10 @@ export async function flushNotebookEdits(notebookPath: string): Promise<void> {
   }
 
   // Capture writes before looking up paths. A settled write leaves the queue.
-  await waitForNoteWrites(await inExport(pendingNoteEdits()));
+  await Promise.all([
+    inExport(pendingNoteEdits()).then(waitForNoteWrites),
+    ready,
+  ]);
 
   const editors = [...savers]
     .filter((saver) => saver.pending)

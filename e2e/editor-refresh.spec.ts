@@ -82,6 +82,23 @@ async function externalText(app: CrossnoteApp, text: string) {
   }, text);
 }
 
+async function savedLocalText(app: CrossnoteApp) {
+  // Closing a writer invalidates older File snapshots. Wait for the editor's
+  // pending save to finish before acquiring the snapshot we assert against.
+  await expect
+    .poll(() =>
+      app.page.evaluate(() => {
+        const event = new Event("beforeunload", { cancelable: true });
+        window.dispatchEvent(event);
+        return event.defaultPrevented;
+      }),
+    )
+    .toBe(false);
+  return app.page.evaluate(async () =>
+    (await (window as unknown as RefreshWindow).meritFile.getFile()).text(),
+  );
+}
+
 test("actual local refresh cannot settle with different disk and editor text", async ({
   app,
   page,
@@ -128,20 +145,7 @@ test("actual local refresh cannot settle with different disk and editor text", a
       page.evaluate(() => (window as unknown as RefreshWindow).meritWriteDone),
     )
     .toBe(true);
-  // The real self-write event proves Notebook.writeNote and its getNote(true)
-  // finished, rather than merely the lower-level file write.
-  await expect
-    .poll(() =>
-      page.evaluate(() => {
-        const event = new Event("beforeunload", { cancelable: true });
-        window.dispatchEvent(event);
-        return event.defaultPrevented;
-      }),
-    )
-    .toBe(false);
-  const disk = await page.evaluate(async () =>
-    (await (window as unknown as RefreshWindow).meritFile.getFile()).text(),
-  );
+  const disk = await savedLocalText(app);
   const ui = await app.editorText();
   expect(ui).toBe("B");
   expect(disk).toMatch(/(?:^|\n)B$/);
@@ -184,14 +188,6 @@ for (const action of ["Update", "Delete"]) {
     await dialog.getByRole("button", { name: "Update", exact: true }).click();
     const edited = after.replace("![new]", "![latest]");
     await expect.poll(() => app.editorText()).toBe(edited);
-    await expect
-      .poll(() =>
-        page.evaluate(async () =>
-          (
-            await (window as unknown as RefreshWindow).meritFile.getFile()
-          ).text(),
-        ),
-      )
-      .toContain(edited);
+    expect(await savedLocalText(app)).toContain(edited);
   });
 }

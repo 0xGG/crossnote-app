@@ -7,11 +7,10 @@ import {
 } from "./pullRecovery";
 
 const record: PullRecovery = {
-  version: 1,
+  version: 2,
   localSha: "base",
   remoteSha: "remote",
   files: { "a.bin": new Uint8Array([0, 128, 255]), "gone.txt": null },
-  conflicts: [],
 };
 
 it("persists bytes and deletion atomically, readable after completion and removable", async () => {

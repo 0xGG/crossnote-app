@@ -68,6 +68,16 @@ const recordGitRequest = (repo, req, res, service) => {
   return auth;
 };
 const commit = async (repo, files) => {
+  const specialEntries = [];
+  // With core.symlinks=false the worktree stores link targets as regular
+  // files. Git needs the requested mode when such a path becomes a blob.
+  const symlinks = new Set(
+    (await git(["ls-files", "--stage", "-z"], repo.work))
+      .toString()
+      .split("\0")
+      .filter((entry) => entry.startsWith("120000 "))
+      .map((entry) => entry.slice(entry.indexOf("\t") + 1)),
+  );
   for (const [name, bytes] of Object.entries(files)) {
     if (
       !name ||
@@ -78,18 +88,38 @@ const commit = async (repo, files) => {
     const target = path.resolve(repo.work, name);
     if (!target.startsWith(repo.work + path.sep))
       throw new Error("Outside fixture");
-    if (bytes === null) await rm(target, { force: true });
-    else {
+    const previous = await lstat(target).catch((error) => {
+      if (error.code !== "ENOENT") throw error;
+    });
+    if (bytes?.gitlink && /^[a-f0-9]{40}$/.test(bytes.gitlink)) {
+      if (previous) await rm(target, { recursive: previous.isDirectory() });
+      await mkdir(target, { recursive: true });
+      specialEntries.push(["160000", bytes.gitlink, name]);
+      continue;
+    }
+    // A gitlink occupies an empty directory in the fixture checkout.
+    if (previous?.isDirectory()) await rmdir(target);
+    else if (bytes === null) await rm(target, { force: true });
+    if (bytes !== null) {
       await mkdir(path.dirname(target), { recursive: true });
-      // Replacing a directory with a file requires deleting its children first.
-      const previous = await lstat(target).catch((error) => {
-        if (error.code !== "ENOENT") throw error;
-      });
-      if (previous?.isDirectory()) await rmdir(target);
-      await writeFile(target, Buffer.from(bytes));
+      const link = typeof bytes.symlink === "string";
+      await writeFile(target, link ? bytes.symlink : Buffer.from(bytes));
+      if (link || symlinks.has(name)) {
+        const oid = await git(
+          ["hash-object", "-w", "--no-filters", "--", name],
+          repo.work,
+        );
+        specialEntries.push([
+          link ? "120000" : "100644",
+          oid.toString().trim(),
+          name,
+        ]);
+      }
     }
   }
   await git(["add", "-A"], repo.work);
+  for (const entry of specialEntries)
+    await git(["update-index", "--add", "--cacheinfo", ...entry], repo.work);
   await git(
     [
       "-c",
@@ -189,6 +219,7 @@ const serve = async (req, res) => {
       await git(["--git-dir", repo.bare, "config", "http.receivepack", "true"]);
       await git(["clone", repo.bare, repo.work]);
       await git(["config", "core.autocrlf", "false"], repo.work);
+      await git(["config", "core.symlinks", "false"], repo.work);
       await commit(repo, files);
       repos.set(id, repo);
       return json(res, {
@@ -249,6 +280,14 @@ const serve = async (req, res) => {
         res.writeHead(405).end();
         return;
       }
+      if (url.searchParams.has("tree"))
+        return json(
+          res,
+          (await git(["--git-dir", repo.bare, "ls-tree", "-r", "master"]))
+            .toString()
+            .trimEnd()
+            .split("\n"),
+        );
       return json(res, {
         sha: (await git(["--git-dir", repo.bare, "rev-parse", "master"]))
           .toString()

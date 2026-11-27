@@ -1,5 +1,4 @@
 import { builtInTabLabels } from "../lib/tabNode";
-import { RecoveryDirectoryCollisionError } from "../lib/recoveryDirectory";
 import i18next from "i18next";
 import { Box, Chip, IconButton, Tooltip, Typography } from "@mui/material";
 import { darken, styled } from "@mui/material/styles";
@@ -172,6 +171,24 @@ export default function NotebookTreeView(props: Props) {
     setFavoritedNotes(quickAccessNotes(notes));
   }, []);
 
+  const refreshTree = useCallback(() => {
+    props.notebook
+      .refreshNotesIfNotLoaded({
+        dir: "./",
+        includeSubdirectories: true,
+      })
+      .then((notes) => {
+        refreshQuickAccessNotes(notes);
+        globalEmitter.emit(EventType.PerformedGitOperation, {
+          notebookPath: props.notebook.dir,
+          preservePendingEdits: true,
+        });
+      })
+      .catch((error) => {
+        console.error(error);
+      });
+  }, [props.notebook, refreshQuickAccessNotes]);
+
   const handleChange = useCallback(
     (event: React.SyntheticEvent | null, nodes: string[]) => {
       if (!event) {
@@ -187,25 +204,12 @@ export default function NotebookTreeView(props: Props) {
           element.tagName &&
           element.tagName.toUpperCase().match(/^(SVG|PATH|BUTTON)$/))
       ) {
-        props.notebook
-          .refreshNotesIfNotLoaded({
-            dir: "./",
-            includeSubdirectories: true,
-          })
-          .then((notes) => {
-            refreshQuickAccessNotes(notes);
-            globalEmitter.emit(EventType.PerformedGitOperation, {
-              notebookPath: props.notebook.dir,
-            });
-          })
-          .catch((error) => {
-            console.error(error);
-          });
+        refreshTree();
 
         onExpandedChange(nodes);
       }
     },
-    [props.notebook, refreshQuickAccessNotes, onExpandedChange],
+    [refreshTree, onExpandedChange],
   );
 
   // Emitter
@@ -351,34 +355,18 @@ export default function NotebookTreeView(props: Props) {
       });
       if (!completed) return;
       const { result, updateFailure } = completed;
-      if (result.numConflicts) {
-        const { message, files } = gitConflictNotice(
-          new NotebookConflictError(result.conflicts, result.deletions),
-          credentials,
-        );
-        notifyGit("warning", message, { files, credentials, updateFailure });
-      } else {
-        notifyGit(
-          "success",
-          i18next.t(
-            result.status === "pending-upload"
-              ? "info/notebook-pending-upload"
-              : result.status === "up-to-date"
-                ? "success/notebook-up-to-date"
-                : "success/notebook-downloaded",
-          ),
-          { credentials, updateFailure },
-        );
-      }
+      notifyGit(
+        "success",
+        i18next.t(
+          result.status === "pending-upload"
+            ? "info/notebook-pending-upload"
+            : result.status === "up-to-date"
+              ? "success/notebook-up-to-date"
+              : "success/notebook-downloaded",
+        ),
+        { credentials, updateFailure },
+      );
     } catch (error) {
-      if (error instanceof RecoveryDirectoryCollisionError) {
-        crossnoteContainer.setRecoveryCollision({
-          notebook: props.notebook,
-          directory: error.directory,
-          canRelease: error.canRelease,
-        });
-        return;
-      }
       // The note save already reported which edit could not be written.
       if (error instanceof NotesNotSavedError) return;
       const openSettings = needsGitSettings(error)
@@ -422,24 +410,7 @@ export default function NotebookTreeView(props: Props) {
               : undefined
           }
           label={
-            <LabelRoot
-              onClick={() => {
-                props.notebook
-                  .refreshNotesIfNotLoaded({
-                    dir: "./",
-                    includeSubdirectories: true,
-                  })
-                  .then((notes) => {
-                    refreshQuickAccessNotes(notes);
-                    globalEmitter.emit(EventType.PerformedGitOperation, {
-                      notebookPath: props.notebook.dir,
-                    });
-                  })
-                  .catch((error) => {
-                    console.error(error);
-                  });
-              }}
-            >
+            <LabelRoot onClick={refreshTree}>
               <LabelText
                 color={"inherit"}
                 variant={"body1"}

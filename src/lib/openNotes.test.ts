@@ -67,6 +67,27 @@ afterEach(async () => {
 });
 
 describe("open notes", () => {
+  it("retains a pending draft and its base when downloaded text changes the same line", () => {
+    const its = calls();
+    const note = join("draft", "Pencil", its);
+    type(note, " blue");
+    expect(() => note.reconcileFile("Ink")).toThrow(
+      expect.objectContaining({ files: ["note.md"] }),
+    );
+    expect(note.document.text()).toBe("Pencil blue");
+    expect(note.saver.savedText).toBe("Pencil");
+    expect(note.saver.pending).toBe(true);
+    expect(its.write).not.toHaveBeenCalled();
+  });
+
+  it("merges queued input and downloaded text on separate lines", () => {
+    const note = join("draft", "Red\nGreen\nBlue");
+    type(note, " pencil");
+    expect(note.reconcileFile("RED\nGreen\nBlue")).toBe(
+      "RED\nGreen\nBlue pencil",
+    );
+    expect(note.document.text()).toBe("RED\nGreen\nBlue pencil");
+  });
   it("takes a file's line ending even when a stripped body's text has not changed", () => {
     const note = join("tab-1", "Body", calls(), location, "\r\n");
     note.written("external", location, "Body", "\r");
@@ -199,7 +220,7 @@ describe("open notes", () => {
   it("tells whoever listens once a write has landed", async () => {
     const note = join("tab-1");
     const written = vi.fn();
-    const stop = note.onWritten(written);
+    const stop = note.onSaveChange(written);
     type(note, " typed");
     await vi.advanceTimersByTimeAsync(300);
     expect(written).toHaveBeenCalledTimes(1);

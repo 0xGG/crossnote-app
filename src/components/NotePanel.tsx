@@ -44,6 +44,8 @@ import {
 import { readNoteText } from "../lib/frontMatter";
 import { Note, renameFailureMessage } from "../lib/note";
 import { Notebook } from "../lib/notebook";
+import { gitConflictNotice } from "../lib/gitResults";
+import { NotebookConflictError } from "../lib/mergeFiles";
 import { trackNoteInsertion } from "../lib/noteWrites";
 import { tagCompletions, wikiLinkCompletions } from "../lib/noteCompletions";
 import { isFinishingEnter } from "../lib/keys";
@@ -75,6 +77,7 @@ import { debounce } from "../utilities/utils";
 import EditImageDialog, { type EditedImage } from "./EditImageDialog";
 import { Loading } from "./Loading";
 import { NoteNotFound } from "./NoteNotFound";
+import { NoteConflictComparison } from "./NoteConflictComparison";
 import NotePopover from "./NotePopover";
 import NotesPanel from "./NotesPanel";
 import {
@@ -455,7 +458,9 @@ export default function NotePanel(props: Props) {
           severity: "error",
           message: failureMessage(
             i18next.t("error/failed-to-save-note"),
-            error,
+            error instanceof NotebookConflictError
+              ? gitConflictNotice(error, props.notebook).message
+              : error,
           ),
           duration: 5000,
         });
@@ -492,7 +497,7 @@ export default function NotePanel(props: Props) {
     if (!openNote) {
       return;
     }
-    return openNote.onWritten(() => {
+    return openNote.onSaveChange(() => {
       if (isMounted.current) {
         setWrittenCount((count) => count + 1);
       }
@@ -538,6 +543,7 @@ export default function NotePanel(props: Props) {
       // refresh of the previous location cannot replace or close this editor.
       if (
         data.notebookPath === note?.notebookPath &&
+        (!data.filePath || data.filePath === location.filePath) &&
         note.filePath === location.filePath
       ) {
         let newNote: Note;
@@ -1227,6 +1233,18 @@ export default function NotePanel(props: Props) {
           }}
         >
           <EditorContentPanel>
+            {note && openNote?.needsComparison && (
+              <NoteConflictComparison
+                key={note.filePath}
+                notebook={props.notebook}
+                filePath={note.filePath}
+                openNote={openNote}
+                showEditor={() => {
+                  if (editorMode === EditorMode.Preview)
+                    changeEditorMode(EditorMode.SourceCode);
+                }}
+              />
+            )}
             <EditorWrapper>
               <EditorHost
                 ref={editorHost}

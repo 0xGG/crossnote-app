@@ -1,7 +1,7 @@
 import { NoteDocument } from "../editor/noteDocument";
 import { NoteSaver, type NoteLocation } from "./noteSaver";
 import { pendingNoteWrites } from "./noteWrites";
-import { mergeFile, NotebookConflictError } from "./mergeFiles";
+import { mergeFile, mergeableText, NotebookConflictError } from "./mergeFiles";
 
 // The notes open in editors, one entry for each note however many tabs show
 // it: the tabs share the note's text, its undo history and the saver that
@@ -25,7 +25,8 @@ export class OpenNote {
   readonly document: NoteDocument;
   readonly saver: NoteSaver;
   private calls: OpenNoteCalls;
-  private readonly writtenListeners = new Set<() => void>();
+  needsComparison = false;
+  private readonly saveListeners = new Set<() => void>();
 
   constructor(
     tabId: string,
@@ -42,11 +43,7 @@ export class OpenNote {
       text: () => this.document.text(),
       write: (to, written) =>
         this.calls.write({ getId: () => this.saver.id }, to, written),
-      onWritten: () => {
-        for (const listener of [...this.writtenListeners]) {
-          listener();
-        }
-      },
+      onWritten: () => this.saveChanged(),
       onFailed: (error) => this.calls.failed(error),
       onReleased: () => {
         const key = keyOf(this.saver.location);
@@ -68,24 +65,32 @@ export class OpenNote {
     this.calls = calls;
   }
 
-  /** Calls back after each write that leaves the notebook with the text. */
-  onWritten(listener: () => void): () => void {
-    this.writtenListeners.add(listener);
+  onSaveChange(listener: () => void): () => void {
+    this.saveListeners.add(listener);
     return () => {
-      this.writtenListeners.delete(listener);
+      this.saveListeners.delete(listener);
     };
+  }
+
+  private saveChanged() {
+    for (const listener of [...this.saveListeners]) listener();
+  }
+
+  setNeedsComparison(needed: boolean) {
+    if (this.needsComparison === needed) return;
+    this.needsComparison = needed;
+    this.saveChanged();
   }
 
   /** Reconcile input queued during git with the file git has just restored.
    * Apply it synchronously before starting the write, so typing during that
    * write builds on the merged document instead of being replaced afterwards.
    */
-  reconcileFile(
-    text: string,
-    lineBreak?: string,
-  ): { text: string; conflict: boolean } {
-    if (this.saver.isOwn(text))
-      return { text: this.document.text(), conflict: false };
+  reconcileFile(text: string, lineBreak?: string): string {
+    if (this.needsComparison) {
+      throw new NotebookConflictError([this.saver.location.filePath]);
+    }
+    if (this.saver.isOwn(text)) return this.document.text();
     const encode = (value: string) => new TextEncoder().encode(value);
     const merged = mergeFile(
       this.saver.location.filePath,
@@ -96,7 +101,9 @@ export class OpenNote {
     // The caller writes this result over the downloaded file. When text cannot
     // be merged, leave both the disk and the dirty editor untouched, including
     // the saver's base, so retries cannot silently discard either version.
-    if (merged.copy) {
+    if (merged.conflict === true) {
+      if (mergeableText(this.saver.location.filePath, encode(text)) !== null)
+        this.setNeedsComparison(true);
       throw new NotebookConflictError([this.saver.location.filePath]);
     }
     const reconciled = new TextDecoder("utf-8", { ignoreBOM: true }).decode(
@@ -104,7 +111,7 @@ export class OpenNote {
     );
     this.document.load(reconciled, lineBreak);
     this.saver.wrote(text);
-    return { text: reconciled, conflict: merged.conflict };
+    return reconciled;
   }
 
   /**

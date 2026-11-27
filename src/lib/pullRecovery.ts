@@ -1,30 +1,17 @@
 export type FileBytes = Uint8Array | null;
 export type ConflictDeletions = Record<string, "local" | "remote">;
 export interface PullRecovery {
-  version: 1;
+  version: 2;
   localSha: string;
   remoteSha: string;
   files: Record<string, FileBytes>;
-  conflicts: string[];
-  // Local files whose paths may be excluded from upload after replay.
-  uploadCandidates?: string[];
-  deletions?: ConflictDeletions;
-  // These local paths have durable copies at safe paths in files. Remove the
-  // originals before checkout so remote files and directories can replace them.
-  // Older plans listed only the original paths.
-  relocated?: Record<string, string> | string[];
 }
-
-// Earlier versions could publish a plan after Git advertised no refs.
-export type StoredPullRecovery = Omit<PullRecovery, "remoteSha"> & {
-  remoteSha: string | null;
-};
 
 // Kept outside the git working tree. A resolved write means the transaction,
 // not just its put request, committed before any destructive git operation.
 async function database(): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
-    const request = indexedDB.open("crossnote-pull-recovery", 1);
+    const request = indexedDB.open("crossnote-downloads", 1);
     request.onupgradeneeded = () => request.result.createObjectStore("pulls");
     request.onerror = () => reject(request.error);
     request.onsuccess = () => resolve(request.result);
@@ -55,7 +42,7 @@ async function transaction<T>(
 
 export const readPullRecovery = (
   id: string,
-): Promise<StoredPullRecovery | undefined> =>
+): Promise<PullRecovery | undefined> =>
   transaction("readonly", (store) => store.get(id));
 export const savePullRecovery = (id: string, recovery: PullRecovery) =>
   transaction("readwrite", (store) => store.put(recovery, id));

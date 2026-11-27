@@ -25,6 +25,11 @@ import {
 } from "../lib/event";
 import { missingFileOrThrow, pfs } from "../lib/fs";
 import { repositoryAddress } from "../lib/gitConnection";
+import {
+  RestoreApplyError,
+  RestorePersistenceError,
+  type ResetPreview,
+} from "../lib/gitRestore";
 import { pruneUnknownTabs, tabsInNotebook } from "../lib/layout";
 import { Note, NoteConfig, NoteMovedError } from "../lib/note";
 import { Notebook } from "../lib/notebook";
@@ -32,6 +37,7 @@ import {
   NotesNotSavedError,
   type NoteLocation,
   flushNotes,
+  flushNotebookEdits,
   moveNoteSavers,
   saverOfWriter,
 } from "../lib/noteSaver";
@@ -44,6 +50,7 @@ import {
   notebookOperation,
 } from "../lib/notebookOperation";
 import { NotebookConflictError } from "../lib/mergeFiles";
+import { gitConflictNotice } from "../lib/gitResults";
 import { CrossnoteTabNode } from "../lib/tabNode";
 import { notebookInFront, tabsetForNewTab } from "../lib/tabset";
 import { getTodayName } from "../utilities/utils";
@@ -155,15 +162,29 @@ async function finishGit<T>(
   }
 }
 
+async function finishRestore(
+  restore: Promise<void>,
+  update: (preservePendingEdits?: boolean) => Promise<void>,
+) {
+  try {
+    await restore;
+  } catch (error) {
+    if (error instanceof RestoreApplyError) {
+      await update(true).catch(console.error);
+      throw error.cause;
+    }
+    // The working files and index already reflect HEAD when only the flush failed.
+    if (error instanceof RestorePersistenceError)
+      await update().catch(console.error);
+    throw error;
+  }
+  return finishGit(true, update);
+}
+
 function useCrossnoteContainer(initialState: InitialState) {
   const crossnote = initialState.crossnote;
   const [initialized, setInitialized] = useState<boolean>(false);
   const [notebooks, setNotebooks] = useState<Notebook[]>([]);
-  const [recoveryCollision, setRecoveryCollision] = useState<{
-    notebook: Notebook;
-    directory: string;
-    canRelease: boolean;
-  } | null>(null);
   const [isAddingNotebook, setIsAddingNotebook] = useState<boolean>(false);
   const [isPushingNotebook, setIsPushingNotebook] = useState<boolean>(false);
   const [isPullingNotebook, setIsPullingNotebook] = useState<boolean>(false);
@@ -262,14 +283,17 @@ function useCrossnoteContainer(initialState: InitialState) {
       filePath: string,
       markdown: string,
       loadedFilePath = filePath,
+      comparedSource?: string,
     ) =>
       writeNoteOperation({ notebookPath, filePath }, async () => {
         // A queued write can acquire the lock after Git has moved its note.
         filePath = saverOfWriter(writer.getId())?.location.filePath ?? filePath;
         // The save comes a moment after the last keystroke, by when the
         // notebook, or the note, may have been deleted or the note renamed.
+        const resolving = comparedSource !== undefined;
         const notebook = getNotebookAtPath(notebookPath);
         if (!notebook) {
+          if (resolving) throw new Error("error/note-comparison-changed");
           return;
         }
         const cached = await notebook.getNote(filePath);
@@ -277,17 +301,28 @@ function useCrossnoteContainer(initialState: InitialState) {
         const saving = open?.saver.id === writer.getId();
         const awaitingDestination = saving && filePath !== loadedFilePath;
         const fresh = cached && (await notebook.getNote(filePath, true));
+        if (
+          resolving &&
+          (!fresh ||
+            !saving ||
+            awaitingDestination ||
+            !open.saver.open ||
+            !open.needsComparison ||
+            open.document.text() !== markdown)
+        )
+          throw new Error("error/note-comparison-changed");
         // Keep the draft until the new file can be read and reconciled.
+        if (saving && open.needsComparison && !fresh)
+          throw new Error("error/note-comparison-changed");
         if (!fresh && awaitingDestination)
           throw new Error(i18next.t("general/note-not-found"));
         // A file deleted by git while its open editor was being edited keeps
         // those new edits. An explicit local deletion removes the cache first.
         const note = fresh ?? (saving && open.saver.open ? cached : null);
         if (!note) return;
-        if (saving) {
-          const merged = open.reconcileFile(note.markdown, note.lineBreak);
-          markdown = merged.text;
-          if (merged.conflict || !fresh)
+        if (saving && !resolving) {
+          markdown = open.reconcileFile(note.markdown, note.lineBreak);
+          if (!fresh)
             notify({
               severity: "warning",
               message: i18next.t("error/notebook-sync-conflicts", {
@@ -300,6 +335,7 @@ function useCrossnoteContainer(initialState: InitialState) {
             note.filePath,
             markdown,
             note.config,
+            comparedSource,
           );
           open?.saver.wrote(newNote.markdown);
           globalEmitter.emit(EventType.ModifiedMarkdown, {
@@ -311,8 +347,17 @@ function useCrossnoteContainer(initialState: InitialState) {
             noteConfig: newNote.config,
           });
         } else {
+          if (
+            resolving &&
+            (await notebook.readConflictSource(filePath)) !== comparedSource
+          )
+            throw new Error("error/note-comparison-changed");
           await notebook.storeNote(filePath);
           open?.saver.wrote(note.markdown);
+        }
+        if (resolving) {
+          open.saver.resolved(markdown);
+          open.setNeedsComparison(false);
         }
       }),
     [getNotebookAtPath],
@@ -345,21 +390,14 @@ function useCrossnoteContainer(initialState: InitialState) {
                 : change;
             const open = openNoteAt(location);
             const merged = open?.reconcileFile(note.markdown, note.lineBreak);
-            if (merged?.conflict)
-              notify({
-                severity: "warning",
-                message: i18next.t("error/notebook-sync-conflicts", {
-                  files: filePath,
-                }),
-              });
             const changed =
               JSON.stringify(note.config) !== JSON.stringify(noteConfig) ||
-              (merged && merged.text !== note.markdown);
+              (merged !== undefined && merged !== note.markdown);
             let saved = note;
             if (changed) {
               saved = await notebook.writeNote(
                 note.filePath,
-                merged?.text ?? note.markdown,
+                merged ?? note.markdown,
                 noteConfig,
               );
             } else {
@@ -388,7 +426,10 @@ function useCrossnoteContainer(initialState: InitialState) {
           severity: "error",
           message: failureMessage(
             i18next.t("error/failed-to-save-note-settings"),
-            error,
+            error instanceof NotebookConflictError
+              ? gitConflictNotice(error, getNotebookAtPath(notebookPath) ?? {})
+                  .message
+              : error,
           ),
           duration: 5000,
         });
@@ -760,50 +801,6 @@ function useCrossnoteContainer(initialState: InitialState) {
     [crossnote, layoutModel, closeTabNode],
   );
 
-  // Writes out what the editors open in a notebook, or on one note of it,
-  // hold, before git or a read from disk changes notes under them: where it
-  // changed a note, the notebook read again afterwards puts the note as it
-  // is on disk into its editor, over whatever had not been written yet. When
-  // a note cannot be written, says which and throws, and the caller does
-  // nothing.
-  const saveOpenNotes = useCallback(
-    async (where: { notebookPath: string; filePath?: string }) => {
-      try {
-        const notebook = getNotebookAtPath(where.notebookPath);
-        if (notebook) await crossnote?.resumeNotebook?.(notebook);
-        await flushNotes(where);
-      } catch (error) {
-        if (error instanceof NotebookConflictError) throw error;
-        const notSaved =
-          error instanceof NotesNotSavedError
-            ? error
-            : new NotesNotSavedError(
-                [
-                  {
-                    notebookPath: where.notebookPath,
-                    filePath: where.filePath ?? where.notebookPath,
-                  },
-                ],
-                [error],
-              );
-        notify({
-          severity: "error",
-          message: failureMessage(
-            i18next.t("error/notes-not-saved", {
-              notes: notSaved.locations
-                .map((location) => location.filePath)
-                .join(", "),
-            }),
-            notSaved.errors[0],
-          ),
-          duration: 5000,
-        });
-        throw notSaved;
-      }
-    },
-    [crossnote, getNotebookAtPath],
-  );
-
   // Reads a notebook's notes again from disk, and has its open editors take
   // them.
   const readNotebookAgain = useCallback(
@@ -836,9 +833,70 @@ function useCrossnoteContainer(initialState: InitialState) {
           }).catch(console.error);
         throw error;
       }
-      await readNotebookAgain(notebook, { requireDirectory: true });
+      await readNotebookAgain(notebook, {
+        requireDirectory: true,
+        preservePendingEdits: true,
+      });
     },
     [readNotebookAgain],
+  );
+
+  // Writes out what the editors open in a notebook, or on one note of it,
+  // hold, before git or a read from disk changes notes under them: where it
+  // changed a note, the notebook read again afterwards puts the note as it
+  // is on disk into its editor, over whatever had not been written yet. When
+  // a note cannot be written, says which and throws, and the caller does
+  // nothing.
+  const saveOpenNotes = useCallback(
+    async (
+      where: { notebookPath: string; filePath?: string },
+      includeAttachments = false,
+    ) => {
+      try {
+        const notebook = getNotebookAtPath(where.notebookPath);
+        const ready =
+          notebook &&
+          crossnote?.resumeNotebook?.(notebook).then(async (resumed) => {
+            // The previous download has already changed disk, even if the next
+            // operation stops before changing anything.
+            if (resumed) await refreshAfterGit(notebook);
+          });
+        if (includeAttachments)
+          await flushNotebookEdits(where.notebookPath, where.filePath, ready);
+        else {
+          await ready;
+          await flushNotes(where);
+        }
+      } catch (error) {
+        if (error instanceof NotebookConflictError) throw error;
+        const notSaved =
+          error instanceof NotesNotSavedError
+            ? error
+            : new NotesNotSavedError(
+                [
+                  {
+                    notebookPath: where.notebookPath,
+                    filePath: where.filePath ?? where.notebookPath,
+                  },
+                ],
+                [error],
+              );
+        notify({
+          severity: "error",
+          message: failureMessage(
+            i18next.t("error/notes-not-saved", {
+              notes: notSaved.locations
+                .map((location) => location.filePath)
+                .join(", "),
+            }),
+            notSaved.errors[0],
+          ),
+          duration: 5000,
+        });
+        throw notSaved;
+      }
+    },
+    [crossnote, getNotebookAtPath, refreshAfterGit],
   );
 
   const refreshNotebook = useCallback(
@@ -856,28 +914,32 @@ function useCrossnoteContainer(initialState: InitialState) {
     [crossnote, saveOpenNotes, readNotebookAgain],
   );
 
-  const hardResetNotebook = useCallback(
+  const previewReset = useCallback(
     async (notebook: Notebook) => {
-      if (!crossnote) {
-        return;
-      }
-      // Written first, or a write still to come would put back after the
-      // reset what was typed before it. An editor typed into while the reset
-      // runs then writes what it holds, which keeps the typing and undoes
-      // the reset for that note; that is written, or fails, before the
-      // notebook is read again, so the editors take what is on disk then.
-      // A write that fails does not stop the reading again: the reset is
-      // done.
+      await saveOpenNotes({ notebookPath: notebook.dir }, true);
+      return crossnote.previewReset(notebook);
+    },
+    [crossnote, saveOpenNotes],
+  );
+
+  const hardResetNotebook = useCallback(
+    async (notebook: Notebook, target: ResetPreview) => {
       try {
-        await saveOpenNotes({ notebookPath: notebook.dir });
+        await saveOpenNotes({ notebookPath: notebook.dir }, true);
       } catch (error) {
         if (error instanceof NotesNotSavedError) return;
         throw error;
       }
-      await crossnote.hardResetNotebook(notebook, notebook.localSha);
-      return finishGit(true, () => refreshAfterGit(notebook));
+      return finishRestore(
+        crossnote.resetToHead(notebook, target),
+        (preservePendingEdits) =>
+          readNotebookAgain(notebook, {
+            requireDirectory: true,
+            preservePendingEdits,
+          }),
+      );
     },
-    [crossnote, saveOpenNotes, refreshAfterGit],
+    [crossnote, saveOpenNotes, readNotebookAgain],
   );
 
   const pushNotebook = useCallback(
@@ -892,7 +954,6 @@ function useCrossnoteContainer(initialState: InitialState) {
         return await finishGit(result, () => refreshAfterGit(args.notebook));
       } catch (error) {
         if (
-          error instanceof NotebookConflictError ||
           error instanceof IgnoredUploadFileError ||
           (error instanceof GitUploadError && error.downloaded)
         ) {
@@ -939,19 +1000,22 @@ function useCrossnoteContainer(initialState: InitialState) {
       }
       return withNotePath(note, async (location) => {
         try {
-          await saveOpenNotes({
-            notebookPath: note.notebookPath,
-            filePath: note.filePath,
-          });
+          await saveOpenNotes(
+            {
+              notebookPath: note.notebookPath,
+              filePath: note.filePath,
+            },
+            true,
+          );
         } catch (error) {
           if (error instanceof NotesNotSavedError) return;
           throw error;
         }
-        const updateFailure = await writeNoteOperation(location, async () => {
+        const restore = writeNoteOperation(location, async () => {
           requireOriginalPath(note.filePath, location);
           return notebook.checkoutNote(note);
         });
-        const completed = await finishGit(true, async () => {
+        return finishRestore(restore, async (preservePendingEdits) => {
           const restored = await notebook.getNote(note.filePath, true);
           if (restored) {
             notebook.search.remove(restored.filePath);
@@ -962,12 +1026,16 @@ function useCrossnoteContainer(initialState: InitialState) {
             );
             globalEmitter.emit(EventType.PerformedGitOperation, {
               notebookPath: notebook.dir,
+              filePath: restored.filePath,
+              preservePendingEdits,
             });
           } else {
-            await readNotebookAgain(notebook, { requireDirectory: true });
+            await readNotebookAgain(notebook, {
+              requireDirectory: true,
+              preservePendingEdits,
+            });
           }
         });
-        return updateFailure ? { ...completed, updateFailure } : completed;
       });
     },
     [getNotebookAtPath, saveOpenNotes, readNotebookAgain],
@@ -1217,12 +1285,7 @@ favorited: true
       ) {
         // TODO:  Run tasks in parallel instead of running one by one
         try {
-          const changed = await crossnote.fetchNotebook({ notebook });
-          if (changed) {
-            globalEmitter.emit(EventType.PerformedGitOperation, {
-              notebookPath: notebook.dir,
-            });
-          }
+          await crossnote.fetchNotebook({ notebook });
         } catch {
           // fetchNotebook records sign-in failures for the sidebar.
         }
@@ -1233,8 +1296,6 @@ favorited: true
 
   return {
     crossnote,
-    recoveryCollision,
-    setRecoveryCollision,
     initialized,
     notebooks,
     updateNoteMarkdown,
@@ -1253,6 +1314,7 @@ favorited: true
     isPullingNotebook,
     updateNotebook,
     deleteNotebook,
+    previewReset,
     hardResetNotebook,
     refreshNotebook,
     pushNotebook,

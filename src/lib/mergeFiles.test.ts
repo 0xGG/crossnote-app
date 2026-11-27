@@ -20,16 +20,16 @@ describe("file merge policy", () => {
       bytes("one\ntwo\nTHREE\n"),
     );
     expect(merged.conflict).toBe(false);
-    expect(text(merged.bytes)).toBe("ONE\ntwo\nTHREE\n");
+    expect(merged.conflict === false && text(merged.bytes)).toBe(
+      "ONE\ntwo\nTHREE\n",
+    );
   });
   it.each(["image.png", "unknown", "data.custom"])(
-    "keeps both versions of %s without decoding them",
+    "reports competing versions of %s without proposing a write",
     (file) => {
       const ours = new Uint8Array([0, 255, 129]);
       const theirs = new Uint8Array([0, 254, 130]);
       expect(mergeFile(file, new Uint8Array([0, 253]), ours, theirs)).toEqual({
-        bytes: ours,
-        copy: theirs,
         conflict: true,
       });
     },
@@ -69,12 +69,10 @@ describe("file merge policy", () => {
       conflict: false,
     });
     expect(mergeFile("a.bin", base, null, changed)).toEqual({
-      bytes: changed,
       conflict: true,
       deleted: "local",
     });
     expect(mergeFile("a.bin", base, changed, null)).toEqual({
-      bytes: changed,
       conflict: true,
       deleted: "remote",
     });
@@ -83,27 +81,9 @@ describe("file merge policy", () => {
       conflict: false,
     });
   });
-  it("retains text conflicts for the editor, including a later unchanged pull", () => {
-    const merged = mergeFile(
-      "a.md",
-      bytes("base\n"),
-      bytes("ours\n"),
-      bytes("theirs\n"),
-    );
-    expect(merged.conflict).toBe(true);
-    expect(text(merged.bytes)).toContain("\\<<<<<<< ours\nours\n");
-    expect(text(merged.bytes)).toContain("theirs\n");
-    const incoming = mergeFile(
-      "a.md",
-      bytes("base\n"),
-      bytes("base\n"),
-      merged.bytes,
-    );
-    expect(incoming.conflict).toBe(true);
-    expect(incoming.bytes).toBe(merged.bytes);
+  it("reports overlapping Markdown edits without proposing a write", () => {
     expect(
-      mergeFile("a.md", bytes("theirs\n"), merged.bytes, bytes("theirs\n"))
-        .conflict,
-    ).toBe(true);
+      mergeFile("a.md", bytes("base\n"), bytes("ours\n"), bytes("theirs\n")),
+    ).toEqual({ conflict: true });
   });
 });

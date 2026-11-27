@@ -2,6 +2,13 @@ import type { enUS } from "./enUS";
 
 export const zhCN = {
   translation: {
+    "editor/compare-disk": "对照磁盘版本",
+    "editor/disk-version": "磁盘上的正文",
+    "editor/compare-disk-help":
+      "可在下方编辑草稿。保存后，磁盘上的文件将采用编辑器中的正文。",
+    "editor/save-editor-text": "保存编辑器正文",
+    "error/note-comparison-changed": "文件或草稿已变化。请重新对照后保存。",
+    "error/note-comparison-unavailable": "无法将该文件读取为可编辑的文本。",
     "backup/export": "导出整本 ZIP",
     "backup/title": "将“{{notebook}}”导出为 ZIP",
     "backup/private-files":
@@ -17,19 +24,6 @@ export const zhCN = {
     "backup/symbolic-link": "无法收录符号链接“{{file}}”。",
     "backup/too-large": "笔记本超出了 ZIP 大小或条目数量限制。",
     "backup/sync-recovery": "请先重试“下载”以完成中断的同步，再导出笔记本。",
-    "recovery/title": "同步已暂停",
-    "recovery/instructions":
-      "远端开始使用笔记本“{{notebook}}”中的 {{directory}}。请关闭该目录下的笔记，下载 ZIP 并核对文件。确认已保存后，Crossnote 会移除本地恢复目录，届时可重试下载或上传。",
-    "recovery/legacy-instructions":
-      "远端开始使用笔记本“{{notebook}}”中的 {{directory}}。Crossnote 无法确认本地目录的来源。你可以下载 ZIP 留存文件。在远端仓库中重命名冲突路径后，即可重试同步。",
-    "recovery/download": "下载恢复文件",
-    "recovery/confirm": "我已保存文件",
-    "recovery/retry": "本地恢复目录已移除，可以重试下载或上传。",
-    "error/close-recovery-notes":
-      "请先关闭恢复目录下的笔记，并等待更改保存完成。",
-    "error/recovery-files-changed":
-      "恢复文件已有变化，请重新下载并核对后再确认。",
-    "error/recovery-files": "无法访问恢复文件。",
     "attachment/insert-image": "插入图片",
     "attachment/ignored":
       "此附件路径被 Git 忽略，未插入链接；已保存的文件仍保留在 assets 中。请检查笔记本的忽略规则。",
@@ -151,10 +145,9 @@ export const zhCN = {
     "error/failed-to-save-note-settings": "保存笔记设置失败",
     "error/notebook-sync-conflicts":
       "同步冲突：{{files}}。你的修改已保留，请检查这些文件后再上传。",
-    "error/notebook-file-deleted-local":
-      "{{file}}（本地请求删除，已保留远端修改）",
-    "error/notebook-file-deleted-remote":
-      "{{file}}（远端请求删除，已保留本地修改）",
+    "git/sync-conflicts": "同步冲突：{{files}}。请解决冲突后重试。",
+    "error/notebook-file-deleted-local": "{{file}}（已在本地删除）",
+    "error/notebook-file-deleted-remote": "{{file}}（已在远端删除）",
     "error/notes-not-saved": "没有执行：{{notes}} 没能保存",
 
     // Success
@@ -294,10 +287,17 @@ export const zhCN = {
     "git/uploaded-and-downloaded": "已下载远端改动并上传本地提交。",
     "git/confirmed-and-downloaded": "远端已包含本地提交，本次已下载后续改动。",
     "git/local-update-failed": "{{outcome}}。更新本机笔记本时出错。",
-    "git/checkout-complete": "检出命令已完成",
+    "git/checkout-complete": "笔记已恢复到已提交版本",
     "git/checkout-failed": "检出失败",
-    "git/reset-complete": "重置命令已完成",
+    "git/reset-complete": "笔记本已恢复到当前本地提交",
+    "git/reset-confirm":
+      "要将 {{branch}} 重置到 {{sha}} 吗？这会丢弃已跟踪文件的改动，并移除已暂存的新增文件。下列路径中占用恢复位置的文件和目录也会被移除。",
+    "git/confirm-reset": "确认重置",
+    "error/no-committed-note": "这篇笔记还没有已提交版本。",
+    "error/reset-target-changed":
+      "笔记本在预览后发生了变化，请重新确认重置范围。",
     "git/reset-failed": "笔记本重置失败",
+    "error/restore-persistence": "工作文件已恢复，但未能保存笔记本。",
     "git/details": "详情",
     "git/copy-details": "复制详情",
     "git/details-copied": "已复制详情",

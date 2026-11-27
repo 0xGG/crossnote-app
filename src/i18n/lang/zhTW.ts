@@ -2,6 +2,13 @@ import type { enUS } from "./enUS";
 
 export const zhTW = {
   translation: {
+    "editor/compare-disk": "比對磁碟版本",
+    "editor/disk-version": "磁碟上的內文",
+    "editor/compare-disk-help":
+      "可在下方編輯草稿。儲存後，磁碟上的檔案將採用編輯器中的內文。",
+    "editor/save-editor-text": "儲存編輯器內文",
+    "error/note-comparison-changed": "檔案或草稿已變更。請重新比對後儲存。",
+    "error/note-comparison-unavailable": "無法將此檔案讀為可編輯的文字。",
     "backup/export": "匯出整本 ZIP",
     "backup/title": "將「{{notebook}}」匯出為 ZIP",
     "backup/private-files":
@@ -17,19 +24,6 @@ export const zhTW = {
     "backup/symbolic-link": "無法收錄符號連結「{{file}}」。",
     "backup/too-large": "筆記本超出 ZIP 大小或項目數量限制。",
     "backup/sync-recovery": "請先重試「下載」以完成中斷的同步，再匯出筆記本。",
-    "recovery/title": "同步已暫停",
-    "recovery/instructions":
-      "遠端開始使用筆記本「{{notebook}}」中的 {{directory}}。請關閉該目錄下的筆記，下載 ZIP 並核對檔案。確認已儲存後，Crossnote 會移除本機復原目錄，即可重試下載或上傳。",
-    "recovery/legacy-instructions":
-      "遠端開始使用筆記本「{{notebook}}」中的 {{directory}}。Crossnote 無法確認本機目錄的來源。你可以下載 ZIP 保留檔案。在遠端儲存庫重新命名衝突路徑後，即可重試同步。",
-    "recovery/download": "下載復原檔案",
-    "recovery/confirm": "我已儲存檔案",
-    "recovery/retry": "本機復原目錄已移除，可以重試下載或上傳。",
-    "error/close-recovery-notes":
-      "請先關閉復原目錄下的筆記，並等待變更儲存完畢。",
-    "error/recovery-files-changed":
-      "復原檔案已有變更，請重新下載並核對後再確認。",
-    "error/recovery-files": "無法存取復原檔案。",
     "attachment/insert-image": "插入圖片",
     "attachment/ignored":
       "此附件路徑被 Git 忽略，未插入連結；已儲存的檔案仍保留在 assets 中。請檢查筆記本的忽略規則。",
@@ -150,10 +144,9 @@ export const zhTW = {
     "error/failed-to-save-note-settings": "儲存筆記設定失敗",
     "error/notebook-sync-conflicts":
       "同步衝突：{{files}}。你的修改已保留，請檢查這些檔案後再上傳。",
-    "error/notebook-file-deleted-local":
-      "{{file}}（本機要求刪除，已保留遠端修改）",
-    "error/notebook-file-deleted-remote":
-      "{{file}}（遠端要求刪除，已保留本機修改）",
+    "git/sync-conflicts": "同步衝突：{{files}}。請解決衝突後重試。",
+    "error/notebook-file-deleted-local": "{{file}}（已在本機刪除）",
+    "error/notebook-file-deleted-remote": "{{file}}（已在遠端刪除）",
     "error/notes-not-saved": "沒有執行：{{notes}} 沒能儲存",
 
     // Success
@@ -293,10 +286,17 @@ export const zhTW = {
     "git/uploaded-and-downloaded": "已下載遠端變更並上傳本機提交。",
     "git/confirmed-and-downloaded": "遠端已包含本機提交，本次已下載後續變更。",
     "git/local-update-failed": "{{outcome}}。更新本機筆記本時發生錯誤。",
-    "git/checkout-complete": "檢出命令已完成",
+    "git/checkout-complete": "筆記已還原至已提交的版本",
     "git/checkout-failed": "檢出失敗",
-    "git/reset-complete": "重設命令已完成",
+    "git/reset-complete": "筆記本已還原至目前的本機提交",
+    "git/reset-confirm":
+      "要將 {{branch}} 重設為 {{sha}} 嗎？這會捨棄已追蹤檔案的變更，並移除已暫存的新增檔案。下列路徑中佔用還原位置的檔案和資料夾也會被移除。",
+    "git/confirm-reset": "確認重設",
+    "error/no-committed-note": "這篇筆記還沒有已提交的版本。",
+    "error/reset-target-changed":
+      "筆記本在預覽後發生了變更，請重新確認重設範圍。",
     "git/reset-failed": "筆記本重設失敗",
+    "error/restore-persistence": "工作檔案已還原，但無法儲存筆記本。",
     "git/details": "詳細資料",
     "git/copy-details": "複製詳細資料",
     "git/details-copied": "已複製詳細資料",

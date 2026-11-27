@@ -6,6 +6,7 @@ import {
   changeRemote,
   cloneRemote,
   createRemote,
+  expectReadOnlyNoteOpen,
   fixtureURL,
   localBytes,
   remoteBytes,
@@ -182,13 +183,12 @@ test("uses saved clone credentials for both upload stages and retries the origin
   await page.reload();
   await app.waitUntilReady();
   await app.openNotes(remote.id);
-  await app.refuseWrites();
   const before = await app.storedText(file);
-  await app.noteCards.getByText("Story", { exact: true }).click();
-  await expect(app.preview).toContainText("Original remote story.");
-  expect(await app.refusedWrites()).toEqual([]);
+  await expectReadOnlyNoteOpen(page, async () => {
+    await app.noteCards.getByText("Story", { exact: true }).click();
+    await expect(app.preview).toContainText("Original remote story.");
+  });
   expect(await app.storedText(file)).toBe(before);
-  await app.refuseWrites(false);
 
   await app.modeButton("Edit").click();
   await app.setEditorText(

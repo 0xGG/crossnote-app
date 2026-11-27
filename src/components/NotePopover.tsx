@@ -41,7 +41,7 @@ import {
 } from "../lib/event";
 import { NotesNotSavedError } from "../lib/noteSaver";
 import { failureMessage, notify } from "../lib/notifications";
-import { notifyGit } from "../lib/gitResults";
+import { gitErrorMessage, notifyGit } from "../lib/gitResults";
 import { mountPreview } from "../render";
 import { printPreview } from "../render/print";
 import { setPreviewTheme } from "../render/theme";
@@ -74,6 +74,7 @@ interface Props {
 
 export default function NotePopover(props: Props) {
   const note = props.note;
+  const [restoring, setRestoring] = useState(false);
   const [deleteNoteDialogOpen, setDeleteNoteDialogOpen] =
     useState<boolean>(false);
   const [changeNoteFilePathDialogOpen, setChangeNoteFilePathDialogOpen] =
@@ -193,7 +194,7 @@ export default function NotePopover(props: Props) {
         anchorEl={props.anchorElement}
         keepMounted
         open={Boolean(props.anchorElement)}
-        onClose={props.onClose}
+        onClose={restoring ? undefined : props.onClose}
         slotProps={{
           transition: {
             onExited: () => {
@@ -203,7 +204,7 @@ export default function NotePopover(props: Props) {
           },
         }}
       >
-        <List>
+        <List inert={restoring} aria-busy={restoring}>
           <MenuRow
             onClick={() => {
               crossnoteContainer.togglePin(
@@ -328,6 +329,7 @@ export default function NotePopover(props: Props) {
           {!isLocal && (
             <MenuRow
               onClick={() => {
+                setRestoring(true);
                 crossnoteContainer
                   .checkoutNote(note)
                   .then((completed) => {
@@ -339,12 +341,19 @@ export default function NotePopover(props: Props) {
                     }
                   })
                   .catch((error) => {
-                    notifyGit("error", t("git/checkout-failed"), {
-                      error,
-                      credentials: notebook,
-                    });
+                    notifyGit(
+                      "error",
+                      gitErrorMessage(error, t("git/checkout-failed")),
+                      {
+                        error,
+                        credentials: notebook,
+                      },
+                    );
+                  })
+                  .finally(() => {
+                    setRestoring(false);
+                    props.onClose();
                   });
-                props.onClose();
               }}
             >
               <ListItemIcon>
