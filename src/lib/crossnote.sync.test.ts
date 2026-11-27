@@ -214,7 +214,6 @@ it.each(["present", "missing", "staged deletion", "retargeted without index"])(
       ...emptyRemote,
       fetchHead: remote,
     });
-    const listing = vi.spyOn(pfs, "readdir");
     if (state === "staged deletion")
       await git.remove({ ...args, filepath: "Alias" });
     if (state === "missing" || state === "retargeted without index")
@@ -238,7 +237,9 @@ it.each(["present", "missing", "staged deletion", "retargeted without index"])(
       expect(await read("README.md")).toEqual([...bytes("# Kept\n")]);
       return;
     }
+    const listing = vi.spyOn(fs.promises, "readdir");
     await app.pullNotebook({ notebook });
+    expect(listing).toHaveBeenCalledWith(notebook.dir + "/assets");
     expect(listing).not.toHaveBeenCalledWith(name);
     expect(await fs.promises.readlink(name)).toBe("./assets");
     expect((await parentGitTree(notebook.dir)).symlinks.get("Alias")).toBe(
