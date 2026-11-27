@@ -1404,6 +1404,7 @@ export default class Crossnote {
     const { target: targetTree, base, cache } = trees;
     const { files: remoteFiles, links: remoteLinks } = targetTree;
     const { files: baseFiles, links: baseLinks } = base;
+    let recoveredCandidates: string[] = [];
     // A saved plan can predate preflight. The ref may already have advanced
     // while the original index is still present.
     if (!prepared) {
@@ -1416,7 +1417,7 @@ export default class Crossnote {
         const index = await trees.readIndex();
         if (remoteLinks.size) assertDisplacedBlobsMatch(base, index);
         if (scopes.size)
-          await this.checkPullIgnoreRules(
+          recoveredCandidates = await this.checkPullIgnoreRules(
             notebook,
             recovery,
             trees,
@@ -1484,15 +1485,21 @@ export default class Crossnote {
     }
     // Older plans saved the working bytes without their upload eligibility.
     // Recover it from the original checkout before replacing its ignore rules.
-    if (
+    const needsLegacyCandidates =
       !recovery.uploadCandidates &&
       recovery.localSha !== recovery.remoteSha &&
       (await refSha(notebook.dir, branchRef(notebook.gitBranch))) ===
-        recovery.localSha
-    ) {
+        recovery.localSha;
+    if (needsLegacyCandidates) {
       const tracked = new Set(baseFiles);
       const isIgnored = ignoreCheck(notebook.dir);
-      const candidates: string[] = [];
+      const copySources = new Map(
+        Array.isArray(moves)
+          ? []
+          : Object.entries(moves).map(
+              ([source, copy]) => [copy, source] as const,
+            ),
+      );
       for (const [filepath, bytes] of Object.entries(files)) {
         if (
           bytes === null ||
@@ -1500,12 +1507,26 @@ export default class Crossnote {
           remoteFiles.has(filepath)
         )
           continue;
+        const original = copySources.get(filepath);
+        if (original !== undefined) {
+          if (tracked.has(original) || !(await isIgnored(original)))
+            recoveredCandidates.push(filepath);
+          continue;
+        }
         const target = this.checkedPath(notebook, filepath);
         const stats = await pfs.stats(target).catch(missingFileOrThrow);
         if (stats?.isFile() && !(await isIgnored(filepath)))
-          candidates.push(filepath);
+          recoveredCandidates.push(filepath);
       }
-      recovery.uploadCandidates = candidates;
+    }
+    const existingCandidates = new Set(recovery.uploadCandidates);
+    if (
+      needsLegacyCandidates ||
+      recoveredCandidates.some((file) => !existingCandidates.has(file))
+    ) {
+      recovery.uploadCandidates = [
+        ...new Set([...existingCandidates, ...recoveredCandidates]),
+      ];
       await savePullRecovery(notebook._id, recovery);
     }
     const originals = Array.isArray(moves) ? moves : Object.keys(moves);
@@ -1959,6 +1980,7 @@ export default class Crossnote {
     const originals = new Set(
       Array.isArray(moved) ? moved : Object.keys(moved),
     );
+    const copies = new Set(Array.isArray(moved) ? [] : Object.values(moved));
     const isIgnored = ignoreCheck(notebook.dir);
     const linkedRules = async (file: string): Promise<string | null> => {
       const resolved = new Map<string, string | null>([[".", "."]]);
@@ -2060,6 +2082,27 @@ export default class Crossnote {
     const scopes = restoredScopes ?? new Set(overrides.keys());
     if (scopes.size) {
       const willBeIgnored = ignoreCheck(notebook.dir, overrides);
+      if (restoredScopes) {
+        // Replay recreates these bytes even if the working copy is missing.
+        // A relocated copy keeps the eligibility of its original.
+        for (const [file, bytes] of Object.entries(files)) {
+          if (
+            bytes === null ||
+            baseFiles.has(file) ||
+            remoteFiles.has(file) ||
+            originals.has(file) ||
+            copies.has(file) ||
+            isWithinGitLink(file, previousLinks) ||
+            isWithinGitLink(file, remoteLinks) ||
+            (!scopes.has(".") && !isWithinGitLink(path.dirname(file), scopes))
+          )
+            continue;
+          const entry = await workingEntry(notebook.dir, file);
+          if (entry?.stats.isSymbolicLink()) continue;
+          if (!(await isIgnored(file)) && (await willBeIgnored(file)) !== false)
+            uploadCandidates.push(file);
+        }
+      }
       // Include untracked drafts that Git leaves out of the status matrix.
       const checkDirectory = async (folder: string): Promise<void> => {
         for (const name of await pfs.readdir(path.join(notebook.dir, folder))) {

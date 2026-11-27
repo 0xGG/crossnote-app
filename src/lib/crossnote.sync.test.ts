@@ -4255,6 +4255,106 @@ it.each(["original checkout", "advanced ref", "installed tree"])(
   },
 );
 
+it.each(["new plan", "saved plan", "legacy plan", "already ignored"])(
+  "retains the known upload eligibility of a color chart under linked rules (%s)",
+  async (phase) => {
+    const swatch = "palette.scratch";
+    const alreadyIgnored = phase === "already ignored";
+    const { app, notebook, base, read } = await repository(
+      {},
+      {
+        ".gitignore": bytes(
+          alreadyIgnored ? "*.local\n*.scratch\n" : "*.local\n",
+        ),
+        "catalog.rules": bytes("*.local\n*.scratch\n"),
+      },
+    );
+    const args = { fs, dir: notebook.dir };
+    const { tree } = await git.readTree({ ...args, oid: base });
+    const link = await git.writeBlob({ ...args, blob: bytes("catalog.rules") });
+    const remote = await git.commit({
+      ...args,
+      author,
+      noUpdateBranch: true,
+      message: "Use catalog rules",
+      tree: await git.writeTree({
+        ...args,
+        tree: tree.map((entry) =>
+          entry.path === ".gitignore"
+            ? { ...entry, mode: "120000", oid: link }
+            : entry,
+        ),
+      }),
+    });
+    vi.mocked(git.fetch).mockResolvedValue({
+      ...emptyRemote,
+      fetchHead: remote,
+    });
+    const colors = bytes("Pencil color chart");
+    await pfs.writeFile(notebook.dir + "/" + swatch, colors);
+    await git.add({ ...args, filepath: swatch, force: alreadyIgnored });
+    expect(await git.listFiles(args)).toContain(swatch);
+    if (phase === "new plan") {
+      expect((await app.pullNotebook({ notebook })).ignoredUploadFile).toBe(
+        swatch,
+      );
+    } else {
+      const existing = "selection.scratch";
+      const moved = "sample-copy.scratch";
+      const original = "sample.local";
+      await pfs.writeFile(notebook.dir + "/" + existing, "Earlier selection");
+      await pfs.writeFile(notebook.dir + "/" + moved, "Local sample");
+      await recovery.savePullRecovery(notebook._id, {
+        version: 1,
+        localSha: base,
+        remoteSha: remote,
+        conflicts: [],
+        files: {
+          [swatch]: colors,
+          [existing]: bytes("Earlier selection"),
+          [moved]: bytes("Local sample"),
+        },
+        relocated: { [original]: moved },
+        ...(phase !== "legacy plan" ? { uploadCandidates: [existing] } : {}),
+      });
+      if (phase === "legacy plan")
+        await pfs.unlink(notebook.dir + "/" + swatch);
+      if (!alreadyIgnored) {
+        vi.spyOn(app, "hardResetNotebook").mockRejectedValueOnce(
+          new Error("Stopped before checkout"),
+        );
+        await expect(app.resumeNotebook(notebook)).rejects.toThrow(
+          "Stopped before checkout",
+        );
+        const candidates = (await recovery.readPullRecovery(notebook._id))
+          ?.uploadCandidates;
+        expect(candidates?.sort()).toEqual([swatch, existing]);
+      }
+      // The next run can see the new rules even before the old journal is retired.
+      await app.hardResetNotebook(
+        notebook,
+        remote,
+        await parentGitTree(notebook.dir, remote),
+        true,
+      );
+      await app.resumeNotebook(notebook);
+      expect(await read(moved)).toEqual([...bytes("Local sample")]);
+      expect(
+        (await app["notebookDB"].get(notebook._id)).blockedUploadPaths?.sort(),
+      ).toEqual(alreadyIgnored ? [existing] : [swatch, existing]);
+      await pfs.unlink(notebook.dir + "/" + existing);
+    }
+    expect(await read(swatch)).toEqual([...colors]);
+    expect(await app.getStatus(notebook.dir, swatch)).toBe("ignored");
+    expect(await git.resolveRef({ ...args, ref: "HEAD" })).toBe(remote);
+    expect(await git.listFiles(args)).not.toContain(swatch);
+    if (!alreadyIgnored)
+      await expect(app.pushNotebook({ notebook })).rejects.toMatchObject({
+        filepath: swatch,
+      });
+  },
+);
+
 it("checks merged ignore rules together with local nested exceptions before checkout", async () => {
   const baseRules = "# local rules\n# spacer\n# remote rules\n*.txt\n";
   const localRules = baseRules.replace("# local rules", "assets/*");
