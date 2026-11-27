@@ -197,12 +197,6 @@ async function rebuildNotebookIndex(dir: string, tip: string) {
     await clearIndexRebuildMarker(dir);
 }
 
-// Git interprets a missing ref as the index. An unborn branch has an empty
-// base tree regardless of which files the user has already staged.
-async function filesAtCommit(dir: string, sha: string): Promise<string[]> {
-  return sha ? git.listFiles({ fs, dir, ref: sha }) : [];
-}
-
 const branchName = (branch: string) =>
   (branch || "master").replace(/^refs\/heads\//, "");
 const branchRef = (branch: string) => `refs/heads/${branchName(branch)}`;
