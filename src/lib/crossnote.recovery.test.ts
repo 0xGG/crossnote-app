@@ -114,9 +114,9 @@ it("opens and syncs a notebook without consuming its older recovery data", async
   const stored = {
     version: 1,
     localSha: base,
-    remoteSha: null,
+    remoteSha: null as string | null,
     files: { "indexed-db.bin": privateBytes },
-    conflicts: [],
+    conflicts: [] as string[],
   };
   try {
     await new Promise<void>((resolve, reject) => {
