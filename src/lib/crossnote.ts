@@ -303,6 +303,20 @@ async function readPullTrees(
   };
 }
 
+const overlaps = (a: string, b: string) =>
+  a === b || a.startsWith(`${b}/`) || b.startsWith(`${a}/`);
+
+async function readListedBlob(
+  args: { fs: typeof fs; dir: string; cache: object },
+  sha: string,
+  file: string,
+  listed: Set<string>,
+): Promise<FileBytes> {
+  return listed.has(file)
+    ? (await git.readBlob({ ...args, oid: sha, filepath: file })).blob
+    : null;
+}
+
 type ParentGitTree = Awaited<ReturnType<typeof parentGitTree>>;
 
 // Checkout displaces a blob at, above, or below an incoming pointer.
@@ -1392,8 +1406,25 @@ export default class Crossnote {
     const { files: baseFiles, links: baseLinks } = base;
     // A saved plan can predate preflight. The ref may already have advanced
     // while the original index is still present.
-    if (!prepared && remoteLinks.size)
-      assertDisplacedBlobsMatch(base, await trees.readIndex());
+    if (!prepared) {
+      const scopes = new Set(
+        [...base.symlinks.keys(), ...targetTree.symlinks.keys()]
+          .filter((file) => path.basename(file) === ".gitignore")
+          .map((file) => path.dirname(file)),
+      );
+      if (remoteLinks.size || scopes.size) {
+        const index = await trees.readIndex();
+        if (remoteLinks.size) assertDisplacedBlobsMatch(base, index);
+        if (scopes.size)
+          await this.checkPullIgnoreRules(
+            notebook,
+            recovery,
+            trees,
+            new Map([...baseLinks, ...index.links]),
+            scopes,
+          );
+      }
+    }
     await assertGitLinkTransition(
       notebook.dir,
       baseLinks,
@@ -1789,8 +1820,6 @@ export default class Crossnote {
     const conflicts: string[] = [];
     const deletions: ConflictDeletions = Object.create(null);
     const relocated: Record<string, string> = Object.create(null);
-    const overlaps = (a: string, b: string) =>
-      a === b || a.startsWith(`${b}/`) || b.startsWith(`${a}/`);
     const occupied = async (candidate: string) =>
       [...reserved].some((entry) => overlaps(entry, candidate)) ||
       (await pfs.exists(this.checkedPath(notebook, candidate)));
@@ -1832,28 +1861,14 @@ export default class Crossnote {
       }
       return `${ignoredCopiesDirectory}/${copy}`;
     };
-    const blob = async (
-      sha: string,
-      file: string,
-      listed: Set<string>,
-    ): Promise<FileBytes> =>
-      listed.has(file)
-        ? (
-            await git.readBlob({
-              ...args,
-              oid: sha,
-              filepath: file,
-            })
-          ).blob
-        : null;
     for (const [file, ours] of Object.entries(cache)) {
       checkReplayPath(file, remoteSymlinks);
       this.checkedPath(notebook, file);
       const merged = mergeFile(
         file,
-        await blob(localSha, file, baseFiles),
+        await readListedBlob(args, localSha, file, baseFiles),
         ours,
-        await blob(remoteSha, file, remoteFiles),
+        await readListedBlob(args, remoteSha, file, remoteFiles),
       );
       if (
         [...remoteFiles].some(
@@ -1888,6 +1903,63 @@ export default class Crossnote {
         conflicts.push(copy);
       }
     }
+    const recovery: PullRecovery = {
+      version: 1,
+      localSha,
+      remoteSha,
+      files,
+      conflicts,
+      deletions,
+      relocated,
+    };
+    const uploadCandidates = await this.checkPullIgnoreRules(
+      notebook,
+      recovery,
+      trees,
+      previousLinks,
+    );
+    for (const [file, copy] of Object.entries(relocated)) {
+      if (baseFiles.has(file) || !(await isIgnored(file)))
+        uploadCandidates.push(copy);
+    }
+    recovery.uploadCandidates = uploadCandidates;
+    // Recovery references the fetched commit and its objects. Persist their
+    // directory entries before publishing a plan a new page must replay.
+    await pfs.storeTree(notebook.dir);
+    await savePullRecovery(notebook._id, recovery);
+    needsRecovery(notebook.dir, true);
+    const ignoredUploadFile = await this.finishPull(notebook, recovery, trees);
+    return {
+      numConflicts: conflicts.length,
+      conflicts,
+      deletions,
+      cache,
+      links,
+      downloadedFrom: localSha,
+      ignoredUploadFile,
+    };
+  }
+
+  private async checkPullIgnoreRules(
+    notebook: Notebook,
+    recovery: PullRecovery,
+    trees: Awaited<ReturnType<typeof readPullTrees>>,
+    previousLinks: GitLinkPaths,
+    restoredScopes?: Set<string>,
+  ): Promise<string[]> {
+    const { localSha, remoteSha, files } = recovery;
+    const { files: baseFiles, symlinks: headSymlinks } = trees.base;
+    const {
+      files: remoteFiles,
+      symlinks: remoteSymlinks,
+      links: remoteLinks,
+    } = trees.target;
+    const args = { fs, dir: notebook.dir, cache: trees.cache };
+    const moved = recovery.relocated ?? {};
+    const originals = new Set(
+      Array.isArray(moved) ? moved : Object.keys(moved),
+    );
+    const isIgnored = ignoreCheck(notebook.dir);
     const linkedRules = async (file: string): Promise<string | null> => {
       const resolved = new Map<string, string | null>([[".", "."]]);
       const lookup = async (
@@ -1927,7 +1999,7 @@ export default class Crossnote {
       };
       const target = await lookup(file, 0);
       if (target === null || isWithinGitLink(target, remoteLinks)) return null;
-      if (target in files)
+      if (Object.hasOwn(files, target))
         return files[target] === null ? "" : decode(files[target]);
       if (remoteFiles.has(target))
         return decode(
@@ -1951,29 +2023,42 @@ export default class Crossnote {
     for (const file of new Set([
       ...baseFiles,
       ...remoteFiles,
-      ...Object.keys(relocated),
+      ...originals,
+      ...(restoredScopes ? Object.keys(files) : []),
     ])) {
       if (path.basename(file) !== ".gitignore") continue;
       const folder = path.dirname(file);
+      if (
+        restoredScopes &&
+        ![...restoredScopes].some(
+          (scope) => scope === "." || folder === "." || overlaps(folder, scope),
+        )
+      )
+        continue;
       if (remoteSymlinks.has(file)) {
         // The target can change even when the link itself does not.
         overrides.set(folder, await linkedRules(file));
         continue;
       }
-      const incoming = await blob(remoteSha, file, remoteFiles);
+      const incoming = await readListedBlob(args, remoteSha, file, remoteFiles);
       if (
-        !(file in relocated) &&
+        !restoredScopes &&
+        !originals.has(file) &&
         !headSymlinks.has(file) &&
-        sameBytes(await blob(localSha, file, baseFiles), incoming)
+        sameBytes(
+          await readListedBlob(args, localSha, file, baseFiles),
+          incoming,
+        )
       )
         continue;
       this.checkedPath(notebook, file);
-      const planned = file in files ? files[file] : incoming;
+      const planned = Object.hasOwn(files, file) ? files[file] : incoming;
       // Match LightningFS's utf8 reads, including BOM handling.
       overrides.set(folder, planned === null ? "" : decode(planned));
     }
     const uploadCandidates: string[] = [];
-    if (overrides.size) {
+    const scopes = restoredScopes ?? new Set(overrides.keys());
+    if (scopes.size) {
       const willBeIgnored = ignoreCheck(notebook.dir, overrides);
       // Include untracked drafts that Git leaves out of the status matrix.
       const checkDirectory = async (folder: string): Promise<void> => {
@@ -1986,9 +2071,18 @@ export default class Crossnote {
             await checkDirectory(file);
             continue;
           }
-          if (baseFiles.has(file) || remoteFiles.has(file) || file in relocated)
+          if (
+            baseFiles.has(file) ||
+            remoteFiles.has(file) ||
+            originals.has(file)
+          )
             continue;
-          if (await isIgnored(file)) {
+          if (restoredScopes) {
+            // The journal lists the files to replay but can omit ignored
+            // drafts. The working rules may already belong to the new tree.
+            if (!Object.hasOwn(files, file) && !(await willBeIgnored(file)))
+              throw new NotebookConflictError([file]);
+          } else if (await isIgnored(file)) {
             if (!(await willBeIgnored(file)))
               throw new NotebookConflictError([file]);
           } else if (files[file] && (await willBeIgnored(file)) !== false) {
@@ -1997,10 +2091,15 @@ export default class Crossnote {
           }
         }
       };
-      changedRules: for (const folder of overrides.keys()) {
+      changedRules: for (const folder of scopes) {
+        if (
+          isWithinGitLink(folder, previousLinks) ||
+          isWithinGitLink(folder, remoteLinks)
+        )
+          continue;
         for (let parent = folder; parent !== ".";) {
           parent = path.dirname(parent);
-          if (overrides.has(parent)) continue changedRules;
+          if (scopes.has(parent)) continue changedRules;
         }
         // A newly introduced scope may still be missing or sit below a file
         // or symlink. Only descend through directories in the current tree.
@@ -2015,35 +2114,7 @@ export default class Crossnote {
         await checkDirectory(folder);
       }
     }
-    for (const [file, copy] of Object.entries(relocated)) {
-      if (baseFiles.has(file) || !(await isIgnored(file)))
-        uploadCandidates.push(copy);
-    }
-    const recovery: PullRecovery = {
-      version: 1,
-      localSha,
-      remoteSha,
-      files,
-      conflicts,
-      deletions,
-      relocated,
-      uploadCandidates,
-    };
-    // Recovery references the fetched commit and its objects. Persist their
-    // directory entries before publishing a plan a new page must replay.
-    await pfs.storeTree(notebook.dir);
-    await savePullRecovery(notebook._id, recovery);
-    needsRecovery(notebook.dir, true);
-    const ignoredUploadFile = await this.finishPull(notebook, recovery, trees);
-    return {
-      numConflicts: conflicts.length,
-      conflicts,
-      deletions,
-      cache,
-      links,
-      downloadedFrom: localSha,
-      ignoredUploadFile,
-    };
+    return uploadCandidates;
   }
 
   private async fetchGit(

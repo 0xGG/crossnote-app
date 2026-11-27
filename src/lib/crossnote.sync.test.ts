@@ -4143,6 +4143,118 @@ it.each([
   },
 );
 
+it.each(["original checkout", "advanced ref", "installed tree"])(
+  "checks files outside a saved plan with linked rules (%s)",
+  async (stage) => {
+    const rule = "assets/team.rules";
+    const { app, notebook, read } = await repository(
+      {},
+      {
+        [rule]: bytes("*.scratch\n"),
+        ".gitignore": bytes("# Root rules\n"),
+      },
+    );
+    const { dir } = notebook;
+    const args = { fs, dir };
+    await fs.promises.symlink("team.rules", dir + "/assets/.gitignore");
+    await git.add({ ...args, filepath: "assets/.gitignore" });
+    const base = await git.commit({
+      ...args,
+      author,
+      message: "Link the team rules",
+    });
+    const { tree } = await git.readTree({ ...args, oid: base });
+    const guide = await git.writeBlob({
+      ...args,
+      blob: bytes("Updated guide"),
+    });
+    const remote = await git.commit({
+      ...args,
+      author,
+      message: "Update guide",
+      noUpdateBranch: true,
+      tree: await git.writeTree({
+        ...args,
+        tree: tree.map((entry) =>
+          entry.path === "README.md" ? { ...entry, oid: guide } : entry,
+        ),
+      }),
+    });
+    const pending: recovery.PullRecovery = {
+      version: 1,
+      localSha: base,
+      remoteSha: remote,
+      conflicts: [],
+      uploadCandidates: [],
+      files: {
+        [rule]: bytes("*.scratch\nhandoff.tmp\n"),
+        "assets/saved.md": bytes("Planned note"),
+      },
+    };
+    await recovery.savePullRecovery(notebook._id, pending);
+    if (stage === "advanced ref")
+      await git.writeRef({
+        ...args,
+        ref: "refs/heads/master",
+        value: remote,
+        force: true,
+      });
+    if (stage === "installed tree")
+      await app.hardResetNotebook(
+        notebook,
+        remote,
+        await parentGitTree(dir, remote),
+        true,
+      );
+
+    // These ordinary files arrived after the plan. One falls under the
+    // replayed rule, one is outside its scope, and one needs review.
+    await pfs.writeFile(dir + "/assets/handoff.tmp", "Working copy");
+    await pfs.writeFile(dir + "/overview.txt", "Outside the scope");
+    await pfs.writeFile(dir + "/assets/inspection.txt", "Pencil sketch");
+    const head = await git.resolveRef({ ...args, ref: "HEAD" });
+    const index = await read(".git/index");
+    const before = await read("README.md");
+    await expect(app.resumeNotebook(notebook)).rejects.toMatchObject({
+      files: ["assets/inspection.txt"],
+    });
+    expect(await git.resolveRef({ ...args, ref: "HEAD" })).toBe(head);
+    expect(await read(".git/index")).toEqual(index);
+    expect(await read("README.md")).toEqual(before);
+    expect(await read("assets/inspection.txt")).toEqual([
+      ...bytes("Pencil sketch"),
+    ]);
+    expect((await recovery.readPullRecovery(notebook._id))?.remoteSha).toBe(
+      remote,
+    );
+
+    await pfs.rename(
+      dir + "/assets/inspection.txt",
+      dir + "/assets/inspection.scratch",
+    );
+    await app.resumeNotebook(notebook);
+    expect(await git.resolveRef({ ...args, ref: "HEAD" })).toBe(remote);
+    expect(await read("README.md")).toEqual([...bytes("Updated guide")]);
+    expect(await read("assets/inspection.scratch")).toEqual([
+      ...bytes("Pencil sketch"),
+    ]);
+    expect(await read("assets/handoff.tmp")).toEqual([
+      ...bytes("Working copy"),
+    ]);
+    expect(await read("overview.txt")).toEqual([...bytes("Outside the scope")]);
+    expect(await read("assets/saved.md")).toEqual([...bytes("Planned note")]);
+    const paths = await git.listFiles(args);
+    expect(paths).toContain("assets/saved.md");
+    for (const local of [
+      "assets/inspection.scratch",
+      "assets/handoff.tmp",
+      "overview.txt",
+    ])
+      expect(paths).not.toContain(local);
+    expect(await recovery.readPullRecovery(notebook._id)).toBeUndefined();
+  },
+);
+
 it("checks merged ignore rules together with local nested exceptions before checkout", async () => {
   const baseRules = "# local rules\n# spacer\n# remote rules\n*.txt\n";
   const localRules = baseRules.replace("# local rules", "assets/*");
