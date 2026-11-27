@@ -122,29 +122,33 @@ test("recovers an editor-created attachment after an interrupted pull", async ({
           )
         )
           return null;
-        return new Promise((resolve, reject) => {
-          const open = indexedDB.open("crossnote-downloads");
-          open.onerror = () => reject(open.error);
-          open.onsuccess = () => {
-            const db = open.result;
-            const read = db.transaction("pulls").objectStore("pulls").get(key);
-            read.onerror = () => reject(read.error);
-            read.onsuccess = () => {
-              db.close();
-              const plan = read.result;
-              resolve(
-                plan
-                  ? {
-                      version: plan.version,
-                      localSha: plan.localSha,
-                      remoteSha: plan.remoteSha,
-                      attachment: Array.from(plan.files[file]),
-                    }
-                  : null,
-              );
-            };
+        function result<T>(request: IDBRequest<T>) {
+          return new Promise<T>((resolve, reject) => {
+            request.onsuccess = () => resolve(request.result);
+            request.onerror = () => reject(request.error);
+          });
+        }
+        const db = await result(indexedDB.open("crossnote-downloads"));
+        try {
+          const plan = await result(
+            db.transaction("pulls").objectStore("pulls").get(key),
+          );
+          if (plan === undefined) return null;
+          const attachment = plan?.files?.[file];
+          if (!(attachment instanceof Uint8Array)) {
+            throw new Error(
+              `Saved download plan has no attachment bytes for ${file}`,
+            );
+          }
+          return {
+            version: plan.version,
+            localSha: plan.localSha,
+            remoteSha: plan.remoteSha,
+            attachment: Array.from(attachment),
           };
-        });
+        } finally {
+          db.close();
+        }
       },
       { key, file },
     );
