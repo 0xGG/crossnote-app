@@ -252,7 +252,8 @@ async function readPullTrees(
   remoteSha: string,
   cache = {},
 ) {
-  const target = await parentGitTree(dir, remoteSha, cache);
+  const blobEntries = { includeBlob: () => true };
+  const target = await parentGitTree(dir, remoteSha, cache, blobEntries);
   const directories = new Set<string>();
   for (const link of target.links.keys()) {
     for (
@@ -266,10 +267,21 @@ async function readPullTrees(
     ? (file: string) =>
         directories.has(file) || isWithinGitLink(file, target.links)
     : undefined;
-  const base = await parentGitTree(dir, localSha, cache, { includeBlob });
+  const base = await parentGitTree(dir, localSha, cache, blobEntries);
+  // An unchanged remote entry can be a file that the local edits replaced
+  // with a directory, or a child of a directory replaced with a file.
+  const incoming = new Set(
+    [...target.files].filter((file) => {
+      const next = target.blobs.get(file);
+      if (!next) return target.links.get(file) !== base.links.get(file);
+      const previous = base.blobs.get(file);
+      return previous?.oid !== next.oid || previous.mode !== next.mode;
+    }),
+  );
   return {
     base,
     target,
+    incoming,
     cache,
     readIndex: () => parentGitTree(dir, undefined, cache, { includeBlob }),
   };
@@ -962,18 +974,23 @@ export default class Crossnote {
     sha: string,
     target: ParentGitTree,
     force = false,
+    filepaths?: string[],
   ) {
     const ref = branchRef(notebook.gitBranch);
     const args = { fs, dir: notebook.dir, cache: {} };
     const links = target.links;
 
     await pfs.writeFile(path.resolve(notebook.dir, ".git", ref), sha);
-    const index = path.resolve(notebook.dir, `.git/index`);
-    if (await pfs.exists(index)) await pfs.unlink(index);
+    const replacing = new Set(filepaths ?? target.files);
+    const resetPaths = (await git.listFiles(args)).filter(
+      (file) => replacing.has(file) || !target.files.has(file),
+    );
+    if (resetPaths.length) await git.remove({ ...args, filepath: resetPaths });
     await git.checkout({
       ...args,
       ref,
       force,
+      filepaths,
       fs: parentWorkingFs(notebook.dir, links),
     });
     for (const [filepath, oid] of links) {
@@ -997,16 +1014,29 @@ export default class Crossnote {
     cache: Cache,
     notebook: Notebook,
   ): Promise<void> {
+    // Remove old index entries before adding the children of a former file.
+    // A directory or an ancestor file at a deleted path is the local replacement.
     for (const [file, bytes] of Object.entries(cache)) {
+      if (bytes !== null) continue;
+      const entry = await workingEntry(notebook.dir, file);
+      if (entry?.relative === file && !entry.stats.isDirectory())
+        await pfs.unlink(this.checkedPath(notebook, file));
+      await git.remove({ fs, dir: notebook.dir, filepath: file });
+    }
+    for (const [file, bytes] of Object.entries(cache)) {
+      if (bytes === null) continue;
       const target = this.checkedPath(notebook, file);
-      if (bytes === null) {
-        if (await pfs.exists(target)) await pfs.unlink(target);
-        await git.remove({ fs, dir: notebook.dir, filepath: file });
-      } else {
+      const entry = await workingEntry(notebook.dir, file);
+      if (entry && (entry.relative !== file || !entry.stats.isFile()))
+        throw new NotebookConflictError([file]);
+      if (
+        !entry ||
+        !sameBytes((await pfs.readFile(target)) as Uint8Array, bytes)
+      ) {
         await pfs.mkdirp(path.dirname(target));
         await pfs.writeFile(target, bytes);
-        await stageLocalFile(notebook.dir, file);
       }
+      await stageLocalFile(notebook.dir, file);
     }
   }
 
@@ -1071,7 +1101,7 @@ export default class Crossnote {
       }
       await pfs.rmdir(dir);
     };
-    for (const file of remoteFiles) {
+    for (const file of trees.incoming) {
       if (remoteLinks.has(file)) continue;
       const target = this.checkedPath(notebook, file);
       if (
@@ -1085,20 +1115,22 @@ export default class Crossnote {
       recovery.remoteSha,
       targetTree,
       true,
+      [...trees.incoming],
     );
-    // Checkout can skip unchanged working files when recreating the index.
-    // Fill only missing blobs before replaying local changes over them.
+    // The index can be missing entries or still hold old staged versions.
+    // Restore the target identities before staging the permitted local edits.
     const args = { fs, dir: notebook.dir, cache: {} };
-    const missing: string[] = [];
-    await git.walk({
-      ...args,
-      trees: [git.TREE({ ref: recovery.remoteSha }), git.STAGE()],
-      map: async (file, [head, entry]) => {
-        if (!entry && (await head?.type()) === "blob") missing.push(file);
-      },
+    const staged = await parentGitTree(notebook.dir, undefined, args.cache, {
+      includeBlob: () => true,
     });
-    if (missing.length)
-      await git.add({ ...args, filepath: missing, force: true });
+    for (const [filepath, { oid, mode }] of targetTree.blobs) {
+      const entry = staged.blobs.get(filepath);
+      if (
+        files[filepath] !== null &&
+        (entry?.oid !== oid || entry.mode !== mode)
+      )
+        await git.updateIndex({ ...args, filepath, oid, mode, add: true });
+    }
     await this.restoreFilesFromCache(files, notebook);
     await pfs.storeTree(notebook.dir);
     await clearIndexRebuildMarker(notebook.dir);
@@ -1279,7 +1311,7 @@ export default class Crossnote {
         else if (!baseFiles.has(file) && !(file in cache)) conflicts.push(file);
       }
     };
-    for (const file of remoteFiles) {
+    for (const file of trees.incoming) {
       if (remoteLinks.has(file)) continue;
       if (
         await this.cacheWorkingFileAncestor(
@@ -1339,20 +1371,11 @@ export default class Crossnote {
         continue;
       }
       if (
-        [...remoteFiles].some(
+        [...trees.incoming].some(
           (remote) => remote !== file && overlaps(remote, file),
         )
       ) {
         if (merged.bytes !== null) conflicts.push(file);
-        continue;
-      }
-      if (
-        ours !== null &&
-        !baseFiles.has(file) &&
-        !remoteFiles.has(file) &&
-        [...baseFiles].some((child) => child.startsWith(file + "/"))
-      ) {
-        conflicts.push(file);
         continue;
       }
       files[file] = merged.bytes;

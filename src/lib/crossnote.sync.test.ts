@@ -429,17 +429,35 @@ it("only fills missing blob entries when staging a fast-forward checkout", async
     await git.remove({ ...args, filepath: "README.md" });
     await git.remove({ ...args, filepath: "assets/a.bin" });
   });
-  const add = vi.spyOn(git, "add");
+  const updates = vi.spyOn(git, "updateIndex");
   await app.pullNotebook({ notebook });
-  const staged = add.mock.calls.map(([options]) => options.filepath);
-  expect(staged).toHaveLength(1);
-  expect(staged[0]).toEqual(
-    expect.arrayContaining(["README.md", "assets/a.bin"]),
-  );
-  expect(staged[0]).toHaveLength(2);
+  expect(
+    updates.mock.calls.map(([options]) => options.filepath).sort(),
+  ).toEqual(["README.md", "assets/a.bin"]);
   expect(await git.listFiles(args)).toEqual(
     await git.listFiles({ ...args, ref: theirs }),
   );
+});
+
+it("restores the committed index entry for an ignored local edit outside the checkout", async () => {
+  const { app, notebook, theirs, read } = await repository(
+    { "incoming.md": bytes("Incoming") },
+    { ".gitignore": bytes("assets/a.bin\n") },
+  );
+  const args = { fs, dir: notebook.dir };
+  const file = "assets/a.bin";
+  await pfs.writeFile(notebook.dir + "/" + file, changed);
+  await git.add({ ...args, filepath: file, force: true });
+  await app.pullNotebook({ notebook });
+  expect(await git.resolveRef({ ...args, ref: "HEAD" })).toBe(theirs);
+  expect(
+    await git.walk({
+      ...args,
+      trees: [git.STAGE()],
+      map: async (name, [entry]) => (name === file ? entry.oid() : undefined),
+    }),
+  ).toEqual([(await git.hashBlob({ object: binary })).oid]);
+  expect(await read(file)).toEqual([...changed]);
 });
 
 it("records an empty remote check and lets a manual pull retry immediately", async () => {
@@ -531,14 +549,12 @@ it("pulls a first commit into an empty clone with a staged local note", async ()
     fetchHeadDescription: "master",
     defaultBranch: "master",
   });
-  const write = pfs.writeFile.bind(pfs);
-  const interrupt = vi
-    .spyOn(pfs, "writeFile")
-    .mockImplementation(async (file, data) => {
-      if (file === `${notebook.dir}/nested/local.md`)
-        throw new Error("Interrupted first pull");
-      return write(file, data);
-    });
+  const add = git.add;
+  const interrupt = vi.spyOn(git, "add").mockImplementation(async (options) => {
+    if (options.filepath === "nested/local.md")
+      throw new Error("Interrupted first pull");
+    return add(options);
+  });
   await expect(app.pullNotebook({ notebook })).rejects.toThrow(
     "Interrupted first pull",
   );
@@ -748,6 +764,88 @@ it("preserves equal-sized edits made in the same second as checkout", async () =
   await app.pullNotebook({ notebook });
   expect(await read("assets/a.bin")).toEqual([...ours]);
 });
+
+it.each(
+  ["file to directory", "directory to file"].flatMap((shape) =>
+    ["download", "upload", "remote edit"].map((operation) => ({
+      shape,
+      operation,
+    })),
+  ),
+)(
+  "preserves a local $shape change during $operation",
+  async ({ shape, operation }) => {
+    const directory = shape === "file to directory";
+    const original = directory ? "removed.txt" : "assets/a.bin";
+    const local = directory ? "removed.txt/note.md" : "assets";
+    const ignored = directory ? "removed.txt/chart.local" : "chart.local";
+    const upstream = operation === "remote edit";
+    const { app, notebook, base, theirs, read } = await repository(
+      {
+        "incoming.md": bytes("Incoming note"),
+        ...(upstream ? { [original]: bytes("Changed upstream") } : {}),
+      },
+      { ".gitignore": bytes("*.local\n") },
+    );
+    const args = { fs, dir: notebook.dir };
+    await pfs.unlink(notebook.dir + "/" + original);
+    if (!directory) await pfs.rmdir(notebook.dir + "/assets");
+    await pfs.writeFile(notebook.dir + "/" + local, "Local note");
+    await pfs.writeFile(notebook.dir + "/" + ignored, "Local color chart");
+    const modified = (await pfs.stats(notebook.dir + "/" + ignored)).mtimeMs;
+    const indexBefore = await read(".git/index");
+    const push = vi
+      .spyOn(git, "push")
+      .mockResolvedValue({ ok: true, error: null, refs: {} });
+    if (upstream) {
+      await expect(app.pullNotebook({ notebook })).rejects.toMatchObject({
+        files: expect.arrayContaining([original]),
+      });
+      expect(await git.resolveRef({ ...args, ref: "HEAD" })).toBe(base);
+      expect(await read(".git/index")).toEqual(indexBefore);
+      expect(await pfs.exists(notebook.dir + "/incoming.md")).toBe(false);
+      expect(push).not.toHaveBeenCalled();
+    } else {
+      if (operation === "download") {
+        await app.pullNotebook({ notebook });
+        expect(await git.resolveRef({ ...args, ref: "HEAD" })).toBe(theirs);
+        const index = await git.listFiles(args);
+        expect(index).toContain(local);
+        expect(index).not.toContain(original);
+        expect(index).not.toContain(ignored);
+      }
+      await app.pushNotebook({ notebook });
+      expect(push).toHaveBeenCalledOnce();
+      expect(
+        (await git.readCommit({ ...args, oid: notebook.remoteSha })).commit
+          .parent,
+      ).toEqual([theirs]);
+      const committed = await git.listFiles({
+        ...args,
+        ref: notebook.remoteSha,
+      });
+      expect(committed).toContain(local);
+      expect(committed).not.toContain(original);
+      expect(committed).not.toContain(ignored);
+      expect([
+        ...(
+          await git.readBlob({
+            ...args,
+            oid: notebook.remoteSha,
+            filepath: local,
+          })
+        ).blob,
+      ]).toEqual([...bytes("Local note")]);
+      expect(await read("incoming.md")).toEqual([...bytes("Incoming note")]);
+    }
+    expect(await read(local)).toEqual([...bytes("Local note")]);
+    expect(await read(ignored)).toEqual([...bytes("Local color chart")]);
+    expect((await pfs.stats(notebook.dir + "/" + ignored)).mtimeMs).toBe(
+      modified,
+    );
+    expect(await recovery.readPullRecovery(notebook._id)).toBeUndefined();
+  },
+);
 
 it.each([false, true])(
   "handles an incoming file in an existing ignored directory (same path: %s)",
@@ -1486,7 +1584,9 @@ it.each([0, 8])(
     const checkout = vi.spyOn(git, "checkout");
     await app.pullNotebook({ notebook });
     expect(checkout.mock.calls).toHaveLength(1);
-    expect(checkout.mock.calls[0][0].filepaths).toBeUndefined();
+    expect(checkout.mock.calls[0][0].filepaths?.sort()).toEqual(
+      [...files.map((entry) => entry.path), next.path, another.path].sort(),
+    );
     const index = await parentGitTree(notebook.dir);
     expect(index.links).toEqual(
       new Map([
@@ -1650,9 +1750,15 @@ it("lists the current branch after waiting for an interrupted download", async (
   });
   const listing = app.listNotebooks();
   await waiting;
-  vi.spyOn(git, "checkout").mockRejectedValueOnce(
-    new Error("Interrupted checkout"),
-  );
+  const checkout = git.checkout;
+  let interrupted = false;
+  vi.spyOn(git, "checkout").mockImplementation(async (options) => {
+    if (options.dir === notebook.dir && !interrupted) {
+      interrupted = true;
+      throw new Error("Interrupted checkout");
+    }
+    return checkout(options);
+  });
   const failure = expect(pull).rejects.toThrow("Interrupted checkout");
   resume();
   await failure;
