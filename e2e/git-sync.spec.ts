@@ -772,6 +772,7 @@ test("keeps an overlapping Markdown edit and stops before installing other remot
   const remote = await createRemote(request, {
     "A.md": bytes("One\n"),
     "B.md": bytes("Two\n"),
+    "alias": { symlink: "A.md" },
   });
   await app.open();
   const dir = await cloneRemote(app, remote);
@@ -799,6 +800,14 @@ test("keeps an overlapping Markdown edit and stops before installing other remot
   expect(await localBytes(page, `${dir}/B.md`)).toEqual(ours);
   expect(await localBytes(page, `${dir}/A.md`)).toEqual(bytes("One\n"));
   expect(await app.storedText(`${dir}/.git/index`)).toBeUndefined();
+  await localBytes(page, `${dir}/B.md`, bytes("Two\n"));
+  await download(app, remote);
+  expect(await localBytes(page, `${dir}/B.md`)).toEqual(
+    bytes("Remote version\n"),
+  );
+  expect(await indexEntries(page, `${dir}/.git/index`)).toContainEqual(
+    expect.objectContaining({ name: "alias", mode: "120000" }),
+  );
 });
 
 test("opens and uploads a notebook with untouched legacy pull records", async ({

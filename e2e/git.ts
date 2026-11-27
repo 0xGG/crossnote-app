@@ -44,7 +44,7 @@ export async function expectNoCheckoutWrites(
       const relative = path.slice(dir.length + 1);
       return (
         !relative.startsWith(".git/") ||
-        /^\.git\/(?:HEAD(?:\.lock)?|index(?:\.lock)?|refs\/heads\/.*)$/.test(
+        /^\.git\/(?:HEAD(?:\.lock)?|index(?:\.lock|\.crossnote-rebuild)?|refs\/heads\/.*)$/.test(
           relative,
         )
       );
