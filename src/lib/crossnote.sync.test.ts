@@ -4355,6 +4355,74 @@ it.each(["new plan", "saved plan", "legacy plan", "already ignored"])(
   },
 );
 
+it("keeps generated recovery markers out of upload notices alongside user ignore files", async () => {
+  const userRules = ".crossnote-recovered/.gitignore";
+  const original = "assets/sample.local";
+  const { app, notebook, base, read } = await repository(
+    {},
+    {
+      ".gitignore": bytes("*.local\n"),
+      "catalog.rules": bytes(`*.local\n${userRules}\n`),
+    },
+  );
+  const args = { fs, dir: notebook.dir };
+  const { tree } = await git.readTree({ ...args, oid: base });
+  const link = await git.writeBlob({ ...args, blob: bytes("catalog.rules") });
+  const asset = await git.writeBlob({ ...args, blob: bytes("Catalog entry") });
+  const remote = await git.commit({
+    ...args,
+    author,
+    noUpdateBranch: true,
+    message: "Use the color catalog",
+    tree: await git.writeTree({
+      ...args,
+      tree: tree.map((entry) => {
+        if (entry.path === ".gitignore")
+          return { ...entry, mode: "120000", oid: link };
+        if (entry.path === "assets")
+          return { ...entry, mode: "100644", type: "blob", oid: asset };
+        return entry;
+      }),
+    }),
+  });
+  vi.mocked(git.fetch).mockResolvedValue({ ...emptyRemote, fetchHead: remote });
+  await pfs.writeFile(`${notebook.dir}/${original}`, "Local sample");
+  await pfs.writeFile(`${notebook.dir}/${userRules}`, "# Pencil colors\n");
+  await git.add({ ...args, filepath: userRules });
+  // Earlier planners saved the generated marker and copy with an empty candidate list.
+  const save = recovery.savePullRecovery;
+  vi.spyOn(recovery, "savePullRecovery").mockImplementationOnce(
+    async (id, plan) => {
+      await save(id, { ...plan, uploadCandidates: [] });
+      throw new Error("Stopped after saving the plan");
+    },
+  );
+  await expect(app.pullNotebook({ notebook })).rejects.toThrow(
+    "Stopped after saving the plan",
+  );
+  const plan = (await recovery.readPullRecovery(notebook._id))!;
+  const copy = (plan.relocated as Record<string, string>)[original];
+  const marker = ".crossnote-recovered-1/.gitignore";
+  expect(plan.files[marker]).toEqual(bytes("# Crossnote recovered files\n*\n"));
+  await expect(app.resumeNotebook(notebook)).rejects.toMatchObject({
+    files: expect.arrayContaining([original, copy]),
+  });
+  expect(await git.resolveRef({ ...args, ref: "HEAD" })).toBe(remote);
+  expect(await read(copy)).toEqual([...bytes("Local sample")]);
+  expect(await read(marker)).toEqual([...plan.files[marker]!]);
+  expect(await read(userRules)).toEqual([...bytes("# Pencil colors\n")]);
+  const tracked = await git.listFiles(args);
+  for (const file of [copy, marker, userRules])
+    expect(tracked).not.toContain(file);
+  expect(
+    (await app["notebookDB"].get(notebook._id)).blockedUploadPaths,
+  ).toEqual([userRules]);
+  await pfs.unlink(`${notebook.dir}/${userRules}`);
+  expect(
+    (await app.pullNotebook({ notebook })).ignoredUploadFile,
+  ).toBeUndefined();
+});
+
 it("checks merged ignore rules together with local nested exceptions before checkout", async () => {
   const baseRules = "# local rules\n# spacer\n# remote rules\n*.txt\n";
   const localRules = baseRules.replace("# local rules", "assets/*");

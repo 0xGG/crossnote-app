@@ -1520,12 +1520,27 @@ export default class Crossnote {
       }
     }
     const existingCandidates = new Set(recovery.uploadCandidates);
-    if (
-      needsLegacyCandidates ||
-      recoveredCandidates.some((file) => !existingCandidates.has(file))
-    ) {
+    const isGeneratedMarker = (file: string) => {
+      const directory = path.dirname(file);
+      return (
+        path.basename(file) === ".gitignore" &&
+        recoveryDirectoryName.test(directory) &&
+        sameBytes(files[file], new TextEncoder().encode(recoveredMarker)) &&
+        !Array.isArray(moves) &&
+        Object.values(moves).some(
+          (copy) =>
+            copy !== file &&
+            path.dirname(copy) === directory &&
+            files[copy] != null,
+        )
+      );
+    };
+    const additions = recoveredCandidates.filter(
+      (file) => !existingCandidates.has(file) && !isGeneratedMarker(file),
+    );
+    if (needsLegacyCandidates || additions.length) {
       recovery.uploadCandidates = [
-        ...new Set([...existingCandidates, ...recoveredCandidates]),
+        ...new Set([...existingCandidates, ...additions]),
       ];
       await savePullRecovery(notebook._id, recovery);
     }
