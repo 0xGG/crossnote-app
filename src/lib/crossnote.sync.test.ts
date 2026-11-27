@@ -3049,23 +3049,27 @@ it.each(["pull", "upload"])(
   },
 );
 
-it.each([false, true])(
-  "preserves a staged mode change below an incoming pointer (committed symlink: %s)",
-  async (wasLink) => {
+it.each([
+  [0o100644, 0o120000],
+  [0o120000, 0o100644],
+  [0o100644, 0o100755],
+  [0o100755, 0o100644],
+])(
+  "preserves a staged mode change below an incoming pointer (%i to %i)",
+  async (headMode, stagedMode) => {
     const filepath = "vendor/alias.md";
     const target = bytes("../README.md");
     const { app, notebook, args, base, incoming, pointer, read } =
       await incomingSubmodule({ [filepath]: target });
     const oid = (await git.hashBlob({ object: target })).oid;
-    const headMode = wasLink ? 0o120000 : 0o100644;
     let local = base;
     let remote = incoming;
-    if (wasLink) {
+    if (headMode !== 0o100644) {
       await git.updateIndex({ ...args, filepath, oid, mode: headMode });
       local = await git.commit({
         ...args,
         author,
-        message: "Track the alias as a link",
+        message: "Track the original file mode",
       });
       const { commit } = await git.readCommit({ ...args, oid: incoming });
       remote = await git.commit({
@@ -3085,7 +3089,7 @@ it.each([false, true])(
       ...args,
       filepath,
       oid,
-      mode: wasLink ? 0o100644 : 0o120000,
+      mode: stagedMode,
     });
     const index = await read(".git/index");
     await expect(app.pullNotebook({ notebook })).rejects.toMatchObject({

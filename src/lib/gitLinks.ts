@@ -5,16 +5,24 @@ import { NotebookConflictError } from "./mergeFiles";
 
 // Gitlinks are leaves of a parent repository even when their directories
 // contain a populated checkout. Read their identity from Git, never from disk.
+// Only retain blob modes and OIDs for the paths selected by the caller.
 export async function parentGitTree(
   dir: string,
   ref?: string,
   cache = {},
-  filepath?: string,
+  {
+    filepath,
+    includeBlob,
+  }: {
+    filepath?: string;
+    includeBlob?: (file: string) => boolean;
+  } = {},
 ) {
+  const blobs = new Map<string, { mode: number; oid: string }>();
   const links = new Map<string, string>();
   const files = new Set<string>();
   const symlinks = new Map<string, string>();
-  if (ref === "") return { links, files, symlinks };
+  if (ref === "") return { links, files, symlinks, blobs };
   await git.walk({
     fs,
     dir,
@@ -30,12 +38,16 @@ export async function parentGitTree(
         return null;
       const type = await entry.type();
       if (type === "commit") links.set(file, await entry.oid());
-      if (type === "blob" && (await entry.mode()) === 0o120000)
-        symlinks.set(file, await entry.oid());
+      if (type === "blob") {
+        const mode = await entry.mode();
+        if (mode === 0o120000) symlinks.set(file, await entry.oid());
+        if (includeBlob?.(file))
+          blobs.set(file, { mode, oid: await entry.oid() });
+      }
       if (type !== "tree") files.add(file);
     },
   });
-  return { links, files, symlinks };
+  return { links, files, symlinks, blobs };
 }
 
 export async function gitLinks(
@@ -44,7 +56,7 @@ export async function gitLinks(
   cache = {},
   filepath?: string,
 ) {
-  return (await parentGitTree(dir, ref, cache, filepath)).links;
+  return (await parentGitTree(dir, ref, cache, { filepath })).links;
 }
 
 export function isWithinGitLink(

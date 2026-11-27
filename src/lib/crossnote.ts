@@ -728,29 +728,9 @@ export default class Crossnote {
           cache[file] = null;
       }
     }
-    const incomingDirectories = new Set<string>();
-    for (const link of incomingLinks?.keys() ?? []) {
-      for (
-        let dir = path.dirname(link);
-        dir !== "." && !incomingDirectories.has(dir);
-        dir = path.dirname(dir)
-      )
-        incomingDirectories.add(dir);
-    }
     for (const [file, head, work, stage] of rows) {
-      const withinLink = isWithinGitLink(file, links);
       if (stage !== head) checkReplayPath(file, symlinks.remote);
-      // Checkout needs directories above a pointer and cannot retain a staged
-      // blob at those paths, at the pointer itself, or below it.
-      if (
-        incomingLinks &&
-        stage &&
-        (withinLink || incomingDirectories.has(file)) &&
-        (stage !== head ||
-          symlinks.head.has(file) !== symlinks.staged.has(file))
-      )
-        throw new NotebookConflictError([file]);
-      if (withinLink) continue;
+      if (isWithinGitLink(file, links)) continue;
       // When checkout is skipped the old index still exists. An upload must
       // stage the current working bytes even if an earlier edit was undone.
       const indexMatches = !includeStaged || head === stage;
@@ -1627,20 +1607,39 @@ export default class Crossnote {
     if (localSha && !(await descendsFrom(remoteSha, localSha)))
       throw new Error("error/notebook-history-diverged");
     const {
-      files: baseFiles,
-      links: baseLinks,
-      symlinks: headSymlinks,
-    } = await parentGitTree(notebook.dir, localSha, args.cache);
-    const {
       files: remoteFiles,
       links: remoteLinks,
       symlinks: remoteSymlinks,
     } = await parentGitTree(notebook.dir, remoteSha, args.cache);
+    const incomingDirectories = new Set<string>();
+    for (const link of remoteLinks.keys()) {
+      for (
+        let dir = path.dirname(link);
+        dir !== "." && !incomingDirectories.has(dir);
+        dir = path.dirname(dir)
+      )
+        incomingDirectories.add(dir);
+    }
+    const includeBlob = remoteLinks.size
+      ? (file: string) =>
+          incomingDirectories.has(file) || isWithinGitLink(file, remoteLinks)
+      : undefined;
+    const {
+      files: baseFiles,
+      links: baseLinks,
+      symlinks: headSymlinks,
+      blobs: baseBlobs,
+    } = await parentGitTree(notebook.dir, localSha, args.cache, {
+      includeBlob,
+    });
     const {
       links: stagedLinks,
       files: stagedFiles,
       symlinks: stagedSymlinks,
-    } = await parentGitTree(notebook.dir, undefined, args.cache);
+      blobs: stagedBlobs,
+    } = await parentGitTree(notebook.dir, undefined, args.cache, {
+      includeBlob,
+    });
     const previousLinks = new Map([...baseLinks, ...stagedLinks]);
     if (previousLinks.size) {
       // After repairing a missing index, an absent pointer is a staged deletion.
@@ -1669,6 +1668,13 @@ export default class Crossnote {
       remoteLinks,
       new Set([...baseFiles, ...stagedFiles]),
     );
+    // Checkout displaces a blob at, above, or below an incoming pointer.
+    // statusMatrix compares blob IDs alone, so compare the Git modes here too.
+    for (const [file, staged] of stagedBlobs) {
+      const base = baseBlobs.get(file);
+      if (base?.mode !== staged.mode || base.oid !== staged.oid)
+        throw new NotebookConflictError([file]);
+    }
     const remoteRoots = new Set(
       [...remoteFiles].map((file) => file.split("/")[0]),
     );
