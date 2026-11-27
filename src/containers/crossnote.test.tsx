@@ -1417,6 +1417,47 @@ it("keeps the open notebook when an upload stops at conflict preflight", async (
   expect(refresh).not.toHaveBeenCalled();
 });
 
+it("refreshes the recovered notebook while a conflicting editor draft stays pending", async () => {
+  const pull = vi.fn();
+  const notebook = await notebookAt("/notebooks/resume-with-draft", {
+    resumeNotebook: async () => {
+      await pfs.writeFile(notebook.dir + "/clean.md", "Recovered clean note");
+      await pfs.writeFile(notebook.dir + "/draft.md", "Recovered file");
+      return true;
+    },
+    pullNotebook: pull,
+  });
+  await pfs.writeFile(notebook.dir + "/clean.md", "Old clean note");
+  await pfs.writeFile(notebook.dir + "/draft.md", "Draft");
+  await notebook.refreshNotes({ dir: "./", includeSubdirectories: true });
+  const { open, type, close } = openForTyping(notebook, "draft.md", "Draft");
+  const refreshed = vi.fn();
+  globalEmitter.on(EventType.PerformedGitOperation, refreshed);
+  try {
+    type(" still editing");
+    await act(async () => {
+      await expect(crossnote.pullNotebook({ notebook })).rejects.toBeInstanceOf(
+        NotesNotSavedError,
+      );
+    });
+    expect(pull).not.toHaveBeenCalled();
+    expect(refreshed).toHaveBeenCalledWith({
+      notebookPath: notebook.dir,
+      preservePendingEdits: true,
+    });
+    expect((await notebook.getNote("clean.md")).markdown).toBe(
+      "Recovered clean note",
+    );
+    expect(open.document.text()).toBe("Draft still editing");
+    expect(open.saver.pending).toBe(true);
+    expect(await read(notebook, "draft.md")).toBe("Recovered file");
+  } finally {
+    globalEmitter.off(EventType.PerformedGitOperation, refreshed);
+    open.saver.discard();
+    close();
+  }
+});
+
 it("saves input before refreshing editors after upload stops for an ignored file", async () => {
   const error = new IgnoredUploadFileError("draft.md");
   let reach!: () => void;

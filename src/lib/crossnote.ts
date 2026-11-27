@@ -1110,10 +1110,12 @@ export default class Crossnote {
     needsRecovery(notebook.dir, false);
   }
 
-  public async resumeNotebook(notebook: Notebook): Promise<void> {
-    await notebookOperation(notebook.dir, async () => {
+  public resumeNotebook(notebook: Notebook): Promise<boolean> {
+    return notebookOperation(notebook.dir, async () => {
       const pending = await this.pendingPull(notebook);
-      if (pending) await this.finishPull(notebook, pending);
+      if (!pending) return false;
+      await this.finishPull(notebook, pending);
+      return true;
     });
   }
 

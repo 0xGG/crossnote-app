@@ -776,6 +776,46 @@ function useCrossnoteContainer(initialState: InitialState) {
     [crossnote, layoutModel, closeTabNode],
   );
 
+  // Reads a notebook's notes again from disk, and has its open editors take
+  // them.
+  const readNotebookAgain = useCallback(
+    async (
+      notebook: Notebook,
+      { requireDirectory = false, preservePendingEdits = false } = {},
+    ) => {
+      await notebook.refreshNotes({
+        dir: "./",
+        includeSubdirectories: true,
+        requireDirectory,
+      });
+      globalEmitter.emit(EventType.PerformedGitOperation, {
+        notebookPath: notebook.dir,
+        preservePendingEdits,
+      });
+    },
+    [],
+  );
+
+  const refreshAfterGit = useCallback(
+    async (notebook: Notebook, refreshAfterFailedSave = true) => {
+      try {
+        await flushNotes({ notebookPath: notebook.dir });
+      } catch (error) {
+        if (refreshAfterFailedSave)
+          await readNotebookAgain(notebook, {
+            requireDirectory: true,
+            preservePendingEdits: true,
+          }).catch(console.error);
+        throw error;
+      }
+      await readNotebookAgain(notebook, {
+        requireDirectory: true,
+        preservePendingEdits: true,
+      });
+    },
+    [readNotebookAgain],
+  );
+
   // Writes out what the editors open in a notebook, or on one note of it,
   // hold, before git or a read from disk changes notes under them: where it
   // changed a note, the notebook read again afterwards puts the note as it
@@ -789,7 +829,13 @@ function useCrossnoteContainer(initialState: InitialState) {
     ) => {
       try {
         const notebook = getNotebookAtPath(where.notebookPath);
-        const ready = notebook && crossnote?.resumeNotebook?.(notebook);
+        const ready =
+          notebook &&
+          crossnote?.resumeNotebook?.(notebook).then(async (resumed) => {
+            // The previous download has already changed disk, even if the next
+            // operation stops before changing anything.
+            if (resumed) await refreshAfterGit(notebook);
+          });
         if (includeAttachments)
           await flushNotebookEdits(where.notebookPath, where.filePath, ready);
         else {
@@ -825,44 +871,7 @@ function useCrossnoteContainer(initialState: InitialState) {
         throw notSaved;
       }
     },
-    [crossnote, getNotebookAtPath],
-  );
-
-  // Reads a notebook's notes again from disk, and has its open editors take
-  // them.
-  const readNotebookAgain = useCallback(
-    async (
-      notebook: Notebook,
-      { requireDirectory = false, preservePendingEdits = false } = {},
-    ) => {
-      await notebook.refreshNotes({
-        dir: "./",
-        includeSubdirectories: true,
-        requireDirectory,
-      });
-      globalEmitter.emit(EventType.PerformedGitOperation, {
-        notebookPath: notebook.dir,
-        preservePendingEdits,
-      });
-    },
-    [],
-  );
-
-  const refreshAfterGit = useCallback(
-    async (notebook: Notebook, refreshAfterFailedSave = true) => {
-      try {
-        await flushNotes({ notebookPath: notebook.dir });
-      } catch (error) {
-        if (refreshAfterFailedSave)
-          await readNotebookAgain(notebook, {
-            requireDirectory: true,
-            preservePendingEdits: true,
-          }).catch(console.error);
-        throw error;
-      }
-      await readNotebookAgain(notebook, { requireDirectory: true });
-    },
-    [readNotebookAgain],
+    [crossnote, getNotebookAtPath, refreshAfterGit],
   );
 
   const refreshNotebook = useCallback(
