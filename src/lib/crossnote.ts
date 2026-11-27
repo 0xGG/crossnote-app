@@ -982,15 +982,37 @@ export default class Crossnote {
 
     await pfs.writeFile(path.resolve(notebook.dir, ".git", ref), sha);
     const replacing = new Set(filepaths ?? target.files);
-    const resetPaths = (await git.listFiles(args)).filter(
+    const indexed = new Set(await git.listFiles(args));
+    const resetPaths = [...indexed].filter(
       (file) => replacing.has(file) || !target.files.has(file),
     );
+    // Checkout batches missing entries when an existing regular file already
+    // has the target bytes and mode. Leave all other local paths untouched.
+    for (const [file, { mode, oid }] of target.blobs) {
+      if (
+        indexed.has(file) ||
+        replacing.has(file) ||
+        (mode !== 0o100644 && mode !== 0o100755)
+      )
+        continue;
+      const entry = await workingEntry(notebook.dir, file);
+      if (
+        entry?.relative !== file ||
+        !entry.stats.isFile() ||
+        Boolean(entry.stats.mode & 0o111) !== (mode === 0o100755)
+      )
+        continue;
+      const object = (await pfs.readFile(
+        this.checkedPath(notebook, file),
+      )) as Uint8Array;
+      if ((await git.hashBlob({ object })).oid === oid) replacing.add(file);
+    }
     if (resetPaths.length) await git.remove({ ...args, filepath: resetPaths });
     await git.checkout({
       ...args,
       ref,
       force,
-      filepaths,
+      filepaths: filepaths && [...replacing],
       fs: parentWorkingFs(notebook.dir, links),
     });
     for (const [filepath, oid] of links) {

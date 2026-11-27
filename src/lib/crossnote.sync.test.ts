@@ -460,6 +460,38 @@ it("restores the committed index entry for an ignored local edit outside the che
   expect(await read(file)).toEqual([...changed]);
 });
 
+it("rebuilds matching entries in one checkout when a download starts without an index", async () => {
+  const pages = Object.fromEntries(
+    Array.from({ length: 16 }, (_, i) => [
+      `notes/${i}.md`,
+      bytes("Pencil chart " + i),
+    ]),
+  );
+  const { app, notebook, theirs, read } = await repository(
+    { "incoming.md": bytes("Incoming note") },
+    pages,
+  );
+  const args = { fs, dir: notebook.dir };
+  const draft = "notes/0.md";
+  await pfs.writeFile(notebook.dir + "/" + draft, "Edited chart");
+  const unchanged = notebook.dir + "/notes/1.md";
+  const modified = (await pfs.stats(unchanged)).mtimeMs;
+  await pfs.unlink(notebook.dir + "/.git/index");
+  const checkout = vi.spyOn(git, "checkout");
+  const update = vi.spyOn(git, "updateIndex");
+  await app.pullNotebook({ notebook });
+  expect(await git.resolveRef({ ...args, ref: "HEAD" })).toBe(theirs);
+  expect(await git.listFiles(args)).toEqual(
+    await git.listFiles({ ...args, ref: theirs }),
+  );
+  expect(await read(draft)).toEqual([...bytes("Edited chart")]);
+  expect((await pfs.stats(unchanged)).mtimeMs).toBe(modified);
+  expect(checkout).toHaveBeenCalledOnce();
+  expect(update.mock.calls.map(([options]) => options.filepath)).toEqual([
+    draft,
+  ]);
+});
+
 it("records an empty remote check and lets a manual pull retry immediately", async () => {
   const { app, notebook, base, theirs, read } = await repository({
     "new.md": bytes("remote"),
