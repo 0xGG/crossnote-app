@@ -1038,13 +1038,16 @@ export default class Crossnote {
   ): Promise<void> {
     // Remove old index entries before adding the children of a former file.
     // A directory or an ancestor file at a deleted path is the local replacement.
+    const deleted: string[] = [];
     for (const [file, bytes] of Object.entries(cache)) {
       if (bytes !== null) continue;
       const entry = await workingEntry(notebook.dir, file);
       if (entry?.relative === file && !entry.stats.isDirectory())
         await pfs.unlink(this.checkedPath(notebook, file));
-      await git.remove({ fs, dir: notebook.dir, filepath: file });
+      deleted.push(file);
     }
+    if (deleted.length)
+      await git.remove({ fs, dir: notebook.dir, filepath: deleted });
     for (const [file, bytes] of Object.entries(cache)) {
       if (bytes === null) continue;
       const target = this.checkedPath(notebook, file);

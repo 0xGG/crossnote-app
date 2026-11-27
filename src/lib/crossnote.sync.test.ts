@@ -941,6 +941,30 @@ it.each([false, true])(
   },
 );
 
+it("removes local deletions from the index together before staging a replacement directory", async () => {
+  const { app, notebook, read } = await repository({
+    "incoming.md": bytes("remote"),
+  });
+  const args = { fs, dir: notebook.dir };
+  const deleted = ["README.md", "removed.txt"];
+  for (const file of deleted) await pfs.unlink(`${notebook.dir}/${file}`);
+  await pfs.writeFile(`${notebook.dir}/removed.txt/local.md`, bytes("local"));
+  const remove = vi.spyOn(git, "remove");
+
+  await app.pullNotebook({ notebook });
+
+  expect(remove.mock.calls.map(([call]) => call.filepath)).toEqual([
+    expect.arrayContaining(deleted),
+  ]);
+  expect(await git.listFiles(args)).toEqual([
+    "assets/a.bin",
+    "incoming.md",
+    "removed.txt/local.md",
+  ]);
+  expect(await read("removed.txt/local.md")).toEqual([...bytes("local")]);
+  expect(await pfs.exists(`${notebook.dir}/README.md`)).toBe(false);
+});
+
 it("does not replay a local deletion over a remote directory", async () => {
   const { app, notebook, read } = await repository({
     "removed.txt": null,
