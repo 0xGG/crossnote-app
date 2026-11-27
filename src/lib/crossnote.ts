@@ -323,6 +323,7 @@ async function prepareUploadIndex(
   for (const [file, , work, index] of await git.statusMatrix({
     ...args,
     fs: parentWorkingFs(dir, links),
+    refresh: false,
   })) {
     if (
       work &&
@@ -686,7 +687,7 @@ export default class Crossnote {
     const cache: Cache = Object.create(null);
     const args = { fs, dir: notebook.dir, cache: gitCache };
     const links = new Set(incomingLinks?.keys());
-    const stagedBlobs: string[] = [];
+    const stagedModes = new Map<string, number>();
     if (includeStaged)
       await git.walk({
         ...args,
@@ -694,12 +695,14 @@ export default class Crossnote {
         map: async (file, [head, entry]) => {
           if ((await head?.mode()) === 0o120000)
             symlinks.head.set(file, await head.oid());
-          if ((await entry?.mode()) === 0o120000)
+          const stagedMode = await entry?.mode();
+          if (stagedMode === 0o120000)
             symlinks.staged.set(file, await entry.oid());
           const staged = await entry?.type();
           if (staged === "commit" || (await head?.type()) === "commit")
             links.add(file);
-          else if (staged === "blob") stagedBlobs.push(file);
+          else if (staged === "blob" && stagedMode !== undefined)
+            stagedModes.set(file, stagedMode);
         },
       });
     const rows = await git.statusMatrix({
@@ -707,10 +710,10 @@ export default class Crossnote {
       fs: parentWorkingFs(notebook.dir, links),
       refresh: false,
     });
-    if (stagedBlobs.length) {
+    if (stagedModes.size) {
       // A staged blob can be hidden by a restored working directory.
       const visible = new Set(rows.map(([file]) => file));
-      for (const file of stagedBlobs) {
+      for (const file of stagedModes.keys()) {
         if (visible.has(file) || isWithinGitLink(file, links)) continue;
         const target = this.checkedPath(notebook, file);
         if (
@@ -774,7 +777,15 @@ export default class Crossnote {
           oid: notebook.localSha,
           filepath: file,
         });
-        if (sameBytes(bytes, base.blob)) continue;
+        // statusMatrix compares OIDs. Stage a working chmod through the same
+        // ignore rules as a content edit instead of refreshing it into the index.
+        const indexedMode =
+          stagedModes.get(file) ?? trees?.base.blobs.get(file)?.mode;
+        const modeChanged =
+          stats?.isFile() &&
+          indexedMode !== undefined &&
+          regularGitMode(stats.mode) !== indexedMode;
+        if (!modeChanged && sameBytes(bytes, base.blob)) continue;
       }
       cache[file] = bytes;
       // Git reports the deleted children but skips the file replacing their directory.
@@ -1293,6 +1304,7 @@ export default class Crossnote {
     );
     // Checkout replaces the index. A staged edit can differ from the working
     // file as well as both commits, including when the working file is gone.
+    const stagedModeChanges: string[] = [];
     if (!missingIndex) {
       for (const file of trees.base.blobs.keys()) {
         if (stagedFiles.has(file) || isWithinGitLink(file, remoteLinks))
@@ -1303,10 +1315,9 @@ export default class Crossnote {
         cache[file] = null;
       }
       for (const [file, staged] of index.blobs) {
-        if (
-          sameGitBlob(staged, trees.base.blobs.get(file)) ||
-          sameGitBlob(staged, trees.target.blobs.get(file))
-        )
+        const base = trees.base.blobs.get(file);
+        const incoming = trees.target.blobs.get(file);
+        if (sameGitBlob(staged, base) || sameGitBlob(staged, incoming))
           continue;
         if ([...remoteLinks.keys()].some((link) => overlaps(link, file)))
           throw new NotebookConflictError([file]);
@@ -1326,6 +1337,8 @@ export default class Crossnote {
         if (staged.oid !== (await git.hashBlob({ object: local })).oid)
           throw new NotebookConflictError([file]);
         cache[file] = local;
+        if (base && staged.mode !== base.mode && staged.mode !== incoming?.mode)
+          stagedModeChanges.push(file);
       }
     }
     const isIgnored = ignoreCheck(notebook.dir);
@@ -1386,19 +1399,15 @@ export default class Crossnote {
       }
     }
     const files: Cache = Object.create(null);
-    const needsStaging: string[] = [];
     const deletions: ConflictDeletions = Object.create(null);
     for (const [file, ours] of Object.entries(cache)) {
       checkReplayPath(file, remoteSymlinks);
       this.checkedPath(notebook, file);
-      const base = trees.base.blobs.get(file);
-      const incoming = trees.target.blobs.get(file);
-      const theirs = await readListedBlob(args, incoming);
       const merged = mergeFile(
         file,
-        await readListedBlob(args, base),
+        await readListedBlob(args, trees.base.blobs.get(file)),
         ours,
-        theirs,
+        await readListedBlob(args, trees.target.blobs.get(file)),
       );
       if (merged.conflict === true) {
         conflicts.push(file);
@@ -1414,17 +1423,6 @@ export default class Crossnote {
         continue;
       }
       files[file] = merged.bytes;
-      // Checkout installs the incoming index. Only staged changes not already
-      // included in that result need a successful add after replay.
-      const staged = index.blobs.get(file);
-      if (
-        staged &&
-        ((staged.mode !== base?.mode && staged.mode !== incoming?.mode) ||
-          (staged.oid !== base?.oid &&
-            staged.oid !== incoming?.oid &&
-            !sameBytes(merged.bytes, theirs)))
-      )
-        needsStaging.push(file);
     }
     if (conflicts.length) throw new NotebookConflictError(conflicts, deletions);
     const recovery: PullRecovery = { version: 2, localSha, remoteSha, files };
@@ -1433,7 +1431,7 @@ export default class Crossnote {
       recovery,
       trees,
       previousLinks,
-      needsStaging,
+      stagedModeChanges,
     );
     // Recovery references the fetched commit and its objects. Persist their
     // directory entries before publishing a plan a new page must replay.
@@ -1449,7 +1447,7 @@ export default class Crossnote {
     recovery: PullRecovery,
     trees: Awaited<ReturnType<typeof readPullTrees>>,
     previousLinks: GitLinkPaths,
-    needsStaging: string[],
+    stagedModeChanges: string[],
   ): Promise<void> {
     const { files } = recovery;
     const { files: baseFiles, symlinks: headSymlinks } = trees.base;
@@ -1552,7 +1550,7 @@ export default class Crossnote {
     }
     const scopes = new Set(overrides.keys());
     const willBeIgnored = ignoreCheck(notebook.dir, overrides);
-    for (const file of needsStaging) {
+    for (const file of stagedModeChanges) {
       if ((await willBeIgnored(file)) !== false)
         throw new NotebookConflictError([file]);
     }

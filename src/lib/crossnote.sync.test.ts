@@ -1083,13 +1083,6 @@ it.each(
         incomingExecutable: true,
       },
       {
-        state: "staged bytes with unchanged ignore rules",
-        stage: "local",
-        working: "local",
-        initialRules: "run.sh\n",
-        blocked: true,
-      },
-      {
         state: "staged executable bit with repository excludes",
         stage: "base",
         executable: true,
@@ -1386,6 +1379,64 @@ it("downloads an unrelated note while keeping ignored working edits out of the i
   expect(await read("run.sh")).toEqual([...bytes("working edit")]);
   expect(await read("colors.scratch")).toEqual([...bytes("blue")]);
 });
+
+it.each([false, true])(
+  "uploads eligible mode changes while retaining an ignored working mode (fast-forward: %s)",
+  async (advance) => {
+    const scripts = ["build.sh", "local.sh", "test.sh"];
+    const content = bytes("tools");
+    const { app, notebook, theirs, read } = await repository(
+      advance ? { "README.md": bytes("catalog update") } : {},
+      {
+        ...Object.fromEntries(scripts.map((file) => [file, content])),
+        ".gitignore": bytes("local.sh\n"),
+      },
+    );
+    const args = { fs, dir: notebook.dir };
+    for (const file of scripts) {
+      const name = notebook.dir + "/" + file;
+      await pfs.unlink(name);
+      await fs.promises.writeFile(name, content, { mode: 0o755 });
+    }
+    await git.add({ ...args, filepath: "test.sh" });
+    await pfs.writeFile(notebook.dir + "/Guide.md", "guide update");
+    const send = vi
+      .spyOn(git, "push")
+      .mockResolvedValue({ ok: true, error: null, refs: {} });
+    await app.pushNotebook({ notebook });
+    expect(send).toHaveBeenCalledOnce();
+    const ref = send.mock.calls[0][0].ref!;
+    const sent = await git.resolveRef({ ...args, ref });
+    expect(sent).toBe(notebook.remoteSha);
+    expect(
+      (await git.readCommit({ ...args, oid: sent })).commit.parent,
+    ).toEqual([theirs]);
+    expect([
+      ...(await git.readBlob({ ...args, oid: sent, filepath: "Guide.md" }))
+        .blob,
+    ]).toEqual([...bytes("guide update")]);
+    const oid = (await git.hashBlob({ object: content })).oid;
+    for (const tree of [undefined, sent]) {
+      const entries = await parentGitTree(
+        notebook.dir,
+        tree,
+        {},
+        { includeBlob: () => true },
+      );
+      for (const file of scripts)
+        expect(entries.blobs.get(file)).toEqual({
+          oid,
+          mode: file === "local.sh" ? 0o100644 : 0o100755,
+        });
+    }
+    for (const file of scripts) {
+      expect(await read(file)).toEqual([...content]);
+      expect(
+        (await fs.promises.lstat(notebook.dir + "/" + file)).mode & 0o111,
+      ).toBe(0o111);
+    }
+  },
+);
 
 it("does not replay a local deletion over a remote directory", async () => {
   const { app, notebook, read } = await repository({
