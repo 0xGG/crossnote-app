@@ -278,13 +278,9 @@ const overlaps = (a: string, b: string) =>
 
 async function readListedBlob(
   args: { fs: typeof fs; dir: string; cache: object },
-  sha: string,
-  file: string,
-  listed: Set<string>,
+  entry: GitBlob | undefined,
 ): Promise<FileBytes> {
-  return listed.has(file)
-    ? (await git.readBlob({ ...args, oid: sha, filepath: file })).blob
-    : null;
+  return entry ? (await git.readBlob({ ...args, oid: entry.oid })).blob : null;
 }
 
 type ParentGitTree = Awaited<ReturnType<typeof parentGitTree>>;
@@ -1392,9 +1388,9 @@ export default class Crossnote {
       this.checkedPath(notebook, file);
       const merged = mergeFile(
         file,
-        await readListedBlob(args, localSha, file, baseFiles),
+        await readListedBlob(args, trees.base.blobs.get(file)),
         ours,
-        await readListedBlob(args, remoteSha, file, remoteFiles),
+        await readListedBlob(args, trees.target.blobs.get(file)),
       );
       if (merged.conflict === true) {
         conflicts.push(file);
@@ -1429,7 +1425,7 @@ export default class Crossnote {
     trees: Awaited<ReturnType<typeof readPullTrees>>,
     previousLinks: GitLinkPaths,
   ): Promise<void> {
-    const { localSha, remoteSha, files } = recovery;
+    const { files } = recovery;
     const { files: baseFiles, symlinks: headSymlinks } = trees.base;
     const {
       files: remoteFiles,
@@ -1476,13 +1472,19 @@ export default class Crossnote {
         return entry;
       };
       const target = await lookup(file, 0);
+      if (target !== null && remoteLinks.has(target)) return "";
       if (target === null || isWithinGitLink(target, remoteLinks)) return null;
       if (Object.hasOwn(files, target))
         return files[target] === null ? "" : decode(files[target]);
-      if (remoteFiles.has(target))
+      if (trees.target.blobs.has(target))
         return decode(
-          (await git.readBlob({ ...args, oid: remoteSha, filepath: target }))
-            .blob,
+          (
+            await git.readBlob({
+              ...args,
+              oid: recovery.remoteSha,
+              filepath: target,
+            })
+          ).blob,
         );
       // Checkout removes the old target, or installs a directory at it or
       // a regular file above it. The resulting path supplies no rules.
@@ -1498,7 +1500,10 @@ export default class Crossnote {
         : "";
     };
     const overrides = new Map<string, string | null>();
-    for (const file of new Set([...baseFiles, ...remoteFiles])) {
+    for (const file of new Set([
+      ...trees.base.blobs.keys(),
+      ...trees.target.blobs.keys(),
+    ])) {
       if (path.basename(file) !== ".gitignore") continue;
       const folder = path.dirname(file);
       if (remoteSymlinks.has(file)) {
@@ -1506,17 +1511,16 @@ export default class Crossnote {
         overrides.set(folder, await linkedRules(file));
         continue;
       }
-      const incoming = await readListedBlob(args, remoteSha, file, remoteFiles);
+      const incoming = trees.target.blobs.get(file);
       if (
         !headSymlinks.has(file) &&
-        sameBytes(
-          await readListedBlob(args, localSha, file, baseFiles),
-          incoming,
-        )
+        trees.base.blobs.get(file)?.oid === incoming?.oid
       )
         continue;
       this.checkedPath(notebook, file);
-      const planned = Object.hasOwn(files, file) ? files[file] : incoming;
+      const planned = Object.hasOwn(files, file)
+        ? files[file]
+        : await readListedBlob(args, incoming);
       // Match LightningFS's utf8 reads, including BOM handling.
       overrides.set(folder, planned === null ? "" : decode(planned));
     }
@@ -1540,7 +1544,7 @@ export default class Crossnote {
               (await willBeIgnored(file)) !== false &&
               !sameBytes(
                 files[file],
-                await readListedBlob(args, remoteSha, file, remoteFiles),
+                await readListedBlob(args, trees.target.blobs.get(file)),
               )
             )
               throw new NotebookConflictError([file]);

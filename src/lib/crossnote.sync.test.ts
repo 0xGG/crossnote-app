@@ -3470,6 +3470,152 @@ it.each([
   },
 );
 
+it.each([
+  "unchanged pointer",
+  "updated pointer",
+  "ordinary rules",
+  "matching ordinary rules",
+])("downloads a catalog with %s at .gitignore", async (state) => {
+  const { app, notebook, base: initial, read } = await repository();
+  const args = { fs, dir: notebook.dir };
+  const name = notebook.dir + "/.gitignore";
+  await pfs.mkdirp(name);
+  await git.updateIndex({
+    ...args,
+    filepath: ".gitignore",
+    mode: 0o160000,
+    oid: initial,
+    add: true,
+  });
+  const pointer = state.endsWith("pointer");
+  if (pointer) {
+    await fs.promises.symlink(
+      "../.gitignore",
+      notebook.dir + "/assets/.gitignore",
+    );
+    await git.add({ ...args, filepath: "assets/.gitignore" });
+    await pfs.writeFile(name + "/catalog.txt", "swatches");
+  }
+  const base = await git.commit({
+    ...args,
+    author,
+    message: "Add catalog pointer",
+  });
+  const swatch = "assets/colors.scratch";
+  await pfs.writeFile(notebook.dir + "/" + swatch, "blue");
+  const { tree } = await git.readTree({ ...args, oid: base });
+  const note = await git.writeBlob({
+    ...args,
+    blob: bytes("Catalog revision"),
+  });
+  const rule = await git.writeBlob({
+    ...args,
+    blob: bytes(
+      state === "matching ordinary rules" ? "*.scratch\n" : "# Palette\n",
+    ),
+  });
+  const remote = await git.commit({
+    ...args,
+    author,
+    noUpdateBranch: true,
+    message: "Update catalog",
+    tree: await git.writeTree({
+      ...args,
+      tree: tree.map((entry) => {
+        if (entry.path === "README.md") return { ...entry, oid: note };
+        if (entry.path !== ".gitignore") return entry;
+        if (pointer)
+          return {
+            ...entry,
+            oid: state === "unchanged pointer" ? initial : base,
+          };
+        return { path: entry.path, type: "blob", mode: "100644", oid: rule };
+      }),
+    }),
+  });
+  vi.mocked(git.fetch).mockResolvedValue({ ...emptyRemote, fetchHead: remote });
+  notebook.localSha = notebook.remoteSha = base;
+  await saveNotebookFixture(app, notebook);
+  const index = await read(".git/index");
+  const listing = vi.spyOn(fs.promises, "readdir");
+  if (state === "matching ordinary rules") {
+    await expect(app.pushNotebook({ notebook })).rejects.toMatchObject({
+      files: [swatch],
+    });
+    expect(await git.resolveRef({ ...args, ref: "HEAD" })).toBe(base);
+    expect(await read(".git/index")).toEqual(index);
+    expect(await read("README.md")).toEqual([...bytes("# Kept\n")]);
+  } else {
+    await app.pullNotebook({ notebook });
+    expect(await git.resolveRef({ ...args, ref: "HEAD" })).toBe(remote);
+    expect(await read("README.md")).toEqual([...bytes("Catalog revision")]);
+    if (pointer) {
+      expect(listing).not.toHaveBeenCalledWith(name);
+      expect((await parentGitTree(notebook.dir)).links.get(".gitignore")).toBe(
+        state === "unchanged pointer" ? initial : base,
+      );
+      expect(await read(".gitignore/catalog.txt")).toEqual([
+        ...bytes("swatches"),
+      ]);
+    } else expect(await read(".gitignore")).toEqual([...bytes("# Palette\n")]);
+  }
+  expect(await read(swatch)).toEqual([...bytes("blue")]);
+  expect(await recovery.readPullRecovery(notebook._id)).toBeUndefined();
+});
+
+it.each(["original rule file", "rule file removed locally"])(
+  "checks a catalog pointer replacing the .gitignore rule file (%s)",
+  async (state) => {
+    const { app, notebook, base, read } = await repository(
+      {},
+      {
+        ".gitignore": bytes("*.scratch\n"),
+        "assets/.gitignore": bytes("*.scratch\n"),
+      },
+    );
+    const args = { fs, dir: notebook.dir };
+    const { tree } = await git.readTree({ ...args, oid: base });
+    const remote = await git.commit({
+      ...args,
+      author,
+      noUpdateBranch: true,
+      message: "Catalog pointer",
+      tree: await git.writeTree({
+        ...args,
+        tree: tree.map((entry) =>
+          entry.path === ".gitignore"
+            ? { path: entry.path, mode: "160000", type: "commit", oid: base }
+            : entry,
+        ),
+      }),
+    });
+    vi.mocked(git.fetch).mockResolvedValue({
+      ...emptyRemote,
+      fetchHead: remote,
+    });
+    await pfs.writeFile(notebook.dir + "/assets/colors.scratch", "green");
+    if (state === "original rule file") {
+      const index = await read(".git/index");
+      await expect(app.pullNotebook({ notebook })).rejects.toMatchObject({
+        files: [".gitignore"],
+      });
+      expect(await git.resolveRef({ ...args, ref: "HEAD" })).toBe(base);
+      expect(await read(".git/index")).toEqual(index);
+      expect(await read(".gitignore")).toEqual([...bytes("*.scratch\n")]);
+    } else {
+      await pfs.unlink(notebook.dir + "/.gitignore");
+      await app.pullNotebook({ notebook });
+      expect(await git.resolveRef({ ...args, ref: "HEAD" })).toBe(remote);
+      expect((await parentGitTree(notebook.dir)).links.get(".gitignore")).toBe(
+        base,
+      );
+      expect(await git.listFiles(args)).not.toContain("assets/colors.scratch");
+    }
+    expect(await read("assets/colors.scratch")).toEqual([...bytes("green")]);
+    expect(await recovery.readPullRecovery(notebook._id)).toBeUndefined();
+  },
+);
+
 it("checks merged ignore rules together with local nested exceptions before checkout", async () => {
   const baseRules = "# local rules\n# spacer\n# remote rules\n*.txt\n";
   const localRules = baseRules.replace("# local rules", "assets/*");
