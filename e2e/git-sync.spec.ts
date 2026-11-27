@@ -1,3 +1,4 @@
+import type LightningFS from "@isomorphic-git/lightning-fs";
 import type { APIRequestContext, Page } from "@playwright/test";
 import { createHash } from "node:crypto";
 import type { CrossnoteApp } from "./crossnote";
@@ -875,6 +876,16 @@ test("keeps an overlapping Markdown edit and stops before installing other remot
   });
   await app.open();
   const dir = await cloneRemote(app, remote);
+  const aliasBlob = Buffer.from(await remoteBytes(request, remote, "alias"));
+  expect(aliasBlob).toEqual(Buffer.from("A.md"));
+  const workingTarget = await page.evaluate(
+    (file) =>
+      (
+        window as unknown as { pfs: { fs: LightningFS } }
+      ).pfs.fs.promises.readlink(file),
+    `${dir}/alias`,
+  );
+  expect(workingTarget).toBe("./A.md");
   const ours = bytes("My version\r\n");
   await localBytes(page, `${dir}/B.md`, ours);
   await page.evaluate(async (dir) => {
@@ -904,9 +915,14 @@ test("keeps an overlapping Markdown edit and stops before installing other remot
   expect(await localBytes(page, `${dir}/B.md`)).toEqual(
     bytes("Remote version\n"),
   );
-  expect(await indexEntries(page, `${dir}/.git/index`)).toContainEqual(
-    expect.objectContaining({ name: "alias", mode: "120000" }),
-  );
+  expect(await indexEntries(page, `${dir}/.git/index`)).toContainEqual({
+    name: "alias",
+    mode: "120000",
+    oid: createHash("sha1")
+      .update(`blob ${aliasBlob.length}\0`)
+      .update(aliasBlob)
+      .digest("hex"),
+  });
 });
 
 test("opens and uploads a notebook with untouched legacy pull records", async ({
