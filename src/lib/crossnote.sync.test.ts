@@ -122,46 +122,85 @@ const emptyRemote: git.FetchResult = {
   defaultBranch: null,
 };
 
-it("keeps staged regular bytes when the incoming path becomes a symlink", async () => {
-  const file = "Shortcut.md";
-  const { app, notebook, base, read } = await repository(
-    {},
-    { [file]: bytes("old note") },
-  );
-  const args = { fs, dir: notebook.dir };
-  const { tree } = await git.readTree({ ...args, oid: base });
-  const link = await git.writeBlob({ ...args, blob: bytes("README.md") });
-  const remote = await git.commit({
-    ...args,
-    author,
-    noUpdateBranch: true,
-    message: "Link the shortcut",
-    tree: await git.writeTree({
+it.each(["staged regular file", "matching link", "different working link"])(
+  "checks a %s when the incoming path becomes a symlink",
+  async (state) => {
+    const file = "Shortcut.md";
+    const { app, notebook, base, read } = await repository(
+      {},
+      { [file]: bytes("old note") },
+    );
+    const args = { fs, dir: notebook.dir };
+    const { tree } = await git.readTree({ ...args, oid: base });
+    const link = await git.writeBlob({ ...args, blob: bytes("README.md") });
+    const remote = await git.commit({
       ...args,
-      tree: tree.map((entry) =>
-        entry.path === file ? { ...entry, mode: "120000", oid: link } : entry,
-      ),
-    }),
-  });
-  vi.mocked(git.fetch).mockResolvedValue({ ...emptyRemote, fetchHead: remote });
-  await pfs.writeFile(notebook.dir + "/" + file, "local note");
-  await git.add({ ...args, filepath: file });
-  const index = await read(".git/index");
-  await expect(app.pullNotebook({ notebook })).rejects.toMatchObject({
-    files: [file],
-  });
-  expect(await recovery.readPullRecovery(notebook._id)).toBeUndefined();
-  expect(await read(".git/index")).toEqual(index);
-  expect(await read(file)).toEqual([...bytes("local note")]);
-  expect(await read("README.md")).toEqual([...bytes("# Kept\n")]);
+      author,
+      noUpdateBranch: true,
+      message: "Link the shortcut",
+      tree: await git.writeTree({
+        ...args,
+        tree: tree.map((entry) =>
+          entry.path === file ? { ...entry, mode: "120000", oid: link } : entry,
+        ),
+      }),
+    });
+    vi.mocked(git.fetch).mockResolvedValue({
+      ...emptyRemote,
+      fetchHead: remote,
+    });
+    if (state !== "staged regular file") {
+      const name = notebook.dir + "/" + file;
+      await pfs.unlink(name);
+      await fs.promises.symlink(
+        state === "matching link" ? "README.md" : "removed.txt",
+        name,
+      );
+      await git.updateIndex({
+        ...args,
+        filepath: file,
+        oid: link,
+        mode: 0o120000,
+        add: true,
+      });
+      const index = await read(".git/index");
+      if (state === "matching link") {
+        await app.pullNotebook({ notebook });
+        expect(await git.resolveRef({ ...args, ref: "HEAD" })).toBe(remote);
+        expect((await parentGitTree(notebook.dir)).symlinks.get(file)).toBe(
+          link,
+        );
+        expect(await fs.promises.readlink(name)).toBe("./README.md");
+      } else {
+        await expect(app.pullNotebook({ notebook })).rejects.toMatchObject({
+          files: [file],
+        });
+        expect(await git.resolveRef({ ...args, ref: "HEAD" })).toBe(base);
+        expect(await read(".git/index")).toEqual(index);
+        expect(await fs.promises.readlink(name)).toBe("./removed.txt");
+      }
+      expect(await recovery.readPullRecovery(notebook._id)).toBeUndefined();
+      return;
+    }
+    await pfs.writeFile(notebook.dir + "/" + file, "local note");
+    await git.add({ ...args, filepath: file });
+    const index = await read(".git/index");
+    await expect(app.pullNotebook({ notebook })).rejects.toMatchObject({
+      files: [file],
+    });
+    expect(await recovery.readPullRecovery(notebook._id)).toBeUndefined();
+    expect(await read(".git/index")).toEqual(index);
+    expect(await read(file)).toEqual([...bytes("local note")]);
+    expect(await read("README.md")).toEqual([...bytes("# Kept\n")]);
 
-  await pfs.writeFile(notebook.dir + "/" + file, "old note");
-  await expect(app.pullNotebook({ notebook })).rejects.toMatchObject({
-    files: [file],
-  });
-  expect(await read(".git/index")).toEqual(index);
-  expect(await read("README.md")).toEqual([...bytes("# Kept\n")]);
-});
+    await pfs.writeFile(notebook.dir + "/" + file, "old note");
+    await expect(app.pullNotebook({ notebook })).rejects.toMatchObject({
+      files: [file],
+    });
+    expect(await read(".git/index")).toEqual(index);
+    expect(await read("README.md")).toEqual([...bytes("# Kept\n")]);
+  },
+);
 
 it.each(["present", "missing", "staged deletion", "retargeted without index"])(
   "treats a tracked directory symlink as a leaf during a download (%s)",
@@ -963,6 +1002,203 @@ it("removes local deletions from the index together before staging a replacement
   ]);
   expect(await read("removed.txt/local.md")).toEqual([...bytes("local")]);
   expect(await pfs.exists(`${notebook.dir}/README.md`)).toBe(false);
+});
+
+it.each(
+  ["download", "upload"].flatMap((operation) =>
+    [
+      {
+        state: "staged mode only",
+        stage: "base",
+        executable: true,
+        working: "base",
+        blocked: true,
+      },
+      {
+        state: "incoming bytes with a different staged mode",
+        stage: "incoming",
+        executable: true,
+        working: "base",
+        incoming: "incoming",
+        blocked: true,
+      },
+      {
+        state: "working bytes with a different staged mode",
+        stage: "local",
+        executable: true,
+        working: "local",
+        blocked: true,
+      },
+      {
+        state: "matching working mode only",
+        stage: "base",
+        executable: true,
+        working: "base",
+        workingExecutable: true,
+      },
+      {
+        state: "matching working mode and bytes",
+        stage: "local",
+        executable: true,
+        working: "local",
+        workingExecutable: true,
+      },
+      {
+        state: "matching incoming mode and bytes",
+        stage: "incoming",
+        executable: true,
+        working: "base",
+        incoming: "incoming",
+        incomingExecutable: true,
+      },
+      {
+        state:
+          "a working executable bit changed independently of incoming bytes",
+        stage: "base",
+        working: "base",
+        workingExecutable: true,
+        incoming: "incoming",
+        blocked: true,
+      },
+      {
+        state: "index-only deletion",
+        stage: null,
+        working: "base",
+        blocked: true,
+      },
+      { state: "deleted working file", stage: null, working: null },
+      {
+        state: "missing whole index",
+        stage: null,
+        working: "base",
+        missing: true,
+      },
+    ].map((sample) => ({ ...sample, operation })),
+  ),
+)("checks $state before a fast-forward $operation", async (sample) => {
+  const name = "run.sh";
+  const { app, notebook, base, read } = await repository(
+    {},
+    { [name]: bytes("base") },
+  );
+  const args = { fs, dir: notebook.dir };
+  const target = notebook.dir + "/" + name;
+  const blob = (value: string) =>
+    git.writeBlob({ ...args, blob: bytes(value) });
+  const { tree } = await git.readTree({ ...args, oid: base });
+  const incomingText = sample.incoming ?? "base";
+  const incomingMode = sample.incomingExecutable ? 0o100755 : 0o100644;
+  const incoming = await git.commit({
+    ...args,
+    author,
+    noUpdateBranch: true,
+    message: "Update catalog",
+    tree: await git.writeTree({
+      ...args,
+      tree: await Promise.all(
+        tree.map(async (entry) =>
+          entry.path === name
+            ? {
+                ...entry,
+                mode: incomingMode.toString(8),
+                oid: await blob(incomingText),
+              }
+            : entry.path === "README.md"
+              ? { ...entry, oid: await blob("Incoming catalog") }
+              : entry,
+        ),
+      ),
+    }),
+  });
+  vi.mocked(git.fetch).mockResolvedValue({
+    ...emptyRemote,
+    fetchHead: incoming,
+  });
+  await pfs.unlink(target);
+  if (sample.working !== null)
+    await fs.promises.writeFile(target, bytes(sample.working), {
+      mode: sample.workingExecutable ? 0o755 : 0o644,
+    });
+  const stageMode = sample.executable ? 0o100755 : 0o100644;
+  if (sample.missing) await pfs.unlink(notebook.dir + "/.git/index");
+  else if (sample.stage === null) await git.remove({ ...args, filepath: name });
+  else
+    await git.updateIndex({
+      ...args,
+      filepath: name,
+      oid: await blob(sample.stage),
+      mode: stageMode,
+      add: true,
+    });
+  const entry = async () =>
+    (
+      await parentGitTree(
+        notebook.dir,
+        undefined,
+        {},
+        { includeBlob: (file) => file === name },
+      )
+    ).blobs.get(name);
+  const index = sample.missing ? null : await read(".git/index");
+  const push = vi
+    .spyOn(git, "push")
+    .mockResolvedValue({ ok: true, error: null, refs: {} });
+  const sync =
+    sample.operation === "upload"
+      ? app.pushNotebook({ notebook })
+      : app.pullNotebook({ notebook });
+  if (sample.blocked) {
+    await expect(sync).rejects.toMatchObject({ files: [name] });
+    expect(await git.resolveRef({ ...args, ref: "HEAD" })).toBe(base);
+    expect(await read(".git/index")).toEqual(index);
+    expect(await read("README.md")).toEqual([...bytes("# Kept\n")]);
+    expect(await entry()).toEqual(
+      sample.stage === null
+        ? undefined
+        : { mode: stageMode, oid: await blob(sample.stage) },
+    );
+    expect(push).not.toHaveBeenCalled();
+  } else {
+    await sync;
+    expect(await read("README.md")).toEqual([...bytes("Incoming catalog")]);
+    const content = sample.incoming ?? sample.working;
+    const expected =
+      content === null
+        ? undefined
+        : {
+            mode:
+              sample.workingExecutable || sample.incomingExecutable
+                ? 0o100755
+                : 0o100644,
+            oid: await blob(content),
+          };
+    expect(await entry()).toEqual(expected);
+    if (sample.operation === "download")
+      expect(await git.resolveRef({ ...args, ref: "HEAD" })).toBe(incoming);
+    else {
+      const uploaded = await parentGitTree(
+        notebook.dir,
+        "HEAD",
+        {},
+        { includeBlob: (file) => file === name },
+      );
+      expect(uploaded.blobs.get(name)).toEqual(expected);
+    }
+  }
+  const work = sample.blocked
+    ? sample.working
+    : (sample.incoming ?? sample.working);
+  if (work === null) expect(await pfs.exists(target)).toBe(false);
+  else {
+    expect(await read(name)).toEqual([...bytes(work)]);
+    expect(Boolean((await fs.promises.lstat(target)).mode & 0o111)).toBe(
+      Boolean(
+        sample.workingExecutable ||
+        (!sample.blocked && sample.incomingExecutable),
+      ),
+    );
+  }
+  expect(await recovery.readPullRecovery(notebook._id)).toBeUndefined();
 });
 
 it("does not replay a local deletion over a remote directory", async () => {

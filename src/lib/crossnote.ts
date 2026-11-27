@@ -254,19 +254,6 @@ async function readPullTrees(
 ) {
   const blobEntries = { includeBlob: () => true };
   const target = await parentGitTree(dir, remoteSha, cache, blobEntries);
-  const directories = new Set<string>();
-  for (const link of target.links.keys()) {
-    for (
-      let parent = path.dirname(link);
-      parent !== "." && !directories.has(parent);
-      parent = path.dirname(parent)
-    )
-      directories.add(parent);
-  }
-  const includeBlob = target.links.size
-    ? (file: string) =>
-        directories.has(file) || isWithinGitLink(file, target.links)
-    : undefined;
   const base = await parentGitTree(dir, localSha, cache, blobEntries);
   // An unchanged remote entry can be a file that the local edits replaced
   // with a directory, or a child of a directory replaced with a file.
@@ -274,8 +261,7 @@ async function readPullTrees(
     [...target.files].filter((file) => {
       const next = target.blobs.get(file);
       if (!next) return target.links.get(file) !== base.links.get(file);
-      const previous = base.blobs.get(file);
-      return previous?.oid !== next.oid || previous.mode !== next.mode;
+      return !sameGitBlob(base.blobs.get(file), next);
     }),
   );
   return {
@@ -283,7 +269,7 @@ async function readPullTrees(
     target,
     incoming,
     cache,
-    readIndex: () => parentGitTree(dir, undefined, cache, { includeBlob }),
+    readIndex: () => parentGitTree(dir, undefined, cache, blobEntries),
   };
 }
 
@@ -303,14 +289,10 @@ async function readListedBlob(
 
 type ParentGitTree = Awaited<ReturnType<typeof parentGitTree>>;
 
-// Checkout displaces a blob at, above, or below an incoming pointer.
-function assertDisplacedBlobsMatch(base: ParentGitTree, index: ParentGitTree) {
-  for (const [file, staged] of index.blobs) {
-    const committed = base.blobs.get(file);
-    if (committed?.mode !== staged.mode || committed.oid !== staged.oid)
-      throw new NotebookConflictError([file]);
-  }
-}
+type GitBlob = { oid: string; mode: number };
+const sameGitBlob = (a: GitBlob | undefined, b: GitBlob | undefined) =>
+  a?.oid === b?.oid && a?.mode === b?.mode;
+const regularGitMode = (mode: number) => (mode & 0o111 ? 0o100755 : 0o100644);
 
 type GitLinkPaths = ReadonlyMap<string, string> | ReadonlySet<string>;
 
@@ -701,7 +683,7 @@ export default class Crossnote {
       remote: new Map<string, string>(),
     },
     missingIndex = false,
-    indexCandidates?: Set<string>,
+    trees?: Awaited<ReturnType<typeof readPullTrees>>,
   ) {
     const cache: Cache = Object.create(null);
     const args = { fs, dir: notebook.dir, cache: gitCache };
@@ -742,8 +724,10 @@ export default class Crossnote {
       }
     }
     for (const [file, head, work, stage] of rows) {
-      if (head === stage || !stage) indexCandidates?.delete(file);
-      if (!missingIndex && stage !== head)
+      const stagedLink = symlinks.staged.get(file);
+      const incomingLinkMatches =
+        stagedLink && stagedLink === symlinks.remote.get(file);
+      if (!missingIndex && stage !== head && !incomingLinkMatches)
         checkReplayPath(file, symlinks.remote);
       if (isWithinGitLink(file, links)) continue;
       // When checkout is skipped the old index still exists. An upload must
@@ -752,11 +736,12 @@ export default class Crossnote {
       if (head === 0 && work === 0 && indexMatches) continue;
       const name = path.join(notebook.dir, file);
       const link = symlinks.head.get(file);
-      if (work && (await fs.promises.lstat(name)).isSymbolicLink()) {
+      const stats = work ? await fs.promises.lstat(name) : undefined;
+      if (stats?.isSymbolicLink()) {
         if (
-          link &&
-          link === symlinks.staged.get(file) &&
-          (await matchesSymlink(args, name, link))
+          stagedLink &&
+          (link === stagedLink || incomingLinkMatches) &&
+          (await matchesSymlink(args, name, stagedLink))
         )
           continue;
         throw new NotebookConflictError([file]);
@@ -764,6 +749,17 @@ export default class Crossnote {
       // The change cache holds regular files and deletions, not link objects.
       if ((link || symlinks.staged.has(file)) && work)
         throw new NotebookConflictError([file]);
+      if (stats?.isFile() && trees) {
+        const base = trees.base.blobs.get(file);
+        const incoming = trees.target.blobs.get(file);
+        const mode = regularGitMode(stats.mode);
+        if (
+          !sameGitBlob(base, incoming) &&
+          mode !== base?.mode &&
+          mode !== incoming?.mode
+        )
+          throw new NotebookConflictError([file]);
+      }
       const bytes =
         work === 0
           ? null
@@ -999,7 +995,7 @@ export default class Crossnote {
       if (
         entry?.relative !== file ||
         !entry.stats.isFile() ||
-        Boolean(entry.stats.mode & 0o111) !== (mode === 0o100755)
+        regularGitMode(entry.stats.mode) !== mode
       )
         continue;
       const object = (await pfs.readFile(
@@ -1286,8 +1282,6 @@ export default class Crossnote {
       remoteLinks,
       new Set([...baseFiles, ...stagedFiles]),
     );
-    assertDisplacedBlobsMatch(trees.base, index);
-    const indexCandidates = missingIndex ? undefined : new Set(stagedFiles);
     const { cache, links } = await this.generateChangesCache(
       notebook,
       false,
@@ -1295,32 +1289,44 @@ export default class Crossnote {
       remoteLinks,
       { head: headSymlinks, staged: stagedSymlinks, remote: remoteSymlinks },
       missingIndex,
-      indexCandidates,
+      trees,
     );
     // Checkout replaces the index. A staged edit can differ from the working
     // file as well as both commits, including when the working file is gone.
-    if (indexCandidates?.size) {
-      await git.walk({
-        ...args,
-        trees: [
-          git.TREE({ ref: localSha || "HEAD" }),
-          git.STAGE(),
-          git.TREE({ ref: remoteSha }),
-        ],
-        map: async (file, [base, stage, remote]) => {
-          if (!indexCandidates.has(file) || (await stage?.type()) !== "blob")
-            return;
-          const staged = await stage.oid();
-          if (
-            staged === (await base?.oid()) ||
-            staged === (await remote?.oid())
-          )
-            return;
-          const local = cache[file];
-          if (!local || staged !== (await git.hashBlob({ object: local })).oid)
-            throw new NotebookConflictError([file]);
-        },
-      });
+    if (!missingIndex) {
+      for (const file of trees.base.blobs.keys()) {
+        if (stagedFiles.has(file) || isWithinGitLink(file, remoteLinks))
+          continue;
+        const entry = await workingEntry(notebook.dir, file);
+        if (entry?.relative === file && !entry.stats.isDirectory())
+          throw new NotebookConflictError([file]);
+        cache[file] = null;
+      }
+      for (const [file, staged] of index.blobs) {
+        if (
+          sameGitBlob(staged, trees.base.blobs.get(file)) ||
+          sameGitBlob(staged, trees.target.blobs.get(file))
+        )
+          continue;
+        if ([...remoteLinks.keys()].some((link) => overlaps(link, file)))
+          throw new NotebookConflictError([file]);
+        const entry = await workingEntry(notebook.dir, file);
+        if (
+          entry?.relative !== file ||
+          !entry.stats.isFile() ||
+          regularGitMode(entry.stats.mode) !== staged.mode
+        )
+          throw new NotebookConflictError([file]);
+        // A mode-only edit can be absent from the byte-oriented status matrix.
+        const local =
+          cache[file] ??
+          ((await pfs.readFile(
+            this.checkedPath(notebook, file),
+          )) as Uint8Array);
+        if (staged.oid !== (await git.hashBlob({ object: local })).oid)
+          throw new NotebookConflictError([file]);
+        cache[file] = local;
+      }
     }
     const isIgnored = ignoreCheck(notebook.dir);
     // A remote file may replace a local directory. Preserve untracked/ignored
