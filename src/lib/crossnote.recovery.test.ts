@@ -137,7 +137,7 @@ it("opens and syncs a notebook without consuming its older recovery data", async
       await pfs.writeFile(`${notebook.dir}/${folder}/.gitignore`, marker);
       await pfs.writeFile(`${notebook.dir}/${folder}/draft.bin`, privateBytes);
     }
-    const read = vi.spyOn(pfs, "readFile");
+    const read = vi.spyOn(fs.promises, "readFile");
     const reopened = (await app.listNotebooks()).find(
       (n) => n._id === notebook._id,
     )!;
@@ -169,9 +169,11 @@ it("opens and syncs a notebook without consuming its older recovery data", async
       "README.md",
       "publish.md",
     ]);
+    const filesRead = read.mock.calls.map(([path]) => path);
+    expect(filesRead).toContain(`${notebook.dir}/publish.md`);
     for (const [folder, marker] of Object.entries(folders)) {
       const file = `${notebook.dir}/${folder}/draft.bin`;
-      expect(read.mock.calls.some(([path]) => path === file)).toBe(false);
+      expect(filesRead).not.toContain(file);
       expect(Array.from((await pfs.readFile(file)) as Uint8Array)).toEqual([
         ...privateBytes,
       ]);
