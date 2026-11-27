@@ -220,7 +220,7 @@ describe("open notes", () => {
   it("tells whoever listens once a write has landed", async () => {
     const note = join("tab-1");
     const written = vi.fn();
-    const stop = note.onWritten(written);
+    const stop = note.onSaveChange(written);
     type(note, " typed");
     await vi.advanceTimersByTimeAsync(300);
     expect(written).toHaveBeenCalledTimes(1);

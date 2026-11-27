@@ -1,4 +1,5 @@
 import type { APIRequestContext, Page } from "@playwright/test";
+import { createHash } from "node:crypto";
 import type { CrossnoteApp } from "./crossnote";
 import { expect, test } from "./fixtures";
 import {
@@ -120,6 +121,96 @@ async function whileDownloading(
   }
   return messages;
 }
+
+test("compares and explicitly saves an editor draft that conflicts with a completed download", async ({
+  app,
+  page,
+  request,
+}) => {
+  const remote = await createRemote(request, {
+    "Story.md": bytes("Base story"),
+  });
+  await app.open();
+  const dir = await cloneRemote(app, remote);
+  const file = dir + "/Story.md";
+  await app.noteCards.getByText("Story", { exact: true }).click();
+  await app.modeButton("Edit").click();
+  await changeRemote(request, remote, {
+    "Story.md": bytes("Downloaded story"),
+  });
+  const messages = await whileDownloading(app, remote.id, () =>
+    app.setEditorText("My draft", app.visibleEditor),
+  );
+  await expect
+    .poll(messages)
+    .toContainEqual(expect.stringContaining("Sync conflicts: Story.md"));
+  expect(await localBytes(page, file)).toEqual(bytes("Downloaded story"));
+  expect(await app.editorText(app.visibleEditor)).toBe("My draft");
+  const index = await indexEntries(page, dir + "/.git/index");
+  const compare = page.getByRole("button", {
+    name: "Compare with disk",
+    exact: true,
+  });
+  const save = page.getByRole("button", {
+    name: "Save editor text",
+    exact: true,
+  });
+  await app.modeButton("Preview").click();
+  await compare.click();
+  await expect(app.visibleEditor).toBeVisible();
+  await expect(
+    page.locator("pre").filter({ hasText: "Downloaded story" }),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "Cancel", exact: true }).click();
+  await app.visibleEditor.click();
+  await page.keyboard.press("Control+s");
+  await compare.click();
+  expect(await localBytes(page, file)).toEqual(bytes("Downloaded story"));
+  expect(await indexEntries(page, dir + "/.git/index")).toEqual(index);
+  await app.setEditorText("My reviewed story", app.visibleEditor);
+  await localBytes(page, file, bytes("A later edit on disk"));
+  await save.click();
+  await expect(
+    page.getByText("The file or draft changed. Compare again before saving."),
+  ).toBeVisible();
+  expect(await localBytes(page, file)).toEqual(bytes("A later edit on disk"));
+  await compare.click();
+  await expect(
+    page.locator("pre").filter({ hasText: "A later edit on disk" }),
+  ).toBeVisible();
+  await page.evaluate((file) => {
+    const { pfs } = window as unknown as FileHost;
+    const write = pfs.writeFile;
+    pfs.writeFile = async (name, data) => {
+      if (name === file) {
+        pfs.writeFile = write;
+        throw new Error("Device unavailable");
+      }
+      await write(name, data);
+    };
+  }, file);
+  await save.click();
+  await expect(
+    page.getByText(/Failed to save the note: Device unavailable/),
+  ).toBeVisible();
+  expect(await localBytes(page, file)).toEqual(bytes("A later edit on disk"));
+  expect(await app.editorText(app.visibleEditor)).toBe("My reviewed story");
+  await save.click();
+  await expect(compare).toHaveCount(0);
+  await expect(save).toHaveCount(0);
+  const data = Buffer.from(await localBytes(page, file));
+  expect(data.toString()).toContain("My reviewed story");
+  const oid = createHash("sha1")
+    .update(`blob ${data.length}\0`)
+    .update(data)
+    .digest("hex");
+  expect(await indexEntries(page, dir + "/.git/index")).toEqual([
+    { name: "Story.md", mode: "100644", oid },
+  ]);
+  expect(await remoteBytes(request, remote, "Story.md")).toEqual(
+    bytes("Downloaded story"),
+  );
+});
 
 test("keeps typing queued during a conflicting download in the open note", async ({
   app,

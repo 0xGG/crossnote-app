@@ -1,5 +1,14 @@
 export const enUS = {
   translation: {
+    "editor/compare-disk": "Compare with disk",
+    "editor/disk-version": "On disk",
+    "editor/compare-disk-help":
+      "Edit your draft below. Saving replaces the file on disk with the editor text.",
+    "editor/save-editor-text": "Save editor text",
+    "error/note-comparison-changed":
+      "The file or draft changed. Compare again before saving.",
+    "error/note-comparison-unavailable":
+      "This file could not be read as editable text.",
     "backup/export": "Export notebook ZIP",
     "backup/title": "Export {{notebook}} as ZIP",
     "backup/private-files":

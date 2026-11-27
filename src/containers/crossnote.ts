@@ -283,14 +283,17 @@ function useCrossnoteContainer(initialState: InitialState) {
       filePath: string,
       markdown: string,
       loadedFilePath = filePath,
+      comparedSource?: string,
     ) =>
       writeNoteOperation({ notebookPath, filePath }, async () => {
         // A queued write can acquire the lock after Git has moved its note.
         filePath = saverOfWriter(writer.getId())?.location.filePath ?? filePath;
         // The save comes a moment after the last keystroke, by when the
         // notebook, or the note, may have been deleted or the note renamed.
+        const resolving = comparedSource !== undefined;
         const notebook = getNotebookAtPath(notebookPath);
         if (!notebook) {
+          if (resolving) throw new Error("error/note-comparison-changed");
           return;
         }
         const cached = await notebook.getNote(filePath);
@@ -298,14 +301,26 @@ function useCrossnoteContainer(initialState: InitialState) {
         const saving = open?.saver.id === writer.getId();
         const awaitingDestination = saving && filePath !== loadedFilePath;
         const fresh = cached && (await notebook.getNote(filePath, true));
+        if (
+          resolving &&
+          (!fresh ||
+            !saving ||
+            awaitingDestination ||
+            !open.saver.open ||
+            !open.needsComparison ||
+            open.document.text() !== markdown)
+        )
+          throw new Error("error/note-comparison-changed");
         // Keep the draft until the new file can be read and reconciled.
+        if (saving && open.needsComparison && !fresh)
+          throw new Error("error/note-comparison-changed");
         if (!fresh && awaitingDestination)
           throw new Error(i18next.t("general/note-not-found"));
         // A file deleted by git while its open editor was being edited keeps
         // those new edits. An explicit local deletion removes the cache first.
         const note = fresh ?? (saving && open.saver.open ? cached : null);
         if (!note) return;
-        if (saving) {
+        if (saving && !resolving) {
           markdown = open.reconcileFile(note.markdown, note.lineBreak);
           if (!fresh)
             notify({
@@ -320,6 +335,7 @@ function useCrossnoteContainer(initialState: InitialState) {
             note.filePath,
             markdown,
             note.config,
+            comparedSource,
           );
           open?.saver.wrote(newNote.markdown);
           globalEmitter.emit(EventType.ModifiedMarkdown, {
@@ -331,8 +347,17 @@ function useCrossnoteContainer(initialState: InitialState) {
             noteConfig: newNote.config,
           });
         } else {
+          if (
+            resolving &&
+            (await notebook.readConflictSource(filePath)) !== comparedSource
+          )
+            throw new Error("error/note-comparison-changed");
           await notebook.storeNote(filePath);
           open?.saver.wrote(note.markdown);
+        }
+        if (resolving) {
+          open.saver.resolved(markdown);
+          open.setNeedsComparison(false);
         }
       }),
     [getNotebookAtPath],

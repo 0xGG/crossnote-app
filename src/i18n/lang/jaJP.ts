@@ -2,6 +2,15 @@ import type { enUS } from "./enUS";
 
 export const jaJP = {
   translation: {
+    "editor/compare-disk": "ディスクの内容と比較",
+    "editor/disk-version": "ディスク上の本文",
+    "editor/compare-disk-help":
+      "下のエディターで下書きを編集できます。保存すると、ディスク上の本文がエディターの内容に置き換わります。",
+    "editor/save-editor-text": "エディターの本文を保存",
+    "error/note-comparison-changed":
+      "ファイルまたは下書きが変更されました。もう一度比較してから保存してください。",
+    "error/note-comparison-unavailable":
+      "このファイルを編集可能なテキストとして読み込めませんでした。",
     "backup/export": "ノートブックを ZIP で書き出す",
     "backup/title": "「{{notebook}}」を ZIP で書き出す",
     "backup/private-files":

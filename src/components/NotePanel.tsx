@@ -77,6 +77,7 @@ import { debounce } from "../utilities/utils";
 import EditImageDialog, { type EditedImage } from "./EditImageDialog";
 import { Loading } from "./Loading";
 import { NoteNotFound } from "./NoteNotFound";
+import { NoteConflictComparison } from "./NoteConflictComparison";
 import NotePopover from "./NotePopover";
 import NotesPanel from "./NotesPanel";
 import {
@@ -496,7 +497,7 @@ export default function NotePanel(props: Props) {
     if (!openNote) {
       return;
     }
-    return openNote.onWritten(() => {
+    return openNote.onSaveChange(() => {
       if (isMounted.current) {
         setWrittenCount((count) => count + 1);
       }
@@ -1232,6 +1233,18 @@ export default function NotePanel(props: Props) {
           }}
         >
           <EditorContentPanel>
+            {note && openNote?.needsComparison && (
+              <NoteConflictComparison
+                key={note.filePath}
+                notebook={props.notebook}
+                filePath={note.filePath}
+                openNote={openNote}
+                showEditor={() => {
+                  if (editorMode === EditorMode.Preview)
+                    changeEditorMode(EditorMode.SourceCode);
+                }}
+              />
+            )}
             <EditorWrapper>
               <EditorHost
                 ref={editorHost}

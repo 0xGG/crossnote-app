@@ -2,6 +2,13 @@ import type { enUS } from "./enUS";
 
 export const zhCN = {
   translation: {
+    "editor/compare-disk": "对照磁盘版本",
+    "editor/disk-version": "磁盘上的正文",
+    "editor/compare-disk-help":
+      "可在下方编辑草稿。保存后，磁盘上的文件将采用编辑器中的正文。",
+    "editor/save-editor-text": "保存编辑器正文",
+    "error/note-comparison-changed": "文件或草稿已变化。请重新对照后保存。",
+    "error/note-comparison-unavailable": "无法将该文件读取为可编辑的文本。",
     "backup/export": "导出整本 ZIP",
     "backup/title": "将“{{notebook}}”导出为 ZIP",
     "backup/private-files":

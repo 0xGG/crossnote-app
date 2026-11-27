@@ -6,7 +6,9 @@ import { findLinks } from "../render/links";
 import { decodeLinkPath, leadsToNote } from "../render/markdown/linkTargets";
 import { NOTE_SETTINGS, readNoteText, writeNoteText } from "./frontMatter";
 import { fs, missingFileOrThrow, pfs } from "./fs";
-import { stageLocalFile } from "./gitFiles";
+import { checkedGitPath, stageLocalFile } from "./gitFiles";
+import { inspectWorkingPath } from "./gitLinks";
+import { mergeableText } from "./mergeFiles";
 import { restoreTree } from "./gitRestore";
 import { Mentions, Note, NoteConfig, Notes } from "./note";
 import { Reference, ReferenceMap } from "./reference";
@@ -434,18 +436,37 @@ export class Notebook {
     return this.notes;
   }
 
+  public async readConflictSource(filePath: string): Promise<string> {
+    const target = checkedGitPath(this.dir, filePath);
+    if (!pfs.isPathOfLocalFileSystem(target)) {
+      const entry = await inspectWorkingPath(this.dir, filePath);
+      if (entry.name !== target || !entry.stats?.isFile())
+        throw new Error("error/note-comparison-unavailable");
+    }
+    const bytes = (await pfs.readFile(target)) as Uint8Array | undefined;
+    const text = mergeableText(filePath, bytes ?? null);
+    if (text === null) throw new Error("error/note-comparison-unavailable");
+    return text;
+  }
+
   public async writeNote(
     filePath: string,
     markdown: string,
     noteConfig: NoteConfig,
+    comparedSource?: string,
   ): Promise<Note> {
     const absFilePath = path.resolve(this.dir, filePath);
     // Settings that have not changed are written as the file had them.
-    const previous = (await pfs
-      .readFile(absFilePath, {
-        encoding: "utf8",
-      })
-      .catch(missingFileOrThrow)) as string | null;
+    const previous =
+      comparedSource !== undefined
+        ? await this.readConflictSource(filePath)
+        : ((await pfs
+            .readFile(absFilePath, {
+              encoding: "utf8",
+            })
+            .catch(missingFileOrThrow)) as string | null);
+    if (comparedSource !== undefined && comparedSource !== previous)
+      throw new Error("error/note-comparison-changed");
 
     await pfs.writeFile(
       absFilePath,

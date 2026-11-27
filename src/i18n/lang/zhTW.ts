@@ -2,6 +2,13 @@ import type { enUS } from "./enUS";
 
 export const zhTW = {
   translation: {
+    "editor/compare-disk": "比對磁碟版本",
+    "editor/disk-version": "磁碟上的內文",
+    "editor/compare-disk-help":
+      "可在下方編輯草稿。儲存後，磁碟上的檔案將採用編輯器中的內文。",
+    "editor/save-editor-text": "儲存編輯器內文",
+    "error/note-comparison-changed": "檔案或草稿已變更。請重新比對後儲存。",
+    "error/note-comparison-unavailable": "無法將此檔案讀為可編輯的文字。",
     "backup/export": "匯出整本 ZIP",
     "backup/title": "將「{{notebook}}」匯出為 ZIP",
     "backup/private-files":

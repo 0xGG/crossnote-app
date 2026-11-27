@@ -207,6 +207,14 @@ export class NoteSaver {
     this.synced = text;
   }
 
+  /** A confirmed write to disk and the index supersedes the failed autosave. */
+  resolved(text: string) {
+    this.synced = text;
+    this.saving = null;
+    this.failed = false;
+    this.lastError = null;
+  }
+
   /** The note moved: write to it where it is now. */
   moveTo(location: NoteLocation) {
     this.location = location;

@@ -1331,6 +1331,52 @@ it.each([
   },
 );
 
+it("keeps a reviewed draft pending until its bytes can be staged and stored", async () => {
+  const notebook = await notebookAt("/notebooks/reviewed-draft");
+  const file = "a.md";
+  const path = notebook.dir + "/" + file;
+  await pfs.writeFile(path, "Base");
+  await notebook.getNote(file, true);
+  const { open, type, close } = openForTyping(notebook, file, "Base");
+  const apply = (source: string) =>
+    crossnote.updateNoteMarkdown(
+      { getId: () => open.saver.id },
+      notebook.dir,
+      file,
+      open.document.text(),
+      file,
+      source,
+    );
+  try {
+    type(" edited");
+    await pfs.writeFile(path, "Downloaded");
+    await expect(open.saver.flush()).rejects.toBeInstanceOf(
+      NotebookConflictError,
+    );
+    const original = await notebook.readConflictSource(file);
+    const store = vi
+      .spyOn(notebook, "storeNote")
+      .mockRejectedValueOnce(new Error("Index unavailable"));
+    await expect(apply(original)).rejects.toThrow("Index unavailable");
+    expect(await body(notebook, file)).toBe("Base edited");
+    expect(open.document.text()).toBe("Base edited");
+    expect(open.saver.pending).toBe(true);
+    expect(open.needsComparison).toBe(true);
+    await expect(apply(original)).rejects.toThrow(
+      "error/note-comparison-changed",
+    );
+    const write = vi.spyOn(notebook, "writeNote");
+    await apply(await notebook.readConflictSource(file));
+    expect(write).not.toHaveBeenCalled();
+    expect(store).toHaveBeenCalledTimes(2);
+    expect(open.saver.pending).toBe(false);
+    expect(open.needsComparison).toBe(false);
+  } finally {
+    open.saver.discard();
+    close();
+  }
+});
+
 it("reconciles typing when a queued alias removal is already present in downloaded settings", async () => {
   const notebook = await notebookAt("/notebooks/noop-settings-during-git");
   const initial = "First\nMiddle\nLast\n";
