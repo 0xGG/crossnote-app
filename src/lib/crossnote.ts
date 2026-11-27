@@ -214,6 +214,10 @@ async function refSha(dir: string, ref: string): Promise<string> {
 // An excluded parent wins before a nested rule can re-include its children.
 function ignoreCheck(dir: string, overrides?: Map<string, string | null>) {
   const matchers = new Map<string, Ignore>();
+  const readRules = async (name: string) =>
+    (await pfs.stats(name).catch(missingFileOrThrow))?.isFile()
+      ? ((await pfs.readFile(name, { encoding: "utf8" })) as string)
+      : "";
   return async (filepath: string) => {
     if (path.basename(filepath) === ".git") return true;
     let ignored = false;
@@ -222,17 +226,15 @@ function ignoreCheck(dir: string, overrides?: Map<string, string | null>) {
       const folder = path.join(...parts.slice(0, depth));
       let matcher = matchers.get(folder);
       if (!matcher) {
-        let contents = overrides?.get(folder);
+        const contents = overrides?.get(folder);
         // The planned tree could not supply an ordinary file for this link.
         if (contents === null) return undefined;
-        if (contents === undefined) {
-          const rule = path.join(dir, folder, ".gitignore");
-          const stats = await pfs.stats(rule).catch(missingFileOrThrow);
-          contents = stats?.isFile()
-            ? ((await pfs.readFile(rule, { encoding: "utf8" })) as string)
-            : "";
-        }
-        matcher = ignore().add(contents);
+        matcher = ignore();
+        if (depth === 0)
+          matcher.add(await readRules(path.join(dir, ".git/info/exclude")));
+        matcher.add(
+          contents ?? (await readRules(path.join(dir, folder, ".gitignore"))),
+        );
         matchers.set(folder, matcher);
       }
       const relative = parts.slice(depth).join("/");
@@ -1053,8 +1055,10 @@ export default class Crossnote {
         await pfs.mkdirp(path.dirname(target));
         await pfs.writeFile(target, bytes);
       }
-      await stageLocalFile(notebook.dir, file);
     }
+    // A rule file or its linked target can be restored after a file it governs.
+    for (const [file, bytes] of Object.entries(cache))
+      if (bytes !== null) await stageLocalFile(notebook.dir, file);
   }
 
   private async pendingPull(
@@ -1382,15 +1386,19 @@ export default class Crossnote {
       }
     }
     const files: Cache = Object.create(null);
+    const needsStaging: string[] = [];
     const deletions: ConflictDeletions = Object.create(null);
     for (const [file, ours] of Object.entries(cache)) {
       checkReplayPath(file, remoteSymlinks);
       this.checkedPath(notebook, file);
+      const base = trees.base.blobs.get(file);
+      const incoming = trees.target.blobs.get(file);
+      const theirs = await readListedBlob(args, incoming);
       const merged = mergeFile(
         file,
-        await readListedBlob(args, trees.base.blobs.get(file)),
+        await readListedBlob(args, base),
         ours,
-        await readListedBlob(args, trees.target.blobs.get(file)),
+        theirs,
       );
       if (merged.conflict === true) {
         conflicts.push(file);
@@ -1406,10 +1414,27 @@ export default class Crossnote {
         continue;
       }
       files[file] = merged.bytes;
+      // Checkout installs the incoming index. Only staged changes not already
+      // included in that result need a successful add after replay.
+      const staged = index.blobs.get(file);
+      if (
+        staged &&
+        ((staged.mode !== base?.mode && staged.mode !== incoming?.mode) ||
+          (staged.oid !== base?.oid &&
+            staged.oid !== incoming?.oid &&
+            !sameBytes(merged.bytes, theirs)))
+      )
+        needsStaging.push(file);
     }
     if (conflicts.length) throw new NotebookConflictError(conflicts, deletions);
     const recovery: PullRecovery = { version: 2, localSha, remoteSha, files };
-    await this.checkPullIgnoreRules(notebook, recovery, trees, previousLinks);
+    await this.checkPullIgnoreRules(
+      notebook,
+      recovery,
+      trees,
+      previousLinks,
+      needsStaging,
+    );
     // Recovery references the fetched commit and its objects. Persist their
     // directory entries before publishing a plan a new page must replay.
     await pfs.storeTree(notebook.dir);
@@ -1424,6 +1449,7 @@ export default class Crossnote {
     recovery: PullRecovery,
     trees: Awaited<ReturnType<typeof readPullTrees>>,
     previousLinks: GitLinkPaths,
+    needsStaging: string[],
   ): Promise<void> {
     const { files } = recovery;
     const { files: baseFiles, symlinks: headSymlinks } = trees.base;
@@ -1525,8 +1551,12 @@ export default class Crossnote {
       overrides.set(folder, planned === null ? "" : decode(planned));
     }
     const scopes = new Set(overrides.keys());
+    const willBeIgnored = ignoreCheck(notebook.dir, overrides);
+    for (const file of needsStaging) {
+      if ((await willBeIgnored(file)) !== false)
+        throw new NotebookConflictError([file]);
+    }
     if (scopes.size) {
-      const willBeIgnored = ignoreCheck(notebook.dir, overrides);
       // Include untracked drafts that Git leaves out of the status matrix.
       const checkDirectory = async (folder: string): Promise<void> => {
         for (const name of await pfs.readdir(path.join(notebook.dir, folder))) {

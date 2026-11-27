@@ -1037,6 +1037,78 @@ it.each(
         workingExecutable: true,
       },
       {
+        state: "staged executable bit with incoming contents",
+        stage: "base",
+        executable: true,
+        working: "base",
+        workingExecutable: true,
+        incoming: "incoming",
+        blocked: true,
+      },
+      {
+        state: "staged executable bit with unchanged ignore rules",
+        stage: "base",
+        executable: true,
+        working: "base",
+        workingExecutable: true,
+        initialRules: "run.sh\n",
+        blocked: true,
+      },
+      {
+        state: "staged executable bit with new ignore rules",
+        stage: "base",
+        executable: true,
+        working: "base",
+        workingExecutable: true,
+        incomingRules: "run.sh\n",
+        blocked: true,
+      },
+      {
+        state: "staged executable bit with relaxed ignore rules",
+        stage: "base",
+        executable: true,
+        working: "base",
+        workingExecutable: true,
+        initialRules: "run.sh\n",
+        incomingRules: "",
+      },
+      {
+        state: "staged executable bit already in the ignored incoming file",
+        stage: "base",
+        executable: true,
+        working: "base",
+        workingExecutable: true,
+        initialRules: "run.sh\n",
+        incoming: "incoming",
+        incomingExecutable: true,
+      },
+      {
+        state: "staged bytes with unchanged ignore rules",
+        stage: "local",
+        working: "local",
+        initialRules: "run.sh\n",
+        blocked: true,
+      },
+      {
+        state: "staged executable bit with repository excludes",
+        stage: "base",
+        executable: true,
+        working: "base",
+        workingExecutable: true,
+        exclude: true,
+        blocked: true,
+      },
+      {
+        state:
+          "staged executable bit allowed by an incoming exception to repository excludes",
+        stage: "base",
+        executable: true,
+        working: "base",
+        workingExecutable: true,
+        exclude: true,
+        incomingRules: "!run.sh\n",
+      },
+      {
         state: "matching working mode and bytes",
         stage: "local",
         executable: true,
@@ -1079,7 +1151,7 @@ it.each(
   const name = "run.sh";
   const { app, notebook, base, read } = await repository(
     {},
-    { [name]: bytes("base") },
+    { [name]: bytes("base"), ".gitignore": bytes(sample.initialRules ?? "") },
   );
   const args = { fs, dir: notebook.dir };
   const target = notebook.dir + "/" + name;
@@ -1097,15 +1169,17 @@ it.each(
       ...args,
       tree: await Promise.all(
         tree.map(async (entry) =>
-          entry.path === name
-            ? {
-                ...entry,
-                mode: incomingMode.toString(8),
-                oid: await blob(incomingText),
-              }
-            : entry.path === "README.md"
-              ? { ...entry, oid: await blob("Incoming catalog") }
-              : entry,
+          entry.path === ".gitignore" && sample.incomingRules !== undefined
+            ? { ...entry, oid: await blob(sample.incomingRules) }
+            : entry.path === name
+              ? {
+                  ...entry,
+                  mode: incomingMode.toString(8),
+                  oid: await blob(incomingText),
+                }
+              : entry.path === "README.md"
+                ? { ...entry, oid: await blob("Incoming catalog") }
+                : entry,
         ),
       ),
     }),
@@ -1139,7 +1213,15 @@ it.each(
         { includeBlob: (file) => file === name },
       )
     ).blobs.get(name);
+  if (sample.exclude)
+    await pfs.writeFile(notebook.dir + "/.git/info/exclude", "run.sh\n");
   const index = sample.missing ? null : await read(".git/index");
+  if (sample.state === "staged executable bit with incoming contents")
+    expect(
+      (await git.statusMatrix({ ...args, refresh: false })).find(
+        ([file]) => file === name,
+      ),
+    ).toEqual([name, 1, 1, 1]);
   const push = vi
     .spyOn(git, "push")
     .mockResolvedValue({ ok: true, error: null, refs: {} });
@@ -1199,6 +1281,110 @@ it.each(
     );
   }
   expect(await recovery.readPullRecovery(notebook._id)).toBeUndefined();
+});
+
+it.each([false, true])(
+  "restages an executable after installing merged linked rules (retry: %s)",
+  async (retry) => {
+    const script = "run.sh",
+      rules = "z-rules.txt";
+    const origin = "# Tools\nmanual.txt\n# Exceptions\n# End\n";
+    const { app, notebook, read } = await repository(
+      {},
+      { [script]: bytes("original"), [rules]: bytes(origin) },
+    );
+    const args = { fs, dir: notebook.dir };
+    await fs.promises.symlink(rules, notebook.dir + "/.gitignore");
+    await git.add({ ...args, filepath: ".gitignore" });
+    const base = await git.commit({ ...args, author, message: "Select rules" });
+    notebook.localSha = notebook.remoteSha = base;
+    await saveNotebookFixture(app, notebook);
+    const { tree } = await git.readTree({ ...args, oid: base });
+    const oid = await git.writeBlob({
+      ...args,
+      blob: bytes(origin.replace("# Tools", script)),
+    });
+    const remote = await git.commit({
+      ...args,
+      author,
+      noUpdateBranch: true,
+      message: "Update tools",
+      tree: await git.writeTree({
+        ...args,
+        tree: tree.map((entry) =>
+          entry.path === rules ? { ...entry, oid } : entry,
+        ),
+      }),
+    });
+    vi.mocked(git.fetch).mockResolvedValue({
+      ...emptyRemote,
+      fetchHead: remote,
+    });
+    await pfs.writeFile(
+      notebook.dir + "/" + rules,
+      origin.replace("# End", "!run.sh"),
+    );
+    const name = notebook.dir + "/" + script;
+    await pfs.unlink(name);
+    await fs.promises.writeFile(name, bytes("local script"), { mode: 0o755 });
+    await git.add({ ...args, filepath: script });
+    if (retry) {
+      const checkout = git.checkout;
+      vi.spyOn(git, "checkout").mockImplementationOnce(async (args) => {
+        await checkout(args);
+        throw new Error("Interrupted download");
+      });
+      await expect(app.pullNotebook({ notebook })).rejects.toThrow(
+        "Interrupted download",
+      );
+      expect(await recovery.readPullRecovery(notebook._id)).toMatchObject({
+        remoteSha: remote,
+      });
+      await app.resumeNotebook(notebook);
+    } else await app.pullNotebook({ notebook });
+    expect(await git.resolveRef({ ...args, ref: "HEAD" })).toBe(remote);
+    expect(await read(rules)).toEqual([
+      ...bytes(origin.replace("# Tools", script).replace("# End", "!run.sh")),
+    ]);
+    expect(await git.isIgnored({ ...args, filepath: script })).toBe(false);
+    expect(await read(script)).toEqual([...bytes("local script")]);
+    const index = await parentGitTree(
+      notebook.dir,
+      undefined,
+      {},
+      { includeBlob: (file) => file === script },
+    );
+    expect(index.blobs.get(script)).toEqual({
+      mode: 0o100755,
+      oid: (await git.hashBlob({ object: bytes("local script") })).oid,
+    });
+    expect(await recovery.readPullRecovery(notebook._id)).toBeUndefined();
+  },
+);
+
+it("downloads an unrelated note while keeping ignored working edits out of the index", async () => {
+  const { app, notebook, read, theirs } = await repository(
+    { "README.md": bytes("remote guide") },
+    { "run.sh": bytes("original"), ".gitignore": bytes("run.sh\n*.scratch\n") },
+  );
+  const args = { fs, dir: notebook.dir };
+  await pfs.writeFile(notebook.dir + "/run.sh", "working edit");
+  await pfs.writeFile(notebook.dir + "/colors.scratch", "blue");
+  await app.pullNotebook({ notebook });
+  const index = await parentGitTree(
+    notebook.dir,
+    undefined,
+    {},
+    { includeBlob: () => true },
+  );
+  expect(index.blobs.get("run.sh")).toEqual({
+    mode: 0o100644,
+    oid: (await git.hashBlob({ object: bytes("original") })).oid,
+  });
+  expect(index.files.has("colors.scratch")).toBe(false);
+  expect(await git.resolveRef({ ...args, ref: "HEAD" })).toBe(theirs);
+  expect(await read("run.sh")).toEqual([...bytes("working edit")]);
+  expect(await read("colors.scratch")).toEqual([...bytes("blue")]);
 });
 
 it("does not replay a local deletion over a remote directory", async () => {
