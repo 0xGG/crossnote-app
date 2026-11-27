@@ -155,9 +155,17 @@ test("compares and explicitly saves an editor draft that conflicts with a comple
     name: "Save editor text",
     exact: true,
   });
+  const tree = app.notebook(remote.id);
+  await tree.getByText(remote.id, { exact: true }).click();
+  expect(await app.editorText(app.visibleEditor)).toBe("My draft");
   await app.modeButton("Preview").click();
   await compare.click();
   await expect(app.visibleEditor).toBeVisible();
+  await tree.getByRole("button", { name: "Collapse", exact: true }).click();
+  await expect(tree).toHaveAttribute("aria-expanded", "false");
+  await app.expandNotebook(remote.id);
+  await expect(tree).toHaveAttribute("aria-expanded", "true");
+  expect(await app.editorText(app.visibleEditor)).toBe("My draft");
   await expect(
     page.locator("pre").filter({ hasText: "Downloaded story" }),
   ).toBeVisible();

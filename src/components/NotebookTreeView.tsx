@@ -171,6 +171,24 @@ export default function NotebookTreeView(props: Props) {
     setFavoritedNotes(quickAccessNotes(notes));
   }, []);
 
+  const refreshTree = useCallback(() => {
+    props.notebook
+      .refreshNotesIfNotLoaded({
+        dir: "./",
+        includeSubdirectories: true,
+      })
+      .then((notes) => {
+        refreshQuickAccessNotes(notes);
+        globalEmitter.emit(EventType.PerformedGitOperation, {
+          notebookPath: props.notebook.dir,
+          preservePendingEdits: true,
+        });
+      })
+      .catch((error) => {
+        console.error(error);
+      });
+  }, [props.notebook, refreshQuickAccessNotes]);
+
   const handleChange = useCallback(
     (event: React.SyntheticEvent | null, nodes: string[]) => {
       if (!event) {
@@ -186,25 +204,12 @@ export default function NotebookTreeView(props: Props) {
           element.tagName &&
           element.tagName.toUpperCase().match(/^(SVG|PATH|BUTTON)$/))
       ) {
-        props.notebook
-          .refreshNotesIfNotLoaded({
-            dir: "./",
-            includeSubdirectories: true,
-          })
-          .then((notes) => {
-            refreshQuickAccessNotes(notes);
-            globalEmitter.emit(EventType.PerformedGitOperation, {
-              notebookPath: props.notebook.dir,
-            });
-          })
-          .catch((error) => {
-            console.error(error);
-          });
+        refreshTree();
 
         onExpandedChange(nodes);
       }
     },
-    [props.notebook, refreshQuickAccessNotes, onExpandedChange],
+    [refreshTree, onExpandedChange],
   );
 
   // Emitter
@@ -405,24 +410,7 @@ export default function NotebookTreeView(props: Props) {
               : undefined
           }
           label={
-            <LabelRoot
-              onClick={() => {
-                props.notebook
-                  .refreshNotesIfNotLoaded({
-                    dir: "./",
-                    includeSubdirectories: true,
-                  })
-                  .then((notes) => {
-                    refreshQuickAccessNotes(notes);
-                    globalEmitter.emit(EventType.PerformedGitOperation, {
-                      notebookPath: props.notebook.dir,
-                    });
-                  })
-                  .catch((error) => {
-                    console.error(error);
-                  });
-              }}
-            >
+            <LabelRoot onClick={refreshTree}>
               <LabelText
                 color={"inherit"}
                 variant={"body1"}
