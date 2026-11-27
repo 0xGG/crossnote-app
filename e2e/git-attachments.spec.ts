@@ -150,20 +150,30 @@ test("recovers an editor-created attachment after an interrupted pull", async ({
     );
   }
   const messages = await app.recordMessages();
-  await page.evaluate((attachment) => {
-    const fs = (window as unknown as FileHost).pfs;
-    const write = fs.writeFile.bind(fs);
-    fs.writeFile = async (path, data) => {
-      if (path === attachment)
-        throw new Error("Interrupted while restoring the attachment");
-      return write(path, data);
+  // Interrupt persistence only after checkout has installed the incoming note.
+  const interrupted = await page.evaluateHandle((dir) => {
+    const { pfs } = window as unknown as FileHost;
+    const storeTree = pfs.storeTree.bind(pfs);
+    let failed = false;
+    pfs.storeTree = async (path) => {
+      if (path === dir && (await pfs.readdir(dir)).includes("incoming.md")) {
+        pfs.storeTree = storeTree;
+        failed = true;
+        throw new Error("Could not persist the downloaded notebook");
+      }
+      return storeTree(path);
     };
-  }, `${dir}/${file}`);
+    return () => failed;
+  }, dir);
   await app
     .notebook(remote.id)
     .getByRole("treeitem", { name: /Download/ })
     .click();
   await expect.poll(messages).toContain("Failed to download notebook");
+  expect(await interrupted.evaluate((didFail) => didFail())).toBe(true);
+  expect(await localBytes(page, `${dir}/incoming.md`)).toEqual(
+    bytes("Remote note"),
+  );
   expect(await savedPlan()).toEqual({
     version: 2,
     localSha,
