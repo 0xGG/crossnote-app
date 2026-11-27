@@ -16,20 +16,6 @@ export const enUS = {
     "backup/too-large": "This notebook exceeds the ZIP size or entry limit.",
     "backup/sync-recovery":
       "Retry Download to finish the interrupted sync, then export the notebook.",
-    "recovery/title": "Sync paused",
-    "recovery/instructions":
-      "The remote now uses {{directory}} in {{notebook}}. Close any notes from that folder, then download the ZIP and check your files. Confirming below removes the local recovery folder so you can retry the download or upload.",
-    "recovery/legacy-instructions":
-      "The remote now uses {{directory}} in {{notebook}}. Crossnote cannot verify who created the local folder. Download a ZIP to keep a copy. Rename the conflicting path in the remote repository, then retry sync.",
-    "recovery/download": "Download recovery files",
-    "recovery/confirm": "I saved the files",
-    "recovery/retry":
-      "Recovery files removed from the notebook. Retry the download or upload.",
-    "error/close-recovery-notes":
-      "Close the notes in this recovery folder before removing it. Wait for their changes to finish saving.",
-    "error/recovery-files-changed":
-      "The recovery files have changed. Download a fresh copy before confirming.",
-    "error/recovery-files": "Could not access the recovery files.",
     "attachment/insert-image": "Insert image",
     "attachment/ignored":
       "This attachment path is ignored by Git. No links were inserted; any files already saved remain in assets. Check the notebook's ignore rules.",
@@ -158,10 +144,10 @@ export const enUS = {
     "error/failed-to-save-note-settings": "Failed to save the note's settings",
     "error/notebook-sync-conflicts":
       "Sync conflicts: {{files}}. Your changes were kept. Review the files before uploading again.",
-    "error/notebook-file-deleted-local":
-      "{{file}} (deleted locally, remote changes kept)",
-    "error/notebook-file-deleted-remote":
-      "{{file}} (deleted remotely, local changes kept)",
+    "git/sync-conflicts":
+      "Sync conflicts: {{files}}. Resolve the conflicts and retry.",
+    "error/notebook-file-deleted-local": "{{file}} (deleted locally)",
+    "error/notebook-file-deleted-remote": "{{file}} (deleted remotely)",
     "error/notes-not-saved":
       "Nothing was done, as {{notes}} could not be saved",
 

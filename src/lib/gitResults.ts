@@ -49,7 +49,7 @@ export function gitConflictNotice(
   credentials: GitCredentials,
 ) {
   const files = describeConflicts(error);
-  const message = i18next.t("error/notebook-sync-conflicts", {
+  const message = i18next.t("git/sync-conflicts", {
     files: redactGitText(files, credentials),
   });
   return { message, files };

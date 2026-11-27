@@ -7,6 +7,7 @@ import {
   cloneRemote,
   createRemote,
   download,
+  fixtureURL,
   localBytes,
   remoteBytes,
   upload,
@@ -104,22 +105,72 @@ test("recovers an editor-created attachment after an interrupted pull", async ({
   await app.modeButton("Edit").click();
   await fileEvent(app, "paste", "recovery.png", "image/png", png);
   const file = await insertedPath(app, ".png");
-  const theirs = [0, 253, 130];
-  await changeRemote(request, remote, { [file]: theirs });
+  await changeRemote(request, remote, { "incoming.md": bytes("Remote note") });
+  const localSha = (
+    await app.storedText(`${dir}/.git/refs/heads/master`)
+  )?.trim();
+  const remoteSha = (
+    await (await request.get(`${fixtureURL}/repos/${remote.id}`)).json()
+  ).sha;
+  const key = dir.slice("/notebooks/".length);
+  async function savedPlan() {
+    return page.evaluate(
+      async ({ key, file }) => {
+        if (
+          !(await indexedDB.databases()).some(
+            (db) => db.name === "crossnote-downloads",
+          )
+        )
+          return null;
+        return new Promise((resolve, reject) => {
+          const open = indexedDB.open("crossnote-downloads");
+          open.onerror = () => reject(open.error);
+          open.onsuccess = () => {
+            const db = open.result;
+            const read = db.transaction("pulls").objectStore("pulls").get(key);
+            read.onerror = () => reject(read.error);
+            read.onsuccess = () => {
+              db.close();
+              const plan = read.result;
+              resolve(
+                plan
+                  ? {
+                      version: plan.version,
+                      localSha: plan.localSha,
+                      remoteSha: plan.remoteSha,
+                      attachment: Array.from(plan.files[file]),
+                    }
+                  : null,
+              );
+            };
+          };
+        });
+      },
+      { key, file },
+    );
+  }
   const messages = await app.recordMessages();
-  await page.evaluate(() => {
+  await page.evaluate((attachment) => {
     const fs = (window as unknown as FileHost).pfs;
     const write = fs.writeFile.bind(fs);
     fs.writeFile = async (path, data) => {
-      if (path.includes(".remote-")) throw new Error("Simulated disk failure");
+      if (path === attachment)
+        throw new Error("Interrupted while restoring the attachment");
       return write(path, data);
     };
-  });
+  }, `${dir}/${file}`);
   await app
     .notebook(remote.id)
     .getByRole("treeitem", { name: /Download/ })
     .click();
   await expect.poll(messages).toContain("Failed to download notebook");
+  expect(await savedPlan()).toEqual({
+    version: 2,
+    localSha,
+    remoteSha,
+    attachment: png,
+  });
+  // Only the committed plan can restore deliberately removed working bytes on reload.
   await page.evaluate(async (path) => {
     const fs = (window as unknown as FileHost).pfs;
     await fs.unlink(path);
@@ -127,15 +178,15 @@ test("recovers an editor-created attachment after an interrupted pull", async ({
   }, `${dir}/${file}`);
   await page.reload();
   await app.waitUntilReady();
-  await expect(app.notebook(remote.id)).toBeVisible();
+  await expect.poll(savedPlan).toBeNull();
   expect(await localBytes(page, `${dir}/${file}`)).toEqual(png);
-  const copies = await page.evaluate(
-    async (dir) =>
-      (
-        await (window as unknown as FileHost).pfs.readdir(`${dir}/assets`)
-      ).filter((name) => name.includes(".remote-")),
-    dir,
+  expect(await localBytes(page, `${dir}/incoming.md`)).toEqual(
+    bytes("Remote note"),
   );
-  expect(copies).toHaveLength(1);
-  expect(await localBytes(page, `${dir}/assets/${copies[0]}`)).toEqual(theirs);
+  expect((await app.storedText(`${dir}/.git/refs/heads/master`))?.trim()).toBe(
+    remoteSha,
+  );
+  await app.openNotes(remote.id);
+  await upload(app, remote);
+  expect(await remoteBytes(request, remote, file)).toEqual(png);
 });

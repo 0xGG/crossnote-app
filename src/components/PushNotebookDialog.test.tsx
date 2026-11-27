@@ -11,6 +11,7 @@ import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import "../i18n/i18n";
 import { Notebook } from "../lib/notebook";
 import { IgnoredUploadFileError } from "../lib/notebookOperation";
+import { NotebookConflictError } from "../lib/mergeFiles";
 import { GitUploadError, type PushNotebookResult } from "../lib/crossnote";
 import PushNotebookDialog from "./PushNotebookDialog";
 
@@ -159,6 +160,29 @@ it("reports a completed download when upload preparation fails", async () => {
           "Download completed. Failed to prepare local changes for upload.",
         details: "Index write failed",
       }),
+    );
+  } finally {
+    notify.mockRestore();
+  }
+});
+
+it("names both sides of deletion conflicts that stop an upload", async () => {
+  const error = new NotebookConflictError(["draft.md", "assets/photo.png"], {
+    "draft.md": "local",
+    "assets/photo.png": "remote",
+  });
+  pushNotebook.mockRejectedValueOnce(error);
+  const notify = vi.spyOn(notifications, "notify");
+  try {
+    upload();
+    await vi.waitFor(() =>
+      expect(notify).toHaveBeenCalledWith(
+        expect.objectContaining({
+          severity: "error",
+          message:
+            "Sync conflicts: draft.md (deleted locally), assets/photo.png (deleted remotely). Resolve the conflicts and retry.",
+        }),
+      ),
     );
   } finally {
     notify.mockRestore();

@@ -17,19 +17,6 @@ export const zhCN = {
     "backup/symbolic-link": "无法收录符号链接“{{file}}”。",
     "backup/too-large": "笔记本超出了 ZIP 大小或条目数量限制。",
     "backup/sync-recovery": "请先重试“下载”以完成中断的同步，再导出笔记本。",
-    "recovery/title": "同步已暂停",
-    "recovery/instructions":
-      "远端开始使用笔记本“{{notebook}}”中的 {{directory}}。请关闭该目录下的笔记，下载 ZIP 并核对文件。确认已保存后，Crossnote 会移除本地恢复目录，届时可重试下载或上传。",
-    "recovery/legacy-instructions":
-      "远端开始使用笔记本“{{notebook}}”中的 {{directory}}。Crossnote 无法确认本地目录的来源。你可以下载 ZIP 留存文件。在远端仓库中重命名冲突路径后，即可重试同步。",
-    "recovery/download": "下载恢复文件",
-    "recovery/confirm": "我已保存文件",
-    "recovery/retry": "本地恢复目录已移除，可以重试下载或上传。",
-    "error/close-recovery-notes":
-      "请先关闭恢复目录下的笔记，并等待更改保存完成。",
-    "error/recovery-files-changed":
-      "恢复文件已有变化，请重新下载并核对后再确认。",
-    "error/recovery-files": "无法访问恢复文件。",
     "attachment/insert-image": "插入图片",
     "attachment/ignored":
       "此附件路径被 Git 忽略，未插入链接；已保存的文件仍保留在 assets 中。请检查笔记本的忽略规则。",
@@ -151,10 +138,9 @@ export const zhCN = {
     "error/failed-to-save-note-settings": "保存笔记设置失败",
     "error/notebook-sync-conflicts":
       "同步冲突：{{files}}。你的修改已保留，请检查这些文件后再上传。",
-    "error/notebook-file-deleted-local":
-      "{{file}}（本地请求删除，已保留远端修改）",
-    "error/notebook-file-deleted-remote":
-      "{{file}}（远端请求删除，已保留本地修改）",
+    "git/sync-conflicts": "同步冲突：{{files}}。请解决冲突后重试。",
+    "error/notebook-file-deleted-local": "{{file}}（已在本地删除）",
+    "error/notebook-file-deleted-remote": "{{file}}（已在远端删除）",
     "error/notes-not-saved": "没有执行：{{notes}} 没能保存",
 
     // Success

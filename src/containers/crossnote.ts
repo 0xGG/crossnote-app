@@ -50,6 +50,7 @@ import {
   notebookOperation,
 } from "../lib/notebookOperation";
 import { NotebookConflictError } from "../lib/mergeFiles";
+import { gitConflictNotice } from "../lib/gitResults";
 import { CrossnoteTabNode } from "../lib/tabNode";
 import { notebookInFront, tabsetForNewTab } from "../lib/tabset";
 import { getTodayName } from "../utilities/utils";
@@ -184,11 +185,6 @@ function useCrossnoteContainer(initialState: InitialState) {
   const crossnote = initialState.crossnote;
   const [initialized, setInitialized] = useState<boolean>(false);
   const [notebooks, setNotebooks] = useState<Notebook[]>([]);
-  const [recoveryCollision, setRecoveryCollision] = useState<{
-    notebook: Notebook;
-    directory: string;
-    canRelease: boolean;
-  } | null>(null);
   const [isAddingNotebook, setIsAddingNotebook] = useState<boolean>(false);
   const [isPushingNotebook, setIsPushingNotebook] = useState<boolean>(false);
   const [isPullingNotebook, setIsPullingNotebook] = useState<boolean>(false);
@@ -310,9 +306,8 @@ function useCrossnoteContainer(initialState: InitialState) {
         const note = fresh ?? (saving && open.saver.open ? cached : null);
         if (!note) return;
         if (saving) {
-          const merged = open.reconcileFile(note.markdown, note.lineBreak);
-          markdown = merged.text;
-          if (merged.conflict || !fresh)
+          markdown = open.reconcileFile(note.markdown, note.lineBreak);
+          if (!fresh)
             notify({
               severity: "warning",
               message: i18next.t("error/notebook-sync-conflicts", {
@@ -370,21 +365,14 @@ function useCrossnoteContainer(initialState: InitialState) {
                 : change;
             const open = openNoteAt(location);
             const merged = open?.reconcileFile(note.markdown, note.lineBreak);
-            if (merged?.conflict)
-              notify({
-                severity: "warning",
-                message: i18next.t("error/notebook-sync-conflicts", {
-                  files: filePath,
-                }),
-              });
             const changed =
               JSON.stringify(note.config) !== JSON.stringify(noteConfig) ||
-              (merged && merged.text !== note.markdown);
+              (merged !== undefined && merged !== note.markdown);
             let saved = note;
             if (changed) {
               saved = await notebook.writeNote(
                 note.filePath,
-                merged?.text ?? note.markdown,
+                merged ?? note.markdown,
                 noteConfig,
               );
             } else {
@@ -413,7 +401,10 @@ function useCrossnoteContainer(initialState: InitialState) {
           severity: "error",
           message: failureMessage(
             i18next.t("error/failed-to-save-note-settings"),
-            error,
+            error instanceof NotebookConflictError
+              ? gitConflictNotice(error, getNotebookAtPath(notebookPath) ?? {})
+                  .message
+              : error,
           ),
           duration: 5000,
         });
@@ -929,7 +920,6 @@ function useCrossnoteContainer(initialState: InitialState) {
         return await finishGit(result, () => refreshAfterGit(args.notebook));
       } catch (error) {
         if (
-          error instanceof NotebookConflictError ||
           error instanceof IgnoredUploadFileError ||
           (error instanceof GitUploadError && error.downloaded)
         ) {
@@ -1272,8 +1262,6 @@ favorited: true
 
   return {
     crossnote,
-    recoveryCollision,
-    setRecoveryCollision,
     initialized,
     notebooks,
     updateNoteMarkdown,

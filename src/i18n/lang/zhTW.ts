@@ -17,19 +17,6 @@ export const zhTW = {
     "backup/symbolic-link": "無法收錄符號連結「{{file}}」。",
     "backup/too-large": "筆記本超出 ZIP 大小或項目數量限制。",
     "backup/sync-recovery": "請先重試「下載」以完成中斷的同步，再匯出筆記本。",
-    "recovery/title": "同步已暫停",
-    "recovery/instructions":
-      "遠端開始使用筆記本「{{notebook}}」中的 {{directory}}。請關閉該目錄下的筆記，下載 ZIP 並核對檔案。確認已儲存後，Crossnote 會移除本機復原目錄，即可重試下載或上傳。",
-    "recovery/legacy-instructions":
-      "遠端開始使用筆記本「{{notebook}}」中的 {{directory}}。Crossnote 無法確認本機目錄的來源。你可以下載 ZIP 保留檔案。在遠端儲存庫重新命名衝突路徑後，即可重試同步。",
-    "recovery/download": "下載復原檔案",
-    "recovery/confirm": "我已儲存檔案",
-    "recovery/retry": "本機復原目錄已移除，可以重試下載或上傳。",
-    "error/close-recovery-notes":
-      "請先關閉復原目錄下的筆記，並等待變更儲存完畢。",
-    "error/recovery-files-changed":
-      "復原檔案已有變更，請重新下載並核對後再確認。",
-    "error/recovery-files": "無法存取復原檔案。",
     "attachment/insert-image": "插入圖片",
     "attachment/ignored":
       "此附件路徑被 Git 忽略，未插入連結；已儲存的檔案仍保留在 assets 中。請檢查筆記本的忽略規則。",
@@ -150,10 +137,9 @@ export const zhTW = {
     "error/failed-to-save-note-settings": "儲存筆記設定失敗",
     "error/notebook-sync-conflicts":
       "同步衝突：{{files}}。你的修改已保留，請檢查這些檔案後再上傳。",
-    "error/notebook-file-deleted-local":
-      "{{file}}（本機要求刪除，已保留遠端修改）",
-    "error/notebook-file-deleted-remote":
-      "{{file}}（遠端要求刪除，已保留本機修改）",
+    "git/sync-conflicts": "同步衝突：{{files}}。請解決衝突後重試。",
+    "error/notebook-file-deleted-local": "{{file}}（已在本機刪除）",
+    "error/notebook-file-deleted-remote": "{{file}}（已在遠端刪除）",
     "error/notes-not-saved": "沒有執行：{{notes}} 沒能儲存",
 
     // Success

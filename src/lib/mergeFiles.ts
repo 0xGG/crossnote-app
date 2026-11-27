@@ -55,30 +55,19 @@ export function mergeableText(file: string, bytes: FileBytes): string | null {
   }
 }
 
-export function hasTextConflicts(text: string): boolean {
-  return (
-    /^\\<+\s/m.test(text) && /^\\=+\s/m.test(text) && /^\\>+\s/m.test(text)
-  );
-}
-
 export function mergeFile(
   file: string,
   base: FileBytes,
   ours: FileBytes,
   theirs: FileBytes,
-): {
-  bytes: FileBytes;
-  conflict: boolean;
-  copy?: Uint8Array;
-  deleted?: "local" | "remote";
-} {
+):
+  | { conflict: false; bytes: FileBytes }
+  | { conflict: true; deleted?: "local" | "remote" } {
   if (sameBytes(ours, theirs) || sameBytes(base, theirs)) {
-    const text = mergeableText(file, ours);
-    return { bytes: ours, conflict: text !== null && hasTextConflicts(text) };
+    return { conflict: false, bytes: ours };
   }
   if (sameBytes(base, ours)) {
-    const text = mergeableText(file, theirs);
-    return { bytes: theirs, conflict: text !== null && hasTextConflicts(text) };
+    return { conflict: false, bytes: theirs };
   }
   const a = mergeableText(file, ours);
   const b = base === null ? "" : mergeableText(file, base);
@@ -88,30 +77,15 @@ export function mergeFile(
       text.match(/[^\n]*\n|[^\n]+$/g) ?? [];
     const merged = diff3Merge(lines(a), lines(b), lines(c));
     let text = "";
-    let conflict = false;
     for (const part of merged) {
-      if (part.ok) text += part.ok.join("");
-      if (part.conflict) {
-        conflict = true;
-        text += `\\<<<<<<< ours\n${part.conflict.a.join("")}\n\\=======\n${part.conflict.b.join("")}\n\\>>>>>>> theirs\n`;
-      }
+      if (part.conflict) return { conflict: true };
+      text += part.ok.join("");
     }
-    return {
-      bytes: encoder.encode(text),
-      conflict: conflict || hasTextConflicts(text),
-    };
+    return { conflict: false, bytes: encoder.encode(text) };
   }
-  // Delete/modify keeps the modified side; no empty file stands for deletion.
-  return {
-    bytes: ours ?? theirs,
-    conflict: true,
-    ...(ours === null
-      ? { deleted: "local" as const }
-      : theirs === null
-        ? { deleted: "remote" as const }
-        : {}),
-    ...(ours !== null && theirs !== null ? { copy: theirs } : {}),
-  };
+  if (ours === null) return { conflict: true, deleted: "local" };
+  if (theirs === null) return { conflict: true, deleted: "remote" };
+  return { conflict: true };
 }
 
 export class NotebookConflictError extends Error {

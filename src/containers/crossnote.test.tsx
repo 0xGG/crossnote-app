@@ -950,10 +950,10 @@ it("updates the moved card's settings and search entry while preserving its repl
   );
 });
 
-it("applies a recovery move to the shared editor and its waiting save", async () => {
+it("follows a renamed note in its shared editor and waiting save", async () => {
   const notebook = await notebookAt("/notebooks/moved-editor");
-  const original = ".crossnote-recovered/recovered-example.md";
-  const moved = ".crossnote-recovered-1/recovered-example.md";
+  const original = "drafts/example.md";
+  const moved = "notes/renamed.md";
   const text = "Example";
   await pfs.writeFile(`${notebook.dir}/${moved}`, text);
   const { open, type, close } = openForTyping(notebook, original, text);
@@ -1287,12 +1287,17 @@ it.each(["stat", "read original"])(
   },
 );
 
-it.each(["text", "settings"])(
-  "preserves the disk and dirty editor when %s cannot reconcile downloaded bytes",
-  async (save) => {
-    const notebook = await notebookAt(`/notebooks/unmergeable-${save}`);
-    const initial = "Base\0\n";
-    const remote = "Downloaded\0\n";
+it.each([
+  ["text", "Base\0\n", "Downloaded\0\n"],
+  ["settings", "Base\0\n", "Downloaded\0\n"],
+  ["text", "Base", "Downloaded"],
+  ["settings", "Base", "Downloaded"],
+])(
+  "preserves the disk and dirty editor when %s cannot reconcile edits to %j",
+  async (save, initial, remote) => {
+    const notebook = await notebookAt(
+      `/notebooks/unmergeable-${save}-${initial.length}`,
+    );
     await pfs.writeFile(`${notebook.dir}/a.md`, initial);
     await notebook.getNote("a.md", true);
     const { open, type, close } = openForTyping(notebook, "a.md", initial);
@@ -1304,7 +1309,7 @@ it.each(["text", "settings"])(
         resetNotifications();
         await crossnote.togglePin(tab, notebook.dir, "a.md");
         expect(getNotificationState().current?.message).toContain(
-          "Failed to save the note's settings",
+          "Sync conflicts: a.md",
         );
       }
       await expect(open.saver.flush()).rejects.toBeInstanceOf(
@@ -1398,62 +1403,69 @@ it("chooses a new note's path only after git has restored the notebook", async (
   }
 });
 
-it.each([
-  ["conflict", new NotebookConflictError(["assets/a.bin"])],
-  ["ignored file", new IgnoredUploadFileError("draft.md")],
-] as const)(
-  "saves input before refreshing editors after an upload stops for %s",
-  async (reason, error) => {
-    let reach!: () => void;
-    let release!: () => void;
-    const reached = new Promise<void>((resolve) => (reach = resolve));
-    const held = new Promise<void>((resolve) => (release = resolve));
-    const notebook = await notebookAt(`/notebooks/typing-during-${reason}`, {
-      pushNotebook: async () => {
-        reach();
-        await held;
-        await pfs.writeFile(`${notebook.dir}/a.md`, "Remote\nMiddle\nLast\n");
-        await pfs.writeFile(`${notebook.dir}/README.md`, "Incoming");
-        throw error;
-      },
-    });
-    const initial = "First\nMiddle\nLast\n";
-    await pfs.writeFile(`${notebook.dir}/a.md`, initial);
-    await notebook.getNote("a.md", true);
-    await pfs.writeFile(`${notebook.dir}/README.md`, "Original");
-    expect((await notebook.getNote("README.md", true)).markdown).toBe(
-      "Original",
-    );
-    const { open, type, close } = openForTyping(notebook, "a.md", initial);
-    const pendingAtRefresh: boolean[] = [];
-    const onRefresh = ({ notebookPath }: { notebookPath: string }) => {
-      if (notebookPath === notebook.dir)
-        pendingAtRefresh.push(open.saver.pending);
-    };
-    globalEmitter.on(EventType.PerformedGitOperation, onRefresh);
-    try {
-      await act(async () => {
-        const pushing = crossnote.pushNotebook({ notebook });
-        const rejected = expect(pushing).rejects.toBe(error);
-        await reached;
-        type("Typed during sync\n");
-        release();
-        await rejected;
-      });
-      expect(pendingAtRefresh).toEqual([false]);
-      expect((await notebook.getNote("README.md")).markdown).toBe("Incoming");
-      expect(await body(notebook, "a.md")).toBe(
-        "Remote\nMiddle\nLast\nTyped during sync\n",
-      );
-      expect(open.document.text()).toBe(await body(notebook, "a.md"));
-      expect(open.saver.pending).toBe(false);
-    } finally {
-      globalEmitter.off(EventType.PerformedGitOperation, onRefresh);
+it("keeps the open notebook when an upload stops at conflict preflight", async () => {
+  const conflict = new NotebookConflictError(["draft.md"]);
+  const notebook = await notebookAt("/notebooks/conflict-preflight", {
+    pushNotebook: async () => {
+      throw conflict;
+    },
+  });
+  const refresh = vi.spyOn(notebook, "refreshNotes");
+  await act(async () => {
+    await expect(crossnote.pushNotebook({ notebook })).rejects.toBe(conflict);
+  });
+  expect(refresh).not.toHaveBeenCalled();
+});
+
+it("saves input before refreshing editors after upload stops for an ignored file", async () => {
+  const error = new IgnoredUploadFileError("draft.md");
+  let reach!: () => void;
+  let release!: () => void;
+  const reached = new Promise<void>((resolve) => (reach = resolve));
+  const held = new Promise<void>((resolve) => (release = resolve));
+  const notebook = await notebookAt("/notebooks/typing-during-ignored-file", {
+    pushNotebook: async () => {
+      reach();
+      await held;
+      await pfs.writeFile(`${notebook.dir}/a.md`, "Remote\nMiddle\nLast\n");
+      await pfs.writeFile(`${notebook.dir}/README.md`, "Incoming");
+      throw error;
+    },
+  });
+  const initial = "First\nMiddle\nLast\n";
+  await pfs.writeFile(`${notebook.dir}/a.md`, initial);
+  await notebook.getNote("a.md", true);
+  await pfs.writeFile(`${notebook.dir}/README.md`, "Original");
+  expect((await notebook.getNote("README.md", true)).markdown).toBe("Original");
+  const { open, type, close } = openForTyping(notebook, "a.md", initial);
+  const pendingAtRefresh: boolean[] = [];
+  const onRefresh = ({ notebookPath }: { notebookPath: string }) => {
+    if (notebookPath === notebook.dir)
+      pendingAtRefresh.push(open.saver.pending);
+  };
+  globalEmitter.on(EventType.PerformedGitOperation, onRefresh);
+  try {
+    await act(async () => {
+      const pushing = crossnote.pushNotebook({ notebook });
+      const rejected = expect(pushing).rejects.toBe(error);
+      await reached;
+      type("Typed during sync\n");
       release();
-      close();
-    }
-  },
-);
+      await rejected;
+    });
+    expect(pendingAtRefresh).toEqual([false]);
+    expect((await notebook.getNote("README.md")).markdown).toBe("Incoming");
+    expect(await body(notebook, "a.md")).toBe(
+      "Remote\nMiddle\nLast\nTyped during sync\n",
+    );
+    expect(open.document.text()).toBe(await body(notebook, "a.md"));
+    expect(open.saver.pending).toBe(false);
+  } finally {
+    globalEmitter.off(EventType.PerformedGitOperation, onRefresh);
+    release();
+    close();
+  }
+});
 
 it.each(["save", "refresh"] as const)(
   "keeps the ignored upload path when the following %s fails",

@@ -28,6 +28,32 @@ export async function expectReadOnlyNoteOpen(
   page: Page,
   openNote: () => Promise<void>,
 ) {
+  expect(await filesystemWrites(page, openNote)).toEqual([]);
+}
+
+export async function expectNoCheckoutWrites(
+  page: Page,
+  dir: string,
+  sync: () => Promise<void>,
+) {
+  const writes = await filesystemWrites(page, sync);
+  // Fetch can update packs and remote refs before it knows about a conflict.
+  const checkoutWrites = writes.filter(({ paths }) =>
+    paths.some((path) => {
+      if (!path.startsWith(dir + "/")) return false;
+      const relative = path.slice(dir.length + 1);
+      return (
+        !relative.startsWith(".git/") ||
+        /^\.git\/(?:HEAD(?:\.lock)?|index(?:\.lock)?|refs\/heads\/.*)$/.test(
+          relative,
+        )
+      );
+    }),
+  );
+  expect(checkoutWrites).toEqual([]);
+}
+
+async function filesystemWrites(page: Page, action: () => Promise<void>) {
   const stop = await page.evaluateHandle(async () => {
     await navigator.locks.request("fs_lock", () => {});
     const methods = [
@@ -47,11 +73,17 @@ export async function expectReadOnlyNoteOpen(
     const { promises } = (
       window as unknown as { pfs: { fs: { promises: Writes } } }
     ).pfs.fs;
-    const writes: string[] = [];
+    const writes: { method: string; paths: string[] }[] = [];
     const restore = methods.map((method) => {
       const original = promises[method];
       promises[method] = (...args) => {
-        writes.push([method, ...args.slice(0, 1)].join(" "));
+        const count = method === "rename" || method === "symlink" ? 2 : 1;
+        writes.push({
+          method,
+          paths: args
+            .slice(0, count)
+            .filter((arg): arg is string => typeof arg === "string"),
+        });
         return original.apply(promises, args);
       };
       return () => (promises[method] = original);
@@ -62,8 +94,8 @@ export async function expectReadOnlyNoteOpen(
       return writes;
     };
   });
-  await openNote();
-  expect(await stop.evaluate((finish) => finish())).toEqual([]);
+  await action();
+  return stop.evaluate((finish) => finish());
 }
 
 export async function createRemote(

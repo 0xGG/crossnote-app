@@ -26,7 +26,6 @@ import { Notebook } from "../lib/notebook";
 import { NotesNotSavedError } from "../lib/noteSaver";
 import { IgnoredUploadFileError } from "../lib/notebookOperation";
 import { NotebookConflictError } from "../lib/mergeFiles";
-import { RecoveryDirectoryCollisionError } from "../lib/recoveryDirectory";
 
 const SpacedTextField = styled(TextField)(({ theme }) => ({
   marginBottom: theme.spacing(2),
@@ -77,14 +76,6 @@ export default function PushNotebookDialog({
       }
     } catch (error) {
       onClose();
-      if (error instanceof RecoveryDirectoryCollisionError) {
-        crossnoteContainer.setRecoveryCollision({
-          notebook,
-          directory: error.directory,
-          canRelease: error.canRelease,
-        });
-        return;
-      }
       // The note save already reported which edit could not be written.
       if (error instanceof NotesNotSavedError) return;
 

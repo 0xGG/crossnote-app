@@ -361,18 +361,6 @@ export function saverOfWriter(writerId: string): NoteSaver | undefined {
   return [...savers].find((saver) => saver.id === writerId);
 }
 
-export function hasNoteWriterInDirectory(
-  notebookPath: string,
-  directory: string,
-): boolean {
-  const inside = ({ location }: { location: NoteLocation }) =>
-    location.notebookPath === notebookPath &&
-    location.filePath.startsWith(directory + "/");
-  return (
-    [...savers].some(inside) || pendingNoteWrites({ notebookPath }).some(inside)
-  );
-}
-
 // A tab closed during a Git operation still has a saver until its queued
 // write settles. Move those writers along with any visible editor.
 export function moveNoteSavers(from: NoteLocation, to: NoteLocation) {

@@ -20,20 +20,6 @@ export const jaJP = {
       "ノートブックが ZIP のサイズまたは項目数の上限を超えています。",
     "backup/sync-recovery":
       "「ダウンロード」をやり直して中断した同期を完了してから、ノートブックを書き出してください。",
-    "recovery/title": "同期を一時停止しました",
-    "recovery/instructions":
-      "リモートがノートブック「{{notebook}}」の {{directory}} を使用しています。このフォルダー内のノートを閉じてから ZIP をダウンロードし、ファイルを確認してください。保存を確認するとローカルの復元フォルダーが削除されます。その後、ダウンロードまたはアップロードを再試行できます。",
-    "recovery/legacy-instructions":
-      "リモートがノートブック「{{notebook}}」の {{directory}} を使用しています。Crossnote はローカルフォルダーの作成元を確認できません。ZIP をダウンロードしてファイルを手元に保存できます。リモートリポジトリで競合するパスの名前を変更してから、同期を再試行してください。",
-    "recovery/download": "復元ファイルをダウンロード",
-    "recovery/confirm": "ファイルを保存しました",
-    "recovery/retry":
-      "ローカルの復元フォルダーを削除しました。ダウンロードまたはアップロードを再試行してください。",
-    "error/close-recovery-notes":
-      "復元フォルダー内のノートを閉じ、変更の保存が終わるまでお待ちください。",
-    "error/recovery-files-changed":
-      "復元ファイルが変更されました。もう一度ダウンロードして内容を確認してください。",
-    "error/recovery-files": "復元ファイルにアクセスできませんでした。",
     "attachment/insert-image": "画像を挿入",
     "attachment/ignored":
       "この添付ファイルのパスは Git で無視されています。リンクは挿入されず、保存済みファイルは assets に残ります。ノートブックの除外ルールを確認してください。",
@@ -165,10 +151,10 @@ export const jaJP = {
     "error/failed-to-save-note-settings": "ノートの設定を保存できませんでした",
     "error/notebook-sync-conflicts":
       "同期の競合: {{files}}。変更は保持されています。再度アップロードする前にファイルを確認してください。",
-    "error/notebook-file-deleted-local":
-      "{{file}}（ローカルで削除、リモートの変更を保持）",
-    "error/notebook-file-deleted-remote":
-      "{{file}}（リモートで削除、ローカルの変更を保持）",
+    "git/sync-conflicts":
+      "同期の競合: {{files}}。競合を解決してから再試行してください。",
+    "error/notebook-file-deleted-local": "{{file}}（ローカルで削除）",
+    "error/notebook-file-deleted-remote": "{{file}}（リモートで削除）",
     "error/notes-not-saved":
       "{{notes}} を保存できなかったため、実行しませんでした",
 

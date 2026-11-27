@@ -80,12 +80,8 @@ export class OpenNote {
    * Apply it synchronously before starting the write, so typing during that
    * write builds on the merged document instead of being replaced afterwards.
    */
-  reconcileFile(
-    text: string,
-    lineBreak?: string,
-  ): { text: string; conflict: boolean } {
-    if (this.saver.isOwn(text))
-      return { text: this.document.text(), conflict: false };
+  reconcileFile(text: string, lineBreak?: string): string {
+    if (this.saver.isOwn(text)) return this.document.text();
     const encode = (value: string) => new TextEncoder().encode(value);
     const merged = mergeFile(
       this.saver.location.filePath,
@@ -96,7 +92,7 @@ export class OpenNote {
     // The caller writes this result over the downloaded file. When text cannot
     // be merged, leave both the disk and the dirty editor untouched, including
     // the saver's base, so retries cannot silently discard either version.
-    if (merged.copy) {
+    if (merged.conflict === true) {
       throw new NotebookConflictError([this.saver.location.filePath]);
     }
     const reconciled = new TextDecoder("utf-8", { ignoreBOM: true }).decode(
@@ -104,7 +100,7 @@ export class OpenNote {
     );
     this.document.load(reconciled, lineBreak);
     this.saver.wrote(text);
-    return { text: reconciled, conflict: merged.conflict };
+    return reconciled;
   }
 
   /**
