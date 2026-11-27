@@ -3109,6 +3109,72 @@ it.each([
   },
 );
 
+it.each([
+  "original index",
+  "ref advanced",
+  "index removed",
+  "pointer installed",
+])(
+  "checks displaced entries before replaying an older download (%s)",
+  async (state) => {
+    const filepath = "vendor/options.txt";
+    const contents = bytes("notebook options");
+    const { notebook, args, base, incoming, pointer, read } =
+      await incomingSubmodule({ [filepath]: contents });
+    const session = new Crossnote();
+    const oid = (await git.hashBlob({ object: contents })).oid;
+    await pfs.unlink(notebook.dir + "/" + filepath);
+    await git.updateIndex({ ...args, filepath, oid, mode: 0o100755 });
+    const plan: recovery.PullRecovery = {
+      version: 1,
+      localSha: base,
+      remoteSha: incoming,
+      files: {},
+      conflicts: [],
+      deletions: {},
+    };
+    await recovery.savePullRecovery(notebook._id, plan);
+    if (state === "pointer installed")
+      await session.hardResetNotebook(
+        notebook,
+        incoming,
+        await parentGitTree(notebook.dir, incoming),
+        true,
+      );
+    else if (state !== "original index")
+      await git.writeRef({
+        ...args,
+        ref: "refs/heads/master",
+        value: incoming,
+        force: true,
+      });
+    if (state === "index removed")
+      await pfs.unlink(notebook.dir + "/.git/index");
+    if (state === "original index" || state === "ref advanced") {
+      const index = await read(".git/index");
+      await expect(session.resumeNotebook(notebook)).rejects.toMatchObject({
+        files: [filepath],
+      });
+      expect(await read(".git/index")).toEqual(index);
+      expect(await git.resolveRef({ ...args, ref: "HEAD" })).toBe(
+        state === "original index" ? base : incoming,
+      );
+      expect(await recovery.readPullRecovery(notebook._id)).toEqual(plan);
+      expect(() => assertNotebookWritable(notebook.dir)).toThrow();
+      // A deliberate index correction makes this same saved plan replayable.
+      await git.updateIndex({ ...args, filepath, oid, mode: 0o100644 });
+    }
+    await session.resumeNotebook(notebook);
+    expect(await git.resolveRef({ ...args, ref: "HEAD" })).toBe(incoming);
+    expect((await parentGitTree(notebook.dir)).links.get("vendor")).toBe(
+      pointer.oid,
+    );
+    expect(await read("README.md")).toEqual([...bytes("# Kept\n")]);
+    expect(await recovery.readPullRecovery(notebook._id)).toBeUndefined();
+    expect(() => assertNotebookWritable(notebook.dir)).not.toThrow();
+  },
+);
+
 it("keeps a staged draft before an incoming submodule occupies its directory", async () => {
   const { app, notebook, args, base, read } = await incomingSubmodule();
   await pfs.writeFile(notebook.dir + "/vendor/draft.md", binary);

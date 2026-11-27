@@ -273,6 +273,47 @@ function ignoreCheck(dir: string, overrides?: Map<string, string | null>) {
   };
 }
 
+// The plan and its immediate checkout share these reads under the notebook lock.
+async function readPullTrees(
+  dir: string,
+  localSha: string,
+  remoteSha: string,
+  cache = {},
+) {
+  const target = await parentGitTree(dir, remoteSha, cache);
+  const directories = new Set<string>();
+  for (const link of target.links.keys()) {
+    for (
+      let parent = path.dirname(link);
+      parent !== "." && !directories.has(parent);
+      parent = path.dirname(parent)
+    )
+      directories.add(parent);
+  }
+  const includeBlob = target.links.size
+    ? (file: string) =>
+        directories.has(file) || isWithinGitLink(file, target.links)
+    : undefined;
+  const base = await parentGitTree(dir, localSha, cache, { includeBlob });
+  return {
+    base,
+    target,
+    cache,
+    readIndex: () => parentGitTree(dir, undefined, cache, { includeBlob }),
+  };
+}
+
+type ParentGitTree = Awaited<ReturnType<typeof parentGitTree>>;
+
+// Checkout displaces a blob at, above, or below an incoming pointer.
+function assertDisplacedBlobsMatch(base: ParentGitTree, index: ParentGitTree) {
+  for (const [file, staged] of index.blobs) {
+    const committed = base.blobs.get(file);
+    if (committed?.mode !== staged.mode || committed.oid !== staged.oid)
+      throw new NotebookConflictError([file]);
+  }
+}
+
 type GitLinkPaths = ReadonlyMap<string, string> | ReadonlySet<string>;
 
 // The Git walker lists a working directory before it checks the entry type.
@@ -964,7 +1005,7 @@ export default class Crossnote {
   public async hardResetNotebook(
     notebook: Notebook,
     sha: string,
-    target: Awaited<ReturnType<typeof parentGitTree>>,
+    target: ParentGitTree,
     force = false,
   ) {
     const ref = branchRef(notebook.gitBranch);
@@ -1335,21 +1376,24 @@ export default class Crossnote {
   private async finishPull(
     notebook: Notebook,
     recovery: PullRecovery,
+    prepared?: Awaited<ReturnType<typeof readPullTrees>>,
   ): Promise<string | undefined> {
     // Replay the same planned bytes, including stable conflict-copy names.
     // Nothing deletes the recovery record on a failed reset, write or flush.
-    const cache = {};
-    const targetTree = await parentGitTree(
-      notebook.dir,
-      recovery.remoteSha,
-      cache,
-    );
+    const trees =
+      prepared ??
+      (await readPullTrees(
+        notebook.dir,
+        recovery.localSha,
+        recovery.remoteSha,
+      ));
+    const { target: targetTree, base, cache } = trees;
     const { files: remoteFiles, links: remoteLinks } = targetTree;
-    const { files: baseFiles, links: baseLinks } = await parentGitTree(
-      notebook.dir,
-      recovery.localSha,
-      cache,
-    );
+    const { files: baseFiles, links: baseLinks } = base;
+    // A saved plan can predate preflight. The ref may already have advanced
+    // while the original index is still present.
+    if (!prepared && remoteLinks.size)
+      assertDisplacedBlobsMatch(base, await trees.readIndex());
     await assertGitLinkTransition(
       notebook.dir,
       baseLinks,
@@ -1606,40 +1650,28 @@ export default class Crossnote {
     }
     if (localSha && !(await descendsFrom(remoteSha, localSha)))
       throw new Error("error/notebook-history-diverged");
+    const trees = await readPullTrees(
+      notebook.dir,
+      localSha,
+      remoteSha,
+      args.cache,
+    );
     const {
       files: remoteFiles,
       links: remoteLinks,
       symlinks: remoteSymlinks,
-    } = await parentGitTree(notebook.dir, remoteSha, args.cache);
-    const incomingDirectories = new Set<string>();
-    for (const link of remoteLinks.keys()) {
-      for (
-        let dir = path.dirname(link);
-        dir !== "." && !incomingDirectories.has(dir);
-        dir = path.dirname(dir)
-      )
-        incomingDirectories.add(dir);
-    }
-    const includeBlob = remoteLinks.size
-      ? (file: string) =>
-          incomingDirectories.has(file) || isWithinGitLink(file, remoteLinks)
-      : undefined;
+    } = trees.target;
     const {
       files: baseFiles,
       links: baseLinks,
       symlinks: headSymlinks,
-      blobs: baseBlobs,
-    } = await parentGitTree(notebook.dir, localSha, args.cache, {
-      includeBlob,
-    });
+    } = trees.base;
+    const index = await trees.readIndex();
     const {
       links: stagedLinks,
       files: stagedFiles,
       symlinks: stagedSymlinks,
-      blobs: stagedBlobs,
-    } = await parentGitTree(notebook.dir, undefined, args.cache, {
-      includeBlob,
-    });
+    } = index;
     const previousLinks = new Map([...baseLinks, ...stagedLinks]);
     if (previousLinks.size) {
       // After repairing a missing index, an absent pointer is a staged deletion.
@@ -1668,13 +1700,7 @@ export default class Crossnote {
       remoteLinks,
       new Set([...baseFiles, ...stagedFiles]),
     );
-    // Checkout displaces a blob at, above, or below an incoming pointer.
-    // statusMatrix compares blob IDs alone, so compare the Git modes here too.
-    for (const [file, staged] of stagedBlobs) {
-      const base = baseBlobs.get(file);
-      if (base?.mode !== staged.mode || base.oid !== staged.oid)
-        throw new NotebookConflictError([file]);
-    }
+    assertDisplacedBlobsMatch(trees.base, index);
     const remoteRoots = new Set(
       [...remoteFiles].map((file) => file.split("/")[0]),
     );
@@ -2008,7 +2034,7 @@ export default class Crossnote {
     await pfs.storeTree(notebook.dir);
     await savePullRecovery(notebook._id, recovery);
     needsRecovery(notebook.dir, true);
-    const ignoredUploadFile = await this.finishPull(notebook, recovery);
+    const ignoredUploadFile = await this.finishPull(notebook, recovery, trees);
     return {
       numConflicts: conflicts.length,
       conflicts,
