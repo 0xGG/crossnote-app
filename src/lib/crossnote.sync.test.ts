@@ -3991,6 +3991,92 @@ it.each([
   },
 );
 
+it.each([
+  {
+    name: "a repeated directory link",
+    links: [
+      ["labels/here", "."],
+      [".gitignore", "labels/here/here/markers.txt"],
+    ],
+  },
+  {
+    name: "a relative file selected through a directory link",
+    links: [
+      ["library/shelf/choose", "../markers.txt"],
+      ["labels/shelf", "../library/shelf"],
+      [".gitignore", "labels/shelf/choose"],
+    ],
+  },
+])(
+  "reads the same planned and installed rules through $name",
+  async ({ links }) => {
+    const markers = {
+      "labels/markers.txt": bytes("# Notebook labels\n*.scratch\n"),
+      "library/markers.txt": bytes("# Library labels\n*.scratch\n"),
+    };
+    const { app, notebook, read } = await repository(
+      {},
+      {
+        ...markers,
+        "library/shelf/guide.txt": bytes("Shelf guide"),
+      },
+    );
+    const { dir } = notebook;
+    const args = { fs, dir };
+    for (const [name, target] of links) {
+      await fs.promises.symlink(target, dir + "/" + name);
+      await git.add({ ...args, filepath: name });
+    }
+    const base = await git.commit({
+      ...args,
+      author,
+      message: "Select label rules",
+    });
+    await pfs.writeFile(dir + "/README.md", "New label guide");
+    await git.add({ ...args, filepath: "README.md" });
+    const remote = await git.commit({
+      ...args,
+      author,
+      noUpdateBranch: true,
+      message: "Update guide",
+    });
+    await app.hardResetNotebook(
+      notebook,
+      base,
+      await parentGitTree(dir, base),
+      true,
+    );
+    vi.mocked(git.fetch).mockResolvedValue({
+      ...emptyRemote,
+      fetchHead: remote,
+    });
+    await pfs.writeFile(dir + "/sample.scratch", "Pencil sketch");
+    expect(await app.getStatus(dir, "sample.scratch")).toBe("ignored");
+    const readBlob = vi.spyOn(git, "readBlob");
+    const savePlan = vi.spyOn(recovery, "savePullRecovery");
+    await app.pullNotebook({ notebook });
+    // Both marker files use the same rule. Observe the fetched marker selected
+    // before checkout and compare its bytes with the installed reader.
+    const markerReads = readBlob.mock.calls.filter(
+      ([query], i) =>
+        readBlob.mock.invocationCallOrder[i] <
+          savePlan.mock.invocationCallOrder[0] &&
+        query.oid === remote &&
+        query.filepath?.endsWith("/markers.txt"),
+    );
+    expect(markerReads.map(([query]) => query.filepath)).toEqual([
+      "labels/markers.txt",
+    ]);
+    expect(await read(".gitignore")).toEqual([
+      ...markers["labels/markers.txt"],
+    ]);
+    expect(await git.resolveRef({ ...args, ref: "HEAD" })).toBe(remote);
+    expect(await read("README.md")).toEqual([...bytes("New label guide")]);
+    expect(await git.listFiles(args)).not.toContain("sample.scratch");
+    expect(await read("sample.scratch")).toEqual([...bytes("Pencil sketch")]);
+  },
+);
+
 it("checks merged ignore rules together with local nested exceptions before checkout", async () => {
   const baseRules = "# local rules\n# spacer\n# remote rules\n*.txt\n";
   const localRules = baseRules.replace("# local rules", "assets/*");

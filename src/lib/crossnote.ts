@@ -1862,36 +1862,45 @@ export default class Crossnote {
         conflicts.push(copy);
       }
     }
-    const linkedRules = async (target: string): Promise<string | null> => {
-      // Git stores the target name in each link. Follow committed links in
-      // the planned tree, using the same target decoding as checkout.
-      const visited = new Set<string>();
-      let component = target;
-      while (component !== ".") {
-        const oid = remoteSymlinks.get(component);
-        if (!oid) {
-          component = path.dirname(component);
-          continue;
+    const linkedRules = async (file: string): Promise<string | null> => {
+      const resolved = new Map<string, string | null>([[".", "."]]);
+      const lookup = async (
+        logical: string,
+        depth: number,
+      ): Promise<string | null> => {
+        const known = resolved.get(logical);
+        if (known !== undefined) return known;
+        // An unfinished lookup is a cycle. Bound nested link expansion too:
+        // a growing loop can keep producing new logical paths.
+        if (depth > 64) return null;
+        resolved.set(logical, null);
+        const dir = path.dirname(logical);
+        const parent = await lookup(dir, depth);
+        if (parent === null) return null;
+        let entry: string | null = path.join(parent, path.basename(logical));
+        const oid = remoteSymlinks.get(entry);
+        if (oid) {
+          const { blob } = await git.readBlob({ ...args, oid });
+          const link = new TextDecoder("utf-8", { ignoreBOM: true }).decode(
+            blob,
+          );
+          if (path.isAbsolute(link)) return null;
+          // CacheFS looks up the entry beneath the resolved parent, but a
+          // relative link is based on the original logical directory.
+          const pointed = path.join(dir, link);
+          if (
+            pointed
+              .split("/")
+              .some((part) => part === ".." || part.toLowerCase() === ".git")
+          )
+            return null;
+          entry = await lookup(pointed, depth + 1);
         }
-        if (visited.has(component)) return null;
-        visited.add(component);
-        const { blob } = await git.readBlob({ ...args, oid });
-        const link = new TextDecoder("utf-8", { ignoreBOM: true }).decode(blob);
-        if (path.isAbsolute(link)) return null;
-        target = path.join(
-          path.dirname(component),
-          link,
-          target.slice(component.length + 1),
-        );
-        if (
-          target
-            .split("/")
-            .some((part) => part === ".." || part.toLowerCase() === ".git")
-        )
-          return null;
-        component = target;
-      }
-      if (isWithinGitLink(target, remoteLinks)) return null;
+        resolved.set(logical, entry);
+        return entry;
+      };
+      const target = await lookup(file, 0);
+      if (target === null || isWithinGitLink(target, remoteLinks)) return null;
       if (target in files)
         return files[target] === null ? "" : decode(files[target]);
       if (remoteFiles.has(target))
